@@ -86,6 +86,7 @@ export default defineNuxtPlugin(() => {
     // Sales Invoice
     salesInvoice          : () => `${apiBase}/sales-invoices`,
     salesInvoiceShow      : (id: number | string) => `${apiBase}/sales-invoices/${id}`,
+    salesInvoiceStatistics: () => `${apiBase}/sales-invoices/statistics`,
 
     // Surat Jalan
     suratJalan          : () => `${apiBase}/surat-jalan`,

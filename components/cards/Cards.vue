@@ -4,14 +4,7 @@
             <div class="card-body">
                 <div v-if="!isAddButtonCard" class="d-flex justify-content-between align-items-center mb-4">
                     <p class="mb-0">{{ total }}</p>
-                    <ul class="list-unstyled d-flex align-items-center avatar-group mb-0">
-                        <li data-bs-toggle="tooltip" data-popup="tooltip-custom" data-bs-placement="top" title="Avatar" class="avatar pull-up">
-                            <img class="rounded-circle" src="/img/avatars/5.png" alt="Avatar" />
-                        </li>
-                        <li data-bs-toggle="tooltip" data-popup="tooltip-custom" data-bs-placement="top" title="Avatar" class="avatar pull-up">
-                            <img class="rounded-circle" src="/img/avatars/2.png" alt="Avatar" />
-                        </li>
-                    </ul>
+                    <i class="ri-bar-chart-grouped-line" style="font-size: 2rem;"></i>
                 </div>
                 <div v-if="!isAddButtonCard" class="d-flex justify-content-between align-items-center">
                     <div class="pegawai-heading">

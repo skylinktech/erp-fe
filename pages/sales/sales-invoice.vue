@@ -8,53 +8,119 @@
             </p>
             <!-- salesInvoice cards -->
             <div class="row g-6 mb-6">
-                <!-- Static cards for display, can be made dynamic later -->
-                <div class="col-xl-4 col-lg-6 col-md-6">
+                <!-- Dynamic cards for invoice statistics -->
+                <div class="col-xl-3 col-lg-6 col-md-6">
                     <div class="card">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-4">
                                 <h5 class="mb-1">Total Invoices</h5>
-                                <span class="badge bg-label-primary rounded-pill">Yearly</span>
+                                <span class="badge bg-label-primary rounded-pill">All Time</span>
                             </div>
                             <div class="d-flex align-items-center">
-                                <h1 class="mb-0 display-4">15</h1>
-                                <i class="ri-arrow-up-s-line ri-24px text-success"></i>
-                                <span class="fw-medium text-success">15.8%</span>
+                                <h1 class="mb-0 display-4">{{ statistics?.counts?.total || 0 }}</h1>
+                                <div class="ms-2">
+                                    <div class="d-flex align-items-center">
+                                        <i class="ri-file-list-3-line ri-24px text-primary"></i>
+                                    </div>
+                                </div>
                             </div>
-                            <p class="mb-0 mt-2">Analytics for last year</p>
+                            <p class="mb-0 mt-2">Total invoice yang dibuat</p>
                         </div>
                     </div>
                 </div>
-                <div class="col-xl-4 col-lg-6 col-md-6">
+                <div class="col-xl-3 col-lg-6 col-md-6">
                     <div class="card">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-4">
-                                <h5 class="mb-1">Pending Invoices</h5>
-                                <span class="badge bg-label-warning rounded-pill">Weekly</span>
+                                <h5 class="mb-1">Unpaid Invoices</h5>
+                                <span class="badge bg-label-danger rounded-pill">{{ statistics?.percentages?.unpaid || 0 }}%</span>
                             </div>
                             <div class="d-flex align-items-center">
-                                <h1 class="mb-0 display-4">5</h1>
-                                <i class="ri-arrow-down-s-line ri-24px text-danger"></i>
-                                <span class="fw-medium text-danger">8.2%</span>
+                                <h1 class="mb-0 display-4">{{ statistics?.counts?.unpaid || 0 }}</h1>
+                                <div class="ms-2">
+                                    <div class="d-flex align-items-center">
+                                        <i class="ri-close-circle-line ri-24px text-danger"></i>
+                                    </div>
+                                </div>
                             </div>
-                            <p class="mb-0 mt-2">Analytics for last week</p>
+                            <p class="mb-0 mt-2"> {{ formatRupiah(statistics?.amounts?.unpaid || 0) }}</p>
                         </div>
                     </div>
                 </div>
-                <div class="col-xl-4 col-lg-6 col-md-6">
-                    <div class="card h-100">
-                        <div class="row h-100">
-                            <div class="col-sm-5">
-                                <div class="d-flex align-items-end h-100 justify-content-center">
-                                    <img src="/img/illustrations/add-new-role-illustration.png" class="img-fluid" alt="Image" width="70">
+                <div class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h5 class="mb-1">Partial Invoices</h5>
+                                <span class="badge bg-label-warning rounded-pill">{{ statistics?.percentages?.partial || 0 }}%</span>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <h1 class="mb-0 display-4">{{ statistics?.counts?.partial || 0 }}</h1>
+                                <div class="ms-2">
+                                    <div class="d-flex align-items-center">
+                                        <i class="ri-time-line ri-24px text-warning"></i>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="col-sm-7">
-                                <div class="card-body text-sm-end text-center ps-sm-0">
-                                    <button v-if="userHasRole('superadmin') || userHasPermission('create_sales_invoice')" @click="salesInvoiceStore.openModal(null, 'admin')" class="btn btn-primary mb-2 text-wrap add-new-role">
+                            <p class="mb-0 mt-2"> {{ formatRupiah(statistics?.amounts?.partial || 0) }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h5 class="mb-1">Paid Invoices</h5>
+                                <span class="badge bg-label-success rounded-pill">{{ statistics?.percentages?.paid || 0 }}%</span>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <h1 class="mb-0 display-4">{{ statistics?.counts?.paid || 0 }}</h1>
+                                <div class="ms-2">
+                                    <div class="d-flex align-items-center">
+                                        <i class="ri-checkbox-circle-line ri-24px text-success"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="mb-0 mt-2"> {{ formatRupiah(statistics?.amounts?.paid || 0) }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Outstanding Amount Card -->
+            <div class="row g-6 mb-6">
+                <div class="col-6">
+                    <div class="card border-warning">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <h5 class="mb-1 text-warning">
+                                        <i class="ri-alert-line me-2"></i>
+                                        Total Outstanding
+                                    </h5>
+                                    <p class="mb-0 text-muted">Total invoice yang belum lunas (unpaid + partial)</p>
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <h4 class="mb-0 text-warning"> {{ formatRupiah(statistics?.amounts?.outstanding || 0) }}</h4>
+                                    <small class="text-muted">{{ (statistics?.counts?.unpaid || 0) + (statistics?.counts?.partial || 0) }} invoices</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <h5 class="mb-1">Buat Sales Invoice Baru</h5>
+                                    <p class="mb-0 text-muted">Tambahkan invoice baru untuk customer Anda</p>
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <button v-if="userHasRole('superadmin') || userHasPermission('create_sales_invoice')" @click="salesInvoiceStore.openModal(null, 'admin')" class="btn btn-primary btn-sm me-2">
+                                        <i class="ri-add-line me-2"></i>
                                         Tambah Sales Invoice
                                     </button>
-                                    <p class="mb-0 mt-1">Buat Sales Invoice baru</p>
                                 </div>
                             </div>
                         </div>
@@ -563,7 +629,7 @@ const { userHasPermission, userHasRole } = usePermissions();
 const permissionStore       = usePermissionsStore()
 const salesOrderStore       = useSalesOrderStore()
 
-const { salesInvoices, loading, totalRecords, params, form, isEditMode, showModal, validationErrors } = storeToRefs(salesInvoiceStore)
+const { salesInvoices, loading, totalRecords, params, form, isEditMode, showModal, validationErrors, statistics } = storeToRefs(salesInvoiceStore)
 const { customers }   = storeToRefs(customerStore)
 const { salesOrders, customerProducts } = storeToRefs(salesOrderStore)
 const { warehouses }  = storeToRefs(warehouseStore)
@@ -726,6 +792,7 @@ let modalInstance = null;
 onMounted(() => {
     userStore.loadUser();
     salesInvoiceStore.fetchSalesInvoices();
+    salesInvoiceStore.fetchInvoiceStatistics();
     customerStore.fetchCustomers();
     salesOrderStore.fetchSalesOrders();
     warehouseStore.fetchWarehouses();
@@ -1005,6 +1072,11 @@ watch(globalFilterValue, useDebounceFn((newValue) => {
 watch(filters, (newFilters) => {
     const { page, rows, ...restFilters } = newFilters;
     salesInvoiceStore.setFilters(restFilters);
+}, { deep: true });
+
+// ✅ NEW: Refresh statistics when filters change
+watch(filters, () => {
+    salesInvoiceStore.fetchInvoiceStatistics();
 }, { deep: true });
 
 const onPage = (event) => {

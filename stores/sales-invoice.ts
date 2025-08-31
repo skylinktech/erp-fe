@@ -125,6 +125,27 @@ interface SalesInvoiceState {
   loading             : boolean
   error               : any
   totalRecords        : number
+  // ✅ NEW: Tambahkan state untuk statistik
+  statistics          : {
+    counts: {
+      total: number
+      unpaid: number
+      partial: number
+      paid: number
+    }
+    amounts: {
+      total: number
+      unpaid: number
+      partial: number
+      paid: number
+      outstanding: number
+    }
+    percentages: {
+      unpaid: number
+      partial: number
+      paid: number
+    }
+  } | null
   params: {
     first      : number
     rows       : number
@@ -151,6 +172,8 @@ export const useSalesInvoiceStore = defineStore('salesInvoice', {
     loading             : true,
     error               : null,
     totalRecords        : 0,
+    // ✅ NEW: Tambahkan state untuk statistik
+    statistics          : null,
     params: {
         first     : 0,
         rows      : 10,
@@ -246,6 +269,44 @@ export const useSalesInvoiceStore = defineStore('salesInvoice', {
         this.loading = false
       }
     },
+
+    // ✅ NEW: Method untuk fetch statistik invoice
+    async fetchInvoiceStatistics() {
+      const toast = useToast();
+      this.error = null;
+      const { $api } = useNuxtApp();
+      
+      try {
+        const token = localStorage.getItem('token');
+        
+        const response = await fetch($api.salesInvoiceStatistics(), {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        });
+
+        if (!response.ok) {
+          throw new Error('Gagal mengambil statistik invoice');
+        }
+
+        const result = await response.json();
+        this.statistics = result.data;
+      } catch (e: any) {
+        console.error('Gagal mengambil statistik invoice:', e);
+        this.error = e;
+        toast.error({
+          title: 'Error',
+          message: `Tidak dapat memuat statistik invoice: ${e.message}`,
+          color: 'red'
+        });
+      }
+    },
+
+
 
     async fetchSalesInvoiceDetails(invoiceId: string) {
       const toast     = useToast();
