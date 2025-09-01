@@ -60,7 +60,7 @@
                                             <!-- Batch Actions -->
                                             <div v-if="selectedPermissions.length > 0" class="btn-group me-2">
                                                 <button 
-                                                    class="btn btn-sm btn-dark px-2 py-2" 
+                                                    class="btn btn-sm btn-dark px-2 py-2 me-2" 
                                                     type="button" 
                                                     aria-expanded="false"
                                                     @click="deleteBatchPermissions"
@@ -69,6 +69,17 @@
                                                 >
                                                     <i class="ri-delete-bin-7-line me-1"></i> 
                                                     Delete ({{ selectedPermissions.length }})
+                                                </button>
+                                                <button 
+                                                    class="btn btn-sm btn-primary px-2 py-2 me-2" 
+                                                    type="button" 
+                                                    aria-expanded="false"
+                                                    @click="openUpdateBatchModal"
+                                                    :disabled="selectedPermissions.length === 0"
+                                                    style="min-width: 120px; min-height: 38px;"
+                                                >
+                                                    <i class="ri-edit-line me-1"></i> 
+                                                    Update ({{ selectedPermissions.length }})
                                                 </button>
                                             </div>
                                             <div class="btn-group me-2">
@@ -230,6 +241,57 @@
                             </form>
                         </template>
                     </Modal>
+
+                    <!-- Modal untuk Update Batch Permission -->
+                    <Modal 
+                        id="UpdateBatchPermissionModal"
+                        :validationErrorsFromParent="batchValidationErrors"
+                        title="Update Batch Permission" 
+                        description="Update multiple permission sekaligus dengan menu group dan menu detail yang sama."
+                    >
+                        <template #default>
+                            <form @submit.prevent="handleUpdateBatchPermission">
+                                <div class="row g-3">
+                                    <div class="col-6 mb-3">
+                                        <label for="batchMenuGroup">Menu Group</label>
+                                        <v-select
+                                            v-model="batchForm.menuGroupId"
+                                            :options="menuGroups"
+                                            label="name"
+                                            :reduce="group => group.id"
+                                            placeholder="-- Pilih Menu Group --"
+                                            id="batchMenuGroup"
+                                            class="menu-group"
+                                        />                                    
+                                    </div>
+                                    <div class="col-6 mb-3">
+                                        <label for="batchMenuDetail">Menu Detail</label>
+                                        <v-select
+                                            v-model="batchForm.menuDetailId"
+                                            :options="filteredBatchMenuDetails"
+                                            label="name"
+                                            :reduce="detail => detail.id"
+                                            placeholder="-- Pilih Menu Detail --"
+                                            id="batchMenuDetail"
+                                            class="menu-detail"
+                                        />                                    
+                                    </div>
+                                    <div class="col-12 d-flex flex-wrap justify-content-center gap-4 row-gap-4">
+                                        <button
+                                            type="submit"
+                                            class="btn btn-primary"
+                                            :disabled="!batchForm.menuGroupId || !batchForm.menuDetailId"
+                                        >
+                                            Update {{ selectedPermissions.length }} Permission
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary" @click="handleCloseBatchModal">
+                                            Batal
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </template>
+                    </Modal>
                 </template>
             </div>
             <!-- / Content -->
@@ -312,12 +374,18 @@ onBeforeUnmount(() => {
 const isEditMode = ref(false)
 const selectedPermission = ref(null)
 const validationErrors = ref([])
+const batchValidationErrors = ref([])
 const menuGroups = ref([])
 const menuDetails = ref([])
 
 const formPermission = ref({
     id: null,
     name: '',
+    menuGroupId: null,
+    menuDetailId: null,
+})
+
+const batchForm = ref({
     menuGroupId: null,
     menuDetailId: null,
 })
@@ -345,6 +413,25 @@ const handleCloseModal = () => {
         }, { once: true });
     }
     resetFormState(); 
+};
+
+const handleCloseBatchModal = () => {
+    const modalEl = document.getElementById('UpdateBatchPermissionModal'); 
+    if (modalEl) {
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        modal.hide();
+        
+        // Bersihkan backdrop setelah modal tertutup
+        modalEl.addEventListener('hidden.bs.modal', () => {
+            document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+            document.body.style.overflow = '';
+        }, { once: true });
+    }
+    batchForm.value = {
+        menuGroupId: null,
+        menuDetailId: null,
+    };
+    batchValidationErrors.value = [];
 };
 
 const resetFormState = () => {
@@ -639,6 +726,33 @@ function openAddPermissionModal() {
     }
 }
 
+function openUpdateBatchModal() {
+    if (selectedPermissions.value.length === 0) {
+        toast.error({
+            title: 'Peringatan!',
+            icon: 'ri-error-warning-line',
+            message: 'Tidak ada permission yang dipilih untuk diupdate.',
+            timeout: 3000,
+            position: 'topRight',
+            layout: 2,
+        });
+        return;
+    }
+    
+    // Reset form batch
+    batchForm.value = {
+        menuGroupId: null,
+        menuDetailId: null,
+    };
+    batchValidationErrors.value = [];
+    
+    const modalEl = document.getElementById('UpdateBatchPermissionModal');
+    if (modalEl) {
+        const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modalInstance.show();
+    }
+}
+
 async function openEditPermissionModal(permissionData) {
     isEditMode.value = true;
     resetFormState();
@@ -823,6 +937,95 @@ const onSelectionChange = (event) => {
     selectedPermissions.value = event.value;
 };
 
+const handleUpdateBatchPermission = async () => {
+    if (!batchForm.value.menuGroupId || !batchForm.value.menuDetailId) {
+        toast.error({
+            title: 'Error!',
+            icon: 'ri-close-line',
+            message: 'Menu Group dan Menu Detail harus dipilih.',
+            timeout: 3000,
+            position: 'topRight',
+            layout: 2,
+        });
+        return;
+    }
+
+    layoutStore.setLoading(true);
+    try {
+        const token = localStorage.getItem('token');
+        const permissionIds = selectedPermissions.value.map(permission => permission.id);
+        
+        // Gunakan endpoint yang sudah ada untuk update individual permission
+        // Update satu per satu karena tidak ada endpoint batch update
+        const updatePromises = permissionIds.map(async (permissionId) => {
+            const response = await fetch($api.permissionUpdate(permissionId), {
+                method: 'PUT',
+                body: JSON.stringify({
+                    name: selectedPermissions.value.find(p => p.id === permissionId)?.name,
+                    menuGroupIds: [batchForm.value.menuGroupId],
+                    menuDetailIds: [batchForm.value.menuDetailId],
+                }),
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(`Gagal mengupdate permission ID ${permissionId}: ${errorData.message || 'Unknown error'}`);
+            }
+            
+            return { id: permissionId, success: true };
+        });
+
+        const results = await Promise.allSettled(updatePromises);
+        
+        // Count successful and failed updates
+        const successful = results.filter(result => result.status === 'fulfilled').length;
+        const failed = results.filter(result => result.status === 'rejected').length;
+        
+        // Clear selection
+        selectedPermissions.value = [];
+        
+        // Refresh data
+        await fetchAllPageData();
+        handleCloseBatchModal();
+        
+        if (failed === 0) {
+            toast.success({
+                title: 'Berhasil!',
+                icon: 'ri-check-line',
+                message: `${successful} permission berhasil diupdate.`,
+                timeout: 3000,
+                position: 'topRight',
+                layout: 2,
+            });
+        } else {
+            toast.warning({
+                title: 'Peringatan!',
+                icon: 'ri-error-warning-line',
+                message: `${successful} permission berhasil diupdate, ${failed} gagal diupdate.`,
+                timeout: 5000,
+                position: 'topRight',
+                layout: 2,
+            });
+        }
+    } catch (error) {
+        toast.error({
+            title: 'Gagal!',
+            icon: 'ri-close-line',
+            message: error.message || 'Terjadi kesalahan saat mengupdate batch permission.',
+            timeout: 3000,
+            position: 'topRight',
+            layout: 2,
+        });
+    } finally {
+        layoutStore.setLoading(false);
+    }
+};
+
 const filteredMenuDetails = computed(() => {
     if (!formPermission.value.menuGroupId || !Array.isArray(menuDetails.value)) {
         return [];
@@ -830,9 +1033,23 @@ const filteredMenuDetails = computed(() => {
     return menuDetails.value; // details are already filtered by fetchMenuDetails
 });
 
+const filteredBatchMenuDetails = computed(() => {
+    if (!batchForm.value.menuGroupId || !Array.isArray(menuDetails.value)) {
+        return [];
+    }
+    return menuDetails.value;
+});
+
 watch(() => formPermission.value.menuGroupId, (newVal, oldVal) => {
   if (newVal !== oldVal) {
     formPermission.value.menuDetailId = null; // Reset detail when group changes
+    fetchMenuDetails(newVal);
+  }
+})
+
+watch(() => batchForm.value.menuGroupId, (newVal, oldVal) => {
+  if (newVal !== oldVal) {
+    batchForm.value.menuDetailId = null; // Reset detail when group changes
     fetchMenuDetails(newVal);
   }
 })
