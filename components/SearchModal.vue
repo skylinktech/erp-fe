@@ -10,7 +10,7 @@
               :value="searchQuery"
               type="text"
               class="search-input"
-              placeholder="Cari menu aplikasi..."
+              placeholder="Cari..."
               @input="(e) => setSearchQuery(e.target.value)"
               @keydown.esc="closeModal"
               @keydown.enter="handleEnterKey"

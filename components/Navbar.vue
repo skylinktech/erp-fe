@@ -19,7 +19,7 @@
                             v-model="searchQuery"
                             type="text"
                             class="search-input"
-                            placeholder="Cari menu aplikasi..."
+                            placeholder="Cari..."
                             @input="handleSearch"
                             @keydown.esc="toggleSearch"
                             @keydown.enter="handleEnterKey"
@@ -66,7 +66,7 @@
                     @click="toggleSearch"
                 >
                     <i class="ri-search-line ri-22px scaleX-n1-rtl me-3"></i>
-                    <span class="d-none d-md-inline-block text-muted">Cari Menu (Ctrl+/)</span>
+                    <span class="d-none d-md-inline-block text-muted">Cari...</span>
                 </a>
             </div>
         </div>
@@ -606,7 +606,7 @@
 .result-icon {
   width: 32px;
   height: 32px;
-  background: #f8f9fa;
+  background: #666bff;
   border-radius: 6px;
   display: flex;
   align-items: center;
@@ -637,7 +637,7 @@
 
 .result-category {
   font-size: 12px;
-  color: #e4e4e7;
+  color: #626264;
   background: #e9ecef;
   padding: 2px 6px;
   border-radius: 10px;
