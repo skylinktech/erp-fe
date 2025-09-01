@@ -169,6 +169,11 @@
                                             {{ Math.round(slotProps.data.stockMin) }}
                                         </template>
                                     </Column>
+                                    <Column field="satuanItem" header="Satuan Item" :sortable="true">
+                                        <template #body="slotProps">
+                                            {{ slotProps.data.satuanItem ? slotProps.data.satuanItem : '-' }}
+                                        </template>
+                                    </Column>
                                     <Column field="priceBuy" header="Harga Beli" :sortable="true" v-if="userHasPermission('show_product')">
                                         <template #body="slotProps">
                                             {{ slotProps.data.priceBuy ? formatRupiah(slotProps.data.priceBuy) : '-' }}
@@ -191,10 +196,31 @@
                                             {{ slotProps.data.category && slotProps.data.category.name ? slotProps.data.category.name : '-' }}
                                         </template>
                                     </Column>
+                                    <Column field="createdByUser.fullName" header="Dibuat Oleh" :sortable="true">
+                                        <template #body="slotProps">
+                                            <span>
+                                                {{ slotProps.data.createdByUser?.fullName || '-' }}
+                                            </span>
+                                        </template>
+                                    </Column>
                                     <Column header="Actions" :exportable="false" style="min-width:8rem">
                                         <template #body="slotProps">
-                                            <button v-if="userHasRole('superadmin') || userHasPermission('edit_product')" @click="productStore.openModal(slotProps.data)" class="btn btn-sm btn-icon btn-text-secondary rounded-pill btn-icon me-2"><i class="ri-edit-box-line"></i></button>
-                                            <button v-if="userHasRole('superadmin') || userHasPermission('delete_product')" @click="productStore.deleteProduct(slotProps.data.id)" class="btn btn-sm btn-icon btn-text-secondary rounded-pill btn-icon"><i class="ri-delete-bin-7-line"></i></button>
+                                            <div class="d-inline-block">
+                                                <a href="javascript:;" class="btn btn-sm btn-text-secondary rounded-pill btn-icon dropdown-toggle hide-arrow" data-bs-toggle="dropdown"><i class="ri-more-2-fill"></i>
+                                                </a>
+                                                <ul class="dropdown-menu">
+                                                    <li v-if="userHasRole('superadmin') || (userHasPermission('edit_product'))">
+                                                        <a class="dropdown-item" href="javascript:void(0)" @click="productStore.openModal(slotProps.data)">
+                                                            <i class="ri-edit-box-line me-2"></i> Edit
+                                                        </a>
+                                                    </li>
+                                                    <li v-if="userHasRole('superadmin') || (userHasPermission('delete_product'))">
+                                                        <a class="dropdown-item text-danger" href="javascript:void(0)" @click="productStore.deleteProduct(slotProps.data.id)">
+                                                            <i class="ri-delete-bin-7-line me-2"></i> Hapus
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
                                         </template>
                                     </Column>
                                 </MyDataTable>
@@ -276,7 +302,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-3">
                                 <div class="form-floating form-floating-outline">
                                     <input 
                                     type="text" 
@@ -289,6 +315,17 @@
                                     required
                                     >
                                     <label>Stok Minimum</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-floating form-floating-outline">
+                                    <input 
+                                    type="text" 
+                                    class="form-control" 
+                                    v-model="form.satuanItem" 
+                                    placeholder="Masukkan satuan item"
+                                    >
+                                    <label>Satuan Item</label>
                                 </div>
                             </div>
                             <div class="col-md-3">
@@ -418,6 +455,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia';
 import { useProductStore } from '~/stores/product'
 import { useKategoriStore } from '~/stores/kategori'
+import { useUserStore } from '~/stores/user'
 import { useUnitStore } from '~/stores/unit'
 import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
@@ -430,7 +468,6 @@ import { useDebounceFn } from '@vueuse/core'
 import { useFormatRupiah } from '~/composables/formatRupiah';
 import { usePermissions } from '~/composables/usePermissions'
 import { usePermissionsStore } from '~/stores/permissions'
-import { useUserStore } from '~/stores/user'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import { useImageUrl } from '~/composables/useImageUrl'
 
@@ -528,6 +565,7 @@ const handleRowsChange = () => {
 const onSort = (event) => productStore.setSort(event);
 
 const exportData = async (format) => {
+    const toast     = useToast();
     try {
         if (format === 'csv') {
             myDataTableRef.value.exportCSV({
@@ -549,7 +587,12 @@ const exportData = async (format) => {
         }
     } catch (error) {
         console.error('Export error:', error);
-        Swal.fire('Error', 'Gagal melakukan export data', 'error');
+        toast.error({
+          title: 'Error',
+          message: 'Gagal melakukan export data',
+          color: 'red',
+          position: 'topRight',
+        });
     }
 };
 

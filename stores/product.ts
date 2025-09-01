@@ -30,6 +30,8 @@ export interface Product {
   image: string | File
   kondisi: string
   berat: number
+  createdBy?: number | null
+  satuanItem?: string | null
   createdAt: string
   updatedAt: string
   category?: Category
@@ -88,6 +90,7 @@ export const useProductStore = defineStore('product', {
       categoryId: undefined,
       kondisi: 'baru',
       berat: 0,
+      satuanItem: '',
     },
     isEditMode: false,
     showModal: false,
@@ -95,6 +98,7 @@ export const useProductStore = defineStore('product', {
   }),
   actions: {
     async fetchProducts() {
+      const toast     = useToast();
       this.loading = true
       this.error = null
       const { $api } = useNuxtApp()
@@ -138,13 +142,19 @@ export const useProductStore = defineStore('product', {
          this.totalRecords = result.meta.total
       } catch (e: any) {
         this.error = e.message
-        Swal.fire('Error', `Tidak dapat memuat data produk: ${e.message}`, 'error');
+        toast.error({
+          title: 'Error',
+          message: `Tidak dapat memuat data produk: ${e.message}`,
+          color: 'red',
+          position: 'topRight',
+        });
       } finally {
         this.loading = false
       }
     },
     
     async saveProduct() {
+        const toast     = useToast();
       this.loading = true;
       this.validationErrors = [];
       const { $api } = useNuxtApp();
@@ -189,13 +199,32 @@ export const useProductStore = defineStore('product', {
           try {
               result = await response.json();
           } catch (parseError) {
-              console.error('Failed to parse response as JSON:', parseError);
+              toast.error({
+                title: 'Error',
+                message: 'Server response tidak valid',
+                color: 'red'
+              });
               throw new Error('Server response tidak valid');
           }
 
           if (!response.ok) {
               if (response.status === 422 && result.errors) {
-                  this.validationErrors = Object.values(result.errors).flat();
+                  const errors = result.errors as unknown;
+                  if (Array.isArray(errors)) {
+                      // Sudah dalam format [{ field, rule, message }, ...]
+                      this.validationErrors = errors as any[];
+                  } else if (errors && typeof errors === 'object') {
+                      // Normalisasi format { field: ["msg1", "msg2"], ... } -> [{ field, message, rule }]
+                      this.validationErrors = Object.entries(errors as Record<string, string | string[]>)
+                        .flatMap(([field, messages]) => {
+                          const messageList = Array.isArray(messages) ? messages : [messages];
+                          return messageList
+                            .filter(Boolean)
+                            .map((message) => ({ field, message, rule: 'unique' }));
+                        });
+                  } else {
+                      this.validationErrors = [];
+                  }
                   return; // Stop execution - jangan throw error agar validation error muncul di modal
               }
               throw new Error(result.message || 'Gagal menyimpan data produk');
@@ -204,12 +233,22 @@ export const useProductStore = defineStore('product', {
           this.closeModal();
           await this.fetchProducts();
           await this.fetchTotalProducts();
-          Swal.fire('Berhasil!', `Produk berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`, 'success');
+          toast.success({
+            title: 'Success',
+            message: `Produk berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
+            color: 'green',
+            position: 'topRight',
+          });
 
       } catch (error: any) {
           // Jangan tampilkan Swal jika ada validation errors (sudah ditampilkan di modal)
           if (this.validationErrors.length === 0) {
-              Swal.fire('Error', error.message || 'Operasi gagal', 'error');
+              toast.error({
+                title: 'Error',
+                message: error.message || 'Operasi gagal',
+                color: 'red',
+                position: 'topRight',
+              });
           }
       } finally {
           this.loading = false;
@@ -217,6 +256,7 @@ export const useProductStore = defineStore('product', {
     },
 
     async deleteProduct(id: number) {
+      const toast     = useToast();
       const { $api } = useNuxtApp();
 
       const result = await Swal.fire({
@@ -254,10 +294,20 @@ export const useProductStore = defineStore('product', {
 
           await this.fetchProducts();
           await this.fetchTotalProducts();
-          Swal.fire('Berhasil!', 'Produk berhasil dihapus.', 'success');
+          toast.success({
+            title: 'Success',
+            message: 'Produk berhasil dihapus.',
+            color: 'green',
+            position: 'topRight',
+          });
       } catch (error: any) {
           console.error('Gagal menghapus produk:', error);
-          Swal.fire('Error', error.message || 'Gagal menghapus produk', 'error');
+          toast.error({
+            title: 'Error',
+            message: error.message || 'Gagal menghapus produk',
+            color: 'red',
+            position: 'topRight',
+          });
       } finally {
           this.loading = false;
       }
@@ -294,6 +344,7 @@ export const useProductStore = defineStore('product', {
                 categoryId: undefined,
                 kondisi: 'baru',
                 berat: 0,
+                satuanItem: '',
             };
         }
         this.showModal = true;
@@ -316,6 +367,7 @@ export const useProductStore = defineStore('product', {
             categoryId: undefined,
             kondisi: 'baru',
             berat: 0,
+            satuanItem: '',
         };
         this.validationErrors = [];
     },
@@ -344,11 +396,17 @@ export const useProductStore = defineStore('product', {
       this.fetchProducts();
     },
 
-    handleImageChange(file: File) {
+    handleImageChange(file: File) { 
+      const toast     = useToast();
         if (file) {
             // Validasi file tidak kosong
             if (!file.size || file.size === 0) {
-                Swal.fire('Error', 'File gambar kosong atau tidak valid', 'error');
+                toast.error({
+                  title: 'Error',
+                  message: 'File gambar kosong atau tidak valid',
+                  color: 'red',
+                  position: 'topRight',
+                });
                 return;
             }
 
@@ -372,14 +430,24 @@ export const useProductStore = defineStore('product', {
             const isValidExtension = allowedExtensions.includes(fileExtension);
 
             if (!isValidMimeType && !isValidExtension) {
-                Swal.fire('Error', `File harus berupa gambar (JPEG, PNG, GIF, WebP). Detected: MIME=${fileType}, Ext=${fileExtension}`, 'error');
+                toast.error({
+                  title: 'Error',
+                  message: `File harus berupa gambar (JPEG, PNG, GIF, WebP). Detected: MIME=${fileType}, Ext=${fileExtension}`,
+                  color: 'red',
+                  position: 'topRight',
+                });
                 return;
             }
 
             // Validasi file size
             const maxSize = 5 * 1024 * 1024; // 5MB
             if (file.size > maxSize) {
-                Swal.fire('Error', 'Ukuran file terlalu besar (maksimal 5MB)', 'error');
+                toast.error({
+                  title: 'Error',
+                  message: 'Ukuran file terlalu besar (maksimal 5MB)',
+                  color: 'red',
+                  position: 'topRight',
+                });
                 return;
             }
 
@@ -389,6 +457,7 @@ export const useProductStore = defineStore('product', {
     },
 
     async fetchTotalProducts() {
+      const toast     = useToast();
         const { $api } = useNuxtApp()
         try {
             const token = localStorage.getItem('token')
@@ -409,10 +478,17 @@ export const useProductStore = defineStore('product', {
             this.totalProducts = result.total
         } catch (error: any) {
             console.error('Error fetching total products:', error)
+            toast.error({
+              title: 'Error',
+              message: error.message || 'Gagal memuat data produk untuk export',
+              color: 'red',
+              position: 'topRight',
+            });
         }
     },
 
     async fetchProductsForExport() {
+      const toast     = useToast();
         const { $api } = useNuxtApp()
         try {
             const token = localStorage.getItem('token')
@@ -446,6 +522,12 @@ export const useProductStore = defineStore('product', {
             }
         } catch (error: any) {
             console.error('Error fetching products for export:', error)
+            toast.error({
+              title: 'Error',
+              message: error.message || 'Gagal memuat data produk untuk export',
+              color: 'red',
+              position: 'topRight',
+            });
             throw error
         }
     }
