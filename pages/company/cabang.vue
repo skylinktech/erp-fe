@@ -386,18 +386,18 @@ watch(cabangs, (newCabangs) => {
 // Watch untuk perusahaans juga
 watch(perusahaans, (newPerusahaans) => {
     if (newPerusahaans && Array.isArray(newPerusahaans)) {
-        console.log('Perusahaans loaded:', newPerusahaans.length)
+        newPerusahaans.length
     } else {
-        console.log('Perusahaans not loaded yet or invalid:', newPerusahaans)
+        newPerusahaans
     }
 }, { immediate: true })
 
 // Watch untuk cabangs juga
 watch(cabangs, (newCabangs) => {
     if (newCabangs && Array.isArray(newCabangs)) {
-        console.log('Cabangs loaded:', newCabangs.length)
+        newCabangs.length
     } else {
-        console.log('Cabangs not loaded yet or invalid:', newCabangs)
+        newCabangs
     }
 }, { immediate: true })
 
@@ -410,15 +410,28 @@ watch(showModal, (newValue) => {
 })
 
 const handleSubmit = async () => {
+    const toast = useToast();
     try {
         // Validasi data sebelum submit
         if (!form.value.perusahaanId) {
-            Swal.fire('Error', 'Pilih perusahaan terlebih dahulu', 'error')
+            toast.error({
+                title: 'Error',
+                message: 'Pilih perusahaan terlebih dahulu',
+                color: 'red',
+                position: 'topRight',
+                layout: 2,
+            })
             return
         }
         
         if (!form.value.kodeCabang || !form.value.nmCabang || !form.value.alamatCabang) {
-            Swal.fire('Error', 'Semua field wajib diisi', 'error')
+            toast.error({
+                title: 'Error',
+                message: 'Semua field wajib diisi',
+                color: 'red',
+                position: 'topRight',
+                layout: 2,
+            })
             return
         }
         
@@ -428,8 +441,13 @@ const handleSubmit = async () => {
             await cabangStore.createCabang()
         }
     } catch (error) {
-        console.error('Error during form submission:', error)
-        Swal.fire('Error', 'Terjadi kesalahan saat menyimpan data', 'error')
+        toast.error({
+            title: 'Error',
+            message: error.message || 'Terjadi kesalahan saat menyimpan data',
+            color: 'red',
+            position: 'topRight',
+            layout: 2,
+        })
     }
 }
 
