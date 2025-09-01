@@ -5,6 +5,7 @@
     :rows="props.rows"
     :loading="props.loading"
     :totalRecords="props.totalRecords"
+    :first="props.first"
     paginator
     lazy
     dataKey="id"
@@ -48,6 +49,10 @@ const props = defineProps({
         default: false,
     },
     totalRecords: {
+        type: Number,
+        default: 0,
+    },
+    first: {
         type: Number,
         default: 0,
     },

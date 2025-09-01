@@ -81,6 +81,7 @@
                             :rows="params.rows" 
                             :loading="loading"
                             :totalRecords="totalRecords"
+                            :first="params.first"
                             :lazy="true"
                             @page="stockOutStore.setPagination($event)"
                             @sort="stockOutStore.setSort($event)"

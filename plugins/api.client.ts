@@ -78,6 +78,7 @@ export default defineNuxtPlugin(() => {
     countSalesOrderByStatus: () => `${apiBase}/sales-order/countByStatus`,
     salesOrderStatistics   : () => `${apiBase}/sales-order/statistics`,
     salesOrderSalesByCustomer: () => `${apiBase}/sales-order/salesByCustomer`,
+    salesOrderTopProducts  : () => `${apiBase}/sales-order/topProducts`,
     approveSalesOrder      : (id: number | string) => `${apiBase}/sales-order/approveSalesOrder/${id}`,
     rejectSalesOrder       : (id: number | string) => `${apiBase}/sales-order/rejectSalesOrder/${id}`,
     salesOrderUpdate       : (id: number | string) => `${apiBase}/sales-order/update/${id}`,

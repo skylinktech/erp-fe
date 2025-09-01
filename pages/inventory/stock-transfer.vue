@@ -79,6 +79,7 @@
                             :rows="Number(params.rows)" 
                             :loading="loading"
                             :totalRecords="totalRecords"
+                            :first="params.first"
                             :lazy="true"
                             @page="stockTransferStore.setPagination"
                             responsiveLayout="scroll" 

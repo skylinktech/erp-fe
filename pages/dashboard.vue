@@ -302,106 +302,67 @@
       <div class="col-md-6 col-xxl-4">
         <div class="card h-100">
           <div class="card-header d-flex align-items-center justify-content-between">
-            <h5 class="card-title m-0 me-2">Project Statistics</h5>
+            <h5 class="card-title m-0 me-2">Produk Teratas</h5>
             <div class="dropdown">
               <button class="btn btn-text-secondary rounded-pill text-muted border-0 p-1" type="button"
-                id="projectStatus" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                id="topProductsMenu" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 <i class="ri-more-2-line ri-20px"></i>
               </button>
-              <div class="dropdown-menu dropdown-menu-end" aria-labelledby="projectStatus">
-                <a class="dropdown-item" href="javascript:void(0);">Last 28 Days</a>
-                <a class="dropdown-item" href="javascript:void(0);">Last Month</a>
-                <a class="dropdown-item" href="javascript:void(0);">Last Year</a>
+              <div class="dropdown-menu dropdown-menu-end" aria-labelledby="topProductsMenu">
+                <a class="dropdown-item" href="javascript:void(0);" @click="refreshTopProducts">Refresh</a>
               </div>
             </div>
           </div>
-          <div class="d-flex justify-content-between p-4 border-bottom">
-            <p class="mb-0 fs-xsmall">NAME</p>
-            <p class="mb-0 fs-xsmall">BUDGET</p>
-          </div>
           <div class="card-body">
-            <ul class="p-0 m-0">
-              <li class="d-flex align-items-center mb-6">
-                <div class="avatar avatar-md flex-shrink-0 me-4">
-                  <div class="avatar-initial bg-light-gray rounded-3">
-                    <div>
-                      <img src="/img/icons/misc/3d-illustration.png" alt="User" class="h-25" />
+            <div v-if="topProductsStore.loading" class="text-center py-4">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+            </div>
+            <div v-else-if="topProductsStore.error" class="text-center py-4">
+              <p class="text-danger">{{ topProductsStore.error }}</p>
+              <button @click="refreshTopProducts" class="btn btn-sm btn-primary">Coba Lagi</button>
+            </div>
+            <div v-else>
+              <template v-if="topProductsStore.visibleItems && topProductsStore.visibleItems.length > 0">
+                <ul class="p-0 m-0">
+                  <li v-for="item in topProductsStore.visibleItems" :key="item.productId" class="d-flex align-items-center mb-4">
+                    <div class="avatar avatar-md flex-shrink-0 me-4">
+                      <div class="avatar-initial bg-light-gray rounded-3">
+                        <div>
+                          <img src="/img/icons/misc/4-square.png" alt="Product" class="h-25" />
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-                <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-                  <div class="me-2">
-                    <h6 class="mb-1">3D Illustration</h6>
-                    <small>Blender Illustration</small>
-                  </div>
-                  <div class="badge bg-label-primary rounded-pill">$6,500</div>
-                </div>
-              </li>
-              <li class="d-flex align-items-center mb-6">
-                <div class="avatar avatar-md flex-shrink-0 me-4">
-                  <div class="avatar-initial bg-light-gray rounded-3">
-                    <div>
-                      <img src="/img/icons/misc/finance-app-design.png" alt="User" class="h-25" />
+                    <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                      <div class="me-2">
+                        <h6 class="mb-1">{{ item.name }}</h6>
+                        <small v-if="item.sku">SKU: {{ item.sku }}</small>
+                      </div>
+                      <div class="badge bg-label-primary rounded-pill">Qty {{ item.totalQty }}</div>
                     </div>
-                  </div>
+                  </li>
+                </ul>
+
+                <div class="text-center mt-3" v-if="topProductsStore.hasMore">
+                  <button @click="loadMoreTopProducts" class="btn btn-outline-primary btn-sm">
+                    <i class="ri-add-line me-1"></i>
+                    Load More
+                  </button>
                 </div>
-                <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-                  <div class="me-2">
-                    <h6 class="mb-1">Finance App Design</h6>
-                    <small>Figma UI Kit</small>
-                  </div>
-                  <div class="badge bg-label-primary rounded-pill">$4,290</div>
+                <div class="text-center mt-3" v-if="topProductsStore.isFullyExpanded && topProductsStore.items.length > 5">
+                  <button @click="showLessTopProducts" class="btn btn-outline-secondary btn-sm">
+                    <i class="ri-subtract-line me-1"></i>
+                    Show Less
+                  </button>
                 </div>
-              </li>
-              <li class="d-flex align-items-center mb-6">
-                <div class="avatar avatar-md flex-shrink-0 me-4">
-                  <div class="avatar-initial bg-light-gray rounded-3">
-                    <div>
-                      <img src="/img/icons/misc/4-square.png" alt="User" class="h-25" />
-                    </div>
-                  </div>
+              </template>
+              <template v-else>
+                <div class="text-center py-4">
+                  <p class="text-muted">Belum ada produk yang terjual saat ini</p>
                 </div>
-                <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-                  <div class="me-2">
-                    <h6 class="mb-1">4 Square</h6>
-                    <small>Android Application</small>
-                  </div>
-                  <div class="badge bg-label-primary rounded-pill">$44,500</div>
-                </div>
-              </li>
-              <li class="d-flex align-items-center mb-6">
-                <div class="avatar avatar-md flex-shrink-0 me-4">
-                  <div class="avatar-initial bg-light-gray rounded-3">
-                    <div>
-                      <img src="/img/icons/misc/delta-web-app.png" alt="User" class="h-25" />
-                    </div>
-                  </div>
-                </div>
-                <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-                  <div class="me-2">
-                    <h6 class="mb-1">Delta Web App</h6>
-                    <small>React Dashboard</small>
-                  </div>
-                  <div class="badge bg-label-primary rounded-pill">$12,690</div>
-                </div>
-              </li>
-              <li class="d-flex align-items-center">
-                <div class="avatar avatar-md flex-shrink-0 me-4">
-                  <div class="avatar-initial bg-light-gray rounded-3">
-                    <div>
-                      <img src="/img/icons/misc/ecommerce-website.png" alt="User" class="h-25" />
-                    </div>
-                  </div>
-                </div>
-                <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-                  <div class="me-2">
-                    <h6 class="mb-1">eCommerce Website</h6>
-                    <small>Vue + Laravel</small>
-                  </div>
-                  <div class="badge bg-label-primary rounded-pill">$10,850</div>
-                </div>
-              </li>
-            </ul>
+              </template>
+            </div>
           </div>
         </div>
       </div>
@@ -536,7 +497,7 @@
           </div>
         </div>
       </div>
-      <div class="col-12 col-xxl-8 col-md-6">
+      <div class="col-12 col-xxl-12 col-md-6">
         <div class="card h-100">
           <div class="card-header">
             <div class="d-flex justify-content-between">
@@ -602,54 +563,6 @@
           </div>
         </div>
       </div>
-      <div class="col-12 col-xxl-4 col-md-6">
-        <div class="card h-100">
-          <div class="card-header">
-            <div class="d-flex justify-content-between">
-              <h5 class="mb-1">Weekly Sales</h5>
-              <div class="dropdown">
-                <button class="btn btn-text-secondary rounded-pill text-muted border-0 p-1" type="button"
-                  id="weeklySalesDropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  <i class="ri-more-2-line ri-20px"></i>
-                </button>
-                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="weeklySalesDropdown">
-                  <a class="dropdown-item" href="javascript:void(0);">Refresh</a>
-                  <a class="dropdown-item" href="javascript:void(0);">Update</a>
-                  <a class="dropdown-item" href="javascript:void(0);">Share</a>
-                </div>
-              </div>
-            </div>
-            <p class="mb-0 card-subtitle">Total 85.4k Sales</p>
-          </div>
-          <div class="card-body">
-            <div class="row mb-7 mb-xl-12">
-              <div class="col-6 d-flex align-items-center">
-                <div class="avatar">
-                  <div class="avatar-initial bg-label-primary rounded">
-                    <i class="ri-funds-line ri-24px"></i>
-                  </div>
-                </div>
-                <div class="ms-3 d-flex flex-column">
-                  <p class="mb-0">Net Income</p>
-                  <h6 class="mb-0">$438.5K</h6>
-                </div>
-              </div>
-              <div class="col-6 d-flex align-items-center">
-                <div class="avatar">
-                  <div class="avatar-initial bg-label-warning rounded">
-                    <i class="ri-money-dollar-circle-line ri-24px"></i>
-                  </div>
-                </div>
-                <div class="ms-3 d-flex flex-column">
-                  <p class="mb-0">Expense</p>
-                  <h6 class="mb-0">$22.4K</h6>
-                </div>
-              </div>
-            </div>
-            <div id="weeklySalesChart"></div>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 </template>
@@ -673,6 +586,7 @@
   import {
     useSalesByCustomerStore
   } from '~/stores/sales-by-customer'
+  import { useTopProductsStore } from '~/stores/top-products'
   import {
     storeToRefs
   } from 'pinia'
@@ -707,6 +621,7 @@
   const userSessionStore = useUserSessionStore()
   const salesStatisticsStore = useSalesStatisticsStore()
   const salesByCustomerStore = useSalesByCustomerStore()
+  const topProductsStore = useTopProductsStore()
 
   const {
     chartData,
@@ -724,6 +639,18 @@
 
   const refreshSalesByCustomer = async () => {
     await salesByCustomerStore.fetchSalesByCustomer()
+  }
+
+  const refreshTopProducts = async () => {
+    await topProductsStore.fetchTopProducts('1m')
+  }
+
+  const loadMoreTopProducts = () => {
+    topProductsStore.loadMore()
+  }
+
+  const showLessTopProducts = () => {
+    topProductsStore.showLess()
   }
 
   const forceLogoutUser = async (sessionId) => {
@@ -796,6 +723,7 @@
     await userSessionStore.fetchActiveUsers();
     await salesStatisticsStore.fetchSalesStatistics();
     await salesByCustomerStore.fetchSalesByCustomer();
+    await topProductsStore.fetchTopProducts();
     setListTitle('Dashboard')
 
     // Auto refresh user sessions every 30 seconds

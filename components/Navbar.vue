@@ -72,61 +72,16 @@
         </div>
     
             <ul class="navbar-nav flex-row align-items-center ms-auto">
-              <!-- Language -->
-                <li class="nav-item dropdown-language dropdown">
-                    <a
-                    class="nav-link btn btn-text-secondary rounded-pill btn-icon dropdown-toggle hide-arrow"
-                    href="javascript:void(0);"
-                    data-bs-toggle="dropdown">
-                    <i class="ri-translate-2 ri-22px"></i>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                    <li>
-                        <a class="dropdown-item" href="javascript:void(0);" data-language="en" data-text-direction="ltr">
-                        <span class="align-middle">English</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item" href="javascript:void(0);" data-language="fr" data-text-direction="ltr">
-                        <span class="align-middle">French</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item" href="javascript:void(0);" data-language="ar" data-text-direction="rtl">
-                        <span class="align-middle">Arabic</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item" href="javascript:void(0);" data-language="de" data-text-direction="ltr">
-                        <span class="align-middle">German</span>
-                        </a>
-                    </li>
-                    </ul>
-                </li>
-                <!--/ Language -->
-
-                <!-- Quick links: This dropdown will also need a Vue-native implementation if used. -->
-                <li class="nav-item dropdown-shortcuts navbar-dropdown dropdown me-1 me-xl-0">
-                    <a
-                    class="nav-link btn btn-text-secondary rounded-pill btn-icon dropdown-toggle hide-arrow"
-                    href="javascript:void(0);"
-                    data-bs-toggle="dropdown"
-                    data-bs-auto-close="outside"
-                    aria-expanded="false">
-                    <i class="ri-star-smile-line ri-22px"></i>
-                    </a>
-                    <!-- Dropdown content here -->
-                </li>
-                <!-- Quick links -->
 
                 <!-- Notification: This dropdown will also need a Vue-native implementation if used. -->
-                <li class="nav-item dropdown-notifications navbar-dropdown dropdown me-4 me-xl-1">
+                <li class="nav-item dropdown-notifications navbar-dropdown dropdown me-4 me-xl-1" @click="showNotificationToast">
                     <a
                     class="nav-link btn btn-text-secondary rounded-pill btn-icon dropdown-toggle hide-arrow"
                     href="javascript:void(0);"
                     data-bs-toggle="dropdown"
                     data-bs-auto-close="outside"
-                    aria-expanded="false">
+                    aria-expanded="false"
+                    >
                     <i class="ri-notification-2-line ri-22px"></i>
                     <span
                         class="position-absolute top-0 start-50 translate-middle-y badge badge-dot bg-danger mt-2 border"></span>
@@ -162,36 +117,8 @@
                         <div class="dropdown-divider"></div>
                     </li>
                     <li>
-                        <a class="dropdown-item" href="#">
+                        <a class="dropdown-item" href="javascript:void(0);" @click="showProfileToast">
                         <i class="ri-user-3-line ri-22px me-3"></i><span class="align-middle">My Profile</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item" href="#">
-                        <i class="ri-settings-4-line ri-22px me-3"></i><span class="align-middle">Settings</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item" href="#">
-                        <span class="d-flex align-items-center align-middle">
-                            <i class="flex-shrink-0 ri-file-text-line ri-22px me-3"></i>
-                            <span class="flex-grow-1 align-middle">Billing</span>
-                            <span class="flex-shrink-0 badge badge-center rounded-pill bg-danger">4</span>
-                        </span>
-                        </a>
-                    </li>
-                    <li>
-                        <div class="dropdown-divider"></div>
-                    </li>
-                    <li>
-                        <a class="dropdown-item" href="#">
-                        <i class="ri-money-dollar-circle-line ri-22px me-3"></i
-                        ><span class="align-middle">Pricing</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item" href="#">
-                        <i class="ri-question-line ri-22px me-3"></i><span class="align-middle">FAQ</span>
                         </a>
                     </li>
                     <li>
@@ -440,6 +367,23 @@
 
     const toggleSidebar = () => {
         layoutStore.toggleSidebar();
+    }
+
+    const showProfileToast = () => {
+        const toast = useToast();
+        toast.info({
+            title: 'Info',
+            message: 'Fitur My Profile akan segera tersedia. Ditunggu ya!',
+            color: 'blue'
+        });
+    }
+    const showNotificationToast = () => {
+        const toast = useToast();
+        toast.info({
+            title: 'Info',
+            message: 'Fitur Notification akan segera tersedia. Ditunggu ya!',
+            color: 'blue'
+        });
     }
 
     const handleLogout = async () => {

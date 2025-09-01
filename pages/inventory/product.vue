@@ -122,6 +122,7 @@
                                     :rows="Number(params.rows)" 
                                     :loading="loading"
                                     :totalRecords="totalRecords"
+                                    :first="params.first"
                                     :lazy="true"
                                     :sort-field="params.sortField"
                                     :sort-order="params.sortOrder"

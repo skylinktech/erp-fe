@@ -109,6 +109,7 @@
                                         :rows="lazyParams.rows" 
                                         :loading="loading"
                                         :totalRecords="totalRecords"
+                                        :first="lazyParams.first"
                                         :lazy="true"
                                         @page="onPage($event)"
                                         @sort="onSort($event)"
