@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import type { Perusahaan } from './perusahaan'
+import Swal from 'sweetalert2'
 // We will use native fetch as requested, so apiFetch is no longer needed here.
 
 export interface Cabang {
@@ -47,7 +48,7 @@ export const useCabangStore = defineStore('cabang', {
     showModal: false,
     isEditMode: false,
     form: { ...initialFormState },
-    validationErrors: null,
+    validationErrors: [],
     error: null,
     params: {
       page: 1,
@@ -124,8 +125,9 @@ export const useCabangStore = defineStore('cabang', {
     },
 
     async createCabang() {
+      const toast = useToast();
       this.loading = true
-      this.validationErrors = null
+      this.validationErrors = []
       const { $api } = useNuxtApp()
 
       try {
@@ -147,7 +149,13 @@ export const useCabangStore = defineStore('cabang', {
         if (error.response && error.response.status === 422) {
           this.validationErrors = error.response._data.errors
         } else {
-          console.error('Gagal membuat cabang:', error)
+          toast.error({
+            title: 'Error',
+            message: error.message || 'Gagal membuat cabang',
+            color: 'red',
+            position: 'topRight',
+            layout: 2,
+          });
         }
       } finally {
         this.loading = false
@@ -155,8 +163,9 @@ export const useCabangStore = defineStore('cabang', {
     },
 
     async updateCabang() {
+      const toast = useToast();
       this.loading = true
-      this.validationErrors = null
+      this.validationErrors = []
       if (!this.form.id) return
       
       const { $api } = useNuxtApp()
@@ -175,11 +184,24 @@ export const useCabangStore = defineStore('cabang', {
         })
         this.closeModal()
         await this.fetchCabangs()
+        toast.success({
+          title: 'Berhasil!',
+          message: 'Cabang berhasil diperbarui.',
+          color: 'green',
+          position: 'topRight',
+          layout: 2,
+        });
       } catch (error: any) {
         if (error.response && error.response.status === 422) {
           this.validationErrors = error.response._data.errors
         } else {
-          console.error('Gagal memperbarui cabang:', error)
+          toast.error({
+            title: 'Error',
+            message: error.message || 'Gagal memperbarui cabang',
+            color: 'red',
+            position: 'topRight',
+            layout: 2,
+          });
         }
       } finally {
         this.loading = false
@@ -187,11 +209,30 @@ export const useCabangStore = defineStore('cabang', {
     },
 
     async deleteCabang(id: number) {
+      const toast = useToast();
       this.loading = true
       const { $api } = useNuxtApp()
-      const token = localStorage.getItem('token');
+
+      const result = await Swal.fire({
+          title: 'Apakah Anda yakin?',
+          text: "Data yang dihapus tidak dapat dikembalikan!",
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#3085d6',
+          cancelButtonColor: '#d33',
+          confirmButtonText: 'Ya, hapus!',
+          cancelButtonText: 'Batal'
+      });
+
+      if (!result.isConfirmed) {
+          this.loading = false;
+          return;
+      }
+
       
       try {
+        const token = localStorage.getItem('token');
+
         await fetch($api.cabang() + `/${id}`, {
           method: 'DELETE',
            headers: {
@@ -201,15 +242,26 @@ export const useCabangStore = defineStore('cabang', {
           credentials: 'include',
         })
         await this.fetchCabangs()
-      } catch (error) {
-        console.error('Gagal menghapus cabang:', error)
+        toast.success({
+          title: 'Berhasil!',
+          message: 'Cabang berhasil dihapus.',
+          color: 'green'
+        });
+      } catch (error: any) {
+        toast.error({
+          title: 'Error',
+          message: error.message || 'Gagal menghapus cabang',
+          color: 'red',
+          position: 'topRight',
+          layout: 2,
+        });
       } finally {
         this.loading = false
       }
     },
 
     openModal(cabang?: Cabang) {
-      this.validationErrors = null
+      this.validationErrors = []
       if (cabang) {
         this.isEditMode = true
         this.form = { 

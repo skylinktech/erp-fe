@@ -192,7 +192,8 @@ export const useCustomerStore = defineStore('customer', {
     },
     async deleteCustomer(id: number) {
       const { $api } = useNuxtApp();
-
+      const toast = useToast();
+      
       const result = await Swal.fire({
           title: 'Apakah Anda yakin?',
           text: "Data pelanggan yang dihapus tidak dapat dikembalikan!",
@@ -225,9 +226,17 @@ export const useCustomerStore = defineStore('customer', {
           }
 
           await this.fetchCustomers();
-          Swal.fire('Berhasil!', 'Customer berhasil dihapus.', 'success');
+          toast.success({
+            title: 'Berhasil!',
+            message: 'Customer berhasil dihapus.',
+            color: 'green'
+          });
       } catch (error: any) {
-          Swal.fire('Error', error.message || 'Gagal menghapus pelanggan', 'error');
+        toast.error({
+          title: 'Error',
+          message: error.message || 'Gagal menghapus pelanggan',
+          color: 'red'
+        });
       } finally {
           this.loading = false;
       }

@@ -272,13 +272,18 @@
                         </div>
                         <div class="col-12">
                             <div class="form-floating form-floating-outline">
-                                <select id="perusahaanId" class="form-select" v-model="form.perusahaanId" required>
-                                    <option value="" disabled>Pilih Perusahaan</option>
-                                    <option v-for="perusahaan in perusahaans" :key="perusahaan.id" :value="perusahaan.id">
+                                <select id="perusahaanId" class="form-select" v-model="form.perusahaanId" required :disabled="!perusahaans || perusahaans.length === 0">
+                                    <option value="" disabled>
+                                        {{ !perusahaans || perusahaans.length === 0 ? 'Loading perusahaan...' : 'Pilih Perusahaan' }}
+                                    </option>
+                                    <option v-for="perusahaan in (perusahaans || [])" :key="perusahaan.id" :value="perusahaan.id">
                                         {{ perusahaan.nmPerusahaan }}
                                     </option>
                                 </select>
                                 <label for="perusahaanId">Perusahaan</label>
+                                <small v-if="!perusahaans || perusahaans.length === 0" class="text-muted">
+                                    Sedang memuat data perusahaan...
+                                </small>
                             </div>
                         </div>
                     </div>
@@ -334,22 +339,67 @@ const myDataTableRef = ref(null)
 const globalFilterValue = ref('')
 
 const modalTitle = computed(() => isEditMode.value ? 'Edit Cabang' : 'Tambah Cabang')
-const modalDescription = computed(() => isEditMode.value ? 'Ubah detail cabang di bawah ini.' : 'Isi detail cabang baru di bawah ini.')
+const modalDescription = computed(() => isEditMode.value ? 'Ubah detail cabang baru di bawah ini.' : 'Isi detail cabang baru di bawah ini.')
+
+// Computed property untuk title yang aman
+const listTitle = computed(() => {
+    const count = cabangs.value?.length || 0
+    return `Cabang (${count})`
+})
 
 const modalInstance = ref(null)
 
 onMounted(() => {
-    cabangStore.fetchCabangs()
-    perusahaanStore.fetchPerusahaans()
-    permissionStore.fetchPermissions()
-    userStore.loadUser()
+    // Fetch data secara berurutan untuk memastikan tidak ada race condition
+    Promise.all([
+        cabangStore.fetchCabangs(),
+        perusahaanStore.fetchPerusahaans(),
+        permissionStore.fetchPermissions(),
+        userStore.loadUser()
+    ]).then(() => {
+        // Set title setelah data berhasil di-fetch
+        if (cabangs.value && Array.isArray(cabangs.value)) {
+            setListTitle('Cabang', cabangs.value.length)
+        }
+    }).catch((error) => {
+        console.error('Error during initialization:', error)
+        // Set title default jika ada error
+        setListTitle('Cabang', 0)
+    })
 
     const modalElement = document.getElementById('CabangModal')
     if (modalElement) {
         modalInstance.value = new bootstrap.Modal(modalElement)
     }
-    setListTitle('Cabang', cabangs.value.length)
+    
+    // Set title dengan nilai default yang aman
+    setListTitle('Cabang', 0)
 })
+
+// Watch untuk update title ketika data berubah
+watch(cabangs, (newCabangs) => {
+    if (newCabangs && Array.isArray(newCabangs)) {
+        setListTitle('Cabang', newCabangs.length)
+    }
+}, { immediate: true })
+
+// Watch untuk perusahaans juga
+watch(perusahaans, (newPerusahaans) => {
+    if (newPerusahaans && Array.isArray(newPerusahaans)) {
+        console.log('Perusahaans loaded:', newPerusahaans.length)
+    } else {
+        console.log('Perusahaans not loaded yet or invalid:', newPerusahaans)
+    }
+}, { immediate: true })
+
+// Watch untuk cabangs juga
+watch(cabangs, (newCabangs) => {
+    if (newCabangs && Array.isArray(newCabangs)) {
+        console.log('Cabangs loaded:', newCabangs.length)
+    } else {
+        console.log('Cabangs not loaded yet or invalid:', newCabangs)
+    }
+}, { immediate: true })
 
 watch(showModal, (newValue) => {
     if (newValue) {
@@ -360,10 +410,26 @@ watch(showModal, (newValue) => {
 })
 
 const handleSubmit = async () => {
-    if (isEditMode.value) {
-        await cabangStore.updateCabang()
-    } else {
-        await cabangStore.createCabang()
+    try {
+        // Validasi data sebelum submit
+        if (!form.value.perusahaanId) {
+            Swal.fire('Error', 'Pilih perusahaan terlebih dahulu', 'error')
+            return
+        }
+        
+        if (!form.value.kodeCabang || !form.value.nmCabang || !form.value.alamatCabang) {
+            Swal.fire('Error', 'Semua field wajib diisi', 'error')
+            return
+        }
+        
+        if (isEditMode.value) {
+            await cabangStore.updateCabang()
+        } else {
+            await cabangStore.createCabang()
+        }
+    } catch (error) {
+        console.error('Error during form submission:', error)
+        Swal.fire('Error', 'Terjadi kesalahan saat menyimpan data', 'error')
     }
 }
 
