@@ -406,9 +406,9 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useBankAccountStore } from '~/stores/bank-accounts'
 import { useUserStore } from '~/stores/user'
-import { usePermissionStore } from '~/stores/permissions'
+import { usePermissionsStore } from '~/stores/permissions'
 import { useDebounceFn } from '@vueuse/core'
-import { formatRupiah } from '~/composables/formatRupiah'
+import { usePermissions } from '~/composables/usePermissions'
 
 // Page meta
 definePageMeta({
@@ -419,10 +419,12 @@ definePageMeta({
 // Stores
 const bankAccountStore = useBankAccountStore()
 const userStore = useUserStore()
-const permissionStore = usePermissionStore()
+const permissionStore = usePermissionsStore()
 
 // Router
 const router = useRouter()
+
+const formatRupiah = useFormatRupiah()
 
 // Refs
 const myDataTableRef = ref()
@@ -487,26 +489,40 @@ const exportData = (format) => {
 }
 
 // Permission helpers
-const userHasRole = (role) => userStore.user?.roles?.some(r => r.name === role) || false
-const userHasPermission = (permission) => permissionStore.hasPermission(permission)
+const { userHasRole, userHasPermission } = usePermissions();
 
 // Lifecycle
 let modalInstance = null
-onMounted(() => {
-    permissionStore.fetchPermissions()
-    userStore.loadUser()
+onMounted(async () => {
+    await permissionStore.fetchPermissions()
+    await userStore.loadUser()
     if (bankAccountStore.bankAccounts.length === 0) {
-        bankAccountStore.fetchBankAccounts()
+        await bankAccountStore.fetchBankAccounts()
     }
     
-    const modalElement = document.getElementById('BankAccountModal')
-    if (modalElement) {
-        modalInstance = new bootstrap.Modal(modalElement)
+    // Initialize table controls
+    tableControls.value.rows = Number(params.value.rows) || 10;
+    tableControls.value.search = globalFilterValue.value;
+})
+
+// Watchers
+watch(showModal, async (newValue) => {
+    if (newValue) {
+        // Delay untuk memastikan modal sudah di-render
+        nextTick(() => {
+            const modalElement = document.getElementById('BankAccountModal')
+            if (modalElement && !instance) {
+                instance = new bootstrap.Modal(modalElement)
+            }
+            instance?.show()
+        })
+    } else {
+        instance?.hide()
     }
 })
 
 // Watchers
-watch(showModal, (newValue) => {
+watch(showModal, async (newValue) => {
     if (newValue) {
         modalInstance?.show()
     } else {
@@ -523,17 +539,17 @@ watch(globalFilterValue, debouncedSearch)
 // Table events
 const onPage = (event) => bankAccountStore.setPagination(event)
 
-const handleRowsChange = (value) => {
+const handleRowsChange = async (value) => {
     const rowsValue = Number(value) || 10
     params.value.rows = rowsValue
     params.value.first = 0
-    bankAccountStore.fetchBankAccounts()
+    await bankAccountStore.fetchBankAccounts()
 }
 
-const handleSearch = (value) => {
+const handleSearch = async (value) => {
     globalFilterValue.value = value
     params.value.first = 0
-    bankAccountStore.fetchBankAccounts()
+    await bankAccountStore.fetchBankAccounts()
 }
 
 const onSort = (event) => bankAccountStore.setSort(event)

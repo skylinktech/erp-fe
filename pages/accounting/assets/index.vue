@@ -463,9 +463,8 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAssetStore } from '~/stores/assets'
 import { useUserStore } from '~/stores/user'
-import { usePermissionStore } from '~/stores/permissions'
+import { usePermissionsStore } from '~/stores/permissions'
 import { useDebounceFn } from '@vueuse/core'
-import { formatRupiah } from '~/composables/formatRupiah'
 
 // Page meta
 definePageMeta({
@@ -476,10 +475,12 @@ definePageMeta({
 // Stores
 const assetStore = useAssetStore()
 const userStore = useUserStore()
-const permissionStore = usePermissionStore()
+const permissionStore = usePermissionsStore()
 
 // Router
 const router = useRouter()
+
+const formatRupiah = useFormatRupiah()
 
 // Refs
 const myDataTableRef = ref()

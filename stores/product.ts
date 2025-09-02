@@ -167,14 +167,17 @@ export const useProductStore = defineStore('product', {
             const value = this.form[key as keyof typeof this.form];
              if (key === 'isService') {
                 formData.append(key, value ? 'true' : 'false');
-            } else if (value !== null && value !== undefined) {
-                if (key === 'image' && value instanceof File) {
-                    formData.append(key, value);
-                } else if (key !== 'image') {
-                    formData.append(key, String(value));
-                }
+            } else if (key === 'image' && value instanceof File) {
+                formData.append(key, value);
+            } else if (key !== 'image') {
+                // Kirim semua field termasuk yang null/undefined, tapi konversi null/undefined ke string kosong
+                const stringValue = value === null || value === undefined ? '' : String(value);
+                formData.append(key, stringValue);
             }
           });
+          
+          // Debug: Log data yang akan dikirim
+          console.log('Form data yang akan dikirim:', Object.fromEntries(formData));
           
           let url = $api.product();
           let method = 'POST';

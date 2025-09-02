@@ -465,9 +465,9 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useExpenseStore } from '~/stores/expenses'
 import { useUserStore } from '~/stores/user'
-import { usePermissionStore } from '~/stores/permissions'
+import { usePermissionsStore } from '~/stores/permissions'
 import { useDebounceFn } from '@vueuse/core'
-import { formatRupiah } from '~/composables/formatRupiah'
+import { usePermissions } from '~/composables/usePermissions'
 
 // Page meta
 definePageMeta({
@@ -478,10 +478,12 @@ definePageMeta({
 // Stores
 const expenseStore = useExpenseStore()
 const userStore = useUserStore()
-const permissionStore = usePermissionStore()
+const permissionStore = usePermissionsStore()
 
 // Router
 const router = useRouter()
+
+const formatRupiah = useFormatRupiah()
 
 // Refs
 const myDataTableRef = ref()
@@ -593,16 +595,16 @@ const onFileChange = (event) => {
 }
 
 // Permission helpers
-const userHasRole = (role) => userStore.user?.roles?.some(r => r.name === role) || false
-const userHasPermission = (permission) => permissionStore.hasPermission(permission)
+const { userHasRole, userHasPermission } = usePermissions();
+
 
 // Lifecycle
 let modalInstance = null
-onMounted(() => {
-    permissionStore.fetchPermissions()
+onMounted(async () => {
+    await permissionStore.fetchPermissions()
     userStore.loadUser()
     if (expenseStore.expenses.length === 0) {
-        expenseStore.fetchExpenses()
+        await expenseStore.fetchExpenses()
     }
     
     const modalElement = document.getElementById('ExpenseModal')
@@ -612,7 +614,7 @@ onMounted(() => {
 })
 
 // Watchers
-watch(showModal, (newValue) => {
+watch(showModal, async (newValue) => {
     if (newValue) {
         modalInstance?.show()
     } else {
@@ -629,11 +631,11 @@ watch(globalFilterValue, debouncedSearch)
 // Table events
 const onPage = (event) => expenseStore.setPagination(event)
 
-const handleRowsChange = (value) => {
+const handleRowsChange = async (value) => {
     const rowsValue = Number(value) || 10
     params.value.rows = rowsValue
     params.value.first = 0
-    expenseStore.fetchExpenses()
+    await expenseStore.fetchExpenses()
 }
 
 const handleSearch = (value) => {

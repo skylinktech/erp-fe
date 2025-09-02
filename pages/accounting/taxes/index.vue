@@ -354,6 +354,7 @@ import { useTaxStore } from '~/stores/taxes'
 import { useUserStore } from '~/stores/user'
 import { usePermissionsStore } from '~/stores/permissions'
 import { useDebounceFn } from '@vueuse/core'
+import { usePermissions } from '~/composables/usePermissions'
 
 // Page meta
 definePageMeta({
@@ -434,16 +435,15 @@ const exportData = (format) => {
 }
 
 // Permission helpers
-const userHasRole = (role) => userStore.user?.roles?.some(r => r.name === role) || false
-const userHasPermission = (permission) => permissionStore.hasPermission(permission)
+const { userHasRole, userHasPermission } = usePermissions();
 
 // Lifecycle
 let modalInstance = null
-onMounted(() => {
+onMounted(async () => {
     permissionStore.fetchPermissions()
     userStore.loadUser()
     if (taxStore.taxes.length === 0) {
-        taxStore.fetchTaxes()
+        await taxStore.fetchTaxes()
     }
     
     const modalElement = document.getElementById('TaxModal')
@@ -453,7 +453,7 @@ onMounted(() => {
 })
 
 // Watchers
-watch(showModal, (newValue) => {
+watch(showModal, async (newValue) => {
     if (newValue) {
         modalInstance?.show()
     } else {
@@ -470,17 +470,17 @@ watch(globalFilterValue, debouncedSearch)
 // Table events
 const onPage = (event) => taxStore.setPagination(event)
 
-const handleRowsChange = (value) => {
+const handleRowsChange = async (value) => {
     const rowsValue = Number(value) || 10
     params.value.rows = rowsValue
     params.value.first = 0
     taxStore.fetchTaxes()
 }
 
-const handleSearch = (value) => {
+const handleSearch = async (value) => {
     globalFilterValue.value = value
     params.value.first = 0
-    taxStore.fetchTaxes()
+    await taxStore.fetchTaxes()
 }
 
 const onSort = (event) => taxStore.setSort(event)
