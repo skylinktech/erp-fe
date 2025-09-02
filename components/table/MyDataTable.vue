@@ -16,6 +16,14 @@
     @selection-change="emit('selection-change', $event)"
   >
     <slot></slot>
+    
+    <!-- Fallback untuk data kosong -->
+    <template #empty>
+      <div class="text-center py-8">
+        <div class="text-gray-500 text-lg font-medium">No data available</div>
+        <div class="text-gray-400 text-sm mt-2">Tidak ada data yang tersedia untuk ditampilkan</div>
+      </div>
+    </template>
   </DataTable>
 </template>
 

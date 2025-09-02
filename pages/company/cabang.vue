@@ -189,7 +189,9 @@
                         >
                             <Column header="#" :sortable="false">
                                 <template #body="slotProps">
-                                    {{ params.first + slotProps.index + 1 }}
+                                    {{
+                                        (Number(params.first) || 0) + (Number(slotProps.index) || 0) + 1
+                                    }}
                                 </template>
                             </Column>
                             <Column field="kodeCabang" header="Kode Cabang" :sortable="true"></Column>

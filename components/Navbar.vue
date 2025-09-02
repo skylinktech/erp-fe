@@ -732,6 +732,11 @@
   </script>
 
 <style>
+
+.dropdown-user {
+    z-index: 9999;
+}
+
 /* Replicate Popper.js positioning for the user dropdown */
 .navbar-nav .dropdown .dropdown-menu {
   position: absolute;

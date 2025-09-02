@@ -1,0 +1,629 @@
+<template>
+    <div class="content-wrapper">
+        <!-- Content -->
+        <div class="container-xxl flex-grow-1 container-p-y">
+            <h4 class="mb-1">Penerimaan Piutang</h4>
+            <p class="mb-6">
+                Kelola penerimaan pembayaran dari pelanggan
+            </p>
+
+            <!-- Receipt Statistics Cards -->
+            <div class="row g-6 mb-6">
+                <div class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <p class="mb-0">Total Penerimaan</p>
+                                <div class="avatar">
+                                    <span class="avatar-initial rounded bg-label-primary">
+                                        <i class="ri-money-dollar-circle-line"></i>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="account-heading">
+                                    <h5 class="mb-1">{{ receipts.length }}</h5>
+                                    <span class="text-muted">Penerimaan Aktif</span>
+                                </div>
+                                <a href="javascript:void(0);" class="text-secondary">
+                                    <i class="ri-file-copy-line ri-22px"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <p class="mb-0">Draft</p>
+                                <div class="avatar">
+                                    <span class="avatar-initial rounded bg-label-warning">
+                                        <i class="ri-file-list-line"></i>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="account-heading">
+                                    <h5 class="mb-1">{{ draftCount }}</h5>
+                                    <span class="text-muted">Menunggu Konfirmasi</span>
+                                </div>
+                                <a href="javascript:void(0);" class="text-secondary">
+                                    <i class="ri-file-copy-line ri-22px"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <p class="mb-0">Dikonfirmasi</p>
+                                <div class="avatar">
+                                    <span class="avatar-initial rounded bg-label-success">
+                                        <i class="ri-checkbox-circle-line"></i>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="account-heading">
+                                    <h5 class="mb-1">{{ confirmedCount }}</h5>
+                                    <span class="text-muted">Sudah Dikonfirmasi</span>
+                                </div>
+                                <a href="javascript:void(0);" class="text-secondary">
+                                    <i class="ri-file-copy-line ri-22px"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <p class="mb-0">Total Nilai</p>
+                                <div class="avatar">
+                                    <span class="avatar-initial rounded bg-label-info">
+                                        <i class="ri-exchange-funds-line"></i>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="account-heading">
+                                    <h5 class="mb-1">{{ formatCurrency(totalAmount) }}</h5>
+                                    <span class="text-muted">Total Penerimaan</span>
+                                </div>
+                                <a href="javascript:void(0);" class="text-secondary">
+                                    <i class="ri-file-copy-line ri-22px"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-6">
+                <div class="col-12">
+                    <h4 class="mt-6 mb-1">Daftar Penerimaan Piutang</h4>
+                    <p class="mb-0">Kelola semua penerimaan pembayaran dari pelanggan.</p>
+                </div>
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                                    <h5 class="mb-0">Daftar Penerimaan</h5>
+                                    <small class="text-muted">Kelola semua penerimaan dalam sistem</small>
+                                </div>
+                                <div class="d-flex gap-2" v-if="userHasPermission('create_ar_receipt') || userHasRole('superadmin')">
+                                    <button 
+                                        @click="receiptStore.openModal()" 
+                                        class="btn btn-primary">
+                                        <i class="ri-add-line me-1"></i>
+                                        Tambah Penerimaan
+                                    </button>
+                                </div>
+                            </div>
+                            <TableControls
+                                v-model="tableControls"
+                                :rows-per-page-options="rowsPerPageOptionsArray"
+                                search-placeholder="Cari nomor referensi, pelanggan..."
+                                @rows-change="handleRowsChange"
+                                @search="handleSearch"
+                                @export="exportData"
+                            />
+                        </div>
+                        <div class="card-datatable table-responsive py-3 px-3">
+                            <MyDataTable 
+                                ref="myDataTableRef"
+                                :data="receipts"
+                                :rows="Number(params.rows)" 
+                                :loading="loading"
+                                :totalRecords="totalRecords"
+                                :first="params.first"
+                                :lazy="true"
+                                @page="onPage($event)"
+                                @sort="onSort($event)"
+                                responsiveLayout="scroll" 
+                                paginatorPosition="bottom"
+                                paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink"
+                                currentPageReportTemplate="Menampilkan {first} sampai {last} dari {totalRecords} data"
+                            >
+                                <Column header="#" :sortable="false">
+                                    <template #body="slotProps">
+                                        {{ params.first + slotProps.index + 1 }}
+                                    </template>
+                                </Column>
+                                <Column field="reference_number" header="No. Referensi" :sortable="true" style="min-width:150px">
+                                    <template #body="slotProps">
+                                        <span class="fw-semibold">{{ slotProps.data.reference_number }}</span>
+                                    </template>
+                                </Column>
+                                <Column field="date" header="Tanggal" :sortable="true" style="min-width:120px">
+                                    <template #body="slotProps">
+                                        <span class="text-muted">{{ formatDate(slotProps.data.date) }}</span>
+                                    </template>
+                                </Column>
+                                <Column field="customer.name" header="Pelanggan" :sortable="true" style="min-width:200px">
+                                    <template #body="slotProps">
+                                        <div>
+                                            <div class="fw-semibold">{{ slotProps.data.customer?.name || 'N/A' }}</div>
+                                        </div>
+                                    </template>
+                                </Column>
+                                <Column field="payment_method" header="Metode Pembayaran" :sortable="true" style="min-width:150px">
+                                    <template #body="slotProps">
+                                        <span class="badge bg-label-secondary">
+                                            {{ getPaymentMethodLabel(slotProps.data.payment_method) }}
+                                        </span>
+                                    </template>
+                                </Column>
+                                <Column field="amount" header="Jumlah" :sortable="true" style="min-width:150px">
+                                    <template #body="slotProps">
+                                        <span class="fw-semibold text-success">
+                                            {{ formatCurrency(slotProps.data.amount, slotProps.data.currency) }}
+                                        </span>
+                                    </template>
+                                </Column>
+                                <Column field="status" header="Status" :sortable="true" style="min-width:120px">
+                                    <template #body="slotProps">
+                                        <span :class="getStatusBadgeClass(slotProps.data.status)">
+                                            {{ getStatusLabel(slotProps.data.status) }}
+                                        </span>
+                                    </template>
+                                </Column>
+                                <Column header="Actions" :exportable="false" style="min-width:8rem">
+                                    <template #body="slotProps">
+                                        <div class="d-inline-block">
+                                            <a href="javascript:;" class="btn btn-sm btn-text-secondary rounded-pill btn-icon dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
+                                                <i class="ri-more-2-fill"></i>
+                                            </a>
+                                            <ul class="dropdown-menu">
+                                                <li v-if="userHasPermission('edit_ar_receipt') || userHasRole('superadmin')">
+                                                    <a class="dropdown-item" href="javascript:void(0)" @click="receiptStore.openModal(slotProps.data)">
+                                                        <i class="ri-edit-box-line me-2"></i> Edit
+                                                    </a>
+                                                </li>
+                                                <li v-if="slotProps.data.status === 'draft' && userHasPermission('approve_ar_receipt') || userHasRole('superadmin')">
+                                                    <a class="dropdown-item text-success" href="javascript:void(0)" @click="confirmReceipt(slotProps.data.id)">
+                                                        <i class="ri-checkbox-circle-line me-2"></i> Konfirmasi
+                                                    </a>
+                                                </li>
+                                                <li v-if="userHasPermission('delete_ar_receipt') || userHasRole('superadmin')">
+                                                    <a class="dropdown-item text-danger" href="javascript:void(0)" @click="receiptStore.deleteReceipt(slotProps.data.id)">
+                                                        <i class="ri-delete-bin-7-line me-2"></i> Hapus
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </template>
+                                </Column>
+                            </MyDataTable>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Receipt Modal -->
+                <Modal 
+                    id="ReceiptModal"
+                    :title="modalTitle" 
+                    :description="modalDescription"
+                    :validation-errors-from-parent="validationErrors"
+                >
+                    <template #default>
+                        <form @submit.prevent="receiptStore.saveReceipt()">
+                            <div class="row g-6">
+                                <div class="col-md-6">
+                                    <div class="form-floating form-floating-outline">
+                                        <input 
+                                            type="text" 
+                                            class="form-control" 
+                                            v-model="form.reference_number" 
+                                            placeholder="Masukkan nomor referensi"
+                                            required
+                                        >
+                                        <label>Nomor Referensi *</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating form-floating-outline">
+                                        <input 
+                                            type="date" 
+                                            class="form-control" 
+                                            v-model="form.date" 
+                                            required
+                                        >
+                                        <label>Tanggal *</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating form-floating-outline">
+                                        <select 
+                                            class="form-select" 
+                                            v-model="form.customer_id"
+                                            required
+                                        >
+                                            <option value="">Pilih Pelanggan</option>
+                                            <option v-for="customer in customers" :key="customer.id" :value="customer.id">
+                                                {{ customer.name }}
+                                            </option>
+                                        </select>
+                                        <label>Pelanggan *</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating form-floating-outline">
+                                        <select 
+                                            class="form-select" 
+                                            v-model="form.invoice_id"
+                                        >
+                                            <option value="">Pilih Invoice (Opsional)</option>
+                                            <option v-for="invoice in invoices" :key="invoice.id" :value="invoice.id">
+                                                {{ invoice.reference_number }} - {{ formatCurrency(invoice.total_amount, invoice.currency) }}
+                                            </option>
+                                        </select>
+                                        <label>Invoice</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating form-floating-outline">
+                                        <select 
+                                            class="form-select" 
+                                            v-model="form.payment_method"
+                                            required
+                                        >
+                                            <option value="">Pilih Metode Pembayaran</option>
+                                            <option v-for="method in paymentMethods" :key="method.value" :value="method.value">
+                                                {{ method.label }}
+                                            </option>
+                                        </select>
+                                        <label>Metode Pembayaran *</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating form-floating-outline">
+                                        <select 
+                                            class="form-select" 
+                                            v-model="form.bank_account_id"
+                                        >
+                                            <option value="">Pilih Rekening Bank (Opsional)</option>
+                                            <option v-for="account in bankAccounts" :key="account.id" :value="account.id">
+                                                {{ account.bank_name }} - {{ account.account_number }}
+                                            </option>
+                                        </select>
+                                        <label>Rekening Bank</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating form-floating-outline">
+                                        <input 
+                                            type="number" 
+                                            class="form-control" 
+                                            v-model="form.amount" 
+                                            step="0.01"
+                                            min="0"
+                                            placeholder="Masukkan jumlah"
+                                            required
+                                        >
+                                        <label>Jumlah *</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating form-floating-outline">
+                                        <select 
+                                            class="form-select" 
+                                            v-model="form.currency"
+                                            required
+                                        >
+                                            <option value="">Pilih Mata Uang</option>
+                                            <option v-for="currency in currencies" :key="currency.value" :value="currency.value">
+                                                {{ currency.label }}
+                                            </option>
+                                        </select>
+                                        <label>Mata Uang *</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating form-floating-outline">
+                                        <input 
+                                            type="number" 
+                                            class="form-control" 
+                                            v-model="form.exchange_rate" 
+                                            step="0.0001"
+                                            min="0"
+                                            placeholder="Masukkan kurs tukar"
+                                            required
+                                        >
+                                        <label>Kurs Tukar *</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating form-floating-outline">
+                                        <select 
+                                            class="form-select" 
+                                            v-model="form.status"
+                                            required
+                                        >
+                                            <option value="">Pilih Status</option>
+                                            <option v-for="status in statuses" :key="status.value" :value="status.value">
+                                                {{ status.label }}
+                                            </option>
+                                        </select>
+                                        <label>Status *</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-floating form-floating-outline">
+                                        <textarea 
+                                            class="form-control" 
+                                            v-model="form.notes" 
+                                            rows="3"
+                                            placeholder="Masukkan catatan (opsional)"
+                                        ></textarea>
+                                        <label>Catatan</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-4 d-flex justify-content-end gap-2">
+                                <button type="button" class="btn btn-outline-secondary" @click="receiptStore.closeModal()">
+                                    Batal
+                                </button>
+                                <button type="submit" class="btn btn-primary" :disabled="loading">
+                                    <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
+                                    {{ isEditMode ? 'Update' : 'Simpan' }}
+                                </button>
+                            </div>
+                        </form>
+                    </template>
+                </Modal>
+            </div>
+        </div>
+        <div class="content-backdrop fade"></div>
+    </div>
+</template>
+
+<script setup>
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
+import { useARReceiptStore } from '~/stores/ar-receipts'
+import { useUserStore } from '~/stores/user'
+import { usePermissionsStore } from '~/stores/permissions'
+import { usePermissions } from '~/composables/usePermissions'
+import { useDebounceFn } from '@vueuse/core'
+import MyDataTable from '~/components/table/MyDataTable.vue'
+import Modal from '~/components/modal/Modal.vue'
+import TableControls from '~/components/table/TableControls.vue'
+import Column from 'primevue/column'
+import DataTable from 'primevue/datatable'
+
+// Page meta
+definePageMeta({
+    title: 'Penerimaan Piutang',
+    description: 'Kelola penerimaan pembayaran dari pelanggan'
+})
+
+// Stores
+const receiptStore = useARReceiptStore()
+const userStore = useUserStore()
+const permissionStore = usePermissionsStore()
+
+// Router
+const router = useRouter()
+
+// Refs
+const myDataTableRef = ref()
+const globalFilterValue = ref('')
+
+// Table Controls
+const tableControls = ref({
+    rows: 10,
+    search: '',
+});
+
+const rowsPerPageOptionsArray = ref([10, 25, 50, 100]);
+
+// Computed
+const receipts = computed(() => {
+  return Array.isArray(receiptStore.receipts) ? receiptStore.receipts : []
+})
+const loading = computed(() => receiptStore.loading)
+const totalRecords = computed(() => {
+  return typeof receiptStore.totalRecords === 'number' ? receiptStore.totalRecords : 0
+})
+const params = computed(() => {
+  return receiptStore.params || {
+    first: 0,
+    rows: 10,
+    sortField: 'reference_number',
+    sortOrder: 1,
+    search: ''
+  }
+})
+const form = computed(() => receiptStore.form)
+const isEditMode = computed(() => receiptStore.isEditMode)
+const showModal = computed(() => receiptStore.showModal)
+const validationErrors = computed(() => {
+  return Array.isArray(receiptStore.validationErrors) ? receiptStore.validationErrors : []
+})
+const customers = computed(() => {
+  return Array.isArray(receiptStore.customers) ? receiptStore.customers : []
+})
+const invoices = computed(() => {
+  return Array.isArray(receiptStore.invoices) ? receiptStore.invoices : []
+})
+const paymentMethods = computed(() => {
+  return Array.isArray(receiptStore.paymentMethods) ? receiptStore.paymentMethods : []
+})
+const bankAccounts = computed(() => {
+  return Array.isArray(receiptStore.bankAccounts) ? receiptStore.bankAccounts : []
+})
+const currencies = computed(() => {
+  return Array.isArray(receiptStore.currencies) ? receiptStore.currencies : []
+})
+const statuses = computed(() => {
+  return Array.isArray(receiptStore.statuses) ? receiptStore.statuses : []
+})
+
+// Statistics
+const draftCount = computed(() => {
+  if (!Array.isArray(receipts.value)) return 0
+  return receipts.value.filter(receipt => receipt.status === 'draft').length
+})
+const confirmedCount = computed(() => {
+  if (!Array.isArray(receipts.value)) return 0
+  return receipts.value.filter(receipt => receipt.status === 'confirmed').length
+})
+const totalAmount = computed(() => {
+  if (!Array.isArray(receipts.value)) return 0
+  return receipts.value.reduce((sum, receipt) => sum + (receipt.amount || 0), 0)
+})
+
+// Modal
+const modalTitle = computed(() => isEditMode.value ? 'Edit Penerimaan' : 'Tambah Penerimaan Baru')
+const modalDescription = computed(() => isEditMode.value ? 'Silakan ubah data penerimaan di bawah ini.' : 'Silakan isi form di bawah ini untuk menambahkan penerimaan baru.')
+
+// Methods
+const getStatusBadgeClass = (status) => {
+    const classes = {
+        draft: 'badge bg-label-warning',
+        confirmed: 'badge bg-label-success',
+        cancelled: 'badge bg-label-danger'
+    }
+    return classes[status] || 'badge bg-label-secondary'
+}
+
+const getStatusLabel = (status) => {
+    const labels = {
+        draft: 'Draft',
+        confirmed: 'Dikonfirmasi',
+        cancelled: 'Dibatalkan'
+    }
+    return labels[status] || status
+}
+
+const getPaymentMethodLabel = (method) => {
+    const methodObj = paymentMethods.value.find(m => m.value === method)
+    return methodObj ? methodObj.label : method
+}
+
+const formatDate = (dateString) => {
+    if (!dateString) return 'N/A'
+    return new Date(dateString).toLocaleDateString('id-ID')
+}
+
+const formatCurrency = (amount, currency = 'IDR') => {
+    if (!amount) return '0'
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: currency
+    }).format(amount)
+}
+
+const confirmReceipt = async (id) => {
+    await receiptStore.confirmReceipt(id)
+}
+
+const exportData = (format) => {
+    if (format === 'csv' && myDataTableRef.value) {
+        myDataTableRef.value.exportCSV()
+    }
+}
+
+// Permission helpers
+const { userHasRole, userHasPermission } = usePermissions();
+
+// Lifecycle
+let modalInstance = null
+onMounted(async () => {
+    try {
+        await permissionStore.fetchPermissions()
+        await userStore.loadUser()
+        await receiptStore.fetchReceipts()
+        
+        // Initialize table controls
+        tableControls.value.rows = Number(params.value.rows) || 10;
+        tableControls.value.search = globalFilterValue.value;
+    } catch (error) {
+        console.error('Error in onMounted:', error)
+    }
+})
+
+// Watchers
+watch(showModal, (newValue) => {
+    if (newValue) {
+        // Delay untuk memastikan modal sudah di-render
+        nextTick(() => {
+            const modalElement = document.getElementById('ReceiptModal')
+            if (modalElement && !modalInstance) {
+                modalInstance = new bootstrap.Modal(modalElement)
+            }
+            modalInstance?.show()
+        })
+    } else {
+        modalInstance?.hide()
+    }
+})
+
+// Watch untuk sinkronisasi table controls
+watch(() => params.value.rows, (newValue) => {
+    tableControls.value.rows = Number(newValue) || 10;
+});
+
+watch(() => globalFilterValue.value, (newValue) => {
+    tableControls.value.search = newValue;
+});
+
+const debouncedSearch = useDebounceFn(() => {
+    receiptStore.setSearch(globalFilterValue.value)
+}, 300)
+
+watch(globalFilterValue, debouncedSearch)
+
+// Table events
+const onPage = (event) => {
+    receiptStore.setPagination(event)
+}
+
+const onSort = (event) => {
+    receiptStore.setSort(event)
+}
+
+const handleRowsChange = (value) => {
+    params.value.rows = value
+    params.value.first = 0
+    receiptStore.fetchReceipts()
+}
+
+const handleSearch = (value) => {
+    globalFilterValue.value = value
+    params.value.first = 0
+    receiptStore.fetchReceipts()
+}
+</script>
+
+<style scoped>
+.badge {
+    font-size: 0.75rem;
+}
+</style>

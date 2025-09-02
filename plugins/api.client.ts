@@ -68,6 +68,11 @@ export default defineNuxtPlugin(() => {
     purchaseOrderUpdate    : (id: number | string) => `${apiBase}/purchase-order/update/${id}`,
     getPurchaseOrderDetails: (id: number | string) => `${apiBase}/purchase-order/getPurchaseOrderDetails/${id}`,
     countPurchaseOrderByStatus: () => `${apiBase}/purchase-order/countByStatus`,
+
+    // Purchase Invoice
+    purchaseInvoice: () => `${apiBase}/purchase-invoice`,
+    purchaseInvoiceShow: (id: number | string) => `${apiBase}/purchase-invoice/${id}`,
+    purchaseInvoiceStatistics: () => `${apiBase}/purchase-invoice/statistics`,
     
     // Purchase Order Item
     purchaseOrderItemUpdateStatusPartial: (id: number | string) => `${apiBase}/purchase-order-item/updateStatusPartial/${id}`,
