@@ -175,7 +175,7 @@
                                             {{ slotProps.data.satuanItem ? slotProps.data.satuanItem : '-' }}
                                         </template>
                                     </Column>
-                                    <Column field="priceBuy" header="Harga Beli" :sortable="true" v-if="userHasPermission('show_product')">
+                                    <Column field="priceBuy" header="Harga Beli" :sortable="true" v-if="userHasPermission('show_product') || userHasRole('superadmin') || userHasRole('admin')">
                                         <template #body="slotProps">
                                             {{ slotProps.data.priceBuy ? formatRupiah(slotProps.data.priceBuy) : '-' }}
                                         </template>
