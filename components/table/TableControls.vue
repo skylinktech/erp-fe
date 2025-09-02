@@ -134,10 +134,6 @@ watch(() => props.modelValue, (newValue) => {
 </script>
 
 <style scoped>
-/* Mobile Responsive Table Controls */
-.table-controls {
-  padding: 1rem;
-}
 
 .table-controls-mobile {
   display: flex;

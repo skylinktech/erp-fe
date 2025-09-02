@@ -59,6 +59,7 @@ export const useRolesStore = defineStore('roles', {
             this.loading = true
             this.error = null
             const { $api } = useNuxtApp()
+            const toast = useToast();
             try {
                 const queryParams = new URLSearchParams({
                     draw: '1',
@@ -86,7 +87,14 @@ export const useRolesStore = defineStore('roles', {
 
             } catch (e: any) {
                 this.error = e.message;
-                Swal.fire('Error', `Tidak dapat memuat data roles: ${e.message}`, 'error');
+                toast.error({
+                    title: 'Error',
+                    message: `Tidak dapat memuat data roles: ${e.message}`,
+                    color: 'red',
+                    position: 'topRight',
+                    layout: 2,
+                    icon: 'error',
+                });
             } finally {
                 this.loading = false;
             }
@@ -94,6 +102,7 @@ export const useRolesStore = defineStore('roles', {
 
         async fetchPermissions() {
             const { $api } = useNuxtApp()
+            const toast = useToast();
             const token = localStorage.getItem('token');
             try {
                 const res = await fetch($api.getPermissions(), {
@@ -111,7 +120,14 @@ export const useRolesStore = defineStore('roles', {
                 this.permissions = apiResponse.data || apiResponse || [];
             } catch (error: any) {
                 this.permissions = [];
-                Swal.fire('Error', `Gagal memuat permissions: ${error.message}`, 'error');
+                toast.error({
+                    title: 'Error',
+                    message: `Gagal memuat permissions: ${error.message}`,
+                    color: 'red',
+                    position: 'topRight',
+                    layout: 2,
+                    icon: 'error',
+                });
             }
         },
 
@@ -119,6 +135,7 @@ export const useRolesStore = defineStore('roles', {
             this.loading = true;
             this.validationErrors = [];
             const { $api } = useNuxtApp();
+            const toast = useToast();
 
             try {
                 const token = localStorage.getItem('token');
@@ -160,11 +177,25 @@ export const useRolesStore = defineStore('roles', {
                 this.closeModal();
                 await this.fetchRoles();
                 
-                Swal.fire('Berhasil!', `Role berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`, 'success');
+                toast.success({
+                    title: 'Success',
+                    message: `Role berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
+                    color: 'green',
+                    position: 'topRight',
+                    layout: 2,
+                    icon: 'success',
+                });
 
             } catch (error: any) {
                 if (error.message !== 'Data validasi tidak valid') {
-                    Swal.fire('Error', error.message || 'Operasi gagal', 'error');
+                    toast.error({
+                        title: 'Error',
+                        message: error.message || 'Operasi gagal',
+                        color: 'red',
+                        position: 'topRight',
+                        layout: 2,
+                        icon: 'error',
+                    });
                 }
             } finally {
                 this.loading = false;
@@ -173,7 +204,7 @@ export const useRolesStore = defineStore('roles', {
 
         async deleteRole(id: number) {
             const { $api } = useNuxtApp();
-            
+            const toast = useToast();
             const result = await Swal.fire({
                 title: 'Apakah Anda yakin?',
                 text: "Role yang dihapus tidak dapat dikembalikan!",
@@ -208,9 +239,23 @@ export const useRolesStore = defineStore('roles', {
                 }
 
                 await this.fetchRoles();
-                Swal.fire('Berhasil!', 'Role berhasil dihapus.', 'success');
+                toast.success({
+                    title: 'Success',
+                    message: 'Role berhasil dihapus.',
+                    color: 'green',
+                    position: 'topRight',
+                    layout: 2,
+                    icon: 'success',
+                });
             } catch (error: any) {
-                Swal.fire('Error', error.message || 'Gagal menghapus role', 'error');
+                toast.error({
+                    title: 'Error',
+                    message: error.message || 'Gagal menghapus role',
+                    color: 'red',
+                    position: 'topRight',
+                    layout: 2,
+                    icon: 'error',
+                });
             } finally {
                 this.loading = false;
             }
@@ -223,6 +268,8 @@ export const useRolesStore = defineStore('roles', {
             if (role) {
                 const { $api } = useNuxtApp();
                 const token = localStorage.getItem('token');
+                const toast = useToast();
+
                 try {
                     const response = await fetch($api.roleShow(role.id), {
                         headers: { 
@@ -241,7 +288,14 @@ export const useRolesStore = defineStore('roles', {
                     };
 
                 } catch (error: any) {
-                    Swal.fire('Error', error.message, 'error');
+                    toast.error({
+                        title: 'Error',
+                        message: error.message,
+                        color: 'red',
+                        position: 'topRight',
+                        layout: 2,
+                        icon: 'error',
+                    });
                     return; // jangan buka modal jika gagal fetch
                 }
             } else {

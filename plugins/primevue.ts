@@ -27,4 +27,8 @@ export default defineNuxtPlugin((nuxtApp) => {
   nuxtApp.vueApp.component('FilterMatchMode', FilterMatchMode);
   nuxtApp.vueApp.component('InputText', InputText);
   nuxtApp.vueApp.component('Chart', Chart);
+  
+  // Register global components
+  nuxtApp.vueApp.component('MyDataTable', () => import('~/components/table/MyDataTable.vue'));
+  nuxtApp.vueApp.component('Modal', () => import('~/components/modal/Modal.vue'));
 });

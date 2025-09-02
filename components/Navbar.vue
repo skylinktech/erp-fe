@@ -144,6 +144,14 @@
     import { useLayoutStore } from '~/stores/layout';
     import { useCustomerStore } from '~/stores/customer'
     import { useProductStore } from '~/stores/product'
+    import { useAccountStore } from '~/stores/accounts'
+    import { useRolesStore } from '~/stores/roles'
+    import { useSalesOrderStore } from '~/stores/sales-order'
+    import { usePurchaseOrderStore } from '~/stores/purchaseOrder'
+    import { useSalesReturnStore } from '~/stores/sales-return'
+    import { useSuratJalanStore } from '~/stores/surat-jalan'
+    import { useQuotationStore } from '~/stores/quotation'
+    import { useVendorStore } from '~/stores/vendor'
 
     const { $api }    = useNuxtApp()
     const userStore   = useUserStore()
@@ -151,7 +159,15 @@
     const layoutStore = useLayoutStore();
     const customerLocalStore = useCustomerStore()
     const productLocalStore  = useProductStore()
-
+    const accountLocalStore  = useAccountStore()
+    const roleLocalStore     = useRolesStore()
+    const salesOrderLocalStore = useSalesOrderStore()
+    const purchaseOrderLocalStore = usePurchaseOrderStore()
+    const salesReturnLocalStore = useSalesReturnStore()
+    const suratJalanLocalStore = useSuratJalanStore()
+    const quotationLocalStore = useQuotationStore()
+    const vendorLocalStore = useVendorStore()
+    
     // --- Search bar logic ---
     const isSearchVisible = ref(false);
     const searchQuery = ref('');
@@ -201,7 +217,12 @@
                 { key: 'customer', label: 'Customer', icon: 'ri-user-line', list: $api.dataCustomer?.() || $api.customer?.(), path: '/sales/customer' },
                 { key: 'vendor', label: 'Vendor', icon: 'ri-store-2-line', list: $api.dataVendor?.() || $api.vendor?.(), path: '/purchasing/vendor' },
                 { key: 'po', label: 'Purchase Order', icon: 'ri-shopping-bag-4-line', list: $api.purchaseOrder?.(), path: '/purchasing/purchase-order' },
-                { key: 'so', label: 'Sales Order', icon: 'ri-file-list-3-line', list: $api.salesOrder?.(), path: '/sales/sales-order' }
+                { key: 'so', label: 'Sales Order', icon: 'ri-file-list-3-line', list: $api.salesOrder?.(), path: '/sales/sales-order' },
+                { key: 'sr', label: 'Sales Return', icon: 'ri-arrow-go-back-line', list: $api.salesReturn?.(), path: '/sales/sales-return' },
+                { key: 'sj', label: 'Surat Jalan', icon: 'ri-truck-line', list: $api.suratJalan?.(), path: '/sales/surat-jalan' },
+                { key: 'quo', label: 'Quotation', icon: 'ri-file-paper-2-line', list: $api.quotation?.(), path: '/sales/quotation' },
+                { key: 'acc', label: 'Accounts', icon: 'ri-account-box-line', list: $api.accounts?.(), path: '/accounting/accounts' },
+                { key: 'role', label: 'Roles', icon: 'ri-shield-user-line', list: $api.roles?.(), path: '/settings/roles' }
             ].filter(e => !!e.list)
 
             const token = process.client 
@@ -219,13 +240,38 @@
                         },
                     })
                     const items = Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : [])
+                    
+
                     const qLower = query.toLowerCase()
                     // Saring hanya yang benar-benar cocok dengan query pada field penting
                     const filtered = items.filter((item) => {
-                        const fields = [
+                                                                    const fields = [
                             item.number, item.no, item.no_invoice, item.invoiceNumber, item.kode,
                             item.sku, item.SKU, item.kd_barang,
-                            item.name, item.productName, item.nama, item.customerName, item.fullname, item.title
+                            item.name, item.productName, item.nama, item.customerName, item.fullname, item.title,
+                            item.code, item.name, item.name, item.name, item.code, item.code, item.code, item.code,
+                            item.name, item.name, item.name, item.name,
+                            item.name, item.name, item.name, item.name,
+                            item.name, item.name, item.name, item.name,
+                            item.name, item.name, item.name, item.name,
+                            item.name, item.name, item.name, item.name,
+                            item.name, item.name, item.name, item.name,
+                            item.name, item.name, item.name, item.name,
+                            item.name, item.name, item.name, item.name,
+                            // Tambahan field untuk accounts
+                            item.category, item.normalBalance,
+                            // Tambahan field untuk sales order
+                            item.noSo, item.no_so, item.noPo, item.no_po, item.status, item.description,
+                            // Tambahan field untuk purchase order
+                            item.noPo, item.no_po, item.noSo, item.no_so, item.status, item.description,
+                            // Tambahan field untuk sales return
+                            item.noSr, item.no_sr, item.noSo, item.no_so, item.status, item.reason,
+                            // Tambahan field untuk surat jalan
+                            item.noSj, item.no_sj, item.noSo, item.no_so, item.status, item.description,
+                            // Tambahan field untuk quotation
+                            item.noQuotation, item.no_quotation, item.status, item.description,
+                            // Tambahan field untuk vendor
+                            item.email, item.phone, item.address
                         ]
                         return fields.some(v => v && String(v).toLowerCase().includes(qLower))
                     })
@@ -233,8 +279,41 @@
                         const id = item.id || item.uuid || item._id
                         const number = item.number || item.no || item.no_invoice || item.invoiceNumber || item.kode
                         const sku = item.sku || item.SKU || item.kd_barang
-                        const name = item.name || item.productName || item.nama || item.customerName || item.fullname || item.title
-                        const primary = number || sku || name || JSON.stringify(item).slice(0, 60)
+                        const name = item.name || item.productName || item.nama || item.customerName || item.fullname || item.title || item.code
+                        const code = item.code || item.kode
+
+                        // Khusus untuk accounts, tampilkan code - name
+                        let primary
+                        if (e.key === 'acc') {
+                            primary = code && name ? `${code} - ${name}` : (code || name || JSON.stringify(item).slice(0, 60))
+                        } else if (e.key === 'so') {
+                            // Sales Order: noSo - status
+                            const noSo = item.noSo || item.no_so || item.number
+                            const status = item.status || 'Draft'
+                            primary = noSo ? `${noSo} - ${status}` : (name || JSON.stringify(item).slice(0, 60))
+                        } else if (e.key === 'po') {
+                            // Purchase Order: noPo - status
+                            const noPo = item.noPo || item.no_po || item.number
+                            const status = item.status || 'Draft'
+                            primary = noPo ? `${noPo} - ${status}` : (name || JSON.stringify(item).slice(0, 60))
+                        } else if (e.key === 'sr') {
+                            // Sales Return: noSr - status
+                            const noSr = item.noSr || item.no_sr || item.number
+                            const status = item.status || 'Draft'
+                            primary = noSr ? `${noSr} - ${status}` : (name || JSON.stringify(item).slice(0, 60))
+                        } else if (e.key === 'sj') {
+                            // Surat Jalan: noSj - status
+                            const noSj = item.noSj || item.no_sj || item.number
+                            const status = item.status || 'Draft'
+                            primary = noSj ? `${noSj} - ${status}` : (name || JSON.stringify(item).slice(0, 60))
+                        } else if (e.key === 'quo') {
+                            // Quotation: noQuotation - status
+                            const noQuotation = item.noQuotation || item.no_quotation || item.number
+                            const status = item.status || 'Draft'
+                            primary = noQuotation ? `${noQuotation} - ${status}` : (name || JSON.stringify(item).slice(0, 60))
+                        } else {
+                            primary = number || sku || name || JSON.stringify(item).slice(0, 60)
+                        }
                         return {
                             name: primary,
                             category: `${e.label}`,
@@ -255,6 +334,19 @@
             // 3) Fallback dari store lokal (jika ada data yang sudah ter-cache)
             const localMatches = []
             try {
+                // Debug: Log store data untuk troubleshooting
+                console.log('Store data lengths:')
+                console.log('- Customers:', customerLocalStore?.customers?.length || 0)
+                console.log('- Products:', productLocalStore?.products?.length || 0)
+                console.log('- Accounts:', accountLocalStore?.accounts?.length || 0)
+                console.log('- Roles:', roleLocalStore?.roles?.length || 0)
+                console.log('- Sales Orders:', salesOrderLocalStore?.salesOrders?.length || 0)
+                console.log('- Purchase Orders:', purchaseOrderLocalStore?.purchaseOrders?.length || 0)
+                console.log('- Sales Returns:', salesReturnLocalStore?.salesReturns?.length || 0)
+                console.log('- Surat Jalans:', suratJalanLocalStore?.suratJalans?.length || 0)
+                console.log('- Quotations:', quotationLocalStore?.quotations?.length || 0)
+                console.log('- Vendors:', vendorLocalStore?.vendors?.length || 0)
+                
                 if (Array.isArray(customerLocalStore?.customers) && customerLocalStore.customers.length) {
                     const filtered = customerLocalStore.customers
                         .filter(c => (c.name || '').toLowerCase().includes(query.toLowerCase()))
@@ -279,10 +371,181 @@
                         }))
                     localMatches.push(...filtered)
                 }
+                if (Array.isArray(accountLocalStore?.accounts) && accountLocalStore.accounts.length) {
+                    const filtered = accountLocalStore.accounts
+                        .filter(a => {
+                            const searchFields = [
+                                a.name || '',
+                                a.code || '',
+                                a.category || ''
+                            ].join(' ').toLowerCase()
+                            return searchFields.includes(query.toLowerCase())
+                        })
+                        .slice(0, 5)
+                        .map(a => ({
+                            name: `${a.code} - ${a.name}`,
+                            category: `Account · ${a.category || 'Unknown'}`,
+                            icon: 'ri-account-box-line',
+                            path: `/accounting/accounts?search=${encodeURIComponent(a.name || a.code)}`
+                        }))
+                    localMatches.push(...filtered)
+                }
+                if (Array.isArray(roleLocalStore?.roles) && roleLocalStore.roles.length) {
+                    const filtered = roleLocalStore.roles
+                        .filter(r => (r.name || '').toLowerCase().includes(query.toLowerCase()))
+                        .slice(0, 5)
+                        .map(r => ({
+                            name: r.name,
+                            category: 'Role',
+                            icon: 'ri-shield-user-line',
+                            path: `/settings/roles?search=${encodeURIComponent(r.name)}`
+                        }))
+                    localMatches.push(...filtered)
+                }
+                
+                // Sales Order fallback
+                if (Array.isArray(salesOrderLocalStore?.salesOrders) && salesOrderLocalStore.salesOrders.length) {
+                    const filtered = salesOrderLocalStore.salesOrders
+                        .filter(so => {
+                            const searchFields = [
+                                so.noSo || '',
+                                so.noPo || '',
+                                so.status || '',
+                                so.description || ''
+                            ].join(' ').toLowerCase()
+                            return searchFields.includes(query.toLowerCase())
+                        })
+                        .slice(0, 5)
+                        .map(so => ({
+                            name: `${so.noSo} - ${so.status || 'Draft'}`,
+                            category: 'Sales Order',
+                            icon: 'ri-file-list-3-line',
+                            path: `/sales/sales-order?search=${encodeURIComponent(so.noSo || so.id)}`
+                        }))
+                    localMatches.push(...filtered)
+                }
+                
+                // Purchase Order fallback
+                if (Array.isArray(purchaseOrderLocalStore?.purchaseOrders) && purchaseOrderLocalStore.purchaseOrders.length) {
+                    const filtered = purchaseOrderLocalStore.purchaseOrders
+                        .filter(po => {
+                            const searchFields = [
+                                po.noPo || '',
+                                po.noSo || '',
+                                po.status || '',
+                                po.description || ''
+                            ].join(' ').toLowerCase()
+                            return searchFields.includes(query.toLowerCase())
+                        })
+                        .slice(0, 5)
+                        .map(po => ({
+                            name: `${po.noPo} - ${po.status || 'Draft'}`,
+                            category: 'Purchase Order',
+                            icon: 'ri-shopping-bag-4-line',
+                            path: `/purchasing/purchase-order?search=${encodeURIComponent(po.noPo || po.id)}`
+                        }))
+                    localMatches.push(...filtered)
+                }
+                
+                // Sales Return fallback
+                if (Array.isArray(salesReturnLocalStore?.salesReturns) && salesReturnLocalStore.salesReturns.length) {
+                    const filtered = salesReturnLocalStore.salesReturns
+                        .filter(sr => {
+                            const searchFields = [
+                                sr.noSr || '',
+                                sr.noSo || '',
+                                sr.status || '',
+                                sr.reason || ''
+                            ].join(' ').toLowerCase()
+                            return searchFields.includes(query.toLowerCase())
+                        })
+                        .slice(0, 5)
+                        .map(sr => ({
+                            name: `${sr.noSr} - ${sr.status || 'Draft'}`,
+                            category: 'Sales Return',
+                            icon: 'ri-arrow-go-back-line',
+                            path: `/sales/sales-return?search=${encodeURIComponent(sr.noSr || sr.id)}`
+                        }))
+                    localMatches.push(...filtered)
+                }
+                
+                // Surat Jalan fallback
+                if (Array.isArray(suratJalanLocalStore?.suratJalans) && suratJalanLocalStore.suratJalans.length) {
+                    const filtered = suratJalanLocalStore.suratJalans
+                        .filter(sj => {
+                            const searchFields = [
+                                sj.noSj || '',
+                                sj.noSo || '',
+                                sj.status || '',
+                                sj.description || ''
+                            ].join(' ').toLowerCase()
+                            return searchFields.includes(query.toLowerCase())
+                        })
+                        .slice(0, 5)
+                        .map(sj => ({
+                            name: `${sj.noSj} - ${sj.status || 'Draft'}`,
+                            category: 'Surat Jalan',
+                            icon: 'ri-truck-line',
+                            path: `/sales/surat-jalan?search=${encodeURIComponent(sj.noSj || sj.id)}`
+                        }))
+                    localMatches.push(...filtered)
+                }
+                
+                // Quotation fallback
+                if (Array.isArray(quotationLocalStore?.quotations) && quotationLocalStore.quotations.length) {
+                    const filtered = quotationLocalStore.quotations
+                        .filter(quo => {
+                            const searchFields = [
+                                quo.noQuotation || '',
+                                quo.status || '',
+                                quo.description || ''
+                            ].join(' ').toLowerCase()
+                            return searchFields.includes(query.toLowerCase())
+                        })
+                        .slice(0, 5)
+                        .map(quo => ({
+                            name: `${quo.noQuotation} - ${quo.status || 'Draft'}`,
+                            category: 'Quotation',
+                            icon: 'ri-file-paper-2-line',
+                            path: `/sales/quotation?search=${encodeURIComponent(quo.noQuotation || quo.id)}`
+                        }))
+                    localMatches.push(...filtered)
+                }
+                
+                // Vendor fallback
+                if (Array.isArray(vendorLocalStore?.vendors) && vendorLocalStore.vendors.length) {
+                    const filtered = vendorLocalStore.vendors
+                        .filter(v => {
+                            const searchFields = [
+                                v.name || '',
+                                v.email || '',
+                                v.phone || '',
+                                v.address || ''
+                            ].join(' ').toLowerCase()
+                            return searchFields.includes(query.toLowerCase())
+                        })
+                        .slice(0, 5)
+                        .map(v => ({
+                            name: v.name,
+                            category: 'Vendor',
+                            icon: 'ri-store-2-line',
+                            path: `/purchasing/vendor?search=${encodeURIComponent(v.name)}`
+                        }))
+                    localMatches.push(...filtered)
+                }
             } catch {}
 
             const combined = [...menuMatches, ...serverMatches, ...localMatches]
             searchResults.value = combined.length > 0 ? combined.slice(0, 20) : []
+
+            
+            // Debug: Log breakdown per kategori
+            const categoryBreakdown = {}
+            combined.forEach(result => {
+                const category = result.category.split(' · ')[0] // Ambil kategori utama
+                categoryBreakdown[category] = (categoryBreakdown[category] || 0) + 1
+            })
+            console.log('- Category breakdown:', categoryBreakdown)
         } catch (error) {
             console.error('Error searching:', error)
             searchResults.value = []
@@ -354,8 +617,52 @@
     };
     // --- End Avatar Dropdown Logic ---
 
-    onMounted(() => {
+    onMounted(async () => {
         userStore.loadUser()
+        
+        // Pre-load data untuk search (jika belum ada)
+        try {
+            const preloadPromises = []
+            
+            if (!accountLocalStore.accounts.length) {
+                preloadPromises.push(accountLocalStore.fetchAccounts().catch(e => console.warn('Failed to pre-load accounts:', e)))
+            }
+            if (!customerLocalStore.customers.length) {
+                preloadPromises.push(customerLocalStore.fetchCustomers().catch(e => console.warn('Failed to pre-load customers:', e)))
+            }
+            if (!productLocalStore.products.length) {
+                preloadPromises.push(productLocalStore.fetchProducts().catch(e => console.warn('Failed to pre-load products:', e)))
+            }
+            if (!roleLocalStore.roles.length) {
+                preloadPromises.push(roleLocalStore.fetchRoles().catch(e => console.warn('Failed to pre-load roles:', e)))
+            }
+            if (!salesOrderLocalStore.salesOrders.length) {
+                preloadPromises.push(salesOrderLocalStore.fetchSalesOrders().catch(e => console.warn('Failed to pre-load sales orders:', e)))
+            }
+            if (!purchaseOrderLocalStore.purchaseOrders.length) {
+                preloadPromises.push(purchaseOrderLocalStore.fetchPurchaseOrders().catch(e => console.warn('Failed to pre-load purchase orders:', e)))
+            }
+            if (!salesReturnLocalStore.salesReturns.length) {
+                preloadPromises.push(salesReturnLocalStore.fetchSalesReturns().catch(e => console.warn('Failed to pre-load sales returns:', e)))
+            }
+            if (!suratJalanLocalStore.suratJalans.length) {
+                preloadPromises.push(suratJalanLocalStore.fetchSuratJalans().catch(e => console.warn('Failed to pre-load surat jalans:', e)))
+            }
+            if (!quotationLocalStore.quotations.length) {
+                preloadPromises.push(quotationLocalStore.fetchQuotations().catch(e => console.warn('Failed to pre-load quotations:', e)))
+            }
+            if (!vendorLocalStore.vendors.length) {
+                preloadPromises.push(vendorLocalStore.fetchVendors().catch(e => console.warn('Failed to pre-load vendors:', e)))
+            }
+            
+            // Jalankan semua pre-loading secara paralel
+            if (preloadPromises.length > 0) {
+                await Promise.allSettled(preloadPromises)
+            }
+        } catch (error) {
+            console.warn('Error pre-loading data for search:', error)
+        }
+        
         window.addEventListener('keydown', handleKeydown);
         document.addEventListener('click', handleClickOutside);
     })
@@ -452,13 +759,13 @@
   transition: all 0.3s ease;
   padding-left: 24px;
   padding-right: 24px;
-  width: 900px;
+  width: 1000px;
 }
 
 /* Search input styling */
 .search-input-container {
   position: relative;
-  min-width: 900px;
+  min-width: 1000px;
 }
 
 .search-input-wrapper {

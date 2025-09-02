@@ -73,6 +73,79 @@ export default defineNuxtPlugin(() => {
     purchaseOrderItemUpdateStatusPartial: (id: number | string) => `${apiBase}/purchase-order-item/updateStatusPartial/${id}`,
     receiveAllPurchaseOrderItems: (id: number | string) => `${apiBase}/purchase-order/receiveAllItems/${id}`,
 
+    // Finance Dashboard
+    financeDashboard: () => `${apiBase}/finance/dashboard`,
+    financeCashFlow: () => `${apiBase}/finance/cash-flow`,
+    financeTaxReport: () => `${apiBase}/finance/tax-report`,
+
+    // Bank Accounts
+    bankAccounts: () => `${apiBase}/accounting/bank-accounts`,
+    bankAccountsStore: () => `${apiBase}/accounting/bank-accounts/store`,
+    bankAccountsUpdate: (id: number | string) => `${apiBase}/accounting/bank-accounts/update/${id}`,
+    bankAccountsShow: (id: number | string) => `${apiBase}/accounting/bank-accounts/${id}`,
+    bankAccountsDelete: (id: number | string) => `${apiBase}/accounting/bank-accounts/delete/${id}`,
+    
+    // Expenses
+    expenses: () => `${apiBase}/accounting/expenses`,
+    expensesStore: () => `${apiBase}/accounting/expenses/store`,
+    expensesUpdate: (id: number | string) => `${apiBase}/accounting/expenses/update/${id}`,
+    expensesShow: (id: number | string) => `${apiBase}/accounting/expenses/${id}`,
+    expensesDelete: (id: number | string) => `${apiBase}/accounting/expenses/delete/${id}`,  
+    expensesSummary: () => `${apiBase}/accounting/expenses/summary`,
+    
+    // AP Payments
+    apPayments: () => `${apiBase}/accounting/ap-payments`,
+    apPaymentsStore: () => `${apiBase}/accounting/ap-payments/store`,
+    apPaymentsUpdate: (id: number | string) => `${apiBase}/accounting/al
+    p-payments/update/${id}`,
+    apPaymentsShow: (id: number | string) => `${apiBase}/accounting/ap-payments/${id}`,
+    apPaymentsDelete: (id: number | string) => `${apiBase}/accounting/ap-payments/delete/${id}`,
+    apPaymentsSummary: () => `${apiBase}/accounting/ap-payments/summary`,
+    
+    // AR Receipts
+    arReceipts: () => `${apiBase}/accounting/ar-receipts`,
+    arReceiptsStore: () => `${apiBase}/accounting/ar-receipts/store`,
+    arReceiptsUpdate: (id: number | string) => `${apiBase}/accounting/ar-receipts/update/${id}`,
+    arReceiptsShow: (id: number | string) => `${apiBase}/accounting/ar-receipts/${id}`,
+    arReceiptsDelete: (id: number | string) => `${apiBase}/accounting/ar-receipts/delete/${id}`,
+    arReceiptsSummary: () => `${apiBase}/accounting/ar-receipts/summary`,
+    
+    // Assets
+    assets: () => `${apiBase}/accounting/assets`,
+    assetsStore: () => `${apiBase}/accounting/assets/store`,
+    assetsUpdate: (id: number | string) => `${apiBase}/accounting/assets/update/${id}`,
+    assetsShow: (id: number | string) => `${apiBase}/accounting/assets/${id}`,
+    assetsDelete: (id: number | string) => `${apiBase}/accounting/assets/delete/${id}`,
+    assetsSummary: () => `${apiBase}/accounting/assets/summary`,
+    assetsCategories: () => `${apiBase}/accounting/assets/categories`,
+    
+    // Accounts
+    accounts: () => `${apiBase}/accounting/accounts`,
+    accountsStore: () => `${apiBase}/accounting/accounts/store`,
+    accountsUpdate: (id: number | string) => `${apiBase}/accounting/accounts/update/${id}`,
+    accountsShow: (id: number | string) => `${apiBase}/accounting/accounts/${id}`,
+    accountsDelete: (id: number | string) => `${apiBase}/accounting/accounts/delete/${id}`,
+    accountsChartOfAccounts: () => `${apiBase}/accounting/accounts/chart-of-accounts`,
+    accountsCategory: (category: string) => `${apiBase}/accounting/accounts/category/${category}`,
+    accountsParentAccounts: () => `${apiBase}/accounting/accounts/parent-accounts`,
+    accountsSummary: () => `${apiBase}/accounting/accounts/summary`,
+
+    // Taxes
+    taxes: () => `${apiBase}/accounting/taxes`,
+    taxesStore: () => `${apiBase}/accounting/taxes/store`,
+    taxesUpdate: (id: number | string) => `${apiBase}/accounting/taxes/update/${id}`,
+    taxesShow: (id: number | string) => `${apiBase}/accounting/taxes/${id}`,
+    taxesDelete: (id: number | string) => `${apiBase}/accounting/taxes/delete/${id}`,
+    taxesActive: () => `${apiBase}/accounting/taxes/active`,
+
+    // Journal Entries
+    journalEntries: () => `${apiBase}/accounting/journal-entries`,
+    journalEntriesStore: () => `${apiBase}/accounting/journal-entries/store`,
+    journalEntriesUpdate: (id: number | string) => `${apiBase}/accounting/journal-entries/update/${id}`,
+    journalEntriesShow: (id: number | string) => `${apiBase}/accounting/journal-entries/${id}`,
+    journalEntriesDelete: (id: number | string) => `${apiBase}/accounting/journal-entries/delete/${id}`,
+    journalEntriesSummary: () => `${apiBase}/accounting/journal-entries/summary`,
+
     // Sales Order
     salesOrder             : () => `${apiBase}/sales-order`,
     countSalesOrderByStatus: () => `${apiBase}/sales-order/countByStatus`,

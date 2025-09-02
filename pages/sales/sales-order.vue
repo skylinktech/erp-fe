@@ -484,7 +484,7 @@
                 </template>
             </Modal>
         </div>
-         <div class="content-backdrop fade"></div>
+        <div class="content-backdrop fade"></div>
     </div>
 </template>
 
