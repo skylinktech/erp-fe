@@ -354,7 +354,6 @@ import { useTaxStore } from '~/stores/taxes'
 import { useUserStore } from '~/stores/user'
 import { usePermissionsStore } from '~/stores/permissions'
 import { useDebounceFn } from '@vueuse/core'
-import { formatRupiah } from '~/composables/formatRupiah'
 
 // Page meta
 definePageMeta({
@@ -369,6 +368,8 @@ const permissionStore = usePermissionsStore()
 
 // Router
 const router = useRouter()
+
+const formatRupiah = useFormatRupiah()
 
 // Refs
 const myDataTableRef = ref()
