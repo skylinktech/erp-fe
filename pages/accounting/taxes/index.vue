@@ -352,7 +352,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTaxStore } from '~/stores/taxes'
 import { useUserStore } from '~/stores/user'
-import { usePermissionStore } from '~/stores/permissions'
+import { usePermissionsStore } from '~/stores/permissions'
 import { useDebounceFn } from '@vueuse/core'
 import { formatRupiah } from '~/composables/formatRupiah'
 
@@ -365,7 +365,7 @@ definePageMeta({
 // Stores
 const taxStore = useTaxStore()
 const userStore = useUserStore()
-const permissionStore = usePermissionStore()
+const permissionStore = usePermissionsStore()
 
 // Router
 const router = useRouter()
