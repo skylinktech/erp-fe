@@ -187,7 +187,11 @@
                             paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink"
                             currentPageReportTemplate="Menampilkan {first} sampai {last} dari {totalRecords} data"
                         >
-                            <Column field="id" header="#" :sortable="true"></Column> 
+                            <Column header="#" :sortable="false">
+                                <template #body="slotProps">
+                                    {{ params.first + slotProps.index + 1 }}
+                                </template>
+                            </Column>
                             <Column field="kodeCabang" header="Kode Cabang" :sortable="true"></Column>
                             <Column field="nmCabang" header="Nama Cabang" :sortable="true"></Column>
                             <Column field="alamatCabang" header="Alamat" :sortable="true"></Column>
