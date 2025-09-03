@@ -205,6 +205,7 @@
                                     </template>
                                 </Column>
                                 <Column field="name" header="Nama Customer" :sortable="true"></Column>
+                                <Column field="code" header="Kode Customer" :sortable="true"></Column>
                                 <Column field="address" header="Alamat Customer" :sortable="true"></Column>
                                 <Column field="npwp" header="NPWP Customer" :sortable="true"></Column>
                                 <Column field="email" header="Email Customer" :sortable="true"></Column>
@@ -268,6 +269,18 @@
                                     <input 
                                         type="text" 
                                         class="form-control" 
+                                        v-model="form.code" 
+                                        placeholder="Masukkan kode customer"
+                                        required
+                                    >
+                                    <label>Kode Customer</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating form-floating-outline">
+                                    <input 
+                                        type="text" 
+                                        class="form-control" 
                                         v-model="form.name" 
                                         placeholder="Masukkan nama customer"
                                         required
@@ -299,7 +312,7 @@
                                     <label>No. Telp Customer</label>
                                 </div>
                             </div>
-                            <div class="col-md-12">
+                            <div class="col-md-6">
                                 <div class="form-floating form-floating-outline">
                                     <input 
                                     type="text" 
