@@ -3,14 +3,18 @@ import { useNuxtApp } from '#app'
 import Swal from 'sweetalert2'
 
 export interface Tax {
-  id?: number
+  id?: string
   name: string
   code: string
   rate: number
-  type: 'percentage' | 'fixed'
-  description?: string
-  is_active: boolean
-  is_default: boolean
+  type: 'ppn' | 'pph' | 'lainnya'
+  isActive: boolean
+  createdBy?: number
+  updatedBy?: number
+  createdAt?: string
+  updatedAt?: string
+  createdByUser?: any
+  updatedByUser?: any
 }
 
 interface TaxState {
@@ -51,17 +55,16 @@ export const useTaxStore = defineStore('tax', {
       name: '',
       code: '',
       rate: 0,
-      type: 'percentage',
-      description: '',
-      is_active: true,
-      is_default: false
+      type: 'ppn',
+      isActive: true
     },
     isEditMode: false,
     showModal: false,
     validationErrors: [],
     taxTypes: [
-      { value: 'percentage', label: 'Persentase (%)' },
-      { value: 'fixed', label: 'Nominal Tetap' }
+      { value: 'ppn', label: 'PPN (Pajak Pertambahan Nilai)' },
+      { value: 'pph', label: 'PPh (Pajak Penghasilan)' },
+      { value: 'lainnya', label: 'Lainnya' }
     ]
   }),
 
@@ -70,6 +73,7 @@ export const useTaxStore = defineStore('tax', {
       this.loading = true
       this.error = null
       const { $api } = useNuxtApp()
+      const toast = useToast()
       try {
         const token = localStorage.getItem('token');
         const params = new URLSearchParams({
@@ -96,10 +100,16 @@ export const useTaxStore = defineStore('tax', {
 
         const result = await response.json()
         this.taxes = result.data
-        this.totalRecords = result.meta.total
+        this.totalRecords = Number(result?.meta?.total) || 0
       } catch (e: any) {
         this.error = e.message
-        Swal.fire('Error', `Tidak dapat memuat data pajak: ${e.message}`, 'error');
+        toast.error({
+          title: 'Error',
+          message: `Tidak dapat memuat data pajak: ${e.message}`,
+          color: 'red',
+          position: 'topRight',
+          layout: 2,
+        });
       } finally {
         this.loading = false
       }
@@ -109,32 +119,42 @@ export const useTaxStore = defineStore('tax', {
       this.loading = true
       this.validationErrors = [];
       const { $api } = useNuxtApp()
+      const toast = useToast()
 
       try {
         const token = localStorage.getItem('token')
 
-        const formData = new FormData()
-        
-        const fieldsToSend = ['name', 'code', 'rate', 'type', 'description', 'is_active', 'is_default'];
-        fieldsToSend.forEach(key => {
-          const value = this.form[key as keyof typeof this.form];
-          if (value !== null && value !== undefined) {
-            formData.append(key, String(value));
-          }
-        });
+        // Debug: log form data
+        console.log('Form data:', this.form)
+        console.log('Is edit mode:', this.isEditMode)
+        console.log('Form ID:', this.form.id)
+
+        // Gunakan JSON data instead of FormData
+        const payload = {
+          name: this.form.name,
+          code: this.form.code,
+          rate: this.form.rate,
+          type: this.form.type,
+          isActive: this.form.isActive
+        };
 
         let method = 'POST';
         let url = $api.taxesStore();
         if (this.isEditMode && this.form.id) {
           url = $api.taxesUpdate(this.form.id);
           method = 'PUT';
+          console.log('Update URL:', url)
+          console.log('Update method:', method)
         }
+
+        console.log('Final payload:', payload)
 
         const response = await fetch(url, {
           method: method,
-          body: formData,
+          body: JSON.stringify(payload),
           headers: {
             'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
           credentials: 'include',
@@ -148,6 +168,9 @@ export const useTaxStore = defineStore('tax', {
           throw new Error('Server response tidak valid');
         }
 
+        console.log('Response status:', response.status)
+        console.log('Response result:', result)
+
         if (!response.ok) {
           if (response.status === 422 && result.errors) {
             this.validationErrors = Object.values(result.errors).flat();
@@ -158,20 +181,34 @@ export const useTaxStore = defineStore('tax', {
         
         this.closeModal();
         await this.fetchTaxes();
-        Swal.fire('Berhasil!', `Pajak berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`, 'success');
+        toast.success({
+          title: 'Success',
+          message: `Pajak berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
+          color: 'green',
+          position: 'topRight',
+          layout: 2,
+
+        });
 
       } catch (error: any) {
         if (this.validationErrors.length === 0) {
-          Swal.fire('Error', error.message || 'Operasi gagal', 'error');
+          toast.error({
+            title: 'Error',
+            message: error.message || 'Operasi gagal',
+            color: 'red',
+            position: 'topRight',
+            layout: 2,
+          });
         }
       } finally {
         this.loading = false
       }
     },
 
-    async deleteTax(id: number) {
+    async deleteTax(id: string) {
       const { $api } = useNuxtApp();
-      
+      const toast = useToast();
+
       const result = await Swal.fire({
         title: 'Apakah Anda yakin?',
         text: "Data pajak yang dihapus tidak dapat dikembalikan!",
@@ -202,9 +239,21 @@ export const useTaxStore = defineStore('tax', {
           }
 
           await this.fetchTaxes();
-          Swal.fire('Berhasil!', 'Pajak berhasil dihapus.', 'success');
+          toast.success({
+            title: 'Success',
+            message: 'Pajak berhasil dihapus.',
+            color: 'green',
+            position: 'topRight',
+            layout: 2,
+          });
         } catch (error: any) {
-          Swal.fire('Error', error.message || 'Gagal menghapus pajak', 'error');
+          toast.error({
+            title: 'Error',
+            message: error.message || 'Gagal menghapus pajak',
+            color: 'red',
+            position: 'topRight',
+            layout: 2,
+          });
         }
       }
     },
@@ -220,29 +269,29 @@ export const useTaxStore = defineStore('tax', {
           name: '',
           code: '',
           rate: 0,
-          type: 'percentage',
-          description: '',
-          is_active: true,
-          is_default: false
+          type: 'ppn',
+          isActive: true
         };
       }
       
       this.showModal = true;
     },
 
-    closeModal() {
-      this.showModal = false;
-      this.isEditMode = false;
+    resetForm() {
       this.form = {
         name: '',
         code: '',
         rate: 0,
-        type: 'percentage',
-        description: '',
-        is_active: true,
-        is_default: false
-      };
-      this.validationErrors = [];
+        type: 'ppn',
+        isActive: true
+      }
+      this.validationErrors = []
+    },
+
+    closeModal() {
+      this.showModal = false;
+      this.isEditMode = false;
+      this.resetForm()
     },
 
     setPagination(event: any) {

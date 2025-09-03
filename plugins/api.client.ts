@@ -6,9 +6,7 @@ export default defineNuxtPlugin(() => {
   // Sinkronkan dengan .env dan nuxt.config.ts
   const apiBase = config.public.apiBase || '';
   const authBase = config.public.authBase || '';
-
   
-
   // Endpoint helper
   const api = {
     // Auth
@@ -117,10 +115,10 @@ export default defineNuxtPlugin(() => {
     
     // Assets
     assets: () => `${apiBase}/accounting/assets`,
-    assetsStore: () => `${apiBase}/accounting/assets/store`,
-    assetsUpdate: (id: number | string) => `${apiBase}/accounting/assets/update/${id}`,
+    assetsStore: () => `${apiBase}/accounting/assets`,
+    assetsUpdate: (id: number | string) => `${apiBase}/accounting/assets/${id}`,
     assetsShow: (id: number | string) => `${apiBase}/accounting/assets/${id}`,
-    assetsDelete: (id: number | string) => `${apiBase}/accounting/assets/delete/${id}`,
+    assetsDelete: (id: number | string) => `${apiBase}/accounting/assets/${id}`,
     assetsSummary: () => `${apiBase}/accounting/assets/summary`,
     assetsCategories: () => `${apiBase}/accounting/assets/categories`,
     
@@ -137,10 +135,10 @@ export default defineNuxtPlugin(() => {
 
     // Taxes
     taxes: () => `${apiBase}/accounting/taxes`,
-    taxesStore: () => `${apiBase}/accounting/taxes/store`,
-    taxesUpdate: (id: number | string) => `${apiBase}/accounting/taxes/update/${id}`,
+    taxesStore: () => `${apiBase}/accounting/taxes`,
+    taxesUpdate: (id: number | string) => `${apiBase}/accounting/taxes/${id}`,
     taxesShow: (id: number | string) => `${apiBase}/accounting/taxes/${id}`,
-    taxesDelete: (id: number | string) => `${apiBase}/accounting/taxes/delete/${id}`,
+    taxesDelete: (id: number | string) => `${apiBase}/accounting/taxes/${id}`,
     taxesActive: () => `${apiBase}/accounting/taxes/active`,
 
     // Journal Entries

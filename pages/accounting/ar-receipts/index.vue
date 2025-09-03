@@ -110,29 +110,27 @@
                 </div>
                 <div class="col-12">
                     <div class="card">
-                        <div class="card-header">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <div>
-                                    <h5 class="mb-0">Daftar Penerimaan</h5>
-                                    <small class="text-muted">Kelola semua penerimaan dalam sistem</small>
-                                </div>
-                                <div class="d-flex gap-2" v-if="userHasPermission('create_ar_receipt') || userHasRole('superadmin')">
-                                    <button 
-                                        @click="receiptStore.openModal()" 
-                                        class="btn btn-primary">
-                                        <i class="ri-add-line me-1"></i>
-                                        Tambah Penerimaan
-                                    </button>
-                                </div>
+                        <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+                            <div class="d-flex align-items-center me-3 mb-2 mb-md-0">
+                                <span class="me-2">Baris:</span>
+                                <Dropdown v-model="params.rows" :options="rowsPerPageOptionsArray" @change="handleRowsChange" placeholder="Jumlah" style="width: 8rem;" />
                             </div>
-                            <TableControls
-                                v-model="tableControls"
-                                :rows-per-page-options="rowsPerPageOptionsArray"
-                                search-placeholder="Cari nomor referensi, pelanggan..."
-                                @rows-change="handleRowsChange"
-                                @search="handleSearch"
-                                @export="exportData"
-                            />
+                            <div class="d-flex align-items-center gap-2">
+                                <button 
+                                    v-if="userHasPermission('create_ar_receipt') || userHasRole('superadmin')"
+                                    @click="receiptStore.openModal()" 
+                                    class="btn btn-primary">
+                                    <i class="ri-add-line me-1"></i>
+                                    Tambah Penerimaan
+                                </button>
+                                <button @click="exportData('csv')" class="btn btn-outline-secondary">
+                                    <i class="ri-download-line me-1"></i>
+                                    Export
+                                </button>
+                                <span class="p-input-icon-left">
+                                    <InputText v-model="globalFilterValue" placeholder="Cari nomor referensi, pelanggan..." class="w-full md:w-20rem" />
+                                </span>
+                            </div>
                         </div>
                         <div class="card-datatable table-responsive py-3 px-3">
                             <MyDataTable 
@@ -195,28 +193,15 @@
                                 </Column>
                                 <Column header="Actions" :exportable="false" style="min-width:8rem">
                                     <template #body="slotProps">
-                                        <div class="d-inline-block">
-                                            <a href="javascript:;" class="btn btn-sm btn-text-secondary rounded-pill btn-icon dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
-                                                <i class="ri-more-2-fill"></i>
-                                            </a>
-                                            <ul class="dropdown-menu">
-                                                <li v-if="userHasPermission('edit_ar_receipt') || userHasRole('superadmin')">
-                                                    <a class="dropdown-item" href="javascript:void(0)" @click="receiptStore.openModal(slotProps.data)">
-                                                        <i class="ri-edit-box-line me-2"></i> Edit
-                                                    </a>
-                                                </li>
-                                                <li v-if="slotProps.data.status === 'draft' && userHasPermission('approve_ar_receipt') || userHasRole('superadmin')">
-                                                    <a class="dropdown-item text-success" href="javascript:void(0)" @click="confirmReceipt(slotProps.data.id)">
-                                                        <i class="ri-checkbox-circle-line me-2"></i> Konfirmasi
-                                                    </a>
-                                                </li>
-                                                <li v-if="userHasPermission('delete_ar_receipt') || userHasRole('superadmin')">
-                                                    <a class="dropdown-item text-danger" href="javascript:void(0)" @click="receiptStore.deleteReceipt(slotProps.data.id)">
-                                                        <i class="ri-delete-bin-7-line me-2"></i> Hapus
-                                                    </a>
-                                                </li>
-                                            </ul>
-                                        </div>
+                                        <button @click="receiptStore.openModal(slotProps.data)" class="btn btn-sm btn-icon btn-text-secondary rounded-pill btn-icon me-2" v-if="userHasPermission('edit_ar_receipt') || userHasRole('superadmin')">
+                                            <i class="ri-edit-box-line ri-20px"></i>
+                                        </button>
+                                        <button @click="confirmReceipt(slotProps.data.id)" class="btn btn-sm btn-icon btn-text-secondary rounded-pill btn-icon me-2" v-if="slotProps.data.status === 'draft' && (userHasPermission('approve_ar_receipt') || userHasRole('superadmin'))">
+                                            <i class="ri-checkbox-circle-line ri-20px"></i>
+                                        </button>
+                                        <button @click="receiptStore.deleteReceipt(slotProps.data.id)" class="btn btn-sm btn-icon btn-text-secondary rounded-pill btn-icon" v-if="userHasPermission('delete_ar_receipt') || userHasRole('superadmin')">
+                                            <i class="ri-delete-bin-7-line ri-20px"></i>
+                                        </button>
                                     </template>
                                 </Column>
                             </MyDataTable>
@@ -413,9 +398,9 @@ import { usePermissions } from '~/composables/usePermissions'
 import { useDebounceFn } from '@vueuse/core'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import Modal from '~/components/modal/Modal.vue'
-import TableControls from '~/components/table/TableControls.vue'
 import Column from 'primevue/column'
-import DataTable from 'primevue/datatable'
+import Dropdown from 'primevue/dropdown'
+import InputText from 'primevue/inputtext'
 
 // Page meta
 definePageMeta({
@@ -434,12 +419,6 @@ const router = useRouter()
 // Refs
 const myDataTableRef = ref()
 const globalFilterValue = ref('')
-
-// Table Controls
-const tableControls = ref({
-    rows: 10,
-    search: '',
-});
 
 const rowsPerPageOptionsArray = ref([10, 25, 50, 100]);
 
@@ -560,10 +539,6 @@ onMounted(async () => {
         await permissionStore.fetchPermissions()
         await userStore.loadUser()
         await receiptStore.fetchReceipts()
-        
-        // Initialize table controls
-        tableControls.value.rows = Number(params.value.rows) || 10;
-        tableControls.value.search = globalFilterValue.value;
     } catch (error) {
         console.error('Error in onMounted:', error)
     }
@@ -585,18 +560,9 @@ watch(showModal, (newValue) => {
     }
 })
 
-// Watch untuk sinkronisasi table controls
-watch(() => params.value.rows, (newValue) => {
-    tableControls.value.rows = Number(newValue) || 10;
-});
-
-watch(() => globalFilterValue.value, (newValue) => {
-    tableControls.value.search = newValue;
-});
-
 const debouncedSearch = useDebounceFn(() => {
     receiptStore.setSearch(globalFilterValue.value)
-}, 300)
+}, 500)
 
 watch(globalFilterValue, debouncedSearch)
 
@@ -609,16 +575,17 @@ const onSort = (event) => {
     receiptStore.setSort(event)
 }
 
-const handleRowsChange = (value) => {
-    params.value.rows = value
-    params.value.first = 0
-    receiptStore.fetchReceipts()
+const handleRowsChange = async (value) => {
+    const rowsValue = Number(value) || 10
+    receiptStore.params.rows = rowsValue
+    receiptStore.params.first = 0
+    await receiptStore.fetchReceipts()
 }
 
-const handleSearch = (value) => {
+const handleSearch = async (value) => {
     globalFilterValue.value = value
-    params.value.first = 0
-    receiptStore.fetchReceipts()
+    receiptStore.params.first = 0
+    await receiptStore.fetchReceipts()
 }
 </script>
 

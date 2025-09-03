@@ -60,7 +60,8 @@ export const useUserStore = defineStore('user', {
       localStorage.removeItem('token')
       localStorage.removeItem('user')
       // Hapus kredensial yang tersimpan untuk remember me
-      localStorage.removeItem('rememberedCredentials')
+      const usernameCookie = useCookie('remembered_username');
+      usernameCookie.value = null;
     },
     async loadUser() {
       const token = localStorage.getItem('token')

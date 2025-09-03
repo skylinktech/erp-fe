@@ -117,11 +117,10 @@
 
   const loadSavedCredentials = () => {
     try {
-      const savedCredentials = localStorage.getItem('rememberedCredentials');
-      if (savedCredentials) {
-        const credentials = JSON.parse(savedCredentials);
-        username.value = credentials.username || '';
-        password.value = credentials.password || '';
+      // Gunakan cookie untuk username saja, jangan simpan password
+      const savedUsername = useCookie('remembered_username');
+      if (savedUsername.value) {
+        username.value = savedUsername.value;
         rememberMe.value = true;
       }
     } catch (error) {
@@ -131,13 +130,17 @@
 
   const saveCredentials = () => {
     if (rememberMe.value) {
-      const credentials = {
-        username: username.value,
-        password: password.value
-      };
-      localStorage.setItem('rememberedCredentials', JSON.stringify(credentials));
+      // Hanya simpan username di cookie, jangan simpan password
+      const usernameCookie = useCookie('remembered_username', {
+        maxAge: 30 * 24 * 60 * 60, // 30 hari
+        secure: true,
+        sameSite: 'strict'
+      });
+      usernameCookie.value = username.value;
     } else {
-      localStorage.removeItem('rememberedCredentials');
+      // Hapus cookie jika remember me tidak dicentang
+      const usernameCookie = useCookie('remembered_username');
+      usernameCookie.value = null;
     }
   };
 

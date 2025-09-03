@@ -4,16 +4,11 @@ import Swal from 'sweetalert2'
 
 export interface BankAccount {
   id?: number
-  name: string
+  account_name: string
   account_number: string
   bank_name: string
-  branch: string
-  account_type: 'savings' | 'checking' | 'current'
   currency: string
-  balance: number
-  is_active: boolean
-  is_default: boolean
-  description?: string
+  opening_balance: number
 }
 
 interface BankAccountState {
@@ -47,21 +42,16 @@ export const useBankAccountStore = defineStore('bankAccount', {
     params: {
       first: 0,
       rows: 10,
-      sortField: 'name',
+      sortField: 'account_name',
       sortOrder: 1,
       search: '',
     },
     form: {
-      name: '',
+      account_name: '',
       account_number: '',
       bank_name: '',
-      branch: '',
-      account_type: 'savings',
       currency: 'IDR',
-      balance: 0,
-      is_active: true,
-      is_default: false,
-      description: ''
+      opening_balance: 0
     },
     isEditMode: false,
     showModal: false,
@@ -130,7 +120,7 @@ export const useBankAccountStore = defineStore('bankAccount', {
 
         const formData = new FormData()
         
-        const fieldsToSend = ['name', 'account_number', 'bank_name', 'branch', 'account_type', 'currency', 'balance', 'is_active', 'is_default', 'description'];
+        const fieldsToSend = ['account_name', 'account_number', 'bank_name', 'currency', 'opening_balance'];
         fieldsToSend.forEach(key => {
           const value = this.form[key as keyof typeof this.form];
           if (value !== null && value !== undefined) {
@@ -232,16 +222,11 @@ export const useBankAccountStore = defineStore('bankAccount', {
         this.form = { ...bankAccount };
       } else {
         this.form = {
-          name: '',
+          account_name: '',
           account_number: '',
           bank_name: '',
-          branch: '',
-          account_type: 'savings',
           currency: 'IDR',
-          balance: 0,
-          is_active: true,
-          is_default: false,
-          description: ''
+          opening_balance: 0
         };
       }
       
@@ -252,16 +237,11 @@ export const useBankAccountStore = defineStore('bankAccount', {
       this.showModal = false;
       this.isEditMode = false;
       this.form = {
-        name: '',
+        account_name: '',
         account_number: '',
         bank_name: '',
-        branch: '',
-        account_type: 'savings',
         currency: 'IDR',
-        balance: 0,
-        is_active: true,
-        is_default: false,
-        description: ''
+        opening_balance: 0
       };
       this.validationErrors = [];
     },

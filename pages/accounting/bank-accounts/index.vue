@@ -104,18 +104,19 @@
             </div>
 
             <!-- Bank Account Table -->
-            <div class="card">
-                <div class="card-header border-bottom">
-                    <div class="card-title mb-0">
-                        <h5 class="mb-0">Daftar Rekening Bank</h5>
-                        <small class="text-muted">Kelola semua rekening bank dalam sistem</small>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center row py-3 gap-3 gap-md-0">
-                        <div class="col-md-4 text-muted">
-                            <small>Menampilkan {{ totalRecords }} dari {{ bankAccounts.length }} rekening</small>
-                        </div>
-                        <div class="col-md-4 d-flex justify-content-end">
-                            <div class="d-flex gap-2">
+            <div class="row g-6">
+                <div class="col-12">
+                    <h4 class="mt-6 mb-1">Daftar Rekening Bank</h4>
+                    <p class="mb-0">Kelola semua rekening bank dalam sistem</p>
+                </div>
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+                            <div class="d-flex align-items-center me-3 mb-2 mb-md-0">
+                                <span class="me-2">Baris:</span>
+                                <Dropdown v-model="params.rows" :options="rowsPerPageOptionsArray" @change="handleRowsChange" placeholder="Jumlah" style="width: 8rem;" />
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
                                 <button 
                                     v-if="userHasRole('superadmin') || userHasPermission('create_bank_account')"
                                     @click="bankAccountStore.openModal()" 
@@ -127,43 +128,38 @@
                                     <i class="ri-download-line me-1"></i>
                                     Export
                                 </button>
+                                <span class="p-input-icon-left">
+                                    <InputText v-model="globalFilterValue" placeholder="Cari Rekening Bank..." class="w-full md:w-20rem" />
+                                </span>
                             </div>
                         </div>
-                    </div>
-                </div>
-                <div class="card-datatable table-responsive">
-                    <MyDataTable
+                <div class="card-datatable table-responsive py-3 px-3">
+                    <MyDataTable 
                         ref="myDataTableRef"
-                        :value="bankAccounts"
+                        :data="bankAccounts"
+                        :rows="Number(params.rows)" 
                         :loading="loading"
-                        :total-records="totalRecords"
+                        :totalRecords="totalRecords"
+                        :first="params.first"
                         :lazy="true"
-                        :paginator="true"
-                        :rows="params.rows"
-                        :rows-per-page-options="rowsPerPageOptionsArray"
-                        :global-filter="globalFilterValue"
-                        :global-filter-fields="['name', 'account_number', 'bank_name', 'branch']"
-                        :sort-field="params.sortField"
-                        :sort-order="params.sortOrder"
-                        @page="onPage"
-                        @sort="onSort"
-                        @filter="handleSearch"
-                        @rows-change="handleRowsChange"
-                        striped-rows
-                        show-gridlines
-                        hover
-                        paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-                        current-page-report-template="Menampilkan {first} sampai {last} dari {totalRecords} rekening"
-                        responsive-layout="scroll"
-                        class="p-datatable-sm"
+                        @page="onPage($event)"
+                        @sort="onSort($event)"
+                        responsiveLayout="scroll" 
+                        paginatorPosition="bottom"
+                        paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink"
+                        currentPageReportTemplate="Menampilkan {first} sampai {last} dari {totalRecords} data"
                     >
-                        <Column field="name" header="Nama Rekening" :sortable="true" style="min-width:150px">
+                        <Column header="#" :sortable="false">
+                            <template #body="slotProps">
+                                {{
+                                    (Number(params.first) || 0) + (Number(slotProps.index) || 0) + 1
+                                }}
+                            </template>
+                        </Column>
+                        <Column field="account_name" header="Nama Rekening" :sortable="true" style="min-width:150px">
                             <template #body="slotProps">
                                 <div>
-                                    <div class="fw-semibold">{{ slotProps.data.name }}</div>
-                                    <small class="text-muted" v-if="slotProps.data.description">
-                                        {{ slotProps.data.description }}
-                                    </small>
+                                    <div class="fw-semibold">{{ slotProps.data.account_name }}</div>
                                 </div>
                             </template>
                         </Column>
@@ -177,59 +173,27 @@
                                 <span class="fw-semibold">{{ slotProps.data.account_number }}</span>
                             </template>
                         </Column>
-                        <Column field="branch" header="Cabang" :sortable="true" style="min-width:120px">
-                            <template #body="slotProps">
-                                <span class="text-muted">{{ slotProps.data.branch }}</span>
-                            </template>
-                        </Column>
-                        <Column field="account_type" header="Tipe" :sortable="true" style="min-width:100px">
-                            <template #body="slotProps">
-                                <span :class="getTypeBadgeClass(slotProps.data.account_type)">
-                                    {{ getTypeLabel(slotProps.data.account_type) }}
-                                </span>
-                            </template>
-                        </Column>
+
                         <Column field="currency" header="Mata Uang" :sortable="true" style="min-width:100px">
                             <template #body="slotProps">
                                 <span class="badge bg-label-secondary">{{ slotProps.data.currency }}</span>
                             </template>
                         </Column>
-                        <Column field="balance" header="Saldo" :sortable="true" style="min-width:120px">
+                        <Column field="opening_balance" header="Saldo" :sortable="true" style="min-width:120px">
                             <template #body="slotProps">
-                                <span class="fw-semibold" :class="getBalanceClass(slotProps.data.balance)">
-                                    {{ formatRupiah(slotProps.data.balance || 0) }}
-                                </span>
-                            </template>
-                        </Column>
-                        <Column field="is_default" header="Default" :sortable="true" style="min-width:100px">
-                            <template #body="slotProps">
-                                <span v-if="slotProps.data.is_default" class="badge bg-label-primary">
-                                    Default
-                                </span>
-                                <span v-else class="text-muted">-</span>
-                            </template>
-                        </Column>
-                        <Column field="is_active" header="Status" :sortable="true" style="min-width:100px">
-                            <template #body="slotProps">
-                                <span :class="slotProps.data.is_active ? 'badge bg-label-success' : 'badge bg-label-danger'">
-                                    {{ slotProps.data.is_active ? 'Aktif' : 'Nonaktif' }}
+                                <span class="fw-semibold" :class="getBalanceClass(slotProps.data.opening_balance)">
+                                    {{ formatRupiah(slotProps.data.opening_balance || 0) }}
                                 </span>
                             </template>
                         </Column>
                         <Column header="Actions" :exportable="false" style="min-width:8rem">
                             <template #body="slotProps">
                                 <div class="d-inline-block">
-                                    <a href="javascript:;" class="btn btn-sm btn-text-secondary rounded-pill btn-icon dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
-                                        <i class="ri-more-2-fill"></i>
+                                    <a href="javascript:;" class="btn btn-sm btn-text-secondary rounded-pill btn-icon dropdown-toggle hide-arrow" data-bs-toggle="dropdown"><i class="ri-more-2-fill"></i>
                                     </a>
                                     <ul class="dropdown-menu">
-                                        <li v-if="userHasRole('superadmin') || userHasPermission('view_bank_account')">
-                                            <a class="dropdown-item" href="javascript:void(0)" @click="openBankAccountDetails(slotProps.data.id)">
-                                                <i class="ri-eye-line me-2"></i> Lihat Detail
-                                            </a>
-                                        </li>
                                         <li v-if="userHasRole('superadmin') || userHasPermission('edit_bank_account')">
-                                            <a class="dropdown-item" href="javascript:void(0)" @click="bankAccountStore.openModal(slotProps.data)">
+                                            <a class="dropdown-item" href="javascript:void(0)" @click="bankAccountStore.openModal(slotProps.data, 'admin')">
                                                 <i class="ri-edit-box-line me-2"></i> Edit
                                             </a>
                                         </li>
@@ -243,6 +207,8 @@
                             </template>
                         </Column>
                     </MyDataTable>
+                </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -262,7 +228,7 @@
                                 <input 
                                     type="text" 
                                     class="form-control" 
-                                    v-model="form.name" 
+                                    v-model="form.account_name" 
                                     placeholder="Masukkan nama rekening"
                                     required
                                 >
@@ -281,7 +247,7 @@
                                 <label>Nama Bank *</label>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-3">
                             <div class="form-floating form-floating-outline">
                                 <input 
                                     type="text" 
@@ -293,34 +259,8 @@
                                 <label>Nomor Rekening *</label>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="form-floating form-floating-outline">
-                                <input 
-                                    type="text" 
-                                    class="form-control" 
-                                    v-model="form.branch" 
-                                    placeholder="Masukkan cabang bank"
-                                    required
-                                >
-                                <label>Cabang Bank *</label>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-floating form-floating-outline">
-                                <select 
-                                    class="form-select" 
-                                    v-model="form.account_type"
-                                    required
-                                >
-                                    <option value="">Pilih Tipe Rekening</option>
-                                    <option v-for="type in accountTypes" :key="type.value" :value="type.value">
-                                        {{ type.label }}
-                                    </option>
-                                </select>
-                                <label>Tipe Rekening *</label>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
+
+                        <div class="col-md-3">
                             <div class="form-floating form-floating-outline">
                                 <select 
                                     class="form-select" 
@@ -340,7 +280,7 @@
                                 <input 
                                     type="number" 
                                     class="form-control" 
-                                    v-model="form.balance" 
+                                    v-model="form.opening_balance" 
                                     placeholder="Masukkan saldo awal"
                                     step="0.01"
                                     min="0"
@@ -349,42 +289,7 @@
                                 <label>Saldo Awal *</label>
                             </div>
                         </div>
-                        <div class="col-md-12">
-                            <div class="form-floating form-floating-outline">
-                                <textarea
-                                    class="form-control h-px-100"
-                                    placeholder="Deskripsi rekening"
-                                    v-model="form.description">
-                                </textarea>
-                                <label>Deskripsi</label>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-check form-switch">
-                                <input 
-                                    class="form-check-input" 
-                                    type="checkbox" 
-                                    v-model="form.is_active"
-                                    id="isActive"
-                                >
-                                <label class="form-check-label" for="isActive">
-                                    Rekening Aktif
-                                </label>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-check form-switch">
-                                <input 
-                                    class="form-check-input" 
-                                    type="checkbox" 
-                                    v-model="form.is_default"
-                                    id="isDefault"
-                                >
-                                <label class="form-check-label" for="isDefault">
-                                    Rekening Default
-                                </label>
-                            </div>
-                        </div>
+
                     </div>
                     <div class="mt-4 d-flex justify-content-end gap-2">
                         <button type="button" class="btn btn-outline-secondary" @click="bankAccountStore.closeModal()">
@@ -402,13 +307,20 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useBankAccountStore } from '~/stores/bank-accounts'
 import { useUserStore } from '~/stores/user'
 import { usePermissionsStore } from '~/stores/permissions'
 import { useDebounceFn } from '@vueuse/core'
 import { usePermissions } from '~/composables/usePermissions'
+import { useFormatRupiah } from '~/composables/formatRupiah'
+import Modal from '~/components/modal/Modal.vue'
+import MyDataTable from '~/components/table/MyDataTable.vue'
+import Dropdown from 'primevue/dropdown'
+import Column from 'primevue/column'
+import InputText from 'primevue/inputtext'
+import Swal from 'sweetalert2'
 
 // Page meta
 definePageMeta({
@@ -431,21 +343,28 @@ const myDataTableRef = ref()
 const globalFilterValue = ref('')
 
 // Computed
-const bankAccounts = computed(() => bankAccountStore.bankAccounts)
-const loading = computed(() => bankAccountStore.loading)
-const totalRecords = computed(() => bankAccountStore.totalRecords)
-const params = computed(() => bankAccountStore.params)
-const form = computed(() => bankAccountStore.form)
-const isEditMode = computed(() => bankAccountStore.isEditMode)
-const showModal = computed(() => bankAccountStore.showModal)
-const validationErrors = computed(() => bankAccountStore.validationErrors)
-const accountTypes = computed(() => bankAccountStore.accountTypes)
-const currencies = computed(() => bankAccountStore.currencies)
+const bankAccounts = computed(() => bankAccountStore.bankAccounts || [])
+const loading = computed(() => bankAccountStore.loading || false)
+const totalRecords = computed(() => bankAccountStore.totalRecords || 0)
+const params = computed(() => bankAccountStore.params || {})
+const form = computed(() => bankAccountStore.form || {})
+const isEditMode = computed(() => bankAccountStore.isEditMode || false)
+const showModal = computed(() => bankAccountStore.showModal || false)
+const validationErrors = computed(() => bankAccountStore.validationErrors || [])
+const accountTypes = computed(() => bankAccountStore.accountTypes || [])
+const currencies = computed(() => bankAccountStore.currencies || [])
 
 // Statistics
-const activeAccountCount = computed(() => bankAccounts.value.filter(acc => acc.is_active).length)
-const defaultAccountCount = computed(() => bankAccounts.value.filter(acc => acc.is_default).length)
-const totalBalance = computed(() => bankAccounts.value.reduce((sum, acc) => sum + (acc.balance || 0), 0))
+const activeAccountCount = computed(() => 0) // Not available in current database schema
+const defaultAccountCount = computed(() => 0) // Not available in current database schema
+
+const totalBalance = computed(() => {
+    if (!bankAccounts.value || !Array.isArray(bankAccounts.value)) return 0
+    return bankAccounts.value.reduce((sum, acc) => {
+        const balance = Number(acc.opening_balance) || 0
+        return sum + balance
+    }, 0)
+})
 
 // Table options
 const rowsPerPageOptionsArray = ref([10, 25, 50, 100])
@@ -455,23 +374,7 @@ const modalTitle = computed(() => isEditMode.value ? 'Edit Rekening Bank' : 'Tam
 const modalDescription = computed(() => isEditMode.value ? 'Silakan ubah data rekening bank di bawah ini.' : 'Silakan isi form di bawah ini untuk menambahkan rekening bank baru.')
 
 // Methods
-const getTypeBadgeClass = (type) => {
-    const classes = {
-        savings: 'badge bg-label-success',
-        checking: 'badge bg-label-warning',
-        current: 'badge bg-label-info'
-    }
-    return classes[type] || 'badge bg-label-secondary'
-}
 
-const getTypeLabel = (type) => {
-    const labels = {
-        savings: 'Tabungan',
-        checking: 'Giro',
-        current: 'Koran'
-    }
-    return labels[type] || type
-}
 
 const getBalanceClass = (balance) => {
     if (!balance) return 'text-muted'
@@ -494,15 +397,15 @@ const { userHasRole, userHasPermission } = usePermissions();
 // Lifecycle
 let modalInstance = null
 onMounted(async () => {
-    await permissionStore.fetchPermissions()
-    await userStore.loadUser()
-    if (bankAccountStore.bankAccounts.length === 0) {
-        await bankAccountStore.fetchBankAccounts()
+    try {
+        await permissionStore.fetchPermissions()
+        await userStore.loadUser()
+        if (bankAccountStore.bankAccounts.length === 0) {
+            await bankAccountStore.fetchBankAccounts()
+        }
+    } catch (error) {
+        console.error('Error in onMounted:', error)
     }
-    
-    // Initialize table controls
-    tableControls.value.rows = Number(params.value.rows) || 10;
-    tableControls.value.search = globalFilterValue.value;
 })
 
 // Watchers
@@ -511,20 +414,11 @@ watch(showModal, async (newValue) => {
         // Delay untuk memastikan modal sudah di-render
         nextTick(() => {
             const modalElement = document.getElementById('BankAccountModal')
-            if (modalElement && !instance) {
-                instance = new bootstrap.Modal(modalElement)
+            if (modalElement && !modalInstance) {
+                modalInstance = new bootstrap.Modal(modalElement)
             }
-            instance?.show()
+            modalInstance?.show()
         })
-    } else {
-        instance?.hide()
-    }
-})
-
-// Watchers
-watch(showModal, async (newValue) => {
-    if (newValue) {
-        modalInstance?.show()
     } else {
         modalInstance?.hide()
     }
@@ -541,14 +435,14 @@ const onPage = (event) => bankAccountStore.setPagination(event)
 
 const handleRowsChange = async (value) => {
     const rowsValue = Number(value) || 10
-    params.value.rows = rowsValue
-    params.value.first = 0
+    bankAccountStore.params.rows = rowsValue
+    bankAccountStore.params.first = 0
     await bankAccountStore.fetchBankAccounts()
 }
 
 const handleSearch = async (value) => {
     globalFilterValue.value = value
-    params.value.first = 0
+    bankAccountStore.params.first = 0
     await bankAccountStore.fetchBankAccounts()
 }
 

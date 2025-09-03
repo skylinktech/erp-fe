@@ -5,22 +5,22 @@ import Swal from 'sweetalert2'
 export interface Asset {
   id?: number
   name: string
-  code: string
   category: string
-  purchase_date: string
-  purchase_cost: number
-  current_value: number
-  depreciation_method: 'straight_line' | 'declining_balance' | 'sum_of_years'
-  useful_life: number
-  salvage_value: number
+  acquisitionDate: string
+  acquisitionCost: number
+  depreciationMethod: 'straight_line' | 'declining_balance' | 'sum_of_years'
+  usefulLife: number
+  residualValue: number
   location: string
-  status: 'active' | 'inactive' | 'sold' | 'disposed'
+  status: 'active' | 'inactive' | 'sold' | 'trashed'
   description?: string
-  serial_number?: string
-  warranty_expiry?: string
-  supplier?: string
-  created_by?: number
-  created_by_user?: any
+  serialNumber?: string
+  warrantyExpiry?: string
+  cabangId?: number | null
+  vendorId?: number | null
+  perusahaanId?: number | null
+  createdBy?: number
+  createdByUser?: any
 }
 
 interface AssetState {
@@ -61,20 +61,20 @@ export const useAssetStore = defineStore('asset', {
     },
     form: {
       name: '',
-      code: '',
       category: '',
-      purchase_date: new Date().toISOString().split('T')[0],
-      purchase_cost: 0,
-      current_value: 0,
-      depreciation_method: 'straight_line',
-      useful_life: 1,
-      salvage_value: 0,
+      acquisitionDate: new Date().toISOString().split('T')[0],
+      acquisitionCost: 0,
+      depreciationMethod: 'straight_line',
+      usefulLife: 1,
+      residualValue: 0,
       location: '',
       status: 'active',
       description: '',
-      serial_number: '',
-      warranty_expiry: '',
-      supplier: ''
+      serialNumber: '',
+      warrantyExpiry: '',
+      cabangId: null,
+      vendorId: null,
+      perusahaanId: null,
     },
     isEditMode: false,
     showModal: false,
@@ -99,7 +99,7 @@ export const useAssetStore = defineStore('asset', {
       { value: 'active', label: 'Aktif' },
       { value: 'inactive', label: 'Tidak Aktif' },
       { value: 'sold', label: 'Terjual' },
-      { value: 'disposed', label: 'Dibuang' }
+      { value: 'trashed', label: 'Dibuang' }
     ]
   }),
 
@@ -108,6 +108,7 @@ export const useAssetStore = defineStore('asset', {
       this.loading = true
       this.error = null
       const { $api } = useNuxtApp()
+      const toast = useToast();
       try {
         const token = localStorage.getItem('token');
         const params = new URLSearchParams({
@@ -134,12 +135,42 @@ export const useAssetStore = defineStore('asset', {
 
         const result = await response.json()
         this.assets = result.data
-        this.totalRecords = result.meta.total
+        this.totalRecords = Number(result?.meta?.total) || 0
       } catch (e: any) {
         this.error = e.message
-        Swal.fire('Error', `Tidak dapat memuat data aset: ${e.message}`, 'error');
+        toast.error({
+          title: 'Error',
+          message: `Tidak dapat memuat data aset: ${e.message}`,
+          color: 'red',
+          position: 'topRight',
+          layout: 2,
+        });
       } finally {
         this.loading = false
+      }
+    },
+
+    async fetchAssetsSummary() {
+      try {
+        const { $api } = useNuxtApp()
+        const token = localStorage.getItem('token')
+        
+        const response = await fetch($api.assetsSummary(), {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json',
+          },
+          credentials: 'include'
+        })
+
+        if (response.ok) {
+          const result = await response.json()
+          return result.data
+        }
+        return null
+      } catch (error) {
+        console.error('Error fetching assets summary:', error)
+        return null
       }
     },
 
@@ -147,19 +178,28 @@ export const useAssetStore = defineStore('asset', {
       this.loading = true
       this.validationErrors = [];
       const { $api } = useNuxtApp()
-
+      const toast = useToast();
       try {
         const token = localStorage.getItem('token')
 
-        const formData = new FormData()
-        
-        const fieldsToSend = ['name', 'code', 'category', 'purchase_date', 'purchase_cost', 'current_value', 'depreciation_method', 'useful_life', 'salvage_value', 'location', 'status', 'description', 'serial_number', 'warranty_expiry', 'supplier'];
-        fieldsToSend.forEach(key => {
-          const value = this.form[key as keyof typeof this.form];
-          if (value !== null && value !== undefined) {
-            formData.append(key, String(value));
-          }
-        });
+        // Gunakan JSON data instead of FormData
+        const payload = {
+          name: this.form.name,
+          category: this.form.category,
+          acquisitionDate: this.form.acquisitionDate,
+          acquisitionCost: this.form.acquisitionCost,
+          depreciationMethod: this.form.depreciationMethod,
+          usefulLife: this.form.usefulLife,
+          residualValue: this.form.residualValue,
+          location: this.form.location,
+          status: this.form.status,
+          description: this.form.description,
+          serialNumber: this.form.serialNumber,
+          warrantyExpiry: this.form.warrantyExpiry,
+          cabangId: this.form.cabangId,
+          vendorId: this.form.vendorId,
+          perusahaanId: this.form.perusahaanId
+        };
 
         let method = 'POST';
         let url = $api.assetsStore();
@@ -170,9 +210,10 @@ export const useAssetStore = defineStore('asset', {
 
         const response = await fetch(url, {
           method: method,
-          body: formData,
+          body: JSON.stringify(payload),
           headers: {
             'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
           credentials: 'include',
@@ -196,11 +237,23 @@ export const useAssetStore = defineStore('asset', {
         
         this.closeModal();
         await this.fetchAssets();
-        Swal.fire('Berhasil!', `Aset berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`, 'success');
+        toast.success({
+          title: 'Success',
+          message: `Aset berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
+          color: 'green',
+          position: 'topRight',
+          layout: 2,
+        });
 
       } catch (error: any) {
         if (this.validationErrors.length === 0) {
-          Swal.fire('Error', error.message || 'Operasi gagal', 'error');
+          toast.error({
+            title: 'Error',
+            message: error.message || 'Operasi gagal',
+            color: 'red',
+            position: 'topRight',
+            layout: 2,
+          });
         }
       } finally {
         this.loading = false
@@ -209,6 +262,7 @@ export const useAssetStore = defineStore('asset', {
 
     async deleteAsset(id: number) {
       const { $api } = useNuxtApp();
+      const toast = useToast();
       
       const result = await Swal.fire({
         title: 'Apakah Anda yakin?',
@@ -240,9 +294,21 @@ export const useAssetStore = defineStore('asset', {
           }
 
           await this.fetchAssets();
-          Swal.fire('Berhasil!', 'Aset berhasil dihapus.', 'success');
+          toast.success({
+            title: 'Success',
+            message: 'Aset berhasil dihapus.',
+            color: 'green',
+            position: 'topRight',
+            layout: 2,
+          });
         } catch (error: any) {
-          Swal.fire('Error', error.message || 'Gagal menghapus aset', 'error');
+          toast.error({
+            title: 'Error',
+            message: error.message || 'Gagal menghapus aset',
+            color: 'red',
+            position: 'topRight',
+            layout: 2,
+          });
         }
       }
     },
@@ -252,51 +318,87 @@ export const useAssetStore = defineStore('asset', {
       this.validationErrors = [];
       
       if (asset) {
-        this.form = { ...asset };
+        // Format tanggal agar sesuai dengan input type="date"
+        const formattedAsset = { ...asset };
+        
+        // Format acquisitionDate
+        if (formattedAsset.acquisitionDate) {
+          const date = new Date(formattedAsset.acquisitionDate);
+          if (!isNaN(date.getTime())) {
+            formattedAsset.acquisitionDate = date.toISOString().split('T')[0];
+          }
+        }
+        
+        // Format warrantyExpiry
+        if (formattedAsset.warrantyExpiry) {
+          const date = new Date(formattedAsset.warrantyExpiry);
+          if (!isNaN(date.getTime())) {
+            formattedAsset.warrantyExpiry = date.toISOString().split('T')[0];
+          }
+        }
+        
+        this.form = formattedAsset;
       } else {
         this.form = {
           name: '',
-          code: '',
           category: '',
-          purchase_date: new Date().toISOString().split('T')[0],
-          purchase_cost: 0,
-          current_value: 0,
-          depreciation_method: 'straight_line',
-          useful_life: 1,
-          salvage_value: 0,
+          acquisitionDate: new Date().toISOString().split('T')[0],
+          acquisitionCost: 0,
+          depreciationMethod: 'straight_line',
+          usefulLife: 1,
+          residualValue: 0,
           location: '',
           status: 'active',
           description: '',
-          serial_number: '',
-          warranty_expiry: '',
-          supplier: ''
+          serialNumber: '',
+          warrantyExpiry: '',
+          cabangId: null,
+          vendorId: null,
+          perusahaanId: null,
         };
       }
       
       this.showModal = true;
     },
 
-    closeModal() {
-      this.showModal = false;
-      this.isEditMode = false;
+    resetForm() {
       this.form = {
         name: '',
-        code: '',
         category: '',
-        purchase_date: new Date().toISOString().split('T')[0],
-        purchase_cost: 0,
-        current_value: 0,
-        depreciation_method: 'straight_line',
-        useful_life: 1,
-        salvage_value: 0,
+        acquisitionDate: new Date().toISOString().split('T')[0],
+        acquisitionCost: 0,
+        depreciationMethod: 'straight_line',
+        usefulLife: 1,
+        residualValue: 0,
         location: '',
         status: 'active',
         description: '',
-        serial_number: '',
-        warranty_expiry: '',
-        supplier: ''
-      };
-      this.validationErrors = [];
+        serialNumber: '',
+        warrantyExpiry: '',
+        cabangId: null,
+        vendorId: null,
+        perusahaanId: null,
+      }
+      this.validationErrors = []
+    },
+
+    // Method untuk mengatur nilai field dengan format rupiah
+    setAcquisitionCost(value: string) {
+      const numericValue = parseInt(value.replace(/[^0-9]/g, '')) || 0
+      this.form.acquisitionCost = numericValue
+    },
+
+    setResidualValue(value: string) {
+      const numericValue = parseInt(value.replace(/[^0-9]/g, '')) || 0
+      this.form.residualValue = numericValue
+    },
+
+
+
+    closeModal() {
+      this.showModal = false
+      this.isEditMode = false
+      this.resetForm()
     },
 
     setPagination(event: any) {
@@ -318,10 +420,10 @@ export const useAssetStore = defineStore('asset', {
     },
 
     calculateDepreciation() {
-      const cost = this.form.purchase_cost || 0;
-      const salvage = this.form.salvage_value || 0;
-      const life = this.form.useful_life || 1;
-      const method = this.form.depreciation_method;
+      const cost = this.form.acquisitionCost || 0;
+      const salvage = this.form.residualValue || 0;
+      const life = this.form.usefulLife || 1;
+      const method = this.form.depreciationMethod;
 
       let depreciation = 0;
 
@@ -338,7 +440,9 @@ export const useAssetStore = defineStore('asset', {
           break;
       }
 
-      this.form.current_value = Math.max(cost - depreciation, salvage);
+      // Calculate current value but don't store it since it's not in the model
+      const currentValue = Math.max(cost - depreciation, salvage);
+      console.log('Calculated current value:', currentValue);
     }
   }
 })
