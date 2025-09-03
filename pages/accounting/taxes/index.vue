@@ -352,15 +352,12 @@ import { usePermissions } from '~/composables/usePermissions'
 import { useFormatRupiah } from '~/composables/formatRupiah'
 import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
+import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import Dropdown from 'primevue/dropdown'
 import Column from 'primevue/column'
 import InputText from 'primevue/inputtext'
 
-// Page meta
-definePageMeta({
-    title: 'Daftar Pajak',
-    description: 'Kelola daftar pajak yang digunakan dalam transaksi'
-})
+const { setListTitle, setFormTitle } = useDynamicTitle()
 
 // Stores
 const taxStore = useTaxStore()
@@ -451,6 +448,7 @@ onMounted(async () => {
     } catch (error) {
         console.error('Error in onMounted:', error)
     }
+    setListTitle('Taxes', taxes.value.length)
 })
 
 // Watchers

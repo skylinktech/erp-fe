@@ -422,6 +422,17 @@ const totalPendingQuantity = computed(() => {
     }, 0)
 })
 
+// ✅ COMPUTED untuk total pending items
+const totalPendingItems = computed(() => {
+    if (!purchaseOrder.value?.purchaseOrderItems) return 0
+    
+    return purchaseOrder.value.purchaseOrderItems.filter(item => {
+        const ordered = Math.floor(Number(item.quantity) || 0)
+        const received = Math.floor(Number(item.receivedQty) || 0)
+        return received < ordered
+    }).length
+})
+
 // ✅ COMPUTED untuk cek apakah semua item sudah diterima
 const isAllItemsReceived = computed(() => {
     return totalPendingQuantity.value === 0

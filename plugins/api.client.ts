@@ -124,13 +124,9 @@ export default defineNuxtPlugin(() => {
     
     // Accounts
     accounts: () => `${apiBase}/accounting/accounts`,
-    accountsStore: () => `${apiBase}/accounting/accounts/store`,
-    accountsUpdate: (id: number | string) => `${apiBase}/accounting/accounts/update/${id}`,
-    accountsShow: (id: number | string) => `${apiBase}/accounting/accounts/${id}`,
-    accountsDelete: (id: number | string) => `${apiBase}/accounting/accounts/delete/${id}`,
     accountsChartOfAccounts: () => `${apiBase}/accounting/accounts/chart-of-accounts`,
-    accountsCategory: (category: string) => `${apiBase}/accounting/accounts/category/${category}`,
     accountsParentAccounts: () => `${apiBase}/accounting/accounts/parent-accounts`,
+    accountsByCategory: (category: string) => `${apiBase}/accounting/accounts/category/${category}`,
     accountsSummary: () => `${apiBase}/accounting/accounts/summary`,
 
     // Taxes

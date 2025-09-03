@@ -22,7 +22,7 @@
                             </div>
                             <div class="d-flex justify-content-between align-items-center">
                                 <div class="account-heading">
-                                    <h5 class="mb-1">{{ accounts.length }}</h5>
+                                    <h5 class="mb-1">{{ totalAccountsCount }}</h5>
                                     <span class="text-muted">Akun Aktif</span>
                                 </div>
                                 <a href="javascript:void(0);" class="text-secondary">
@@ -102,9 +102,10 @@
                     </div>
                 </div>
             </div>
+            
             <div class="row g-6">
                 <div class="col-12">
-                    <h4 class="mt-6 mb-1">Total & Filter Chart of Accounts</h4>
+                    <h4 class="mt-6 mb-1">Chart of Accounts</h4>
                     <p class="mb-0">Temukan semua akun dalam sistem Chart of Accounts.</p>
                 </div>
                 <div class="col-12">
@@ -131,22 +132,41 @@
                                 </span>
                             </div>
                         </div>
+                        <div class="card-header d-flex justify-content-end align-items-center flex-wrap pt-0">
+                            <div class="d-flex align-items-center gap-2">
+                                <button @click="expandAll" class="btn me-5 p-0 fw-semibold">
+                                    <i class="ri-expand-left-right-line me-1"></i>
+                                    Expand All
+                                </button>
+                                <button @click="collapseAll" class="btn me-5 p-0 fw-semibold">
+                                    <i class="ri-contract-left-right-line me-1"></i>
+                                    Collapse All
+                                </button>
+                            </div>
+                        </div>
                         <div class="card-datatable table-responsive py-3 px-3">
-                            <MyDataTable 
+                            <!-- Test: Gunakan PrimeVue DataTable langsung untuk expansion -->
+                            <DataTable 
                                 ref="myDataTableRef"
-                                :data="accounts"
+                                :value="displayAccounts"
                                 :rows="Number(params.rows)" 
                                 :loading="loading"
                                 :totalRecords="totalRecords"
                                 :first="params.first"
-                                :lazy="true"
+                                paginator
                                 @page="onPage($event)"
                                 @sort="onSort($event)"
                                 responsiveLayout="scroll" 
                                 paginatorPosition="bottom"
                                 paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink"
                                 currentPageReportTemplate="Menampilkan {first} sampai {last} dari {totalRecords} data"
+                                v-model:expandedRows="expandedRows"
+                                @rowExpand="onRowExpand"
+                                @rowCollapse="onRowCollapse"
+                                dataKey="id"
+                                tableStyle="min-width: 60rem"
                             >
+                                <Column :expander="true" style="width: 3rem" />
                                 <Column header="#" :sortable="false">
                                     <template #body="slotProps">
                                         {{ params.first + slotProps.index + 1 }}
@@ -157,13 +177,13 @@
                                         <span class="fw-semibold">{{ slotProps.data.code }}</span>
                                     </template>
                                 </Column>
-                                                             <Column field="name" header="Nama Akun" :sortable="true" style="min-width:200px">
-                                 <template #body="slotProps">
-                                     <div>
-                                         <div class="fw-semibold">{{ slotProps.data.name }}</div>
-                                     </div>
-                                 </template>
-                             </Column>
+                                <Column field="name" header="Nama Akun" :sortable="true" style="min-width:200px">
+                                    <template #body="slotProps">
+                                        <div>
+                                            <div class="fw-semibold">{{ slotProps.data.name }}</div>
+                                        </div>
+                                    </template>
+                                </Column>
                                 <Column field="category" header="Kategori" :sortable="true" style="min-width:150px">
                                     <template #body="slotProps">
                                         <span :class="getTypeBadgeClass(slotProps.data.category)">
@@ -198,23 +218,34 @@
                                 </Column>
                                 <Column header="Actions" :exportable="false" style="min-width:8rem">
                                     <template #body="slotProps">
-                                        <button @click="openAccountDetails(slotProps.data.id)" class="btn btn-sm btn-icon btn-text-secondary rounded-pill btn-icon me-2" v-if="userHasRole('superadmin') || userHasPermission('view_account')">
-                                            <i class="ri-eye-line ri-20px"></i>
-                                        </button>
-                                        <button @click="accountStore.openModal(slotProps.data)" class="btn btn-sm btn-icon btn-text-secondary rounded-pill btn-icon me-2" v-if="userHasRole('superadmin') || userHasPermission('edit_account')">
-                                            <i class="ri-edit-box-line ri-20px"></i>
-                                        </button>
-                                        <button @click="accountStore.deleteAccount(slotProps.data.id)" class="btn btn-sm btn-icon btn-text-secondary rounded-pill btn-icon" v-if="userHasRole('superadmin') || userHasPermission('delete_account')">
-                                            <i class="ri-delete-bin-7-line ri-20px"></i>
-                                        </button>
+                                        <div class="d-inline-block">
+                                            <a href="javascript:;" class="btn btn-sm btn-text-secondary rounded-pill btn-icon dropdown-toggle hide-arrow" data-bs-toggle="dropdown"><i class="ri-more-2-fill"></i>
+                                            </a>
+                                            <ul class="dropdown-menu">
+                                                <li v-if="userHasRole('superadmin') || userHasPermission('edit_account')">
+                                                    <a class="dropdown-item" href="javascript:void(0)" @click="accountStore.openModal(slotProps.data, 'admin')">
+                                                        <i class="ri-edit-box-line me-2"></i> Edit
+                                                    </a>
+                                                </li>
+                                                <li v-if="userHasRole('superadmin') || userHasPermission('delete_account')">
+                                                    <a class="dropdown-item text-danger" href="javascript:void(0)" @click="accountStore.deleteAccount(slotProps.data.id)">
+                                                        <i class="ri-delete-bin-7-line me-2"></i> Hapus
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
                                     </template>
                                 </Column>
-                            </MyDataTable>
+                                <!-- Test Expansion Template -->
+                                <template #expansion="slotProps">
+                                    <ExpandedRowContent :account="slotProps.data" />
+                                </template>
+                            </DataTable>
                         </div>
                     </div>
                 </div>
 
-                <!-- Account Modal -->
+                <!-- Account Modal (tetap sama) -->
                 <Modal 
                     id="AccountModal"
                     :title="modalTitle" 
@@ -337,12 +368,11 @@ import Modal from '~/components/modal/Modal.vue'
 import Column from 'primevue/column'
 import Dropdown from 'primevue/dropdown'
 import InputText from 'primevue/inputtext'
+import DataTable from 'primevue/datatable'
+import { useDynamicTitle } from '~/composables/useDynamicTitle'
+import ExpandedRowContent from '~/components/table/ExpandedRowContent.vue'
 
-// Page meta
-definePageMeta({
-    title: 'Chart of Accounts',
-    description: 'Kelola Chart of Accounts (COA) untuk sistem akuntansi'
-})
+const { setListTitle, setFormTitle } = useDynamicTitle()
 
 // Stores
 const accountStore = useAccountStore()
@@ -356,18 +386,19 @@ const router = useRouter()
 // Refs
 const myDataTableRef = ref()
 const globalFilterValue = ref('')
+const expandedRows = ref({})
+const rowsPerPageOptionsArray = ref([10, 25, 50, 100])
 
-const rowsPerPageOptionsArray = ref([10, 25, 50, 100]);
-
-
-
-// Computed
-const accounts = computed(() => {
-  return Array.isArray(accountStore.accounts) ? accountStore.accounts : []
-})
+// Computed values dari store
 const loading = computed(() => accountStore.loading)
 const totalRecords = computed(() => {
-  return typeof accountStore.totalRecords === 'number' ? accountStore.totalRecords : 0
+  // Gunakan jumlah top-level parent accounts untuk pagination
+  if (!accountStore.accounts || !Array.isArray(accountStore.accounts)) return 0
+  
+  // Hanya count top-level parent accounts (level 1, parent_id: null)
+  return accountStore.accounts.filter(account => 
+    account.level === 1 && !account.parentId
+  ).length
 })
 const params = computed(() => {
   return accountStore.params || {
@@ -394,22 +425,86 @@ const accountCategories = computed(() => {
   return Array.isArray(accountStore.accountCategories) ? accountStore.accountCategories : []
 })
 
-// Statistics
+// Processed accounts untuk expanded rows - VERSI SEDERHANA
+const processedAccounts = computed(() => {
+  if (!accountStore.accounts || !Array.isArray(accountStore.accounts)) {
+    return []
+  }
+
+  // Hanya ambil TOP-LEVEL parent accounts (level 1, parent_id: null)
+  const topLevelParentAccounts = accountStore.accounts.filter(account => 
+    account.level === 1 && !account.parentId
+  )
+  
+  // Untuk setiap top-level parent, gunakan children yang sudah ada di store
+  const processed = topLevelParentAccounts.map(account => {
+    // Gunakan children yang sudah ada di store, jangan buat ulang
+    return {
+      ...account,
+      children: account.children || [] // Gunakan children yang sudah ada
+    }
+  })
+
+  return processed
+})
+
+// Display accounts dengan pagination dan sorting
+const displayAccounts = computed(() => {
+  if (!processedAccounts.value || processedAccounts.value.length === 0) {
+    return []
+  }
+
+  let accounts = [...processedAccounts.value]
+
+  // Sorting
+  if (params.value.sortField) {
+    accounts.sort((a, b) => {
+      let aVal = a[params.value.sortField]
+      let bVal = b[params.value.sortField]
+      
+      // Handle string comparison
+      if (typeof aVal === 'string') {
+        aVal = aVal.toLowerCase()
+        bVal = bVal.toLowerCase()
+      }
+      
+      if (params.value.sortOrder > 0) {
+        return aVal > bVal ? 1 : -1
+      } else {
+        return aVal < bVal ? 1 : -1
+      }
+    })
+  }
+
+  // Pagination
+  const start = params.value.first
+  const end = start + params.value.rows
+  
+  return accounts.slice(start, end)
+})
+
+// Statistics yang diperbaiki
+const totalAccountsCount = computed(() => {
+  if (!accountStore.accounts || !Array.isArray(accountStore.accounts)) return 0
+  return accountStore.accounts.length
+})
+
 const assetCount = computed(() => {
-  if (!Array.isArray(accounts.value)) return 0
-  return accounts.value.filter(acc => acc.category === 'asset').length
+  if (!accountStore.accounts || !Array.isArray(accountStore.accounts)) return 0
+  return accountStore.accounts.filter(acc => acc.category === 'asset').length
 })
+
 const liabilityCount = computed(() => {
-  if (!Array.isArray(accounts.value)) return 0
-  return accounts.value.filter(acc => acc.category === 'liability').length
+  if (!accountStore.accounts || !Array.isArray(accountStore.accounts)) return 0
+  return accountStore.accounts.filter(acc => acc.category === 'liability').length
 })
+
 const equityCount = computed(() => {
-  if (!Array.isArray(accounts.value)) return 0
-  return accounts.value.filter(acc => acc.category === 'equity').length
+  if (!accountStore.accounts || !Array.isArray(accountStore.accounts)) return 0
+  return accountStore.accounts.filter(acc => acc.category === 'equity').length
 })
 
-
-// Modal
+// Modal computed
 const modalTitle = computed(() => isEditMode.value ? 'Edit Akun' : 'Tambah Akun Baru')
 const modalDescription = computed(() => isEditMode.value ? 'Silakan ubah data akun di bawah ini.' : 'Silakan isi form di bawah ini untuk menambahkan akun baru.')
 
@@ -436,12 +531,41 @@ const getTypeLabel = (type) => {
     return labels[type] || type
 }
 
+// Row expansion methods yang diperbaiki
+const onRowExpand = (event) => {
+    // Row expanded event handler
+}
 
+const onRowCollapse = (event) => {
+    // Row collapsed event handler
+}
 
+const expandAll = () => {
+    const allExpanded = {}
+    processedAccounts.value.forEach(account => {
+        if (account.children && account.children.length > 0) {
+            allExpanded[account.id] = true
+        }
+    })
+    expandedRows.value = allExpanded
+}
 
+const collapseAll = () => {
+    expandedRows.value = {}
+}
 
 const openAccountDetails = (accountId) => {
     router.push({ path: `/accounting/accounts/detail`, query: { id: accountId } })
+}
+
+const openAddChildModal = (parentAccount) => {
+    // Pre-fill form dengan parent account
+    accountStore.openModal()
+    nextTick(() => {
+        accountStore.form.parentId = parentAccount.id
+        accountStore.form.level = parentAccount.level + 1
+        accountStore.form.category = parentAccount.category
+    })
 }
 
 const exportData = (format) => {
@@ -451,7 +575,7 @@ const exportData = (format) => {
 }
 
 // Permission helpers
-const { userHasRole, userHasPermission } = usePermissions();
+const { userHasRole, userHasPermission } = usePermissions()
 
 // Lifecycle
 let modalInstance = null
@@ -459,16 +583,18 @@ onMounted(async () => {
     try {
         await permissionStore.fetchPermissions()
         await userStore.loadUser()
-        await accountStore.fetchAccounts()
+        // Gunakan fetchChartOfAccounts untuk mendapatkan semua top-level accounts dengan children
+        await accountStore.fetchChartOfAccounts()
+        
     } catch (error) {
         console.error('Error in onMounted:', error)
     }
+    setListTitle('Chart of Accounts', totalAccountsCount.value)
 })
 
 // Watchers
 watch(showModal, (newValue) => {
     if (newValue) {
-        // Delay untuk memastikan modal sudah di-render
         nextTick(() => {
             const modalElement = document.getElementById('AccountModal')
             if (modalElement && !modalInstance) {
@@ -492,10 +618,10 @@ const onPage = (event) => {
     accountStore.setPagination(event)
 }
 
-
-
 const onSort = (event) => {
-    accountStore.setSort(event)
+    // Update params untuk client-side sorting
+    params.value.sortField = event.sortField || 'code'
+    params.value.sortOrder = event.sortOrder || 1
 }
 
 const handleRowsChange = async (value) => {
@@ -510,10 +636,63 @@ const handleSearch = async (value) => {
     accountStore.params.first = 0
     await accountStore.fetchAccounts()
 }
+
+// Debug computed untuk memantau perubahan data
+watch(() => accountStore.accounts, (newAccounts, oldAccounts) => {
+    
+    if (newAccounts && newAccounts.length > 0) {
+        
+    }
+}, { deep: true, immediate: true })
+
+// Watch perubahan processedAccounts
+watch(processedAccounts, (newProcessed) => {
+    
+}, { deep: true })
 </script>
 
 <style scoped>
 .badge {
     font-size: 0.75rem;
+}
+
+.table-sm td, .table-sm th {
+    padding: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.btn-group-sm .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+}
+
+.expanded-content {
+    background-color: #f8f9fa;
+    border-left: 3px solid #0d6efd;
+}
+
+.ri-48px {
+    font-size: 3rem;
+}
+
+/* Custom styling untuk expanded row */
+.p-datatable .p-datatable-tbody > tr.p-datatable-row-expansion {
+    background: #f8f9fa;
+}
+
+.p-datatable .p-datatable-tbody > tr.p-datatable-row-expansion > td {
+    border: none;
+    padding: 0;
+}
+
+/* Styling untuk nested table di expansion */
+.p-datatable .p-datatable-tbody > tr.p-datatable-row-expansion .p-datatable {
+    box-shadow: none;
+    border: 1px solid #dee2e6;
+}
+
+/* Hover effect untuk child rows */
+.p-datatable .p-datatable-tbody > tr.p-datatable-row-expansion .p-datatable-tbody > tr:hover {
+    background: #e3f2fd !important;
 }
 </style>

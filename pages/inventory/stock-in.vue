@@ -43,11 +43,11 @@
                                         class="btn btn-dark px-2 py-2" 
                                         type="button" 
                                         @click="postAllSelectedStockIn"
-                                        :disabled="stockInStore.selectedIds.length === 0"
+                                        :disabled="!Array.isArray(selectedStockIns) || selectedStockIns.length === 0"
                                         title="Post semua stock in yang dipilih"
                                         style="min-width: 150px; min-height: 38px;"
                                     >
-                                        <i class="ri-upload-2-line me-1"></i> Post All ({{ stockInStore.selectedIds.length }})
+                                        <i class="ri-upload-2-line me-1"></i> Post All ({{ Array.isArray(selectedStockIns) ? selectedStockIns.length : 0 }})
                                     </button>
                                 </div>
                                 <div class="btn-group me-2">
@@ -75,7 +75,7 @@
                             </div>
                         </div>
                         <div class="card-datatable table-responsive py-3 px-3">
-                        <MyDataTable 
+                                                <MyDataTable 
                             ref="myDataTableRef"
                             :data="stockIns" 
                             :rows="params.rows" 
@@ -83,6 +83,7 @@
                             :totalRecords="totalRecords"
                             :first="params.first"
                             :lazy="true"
+                            dataKey="id"
                             @page="stockInStore.setPagination($event)"
                             @sort="stockInStore.setSort($event)"
                             responsiveLayout="scroll" 
@@ -90,28 +91,35 @@
                             paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink"
                             currentPageReportTemplate="Menampilkan {first} sampai {last} dari {totalRecords} data"
                             >
-                                <Column header="#" :sortable="false" style="width: 50px;">
-                                    <template #header>
-                                        <Checkbox 
-                                            v-model="stockInStore.selectAll" 
-                                            @change="stockInStore.toggleSelectAll"
-                                            :indeterminate="stockInStore.selectedIds.length > 0 && !stockInStore.selectAll"
-                                        />
-                                    </template>
-                                    <template #body="slotProps">
-                                        <Checkbox 
-                                            v-model="stockInStore.selectedIds" 
-                                            :value="slotProps.data.id"
-                                            @change="stockInStore.toggleSelection(slotProps.data.id)"
-                                            :disabled="slotProps.data.status !== 'draft'"
-                                        />
-                                    </template>
-                                </Column>
+                            <Column headerStyle="width: 3rem" :exportable="false">
+                                <template #header>
+                                    <input 
+                                        type="checkbox" 
+                                        class="form-check-input"
+                                        :checked="isAllSelected"
+                                        @change="handleSelectAllChange"
+                                        :indeterminate="isIndeterminate"
+                                        :disabled="isHeaderCheckboxDisabled"
+                                        :class="{ 'disabled-checkbox': isHeaderCheckboxDisabled }"
+                                    />
+                                </template>
+                                <template #body="slotProps">
+                                    <input 
+                                        type="checkbox" 
+                                        class="form-check-input"
+                                        :key="`checkbox-${slotProps.data.id}-${forceUpdate}`"
+                                        :checked="isRowSelected(slotProps.data.id)"
+                                        @change="(event) => handleCheckboxChange(slotProps.data, event.target.checked)"
+                                        :disabled="slotProps.data.status === 'posted'"
+                                        :class="{ 'disabled-checkbox': slotProps.data.status === 'posted' }"
+                                    />
+                                </template>
+                            </Column>
                                 <Column header="No." :sortable="false" style="width: 60px;">
                                     <template #body="slotProps">
                                         {{
-                                            Number.isFinite(params.page) && Number.isFinite(params.rows)
-                                            ? ((params.page - 1) * params.rows + slotProps.index + 1)
+                                            Number.isFinite(params.first) && Number.isFinite(params.rows)
+                                            ? ((params.first / params.rows) + slotProps.index + 1)
                                             : (slotProps.index + 1)
                                         }}
                                     </template>
@@ -166,11 +174,6 @@
                                                         <i class="ri-eye-line me-2"></i> Lihat Detail
                                                     </a>
                                                 </li>
-                                                <li v-if="userHasRole('superadmin') || (userHasPermission('edit_stock_in') && slotProps.data.status == 'draft')">
-                                                    <a class="dropdown-item" href="javascript:void(0)" @click="stockInStore.openModal(slotProps.data)">
-                                                        <i class="ri-edit-box-line me-2"></i> Edit
-                                                    </a>
-                                                </li>
                                                 <li v-if="userHasRole('superadmin') || (userHasPermission('delete_stock_in') && slotProps.data.status == 'Received')">
                                                     <a class="dropdown-item text-danger" href="javascript:void(0)" @click="deleteStockIn(slotProps.data.id)">
                                                         <i class="ri-delete-bin-7-line me-2"></i> Hapus
@@ -195,7 +198,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, onBeforeUnmount } from 'vue'
+import { ref, onMounted, watch, onBeforeUnmount, computed, nextTick, triggerRef } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useUserStore } from '~/stores/user'
 import { useStockStore } from '~/stores/stockin'
@@ -204,13 +207,11 @@ import CardBox from '~/components/cards/Cards.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import Swal from 'sweetalert2'
 import InputText from 'primevue/inputtext'
-import Checkbox from 'primevue/checkbox'
 import 'vue-select/dist/vue-select.css'
 import { useRouter } from 'vue-router'
 import { usePermissions } from '~/composables/usePermissions'
 import { usePermissionsStore } from '~/stores/permissions'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
-
 
 // Composables
 const { setListTitle, setFormTitle } = useDynamicTitle()
@@ -223,11 +224,13 @@ const userStore                 = useUserStore()
 const permissionStore           = usePermissionsStore()
 const stockInStore              = useStockStore()
 const warehouseStore            = useWarehouseStore()
-const { stockIns, totalRecords, stats, params, selectedIds, selectAll } = storeToRefs(stockInStore)
+const { stockIns, totalRecords, stats, params } = storeToRefs(stockInStore)
 const { warehouse: warehouses } = storeToRefs(warehouseStore)
 const loading                   = ref(false);
 const globalFilterValue         = ref('');
 const router                    = useRouter()
+const selectedStockIns          = ref([])
+const forceUpdate               = ref(0)
 
 const { userHasPermission, userHasRole } = usePermissions();
 
@@ -235,6 +238,100 @@ const status       = ref([
     { label: 'Draft', value: 'draft' },
     { label: 'Posted', value: 'posted' },
 ]);
+
+// Method untuk selection change
+const onSelectionChange = (event) => {
+    selectedStockIns.value = event.value;
+};
+
+// Method untuk menentukan apakah row bisa di-select
+const isSelectable = (rowData) => {
+    return rowData.status === 'draft';
+};
+
+// Method untuk handle checkbox change
+const handleCheckboxChange = (item, checked) => {
+    // Hanya proses jika status draft
+    if (item.status !== 'draft') {
+        return;
+    }
+    
+    if (checked) {
+        // Tambahkan ke selection jika belum ada
+        if (!selectedStockIns.value.some(selected => selected.id === item.id)) {
+            selectedStockIns.value.push(item);
+        }
+    } else {
+        // Hapus dari selection
+        selectedStockIns.value = selectedStockIns.value.filter(selected => selected.id !== item.id);
+    }
+};
+
+// Computed properties untuk checkbox selection
+const draftStockIns = computed(() => {
+    if (!stockIns.value || !Array.isArray(stockIns.value)) return [];
+    return stockIns.value.filter(stock => stock && stock.status === 'draft');
+});
+
+const isAllSelected = computed(() => {
+    const selected = selectedStockIns.value;
+    const draft = draftStockIns.value;
+    
+    if (!Array.isArray(selected) || !Array.isArray(draft) || draft.length === 0) {
+        return false;
+    }
+    
+    return selected.length === draft.length;
+});
+
+const isIndeterminate = computed(() => {
+    const selected = selectedStockIns.value;
+    const draft = draftStockIns.value;
+    
+    if (!Array.isArray(selected) || !Array.isArray(draft) || draft.length === 0) {
+        return false;
+    }
+    
+    return selected.length > 0 && selected.length < draft.length;
+});
+
+// Computed property untuk disable checkbox header
+const isHeaderCheckboxDisabled = computed(() => {
+    if (!stockIns.value || !Array.isArray(stockIns.value)) return true;
+    
+    // Disable jika semua data berstatus 'posted'
+    return stockIns.value.length > 0 && stockIns.value.every(stock => stock.status === 'posted');
+});
+
+// Method untuk check apakah row tertentu ter-select
+const isRowSelected = (rowId) => {
+    // Gunakan forceUpdate untuk memastikan reactivity
+    forceUpdate.value;
+    return selectedStockIns.value.some(item => item.id === rowId);
+};
+
+// Method untuk handle select all change
+const handleSelectAllChange = (checked) => {
+    if (checked) {
+        // Pilih semua stock in yang berstatus draft
+        selectedStockIns.value = [...draftStockIns.value];
+    } else {
+        // Clear semua selection dengan cara yang memastikan reactivity
+        selectedStockIns.value = [];
+    }
+    
+    // Force re-render dengan multiple approach
+    forceUpdate.value++;
+    
+    // Double force dengan nextTick dan triggerRef
+    nextTick(() => {
+        forceUpdate.value++;
+        // Trigger reactivity update dengan mengubah array reference
+        selectedStockIns.value = [...selectedStockIns.value];
+        // Force reactivity dengan triggerRef
+        triggerRef(selectedStockIns);
+    });
+};
 
 const rowsPerPageOptionsArray = ref([10, 25, 50, 100]);
 
@@ -259,6 +356,8 @@ const postStockIn = async (id) => {
     try {
         await stockInStore.postStockIn(id);
         await stockInStore.fetchStockInsPaginated();
+        selectedStockIns.value = [];
+        forceUpdate.value++;
         toast.success(`Stock In berhasil diposting.`);
     } catch (error) {
         let errorMessage = 'Gagal memposting stock in';
@@ -272,9 +371,6 @@ const postStockIn = async (id) => {
         try {
             const parsedError = JSON.parse(errorMessage);
             if (parsedError.errors) {
-                 stockInStore.validationErrors = Array.isArray(parsedError.errors)
-                    ? parsedError.errors
-                    : Object.values(parsedError.errors).flat();
                 return toast.error('Terdapat kesalahan validasi data.');
             }
              errorMessage = parsedError.message || errorMessage;
@@ -287,14 +383,14 @@ const postStockIn = async (id) => {
 };
 
 const postAllSelectedStockIn = async () => {
-    if (stockInStore.selectedIds.length === 0) {
-        toast.warning('Pilih stock in yang akan diposting terlebih dahulu.');
+    // Validasi sudah dilakukan di button disabled, tidak perlu warning lagi
+    if (!Array.isArray(selectedStockIns.value) || selectedStockIns.value.length === 0) {
         return;
     }
 
     const result = await Swal.fire({
         title: 'Konfirmasi Post All',
-        text: `Apakah Anda yakin ingin memposting ${stockInStore.selectedIds.length} stock in yang dipilih?`,
+        text: `Apakah Anda yakin ingin memposting ${selectedStockIns.length} stock in yang dipilih?`,
         icon: 'question',
         showCancelButton: true,
         confirmButtonColor: '#28a745',
@@ -306,37 +402,66 @@ const postAllSelectedStockIn = async () => {
     if (result.isConfirmed) {
         try {
             loading.value = true;
-            const result = await stockInStore.postAllStockIn(stockInStore.selectedIds);
+            console.log('Starting post all selected stock in...', selectedStockIns.value.map(item => item.id));
+            
+            const result = await stockInStore.postAllSelectedStockIn(selectedStockIns.value.map(item => item.id));
+            console.log('Post all result:', result);
+            
+            // Validasi response
+            if (!result) {
+                throw new Error('Response kosong dari server');
+            }
             
             // Tampilkan hasil
-            let message = result.message;
-            if (result.results.failed.length > 0) {
-                message += '\n\nGagal:';
-                result.results.failed.forEach(item => {
-                    message += `\n- ${item.id}: ${item.reason}`;
-                });
+            let message = result.message || 'Stock in berhasil diposting';
+            
+            // Handle failed results jika ada
+            if (result.results && result.results.failed && Array.isArray(result.results.failed)) {
+                if (result.results.failed.length > 0) {
+                    message += '\n\nGagal:';
+                    result.results.failed.forEach(item => {
+                        message += `\n- ${item.id}: ${item.reason}`;
+                    });
+                }
             }
             
             await Swal.fire({
                 title: 'Hasil Post All',
                 text: message,
-                icon: result.results.failed.length === 0 ? 'success' : 'warning',
+                icon: (result.results && result.results.failed && result.results.failed.length > 0) ? 'warning' : 'success',
                 confirmButtonText: 'OK'
             });
             
-            // Refresh data dan clear selection
+            // Clear selection setelah berhasil
+            selectedStockIns.value = [];
+            forceUpdate.value++;
+            
+            // Refresh data
             await stockInStore.fetchStockInsPaginated();
-            stockInStore.clearSelection();
             
         } catch (error) {
+            console.error('Error in postAllSelectedStockIn:', error);
+            
             let errorMessage = 'Gagal memposting stock in';
             if (error instanceof Error) {
                 errorMessage = error.message;
             } else if (typeof error === 'string') {
                 errorMessage = error;
+            } else if (error && typeof error === 'object') {
+                // Coba extract message dari error object
+                errorMessage = error.message || error.error || JSON.stringify(error);
             }
             
+            console.error('Final error message:', errorMessage);
             toast.error(errorMessage);
+            
+            // Tampilkan error detail di console untuk debugging
+            console.group('Error Details');
+            console.error('Error object:', error);
+            console.error('Error type:', typeof error);
+            console.error('Error constructor:', error?.constructor?.name);
+            console.groupEnd();
+            
         } finally {
             loading.value = false;
         }
@@ -347,9 +472,15 @@ const postAllSelectedStockIn = async () => {
 const loadLazyData = async () => {
     try {
         await stockInStore.fetchStockInsPaginated();
+        // Clear selection setelah data berubah
+        selectedStockIns.value = [];
+        forceUpdate.value++;
     } catch (error) {
         const error_message = error.message;
         toast.error(`Tidak dapat memuat data stock in: ${error_message}`);
+        // Clear selection jika terjadi error
+        selectedStockIns.value = [];
+        forceUpdate.value++;
     }
 };
 
@@ -362,9 +493,28 @@ onMounted(() => {
     setListTitle('Stock In', stockIns.value.length)
 });
 
-// Clear selection saat data berubah
-watch(stockIns, () => {
-    stockInStore.clearSelection();
+// Clear selection saat data berubah (hanya jika data benar-benar berubah, bukan karena pagination/sort)
+watch(stockIns, (newStockIns, oldStockIns) => {
+    try {
+        // Hanya clear selection jika data benar-benar berubah (bukan karena pagination/sort)
+        if (oldStockIns && Array.isArray(oldStockIns) && oldStockIns.length > 0) {
+            // Cek apakah ini perubahan data yang sebenarnya atau hanya pagination/sort
+            const isDataChange = newStockIns.some((stock, index) => {
+                const oldStock = oldStockIns[index];
+                return !oldStock || stock.id !== oldStock.id || stock.status !== oldStock.status;
+            });
+            
+            if (isDataChange) {
+                selectedStockIns.value = [];
+                forceUpdate.value++;
+            }
+        }
+    } catch (error) {
+        console.error('Error in stockIns watcher:', error);
+        // Clear selection jika terjadi error
+        selectedStockIns.value = [];
+        forceUpdate.value++;
+    }
 });
 
 const exportData = (format) => {
@@ -487,20 +637,10 @@ const exportStockInWithDetails = async () => {
         link.click();
         document.body.removeChild(link);
 
-        const toast = useToast();
-        toast.success({
-            title: 'Success',
-            message: 'Export CSV dengan detail item berhasil!',
-            color: 'green'
-        });
+        toast.success('Export CSV dengan detail item berhasil!');
         
     } catch (error) {
-        const toast = useToast();
-        toast.error({
-            title: 'Error',
-            message: 'Gagal export CSV: ' + (error.message || 'Unknown error'),
-            color: 'red'
-        });
+        toast.error('Gagal export CSV: ' + (error.message || 'Unknown error'));
     } finally {
         loading.value = false;
     }
@@ -529,6 +669,8 @@ const deleteStockIn = async (id) => {
         try {
             await stockInStore.deleteStockIn(id);
             loadLazyData(); // Muat ulang data
+            selectedStockIns.value = [];
+            forceUpdate.value++;
             toast.success('Stock In berhasil dihapus.');
 
         } catch (error) {
@@ -545,6 +687,8 @@ const getStatusBadge = (status) => {
             return { text: 'Posted', class: 'badge rounded-pill bg-label-success' };
     }
 };
+
+
 </script>
 
 <style scoped>
@@ -552,5 +696,30 @@ const getStatusBadge = (status) => {
     :deep(.warehouse-select .vs__dropdown-toggle) {
         height: 48px !important;
         border-radius: 7px;
+    }
+    
+    /* Styling untuk disabled checkbox pada data posted */
+    .disabled-checkbox {
+        opacity: 0.6;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+    
+    /* Styling untuk checkbox yang aktif */
+    .form-check-input {
+        cursor: pointer;
+        width: 18px;
+        height: 18px;
+        margin: 0;
+    }
+    
+    .form-check-input:checked {
+        background-color: #10b981;
+        border-color: #10b981;
+    }
+    
+    .form-check-input:focus {
+        border-color: #10b981;
+        box-shadow: 0 0 0 0.2rem rgba(16, 185, 129, 0.25);
     }
 </style>

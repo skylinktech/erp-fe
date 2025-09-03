@@ -152,6 +152,52 @@ export const useProductStore = defineStore('product', {
         this.loading = false
       }
     },
+
+    // ✅ NEW: Method untuk mengambil produk berdasarkan warehouse tertentu
+    async fetchProductsByWarehouse(warehouseId: number) {
+      if (!warehouseId) return;
+      
+      const toast = useToast();
+      this.loading = true;
+      this.error = null;
+      const { $api } = useNuxtApp();
+      
+      try {
+        const token = localStorage.getItem('token');
+        const params = new URLSearchParams({
+          warehouseId: warehouseId.toString(),
+          includeStocks: 'true',
+          rows: '1000', // Ambil semua produk untuk warehouse ini
+        });
+
+        const response = await fetch(`${$api.product()}?${params.toString()}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json',
+          },
+          credentials: 'include'
+        });
+
+        if (!response.ok) {
+          throw new Error('Gagal memuat data produk untuk gudang ini');
+        }
+
+        const result = await response.json();
+        this.products = result.data || [];
+        this.totalRecords = result.data?.length || 0;
+        
+      } catch (e: any) {
+        this.error = e.message;
+        toast.error({
+          title: 'Error',
+          message: `Tidak dapat memuat data produk untuk gudang: ${e.message}`,
+          color: 'red',
+          position: 'topRight',
+        });
+      } finally {
+        this.loading = false;
+      }
+    },
     
     async saveProduct() {
         const toast     = useToast();

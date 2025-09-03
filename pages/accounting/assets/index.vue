@@ -469,17 +469,14 @@ import { usePermissions } from '~/composables/usePermissions'
 import { useFormatRupiah } from '~/composables/formatRupiah'
 import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
+import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import vSelect from 'vue-select'
 import Dropdown from 'primevue/dropdown'
 import Column from 'primevue/column'
 import InputText from 'primevue/inputtext'
 import 'vue-select/dist/vue-select.css'
 
-// Page meta
-definePageMeta({
-    title: 'Aset Tetap',
-    description: 'Kelola aset tetap dan perhitungan penyusutan'
-})
+const { setListTitle, setFormTitle } = useDynamicTitle()
 
 // Components
 const components = {
@@ -651,6 +648,7 @@ onMounted(async () => {
     } catch (error) {
         console.error('Error in onMounted:', error)
     }
+    setListTitle('Aset Tetap', assets.value.length)
 })
 
 // Watchers (persis sama dengan halaman accounts)

@@ -141,6 +141,58 @@ export const useAccountStore = defineStore('account', {
       }
     },
 
+    async fetchChartOfAccounts() {
+      this.loading = true
+      this.error = null
+      const toast = useToast();
+      const { $api } = useNuxtApp()
+      try {
+        const token = localStorage.getItem('token');
+        
+        // Gunakan endpoint chart-of-accounts yang mengembalikan semua top-level accounts
+        const response = await fetch($api.accountsChartOfAccounts(), {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          credentials: 'include'
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ message: 'Gagal memuat Chart of Accounts.' }));
+          throw new Error(errorData.message || 'Gagal memuat Chart of Accounts.');
+        }
+
+        const result = await response.json()
+        
+        // Chart of Accounts mengembalikan data langsung tanpa pagination
+        if (result.data && Array.isArray(result.data)) {
+          this.accounts = result.data
+          this.totalRecords = result.data.length
+        } else {
+          this.accounts = []
+          this.totalRecords = 0
+        }
+        
+      } catch (e: any) {
+        console.error('Error fetching Chart of Accounts:', e)
+        this.error = e.message
+        this.accounts = []
+        this.totalRecords = 0
+        toast.error({
+          title: 'Error',
+          message: `Tidak dapat memuat Chart of Accounts: ${e.message}`,
+          color: 'red',
+          position: 'topRight',
+          layout: 2,
+          icon: 'error',
+        });
+      } finally {
+        this.loading = false
+      }
+    },
+
     async fetchParentAccounts() {
       const { $api } = useNuxtApp()
       try {

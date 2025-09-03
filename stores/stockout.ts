@@ -240,23 +240,27 @@ export const useStockOutStore = defineStore('stockOut', {
     setPagination(event: any) {
         this.params.first = event.first;
         this.params.rows = event.rows;
+        this.clearSelection(); // Clear selection saat pagination berubah
         this.fetchStockOutsPaginated();
     },
 
     setSort(event: any) {
         this.params.sortField = event.sortField;
         this.params.sortOrder = event.sortOrder;
+        this.clearSelection(); // Clear selection saat sort berubah
         this.fetchStockOutsPaginated();
     },
         
     setSearch(value: string) {
         this.params.search = value;
         this.params.first = 0;
+        this.clearSelection(); // Clear selection saat search berubah
         this.fetchStockOutsPaginated();
     },
 
     handleRowsChange() {
         this.params.first = 0;
+        this.clearSelection(); // Clear selection saat rows berubah
         this.fetchStockOutsPaginated();
     },
 
@@ -309,6 +313,14 @@ export const useStockOutStore = defineStore('stockOut', {
       } else {
         this.selectedIds = [];
       }
+    },
+
+    selectAllStockOuts() {
+      // Pilih semua stock out yang berstatus draft
+      this.selectedIds = this.stockOuts
+        .filter(stock => stock.status === 'draft')
+        .map(stock => stock.id);
+      this.selectAll = true;
     },
 
     toggleSelection(id: string) {

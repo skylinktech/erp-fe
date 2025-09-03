@@ -394,21 +394,10 @@
                                 </div>
                             </div>
                             <div class="tab-pane fade" id="form-tabs-items" role="tabpanel">
-                                <div class="alert alert-info mb-4">
-                                    <i class="ri-information-line me-2"></i>
-                                    <strong>Info:</strong> 
-                                    <ul class="mb-0 mt-2">
-                                        <li>Anda dapat <strong>mencari produk berdasarkan part number (SKU) atau nama produk</strong></li>
-                                        <li>Format tampilan: <strong>Part Number | Nama Produk</strong></li>
-                                        <li>Pencarian bersifat <strong>case-insensitive</strong> dan mendukung <strong>partial match</strong></li>
-                                        <li><strong>💡 Tips:</strong> Ketik untuk mencari berdasarkan SKU atau nama produk</li>
-                                        <li><strong>🔧 Debug:</strong> Buka console browser untuk melihat log data produk</li>
-                                    </ul>
-                                </div>
                                 <div v-for="(item, index) in form.purchaseOrderItems" :key="index" class="repeater-item mb-4">
                                     <div class="row g-3">
                                         <div class="col-12">
-                                            <label class="form-label">Gudang</label>
+                                            <label class="form-label">Gudang <span class="text-danger">*</span></label>
                                             <v-select 
                                                 v-model="item.warehouseId" 
                                                 :options="warehouses || []" 
@@ -417,13 +406,20 @@
                                                 placeholder="Pilih Gudang" 
                                                 class="v-select-style"
                                                 :loading="warehouseStore.loading"
+                                                @update:modelValue="onWarehouseChange(index)"
+                                                required
+                                                :class="{ 'is-invalid': !item.warehouseId && item.productId }"
                                             />
                                             <small class="text-muted">Gudang tersedia: {{ warehouses?.length || 0 }}</small>
+                                            <div v-if="!item.warehouseId && item.productId" class="text-danger small mt-1">
+                                                <i class="ri-error-warning-line me-1"></i>
+                                                Gudang harus dipilih terlebih dahulu sebelum memilih produk
+                                            </div>
                                         </div>
                                         <div class="col-md-4">
                                             <v-select 
                                                 v-model="item.productId" 
-                                                :options="filteredProducts" 
+                                                :options="getProductsByWarehouse(item.warehouseId)" 
                                                 label="displayName"
                                                 :reduce="p => p.id" 
                                                 placeholder="Cari berdasarkan SKU atau nama produk..." 
@@ -434,6 +430,8 @@
                                                 :clearable="true"
                                                 :close-on-select="true"
                                                 :preserve-search="false"
+                                                :disabled="!item.warehouseId"
+                                                :class="{ 'is-invalid': !item.warehouseId }"
                                             >
                                                 <template #option="option">
                                                     <div class="d-flex justify-content-between align-items-center w-100">
@@ -443,8 +441,31 @@
                                                         </div>
                                                     </div>
                                                 </template>
+                                                <template #selected-option="option">
+                                                    <div class="d-flex align-items-center">
+                                                        <span class="fw-bold">{{ option.sku }} | {{ option.name }}</span>
+                                                    </div>
+                                                </template>
+                                                <template #no-options>
+                                                    <div class="text-center p-3">
+                                                        <div v-if="!item.warehouseId" class="text-muted">
+                                                            <i class="ri-information-line me-2"></i>
+                                                            Pilih gudang terlebih dahulu untuk melihat produk
+                                                        </div>
+                                                        <div v-else class="text-muted">
+                                                            <i class="ri-search-line me-2"></i>
+                                                            Tidak ada produk ditemukan di gudang ini
+                                                        </div>
+                                                    </div>
+                                                </template>
                                             </v-select>
-                                            <small class="text-muted">Produk tersedia: {{ filteredProducts?.length || 0 }} | Selected: {{ item.productId }}</small>
+                                            <small class="text-muted">
+                                                Produk tersedia: {{ getProductsByWarehouse(item.warehouseId)?.length || 0 }} 
+                                                | Selected: {{ item.productId }}
+                                                <span v-if="!item.warehouseId" class="text-danger">
+                                                    (Pilih gudang dulu)
+                                                </span>
+                                            </small>
                                         </div>
                                         <div class="col-md-2">
                                             <div class="form-floating form-floating-outline">
@@ -500,7 +521,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { usePurchaseOrderStore } from '~/stores/purchaseOrder'
 import { useVendorStore } from '~/stores/vendor'
@@ -573,6 +594,9 @@ const filters = ref({
     poType: null,
     status: null,
 });
+
+// ✅ NEW: State untuk produk berdasarkan warehouse
+const productsByWarehouse = ref(new Map());
 
 const rowsPerPageOptionsArray = ref([10, 25, 50, 100]);
 const modalTitle = computed(() => isEditMode.value ? 'Edit Purchase Order' : 'Tambah Purchase Order');
@@ -757,6 +781,35 @@ const filteredProducts = computed(() => {
     }));
 });
 
+const getProductsByWarehouse = (warehouseId) => {
+    if (!warehouseId) return [];
+    
+    // Debug: log data yang tersedia
+    console.log('🔍 getProductsByWarehouse called with warehouseId:', warehouseId);
+    console.log('📦 productsByWarehouse cache:', productsByWarehouse.value);
+    console.log('🌐 products global:', products.value);
+    
+    // Gunakan produk yang sudah di-cache berdasarkan warehouse
+    if (productsByWarehouse.value.has(warehouseId)) {
+        const cachedProducts = productsByWarehouse.value.get(warehouseId) || [];
+        console.log('✅ Using cached products for warehouse:', cachedProducts);
+        return cachedProducts.map(product => ({
+            ...product,
+            displayName: `${product.sku || ''} | ${product.name || ''}`
+        }));
+    }
+    
+    // Fallback ke produk global jika belum ada cache
+    // Untuk sementara, tampilkan semua produk yang tersedia
+    const fallbackProducts = (products.value || []).map(product => ({
+        ...product,
+        displayName: `${product.sku || ''} | ${product.name || ''}`
+    }));
+    
+    console.log('🔄 Using fallback products:', fallbackProducts);
+    return fallbackProducts;
+};
+
 const debouncedSearch = useDebounceFn(() => {
     if (globalFilterValue.value !== undefined) {
         purchaseOrderStore.setSearch(globalFilterValue.value)
@@ -881,11 +934,15 @@ const onProductChange = (index) => {
   if (!form.value || !form.value.purchaseOrderItems) return;
   
   const selectedProductId = form.value.purchaseOrderItems[index].productId;
+  console.log('🔄 Product changed for item', index, 'to productId:', selectedProductId);
+  
   const selectedProduct = (filteredProducts.value || []).find(p => p.id === selectedProductId);
+  console.log('🔍 Selected product:', selectedProduct);
 
   if (selectedProduct) {
     const item = form.value.purchaseOrderItems[index];
     item.price = Number(selectedProduct.priceBuy) || 0;
+    console.log('💰 Set price to:', item.price);
     calculateSubtotal(index);
   }
 };
@@ -905,6 +962,41 @@ const calculateSubtotal = (index) => {
   const price = Number(item.price) || 0;
   
   item.subtotal = quantity * price;
+};
+
+const onWarehouseChange = async (index) => {
+    if (!form.value || !form.value.purchaseOrderItems) return;
+    const item = form.value.purchaseOrderItems[index];
+    if (item.warehouseId) {
+        console.log('🏭 Warehouse changed for item', index, 'to warehouseId:', item.warehouseId);
+        
+        // Clear product selection if warehouse changes
+        item.productId = null;
+        // Reset price and subtotal if product is cleared
+        item.price = 0;
+        item.subtotal = 0;
+        
+        // Fetch products for this specific warehouse
+        try {
+            console.log('📡 Fetching products for warehouse:', item.warehouseId);
+            const warehouseProducts = await purchaseOrderStore.fetchProductsByWarehouse(item.warehouseId);
+            console.log('📦 Received warehouse products:', warehouseProducts);
+            
+            // Pastikan data memiliki displayName
+            const productsWithDisplayName = warehouseProducts.map(product => ({
+                ...product,
+                displayName: `${product.sku || ''} | ${product.name || ''}`
+            }));
+            
+            console.log('🏷️ Products with displayName:', productsWithDisplayName);
+            productsByWarehouse.value.set(item.warehouseId, productsWithDisplayName);
+            
+            // Force re-render
+            await nextTick();
+        } catch (error) {
+            console.error('Error fetching products for warehouse:', error);
+        }
+    }
 };
 
 const viewPurchaseOrderDetails = (purchaseOrderId) => {
@@ -969,6 +1061,28 @@ const handlePoTypeChange = (selectedType) => {
     .attachment-preview:hover {
         transform: scale(1.05);
         box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    /* ✅ NEW: Styling untuk validasi */
+    .is-invalid {
+        border-color: #dc3545 !important;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+    }
+
+    .is-invalid .vs__dropdown-toggle {
+        border-color: #dc3545 !important;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+    }
+
+    /* ✅ NEW: Styling untuk disabled state */
+    .v-select-style:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .v-select-style:disabled .vs__dropdown-toggle {
+        background-color: #e9ecef;
+        cursor: not-allowed;
     }
 
     :deep(.v-select-style .vs__dropdown-toggle),

@@ -317,16 +317,13 @@ import { usePermissions } from '~/composables/usePermissions'
 import { useFormatRupiah } from '~/composables/formatRupiah'
 import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
+import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import Dropdown from 'primevue/dropdown'
 import Column from 'primevue/column'
 import InputText from 'primevue/inputtext'
 import Swal from 'sweetalert2'
 
-// Page meta
-definePageMeta({
-    title: 'Rekening Bank',
-    description: 'Kelola rekening bank untuk transaksi keuangan'
-})
+const { setListTitle, setFormTitle } = useDynamicTitle()
 
 // Stores
 const bankAccountStore = useBankAccountStore()
@@ -406,6 +403,7 @@ onMounted(async () => {
     } catch (error) {
         console.error('Error in onMounted:', error)
     }
+    setListTitle('Bank Account', bankAccounts.value.length)
 })
 
 // Watchers

@@ -397,16 +397,13 @@ import { usePermissionsStore } from '~/stores/permissions'
 import { usePermissions } from '~/composables/usePermissions'
 import { useDebounceFn } from '@vueuse/core'
 import MyDataTable from '~/components/table/MyDataTable.vue'
+import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import Modal from '~/components/modal/Modal.vue'
 import Column from 'primevue/column'
 import Dropdown from 'primevue/dropdown'
 import InputText from 'primevue/inputtext'
 
-// Page meta
-definePageMeta({
-    title: 'Penerimaan Piutang',
-    description: 'Kelola penerimaan pembayaran dari pelanggan'
-})
+const { setListTitle, setFormTitle } = useDynamicTitle()
 
 // Stores
 const receiptStore = useARReceiptStore()
@@ -542,6 +539,7 @@ onMounted(async () => {
     } catch (error) {
         console.error('Error in onMounted:', error)
     }
+    setListTitle('AR Receipts', receipts.value.length)
 })
 
 // Watchers

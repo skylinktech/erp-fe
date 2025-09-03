@@ -299,6 +299,25 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
                 throw new Error('Minimal harus ada 1 item produk yang valid (produk, quantity > 0, harga > 0)');
             }
 
+            // ✅ NEW: Validasi warehouse untuk setiap item
+            const itemsWithoutWarehouse = this.form.purchaseOrderItems.filter((item: any) => 
+                item.productId && !item.warehouseId
+            );
+            
+            if (itemsWithoutWarehouse.length > 0) {
+                throw new Error('Semua item produk harus memiliki gudang yang dipilih');
+            }
+
+            // ✅ NEW: Validasi produk sesuai dengan warehouse yang dipilih
+            for (const item of this.form.purchaseOrderItems) {
+                if (item.productId && item.warehouseId) {
+                    // Validasi bahwa warehouse dan product sudah dipilih
+                    if (!item.warehouseId) {
+                        throw new Error(`Item produk ${item.productId} harus memiliki gudang yang dipilih`);
+                    }
+                }
+            }
+
             // Append hanya items yang valid
             validItems.forEach((item: any, i: number) => {
                 Object.keys(item).forEach(itemKey => {
@@ -708,6 +727,40 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
             title: 'Error',
             message: 'Gagal memuat daftar vendor.',
             color: 'red'
+            });
+            return [];
+        }
+    },
+
+    // ✅ NEW: Method untuk mengambil produk berdasarkan warehouse
+    async fetchProductsByWarehouse(warehouseId: number) {
+        if (!warehouseId) return [];
+        
+        const toast = useToast();
+        try {
+            const { $api } = useNuxtApp();
+            const token = localStorage.getItem('token');
+            
+            // Fetch products with warehouse filter and include stocks
+            const response = await fetch(`${$api.product()}?warehouseId=${warehouseId}&includeStocks=true&rows=1000`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json',
+                }
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                return result.data || [];
+            } else {
+                throw new Error('Gagal memuat data produk untuk gudang ini');
+            }
+        } catch (error) {
+            console.error('Error fetching products by warehouse:', error);
+            toast.error({
+                title: 'Error',
+                message: 'Gagal memuat data produk untuk gudang yang dipilih',
+                color: 'red'
             });
             return [];
         }

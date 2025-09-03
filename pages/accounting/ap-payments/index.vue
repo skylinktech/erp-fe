@@ -533,17 +533,14 @@ import { usePermissions } from '~/composables/usePermissions'
 import { useFormatRupiah } from '~/composables/formatRupiah'
 import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
+import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import Dropdown from 'primevue/dropdown'
 import Column from 'primevue/column'
 import InputText from 'primevue/inputtext'
 import vSelect from 'vue-select'
 import 'vue-select/dist/vue-select.css'
 
-// Page meta
-definePageMeta({
-  title: 'Pembayaran ke Vendor',
-  description: 'Kelola pembayaran ke vendor untuk transaksi keuangan'
-})
+const { setListTitle, setFormTitle } = useDynamicTitle()
 
 // Stores
 const apPaymentStore = useAPPaymentStore()
@@ -596,6 +593,7 @@ onMounted(async () => {
   } catch (error) {
     console.error('Error in onMounted:', error)
   }
+  setListTitle('AP Payments', apPaymentStore.payments.length)
 })
 
 // Watchers
