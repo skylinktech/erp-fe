@@ -144,8 +144,10 @@
                                                 <img 
                                                     :src="getProductImage(slotProps.data.image)" 
                                                     alt="Gambar Produk" 
-                                                    style="height: 40px; max-width: 80px; object-fit: contain;" 
+                                                    style="height: 40px; max-width: 80px; object-fit: contain; cursor: pointer;" 
                                                     @error="(e) => handleImageError(e, '/img/default-product-image.png')"
+                                                    @click="productStore.openImageInNewTab(slotProps.data.image)"
+                                                    title="Klik untuk melihat gambar lengkap"
                                                 />
                                             </div>
                                             <div v-else>
@@ -725,5 +727,21 @@ const getFieldError = (fieldName) => {
             flex: 0 0 100%;
             max-width: 100%;
         }
+    }
+
+    /* Image clickable styling */
+    :deep(.p-datatable img[style*="cursor: pointer"]) {
+        transition: all 0.2s ease;
+        border: 2px solid transparent;
+    }
+
+    :deep(.p-datatable img[style*="cursor: pointer"]:hover) {
+        transform: scale(1.05);
+        border-color: #696cff;
+        box-shadow: 0 2px 8px rgba(105, 108, 255, 0.3);
+    }
+
+    :deep(.p-datatable img[style*="cursor: pointer"]:active) {
+        transform: scale(0.98);
     }
 </style>

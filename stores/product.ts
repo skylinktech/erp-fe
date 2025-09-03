@@ -533,6 +533,14 @@ export const useProductStore = defineStore('product', {
             });
             throw error
         }
+    },
+
+    openImageInNewTab(imagePath: string) {
+      if (imagePath) {
+        const { getProductImage } = useImageUrl();
+        const fullImageUrl = getProductImage(imagePath);
+        window.open(fullImageUrl, '_blank');
+      }
     }
   }
 })
