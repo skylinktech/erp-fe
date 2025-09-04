@@ -120,7 +120,10 @@
                                 paginatorPosition="bottom"
                                 paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink"
                                 currentPageReportTemplate="Menampilkan {first} sampai {last} dari {totalRecords} data"
+                                :expandedRows="expandedRows"
+                                @row-toggle="onRowToggle"
                                 >
+                                    <Column :expander="true" headerStyle="width: 3rem" />
                                     <Column header="#" :sortable="false">
                                         <template #body="slotProps">
                                             {{ params.first + slotProps.index + 1 }}
@@ -246,6 +249,11 @@
                                             </div>
                                         </template>
                                     </Column>
+                                    
+                                    <!-- Expanded Row Template -->
+                                    <template #expansion="slotProps">
+                                        <SalesOrderExpandedRow :salesOrder="slotProps.data" />
+                                    </template>
                             </MyDataTable>
                         </div>
                     </div>
@@ -506,6 +514,7 @@ import Modal from '~/components/modal/Modal.vue'
 import CardBox from '~/components/cards/Cards.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import TableControls from '~/components/table/TableControls.vue'
+import SalesOrderExpandedRow from '~/components/table/SalesOrderExpandedRow.vue'
 import vSelect from 'vue-select'
 import Dropdown from 'primevue/dropdown'
 import Column from 'primevue/column'
@@ -559,6 +568,7 @@ const filters = ref({
   search: '',
 });
 const globalFilterValue = ref('');
+const expandedRows = ref({});
 
 // Table controls data
 const tableControls = ref({
@@ -1328,6 +1338,14 @@ const exportSalesOrderPDF = async (dataToExport) => {
     );
 
     doc.save('sales-orders.pdf');
+};
+
+// Row expansion methods
+const onRowToggle = (event) => {
+    console.log('🔍 Sales Order - Row toggle event:', event)
+    console.log('🔍 Sales Order - Expanded data:', event.data)
+    console.log('🔍 Sales Order - SalesOrderItems:', event.data?.salesOrderItems)
+    expandedRows.value = event.data;
 };
 
 </script>

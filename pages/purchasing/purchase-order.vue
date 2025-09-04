@@ -89,7 +89,10 @@
                                 paginatorPosition="bottom"
                                 paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink"
                                 currentPageReportTemplate="Menampilkan {first} sampai {last} dari {totalRecords} data"
+                                :expandedRows="expandedRows"
+                                @row-toggle="onRowToggle"
                                 >
+                                    <Column :expander="true" headerStyle="width: 3rem" />
                                     <Column header="#" :sortable="false">
                                         <template #body="slotProps">
                                             {{ params.first + slotProps.index + 1 }}
@@ -201,6 +204,11 @@
                                             </div>
                                         </template>
                                     </Column>
+                                    
+                                    <!-- Expanded Row Template -->
+                                    <template #expansion="slotProps">
+                                        <PurchaseOrderExpandedRow :purchaseOrder="slotProps.data" />
+                                    </template>
                             </MyDataTable>
                         </div>
                     </div>
@@ -543,6 +551,7 @@ import Swal from 'sweetalert2'
 import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import TableControls from '~/components/table/TableControls.vue'
+import PurchaseOrderExpandedRow from '~/components/table/PurchaseOrderExpandedRow.vue'
 import vSelect from 'vue-select'
 import Dropdown from 'primevue/dropdown'
 import CardBox from '~/components/cards/Cards.vue'
@@ -594,6 +603,7 @@ const filters = ref({
     poType: null,
     status: null,
 });
+const expandedRows = ref({});
 
 // ✅ NEW: State untuk produk berdasarkan warehouse
 const productsByWarehouse = ref(new Map());
@@ -1044,6 +1054,11 @@ const handlePoTypeChange = (selectedType) => {
         form.value.perusahaanId = null;
         form.value.cabangId = null;
     }
+};
+
+// Row expansion methods
+const onRowToggle = (event) => {
+    expandedRows.value = event.data;
 };
 
 </script>

@@ -149,7 +149,7 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
             sortOrder: this.params.sortOrder?.toString() || '',
             draw     : this.params.draw.toString(),
             search   : this.params.search || '',
-            includeItems: 'true', // Include purchaseOrderItems with product relation
+            includeItems: 'true', // Always include purchaseOrderItems with product relation
         });
 
         if (this.params.vendorId) {

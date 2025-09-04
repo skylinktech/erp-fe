@@ -207,6 +207,7 @@ export const useSalesOrderStore = defineStore('salesOrder', {
             sortOrder: this.params.sortOrder?.toString() || '',
             draw     : this.params.draw.toString(),
             search   : this.params.search || '',
+            includeItems: 'true', // Always include salesOrderItems with product relation
         });
 
         if (this.params.customerId) {
@@ -242,6 +243,13 @@ export const useSalesOrderStore = defineStore('salesOrder', {
         const result = await response.json()
         this.salesOrders = result.data
         this.totalRecords = result.meta.total
+        
+        // Debug logging untuk melihat data yang diterima
+        console.log('🔍 Sales Order Store - API Response:', result)
+        console.log('🔍 Sales Order Store - Sales Orders:', this.salesOrders)
+        if (this.salesOrders.length > 0) {
+          console.log('🔍 Sales Order Store - First SO Items:', this.salesOrders[0]?.salesOrderItems)
+        }
       } catch (e: any) {
         console.error('Gagal mengambil data salesOrder:', e)
         this.error = e

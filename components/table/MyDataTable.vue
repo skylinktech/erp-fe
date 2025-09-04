@@ -6,6 +6,7 @@
     :loading="props.loading"
     :totalRecords="props.totalRecords"
     :first="props.first"
+    :expandedRows="props.expandedRows"
     paginator
     lazy
     dataKey="id"
@@ -14,8 +15,14 @@
     @page="emit('page', $event)"
     @sort="emit('sort', $event)"
     @selection-change="emit('selection-change', $event)"
+    @row-toggle="emit('row-toggle', $event)"
   >
     <slot></slot>
+    
+    <!-- Expansion template slot -->
+    <template #expansion="slotProps">
+      <slot name="expansion" :data="slotProps.data"></slot>
+    </template>
     
     <!-- Fallback untuk data kosong -->
     <template #empty>
@@ -64,9 +71,13 @@ const props = defineProps({
         type: Number,
         default: 0,
     },
+    expandedRows: {
+        type: Object,
+        default: () => ({}),
+    },
 })
 
-const emit = defineEmits(['page', 'sort', 'selection-change'])
+const emit = defineEmits(['page', 'sort', 'selection-change', 'row-toggle'])
 
 const dt = ref()
 
