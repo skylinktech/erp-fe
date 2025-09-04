@@ -6,9 +6,13 @@
             Berikut di bawah ini data detail stock transfer
             </p>
             <div v-if="loading" class="text-center">
-                <div class="spinner-border" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
+                <ProgressSpinner 
+                    style="width: 50px; height: 50px" 
+                    strokeWidth="4"
+                    fill="transparent"
+                    animationDuration="1s"
+                />
+                <div class="mt-3 text-muted">Memuat data...</div>
             </div>
             <div v-else-if="error" class="alert alert-danger">{{ error.message }}</div>
             <div v-else-if="stockTransfer" class="row g-6">

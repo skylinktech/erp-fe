@@ -408,7 +408,7 @@
                       <div class="modal-footer mt-6">
                            <button type="button" class="btn btn-outline-secondary" @click="suratJalanStore.closeModal()">Tutup</button>
                           <button type="submit" class="btn btn-primary" :disabled="loading">
-                              <span v-if="loading" class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                              <span v-if="loading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                               Simpan
                           </button>
                       </div>

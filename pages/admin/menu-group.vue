@@ -2,12 +2,14 @@
     <div class="content-wrapper">
         <!-- Content -->
         <div class="container-xxl flex-grow-1 container-p-y">
-            <div v-if="loading">
-                <!-- Skeleton loader -->
-                <div class="animate-pulse space-y-2">
-                    <div class="h-6 bg-gray-200 rounded"></div>
-                    <div class="h-6 bg-gray-200 rounded w-1/2"></div>
-                </div>
+            <div v-if="loading" class="text-center py-8">
+                <ProgressSpinner 
+                    style="width: 50px; height: 50px" 
+                    strokeWidth="4"
+                    fill="transparent"
+                    animationDuration="1s"
+                />
+                <div class="mt-3 text-muted">Memuat data...</div>
             </div>
             <template v-else>
                 <div v-if="menuGroups.length > 0">

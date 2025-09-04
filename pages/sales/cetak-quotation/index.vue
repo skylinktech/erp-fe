@@ -1,8 +1,12 @@
 <template>
     <div v-if="loading" class="text-center p-6">
-      <div class="spinner-border" role="status">
-        <span class="visually-hidden">Loading...</span>
-      </div>
+      <ProgressSpinner 
+                    style="width: 50px; height: 50px" 
+                    strokeWidth="4"
+                    fill="transparent"
+                    animationDuration="1s"
+                />
+                <div class="mt-3 text-muted">Memuat data...</div>
     </div>
     <div v-else-if="error" class="alert alert-danger m-6">{{ error.message }}</div>
     <div v-else-if="quotation" class="p-6">

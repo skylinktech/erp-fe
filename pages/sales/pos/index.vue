@@ -218,7 +218,7 @@
                         </div>
                     </div>
                     <button class="btn-print" type="button" @click="saveBills" :disabled="loading">
-                        <span v-if="loading" class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                        <span v-if="loading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                         {{ loading ? 'Menyimpan...' : 'Simpan' }}
                     </button>
                 </div>

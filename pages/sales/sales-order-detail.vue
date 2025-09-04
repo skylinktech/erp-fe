@@ -2,14 +2,15 @@
     <div class="content-wrapper">
         <!-- Content -->
         <div class="container-xxl flex-grow-1 container-p-y">
-            <div v-if="loading" class="text-center py-5">
-                <div class="d-flex flex-column align-items-center">
-                    <div class="spinner-border text-primary mb-3" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                    <h6 class="text-muted">Memuat detail Sales Order...</h6>
-                    <small class="text-muted">Mohon tunggu sebentar</small>
-                </div>
+            <div v-if="loading" class="text-center py-8">
+                <ProgressSpinner 
+                    style="width: 50px; height: 50px" 
+                    strokeWidth="4"
+                    fill="transparent"
+                    animationDuration="1s"
+                />
+                <div class="mt-3 text-muted">Memuat detail Sales Order...</div>
+                <small class="text-muted">Mohon tunggu sebentar</small>
             </div>
             <template v-else-if="salesOrder">
                 <!-- ✅ STATUS ALERT untuk DELIVERED -->
