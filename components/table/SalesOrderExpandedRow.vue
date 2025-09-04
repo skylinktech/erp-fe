@@ -19,7 +19,7 @@
           <thead class="table-light">
             <tr>
               <th>No</th>
-              <th>SKU</th>
+              <th>Part Number</th>
               <th>Nama Produk</th>
               <th>Gudang</th>
               <th>Qty Order</th>
@@ -33,7 +33,7 @@
             <tr v-for="(item, index) in salesOrder.salesOrderItems" :key="item.id" class="align-middle">
               <td>{{ index + 1 }}</td>
               <td>
-                <span class="badge bg-label-info">{{ item.product?.sku || '-' }}</span>
+                <span class="badge bg-label-secondary">{{ item.product?.sku || '-' }}</span>
               </td>
               <td>
                 <div class="d-flex flex-column">
@@ -53,10 +53,10 @@
                 <span class="fw-medium">{{ item.deliveredQty || 0 }}</span>
               </td>
               <td>
-                <span class="text-success fw-medium">{{ formatRupiah(item.price) }}</span>
+                <span class="fw-medium">{{ formatRupiah(item.price) }}</span>
               </td>
               <td>
-                <span class="text-primary fw-bold">{{ formatRupiah(item.subtotal) }}</span>
+                <span class="fw-bold">{{ formatRupiah(item.subtotal) }}</span>
               </td>
               <td>
                 <span :class="getDeliveryStatusBadge(item).class">
