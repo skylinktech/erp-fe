@@ -339,12 +339,8 @@
   const printPurchaseInvoice = (id) => {
     if (!id) {
       console.error('❌ No purchaseInvoiceId provided for printingPurchase InvoiceId provided for printing')
-      Swal.fire({
-        icon: 'error',
-        title: 'Parameter Tidak Valid',
-        text: 'ID Purchase Invoice tidak valid untuk print.',
-        confirmButtonText: 'OK'
-      })
+      const toast = useToast()
+      toast.error('ID Purchase Invoice tidak valid untuk print.')
       return
     }
     
@@ -391,21 +387,13 @@
         await purchaseInvoiceStore.fetchInvoiceDetailWithItems(invoiceIdToFetch)
       } catch (error) {
         console.error('❌ Failed to fetch invoice details:', error)
-        Swal.fire({
-          icon: 'error',
-          title: 'Gagal Memuat Data',
-          text: `Tidak dapat memuat detail Purchase Invoice dengan ID: ${invoiceIdToFetch}. ${error.message || 'Silakan coba lagi.'}`,
-          confirmButtonText: 'OK'
-        })
+        const toast = useToast()
+        toast.error(`Tidak dapat memuat detail Purchase Invoice dengan ID: ${invoiceIdToFetch}. ${error.message || 'Silakan coba lagi.'}`)
       }
     } else {
       console.error('❌ Invalid invoiceId:', invoiceIdToFetch)
-      Swal.fire({
-        icon: 'error',
-        title: 'Parameter Tidak Valid',
-        text: 'ID Purchase Invoice tidak valid atau kosong.',
-        confirmButtonText: 'OK'
-      })
+      const toast = useToast()
+      toast.error('ID Purchase Invoice tidak valid atau kosong.')
     }
   }
   

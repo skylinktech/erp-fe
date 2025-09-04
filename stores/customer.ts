@@ -100,7 +100,13 @@ export const useCustomerStore = defineStore('customer', {
         this.totalRecords = result.meta.total
       } catch (e: any) {
         this.error = e.message
-        Swal.fire('Error', `Tidak dapat memuat data pelanggan: ${e.message}`, 'error');
+        const toast = useToast()        
+        toast.error({
+          title: 'Error',
+          message: `Tidak dapat memuat data pelanggan: ${e.message}`,
+          color: 'red',
+          position: 'topRight',
+        });
       } finally {
         this.loading = false
       }
@@ -181,12 +187,24 @@ export const useCustomerStore = defineStore('customer', {
         
         this.closeModal();
         await this.fetchCustomers();
-        Swal.fire('Berhasil!', `Customer berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`, 'success');
+        const toast = useToast()
+        toast.success({
+          title: 'Success',
+          message: `Customer berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
+          color: 'green',
+          position: 'topRight',
+        });
 
       } catch (error: any) {
         // Jangan tampilkan Swal jika ada validation errors (sudah ditampilkan di modal)
         if (this.validationErrors.length === 0) {
-            Swal.fire('Error', error.message || 'Operasi gagal', 'error');
+            const toast = useToast()            
+            toast.error({
+              title: 'Error',
+              message: error.message || 'Operasi gagal',
+              color: 'red',
+              position: 'topRight',
+            });
         }
       } finally {
         this.loading = false
@@ -269,7 +287,13 @@ export const useCustomerStore = defineStore('customer', {
       } catch (e: any) {
         this.error = e.message;
         this.selectedCustomer = null;
-        Swal.fire('Error', `Tidak dapat memuat detail pelanggan: ${e.message}`, 'error');
+        const toast = useToast()        
+        toast.error({
+          title: 'Error',
+          message: `Tidak dapat memuat detail pelanggan: ${e.message}`,
+          color: 'red',
+          position: 'topRight',
+        });
       } finally {
         this.loading = false;
       }
@@ -296,7 +320,13 @@ export const useCustomerStore = defineStore('customer', {
                     customerProducts: data.customerProducts && data.customerProducts.length > 0 ? data.customerProducts: [{ productId: null, priceSell: 0 }]
                 };
             } catch (error: any) {
-                Swal.fire('Error', error.message, 'error');
+                const toast = useToast()                
+                toast.error({
+                  title: 'Error',
+                  message: error.message,
+                  color: 'red',
+                  position: 'topRight',
+                });
             } finally {
                 this.loading = false;
             }

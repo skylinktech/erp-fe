@@ -93,7 +93,13 @@ export const useKategoriStore = defineStore('kategori', {
         this.totalRecords = result.meta.total
       } catch (e: any) {
         this.error = e.message
-        Swal.fire('Error', `Tidak dapat memuat data kategori: ${e.message}`, 'error');
+        const toast = useToast()
+        toast.error({
+          title: 'Error',
+          message: `Tidak dapat memuat data kategori: ${e.message}`,
+          color: 'red',
+          position: 'topRight',
+        });
       } finally {
         this.loading = false
       }
@@ -170,10 +176,22 @@ export const useKategoriStore = defineStore('kategori', {
             this.closeModal();
             await this.fetchKategori();
             await this.fetchStats();
-            Swal.fire('Berhasil!', `Kategori berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`, 'success');
+            const toast = useToast()
+            toast.success({
+              title: 'Success',
+              message: `Kategori berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
+              color: 'green',
+              position: 'topRight',
+            });
 
         } catch (error: any) {
-            Swal.fire('Error', error.message || 'Operasi gagal', 'error');
+            const toast = useToast()
+            toast.error({
+              title: 'Error',
+              message: error.message || 'Operasi gagal',
+              color: 'red',
+              position: 'topRight',
+            });
         } finally {
             this.loading = false;
         }
@@ -216,10 +234,22 @@ export const useKategoriStore = defineStore('kategori', {
           }
 
           await this.fetchKategori();
-          Swal.fire('Berhasil!', 'Kategori berhasil dihapus.', 'success');
+          const toast = useToast()
+          toast.success({
+            title: 'Success',
+            message: 'Kategori berhasil dihapus.',
+            color: 'green',
+            position: 'topRight',
+          });
       } catch (error: any) {
           console.error('Gagal menghapus kategori:', error);
-          Swal.fire('Error', error.message || 'Gagal menghapus kategori', 'error');
+          const toast = useToast()
+          toast.error({
+            title: 'Error',
+            message: error.message || 'Gagal menghapus kategori',
+            color: 'red',
+            position: 'topRight',
+          });
       } finally {
           this.loading = false;
       }

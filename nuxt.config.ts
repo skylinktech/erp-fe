@@ -32,6 +32,7 @@ export default defineNuxtConfig({
     '~/plugins/jquery.client.ts',
     '~/plugins/api.client.ts',
     '~/plugins/primevue.ts',
+    '~/plugins/toast-config.client.ts',
     '~/plugins/session-toast.client.ts',
   ],
   css: [

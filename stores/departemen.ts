@@ -80,7 +80,13 @@ export const useDepartemenStore = defineStore('departemen', {
 
       } catch (e: any) {
         this.error = e.message
-        Swal.fire('Error', `Tidak dapat memuat data departemen: ${e.message}`, 'error');
+        const toast = useToast()        
+        toast.error({
+          title: 'Error',
+          message: `Tidak dapat memuat data departemen: ${e.message}`,
+          color: 'red',
+          position: 'topRight',
+        });
       } finally {
         this.loading = false
       }
@@ -101,7 +107,13 @@ export const useDepartemenStore = defineStore('departemen', {
             this.divisis = result.data || [];
         } catch (error) {
             console.error('Error fetching divisis:', error);
-            Swal.fire('Error', 'Gagal mengambil data Divisi untuk pilihan.', 'error');
+            const toast = useToast()            
+            toast.error({
+            title: 'Error',
+            message: 'Gagal mengambil data Divisi untuk pilihan.',
+            color: 'red',
+            position: 'topRight',
+          });
         }
     },
 
@@ -148,11 +160,23 @@ export const useDepartemenStore = defineStore('departemen', {
         
         this.closeModal();
         await this.fetchDepartemens();
-        Swal.fire('Berhasil!', `Departemen berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`, 'success');
+        const toast = useToast()        
+        toast.success({
+          title: 'Success',
+          message: `Departemen berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
+          color: 'green',
+          position: 'topRight',
+        });
 
       } catch (error: any) {
         if (error.message !== 'Data validasi tidak valid') {
-            Swal.fire('Error', error.message || 'Operasi gagal', 'error');
+            const toast = useToast()
+            toast.error({
+              title: 'Error',
+              message: error.message || 'Operasi gagal',
+              color: 'red',
+              position: 'topRight',
+            });
         }
       } finally {
         this.loading = false;
@@ -197,10 +221,22 @@ export const useDepartemenStore = defineStore('departemen', {
           }
 
           await this.fetchDepartemens();
-          Swal.fire('Berhasil!', 'Departemen berhasil dihapus.', 'success');
+          const toast = useToast()          
+          toast.success({
+            title: 'Success',
+            message: 'Departemen berhasil dihapus.',
+            color: 'green',
+            position: 'topRight',
+          });
       } catch (error: any) {
           console.error('Gagal menghapus departemen:', error);
-          Swal.fire('Error', error.message || 'Gagal menghapus departemen', 'error');
+          const toast = useToast()          
+          toast.error({
+            title: 'Error',
+            message: error.message || 'Gagal menghapus departemen',
+            color: 'red',
+            position: 'topRight',
+          });
       } finally {
           this.loading = false;
       }

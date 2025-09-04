@@ -96,7 +96,13 @@ export const useJabatanStore = defineStore('jabatan', {
         this.totalRecords = result.meta.total
       } catch (error) {
         console.error('Gagal mengambil data jabatan:', error)
-        Swal.fire('Error', 'Gagal mengambil data jabatan', 'error')
+        const toast = useToast()        
+        toast.error({
+          title: 'Error',
+          message: 'Gagal mengambil data jabatan',
+          color: 'red',
+          position: 'topRight',
+        });
       } finally {
         this.loading = false
       }
@@ -169,10 +175,22 @@ export const useJabatanStore = defineStore('jabatan', {
             this.closeModal();
             await this.fetchJabatans();
             await this.fetchStats();
-            Swal.fire('Berhasil!', `Jabatan berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`, 'success');
+            const toast = useToast()            
+            toast.success({
+              title: 'Success',
+              message: `Jabatan berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
+              color: 'green',
+              position: 'topRight',
+            });
 
         } catch (error: any) {
-            Swal.fire('Error', error.message || 'Operasi gagal', 'error');
+            const toast = useToast()            
+            toast.error({
+              title: 'Error',
+              message: error.message || 'Operasi gagal',
+              color: 'red',
+              position: 'topRight',
+            });
         } finally {
             this.loading = false;
         }
@@ -216,9 +234,21 @@ export const useJabatanStore = defineStore('jabatan', {
 
           await this.fetchJabatans();
           await this.fetchStats();
-          Swal.fire('Berhasil!', 'Jabatan berhasil dihapus.', 'success');
+          const toast = useToast()          
+          toast.success({
+            title: 'Success',
+            message: 'Jabatan berhasil dihapus.',
+            color: 'green',
+            position: 'topRight',
+          });
       } catch (error: any) {
-          Swal.fire('Error', error.message || 'Gagal menghapus jabatan', 'error');
+          const toast = useToast()          
+          toast.error({
+            title: 'Error',
+            message: error.message || 'Gagal menghapus jabatan',
+            color: 'red',
+            position: 'topRight',
+          });
       } finally {
           this.loading = false;
       }

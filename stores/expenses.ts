@@ -149,7 +149,13 @@ export const useExpenseStore = defineStore('expense', {
         this.totalRecords = result.meta.total
       } catch (e: any) {
         this.error = e.message
-        Swal.fire('Error', `Tidak dapat memuat data pengeluaran: ${e.message}`, 'error');
+        const toast = useToast()        
+        toast.error({
+          title: 'Error',
+          message: `Tidak dapat memuat data pengeluaran: ${e.message}`,
+          color: 'red',
+          position: 'topRight',
+        });
       } finally {
         this.loading = false
       }
@@ -283,11 +289,23 @@ export const useExpenseStore = defineStore('expense', {
         
         this.closeModal();
         await this.fetchExpenses();
-        Swal.fire('Berhasil!', `Pengeluaran berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`, 'success');
+        const toast = useToast()        
+        toast.success({
+          title: 'Success',
+          message: `Pengeluaran berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
+          color: 'green',
+          position: 'topRight',
+        });
 
       } catch (error: any) {
         if (this.validationErrors.length === 0) {
-          Swal.fire('Error', error.message || 'Operasi gagal', 'error');
+          const toast = useToast()          
+          toast.error({
+            title: 'Error',
+            message: error.message || 'Operasi gagal',
+            color: 'red',
+            position: 'topRight',
+          });
         }
       } finally {
         this.loading = false
@@ -327,9 +345,21 @@ export const useExpenseStore = defineStore('expense', {
           }
 
           await this.fetchExpenses();
-          Swal.fire('Berhasil!', 'Pengeluaran berhasil dihapus.', 'success');
+          const toast = useToast()          
+          toast.success({
+            title: 'Success',
+            message: 'Pengeluaran berhasil dihapus.',
+            color: 'green',
+            position: 'topRight',
+          });
         } catch (error: any) {
-          Swal.fire('Error', error.message || 'Gagal menghapus pengeluaran', 'error');
+          const toast = useToast()          
+          toast.error({
+            title: 'Error',
+            message: error.message || 'Gagal menghapus pengeluaran',
+            color: 'red',
+            position: 'topRight',
+          });
         }
       }
     },
@@ -367,9 +397,21 @@ export const useExpenseStore = defineStore('expense', {
           }
 
           await this.fetchExpenses();
-          Swal.fire('Berhasil!', 'Pengeluaran berhasil disetujui.', 'success');
+          const toast = useToast()          
+          toast.success({
+            title: 'Success',
+            message: 'Pengeluaran berhasil disetujui.',
+            color: 'green',
+            position: 'topRight',
+          });
         } catch (error: any) {
-          Swal.fire('Error', error.message || 'Gagal menyetujui pengeluaran', 'error');
+          const toast = useToast()          
+          toast.error({
+            title: 'Error',
+            message: error.message || 'Gagal menyetujui pengeluaran',
+            color: 'red',
+            position: 'topRight',
+          });
         }
       }
     },

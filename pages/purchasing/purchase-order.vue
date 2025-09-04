@@ -405,24 +405,19 @@
                                 <div v-for="(item, index) in form.purchaseOrderItems" :key="index" class="repeater-item mb-4">
                                     <div class="row g-3">
                                         <div class="col-12">
-                                            <label class="form-label">Gudang <span class="text-danger">*</span></label>
+                                            <label class="form-label">Gudang</label>
                                             <v-select 
                                                 v-model="item.warehouseId" 
                                                 :options="warehouses || []" 
                                                 :get-option-label="w => `${w.name} (${w.code})`" 
                                                 :reduce="w => w.id" 
-                                                placeholder="Pilih Gudang" 
+                                                placeholder="Pilih Gudang (Opsional)" 
                                                 class="v-select-style"
                                                 :loading="warehouseStore.loading"
                                                 @update:modelValue="onWarehouseChange(index)"
-                                                required
-                                                :class="{ 'is-invalid': !item.warehouseId && item.productId }"
+                                                :clearable="true"
                                             />
-                                            <small class="text-muted">Gudang tersedia: {{ warehouses?.length || 0 }}</small>
-                                            <div v-if="!item.warehouseId && item.productId" class="text-danger small mt-1">
-                                                <i class="ri-error-warning-line me-1"></i>
-                                                Gudang harus dipilih terlebih dahulu sebelum memilih produk
-                                            </div>
+                                            <small class="text-muted">Gudang tersedia: {{ warehouses?.length || 0 }} - Pilih gudang untuk melihat produk yang tersedia di gudang tersebut</small>
                                         </div>
                                         <div class="col-md-4">
                                             <v-select 
@@ -438,8 +433,6 @@
                                                 :clearable="true"
                                                 :close-on-select="true"
                                                 :preserve-search="false"
-                                                :disabled="!item.warehouseId"
-                                                :class="{ 'is-invalid': !item.warehouseId }"
                                             >
                                                 <template #option="option">
                                                     <div class="d-flex justify-content-between align-items-center w-100">
@@ -456,13 +449,9 @@
                                                 </template>
                                                 <template #no-options>
                                                     <div class="text-center p-3">
-                                                        <div v-if="!item.warehouseId" class="text-muted">
-                                                            <i class="ri-information-line me-2"></i>
-                                                            Pilih gudang terlebih dahulu untuk melihat produk
-                                                        </div>
-                                                        <div v-else class="text-muted">
+                                                        <div class="text-muted">
                                                             <i class="ri-search-line me-2"></i>
-                                                            Tidak ada produk ditemukan di gudang ini
+                                                            Tidak ada produk ditemukan
                                                         </div>
                                                     </div>
                                                 </template>
@@ -470,8 +459,8 @@
                                             <small class="text-muted">
                                                 Produk tersedia: {{ getProductsByWarehouse(item.warehouseId)?.length || 0 }} 
                                                 | Selected: {{ item.productId }}
-                                                <span v-if="!item.warehouseId" class="text-danger">
-                                                    (Pilih gudang dulu)
+                                                <span v-if="item.warehouseId" class="text-info">
+                                                    (Filtered by warehouse)
                                                 </span>
                                             </small>
                                         </div>
@@ -650,10 +639,13 @@ onMounted(async () => {
     
     // Load data menggunakan method store yang standar
     try {
+        // Set parameter untuk memuat lebih banyak produk
+        productStore.params.rows = 1000; // Load lebih banyak produk
+        
         await Promise.all([
             vendorStore.fetchVendors(),
             perusahaanStore.fetchPerusahaans(),
-            productStore.fetchProducts(),
+            productStore.fetchProducts(), // Load semua produk tanpa filter gudang
             warehouseStore.fetchWarehouses(),
             userStore.loadUser(),
             permissionStore.fetchPermissions()
@@ -692,9 +684,17 @@ watch(() => globalFilterValue.value, (newValue) => {
     tableControls.value.search = newValue;
 });
 
-watch(showModal, (newValue) => {
+watch(showModal, async (newValue) => {
     if (newValue) {
         modalInstance?.show()
+        
+        // Pastikan produk sudah dimuat dengan jumlah yang cukup
+        if (!products.value || products.value.length === 0) {
+            console.log('🔄 Products not loaded, fetching all products...');
+            productStore.params.rows = 1000;
+            await productStore.fetchProducts();
+        }
+        
         if (isEditMode.value && form.value?.attachment_url) {
             form.value.attachmentPreview = form.value.attachment_url
         } else if (isEditMode.value && form.value?.attachment) {
@@ -792,31 +792,38 @@ const filteredProducts = computed(() => {
 });
 
 const getProductsByWarehouse = (warehouseId) => {
-    if (!warehouseId) return [];
-    
     // Debug: log data yang tersedia
     console.log('🔍 getProductsByWarehouse called with warehouseId:', warehouseId);
     console.log('📦 productsByWarehouse cache:', productsByWarehouse.value);
     console.log('🌐 products global:', products.value);
     
-    // Gunakan produk yang sudah di-cache berdasarkan warehouse
+    // Jika warehouseId tidak dipilih, tampilkan SEMUA produk yang tersedia
+    if (!warehouseId) {
+        const allProducts = (products.value || []).map(product => ({
+            ...product,
+            displayName: `${product.sku || ''} | ${product.name || ''}`
+        }));
+        console.log('🌍 Showing ALL products (no warehouse filter):', allProducts.length, 'products');
+        return allProducts;
+    }
+    
+    // Jika warehouseId dipilih, gunakan produk yang sudah di-cache berdasarkan warehouse
     if (productsByWarehouse.value.has(warehouseId)) {
         const cachedProducts = productsByWarehouse.value.get(warehouseId) || [];
-        console.log('✅ Using cached products for warehouse:', cachedProducts);
+        console.log('✅ Using cached products for warehouse:', cachedProducts.length, 'products');
         return cachedProducts.map(product => ({
             ...product,
             displayName: `${product.sku || ''} | ${product.name || ''}`
         }));
     }
     
-    // Fallback ke produk global jika belum ada cache
-    // Untuk sementara, tampilkan semua produk yang tersedia
+    // Fallback ke SEMUA produk jika belum ada cache untuk warehouse tertentu
     const fallbackProducts = (products.value || []).map(product => ({
         ...product,
         displayName: `${product.sku || ''} | ${product.name || ''}`
     }));
     
-    console.log('🔄 Using fallback products:', fallbackProducts);
+    console.log('🔄 Using ALL products as fallback for warehouse:', fallbackProducts.length, 'products');
     return fallbackProducts;
 };
 
@@ -897,7 +904,8 @@ function onFileChange(e) {
   const file = e.target.files[0];
   if (file) {
     if (!file.size || file.size === 0) {
-      Swal.fire('Error', 'File attachment kosong atau tidak valid', 'error');
+      const toast = useToast()
+      toast.error('File attachment kosong atau tidak valid')
       return;
     }
 
@@ -922,13 +930,15 @@ function onFileChange(e) {
     const isValidExtension = allowedExtensions.includes(fileExtension);
 
     if (!isValidMimeType && !isValidExtension) {
-      Swal.fire('Error', `File harus berupa PDF, Excel, atau gambar. Detected: MIME=${fileType}, Ext=${fileExtension}`, 'error');
+    const toast = useToast()
+      toast.error(`File harus berupa PDF, Excel, atau gambar. Detected: MIME=${fileType}, Ext=${fileExtension}`)
       return;
     }
 
     const maxSize = 10 * 1024 * 1024;
     if (file.size > maxSize) {
-      Swal.fire('Error', 'Ukuran file terlalu besar (maksimal 10MB)', 'error');
+      const toast = useToast()
+      toast.error('Ukuran file terlalu besar (maksimal 10MB)')
       return;
     }
 
@@ -977,16 +987,11 @@ const calculateSubtotal = (index) => {
 const onWarehouseChange = async (index) => {
     if (!form.value || !form.value.purchaseOrderItems) return;
     const item = form.value.purchaseOrderItems[index];
+    
+    console.log('🏭 Warehouse changed for item', index, 'to warehouseId:', item.warehouseId);
+    
+    // Jika warehouse dipilih, fetch produk untuk warehouse tersebut
     if (item.warehouseId) {
-        console.log('🏭 Warehouse changed for item', index, 'to warehouseId:', item.warehouseId);
-        
-        // Clear product selection if warehouse changes
-        item.productId = null;
-        // Reset price and subtotal if product is cleared
-        item.price = 0;
-        item.subtotal = 0;
-        
-        // Fetch products for this specific warehouse
         try {
             console.log('📡 Fetching products for warehouse:', item.warehouseId);
             const warehouseProducts = await purchaseOrderStore.fetchProductsByWarehouse(item.warehouseId);
@@ -1006,6 +1011,9 @@ const onWarehouseChange = async (index) => {
         } catch (error) {
             console.error('Error fetching products for warehouse:', error);
         }
+    } else {
+        // Jika warehouse dihapus, tidak perlu fetch produk khusus
+        console.log('🏭 Warehouse cleared, will show all products');
     }
 };
 

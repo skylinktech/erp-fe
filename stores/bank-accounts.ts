@@ -104,7 +104,13 @@ export const useBankAccountStore = defineStore('bankAccount', {
         this.totalRecords = result.meta.total
       } catch (e: any) {
         this.error = e.message
-        Swal.fire('Error', `Tidak dapat memuat data rekening bank: ${e.message}`, 'error');
+        const toast = useToast()        
+        toast.error({
+          title: 'Error',
+          message: `Tidak dapat memuat data rekening bank: ${e.message}`,
+          color: 'red',
+          position: 'topRight',
+        });
       } finally {
         this.loading = false
       }
@@ -163,11 +169,23 @@ export const useBankAccountStore = defineStore('bankAccount', {
         
         this.closeModal();
         await this.fetchBankAccounts();
-        Swal.fire('Berhasil!', `Rekening bank berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`, 'success');
+        const toast = useToast()        
+        toast.success({
+          title: 'Success',
+          message: `Rekening bank berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
+          color: 'green',
+          position: 'topRight',
+        });
 
       } catch (error: any) {
         if (this.validationErrors.length === 0) {
-          Swal.fire('Error', error.message || 'Operasi gagal', 'error');
+          const toast = useToast()          
+          toast.error({
+            title: 'Error',
+            message: error.message || 'Operasi gagal',
+            color: 'red',
+            position: 'topRight',
+          });
         }
       } finally {
         this.loading = false
@@ -207,9 +225,21 @@ export const useBankAccountStore = defineStore('bankAccount', {
           }
 
           await this.fetchBankAccounts();
-          Swal.fire('Berhasil!', 'Rekening bank berhasil dihapus.', 'success');
+          const toast = useToast()          
+          toast.success({
+            title: 'Success',
+            message: 'Rekening bank berhasil dihapus.',
+            color: 'green',
+            position: 'topRight',
+          });
         } catch (error: any) {
-          Swal.fire('Error', error.message || 'Gagal menghapus rekening bank', 'error');
+          const toast = useToast()          
+          toast.error({
+            title: 'Error',
+            message: error.message || 'Gagal menghapus rekening bank',
+            color: 'red',
+            position: 'topRight',
+          });
         }
       }
     },

@@ -536,32 +536,14 @@ const receiveAllItems = async () => {
         await refreshPurchaseOrderDetails()
         
         // ✅ TAMPILKAN SUCCESS MESSAGE
-        await Swal.fire({
-            title: 'Berhasil!',
-            text: `Semua barang telah diterima. ${totalPendingQuantity.value} Stock In telah dibuat.`,
-            icon: 'success',
-            confirmButtonColor: '#28a745',
-            confirmButtonText: 'OK',
-            customClass: {
-                confirmButton: 'btn btn-success'
-            },
-            buttonsStyling: false
-        })
+        const toast = useToast()
+        toast.success(`Semua barang telah diterima. ${totalPendingQuantity.value} Stock In telah dibuat.`)
         
     } catch (error) {
         console.error('Error receiving all items:', error)
         
-        await Swal.fire({
-            title: 'Error!',
-            text: error.data?.message || error.message || 'Gagal menerima semua barang',
-            icon: 'error',
-            confirmButtonColor: '#dc3545',
-            confirmButtonText: 'OK',
-            customClass: {
-                confirmButton: 'btn btn-danger'
-            },
-            buttonsStyling: false
-        })
+        const toast = useToast()
+        toast.error(error.data?.message || error.message || 'Gagal menerima semua barang')
     }
 }
 

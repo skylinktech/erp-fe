@@ -120,10 +120,12 @@ onMounted(async () => {
       await stockOutStore.fetchStockOutById(stockOutId);
       setDetailTitle('Stock Out', selectedStockOut.value?.noSo || 'Detail')
     } catch (e) {
-      Swal.fire('Error', e.message || 'Gagal memuat detail stock out.', 'error');
+      const toast = useToast()
+      toast.error(e.message || 'Gagal memuat detail stock out.')
     }
   } else {
-    Swal.fire('Error', 'ID Stock Out tidak ditemukan di URL.', 'error');
+    const toast = useToast()
+    toast.error('ID Stock Out tidak ditemukan di URL.')
   }
 });
 

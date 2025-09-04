@@ -146,7 +146,13 @@ export const useMenuGroupStore = defineStore('menu-group', {
 
       } catch (e: any) {
         this.error = e.message
-        Swal.fire('Error', `Tidak dapat memuat data menu group: ${e.message}`, 'error');
+        const toast = useToast()        
+        toast.error({
+          title: 'Error',
+          message: `Tidak dapat memuat data menu group: ${e.message}`,
+          color: 'red',
+          position: 'topRight',
+        });
       } finally {
         this.loading = false
       }
@@ -235,11 +241,23 @@ export const useMenuGroupStore = defineStore('menu-group', {
         
         this.closeModal();
         await this.fetchMenuGroups();
-        Swal.fire('Berhasil!', `Menu group berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`, 'success');
+        const toast = useToast()        
+        toast.success({
+          title: 'Success',
+          message: `Menu group berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
+          color: 'green',
+          position: 'topRight',
+        });
 
       } catch (error: any) {
         if (error.message !== 'Data validasi tidak valid') {
-            Swal.fire('Error', error.message || 'Operasi gagal', 'error');
+            const toast = useToast()            
+            toast.error({
+              title: 'Error',
+              message: error.message || 'Operasi gagal',
+              color: 'red',
+              position: 'topRight',
+            });
         }
       } finally {
         this.loading = false;
@@ -284,10 +302,22 @@ export const useMenuGroupStore = defineStore('menu-group', {
           }
 
           await this.fetchMenuGroups();
-          Swal.fire('Berhasil!', 'Menu group berhasil dihapus.', 'success');
+          const toast = useToast()          
+          toast.success({
+            title: 'Success',
+            message: 'Menu group berhasil dihapus.',
+            color: 'green',
+            position: 'topRight',
+          });
       } catch (error: any) {
           console.error('Gagal menghapus menu group:', error);
-          Swal.fire('Error', error.message || 'Gagal menghapus menu group', 'error');
+          const toast = useToast()          
+          toast.error({
+            title: 'Error',
+            message: error.message || 'Gagal menghapus menu group',
+            color: 'red',
+            position: 'topRight',
+          });
       } finally {
           this.loading = false;
       }

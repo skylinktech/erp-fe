@@ -147,12 +147,24 @@ export const usePerusahaanStore = defineStore('perusahaan', {
 
             this.closeModal();
             await this.fetchPerusahaans();
-            Swal.fire('Berhasil!', `Perusahaan berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`, 'success');
+            const toast = useToast()
+            toast.success({
+              title: 'Success',
+              message: `Perusahaan berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
+              color: 'green',
+              position: 'topRight',
+            });
 
         } catch (error: any) {
             // Jangan tampilkan Swal jika ada validation errors (sudah ditampilkan di modal)
             if (this.validationErrors.length === 0) {
-                Swal.fire('Error', error.message || 'Operasi gagal', 'error');
+                const toast = useToast()
+                toast.error({
+                  title: 'Error',
+                  message: error.message || 'Operasi gagal',
+                  color: 'red',
+                  position: 'topRight',
+                });
             }
         } finally {
             this.loading = false;
@@ -196,9 +208,21 @@ export const usePerusahaanStore = defineStore('perusahaan', {
           }
 
           await this.fetchPerusahaans();
-          Swal.fire('Berhasil!', 'Perusahaan berhasil dihapus.', 'success');
+          const toast = useToast()
+          toast.success({
+            title: 'Success',
+            message: 'Perusahaan berhasil dihapus.',
+            color: 'green',
+            position: 'topRight',
+          });
       } catch (error: any) {
-          Swal.fire('Error', error.message || 'Gagal menghapus perusahaan', 'error');
+          const toast = useToast()
+          toast.error({
+            title: 'Error',
+            message: error.message || 'Gagal menghapus perusahaan',
+            color: 'red',
+            position: 'topRight',
+          });
       } finally {
           this.loading = false;
       }
@@ -266,7 +290,13 @@ export const usePerusahaanStore = defineStore('perusahaan', {
         if (file) {
             // Validasi file tidak kosong
             if (!file.size || file.size === 0) {
-                Swal.fire('Error', 'File logo kosong atau tidak valid', 'error');
+                const toast = useToast()
+                toast.error({
+                  title: 'Error',
+                  message: 'File logo kosong atau tidak valid',
+                  color: 'red',
+                  position: 'topRight',
+                });
                 return;
             }
 
@@ -290,14 +320,26 @@ export const usePerusahaanStore = defineStore('perusahaan', {
             const isValidExtension = allowedExtensions.includes(fileExtension);
 
             if (!isValidMimeType && !isValidExtension) {
-                Swal.fire('Error', `File harus berupa gambar (JPEG, PNG, GIF, WebP). Detected: MIME=${fileType}, Ext=${fileExtension}`, 'error');
+                const toast = useToast()
+                toast.error({
+                  title: 'Error',
+                  message: `File harus berupa gambar (JPEG, PNG, GIF, WebP). Detected: MIME=${fileType}, Ext=${fileExtension}`,
+                  color: 'red',
+                  position: 'topRight',
+                });
                 return;
             }
 
             // Validasi file size
             const maxSize = 5 * 1024 * 1024; // 5MB
             if (file.size > maxSize) {
-                Swal.fire('Error', 'Ukuran file terlalu besar (maksimal 5MB)', 'error');
+                const toast = useToast()
+                toast.error({
+                  title: 'Error',
+                  message: 'Ukuran file terlalu besar (maksimal 5MB)',
+                  color: 'red',
+                  position: 'topRight',
+                });
                 return;
             }
 

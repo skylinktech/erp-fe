@@ -269,7 +269,8 @@ const exportData = async (format) => {
         }
     } catch (error) {
         console.error('Export error:', error);
-        Swal.fire('Error', 'Gagal melakukan export data', 'error');
+        const toast = useToast()       
+        toast.error('Gagal melakukan export data')
     }
 };
 

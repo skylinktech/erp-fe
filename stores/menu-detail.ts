@@ -84,7 +84,13 @@ export const useMenuDetailStore = defineStore('menu-detail', {
 
       } catch (e: any) {
         this.error = e.message
-        Swal.fire('Error', `Tidak dapat memuat data menu detail: ${e.message}`, 'error');
+        const toast = useToast()
+        toast.error({
+          title: 'Error',
+          message: `Tidak dapat memuat data menu detail: ${e.message}`,
+          color: 'red',
+          position: 'topRight',
+        });
       } finally {
         this.loading = false
       }
@@ -105,7 +111,13 @@ export const useMenuDetailStore = defineStore('menu-detail', {
             this.menuGroups = result.data || [];
         } catch (error) {
             console.error('Error fetching menu groups:', error);
-            Swal.fire('Error', 'Gagal mengambil data Menu Group untuk pilihan.', 'error');
+            const toast = useToast()            
+            toast.error({
+              title: 'Error',
+              message: 'Gagal mengambil data Menu Group untuk pilihan.',
+              color: 'red',
+              position: 'topRight',
+            });
         }
     },
 
@@ -155,7 +167,7 @@ export const useMenuDetailStore = defineStore('menu-detail', {
         await menuGroupStore.fetchAllMenuGroups();
         
         toast.success({
-            title: 'Berhasil!',
+            title: 'Success',
             icon: 'ri-check-line',
             message: `Menu detail berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
             timeout: 3000,
@@ -166,7 +178,7 @@ export const useMenuDetailStore = defineStore('menu-detail', {
       } catch (error: any) {
         if (error.message !== 'Data validasi tidak valid') {
             toast.error({
-                title: 'Gagal!',
+                title: 'Error',
                 icon: 'ri-close-line',
                 message: error.message || 'Operasi gagal',
                 timeout: 3000,
@@ -221,7 +233,7 @@ export const useMenuDetailStore = defineStore('menu-detail', {
           await menuGroupStore.fetchAllMenuGroups();
 
           toast.success({
-            title: 'Berhasil!',
+            title: 'Success',
             icon: 'ri-check-line',
             message: 'Menu detail berhasil dihapus.',
             timeout: 3000,
@@ -231,7 +243,7 @@ export const useMenuDetailStore = defineStore('menu-detail', {
       } catch (error: any) {
           console.error('Gagal menghapus menu detail:', error);
           toast.error({
-            title: 'Gagal!',
+            title: 'Error',
             icon: 'ri-close-line',
             message: error.message || 'Gagal menghapus menu detail',
             timeout: 3000,

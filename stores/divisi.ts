@@ -78,7 +78,13 @@ export const useDivisiStore = defineStore('divisi', {
 
       } catch (e: any) {
         this.error = e.message
-        Swal.fire('Error', `Tidak dapat memuat data divisi: ${e.message}`, 'error');
+        const toast = useToast()        
+        toast.error({
+          title: 'Error',
+          message: `Tidak dapat memuat data divisi: ${e.message}`,
+          color: 'red',
+          position: 'topRight',
+        });
       } finally {
         this.loading = false
       }
@@ -126,11 +132,23 @@ export const useDivisiStore = defineStore('divisi', {
         
         this.closeModal();
         await this.fetchDivisis();
-        Swal.fire('Berhasil!', `Divisi berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`, 'success');
+        const toast = useToast()        
+        toast.success({
+          title: 'Success',
+          message: `Divisi berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
+          color: 'green',
+          position: 'topRight',
+        });
 
       } catch (error: any) {
         if (error.message !== 'Data validasi tidak valid') {
-            Swal.fire('Error', error.message || 'Operasi gagal', 'error');
+            const toast = useToast()            
+            toast.error({
+            title: 'Error',
+            message: error.message || 'Operasi gagal',
+            color: 'red',
+            position: 'topRight',
+          });
         }
       } finally {
         this.loading = false;
@@ -175,10 +193,22 @@ export const useDivisiStore = defineStore('divisi', {
           }
 
           await this.fetchDivisis();
-          Swal.fire('Berhasil!', 'Divisi berhasil dihapus.', 'success');
+          const toast = useToast()          
+          toast.success({
+            title: 'Success',
+            message: 'Divisi berhasil dihapus.',
+            color: 'green',
+            position: 'topRight',
+          });
       } catch (error: any) {
           console.error('Gagal menghapus divisi:', error);
-          Swal.fire('Error', error.message || 'Gagal menghapus divisi', 'error');
+          const toast = useToast()          
+          toast.error({
+            title: 'Error',
+            message: error.message || 'Gagal menghapus divisi',
+            color: 'red',
+            position: 'topRight',
+          });
       } finally {
           this.loading = false;
       }

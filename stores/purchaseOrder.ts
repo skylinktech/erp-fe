@@ -299,24 +299,7 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
                 throw new Error('Minimal harus ada 1 item produk yang valid (produk, quantity > 0, harga > 0)');
             }
 
-            // ✅ NEW: Validasi warehouse untuk setiap item
-            const itemsWithoutWarehouse = this.form.purchaseOrderItems.filter((item: any) => 
-                item.productId && !item.warehouseId
-            );
-            
-            if (itemsWithoutWarehouse.length > 0) {
-                throw new Error('Semua item produk harus memiliki gudang yang dipilih');
-            }
-
-            // ✅ NEW: Validasi produk sesuai dengan warehouse yang dipilih
-            for (const item of this.form.purchaseOrderItems) {
-                if (item.productId && item.warehouseId) {
-                    // Validasi bahwa warehouse dan product sudah dipilih
-                    if (!item.warehouseId) {
-                        throw new Error(`Item produk ${item.productId} harus memiliki gudang yang dipilih`);
-                    }
-                }
-            }
+            // ✅ UPDATED: Warehouse sekarang opsional, tidak ada validasi khusus
 
             // Append hanya items yang valid
             validItems.forEach((item: any, i: number) => {
@@ -732,17 +715,25 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
         }
     },
 
-    // ✅ NEW: Method untuk mengambil produk berdasarkan warehouse
-    async fetchProductsByWarehouse(warehouseId: number) {
-        if (!warehouseId) return [];
-        
+    // ✅ UPDATED: Method untuk mengambil produk berdasarkan warehouse (opsional)
+    async fetchProductsByWarehouse(warehouseId?: number) {
         const toast = useToast();
         try {
             const { $api } = useNuxtApp();
             const token = localStorage.getItem('token');
             
-            // Fetch products with warehouse filter and include stocks
-            const response = await fetch(`${$api.product()}?warehouseId=${warehouseId}&includeStocks=true&rows=1000`, {
+            // Selalu muat semua produk dengan jumlah yang besar
+            let url = `${$api.product()}?includeStocks=true&rows=1000`;
+            
+            // Jika warehouseId dipilih, tambahkan filter warehouse
+            if (warehouseId) {
+                url += `&warehouseId=${warehouseId}`;
+                console.log('🏭 Fetching products for specific warehouse:', warehouseId);
+            } else {
+                console.log('🌍 Fetching ALL products (no warehouse filter)');
+            }
+            
+            const response = await fetch(url, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json',
@@ -751,15 +742,52 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
             
             if (response.ok) {
                 const result = await response.json();
-                return result.data || [];
+                const products = result.data || [];
+                console.log(`📦 Fetched ${products.length} products${warehouseId ? ` for warehouse ${warehouseId}` : ' (all products)'}`);
+                return products;
             } else {
-                throw new Error('Gagal memuat data produk untuk gudang ini');
+                throw new Error(warehouseId ? 'Gagal memuat data produk untuk gudang ini' : 'Gagal memuat data produk');
             }
         } catch (error) {
             console.error('Error fetching products by warehouse:', error);
             toast.error({
                 title: 'Error',
-                message: 'Gagal memuat data produk untuk gudang yang dipilih',
+                message: warehouseId ? 'Gagal memuat data produk untuk gudang yang dipilih' : 'Gagal memuat data produk',
+                color: 'red'
+            });
+            return [];
+        }
+    },
+
+    // ✅ NEW: Method untuk memuat semua produk tanpa filter
+    async fetchAllProducts() {
+        const toast = useToast();
+        try {
+            const { $api } = useNuxtApp();
+            const token = localStorage.getItem('token');
+            
+            console.log('🌍 Fetching ALL products for purchase order...');
+            
+            const response = await fetch(`${$api.product()}?includeStocks=true&rows=1000`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json',
+                }
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                const products = result.data || [];
+                console.log(`📦 Fetched ${products.length} products for purchase order`);
+                return products;
+            } else {
+                throw new Error('Gagal memuat semua produk');
+            }
+        } catch (error) {
+            console.error('Error fetching all products:', error);
+            toast.error({
+                title: 'Error',
+                message: 'Gagal memuat semua produk',
                 color: 'red'
             });
             return [];
@@ -852,8 +880,12 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
 
     addItem() {
         this.form.purchaseOrderItems.push({
-            productId: null, warehouseId: null, quantity: 1, price: 0,
-            description: '', subtotal: 0,
+            productId: null, 
+            warehouseId: null, 
+            quantity: 1, 
+            price: 0,
+            description: '', 
+            subtotal: 0,
         });
     },
 

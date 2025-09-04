@@ -970,7 +970,8 @@ function onFileChange(e) {
   if (file) {
     // Validasi file tidak kosong
     if (!file.size || file.size === 0) {
-      Swal.fire('Error', 'File attachment kosong atau tidak valid', 'error');
+      const toast = useToast()
+      toast.error('File attachment kosong atau tidak valid')
       return;
     }
 
@@ -998,14 +999,16 @@ function onFileChange(e) {
     const isValidExtension = allowedExtensions.includes(fileExtension);
 
     if (!isValidMimeType && !isValidExtension) {
-      Swal.fire('Error', `File harus berupa PDF, Excel, atau gambar. Detected: MIME=${fileType}, Ext=${fileExtension}`, 'error');
+      const toast = useToast()
+      toast.error(`File harus berupa PDF, Excel, atau gambar. Detected: MIME=${fileType}, Ext=${fileExtension}`)
       return;
     }
 
     // Validasi file size (10MB)
     const maxSize = 10 * 1024 * 1024;
     if (file.size > maxSize) {
-      Swal.fire('Error', 'Ukuran file terlalu besar (maksimal 10MB)', 'error');
+      const toast = useToast()
+      toast.error('Ukuran file terlalu besar (maksimal 10MB)')
       return;
     }
 

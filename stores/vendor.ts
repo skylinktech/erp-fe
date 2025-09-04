@@ -291,7 +291,13 @@ export const useVendorStore = defineStore('vendor', {
         if (file) {
             // Validasi file tidak kosong
             if (!file.size || file.size === 0) {
-                Swal.fire('Error', 'File logo kosong atau tidak valid', 'error');
+                const toast = useToast()
+                toast.error({
+                  title: 'Error',
+                  message: 'File logo kosong atau tidak valid',
+                  color: 'red',
+                  position: 'topRight',
+                });
                 return;
             }
 
@@ -315,14 +321,26 @@ export const useVendorStore = defineStore('vendor', {
             const isValidExtension = allowedExtensions.includes(fileExtension);
 
             if (!isValidMimeType && !isValidExtension) {
-                Swal.fire('Error', `File harus berupa gambar (JPEG, PNG, GIF, WebP). Detected: MIME=${fileType}, Ext=${fileExtension}`, 'error');
+                const toast = useToast()
+                toast.error({
+                  title: 'Error',
+                  message: `File harus berupa gambar (JPEG, PNG, GIF, WebP). Detected: MIME=${fileType}, Ext=${fileExtension}`,
+                  color: 'red',
+                  position: 'topRight',
+                });
                 return;
             }
 
             // Validasi file size
             const maxSize = 5 * 1024 * 1024; // 5MB
             if (file.size > maxSize) {
-                Swal.fire('Error', 'Ukuran file terlalu besar (maksimal 5MB)', 'error');
+                const toast = useToast()
+                toast.error({
+                  title: 'Error',
+                  message: 'Ukuran file terlalu besar (maksimal 5MB)',
+                  color: 'red',
+                  position: 'topRight',
+                });
                 return;
             }
 

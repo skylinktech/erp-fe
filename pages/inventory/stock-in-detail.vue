@@ -116,10 +116,12 @@ onMounted(async () => {
       await stockInStore.fetchStockInById(stockInId);
       setDetailTitle('Stock In', stockIn.value.noSi)
     } catch (e) {
-      Swal.fire('Error', e.message || 'Gagal memuat detail stock in.', 'error');
+      const toast = useToast()
+      toast.error(e.message || 'Gagal memuat detail stock in.')
     }
   } else {
-    Swal.fire('Error', 'ID Stock In tidak ditemukan di URL.', 'error');
+    const toast = useToast()
+    toast.error('ID Stock In tidak ditemukan di URL.')
   }
 });
 
