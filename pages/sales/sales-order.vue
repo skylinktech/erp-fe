@@ -1345,9 +1345,6 @@ const exportSalesOrderPDF = async (dataToExport) => {
 
 // Row expansion methods
 const onRowToggle = (event) => {
-    console.log('🔍 Sales Order - Row toggle event:', event)
-    console.log('🔍 Sales Order - Expanded data:', event.data)
-    console.log('🔍 Sales Order - SalesOrderItems:', event.data?.salesOrderItems)
     expandedRows.value = event.data;
 };
 

@@ -186,6 +186,7 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
         this.error = e
         // Pastikan tetap array kosong jika error
         this.purchaseOrders = []
+        const toast = useToast();
         toast.error({
           title: 'Error',
           message: `Tidak dapat memuat data Purchase Order: ${e.message}`,
@@ -715,58 +716,12 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
         }
     },
 
-    // ✅ UPDATED: Method untuk mengambil produk berdasarkan warehouse (opsional)
-    async fetchProductsByWarehouse(warehouseId?: number) {
-        const toast = useToast();
-        try {
-            const { $api } = useNuxtApp();
-            const token = localStorage.getItem('token');
-            
-            // Selalu muat semua produk dengan jumlah yang besar
-            let url = `${$api.product()}?includeStocks=true&rows=1000`;
-            
-            // Jika warehouseId dipilih, tambahkan filter warehouse
-            if (warehouseId) {
-                url += `&warehouseId=${warehouseId}`;
-                console.log('🏭 Fetching products for specific warehouse:', warehouseId);
-            } else {
-                console.log('🌍 Fetching ALL products (no warehouse filter)');
-            }
-            
-            const response = await fetch(url, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Accept': 'application/json',
-                }
-            });
-            
-            if (response.ok) {
-                const result = await response.json();
-                const products = result.data || [];
-                console.log(`📦 Fetched ${products.length} products${warehouseId ? ` for warehouse ${warehouseId}` : ' (all products)'}`);
-                return products;
-            } else {
-                throw new Error(warehouseId ? 'Gagal memuat data produk untuk gudang ini' : 'Gagal memuat data produk');
-            }
-        } catch (error) {
-            console.error('Error fetching products by warehouse:', error);
-            toast.error({
-                title: 'Error',
-                message: warehouseId ? 'Gagal memuat data produk untuk gudang yang dipilih' : 'Gagal memuat data produk',
-                color: 'red'
-            });
-            return [];
-        }
-    },
-
     // ✅ NEW: Method untuk memuat semua produk tanpa filter
     async fetchAllProducts() {
         const toast = useToast();
         try {
             const { $api } = useNuxtApp();
             const token = localStorage.getItem('token');
-            
-            console.log('🌍 Fetching ALL products for purchase order...');
             
             const response = await fetch(`${$api.product()}?includeStocks=true&rows=1000`, {
                 headers: {
@@ -778,7 +733,6 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
             if (response.ok) {
                 const result = await response.json();
                 const products = result.data || [];
-                console.log(`📦 Fetched ${products.length} products for purchase order`);
                 return products;
             } else {
                 throw new Error('Gagal memuat semua produk');

@@ -222,9 +222,6 @@ export const useProductStore = defineStore('product', {
             }
           });
           
-          // Debug: Log data yang akan dikirim
-          console.log('Form data yang akan dikirim:', Object.fromEntries(formData));
-          
           let url = $api.product();
           let method = 'POST';
 

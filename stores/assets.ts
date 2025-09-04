@@ -442,7 +442,7 @@ export const useAssetStore = defineStore('asset', {
 
       // Calculate current value but don't store it since it's not in the model
       const currentValue = Math.max(cost - depreciation, salvage);
-      console.log('Calculated current value:', currentValue);
+      currentValue
     }
   }
 })

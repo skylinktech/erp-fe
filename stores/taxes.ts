@@ -124,11 +124,6 @@ export const useTaxStore = defineStore('tax', {
       try {
         const token = localStorage.getItem('token')
 
-        // Debug: log form data
-        console.log('Form data:', this.form)
-        console.log('Is edit mode:', this.isEditMode)
-        console.log('Form ID:', this.form.id)
-
         // Gunakan JSON data instead of FormData
         const payload = {
           name: this.form.name,
@@ -143,11 +138,7 @@ export const useTaxStore = defineStore('tax', {
         if (this.isEditMode && this.form.id) {
           url = $api.taxesUpdate(this.form.id);
           method = 'PUT';
-          console.log('Update URL:', url)
-          console.log('Update method:', method)
         }
-
-        console.log('Final payload:', payload)
 
         const response = await fetch(url, {
           method: method,
@@ -164,12 +155,8 @@ export const useTaxStore = defineStore('tax', {
         try {
           result = await response.json();
         } catch (parseError) {
-          console.error('Failed to parse response as JSON:', parseError);
           throw new Error('Server response tidak valid');
         }
-
-        console.log('Response status:', response.status)
-        console.log('Response result:', result)
 
         if (!response.ok) {
           if (response.status === 422 && result.errors) {
@@ -247,6 +234,7 @@ export const useTaxStore = defineStore('tax', {
             layout: 2,
           });
         } catch (error: any) {
+          console.error('Error deleting tax:', error);
           toast.error({
             title: 'Error',
             message: error.message || 'Gagal menghapus pajak',
