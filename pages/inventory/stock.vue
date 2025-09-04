@@ -8,14 +8,41 @@
             </p>
             <!-- stock in cards -->
             <div class="row g-6 mb-6">
+                <div class="col-6" v-if="loading && stats.total === undefined">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="skeleton-loader me-3" style="width: 40px; height: 40px; border-radius: 8px;"></div>
+                                <div class="flex-grow-1">
+                                    <div class="skeleton-loader mb-2" style="width: 60%; height: 16px;"></div>
+                                    <div class="skeleton-loader" style="width: 40%; height: 20px;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <CardBox
-                    v-if="stats.total !== undefined"
+                    v-else-if="stats.total !== undefined"
                     title="Total Stock"
                     :total="stats.total + ' Stock'"
                     columnClass="col-6"
                 />
+                
+                <div class="col-6" v-if="loading && stats.perWarehouse.length === 0">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="skeleton-loader me-3" style="width: 40px; height: 40px; border-radius: 8px;"></div>
+                                <div class="flex-grow-1">
+                                    <div class="skeleton-loader mb-2" style="width: 70%; height: 16px;"></div>
+                                    <div class="skeleton-loader" style="width: 50%; height: 20px;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <CardBox
-                    v-if="stats.perWarehouse.length > 0"
+                    v-else-if="stats.perWarehouse.length > 0"
                     title="Total Stock Per Gudang"
                     :total="stats.perWarehouse.length + ' Gudang'"
                     columnClass="col-6"
@@ -181,8 +208,7 @@ const myDataTableRef            = ref(null)
 const userStore                 = useUserStore()
 const stocksStore              = useStocksStore()
 const permissionStore           = usePermissionsStore()
-const { stocks, totalRecords, stats, params } = storeToRefs(stocksStore)
-const loading                   = ref(false);
+const { stocks, totalRecords, stats, params, loading } = storeToRefs(stocksStore)
 const globalFilterValue         = ref('');
 
 const { userHasPermission, userHasRole } = usePermissions();
@@ -285,5 +311,28 @@ const deleteStockIn = async (id) => {
     :deep(.warehouse-select .vs__dropdown-toggle) {
         height: 48px !important;
         border-radius: 7px;
+    }
+
+    /* Skeleton Loader */
+    .skeleton-loader {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite;
+        border-radius: 4px;
+    }
+
+    @keyframes loading {
+        0% {
+            background-position: 200% 0;
+        }
+        100% {
+            background-position: -200% 0;
+        }
+    }
+
+    /* Dark mode skeleton */
+    :deep(.dark) .skeleton-loader {
+        background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
+        background-size: 200% 100%;
     }
 </style>

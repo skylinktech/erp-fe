@@ -1,37 +1,52 @@
 <template>
-  <DataTable
-    ref="dt"
-    :value="props.data"
-    :rows="props.rows"
-    :loading="props.loading"
-    :totalRecords="props.totalRecords"
-    :first="props.first"
-    :expandedRows="props.expandedRows"
-    paginator
-    lazy
-    dataKey="id"
-    tableStyle="min-width: 50rem"
-    v-bind="$attrs"
-    @page="emit('page', $event)"
-    @sort="emit('sort', $event)"
-    @selection-change="emit('selection-change', $event)"
-    @row-toggle="emit('row-toggle', $event)"
-  >
-    <slot></slot>
-    
-    <!-- Expansion template slot -->
-    <template #expansion="slotProps">
-      <slot name="expansion" :data="slotProps.data"></slot>
-    </template>
-    
-    <!-- Fallback untuk data kosong -->
-    <template #empty>
-      <div class="text-center py-8">
-        <div class="text-gray-500 text-lg font-medium">No data available</div>
-        <div class="text-gray-400 text-sm mt-2">Tidak ada data yang tersedia untuk ditampilkan</div>
+  <div class="relative">
+    <!-- Loading Overlay -->
+    <div v-if="props.loading" class="loading-overlay">
+      <div class="loading-content">
+        <ProgressSpinner 
+          style="width: 50px; height: 50px" 
+          strokeWidth="4"
+          fill="transparent"
+          animationDuration="1s"
+        />
+        <div class="loading-text mt-3">Memuat data...</div>
       </div>
-    </template>
-  </DataTable>
+    </div>
+
+    <DataTable
+      ref="dt"
+      :value="props.data"
+      :rows="props.rows"
+      :loading="false"
+      :totalRecords="props.totalRecords"
+      :first="props.first"
+      :expandedRows="props.expandedRows"
+      paginator
+      lazy
+      dataKey="id"
+      tableStyle="min-width: 50rem"
+      v-bind="$attrs"
+      @page="emit('page', $event)"
+      @sort="emit('sort', $event)"
+      @selection-change="emit('selection-change', $event)"
+      @row-toggle="emit('row-toggle', $event)"
+    >
+      <slot></slot>
+      
+      <!-- Expansion template slot -->
+      <template #expansion="slotProps">
+        <slot name="expansion" :data="slotProps.data"></slot>
+      </template>
+      
+      <!-- Fallback untuk data kosong -->
+      <template #empty>
+        <div class="text-center py-8">
+          <div class="text-gray-500 text-lg font-medium">No data available</div>
+          <div class="text-gray-400 text-sm mt-2">Tidak ada data yang tersedia untuk ditampilkan</div>
+        </div>
+      </template>
+    </DataTable>
+  </div>
 </template>
 
 <script setup>
@@ -425,6 +440,39 @@ defineExpose({
 })
 </script>
 <style scoped>
-  
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  border-radius: 8px;
+}
 
+.loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-text {
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Dark mode support */
+:deep(.dark) .loading-overlay {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+:deep(.dark) .loading-text {
+  color: #d1d5db;
+}
 </style>
