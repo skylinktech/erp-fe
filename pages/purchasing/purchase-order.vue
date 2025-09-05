@@ -677,14 +677,24 @@ watch(() => globalFilterValue.value, (newValue) => {
     tableControls.value.search = newValue;
 });
 
-watch(showModal, async (newValue) => {
+watch(showModal, (newValue) => {
     if (newValue) {
-        modalInstance?.show()
+        // Delay untuk memastikan modal sudah di-render
+        nextTick(() => {
+            const modalElement = document.getElementById('PurchaseOrderModal')
+            if (modalElement && !modalInstance) {
+                modalInstance = new bootstrap.Modal(modalElement)
+            }
+            modalInstance?.show()
+        })
         
-        // Pastikan produk sudah dimuat dengan jumlah yang cukup
+        // Pastikan produk sudah dimuat dengan jumlah yang cukup (non-blocking)
         if (!products.value || products.value.length === 0) {
             productStore.params.rows = 1000;
-            await productStore.fetchProducts();
+            // Jangan await di sini, biarkan berjalan di background
+            productStore.fetchProducts().catch(error => {
+                console.error('Error loading products:', error);
+            });
         }
         
         if (isEditMode.value && form.value?.attachment_url) {
