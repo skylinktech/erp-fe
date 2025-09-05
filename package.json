@@ -10,6 +10,9 @@
     "preview": "nuxt preview",
     "vercel-build": "nuxt build"
   },
+  "engines": {
+    "node": "22.x"
+  },
   "dependencies": {
     "@pinia/nuxt": "^0.11.0",
     "@popperjs/core": "^2.11.8",
