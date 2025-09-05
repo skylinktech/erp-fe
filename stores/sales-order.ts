@@ -244,8 +244,11 @@ export const useSalesOrderStore = defineStore('salesOrder', {
         this.salesOrders = result.data
         this.totalRecords = result.meta.total
         
+        // Debug logging untuk melihat data yang diterima
+        console.log('🔍 Sales Order Store - API Response:', result)
+        console.log('🔍 Sales Order Store - Sales Orders:', this.salesOrders)
         if (this.salesOrders.length > 0) {
-          this.salesOrders[0]?.salesOrderItems
+          console.log('🔍 Sales Order Store - First SO Items:', this.salesOrders[0]?.salesOrderItems)
         }
       } catch (e: any) {
         console.error('Gagal mengambil data salesOrder:', e)

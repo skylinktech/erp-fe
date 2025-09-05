@@ -576,6 +576,10 @@ const { products }    = storeToRefs(productStore)
 const { user }        = storeToRefs(userStore)
 const { permissions } = storeToRefs(permissionStore)
 
+
+
+
+
 // State
 const globalFilterValue = ref('');
 const tableControls = ref({
@@ -614,6 +618,8 @@ const grandTotal = computed(() => {
   return totalAfterDiscount + taxAmount;
 });
 
+
+
 const poTypeOptions = ref([
     { label: 'Internal', value: 'internal' },
     { label: 'External', value: 'external' },
@@ -626,6 +632,7 @@ const statusOptions = ref([
     { label: 'Rejected', value: 'rejected' },
     { label: 'Partial', value: 'partial' },
 ]);
+
 
 let modalInstance = null;
 onMounted(async () => {
@@ -690,6 +697,7 @@ watch(showModal, (newValue) => {
         
         // Pastikan produk sudah dimuat dengan jumlah yang cukup (non-blocking)
         if (!products.value || products.value.length === 0) {
+            console.log('🔄 Products not loaded, fetching all products...');
             productStore.params.rows = 1000;
             // Jangan await di sini, biarkan berjalan di background
             productStore.fetchProducts().catch(error => {
@@ -740,6 +748,8 @@ watch(() => form.value?.purchaseOrderItems, (newItems) => {
     if (newItems && newItems.length > 0) {
     }
 }, { deep: true })
+
+
 
 watch(() => form.value?.perusahaanId, async (newPerusahaanId) => {
     if (newPerusahaanId && form.value) {
@@ -792,18 +802,25 @@ const filteredProducts = computed(() => {
 });
 
 const getProductsByWarehouse = (warehouseId) => {
+    // Debug: log data yang tersedia
+    console.log('🔍 getProductsByWarehouse called with warehouseId:', warehouseId);
+    console.log('📦 productsByWarehouse cache:', productsByWarehouse.value);
+    console.log('🌐 products global:', products.value);
+    
     // Jika warehouseId tidak dipilih, tampilkan SEMUA produk yang tersedia
     if (!warehouseId) {
         const allProducts = (products.value || []).map(product => ({
             ...product,
             displayName: `${product.sku || ''} | ${product.name || ''}`
         }));
+        console.log('🌍 Showing ALL products (no warehouse filter):', allProducts.length, 'products');
         return allProducts;
     }
     
     // Jika warehouseId dipilih, gunakan produk yang sudah di-cache berdasarkan warehouse
     if (productsByWarehouse.value.has(warehouseId)) {
         const cachedProducts = productsByWarehouse.value.get(warehouseId) || [];
+        console.log('✅ Using cached products for warehouse:', cachedProducts.length, 'products');
         return cachedProducts.map(product => ({
             ...product,
             displayName: `${product.sku || ''} | ${product.name || ''}`
@@ -816,6 +833,7 @@ const getProductsByWarehouse = (warehouseId) => {
         displayName: `${product.sku || ''} | ${product.name || ''}`
     }));
     
+    console.log('🔄 Using ALL products as fallback for warehouse:', fallbackProducts.length, 'products');
     return fallbackProducts;
 };
 
@@ -946,12 +964,15 @@ const onProductChange = (index) => {
   if (!form.value || !form.value.purchaseOrderItems) return;
   
   const selectedProductId = form.value.purchaseOrderItems[index].productId;
+  console.log('🔄 Product changed for item', index, 'to productId:', selectedProductId);
   
   const selectedProduct = (filteredProducts.value || []).find(p => p.id === selectedProductId);
+  console.log('🔍 Selected product:', selectedProduct);
 
   if (selectedProduct) {
     const item = form.value.purchaseOrderItems[index];
     item.price = Number(selectedProduct.priceBuy) || 0;
+    console.log('💰 Set price to:', item.price);
     calculateSubtotal(index);
   }
 };
@@ -977,10 +998,14 @@ const onWarehouseChange = async (index) => {
     if (!form.value || !form.value.purchaseOrderItems) return;
     const item = form.value.purchaseOrderItems[index];
     
+    console.log('🏭 Warehouse changed for item', index, 'to warehouseId:', item.warehouseId);
+    
     // Jika warehouse dipilih, fetch produk untuk warehouse tersebut
     if (item.warehouseId) {
         try {
+            console.log('📡 Fetching products for warehouse:', item.warehouseId);
             const warehouseProducts = await purchaseOrderStore.fetchProductsByWarehouse(item.warehouseId);
+            console.log('📦 Received warehouse products:', warehouseProducts);
             
             // Pastikan data memiliki displayName
             const productsWithDisplayName = warehouseProducts.map(product => ({
@@ -988,6 +1013,7 @@ const onWarehouseChange = async (index) => {
                 displayName: `${product.sku || ''} | ${product.name || ''}`
             }));
             
+            console.log('🏷️ Products with displayName:', productsWithDisplayName);
             productsByWarehouse.value.set(item.warehouseId, productsWithDisplayName);
             
             // Force re-render
@@ -995,6 +1021,9 @@ const onWarehouseChange = async (index) => {
         } catch (error) {
             console.error('Error fetching products for warehouse:', error);
         }
+    } else {
+        // Jika warehouse dihapus, tidak perlu fetch produk khusus
+        console.log('🏭 Warehouse cleared, will show all products');
     }
 };
 

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import type { StockIn, StockOut, StockInDetail, StockOutDetail } from './stocks'
+import type { StockIn, StockOut, Stock, StockInDetail, StockOutDetail, StockTransfer } from './stocks'
 
 interface Stats {
   total : number | undefined
@@ -14,6 +14,7 @@ interface StockState {
   stockOuts      : StockOut[]
   stockInDetails : StockInDetail[]
   stockOutDetails: StockOutDetail[]
+  stockTransfers : StockTransfer[]
   stats          : Stats
   loading        : boolean
   error          : any
@@ -36,6 +37,7 @@ export const useStockStore = defineStore('stock', {
     stockOuts: [],
     stockInDetails: [],
     stockOutDetails: [],
+    stockTransfers: [],
     selectedStockIn: null,
     totalRecords: 0,
     stats: {
@@ -512,6 +514,8 @@ export const useStockStore = defineStore('stock', {
     // Method untuk posting multiple stock in
     async postAllStockIn(ids: string[]) {
       try {
+        console.log('Store: Starting postAllStockIn with ids:', ids);
+        
         const { $api } = useNuxtApp();
         const token = localStorage.getItem('token');
 
@@ -529,11 +533,16 @@ export const useStockStore = defineStore('stock', {
           credentials: 'include',
         });
 
+        console.log('Store: Response status:', response.status);
+        console.log('Store: Response headers:', response.headers);
+
         if (!response.ok) {
           let errorData;
           try {
             errorData = await response.json();
+            console.error('Store: Error response data:', errorData);
           } catch (parseError) {
+            console.error('Store: Failed to parse error response:', parseError);
             errorData = { message: `HTTP ${response.status}: ${response.statusText}` };
           }
           
@@ -541,9 +550,17 @@ export const useStockStore = defineStore('stock', {
         }
 
         const result = await response.json();
+        console.log('Store: Success response:', result);
         return result;
         
-      } catch (e: any) {
+      } catch (e) {
+        console.error('Store: Error posting all stock in:', e);
+        console.error('Store: Error details:', {
+          name: e?.name,
+          message: e?.message,
+          stack: e?.stack,
+          type: typeof e
+        });
         this.error = e;
         throw e;
       }

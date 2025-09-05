@@ -549,6 +549,13 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
               paymentMethod: fullData.paymentMethod || 'cash', // ✅ NEW: Pastikan payment method terisi
           };
 
+          // ✅ DEBUG: Log form data setelah diisi
+          console.log('🔍 Form Data After Fill:', {
+            paymentMethod: this.form.paymentMethod,
+            fullDataPaymentMethod: fullData.paymentMethod,
+            formData: this.form
+          });
+
           const dateFields = ['paymentDate'];
           dateFields.forEach(field => {
               if (this.form[field]) {
@@ -596,6 +603,12 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
         remainingAmount: 0,
         purchaseInvoiceItems: [],
       };
+      
+      // ✅ DEBUG: Log form data setelah reset
+      console.log('🔍 Form Data After Reset:', {
+        paymentMethod: this.form.paymentMethod,
+        formData: this.form
+      });
     },
 
     setPagination(event: any) {
