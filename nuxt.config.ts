@@ -7,6 +7,11 @@ export default defineNuxtConfig({
   },
   ssr: false,
   
+  // Disable oxc-parser untuk menghindari native binding issues
+  typescript: {
+    typeCheck: false
+  },
+  
   // Fix untuk native binding issues di deployment
   nitro: {
     experimental: {
@@ -17,6 +22,10 @@ export default defineNuxtConfig({
       options: {
         target: 'es2024' // Node.js 24 mendukung ES2024
       }
+    },
+    // Disable oxc-parser untuk Vercel
+    rollupConfig: {
+      external: ['oxc-parser']
     }
   },
   

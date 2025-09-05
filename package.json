@@ -8,7 +8,7 @@
     "start": "node .output/server/index.mjs",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare --no-install"
+    "vercel-build": "nuxt build"
   },
   "dependencies": {
     "@pinia/nuxt": "^0.11.0",
