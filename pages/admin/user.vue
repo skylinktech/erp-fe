@@ -215,14 +215,14 @@
                                 />   
                             </div>
                             <div class="d-flex justify-content-end">
+                                <button type="button" class="btn btn-outline-secondary me-2" @click="userStore.closeModal()">
+                                    Tutup
+                                </button>
                                 <button
                                     type="submit"
-                                    class="btn btn-primary me-2"
+                                    class="btn btn-primary"
                                 >
                                     {{ isEditMode ? 'Update' : 'Simpan' }}
-                                </button>
-                                <button type="button" class="btn btn-secondary" @click="userStore.closeModal()">
-                                    Batal
                                 </button>
                             </div>
                         </div>

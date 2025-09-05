@@ -391,7 +391,7 @@
                             </div>
                             <div class="mt-4 d-flex justify-content-end gap-2">
                                 <button type="button" class="btn btn-outline-secondary" @click="accountStore.closeModal()">
-                                    Batal
+                                    Tutup
                                 </button>
                                 <button type="submit" class="btn btn-primary" :disabled="loading">
                                     <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>

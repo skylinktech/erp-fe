@@ -236,14 +236,14 @@
                                         />                                    
                                     </div>
                                     <div class="col-12 d-flex flex-wrap justify-content-center gap-4 row-gap-4">
+                                        <button type="button" class="btn btn-outline-secondary" @click="handleCloseModal">
+                                            Tutup
+                                        </button>
                                         <button
                                             type="submit"
                                             class="btn btn-primary"
                                         >
                                             {{ isEditMode ? 'Update' : 'Simpan' }}
-                                        </button>
-                                        <button type="button" class="btn btn-outline-secondary" @click="handleCloseModal">
-                                            Batal
                                         </button>
                                     </div>
                                 </div>
@@ -286,15 +286,15 @@
                                         />                                    
                                     </div>
                                     <div class="col-12 d-flex flex-wrap justify-content-center gap-4 row-gap-4">
+                                        <button type="button" class="btn btn-outline-secondary" @click="handleCloseBatchModal">
+                                            Tutup
+                                        </button>
                                         <button
                                             type="submit"
                                             class="btn btn-primary"
                                             :disabled="!batchForm.menuGroupId || !batchForm.menuDetailId"
                                         >
                                             Update {{ selectedPermissions.length }} Permission
-                                        </button>
-                                        <button type="button" class="btn btn-outline-secondary" @click="handleCloseBatchModal">
-                                            Batal
                                         </button>
                                     </div>
                                 </div>

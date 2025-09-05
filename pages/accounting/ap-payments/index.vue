@@ -558,7 +558,7 @@
             class="btn btn-secondary"
             :disabled="apPaymentStore.loading"
           >
-            Batal
+            Tutup
           </button>
           <button
             type="submit"
