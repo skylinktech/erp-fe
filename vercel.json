@@ -3,11 +3,6 @@
   "outputDirectory": ".output/public",
   "installCommand": "npm install --ignore-scripts",
   "framework": "nuxtjs",
-  "functions": {
-    "app/api/**/*.ts": {
-      "runtime": "nodejs20.x"
-    }
-  },
   "env": {
     "NODE_OPTIONS": "--max-old-space-size=4096"
   }
