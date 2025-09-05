@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "nuxt build",
-    "postinstall": "npx --yes oxc-parser@latest install",
+    "postinstall": "npm rebuild oxc-parser",
     "dev": "nuxt dev",
     "start": "node .output/server/index.mjs",
     "generate": "nuxt generate",
@@ -29,7 +29,7 @@
     "jquery": "^3.7.1",
     "jspdf": "^3.0.1",
     "jspdf-autotable": "^5.0.2",
-    "nuxt": "^3.17.5",
+    "nuxt": "^3.17.4",
     "nuxt-toast": "^1.1.4",
     "pinia": "^3.0.2",
     "primeicons": "^7.0.0",
