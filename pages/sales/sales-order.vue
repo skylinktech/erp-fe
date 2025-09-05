@@ -497,7 +497,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useSalesOrderStore } from '~/stores/sales-order'
 import { useCustomerStore } from '~/stores/customer'
@@ -683,8 +683,15 @@ watch(() => globalFilterValue.value, (newValue) => {
 
 watch(showModal, (newValue) => {
     if (newValue) {
+        // Delay untuk memastikan modal sudah di-render
+        nextTick(() => {
+            const modalElement = document.getElementById('SalesOrderModal')
+            if (modalElement && !modalInstance) {
+                modalInstance = new bootstrap.Modal(modalElement)
+            }
+            modalInstance?.show()
+        })
         
-        modalInstance?.show()
         if (isEditMode.value) {
             if (form.value.attachment_url) {
                 form.value.attachmentPreview = form.value.attachment_url
