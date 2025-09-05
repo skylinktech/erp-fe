@@ -6,6 +6,39 @@ export default defineNuxtConfig({
     enabled: true
   },
   ssr: false,
+  
+  // Fix untuk native binding issues di deployment
+  nitro: {
+    experimental: {
+      wasm: true
+    },
+    // Optimasi untuk Node.js 24
+    esbuild: {
+      options: {
+        target: 'es2024' // Node.js 24 mendukung ES2024
+      }
+    }
+  },
+  
+  // Optimasi build untuk deployment
+  build: {
+    transpile: ['primevue'],
+    analyze: false
+  },
+  
+  // Optimasi untuk Node.js 24
+  vite: {
+    build: {
+      target: 'es2024', // Target ES2024 untuk Node.js 24
+      minify: 'terser',
+      terserOptions: {
+        compress: {
+          drop_console: true, // Hapus console.log di production
+          drop_debugger: true
+        }
+      }
+    }
+  },
   routeRules: {
     '/inventory/cetak-stock-transfer/**': { ssr: false },
   },
