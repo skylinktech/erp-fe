@@ -417,7 +417,7 @@
                                                 @update:modelValue="onWarehouseChange(index)"
                                                 :clearable="true"
                                             />
-                                            <small class="text-muted">Gudang tersedia: {{ warehouses?.length || 0 }} - Pilih gudang untuk melihat produk yang tersedia di gudang tersebut</small>
+                                            <small class="text-muted">Gudang tersedia: {{ warehouses?.length || 0 }} - Pilih gudang untuk informasi tambahan (semua produk tetap tersedia)</small>
                                         </div>
                                         <div class="col-md-4">
                                             <v-select 
@@ -459,8 +459,8 @@
                                             <small class="text-muted">
                                                 Produk tersedia: {{ getProductsByWarehouse(item.warehouseId)?.length || 0 }} 
                                                 | Selected: {{ item.productId }}
-                                                <span v-if="item.warehouseId" class="text-info">
-                                                    (Filtered by warehouse)
+                                                <span class="text-info">
+                                                    (Semua produk tersedia)
                                                 </span>
                                             </small>
                                         </div>
@@ -590,8 +590,8 @@ const filters = ref({
 });
 const expandedRows = ref({});
 
-// ✅ NEW: State untuk produk berdasarkan warehouse
-const productsByWarehouse = ref(new Map());
+// State untuk produk berdasarkan warehouse (tidak lagi digunakan, semua produk selalu tersedia)
+// const productsByWarehouse = ref(new Map());
 
 const rowsPerPageOptionsArray = ref([10, 25, 50, 100]);
 const modalTitle = computed(() => isEditMode.value ? 'Edit Purchase Order' : 'Tambah Purchase Order');
@@ -792,31 +792,13 @@ const filteredProducts = computed(() => {
 });
 
 const getProductsByWarehouse = (warehouseId) => {
-    // Jika warehouseId tidak dipilih, tampilkan SEMUA produk yang tersedia
-    if (!warehouseId) {
-        const allProducts = (products.value || []).map(product => ({
-            ...product,
-            displayName: `${product.sku || ''} | ${product.name || ''}`
-        }));
-        return allProducts;
-    }
-    
-    // Jika warehouseId dipilih, gunakan produk yang sudah di-cache berdasarkan warehouse
-    if (productsByWarehouse.value.has(warehouseId)) {
-        const cachedProducts = productsByWarehouse.value.get(warehouseId) || [];
-        return cachedProducts.map(product => ({
-            ...product,
-            displayName: `${product.sku || ''} | ${product.name || ''}`
-        }));
-    }
-    
-    // Fallback ke SEMUA produk jika belum ada cache untuk warehouse tertentu
-    const fallbackProducts = (products.value || []).map(product => ({
+    // Selalu tampilkan SEMUA produk yang tersedia, terlepas dari warehouse yang dipilih
+    const allProducts = (products.value || []).map(product => ({
         ...product,
         displayName: `${product.sku || ''} | ${product.name || ''}`
     }));
     
-    return fallbackProducts;
+    return allProducts;
 };
 
 const debouncedSearch = useDebounceFn(() => {
@@ -977,25 +959,12 @@ const onWarehouseChange = async (index) => {
     if (!form.value || !form.value.purchaseOrderItems) return;
     const item = form.value.purchaseOrderItems[index];
     
-    // Jika warehouse dipilih, fetch produk untuk warehouse tersebut
-    if (item.warehouseId) {
-        try {
-            const warehouseProducts = await purchaseOrderStore.fetchProductsByWarehouse(item.warehouseId);
-            
-            // Pastikan data memiliki displayName
-            const productsWithDisplayName = warehouseProducts.map(product => ({
-                ...product,
-                displayName: `${product.sku || ''} | ${product.name || ''}`
-            }));
-            
-            productsByWarehouse.value.set(item.warehouseId, productsWithDisplayName);
-            
-            // Force re-render
-            await nextTick();
-        } catch (error) {
-            console.error('Error fetching products for warehouse:', error);
-        }
-    }
+    // Warehouse dipilih hanya untuk informasi, tidak mempengaruhi daftar produk
+    // Semua produk tetap tersedia untuk dipilih
+    console.log(`Warehouse ${item.warehouseId} dipilih untuk item ${index}, tetapi semua produk tetap tersedia`);
+    
+    // Force re-render untuk memastikan UI terupdate
+    await nextTick();
 };
 
 const viewPurchaseOrderDetails = (purchaseOrderId) => {
