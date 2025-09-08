@@ -340,11 +340,20 @@
                                         <div class="form-floating form-floating-outline">
                                             <v-select
                                                 v-model="item.productId"
-                                                :options="products"
-                                                :get-option-label="product => `${product.name}`"
+                                                :options="allProducts"
+                                                :get-option-label="product => `${product.sku} | ${product.name}`"
                                                 :reduce="product => product.id"
                                                 placeholder="-- Pilih Produk --"
                                                 class="product-select"
+                                                :filterable="true"
+                                                :searchable="true"
+                                                :clearable="true"
+                                                :filter-by="(option, label, search) => {
+                                                    const product = option;
+                                                    const searchLower = search.toLowerCase();
+                                                    return product.name.toLowerCase().includes(searchLower) || 
+                                                           product.sku.toLowerCase().includes(searchLower);
+                                                }"
                                             />
                                         </div>
                                     </div>
@@ -433,7 +442,7 @@ const permissionStore                    = usePermissionsStore()
 const userStore                          = useUserStore()
 
 const { customers, loading, totalRecords, params, form, isEditMode, showModal, validationErrors } = storeToRefs(customerStore)
-const { products } = storeToRefs(productStore)
+const { products, allProducts } = storeToRefs(productStore)
 const { permissions } = storeToRefs(permissionStore)
 
 const globalFilterValue = ref('')
@@ -457,7 +466,10 @@ onMounted(() => {
     if (customerStore.customers.length === 0) {
       customerStore.fetchCustomers();
     }
-    productStore.fetchProducts(); // Fetch products for the select dropdown
+    // Fetch all products for the select dropdown (without pagination)
+    if (productStore.allProducts.length === 0) {
+      productStore.fetchAllProducts();
+    }
     const modalElement = document.getElementById('CustomerModal')
     if (modalElement) {
         modalInstance = new bootstrap.Modal(modalElement)

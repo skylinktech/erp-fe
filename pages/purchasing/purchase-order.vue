@@ -98,7 +98,16 @@
                                             {{ params.first + slotProps.index + 1 }}
                                         </template>
                                     </Column>
-                                    <Column field="noPo" header="No. PO" :sortable="true"></Column>
+                                    <Column field="noPo" header="No. PO" :sortable="true">
+                                        <template #body="slotProps">
+                                            <a 
+                                                @click="navigateTo(`/purchasing/purchase-order-detail?id=${slotProps.data.id}`)" 
+                                                style="cursor: pointer; color: #666bff; text-decoration: underline;"
+                                            >
+                                                {{ slotProps.data.noPo }}
+                                            </a>
+                                        </template>
+                                    </Column>
                                     <Column field="vendor.name" header="Nama Vendor" :sortable="true"></Column>
                                     <Column field="poType" header="Tipe PO" :sortable="true">
                                         <template #body="slotProps">
@@ -424,7 +433,7 @@
                                             <v-select 
                                                 v-model="item.productId" 
                                                 :options="getProductsByWarehouse(item.warehouseId)" 
-                                                label="displayName"
+                                                :get-option-label="product => `${product.sku} | ${product.name}`"
                                                 :reduce="p => p.id" 
                                                 placeholder="Cari berdasarkan SKU atau nama produk..." 
                                                 @update:modelValue="onProductChange(index)" 
@@ -434,6 +443,12 @@
                                                 :clearable="true"
                                                 :close-on-select="true"
                                                 :preserve-search="false"
+                                                :filter-by="(option, label, search) => {
+                                                    const product = option;
+                                                    const searchLower = search.toLowerCase();
+                                                    return product.name.toLowerCase().includes(searchLower) || 
+                                                           product.sku.toLowerCase().includes(searchLower);
+                                                }"
                                             >
                                                 <template #option="option">
                                                     <div class="d-flex justify-content-between align-items-center w-100">
@@ -633,13 +648,11 @@ onMounted(async () => {
     
     // Load data menggunakan method store yang standar
     try {
-        // Set parameter untuk memuat lebih banyak produk
-        productStore.params.rows = 1000; // Load lebih banyak produk
-        
+        // ✅ FIXED: Gunakan fetchAllProducts untuk memuat semua produk tanpa pagination
         await Promise.all([
             vendorStore.fetchVendors(),
             perusahaanStore.fetchPerusahaans(),
-            productStore.fetchProducts(), // Load semua produk tanpa filter gudang
+            productStore.fetchAllProducts(), // Load semua produk tanpa pagination
             warehouseStore.fetchWarehouses(),
             userStore.loadUser(),
             permissionStore.fetchPermissions()
@@ -689,12 +702,11 @@ watch(showModal, (newValue) => {
             modalInstance?.show()
         })
         
-        // Pastikan produk sudah dimuat dengan jumlah yang cukup (non-blocking)
+        // ✅ FIXED: Pastikan semua produk sudah dimuat (non-blocking)
         if (!products.value || products.value.length === 0) {
-            productStore.params.rows = 1000;
             // Jangan await di sini, biarkan berjalan di background
-            productStore.fetchProducts().catch(error => {
-                console.error('Error loading products:', error);
+            productStore.fetchAllProducts().catch(error => {
+                console.error('Error loading all products:', error);
             });
         }
         
@@ -784,9 +796,8 @@ const filteredProducts = computed(() => {
         return [];
     }
     
-    const limited = products.value.slice(0, 100);
-    
-    return limited.map(product => ({
+    // ✅ FIXED: Hapus limitasi 100 produk, tampilkan semua produk
+    return products.value.map(product => ({
         ...product,
         displayName: `${product.sku || ''} | ${product.name || ''}`
     }));
@@ -937,7 +948,8 @@ const onProductChange = (index) => {
   
   const selectedProductId = form.value.purchaseOrderItems[index].productId;
   
-  const selectedProduct = (filteredProducts.value || []).find(p => p.id === selectedProductId);
+  // ✅ FIXED: Gunakan semua produk, bukan hanya yang terbatas
+  const selectedProduct = (products.value || []).find(p => p.id === selectedProductId);
 
   if (selectedProduct) {
     const item = form.value.purchaseOrderItems[index];
@@ -1048,6 +1060,120 @@ const onRowToggle = (event) => {
     .is-invalid {
         border-color: #dc3545 !important;
         box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+    }
+
+    /* ✅ NEW: Styling untuk v-select yang konsisten dengan customer */
+    :deep(.v-select-style .vs__dropdown-toggle) {
+        height: 48px !important;
+        border-radius: 7px;
+    }
+
+    :deep(.v-select-style .vs__search) {
+        padding: 8px 12px !important;
+        font-size: 14px !important;
+        border: none !important;
+        outline: none !important;
+        background: transparent !important;
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    :deep(.v-select-style .vs__dropdown-menu) {
+        max-height: 300px !important;
+        overflow-y: auto !important;
+    }
+
+    :deep(.v-select-style .vs__dropdown-option--highlight) {
+        background-color: #696cff !important;
+        color: white !important;
+    }
+
+    :deep(.v-select-style .vs__dropdown-option) {
+        padding: 12px 16px !important;
+        font-size: 14px !important;
+        line-height: 1.4 !important;
+        border-bottom: 1px solid #f0f0f0 !important;
+        white-space: normal !important;
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
+        min-height: auto !important;
+        height: auto !important;
+    }
+
+    :deep(.v-select-style .vs__dropdown-option:last-child) {
+        border-bottom: none !important;
+    }
+
+    :deep(.v-select-style .vs__dropdown-option:hover) {
+        background-color: #f8f9fa !important;
+        color: #333 !important;
+    }
+
+    :deep(.v-select-style .vs__dropdown-option--highlight:hover) {
+        background-color: #696cff !important;
+        color: white !important;
+    }
+
+    /* ✅ NEW: Memastikan highlight menutupi seluruh area option */
+    :deep(.v-select-style .vs__dropdown-option--highlight) {
+        background-color: #696cff !important;
+        color: white !important;
+        display: block !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    /* ✅ NEW: Styling untuk content di dalam option agar highlight sempurna */
+    :deep(.v-select-style .vs__dropdown-option .d-flex) {
+        width: 100% !important;
+        display: flex !important;
+        align-items: flex-start !important;
+        justify-content: space-between !important;
+    }
+
+    :deep(.v-select-style .vs__dropdown-option .fw-bold) {
+        word-break: break-word !important;
+        hyphens: auto !important;
+        line-height: 1.3 !important;
+    }
+
+    :deep(.v-select-style .vs__dropdown-option small) {
+        word-break: break-word !important;
+        hyphens: auto !important;
+        line-height: 1.2 !important;
+        margin-top: 2px !important;
+    }
+
+    /* ✅ NEW: Responsive styling untuk text truncation di tablet dan mobile */
+    @media (max-width: 768px) {
+        :deep(.v-select-style .vs__selected) {
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            max-width: 100% !important;
+        }
+
+        :deep(.v-select-style .vs__placeholder) {
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            max-width: 100% !important;
+        }
+
+        :deep(.v-select-style .vs__selected-options) {
+            overflow: hidden !important;
+        }
+    }
+
+    @media (max-width: 576px) {
+        :deep(.v-select-style .vs__selected) {
+            font-size: 14px !important;
+            padding: 2px 4px !important;
+        }
+
+        :deep(.v-select-style .vs__placeholder) {
+            font-size: 14px !important;
+        }
     }
 
     .is-invalid .vs__dropdown-toggle {

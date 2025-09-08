@@ -901,6 +901,38 @@ const handleSearch = async (value) => {
   padding: 0.5rem 0.75rem !important;
 }
 
+/* ✅ NEW: Responsive styling untuk text truncation di tablet dan mobile */
+@media (max-width: 768px) {
+  ::deep(.v-select-style .vs__selected) {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
+  }
+
+  ::deep(.v-select-style .vs__placeholder) {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
+  }
+
+  ::deep(.v-select-style .vs__selected-options) {
+    overflow: hidden !important;
+  }
+}
+
+@media (max-width: 576px) {
+  ::deep(.v-select-style .vs__selected) {
+    font-size: 14px !important;
+    padding: 2px 4px !important;
+  }
+
+  ::deep(.v-select-style .vs__placeholder) {
+    font-size: 14px !important;
+  }
+}
+
 /* Skeleton Loader */
 .skeleton-loader {
   background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);

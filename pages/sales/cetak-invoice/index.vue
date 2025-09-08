@@ -107,7 +107,7 @@
         </div>
       </div>
 
-      <div class="table-responsive border border-bottom-0 rounded mb-6">
+      <div class="table-responsive border-bottom-0 rounded mb-6">
         <table class="table m-0" style="font-size: 12px;">
           <thead class="table-dark table-head-white">
             <tr>
@@ -399,7 +399,7 @@
     /* Ensure only the main items table has borders */
     .table-responsive.border table td,
     .table-responsive.border table th {
-      border: 1px solid #ddd !important;
+      border: none !important;
     }
 
     /* Remove borders from all other tables */

@@ -906,7 +906,21 @@
 /* Responsive */
 @media (max-width: 768px) {
   .search-input-container {
-    min-width: 250px;
+    min-width: 100px;
+  }
+
+  .navbar-search-wrapper .search-toggler {
+  transition: all 0.3s ease;
+  border-radius: 8px;
+  padding-left: 12px !important;
+  padding-right: 12px;
+  transform: scale(1.0);
+  transition: all 0.3s ease;
+  width: 100px;
+}
+
+  .navbar-search-wrapper .search-toggler:hover {
+    width: 100px;
   }
   
   .search-results-dropdown {

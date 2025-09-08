@@ -44,6 +44,7 @@ export interface Product {
 
 interface ProductState {
   products: Product[]
+  allProducts: Product[] // ✅ NEW: Untuk menyimpan semua produk untuk select dropdown
   loading: boolean
   error: any
   totalRecords: number
@@ -65,6 +66,7 @@ interface ProductState {
 export const useProductStore = defineStore('product', {
   state: (): ProductState => ({
     products: [],
+    allProducts: [], // ✅ NEW: Initialize allProducts array
     loading: true,
     error: null,
     totalRecords: 0,
@@ -154,6 +156,55 @@ export const useProductStore = defineStore('product', {
         }
       } finally {
         this.loading = false
+      }
+    },
+
+    // ✅ NEW: Method untuk mengambil semua produk tanpa pagination (untuk select dropdown)
+    // Method ini digunakan untuk mengisi data produk di select dropdown seperti di halaman customer
+    // Menggunakan rows=10000 untuk mengambil semua produk tanpa pagination
+    async fetchAllProducts() {
+      const toast = useToast();
+      this.loading = true;
+      this.error = null;
+      const { $api } = useNuxtApp();
+      
+      try {
+        const token = localStorage.getItem('token');
+        const params = new URLSearchParams({
+          rows: '10000', // Ambil semua produk dengan limit yang sangat besar
+          sortField: 'name', // Urutkan berdasarkan nama untuk kemudahan pencarian
+          sortOrder: 'asc',
+          search: '', // Tanpa filter search
+        });
+
+        const response = await fetch(`${$api.product()}?${params.toString()}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json',
+          },
+          credentials: 'include'
+        });
+
+        if (!response.ok) {
+          throw new Error('Gagal memuat semua data produk');
+        }
+
+        const result = await response.json();
+        this.allProducts = result.data || [];
+        return this.allProducts;
+        
+      } catch (e: any) {
+        this.error = e.message;
+        toast.error({
+          title: 'Error',
+          message: `Tidak dapat memuat data produk: ${e.message}`,
+          color: 'red',
+          position: 'topRight',
+        });
+        this.allProducts = [];
+        return [];
+      } finally {
+        this.loading = false;
       }
     },
 
@@ -286,6 +337,7 @@ export const useProductStore = defineStore('product', {
           this.closeModal();
           await this.fetchProducts();
           await this.fetchTotalProducts();
+          await this.refreshAllProducts(); // ✅ Refresh allProducts untuk select dropdown
           toast.success({
             title: 'Success',
             message: `Produk berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
@@ -347,6 +399,7 @@ export const useProductStore = defineStore('product', {
 
           await this.fetchProducts();
           await this.fetchTotalProducts();
+          await this.refreshAllProducts(); // ✅ Refresh allProducts untuk select dropdown
           toast.success({
             title: 'Success',
             message: 'Produk berhasil dihapus.',
@@ -591,6 +644,11 @@ export const useProductStore = defineStore('product', {
         const fullImageUrl = getProductImage(imagePath);
         window.open(fullImageUrl, '_blank');
       }
+    },
+
+    // ✅ NEW: Method untuk refresh allProducts setelah ada perubahan produk
+    async refreshAllProducts() {
+      await this.fetchAllProducts();
     }
   }
 })

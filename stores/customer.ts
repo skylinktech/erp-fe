@@ -306,6 +306,13 @@ export const useCustomerStore = defineStore('customer', {
     async openModal(customer: Customer | null = null) {
         this.isEditMode = !!customer;
         this.validationErrors = [];
+        
+        // ✅ NEW: Fetch all products untuk select dropdown saat membuka modal
+        const { useProductStore } = await import('./product');
+        const productStore = useProductStore();
+        if (productStore.allProducts.length === 0) {
+            await productStore.fetchAllProducts();
+        }
         if (customer && customer.id) {
             // Fetch complete data for editing
             this.loading = true;

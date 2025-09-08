@@ -131,9 +131,12 @@
                                     </Column>
                                     <Column field="noSo" header="No. SO" :sortable="true">
                                         <template #body="slotProps">
-                                            <span>
+                                            <a 
+                                                @click="navigateTo(`/sales/sales-order-detail?id=${slotProps.data.id}`)" 
+                                                style="cursor: pointer; color: #666bff; text-decoration: underline;"
+                                            >
                                                 {{ slotProps.data.noSo || '-' }}
-                                            </span>
+                                            </a>
                                         </template>
                                     </Column>
                                     <Column field="noPo" header="No. PO" :sortable="true">
@@ -410,22 +413,28 @@
                                     <div class="row g-3">
                                         <div class="col-12">
                                             <v-select v-model="item.warehouseId" :options="warehouses"
-                                            :get-option-label="w => `${w.name} (${w.code})`" :reduce="w => w.id" placeholder="Pilih Gudang SO" class="v-select-style" @update:modelValue="updateStockInfo(index)"/>
+                                            :get-option-label="w => `${w.name} (${w.code})`" :reduce="w => w.id" placeholder="Pilih Gudang SO" class="v-select-style" @update:modelValue="(value) => { item.warehouseId = value; if (item.productId) updateStockInfo(index); }"/>
                                         </div>
                                         <div class="col-md-4">
                                             <v-select 
                                                 v-model="item.productId" 
                                                 :options="filteredCustomerProducts" 
-                                                label="displayName"
+                                                :get-option-label="product => `${product.sku} | ${product.name}`"
                                                 :reduce="p => p.id" 
                                                 placeholder="Cari berdasarkan SKU atau nama produk..." 
-                                                @update:modelValue="onProductChange(index)" 
+                                                @update:modelValue="(value) => { item.productId = value; onProductChange(index); }" 
                                                 class="v-select-style"
                                                 :disabled="!form.customerId"
                                                 :searchable="true"
                                                 :clearable="true"
                                                 :close-on-select="true"
                                                 :preserve-search="false"
+                                                :filter-by="(option, label, search) => {
+                                                    const product = option;
+                                                    const searchLower = search.toLowerCase();
+                                                    return product.name.toLowerCase().includes(searchLower) || 
+                                                           product.sku.toLowerCase().includes(searchLower);
+                                                }"
                                             >
                                                 <template #option="option">
                                                     <div class="d-flex justify-content-between align-items-center w-100">
@@ -463,7 +472,7 @@
                                         </div>
                                         <div class="col-md-3">
                                             <div class="form-floating form-floating-outline">
-                                                <input type="text" :value="item.stock && item.stock.quantity !== undefined && item.stock.quantity !== null ? Math.floor(item.stock.quantity) : ''" class="form-control" placeholder="Stock" readonly>
+                                                <input type="text" :value="getStockDisplay(item.stock)" class="form-control" placeholder="Stock" readonly>
                                                 <label>Stock</label>
                                             </div>
                                         </div>
@@ -681,7 +690,7 @@ watch(() => globalFilterValue.value, (newValue) => {
     tableControls.value.search = newValue;
 });
 
-watch(showModal, (newValue) => {
+watch(showModal, async (newValue) => {
     if (newValue) {
         // Delay untuk memastikan modal sudah di-render
         nextTick(() => {
@@ -703,9 +712,14 @@ watch(showModal, (newValue) => {
             
             // Fetch stock for existing items
             if (form.value.salesOrderItems && form.value.salesOrderItems.length > 0) {
-                form.value.salesOrderItems.forEach((item, index) => {
-                    updateStockInfo(index);
-                });
+                // Delay sedikit untuk memastikan semua data sudah ter-load
+                await nextTick();
+                for (let index = 0; index < form.value.salesOrderItems.length; index++) {
+                    const item = form.value.salesOrderItems[index];
+                    if (item.productId && item.warehouseId) {
+                        await updateStockInfo(index);
+                    }
+                }
             }
         } else {
             form.value.attachmentPreview = null
@@ -737,6 +751,33 @@ watch(() => form.value.customerId, (newCustomerId, oldCustomerId) => {
     salesOrderStore.addItem();
   }
 });
+
+// Watch untuk salesOrderItems agar stock di-update saat warehouse berubah
+watch(() => form.value.salesOrderItems, (newItems) => {
+  if (newItems && newItems.length > 0) {
+    newItems.forEach((item, index) => {
+      if (item.productId && item.warehouseId && !item.stock) {
+        // Hanya update jika stock belum ada
+        updateStockInfo(index);
+      }
+    });
+  }
+}, { deep: true });
+
+// Watch untuk memastikan stock di-update saat productId atau warehouseId berubah
+watch(() => form.value.salesOrderItems?.map(item => ({ productId: item.productId, warehouseId: item.warehouseId })), (newValues, oldValues) => {
+  if (newValues && oldValues && newValues.length === oldValues.length) {
+    newValues.forEach((newValue, index) => {
+      const oldValue = oldValues[index];
+      if (oldValue && (newValue.productId !== oldValue.productId || newValue.warehouseId !== oldValue.warehouseId)) {
+        // ProductId atau warehouseId berubah, update stock
+        if (newValue.productId && newValue.warehouseId) {
+          updateStockInfo(index);
+        }
+      }
+    });
+  }
+}, { deep: true });
 
 watch(() => customerProducts, (newProducts) => {
     if (newProducts && newProducts.length > 0) {
@@ -882,14 +923,22 @@ const handleSubmit = () => {
 
 
 const onProductChange = (index) => {
-  const selectedProductId = form.value.salesOrderItems[index].productId;
+  const item = form.value.salesOrderItems[index];
+  const selectedProductId = item.productId;
   const selectedProduct = customerProducts.value.find(p => p.id === selectedProductId);
 
   if (selectedProduct) {
-    const item = form.value.salesOrderItems[index];
     item.price = Number(selectedProduct.priceSell) || 0;
     calculateSubtotal(index);
-    updateStockInfo(index)
+    
+    // Hanya update stock jika warehouseId sudah ter-set
+    if (item.warehouseId) {
+      updateStockInfo(index)
+    }
+  } else {
+    // Reset price jika produk tidak ditemukan
+    item.price = 0;
+    calculateSubtotal(index);
   }
 };
 
@@ -944,25 +993,100 @@ const updateStockInfo = async (index) => {
     const item = form.value.salesOrderItems[index]
     if (item.productId && item.warehouseId) {
         try {
-            stockStore.params.search = '' // Reset search if any
-            stockStore.params.rows = 1 // We only need one record
+            // Reset stock store params untuk memastikan filter yang tepat
+            stockStore.params.search = ''
+            stockStore.params.rows = 10
+            stockStore.params.first = 0
+            stockStore.params.productId = item.productId
+            stockStore.params.warehouseId = item.warehouseId
+            
             const response = await stockStore.fetchStocksPaginated({
                 productId: item.productId,
                 warehouseId: item.warehouseId,
             })
+            
             if (response && response.data && response.data.length > 0) {
-                item.stock = response.data[0]
+                // Cari stock yang sesuai dengan productId dan warehouseId
+                const matchingStock = response.data.find(stock => 
+                    stock.productId === item.productId && stock.warehouseId === item.warehouseId
+                )
+                
+                if (matchingStock) {
+                    item.stock = matchingStock
+                } else {
+                    // Coba ambil stock dengan cara yang berbeda
+                    try {
+                        const { $api } = useNuxtApp();
+                        const token = localStorage.getItem('token');
+                        
+                        // Coba dengan parameter all=true
+                        const fallbackResponse = await fetch(`${$api.stock()}?productId=${item.productId}&warehouseId=${item.warehouseId}&all=true`, {
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Accept': 'application/json',
+                            }
+                        });
+                        
+                        if (fallbackResponse.ok) {
+                            const fallbackData = await fallbackResponse.json();
+                            
+                            if (fallbackData && fallbackData.data && fallbackData.data.length > 0) {
+                                const fallbackStock = fallbackData.data.find(stock => 
+                                    stock.productId === item.productId && stock.warehouseId === item.warehouseId
+                                );
+                                if (fallbackStock) {
+                                    item.stock = fallbackStock;
+                                    return;
+                                }
+                            }
+                        }
+                        
+                        // Coba tanpa filter untuk melihat semua stock
+                        const allStockResponse = await fetch(`${$api.stock()}?all=true`, {
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Accept': 'application/json',
+                            }
+                        });
+                        
+                        if (allStockResponse.ok) {
+                            const allStockData = await allStockResponse.json();
+                            
+                            if (allStockData && allStockData.data && allStockData.data.length > 0) {
+                                const matchingStock = allStockData.data.find(stock => 
+                                    stock.productId === item.productId && stock.warehouseId === item.warehouseId
+                                );
+                                if (matchingStock) {
+                                    item.stock = matchingStock;
+                                    return;
+                                }
+                            }
+                        }
+                    } catch (fallbackError) {
+                        // Fallback failed, continue with default
+                    }
+                    
+                    item.stock = { quantity: 0 }
+                }
             } else {
                 item.stock = { quantity: 0 }
             }
         } catch (error) {
-            console.error('Failed to fetch stock info:', error)
             item.stock = { quantity: 0 }
         }
     } else {
-        item.stock = { quantity: 0 }
+        // Jangan set stock ke 0 jika belum ada productId atau warehouseId
+        if (!item.stock) {
+            item.stock = null
+        }
     }
 }
+
+const getStockDisplay = (stock) => {
+    if (!stock) return 'Loading...';
+    if (stock.quantity === undefined || stock.quantity === null) return 'Loading...';
+    return Math.floor(stock.quantity);
+};
 
 const clearDateFilters = () => {
     filters.value.startDate = null;
@@ -1408,6 +1532,95 @@ const onRowToggle = (event) => {
     :deep(.v-select-style .vs__dropdown-option--highlight) {
         background-color: #696cff !important;
         color: white !important;
+    }
+
+    /* ✅ NEW: Styling untuk product select yang konsisten dengan customer */
+    :deep(.v-select-style .vs__dropdown-option) {
+        padding: 12px 16px !important;
+        font-size: 14px !important;
+        line-height: 1.4 !important;
+        border-bottom: 1px solid #f0f0f0 !important;
+        white-space: normal !important;
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
+        min-height: auto !important;
+        height: auto !important;
+    }
+
+    :deep(.v-select-style .vs__dropdown-option:last-child) {
+        border-bottom: none !important;
+    }
+
+    :deep(.v-select-style .vs__dropdown-option:hover) {
+        background-color: #f8f9fa !important;
+        color: #333 !important;
+    }
+
+    :deep(.v-select-style .vs__dropdown-option--highlight:hover) {
+        background-color: #696cff !important;
+        color: white !important;
+    }
+
+    /* ✅ NEW: Memastikan highlight menutupi seluruh area option */
+    :deep(.v-select-style .vs__dropdown-option--highlight) {
+        background-color: #696cff !important;
+        color: white !important;
+        display: block !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    /* ✅ NEW: Styling untuk content di dalam option agar highlight sempurna */
+    :deep(.v-select-style .vs__dropdown-option .d-flex) {
+        width: 100% !important;
+        display: flex !important;
+        align-items: flex-start !important;
+        justify-content: space-between !important;
+    }
+
+    :deep(.v-select-style .vs__dropdown-option .fw-bold) {
+        word-break: break-word !important;
+        hyphens: auto !important;
+        line-height: 1.3 !important;
+    }
+
+    :deep(.v-select-style .vs__dropdown-option small) {
+        word-break: break-word !important;
+        hyphens: auto !important;
+        line-height: 1.2 !important;
+        margin-top: 2px !important;
+    }
+
+    /* ✅ NEW: Responsive styling untuk text truncation di tablet dan mobile */
+    @media (max-width: 768px) {
+        :deep(.v-select-style .vs__selected) {
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            max-width: 100% !important;
+        }
+
+        :deep(.v-select-style .vs__placeholder) {
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            max-width: 100% !important;
+        }
+
+        :deep(.v-select-style .vs__selected-options) {
+            overflow: hidden !important;
+        }
+    }
+
+    @media (max-width: 576px) {
+        :deep(.v-select-style .vs__selected) {
+            font-size: 14px !important;
+            padding: 2px 4px !important;
+        }
+
+        :deep(.v-select-style .vs__placeholder) {
+            font-size: 14px !important;
+        }
     }
 
     @media (max-width: 575.98px) {

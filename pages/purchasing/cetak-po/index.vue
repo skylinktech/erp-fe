@@ -107,7 +107,7 @@
         </div>
       </div>
 
-      <div class="table-responsive table-striped rounded mb-6">
+      <div class="table-responsive border-bottom-0 rounded mb-6">
         <table class="table m-0" style="font-size: 12px;">
           <thead class="table-dark table-head-white">
             <tr>
@@ -117,7 +117,7 @@
               <th>Deskripsi</th>
               <th>Qty</th>
               <th>Price</th>
-              <th>Subtotal</th>
+              <th>Total</th>
             </tr>
           </thead>
           <tbody>
@@ -131,22 +131,22 @@
               <td>{{ formatRupiah(item.price || 0) }}</td>
               <td>{{ formatRupiah(item.subtotal || 0) }}</td>
             </tr>
-            <!-- ✅ FALLBACK: jika tidak ada salesInvoiceItems, tampilkan dari salesOrder -->
-            <template v-if="(!purchaseOrder.purchaseOrderItems || purchaseOrder.purchaseOrderItems.length === 0)">
-              <tr v-for="(item, index) in purchaseOrder.purchaseOrderItems" :key="`fallback-${item.id}`">
+            <!-- ✅ FALLBACK: jika tidak ada purchaseOrderItems, tampilkan dari salesOrder -->
+            <template v-if="(!purchaseOrder.purchaseOrderItems || purchaseOrder.purchaseOrderItems.length === 0) && purchaseOrder.salesOrder?.salesOrderItems">
+              <tr v-for="(item, index) in purchaseOrder.salesOrder.salesOrderItems" :key="`fallback-${item.id}`">
                 <td>{{ index + 1 }}</td>
                 <td>{{ item.product?.sku || '-' }}</td>
                 <td>{{ item.product?.name || '-' }}</td>
                 <td>{{ item.description || '-' }}</td>
                 <td>{{ Number(item.quantity) }}</td>
-              <td>{{ formatRupiah(item.price || 0) }}</td>
-              <td>{{ formatRupiah(item.subtotal || 0) }}</td>
-            </tr>
+                <td>{{ formatRupiah(item.price || 0) }}</td>
+                <td>{{ formatRupiah(item.subtotal || 0) }}</td>
+              </tr>
             </template>
             <!-- ✅ MESSAGE jika tidak ada items sama sekali -->
             <tr v-if="(!purchaseOrder.purchaseOrderItems || purchaseOrder.purchaseOrderItems.length === 0) && 
-                      (!purchaseOrder.purchaseOrderItems || purchaseOrder.purchaseOrderItems.length === 0)">
-              <td colspan="8" class="text-center py-4 text-muted">
+                      (!purchaseOrder.salesOrder?.salesOrderItems || purchaseOrder.salesOrder.salesOrderItems.length === 0)">
+              <td colspan="7" class="text-center py-4 text-muted">
                 <em>Tidak ada item untuk ditampilkan</em>
               </td>
             </tr>
@@ -157,12 +157,12 @@
       <div class="table-responsive table-striped">
         <table class="table mt-2 table-borderless" style="font-size: 12px;">
           <tbody>
-            <tr v-if="purchaseOrder.description">
+            <tr>
               <td colspan="2" class="px-0 pt-6 align-top" style="max-width: 320px; width: 320px; min-width: 220px;">
-                <p class="mb-2">
+                <p v-if="purchaseOrder.description" class="mb-2">
                   <span class="fw-medium text-heading">Catatan:</span>
                 </p>
-                <p class="mb-0" style="white-space: pre-line; word-break: break-word; max-width: 320px;">
+                <p v-if="purchaseOrder.description" class="mb-0" style="white-space: pre-line; word-break: break-word; max-width: 320px;">
                   {{ purchaseOrder.description }}
                 </p>
               </td>
@@ -172,6 +172,11 @@
                     <span class="fw-medium text-heading" style="min-width: 90px;">Subtotal</span>
                     <span class="fw-medium text-heading px-2" style="min-width: 10px; text-align: right;">:</span>
                     <span class="fw-semibold text-end flex-grow-1">{{ formatRupiah(calculateSubtotal()) || 0 }}</span>
+                  </div>
+                  <div class="mb-2 d-flex" style="min-width: 270px;">
+                    <span class="fw-medium text-heading" style="min-width: 90px;">DPP</span>
+                    <span class="fw-medium text-heading px-2" style="min-width: 10px; text-align: right;">:</span>
+                    <span class="fw-semibold text-end flex-grow-1">{{ formatRupiah(Number(purchaseOrder.dpp) || 0) }}</span>
                   </div>
                   <div class="mb-2 d-flex" style="min-width: 270px;">
                     <span class="fw-medium text-heading" style="min-width: 90px;">
@@ -282,14 +287,14 @@
   const calculateSubtotal = () => {
     if (!purchaseOrder.value) return 0;
     
-    // ✅ PRIORITAS: Gunakan salesInvoiceItems jika ada
+    // ✅ PRIORITAS: Gunakan purchaseOrderItems jika ada
     if (purchaseOrder.value.purchaseOrderItems && purchaseOrder.value.purchaseOrderItems.length > 0) {
       return purchaseOrder.value.purchaseOrderItems.reduce((total, item) => {
         return total + (Number(item.subtotal) || 0);
       }, 0);
     }
     
-    // ✅ FALLBACK: Gunakan salesOrderItems jika salesInvoiceItems tidak ada
+    // ✅ FALLBACK: Gunakan salesOrderItems jika purchaseOrderItems tidak ada
     if (purchaseOrder.value.salesOrder?.salesOrderItems) {
       return purchaseOrder.value.salesOrder.salesOrderItems.reduce((total, item) => {
         return total + (Number(item.subtotal) || 0);
@@ -373,7 +378,7 @@
     /* Ensure only the main items table has borders */
     .table-responsive.border table td,
     .table-responsive.border table th {
-      border: 1px solid #ddd !important;
+      border: none !important;
     }
 
     /* Remove borders from all other tables */

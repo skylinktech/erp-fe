@@ -857,7 +857,7 @@ export const useSalesOrderStore = defineStore('salesOrder', {
             this.form.salesOrderItems = this.form.salesOrderItems.map((item: any) => {
                 return {
                     ...item,
-                    stock: item.stock || { quantity: 0 },
+                    stock: item.stock || null, // Jangan set default 0, biarkan null sampai di-fetch
                 }
             })
           } else {
@@ -917,7 +917,7 @@ export const useSalesOrderStore = defineStore('salesOrder', {
             price: 0,
             description: '',
             subtotal: 0,
-            stock: { quantity: 0 },
+            stock: null, // Jangan set default 0, biarkan null sampai di-fetch
         });
     },
 

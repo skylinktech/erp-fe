@@ -117,7 +117,7 @@
                                 :rows="Number(params.rows)" 
                                 :loading="loading"
                                 :totalRecords="totalRecords"
-                            :first="params.first"
+                                :first="params.first"
                                 :lazy="true"
                                 @page="onPage($event)"
                                 @sort="onSort($event)"
@@ -125,7 +125,10 @@
                                 paginatorPosition="bottom"
                                 paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink"
                                 currentPageReportTemplate="Menampilkan {first} sampai {last} dari {totalRecords} data"
+                                :expandedRows="expandedRows"
+                                @row-toggle="onRowToggle"
                                 >
+                                    <Column :expander="true" headerStyle="width: 3rem" />
                                     <Column header="#" :sortable="false">
                                         <template #body="slotProps">
                                             {{ params.first + slotProps.index + 1 }}
@@ -210,6 +213,11 @@
                                             </div>
                                         </template>
                                     </Column>
+                                    
+                                    <!-- Expanded Row Template -->
+                                    <template #expansion="slotProps">
+                                        <QuotationExpandedRow :quotation="slotProps.data" />
+                                    </template>
                             </MyDataTable>
                         </div>
                     </div>
@@ -350,7 +358,7 @@
                                             <v-select 
                                                 v-model="item.productId" 
                                                 :options="filteredCustomerProducts" 
-                                                label="displayName"
+                                                :get-option-label="product => `${product.sku} | ${product.name}`"
                                                 :reduce="p => p.id" 
                                                 placeholder="Cari berdasarkan part number atau nama produk..." 
                                                 @update:modelValue="onProductChange(index)" 
@@ -360,10 +368,15 @@
                                                 :max-height="300"
                                                 :max-options="100"
                                                 :clearable="true"
+                                                :filter-by="(option, label, search) => {
+                                                    const product = option;
+                                                    const searchLower = search.toLowerCase();
+                                                    return product.name.toLowerCase().includes(searchLower) || 
+                                                           product.sku.toLowerCase().includes(searchLower);
+                                                }"
                                                 :close-on-select="true"
                                                 :loading="loading"
                                                 :filterable="true"
-                                                :create-option="false"
                                                 :multiple="false"
                                                 :taggable="false"
                                                 no-options-text="Tidak ada produk yang cocok dengan pencarian"
@@ -482,12 +495,13 @@
   import { useUserStore } from '~/stores/user'
   import { usePermissionsStore } from '~/stores/permissions'
   import { usePermissions } from '~/composables/usePermissions'
-  import Modal from '~/components/modal/Modal.vue'
-  import MyDataTable from '~/components/table/MyDataTable.vue'
-  import vSelect from 'vue-select'
-  import Dropdown from 'primevue/dropdown'
-  import Column from 'primevue/column'
-  import InputText from 'primevue/inputtext'
+import Modal from '~/components/modal/Modal.vue'
+import MyDataTable from '~/components/table/MyDataTable.vue'
+import QuotationExpandedRow from '~/components/table/QuotationExpandedRow.vue'
+import vSelect from 'vue-select'
+import Dropdown from 'primevue/dropdown'
+import Column from 'primevue/column'
+import InputText from 'primevue/inputtext'
   import 'vue-select/dist/vue-select.css'
   import { useDebounceFn } from '@vueuse/core'
   import { useRouter } from 'vue-router'
@@ -520,14 +534,15 @@
   const { user }        = storeToRefs(userStore)
   const { permissions } = storeToRefs(permissionStore)
 
-  // State
-  const globalFilterValue = ref('');
-  const attachmentPreview = ref(null);
-  const filters = ref({
-      search: '',
-      customerId: null,
-      status: null,
-  });
+// State
+const globalFilterValue = ref('');
+const attachmentPreview = ref(null);
+const expandedRows = ref({});
+const filters = ref({
+    search: '',
+    customerId: null,
+    status: null,
+});
 
   const rowsPerPageOptionsArray = ref([10, 25, 50, 100]);
   const modalTitle = computed(() => {
@@ -836,6 +851,11 @@
       }
   };
 
+  // Row expansion methods
+  const onRowToggle = (event) => {
+      expandedRows.value = event.data;
+  };
+
   </script>
 
   <style scoped>
@@ -851,6 +871,8 @@
       :deep(.cabang .vs__dropdown-toggle) {
           height: 48px !important;
           border-radius: 7px;
+          display: flex !important;
+          align-items: center !important;
       }
 
       /* ✅ NEW: Limit dropdown height dan tambahkan scroll */
@@ -883,6 +905,59 @@
           background: transparent !important;
       }
 
+      /* ✅ NEW: Styling untuk selected value container - centering yang tepat */
+      :deep(.v-select-style .vs__selected-options) {
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          width: 100% !important;
+          height: 100% !important;
+      }
+
+      /* ✅ NEW: Styling untuk selected value yang memiliki teks (bukan placeholder) */
+      :deep(.v-select-style .vs__selected) {
+          text-align: center !important;
+          width: 100% !important;
+      }
+
+      /* ✅ NEW: Styling untuk placeholder text - centering yang tepat tanpa margin */
+      :deep(.v-select-style .vs__placeholder) {
+          text-align: center !important;
+          width: 100% !important;
+      }
+
+      /* ✅ NEW: Responsive styling untuk text truncation di tablet dan mobile */
+      @media (max-width: 768px) {
+          :deep(.v-select-style .vs__selected) {
+              white-space: nowrap !important;
+              overflow: hidden !important;
+              text-overflow: ellipsis !important;
+              max-width: 100% !important;
+          }
+
+          :deep(.v-select-style .vs__placeholder) {
+              white-space: nowrap !important;
+              overflow: hidden !important;
+              text-overflow: ellipsis !important;
+              max-width: 100% !important;
+          }
+
+          :deep(.v-select-style .vs__selected-options) {
+              overflow: hidden !important;
+          }
+      }
+
+      @media (max-width: 576px) {
+          :deep(.v-select-style .vs__selected) {
+              font-size: 14px !important;
+              padding: 2px 4px !important;
+          }
+
+          :deep(.v-select-style .vs__placeholder) {
+              font-size: 14px !important;
+          }
+      }
+
       /* ✅ NEW: Styling untuk loading state */
       :deep(.v-select-style .vs__spinner) {
           border-color: #1976d2 !important;
@@ -897,11 +972,11 @@
           font-style: italic !important;
       }
 
-      /* ✅ NEW: Styling untuk selected option */
+      /* ✅ NEW: Styling untuk selected option - konsisten dengan purchase-order (tanpa background) */
       :deep(.v-select-style .vs__selected) {
-          background-color: #e3f2fd !important;
-          color: #1976d2 !important;
-          border: 1px solid #1976d2 !important;
+          background-color: transparent !important;
+          color: inherit !important;
+          border: none !important;
           border-radius: 4px !important;
           padding: 2px 6px !important;
           margin: 2px !important;
@@ -917,10 +992,10 @@
           animation: spin 1s linear infinite !important;
       }
 
-      /* ✅ NEW: Styling untuk option yang sedang dipilih */
+      /* ✅ NEW: Styling untuk option yang sedang dipilih - konsisten dengan purchase-order */
       :deep(.v-select-style .vs__dropdown-option--selected) {
-          background-color: #e3f2fd !important;
-          color: #1976d2 !important;
+          background-color: #696cff !important;
+          color: white !important;
           font-weight: 600 !important;
       }
 
@@ -968,10 +1043,89 @@
           box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
       }
 
-      /* ✅ NEW: Styling untuk option yang sedang difilter */
+      /* ✅ NEW: Styling untuk option yang sedang difilter - konsisten dengan purchase-order */
       :deep(.v-select-style .vs__dropdown-option--highlight) {
-          background-color: #e3f2fd !important;
-          color: #1976d2 !important;
+          background-color: #696cff !important;
+          color: white !important;
           font-weight: 600 !important;
+      }
+
+      /* ✅ NEW: Styling untuk product select yang konsisten dengan purchase-order */
+      :deep(.v-select-style .vs__dropdown-option) {
+          padding: 12px 16px !important;
+          font-size: 14px !important;
+          line-height: 1.4 !important;
+          border-bottom: 1px solid #f0f0f0 !important;
+          white-space: normal !important;
+          word-wrap: break-word !important;
+          overflow-wrap: break-word !important;
+          min-height: auto !important;
+          height: auto !important;
+      }
+
+      :deep(.v-select-style .vs__dropdown-option:last-child) {
+          border-bottom: none !important;
+      }
+
+      :deep(.v-select-style .vs__dropdown-option:hover) {
+          background-color: #f8f9fa !important;
+          color: #333 !important;
+      }
+
+      :deep(.v-select-style .vs__dropdown-option--highlight:hover) {
+          background-color: #696cff !important;
+          color: white !important;
+      }
+
+      /* ✅ NEW: Memastikan highlight menutupi seluruh area option */
+      :deep(.v-select-style .vs__dropdown-option--highlight) {
+          background-color: #696cff !important;
+          color: white !important;
+          display: block !important;
+          width: 100% !important;
+          box-sizing: border-box !important;
+      }
+
+      /* ✅ NEW: Styling untuk content di dalam option agar highlight sempurna */
+      :deep(.v-select-style .vs__dropdown-option .d-flex) {
+          width: 100% !important;
+          display: flex !important;
+          align-items: flex-start !important;
+          justify-content: space-between !important;
+      }
+
+      :deep(.v-select-style .vs__dropdown-option .fw-bold) {
+          word-break: break-word !important;
+          hyphens: auto !important;
+          line-height: 1.3 !important;
+      }
+
+      :deep(.v-select-style .vs__dropdown-option small) {
+          word-break: break-word !important;
+          hyphens: auto !important;
+          line-height: 1.2 !important;
+          margin-top: 2px !important;
+      }
+
+      /* ✅ NEW: Styling untuk disabled state - konsisten dengan purchase-order */
+      .v-select-style:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+      }
+
+      .v-select-style:disabled .vs__dropdown-toggle {
+          background-color: #e9ecef;
+          cursor: not-allowed;
+      }
+
+      /* ✅ NEW: Styling untuk validasi - konsisten dengan purchase-order */
+      .is-invalid {
+          border-color: #dc3545 !important;
+          box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+      }
+
+      .is-invalid .vs__dropdown-toggle {
+          border-color: #dc3545 !important;
+          box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
       }
   </style>
