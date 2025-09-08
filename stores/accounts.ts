@@ -81,7 +81,7 @@ export const useAccountStore = defineStore('account', {
   }),
 
   actions: {
-    async fetchAccounts() {
+    async fetchAccounts(suppressError = false) {
       this.loading = true
       this.error = null
       const toast = useToast();
@@ -128,14 +128,18 @@ export const useAccountStore = defineStore('account', {
         this.error = e.message
         this.accounts = []
         this.totalRecords = 0
-        toast.error({
-          title: 'Error',
-          message: `Tidak dapat memuat data akun: ${e.message}`,
-          color: 'red',
-          position: 'topRight',
-          layout: 2,
-          icon: 'error',
-        });
+        
+        // Hanya tampilkan notifikasi error jika tidak di-suppress (untuk preload)
+        if (!suppressError) {
+          toast.error({
+            title: 'Error',
+            message: `Tidak dapat memuat data akun: ${e.message}`,
+            color: 'red',
+            position: 'topRight',
+            layout: 2,
+            icon: 'error',
+          });
+        }
       } finally {
         this.loading = false
       }

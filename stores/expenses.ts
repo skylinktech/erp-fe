@@ -3,29 +3,20 @@ import { useNuxtApp } from '#app'
 import Swal from 'sweetalert2'
 
 export interface Expense {
-  id?: number
-  reference_number: string
+  id?: string
+  expenseNumber: string
   date: string
   description: string
   amount: number
-  category: string
-  payment_method: 'cash' | 'bank_transfer' | 'check' | 'credit_card'
-  bank_account_id?: number
-  vendor_id?: number
-  tax_id?: number
-  tax_amount: number
-  total_amount: number
-  status: 'draft' | 'approved' | 'paid' | 'cancelled'
-  notes?: string
-  attachments?: File[]
-  created_by?: number
-  approved_by?: number
-  approved_at?: string
-  bank_account?: any
-  vendor?: any
-  tax?: any
-  created_by_user?: any
-  approved_by_user?: any
+  paymentMethod: string
+  bankAccountId?: string
+  departemenId: number
+  createdBy?: number
+  updatedBy?: number
+  departemen?: any
+  bankAccount?: any
+  createdByUser?: any
+  updatedByUser?: any
 }
 
 interface ExpenseState {
@@ -46,11 +37,8 @@ interface ExpenseState {
   showModal: boolean
   validationErrors: any[]
   paymentMethods: { value: string; label: string }[]
-  expenseCategories: { value: string; label: string }[]
-  expenseStatuses: { value: string; label: string }[]
   bankAccounts: any[]
-  vendors: any[]
-  taxes: any[]
+  departments: any[]
 }
 
 export const useExpenseStore = defineStore('expense', {
@@ -68,20 +56,13 @@ export const useExpenseStore = defineStore('expense', {
       search: '',
     },
     form: {
-      reference_number: '',
+      expenseNumber: '',
       date: new Date().toISOString().split('T')[0],
       description: '',
       amount: 0,
-      category: '',
-      payment_method: 'cash',
-      bank_account_id: undefined,
-      vendor_id: undefined,
-      tax_id: undefined,
-      tax_amount: 0,
-      total_amount: 0,
-      status: 'draft',
-      notes: '',
-      attachments: []
+      paymentMethod: 'cash',
+      bankAccountId: undefined,
+      departemenId: undefined,
     },
     isEditMode: false,
     showModal: false,
@@ -92,27 +73,8 @@ export const useExpenseStore = defineStore('expense', {
       { value: 'check', label: 'Cek' },
       { value: 'credit_card', label: 'Kartu Kredit' }
     ],
-    expenseCategories: [
-      { value: 'office_supplies', label: 'Perlengkapan Kantor' },
-      { value: 'utilities', label: 'Utilitas' },
-      { value: 'rent', label: 'Sewa' },
-      { value: 'salary', label: 'Gaji' },
-      { value: 'marketing', label: 'Pemasaran' },
-      { value: 'travel', label: 'Perjalanan' },
-      { value: 'maintenance', label: 'Pemeliharaan' },
-      { value: 'insurance', label: 'Asuransi' },
-      { value: 'legal', label: 'Hukum' },
-      { value: 'other', label: 'Lainnya' }
-    ],
-    expenseStatuses: [
-      { value: 'draft', label: 'Draft' },
-      { value: 'approved', label: 'Disetujui' },
-      { value: 'paid', label: 'Dibayar' },
-      { value: 'cancelled', label: 'Dibatalkan' }
-    ],
     bankAccounts: [],
-    vendors: [],
-    taxes: []
+    departments: []
   }),
 
   actions: {
@@ -124,9 +86,7 @@ export const useExpenseStore = defineStore('expense', {
         const token = localStorage.getItem('token');
         const params = new URLSearchParams({
           page: Math.floor((this.params.first / this.params.rows) + 1).toString(),
-          rows: Math.floor(this.params.rows).toString(),
-          sortField: this.params.sortField || '',
-          sortOrder: (this.params.sortOrder || 1) > 0 ? 'asc' : 'desc',
+          limit: Math.floor(this.params.rows).toString(),
           search: this.params.search || '',
         });
 
@@ -145,8 +105,18 @@ export const useExpenseStore = defineStore('expense', {
         }
 
         const result = await response.json()
-        this.expenses = result.data
-        this.totalRecords = result.meta.total
+        
+        // Handle paginated response format from AdonisJS
+        if (result.data && result.data.data && Array.isArray(result.data.data)) {
+          this.expenses = result.data.data
+          this.totalRecords = result.data.meta?.total || 0
+        } else if (result.data && Array.isArray(result.data)) {
+          this.expenses = result.data
+          this.totalRecords = result.data.length
+        } else {
+          this.expenses = []
+          this.totalRecords = 0
+        }
       } catch (e: any) {
         this.error = e.message
         const toast = useToast()        
@@ -183,11 +153,11 @@ export const useExpenseStore = defineStore('expense', {
       }
     },
 
-    async fetchVendors() {
+    async fetchDepartments() {
       const { $api } = useNuxtApp()
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch($api.vendor(), {
+        const response = await fetch($api.dataDepartemen(), {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
@@ -198,32 +168,10 @@ export const useExpenseStore = defineStore('expense', {
 
         if (response.ok) {
           const result = await response.json()
-          this.vendors = result.data
+          this.departments = Array.isArray(result) ? result : []
         }
       } catch (error) {
-        console.error('Error fetching vendors:', error)
-      }
-    },
-
-    async fetchTaxes() {
-      const { $api } = useNuxtApp()
-      try {
-        const token = localStorage.getItem('token');
-        const response = await fetch($api.taxes(), {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          credentials: 'include'
-        });
-
-        if (response.ok) {
-          const result = await response.json()
-          this.taxes = result.data
-        }
-      } catch (error) {
-        console.error('Error fetching taxes:', error)
+        console.error('Error fetching departments:', error)
       }
     },
 
@@ -237,7 +185,7 @@ export const useExpenseStore = defineStore('expense', {
 
         const formData = new FormData()
         
-        const fieldsToSend = ['reference_number', 'date', 'description', 'amount', 'category', 'payment_method', 'bank_account_id', 'vendor_id', 'tax_id', 'tax_amount', 'total_amount', 'status', 'notes'];
+        const fieldsToSend = ['expenseNumber', 'date', 'description', 'amount', 'paymentMethod', 'bankAccountId', 'departemenId'];
         fieldsToSend.forEach(key => {
           const value = this.form[key as keyof typeof this.form];
           if (value !== null && value !== undefined) {
@@ -245,14 +193,10 @@ export const useExpenseStore = defineStore('expense', {
           }
         });
 
-        // Handle attachments
-        if (this.form.attachments && Array.isArray(this.form.attachments)) {
-          this.form.attachments.forEach((file, index) => {
-            if (file instanceof File) {
-              formData.append(`attachments[${index}]`, file);
-            }
-          });
-        }
+        // Add user info
+        const user = JSON.parse(localStorage.getItem('user') || '{}')
+        formData.append('createdBy', String(user.id || 1))
+        formData.append('updatedBy', String(user.id || 1))
 
         let method = 'POST';
         let url = $api.expensesStore();
@@ -312,7 +256,7 @@ export const useExpenseStore = defineStore('expense', {
       }
     },
 
-    async deleteExpense(id: number) {
+    async deleteExpense(id: string) {
       const { $api } = useNuxtApp();
       
       const result = await Swal.fire({
@@ -364,57 +308,6 @@ export const useExpenseStore = defineStore('expense', {
       }
     },
 
-    async approveExpense(id: number) {
-      const { $api } = useNuxtApp();
-      
-      const result = await Swal.fire({
-        title: 'Setujui Pengeluaran?',
-        text: "Apakah Anda yakin ingin menyetujui pengeluaran ini?",
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#28a745',
-        cancelButtonColor: '#6c757d',
-        confirmButtonText: 'Ya, Setujui!',
-        cancelButtonText: 'Batal'
-      });
-
-      if (result.isConfirmed) {
-        try {
-          const token = localStorage.getItem('token');
-          const response = await fetch(`${$api.expenses()}/approve/${id}`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            credentials: 'include'
-          });
-
-          if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ message: 'Gagal menyetujui pengeluaran.' }));
-            throw new Error(errorData.message || 'Gagal menyetujui pengeluaran.');
-          }
-
-          await this.fetchExpenses();
-          const toast = useToast()          
-          toast.success({
-            title: 'Success',
-            message: 'Pengeluaran berhasil disetujui.',
-            color: 'green',
-            position: 'topRight',
-          });
-        } catch (error: any) {
-          const toast = useToast()          
-          toast.error({
-            title: 'Error',
-            message: error.message || 'Gagal menyetujui pengeluaran',
-            color: 'red',
-            position: 'topRight',
-          });
-        }
-      }
-    },
 
     openModal(expense?: Expense) {
       this.isEditMode = !!expense;
@@ -424,47 +317,32 @@ export const useExpenseStore = defineStore('expense', {
         this.form = { ...expense };
       } else {
         this.form = {
-          reference_number: '',
+          expenseNumber: '',
           date: new Date().toISOString().split('T')[0],
           description: '',
           amount: 0,
-          category: '',
-          payment_method: 'cash',
-          bank_account_id: undefined,
-          vendor_id: undefined,
-          tax_id: undefined,
-          tax_amount: 0,
-          total_amount: 0,
-          status: 'draft',
-          notes: '',
-          attachments: []
+          paymentMethod: 'cash',
+          bankAccountId: undefined,
+          departemenId: undefined,
         };
       }
       
       this.showModal = true;
       this.fetchBankAccounts();
-      this.fetchVendors();
-      this.fetchTaxes();
+      this.fetchDepartments();
     },
 
     closeModal() {
       this.showModal = false;
       this.isEditMode = false;
       this.form = {
-        reference_number: '',
+        expenseNumber: '',
         date: new Date().toISOString().split('T')[0],
         description: '',
         amount: 0,
-        category: '',
-        payment_method: 'cash',
-        bank_account_id: undefined,
-        vendor_id: undefined,
-        tax_id: undefined,
-        tax_amount: 0,
-        total_amount: 0,
-        status: 'draft',
-        notes: '',
-        attachments: []
+        paymentMethod: 'cash',
+        bankAccountId: undefined,
+        departemenId: undefined,
       };
       this.validationErrors = [];
     },
@@ -487,27 +365,5 @@ export const useExpenseStore = defineStore('expense', {
       this.fetchExpenses();
     },
 
-    calculateTotalAmount() {
-      const amount = this.form.amount || 0;
-      const taxAmount = this.form.tax_amount || 0;
-      this.form.total_amount = amount + taxAmount;
-    },
-
-    handleTaxChange() {
-      const amount = this.form.amount || 0;
-      const tax = this.taxes.find(t => t.id === this.form.tax_id);
-      
-      if (tax) {
-        if (tax.type === 'percentage') {
-          this.form.tax_amount = (amount * tax.rate) / 100;
-        } else {
-          this.form.tax_amount = tax.rate;
-        }
-      } else {
-        this.form.tax_amount = 0;
-      }
-      
-      this.calculateTotalAmount();
-    }
   }
 })

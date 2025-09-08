@@ -245,6 +245,7 @@ export default defineNuxtPlugin(() => {
     dataProduct: () => `${apiBase}/data/product`,
     dataCustomer: () => `${apiBase}/data/customer`,
     dataVendor: () => `${apiBase}/data/vendor`,
+    dataDepartemen: () => `${apiBase}/data/departemen`,
 
     // User Sessions
     userSessionsActiveUsers: () => `${apiBase}/user-sessions/active-users`,

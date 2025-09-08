@@ -625,7 +625,7 @@
             const preloadPromises = []
             
             if (!accountLocalStore.accounts.length) {
-                preloadPromises.push(accountLocalStore.fetchAccounts().catch(e => console.warn('Failed to pre-load accounts:', e)))
+                preloadPromises.push(accountLocalStore.fetchAccounts(true).catch(e => console.warn('Failed to pre-load accounts:', e)))
             }
             if (!customerLocalStore.customers.length) {
                 preloadPromises.push(customerLocalStore.fetchCustomers().catch(e => console.warn('Failed to pre-load customers:', e)))
