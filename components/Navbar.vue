@@ -152,6 +152,7 @@
     import { useSuratJalanStore } from '~/stores/surat-jalan'
     import { useQuotationStore } from '~/stores/quotation'
     import { useVendorStore } from '~/stores/vendor'
+    import { usePermissions } from '~/composables/usePermissions'
 
     const { $api }    = useNuxtApp()
     const userStore   = useUserStore()
@@ -167,6 +168,7 @@
     const suratJalanLocalStore = useSuratJalanStore()
     const quotationLocalStore = useQuotationStore()
     const vendorLocalStore = useVendorStore()
+    const { userHasPermission, userHasRole } = usePermissions()
     
     // --- Search bar logic ---
     const isSearchVisible = ref(false);
@@ -624,7 +626,8 @@
         try {
             const preloadPromises = []
             
-            if (!accountLocalStore.accounts.length) {
+            // Hanya preload accounts jika user memiliki permission
+            if (!accountLocalStore.accounts.length && (userHasRole('superadmin') || userHasPermission('view_account'))) {
                 preloadPromises.push(accountLocalStore.fetchAccounts(true).catch(e => console.warn('Failed to pre-load accounts:', e)))
             }
             if (!customerLocalStore.customers.length) {
