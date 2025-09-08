@@ -50,8 +50,8 @@ export const useStockStore = defineStore('stock', {
     params: {
         first: 0,
         rows: 10,
-        sortField: null,
-        sortOrder: null,
+        sortField: 'created_at',
+        sortOrder: 2, // 2 = descending, 1 = ascending
         draw: 1,
         search: '',
         id: '',

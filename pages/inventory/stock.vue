@@ -163,7 +163,7 @@
                                             </a>
                                             <ul class="dropdown-menu">
                                                 <li>
-                                                    <a class="dropdown-item text-danger" href="javascript:void(0)" @click="deleteStockIn(slotProps.data.id)">
+                                                    <a class="dropdown-item text-danger" href="javascript:void(0)" @click="deleteStock(slotProps.data.id)">
                                                         <i class="ri-delete-bin-7-line me-2"></i> Hapus
                                                     </a>
                                                 </li>
@@ -201,6 +201,7 @@ import Swal from 'sweetalert2'
 // Composables
 const { setListTitle, setFormTitle } = useDynamicTitle()
 const { getProductImage, handleImageError } = useImageUrl()
+const toast = useToast()
 
 const { $api } = useNuxtApp()
 
@@ -269,7 +270,6 @@ const exportData = async (format) => {
         }
     } catch (error) {
         console.error('Export error:', error);
-        const toast = useToast()       
         toast.error('Gagal melakukan export data')
     }
 };
@@ -280,7 +280,7 @@ const viewStockInDetails = (stockInId) => {
     window.open(url, '__blank');
 };
 
-const deleteStockIn = async (id) => {
+const deleteStock = async (id) => {
     if (!id) return;
 
     const result = await Swal.fire({
@@ -296,12 +296,22 @@ const deleteStockIn = async (id) => {
 
     if (result.isConfirmed) {
         try {
-            await stocksStore.deleteStockIn(id);
+            await stocksStore.deleteStock(id);
             loadLazyData(); // Muat ulang data
-            toast.success('Stock In berhasil dihapus.');
+            toast.success({
+                title: 'Success',
+                message: 'Stock berhasil dihapus.',
+                color: 'green',
+                position: 'topRight',
+            });
 
         } catch (error) {
-            toast.error(error.message);
+            toast.error({
+                title: 'Error',
+                message: error.message,
+                color: 'red',
+                position: 'topRight',
+            });
         }
     }
 };

@@ -508,7 +508,7 @@ const receiveAllItems = async () => {
     // ✅ TAMPILKAN SWEETALERT CONFIRMATION
     const result = await Swal.fire({
         title: 'Konfirmasi Receive All',
-        text: `Apakah anda yakin ingin menerima semua barang? (${totalPendingQuantity.value} items akan dibuat Stock In nya)`,
+        text: `Apakah anda yakin ingin menerima semua barang? (1 Stock In akan dibuat dengan ${totalPendingQuantity.value} items)`,
         icon: 'question',
         showCancelButton: true,
         confirmButtonColor: '#28a745',
@@ -537,7 +537,7 @@ const receiveAllItems = async () => {
         
         // ✅ TAMPILKAN SUCCESS MESSAGE
         const toast = useToast()
-        toast.success(`Semua barang telah diterima. ${totalPendingQuantity.value} Stock In telah dibuat.`)
+        toast.success(`Semua barang telah diterima. 1 Stock In telah dibuat dengan ${totalPendingQuantity.value} items.`)
         
     } catch (error) {
         console.error('Error receiving all items:', error)
