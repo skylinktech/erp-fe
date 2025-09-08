@@ -67,7 +67,7 @@ export const useCustomerStore = defineStore('customer', {
     validationErrors: [],
   }),
   actions: {
-    async fetchCustomers() {
+    async fetchCustomers(suppressError = false) {
       this.loading = true
       this.error = null
       const { $api } = useNuxtApp()
@@ -100,13 +100,17 @@ export const useCustomerStore = defineStore('customer', {
         this.totalRecords = result.meta.total
       } catch (e: any) {
         this.error = e.message
-        const toast = useToast()        
-        toast.error({
-          title: 'Error',
-          message: `Tidak dapat memuat data pelanggan: ${e.message}`,
-          color: 'red',
-          position: 'topRight',
-        });
+        
+        // Hanya tampilkan notifikasi error jika tidak di-suppress (untuk preload)
+        if (!suppressError) {
+          const toast = useToast()        
+          toast.error({
+            title: 'Error',
+            message: `Tidak dapat memuat data pelanggan: ${e.message}`,
+            color: 'red',
+            position: 'topRight',
+          });
+        }
       } finally {
         this.loading = false
       }

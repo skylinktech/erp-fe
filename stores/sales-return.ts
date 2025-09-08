@@ -143,7 +143,7 @@ export const useSalesReturnStore = defineStore('salesReturn', {
     }
   },
   actions: {
-    async fetchSalesReturns() {
+    async fetchSalesReturns(suppressError = false) {
       const toast     = useToast();
       this.loading = true
       this.error = null
@@ -191,11 +191,15 @@ export const useSalesReturnStore = defineStore('salesReturn', {
       } catch (e: any) {
         console.error('Gagal mengambil data salesReturn:', e)
         this.error = e
-        toast.error({
-          title: 'Error',
-          message: `Tidak dapat memuat data Sales Return: ${e.message}`,
-          color: 'red'
-        });
+        
+        // Hanya tampilkan notifikasi error jika tidak di-suppress (untuk preload)
+        if (!suppressError) {
+          toast.error({
+            title: 'Error',
+            message: `Tidak dapat memuat data Sales Return: ${e.message}`,
+            color: 'red'
+          });
+        }
       } finally {
         this.loading = false
       }

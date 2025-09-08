@@ -51,7 +51,7 @@ export const useVendorStore = defineStore('vendor', {
     validationErrors: [],
   }),
   actions: {
-    async fetchVendors() {
+    async fetchVendors(suppressError = false) {
       const toast = useToast();
       this.loading = true
       this.error = null
@@ -87,11 +87,15 @@ export const useVendorStore = defineStore('vendor', {
         this.totalRecords = result.meta.total
       } catch (e: any) {
         this.error = e.message
-        toast.error({
-          title: 'Error',
-          message: `Tidak dapat memuat data vendor: ${e.message}`,
-          color: 'red'
-        });
+        
+        // Hanya tampilkan notifikasi error jika tidak di-suppress (untuk preload)
+        if (!suppressError) {
+          toast.error({
+            title: 'Error',
+            message: `Tidak dapat memuat data vendor: ${e.message}`,
+            color: 'red'
+          });
+        }
       } finally {
         this.loading = false
       }

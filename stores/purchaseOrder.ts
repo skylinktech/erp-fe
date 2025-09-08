@@ -134,7 +134,7 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
     validationErrors: [],
   }),
   actions: {
-    async fetchPurchaseOrders() {
+    async fetchPurchaseOrders(suppressError = false) {
       const toast     = useToast();
       this.loading = true
       this.error = null
@@ -186,11 +186,15 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
         this.error = e
         // Pastikan tetap array kosong jika error
         this.purchaseOrders = []
-        toast.error({
-          title: 'Error',
-          message: `Tidak dapat memuat data Purchase Order: ${e.message}`,
-          color: 'red'
-        });
+        
+        // Hanya tampilkan notifikasi error jika tidak di-suppress (untuk preload)
+        if (!suppressError) {
+          toast.error({
+            title: 'Error',
+            message: `Tidak dapat memuat data Purchase Order: ${e.message}`,
+            color: 'red'
+          });
+        }
       } finally {
         this.loading = false
         // Pastikan purchaseOrders selalu berupa array setelah operasi selesai

@@ -97,7 +97,7 @@ export const useProductStore = defineStore('product', {
     validationErrors: [],
   }),
   actions: {
-    async fetchProducts() {
+    async fetchProducts(suppressError = false) {
       const toast     = useToast();
       this.loading = true
       this.error = null
@@ -142,12 +142,16 @@ export const useProductStore = defineStore('product', {
          this.totalRecords = result.meta.total
       } catch (e: any) {
         this.error = e.message
-        toast.error({
-          title: 'Error',
-          message: `Tidak dapat memuat data produk: ${e.message}`,
-          color: 'red',
-          position: 'topRight',
-        });
+        
+        // Hanya tampilkan notifikasi error jika tidak di-suppress (untuk preload)
+        if (!suppressError) {
+          toast.error({
+            title: 'Error',
+            message: `Tidak dapat memuat data produk: ${e.message}`,
+            color: 'red',
+            position: 'topRight',
+          });
+        }
       } finally {
         this.loading = false
       }

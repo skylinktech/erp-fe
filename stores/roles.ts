@@ -55,7 +55,7 @@ export const useRolesStore = defineStore('roles', {
         validationErrors: [],
     }),
     actions: {
-        async fetchRoles() {
+        async fetchRoles(suppressError = false) {
             this.loading = true
             this.error = null
             const { $api } = useNuxtApp()
@@ -87,14 +87,18 @@ export const useRolesStore = defineStore('roles', {
 
             } catch (e: any) {
                 this.error = e.message;
-                toast.error({
-                    title: 'Error',
-                    message: `Tidak dapat memuat data roles: ${e.message}`,
-                    color: 'red',
-                    position: 'topRight',
-                    layout: 2,
-                    icon: 'error',
-                });
+                
+                // Hanya tampilkan notifikasi error jika tidak di-suppress (untuk preload)
+                if (!suppressError) {
+                    toast.error({
+                        title: 'Error',
+                        message: `Tidak dapat memuat data roles: ${e.message}`,
+                        color: 'red',
+                        position: 'topRight',
+                        layout: 2,
+                        icon: 'error',
+                    });
+                }
             } finally {
                 this.loading = false;
             }

@@ -122,7 +122,7 @@ export const useQuotationStore = defineStore('quotation', {
     customerProducts: [],
   }),
   actions: {
-    async fetchQuotations() {
+    async fetchQuotations(suppressError = false) {
       const toast     = useToast();
       this.loading = true
       this.error = null
@@ -168,13 +168,17 @@ export const useQuotationStore = defineStore('quotation', {
       } catch (e: any) {
         console.error('Gagal mengambil data quotation:', e)
         this.error = e
-        toast.error({
-          title: 'Error',
-          message: `Tidak dapat memuat data Quotation: ${e.message}`,
-          color: 'red',
-          position: 'topRight',
-          layout: 2,
-        });
+        
+        // Hanya tampilkan notifikasi error jika tidak di-suppress (untuk preload)
+        if (!suppressError) {
+          toast.error({
+            title: 'Error',
+            message: `Tidak dapat memuat data Quotation: ${e.message}`,
+            color: 'red',
+            position: 'topRight',
+            layout: 2,
+          });
+        }
       } finally {
         this.loading = false
       }

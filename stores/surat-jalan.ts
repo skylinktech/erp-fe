@@ -155,7 +155,7 @@ export const useSuratJalanStore = defineStore('suratJalan', {
   getters: {
   },
   actions: {
-    async fetchSuratJalans() {
+    async fetchSuratJalans(suppressError = false) {
       this.loading = true
       this.error   = null
       const { $api } = useNuxtApp()

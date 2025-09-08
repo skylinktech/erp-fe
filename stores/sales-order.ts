@@ -192,7 +192,7 @@ export const useSalesOrderStore = defineStore('salesOrder', {
     }
   },
   actions: {
-    async fetchSalesOrders() {
+    async fetchSalesOrders(suppressError = false) {
       this.loading = true
       this.error = null
       const { $api } = useNuxtApp()
@@ -249,12 +249,16 @@ export const useSalesOrderStore = defineStore('salesOrder', {
       } catch (e: any) {
         console.error('Gagal mengambil data salesOrder:', e)
         this.error = e
-        const toast = useToast();
-        toast.error({
-          title: 'Error',
-          message: `Tidak dapat memuat data Sales Order: ${e?.message || e}`,
-          color: 'red'
-        });
+        
+        // Hanya tampilkan notifikasi error jika tidak di-suppress (untuk preload)
+        if (!suppressError) {
+          const toast = useToast();
+          toast.error({
+            title: 'Error',
+            message: `Tidak dapat memuat data Sales Order: ${e?.message || e}`,
+            color: 'red'
+          });
+        }
       } finally {
         this.loading = false
       }

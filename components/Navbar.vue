@@ -628,31 +628,31 @@
                 preloadPromises.push(accountLocalStore.fetchAccounts(true).catch(e => console.warn('Failed to pre-load accounts:', e)))
             }
             if (!customerLocalStore.customers.length) {
-                preloadPromises.push(customerLocalStore.fetchCustomers().catch(e => console.warn('Failed to pre-load customers:', e)))
+                preloadPromises.push(customerLocalStore.fetchCustomers(true).catch(e => console.warn('Failed to pre-load customers:', e)))
             }
             if (!productLocalStore.products.length) {
-                preloadPromises.push(productLocalStore.fetchProducts().catch(e => console.warn('Failed to pre-load products:', e)))
+                preloadPromises.push(productLocalStore.fetchProducts(true).catch(e => console.warn('Failed to pre-load products:', e)))
             }
             if (!roleLocalStore.roles.length) {
-                preloadPromises.push(roleLocalStore.fetchRoles().catch(e => console.warn('Failed to pre-load roles:', e)))
+                preloadPromises.push(roleLocalStore.fetchRoles(true).catch(e => console.warn('Failed to pre-load roles:', e)))
             }
             if (!salesOrderLocalStore.salesOrders.length) {
-                preloadPromises.push(salesOrderLocalStore.fetchSalesOrders().catch(e => console.warn('Failed to pre-load sales orders:', e)))
+                preloadPromises.push(salesOrderLocalStore.fetchSalesOrders(true).catch(e => console.warn('Failed to pre-load sales orders:', e)))
             }
             if (!purchaseOrderLocalStore.purchaseOrders.length) {
-                preloadPromises.push(purchaseOrderLocalStore.fetchPurchaseOrders().catch(e => console.warn('Failed to pre-load purchase orders:', e)))
+                preloadPromises.push(purchaseOrderLocalStore.fetchPurchaseOrders(true).catch(e => console.warn('Failed to pre-load purchase orders:', e)))
             }
             if (!salesReturnLocalStore.salesReturns.length) {
-                preloadPromises.push(salesReturnLocalStore.fetchSalesReturns().catch(e => console.warn('Failed to pre-load sales returns:', e)))
+                preloadPromises.push(salesReturnLocalStore.fetchSalesReturns(true).catch(e => console.warn('Failed to pre-load sales returns:', e)))
             }
             if (!suratJalanLocalStore.suratJalans.length) {
-                preloadPromises.push(suratJalanLocalStore.fetchSuratJalans().catch(e => console.warn('Failed to pre-load surat jalans:', e)))
+                preloadPromises.push(suratJalanLocalStore.fetchSuratJalans(true).catch(e => console.warn('Failed to pre-load surat jalans:', e)))
             }
             if (!quotationLocalStore.quotations.length) {
-                preloadPromises.push(quotationLocalStore.fetchQuotations().catch(e => console.warn('Failed to pre-load quotations:', e)))
+                preloadPromises.push(quotationLocalStore.fetchQuotations(true).catch(e => console.warn('Failed to pre-load quotations:', e)))
             }
             if (!vendorLocalStore.vendors.length) {
-                preloadPromises.push(vendorLocalStore.fetchVendors().catch(e => console.warn('Failed to pre-load vendors:', e)))
+                preloadPromises.push(vendorLocalStore.fetchVendors(true).catch(e => console.warn('Failed to pre-load vendors:', e)))
             }
             
             // Jalankan semua pre-loading secara paralel
