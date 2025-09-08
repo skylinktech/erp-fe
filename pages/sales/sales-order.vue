@@ -373,7 +373,7 @@
                                                 accept=".pdf,.xlsx,.xls,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp,.svg"
                                             >
                                             <label>Attachment (PDF, Excel, Image)</label>
-                                            
+                                            <small class="text-muted">Ukuran maksimal 2MB</small>
                                             <div v-if="form.attachmentPreview" class="mt-2">
                                                 <div class="d-flex align-items-center mb-2">
                                                     <i :class="getFileIcon(form.attachmentPreview)" style="font-size: 1.2rem; margin-right: 0.5rem;"></i>

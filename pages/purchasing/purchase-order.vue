@@ -376,6 +376,7 @@
                                                 accept=".pdf,.xlsx,.xls,.jpg,.jpeg,.png,.gif,.webp,.svg"
                                             >
                                             <label>Attachment (PDF, Excel, Image)</label>
+                                            <small class="text-muted">Ukuran maksimal 2MB</small>
                                             
                                             <div v-if="form.attachmentPreview" class="mt-2">
                                                 <div class="d-flex align-items-center mb-2">
@@ -891,7 +892,6 @@ function onFileChange(e) {
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       'application/vnd.ms-excel',
       'image/jpeg',
-      'image/jpg',
       'image/png',
       'image/gif',
       'image/webp',
@@ -904,15 +904,23 @@ function onFileChange(e) {
     const isValidExtension = allowedExtensions.includes(fileExtension);
 
     if (!isValidMimeType && !isValidExtension) {
-    const toast = useToast()
-      toast.error(`File harus berupa PDF, Excel, atau gambar. Detected: MIME=${fileType}, Ext=${fileExtension}`)
+      const toast = useToast()
+      toast.error({
+        title: 'Error',
+        message: `File harus berupa PDF, Excel, atau gambar. Detected: MIME=${fileType}, Ext=${fileExtension}`,
+        color: 'red'
+      })
       return;
     }
 
     const maxSize = 10 * 1024 * 1024;
     if (file.size > maxSize) {
       const toast = useToast()
-      toast.error('Ukuran file terlalu besar (maksimal 10MB)')
+      toast.error({
+        title: 'Error',
+        message: 'Ukuran file terlalu besar (maksimal 10MB)',
+        color: 'red'
+      })
       return;
     }
 

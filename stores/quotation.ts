@@ -308,9 +308,14 @@ export const useQuotationStore = defineStore('quotation', {
                     // Tampilkan detail error jika ada
                     let errorMessage = errorData.message || 'Gagal menyimpan data quotation';
                     if (errorData.error) {
-                        errorMessage += `\nDetail: ${errorData.error.message}`;
-                        if (errorData.error.constraint) {
-                            errorMessage += `\nConstraint: ${errorData.error.constraint}`;
+                        // errorData.error bisa berupa string atau object
+                        if (typeof errorData.error === 'string') {
+                            errorMessage += `\nDetail: ${errorData.error}`;
+                        } else if (errorData.error.message) {
+                            errorMessage += `\nDetail: ${errorData.error.message}`;
+                            if (errorData.error.constraint) {
+                                errorMessage += `\nConstraint: ${errorData.error.constraint}`;
+                            }
                         }
                     }
                     throw new Error(errorMessage);
