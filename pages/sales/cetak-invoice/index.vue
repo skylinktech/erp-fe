@@ -158,7 +158,7 @@
       <div class="table-responsive">
         <table class="table mt-2 table-borderless summary-table" style="font-size: 12px;">
           <tbody>
-            <tr v-if="salesInvoice.description">
+            <tr>
               <td colspan="2" class="px-0 pt-6 align-top" style="max-width: 320px; width: 320px; min-width: 220px;">
                 <p class="mb-2">
                   <span class="fw-medium text-heading">Catatan:</span>

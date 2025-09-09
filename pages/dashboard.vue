@@ -337,7 +337,7 @@
                     <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
                       <div class="me-2">
                         <h6 class="mb-1">{{ item.name }}</h6>
-                        <small v-if="item.sku">SKU: {{ item.sku }}</small>
+                        <small v-if="item.sku">Part Number: {{ item.sku }}</small>
                       </div>
                       <div class="badge bg-label-primary rounded-pill">Qty {{ item.totalQty }}</div>
                     </div>
