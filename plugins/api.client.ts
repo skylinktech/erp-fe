@@ -194,6 +194,12 @@ export default defineNuxtPlugin(() => {
     stockOut               : () => `${apiBase}/stock-out`,
     stockOutExport         : () => `${apiBase}/stock-out/export`,
     stockOutNotifications  : () => `${apiBase}/stock-out/notifications`,
+    
+    // Purchase Order Notifications
+    purchaseOrderNotifications: () => `${apiBase}/purchase-order/notifications`,
+    
+    // Sales Order Notifications  
+    salesOrderNotifications: () => `${apiBase}/sales-order/notifications`,
     stock                  : () => `${apiBase}/stock`,
     stockExportExcel       : () => `${apiBase}/stock/export-excel`,
     validateStockBatch     : () => `${apiBase}/stock/validate-batch`,

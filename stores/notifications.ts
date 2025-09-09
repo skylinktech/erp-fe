@@ -1,5 +1,13 @@
 import { defineStore } from 'pinia'
 
+// Use localStorage safely
+const getLocalStorage = () => {
+  if (typeof window !== 'undefined') {
+    return window.localStorage
+  }
+  return null
+}
+
 export interface StockNotification {
   id: string
   type: 'stock_in' | 'stock_out'
@@ -14,71 +22,158 @@ export interface StockNotification {
   description?: string
 }
 
+export interface OrderNotification {
+  id: string
+  type: 'purchase_order' | 'sales_order'
+  noPo?: string
+  noSo?: string
+  status: string
+  createdAt: string
+  createdBy: string
+  createdByName?: string
+  vendorName?: string
+  customerName?: string
+  total: number
+  description?: string
+}
+
+export type Notification = StockNotification | OrderNotification
+
 interface NotificationState {
-  notifications: StockNotification[]
+  notifications: Notification[]
+  stockNotifications: StockNotification[]
+  orderNotifications: OrderNotification[]
   unreadCount: number
   loading: boolean
   error: any
   lastChecked: Date | null
+  readNotifications: Set<string>
 }
 
 export const useNotificationsStore = defineStore('notifications', {
   state: (): NotificationState => ({
     notifications: [],
+    stockNotifications: [],
+    orderNotifications: [],
     unreadCount: 0,
     loading: false,
     error: null,
-    lastChecked: null
+    lastChecked: null,
+    readNotifications: new Set<string>()
   }),
 
   getters: {
     stockInNotifications: (state) => 
-      state.notifications.filter(n => n.type === 'stock_in'),
+      state.stockNotifications.filter(n => n.type === 'stock_in'),
     
     stockOutNotifications: (state) => 
-      state.notifications.filter(n => n.type === 'stock_out'),
+      state.stockNotifications.filter(n => n.type === 'stock_out'),
+    
+    purchaseOrderNotifications: (state) => 
+      state.orderNotifications.filter(n => n.type === 'purchase_order'),
+    
+    salesOrderNotifications: (state) => 
+      state.orderNotifications.filter(n => n.type === 'sales_order'),
+    
+    // Getter untuk notifikasi navbar (maksimal 5 terbaru)
+    navbarNotifications: (state) => 
+      state.notifications.slice(0, 5),
     
     unreadNotifications: (state) => 
-      state.notifications.filter(n => n.status !== 'posted'),
+      state.notifications.filter(n => {
+        if (n.type === 'stock_in' || n.type === 'stock_out') {
+          return n.status !== 'posted'
+        }
+        return n.status === 'draft'
+      }),
     
     hasUnreadNotifications: (state) => 
       state.unreadCount > 0
   },
 
   actions: {
+    // Load read notifications from localStorage
+    loadReadNotifications() {
+      try {
+        const storage = getLocalStorage()
+        if (storage) {
+          const stored = storage.getItem('readNotifications')
+          if (stored) {
+            this.readNotifications = new Set(JSON.parse(stored))
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to load read notifications from localStorage:', error)
+      }
+    },
+
+    // Save read notifications to localStorage
+    saveReadNotifications() {
+      try {
+        const storage = getLocalStorage()
+        if (storage) {
+          storage.setItem('readNotifications', JSON.stringify([...this.readNotifications]))
+        }
+      } catch (error) {
+        console.warn('Failed to save read notifications to localStorage:', error)
+      }
+    },
+
     async fetchNotifications() {
       this.loading = true
       this.error = null
       
+      // Load read notifications from localStorage first
+      this.loadReadNotifications()
+      
       try {
         const { $api } = useNuxtApp()
-        const token = localStorage.getItem('token')
+        
+        // Check if we're in the browser before accessing localStorage
+        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
         
         if (!token) {
           throw new Error('Token tidak ditemukan')
         }
 
-        // Fetch stock in notifications
-        const stockInResponse = await fetch(`${$api.stockInNotifications()}?status=not_posted&limit=10`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          credentials: 'include'
-        })
+        // Fetch all notifications in parallel
+        const [stockInResponse, stockOutResponse, purchaseOrderResponse, salesOrderResponse] = await Promise.all([
+          fetch(`${$api.stockInNotifications()}?status=not_posted&limit=10`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            credentials: 'include'
+          }),
+          fetch(`${$api.stockOutNotifications()}?status=not_posted&limit=10`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            credentials: 'include'
+          }),
+          fetch(`${$api.purchaseOrderNotifications()}?status=draft&limit=10`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            credentials: 'include'
+          }),
+          fetch(`${$api.salesOrderNotifications()}?status=draft&limit=10`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            credentials: 'include'
+          })
+        ])
 
-        // Fetch stock out notifications
-        const stockOutResponse = await fetch(`${$api.stockOutNotifications()}?status=not_posted&limit=10`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          credentials: 'include'
-        })
-
-        const notifications: StockNotification[] = []
+        const stockNotifications: StockNotification[] = []
+        const orderNotifications: OrderNotification[] = []
 
         // Process stock in notifications
         if (stockInResponse.ok) {
@@ -87,7 +182,7 @@ export const useNotificationsStore = defineStore('notifications', {
           
           stockIns.forEach((item: any) => {
             if (item.status !== 'posted') {
-              notifications.push({
+              stockNotifications.push({
                 id: item.id,
                 type: 'stock_in',
                 noSi: item.noSi,
@@ -96,7 +191,7 @@ export const useNotificationsStore = defineStore('notifications', {
                 createdAt: item.createdAt,
                 createdBy: item.createdBy || item.userId || '',
                 createdByName: item.user?.fullName || item.createdByName || 'Unknown',
-                warehouseName: item.warehouse?.name || 'Unknown Warehouse',
+                warehouseName: item.warehouseName || item.warehouse?.name || 'Unknown Warehouse',
                 description: item.description || ''
               })
             }
@@ -110,7 +205,7 @@ export const useNotificationsStore = defineStore('notifications', {
           
           stockOuts.forEach((item: any) => {
             if (item.status !== 'posted') {
-              notifications.push({
+              stockNotifications.push({
                 id: item.id,
                 type: 'stock_out',
                 noSo: item.noSo,
@@ -119,18 +214,78 @@ export const useNotificationsStore = defineStore('notifications', {
                 createdAt: item.createdAt,
                 createdBy: item.createdBy || item.userId || '',
                 createdByName: item.user?.fullName || item.createdByName || 'Unknown',
-                warehouseName: item.warehouse?.name || 'Unknown Warehouse',
+                warehouseName: item.warehouseName || item.warehouse?.name || 'Unknown Warehouse',
                 description: item.description || ''
               })
             }
           })
         }
 
-        // Sort by creation date (newest first)
-        notifications.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        // Process purchase order notifications
+        if (purchaseOrderResponse.ok) {
+          const purchaseOrderData = await purchaseOrderResponse.json()
+          const purchaseOrders = Array.isArray(purchaseOrderData.data) ? purchaseOrderData.data : purchaseOrderData
+          
+          purchaseOrders.forEach((item: any) => {
+            if (item.status === 'draft') {
+              orderNotifications.push({
+                id: item.id,
+                type: 'purchase_order',
+                noPo: item.noPo,
+                status: item.status,
+                createdAt: item.createdAt,
+                createdBy: item.createdBy || '',
+                createdByName: item.createdByName || 'Unknown',
+                vendorName: item.vendorName || 'Unknown Vendor',
+                total: item.total || 0,
+                description: item.description || ''
+              })
+            }
+          })
+        }
 
-        this.notifications = notifications
-        this.unreadCount = notifications.length
+        // Process sales order notifications
+        if (salesOrderResponse.ok) {
+          const salesOrderData = await salesOrderResponse.json()
+          const salesOrders = Array.isArray(salesOrderData.data) ? salesOrderData.data : salesOrderData
+          
+          salesOrders.forEach((item: any) => {
+            if (item.status === 'draft') {
+              orderNotifications.push({
+                id: item.id,
+                type: 'sales_order',
+                noSo: item.noSo,
+                status: item.status,
+                createdAt: item.createdAt,
+                createdBy: item.createdBy || '',
+                createdByName: item.createdByName || 'Unknown',
+                customerName: item.customerName || 'Unknown Customer',
+                total: item.total || 0,
+                description: item.description || ''
+              })
+            }
+          })
+        }
+
+        // Combine all notifications
+        const allNotifications: Notification[] = [...stockNotifications, ...orderNotifications]
+        
+        // Sort by creation date (newest first)
+        allNotifications.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+
+        // Store all notifications
+        this.notifications = allNotifications
+        this.stockNotifications = stockNotifications
+        this.orderNotifications = orderNotifications
+        
+        // Calculate unread count based on read notifications
+        this.unreadCount = allNotifications.filter(notification => 
+          !this.readNotifications.has(notification.id)
+        ).length
+        
+        // Clean up read notifications for items that are no longer relevant
+        this.cleanupReadNotifications()
+        
         this.lastChecked = new Date()
 
       } catch (error) {
@@ -144,16 +299,23 @@ export const useNotificationsStore = defineStore('notifications', {
     },
 
     async markAsRead(notificationId: string) {
-      // In a real implementation, you might want to call an API to mark as read
-      // For now, we'll just remove it from the unread count
-      const notification = this.notifications.find(n => n.id === notificationId)
-      if (notification && notification.status !== 'posted') {
-        this.unreadCount = Math.max(0, this.unreadCount - 1)
-      }
+      this.readNotifications.add(notificationId)
+      this.saveReadNotifications()
+      
+      // Recalculate unread count
+      this.unreadCount = this.notifications.filter(notification => 
+        !this.readNotifications.has(notification.id)
+      ).length
     },
 
     async markAllAsRead() {
-      // In a real implementation, you might want to call an API to mark all as read
+      // Mark all current notifications as read
+      this.notifications.forEach(notification => {
+        this.readNotifications.add(notification.id)
+      })
+      this.saveReadNotifications()
+      
+      // Set unread count to 0
       this.unreadCount = 0
     },
 
@@ -161,6 +323,21 @@ export const useNotificationsStore = defineStore('notifications', {
       this.notifications = []
       this.unreadCount = 0
       this.error = null
+    },
+
+    // Clean up read notifications for items that are no longer in the notifications list
+    cleanupReadNotifications() {
+      const currentNotificationIds = new Set(this.notifications.map(n => n.id))
+      const cleanedReadNotifications = new Set<string>()
+      
+      this.readNotifications.forEach(id => {
+        if (currentNotificationIds.has(id)) {
+          cleanedReadNotifications.add(id)
+        }
+      })
+      
+      this.readNotifications = cleanedReadNotifications
+      this.saveReadNotifications()
     },
 
     // Format time ago for display
