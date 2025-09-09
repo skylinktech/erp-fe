@@ -149,6 +149,7 @@
                                                     style="height: 40px; max-width: 80px; object-fit: contain; cursor: pointer;" 
                                                     @error="(e) => handleImageError(e, '/img/default-product-image.png')"
                                                     @click="productStore.openImageInNewTab(slotProps.data.image)"
+                                                    @load="debugImageUrl(slotProps.data.image)"
                                                     title="Klik untuk melihat gambar lengkap"
                                                 />
                                             </div>
@@ -478,7 +479,7 @@ import { useImageUrl } from '~/composables/useImageUrl'
 
 // Composables
 const { setListTitle, setFormTitle } = useDynamicTitle()
-const { getProductImage, handleImageError } = useImageUrl()
+const { getProductImage, handleImageError, debugImageUrl } = useImageUrl()
 
 const { userHasPermission, userHasRole } = usePermissions();
 

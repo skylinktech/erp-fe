@@ -14,9 +14,27 @@ export const useImageUrl = () => {
     
     // Jika local storage, gabungkan dengan API base
     const apiBase = config.public.apiBase || ''
-    const baseUrl = apiBase.replace('/api', '')
+    let baseUrl = apiBase
     
-    return `${baseUrl}/${path}`
+    // Perbaiki cara menghapus /api dari URL
+    if (baseUrl.endsWith('/api')) {
+      baseUrl = baseUrl.replace('/api', '')
+    } else if (baseUrl.includes('/api/')) {
+      baseUrl = baseUrl.replace('/api/', '/')
+    }
+    
+    // Pastikan baseUrl tidak kosong
+    if (!baseUrl) {
+      console.warn('API base URL tidak ditemukan, menggunakan path asli:', path)
+      return path
+    }
+    
+    // Pastikan path tidak dimulai dengan slash ganda
+    const cleanPath = path.startsWith('/') ? path.substring(1) : path
+    const fullUrl = `${baseUrl}/${cleanPath}`
+    
+    console.log('Generated image URL:', fullUrl, 'from path:', path)
+    return fullUrl
   }
 
   /**
@@ -162,6 +180,31 @@ export const useImageUrl = () => {
     }
   }
 
+  /**
+   * Debug image URL generation
+   */
+  const debugImageUrl = (path: string | null | undefined) => {
+    console.group('🔍 Image URL Debug')
+    console.log('Input path:', path)
+    console.log('Config apiBase:', config.public.apiBase)
+    console.log('Config storageBase:', config.public.storageBase)
+    console.log('Config storageDriver:', config.public.storageDriver)
+    
+    if (path) {
+      const generatedUrl = getImageUrl(path)
+      console.log('Generated URL:', generatedUrl)
+      
+      // Test URL accessibility
+      testImageUrl(generatedUrl).then(isAccessible => {
+        console.log('URL accessible:', isAccessible)
+        console.groupEnd()
+      })
+    } else {
+      console.log('No path provided')
+      console.groupEnd()
+    }
+  }
+
   return {
     getImageUrl,
     getCustomerLogo,
@@ -177,6 +220,7 @@ export const useImageUrl = () => {
     isImageFile,
     isPdfFile,
     isExcelFile,
-    testImageUrl
+    testImageUrl,
+    debugImageUrl
   }
 }

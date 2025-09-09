@@ -357,6 +357,64 @@
       display: none !important;
     }
     
+    /* Allow table to break across pages */
+    .table-responsive {
+      page-break-inside: auto !important;
+    }
+    
+    .table-responsive table {
+      page-break-inside: auto !important;
+    }
+    
+    /* Keep table header on each page */
+    .table-responsive table thead {
+      display: table-header-group !important;
+      page-break-inside: avoid !important;
+    }
+    
+    /* Allow rows to break across pages */
+    .table-responsive table tbody tr {
+      page-break-inside: auto !important;
+    }
+    
+    /* Add more padding for continuation pages */
+    .table-responsive table tbody tr:first-child {
+      padding-top: 40px !important;
+    }
+    
+    /* Ensure proper spacing for table continuation */
+    .table-responsive {
+      margin-top: 0 !important;
+    }
+    
+    /* Add top margin for table when it continues on new page */
+    @page {
+      margin-top: 20mm !important;
+      margin-bottom: 15mm !important;
+    }
+    
+    /* Add extra padding for table rows that start on new page */
+    .table-responsive table tbody tr {
+      padding-top: 20px !important;
+    }
+    
+    /* Specific styling for table continuation */
+    .table-responsive table tbody tr:first-child td {
+      padding-top: 30px !important;
+    }
+    
+    /* Ensure proper spacing for all table cells */
+    .table-responsive table tbody tr td {
+      padding-top: 12px !important;
+      padding-bottom: 12px !important;
+      vertical-align: middle !important;
+    }
+    
+    /* Add margin for table when it starts on new page */
+    .table-responsive {
+      margin-top: 20px !important;
+    }
+    
     /* Remove borders from customer info table */
     .table-borderless td, 
     .table-borderless th,

@@ -588,7 +588,7 @@ const { vendors }     = storeToRefs(vendorStore)
 const { perusahaans } = storeToRefs(perusahaanStore)
 const { cabangs }     = storeToRefs(cabangStore)
 const { warehouses }  = storeToRefs(warehouseStore)
-const { products }    = storeToRefs(productStore)
+const { products, allProducts }    = storeToRefs(productStore)
 const { user }        = storeToRefs(userStore)
 const { permissions } = storeToRefs(permissionStore)
 
@@ -703,7 +703,7 @@ watch(showModal, (newValue) => {
         })
         
         // ✅ FIXED: Pastikan semua produk sudah dimuat (non-blocking)
-        if (!products.value || products.value.length === 0) {
+        if (!allProducts.value || allProducts.value.length === 0) {
             // Jangan await di sini, biarkan berjalan di background
             productStore.fetchAllProducts().catch(error => {
                 console.error('Error loading all products:', error);
@@ -722,9 +722,11 @@ watch(showModal, (newValue) => {
     }
 })
 
-watch(products, (newProducts) => {
+watch(allProducts, (newProducts) => {
     if (newProducts && newProducts.length > 0) {
+        console.log(`📦 Loaded ${newProducts.length} products for purchase order form`);
     } else {
+        console.log('📦 No products loaded yet');
     }
 })
 
@@ -792,12 +794,12 @@ const isExternalPO = computed(() => {
 });
 
 const filteredProducts = computed(() => {
-    if (!products.value || !Array.isArray(products.value)) {
+    if (!allProducts.value || !Array.isArray(allProducts.value)) {
         return [];
     }
     
-    // ✅ FIXED: Hapus limitasi 100 produk, tampilkan semua produk
-    return products.value.map(product => ({
+    // ✅ FIXED: Gunakan allProducts untuk menampilkan semua produk tanpa limitasi
+    return allProducts.value.map(product => ({
         ...product,
         displayName: `${product.sku || ''} | ${product.name || ''}`
     }));
@@ -805,12 +807,12 @@ const filteredProducts = computed(() => {
 
 const getProductsByWarehouse = (warehouseId) => {
     // Selalu tampilkan SEMUA produk yang tersedia, terlepas dari warehouse yang dipilih
-    const allProducts = (products.value || []).map(product => ({
+    const allProductsList = (allProducts.value || []).map(product => ({
         ...product,
         displayName: `${product.sku || ''} | ${product.name || ''}`
     }));
     
-    return allProducts;
+    return allProductsList;
 };
 
 const debouncedSearch = useDebounceFn(() => {
@@ -948,8 +950,8 @@ const onProductChange = (index) => {
   
   const selectedProductId = form.value.purchaseOrderItems[index].productId;
   
-  // ✅ FIXED: Gunakan semua produk, bukan hanya yang terbatas
-  const selectedProduct = (products.value || []).find(p => p.id === selectedProductId);
+  // ✅ FIXED: Gunakan allProducts untuk mencari produk yang dipilih
+  const selectedProduct = (allProducts.value || []).find(p => p.id === selectedProductId);
 
   if (selectedProduct) {
     const item = form.value.purchaseOrderItems[index];

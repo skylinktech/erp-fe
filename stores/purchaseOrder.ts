@@ -749,7 +749,7 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
             const token = localStorage.getItem('token');
             
             // Selalu muat semua produk dengan jumlah yang besar
-            let url = `${$api.product()}?includeStocks=true&rows=1000`;
+            let url = `${$api.product()}?includeStocks=true&rows=10000`;
             
             // Jika warehouseId dipilih, tambahkan filter warehouse
             if (warehouseId) {
@@ -795,7 +795,7 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
             
             console.log('🌍 Fetching ALL products for purchase order...');
             
-            const response = await fetch(`${$api.product()}?includeStocks=true&rows=1000`, {
+            const response = await fetch(`${$api.product()}?includeStocks=true&rows=10000`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json',

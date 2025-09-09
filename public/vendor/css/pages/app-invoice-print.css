@@ -32,10 +32,16 @@ body {
 
 /* Print-specific styles for better table display */
 @media print {
-  /* Ensure table headers are always visible */
+  /* Ensure table headers are always visible and repeat on each page */
   table thead {
     display: table-header-group !important;
     break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+  
+  /* Ensure table headers repeat on each page */
+  table thead tr {
+    page-break-after: avoid !important;
   }
 
   /* Force background colors to print */
@@ -84,9 +90,38 @@ body {
     color: #ffffff !important;
   }
 
-  /* Prevent page breaks inside tables */
+  /* Allow page breaks inside tables for better pagination */
   table {
+    page-break-inside: auto !important;
+  }
+  
+  /* Prevent page breaks inside table headers only */
+  table thead {
     page-break-inside: avoid !important;
+  }
+  
+  /* Allow page breaks between table rows */
+  table tbody tr {
+    page-break-inside: auto !important;
+  }
+  
+  /* Add padding for table continuation on new pages */
+  table tbody tr:first-child {
+    padding-top: 30px !important;
+  }
+  
+  /* Ensure proper page margins */
+  @page {
+    margin-top: 20mm !important;
+    margin-bottom: 15mm !important;
+    margin-left: 15mm !important;
+    margin-right: 15mm !important;
+  }
+  
+  /* Add extra spacing for table rows */
+  table tbody tr td {
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
   }
 
   /* Ensure proper spacing */
