@@ -1,12 +1,12 @@
 <template>
     <div v-if="loading" class="text-center p-6">
       <ProgressSpinner 
-                    style="width: 50px; height: 50px" 
-                    strokeWidth="4"
-                    fill="transparent"
-                    animationDuration="1s"
-                />
-                <div class="mt-3 text-muted">Memuat data...</div>
+        style="width: 50px; height: 50px" 
+        strokeWidth="4"
+        fill="transparent"
+        animationDuration="1s"
+    />
+    <div class="mt-3 text-muted">Memuat data...</div>
     </div>
     <div v-else-if="error" class="alert alert-danger m-6">{{ error.message }}</div>
     <div v-else-if="salesInvoice" class="p-6">
@@ -85,6 +85,11 @@
                  <td class="text-start" style="font-size: 12px; white-space: nowrap;">Attention</td>
                  <td style="font-size: 12px; width: 10px;">:</td>
                  <td class="text-start" style="font-size: 12px;">{{ salesInvoice.up || '-' }}</td>
+               </tr>
+               <tr>
+                 <td class="text-start" style="font-size: 12px; white-space: nowrap;">PO Number</td>
+                 <td style="font-size: 12px; width: 10px;">:</td>
+                 <td class="text-start" style="font-size: 12px;">{{ salesInvoice.salesOrder?.noPo || '-' }}</td>
                </tr>
              </table>
            </div>
