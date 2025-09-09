@@ -12,7 +12,7 @@
                 <div class="mt-3 text-muted">Memuat data...</div>
             </div>
             <template v-else>
-                <div v-if="products.length > 0">
+                <div>
                     <h4 class="mb-1">List Product</h4>
                     <p class="mb-6">
                         List product yang terdaftar di sistem
@@ -105,15 +105,6 @@
                                                     class="w-full md:w-20rem"
                                                 />
                                             </span>
-                                            <button 
-                                                v-if="globalFilterValue" 
-                                                @click="clearSearch" 
-                                                class="btn btn-outline-secondary" 
-                                                type="button"
-                                                title="Hapus pencarian"
-                                            >
-                                                <i class="ri-close-line"></i>
-                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -236,20 +227,6 @@
                         </div>
                     </div>
                     <!--/ product cards -->
-                </div>
-                <div v-else class="text-center">
-                    <div class="d-flex flex-column align-items-center">
-                        <img src="/img/illustrations/misc-under-maintenance-illustration.png" alt="page-misc-under-maintenance" width="300" class="img-fluid" />
-                        <h4 class="mt-4">Tidak ada data Product</h4>
-                        <p class="mb-4">
-                            Saat ini belum ada data product yang tersedia.<br />
-                            Silakan buat product baru untuk memulai.
-                        </p>
-                        <button @click="productStore.openModal()" class="btn btn-primary">
-                            <i class="ri-add-line me-1"></i>
-                            Tambah Product
-                        </button>
-                    </div>
                 </div>
             </template>
             <!-- Placeholder untuk MenuModal component -->
@@ -555,11 +532,6 @@ const debouncedSearch = useDebounceFn(() => {
     productStore.setSearch(globalFilterValue.value)
 }, 500)
 watch(globalFilterValue, debouncedSearch);
-
-const clearSearch = () => {
-    globalFilterValue.value = '';
-    productStore.setSearch('');
-};
 
 const onPage = (event) => productStore.setPagination(event);
 

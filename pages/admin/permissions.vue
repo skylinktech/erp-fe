@@ -4,7 +4,7 @@
         <div class="content-wrapper">
             <!-- Content -->
             <div class="container-xxl flex-grow-1 container-p-y">
-                <div v-if="permissions.length > 0">
+                <div>
                         <h4 class="mb-1">List Permissions</h4>
                         <p class="mb-6">
                             List permissions yang terdaftar di sistem
@@ -175,20 +175,6 @@
                             </div>
                         </div>
                         <!--/ permission cards -->
-                    </div>
-                    <div v-else class="text-center">
-                        <div class="d-flex flex-column align-items-center">
-                            <img src="/img/illustrations/misc-under-maintenance-illustration.png" alt="page-misc-under-maintenance" width="300" class="img-fluid" />
-                            <h4 class="mt-4">Tidak ada data Permission</h4>
-                            <p class="mb-4">
-                                Saat ini belum ada data permission yang tersedia.<br />
-                                Silakan buat permission baru untuk memulai.
-                            </p>
-                            <button @click="permissionsStore.openModal()" class="btn btn-primary">
-                                <i class="ri-add-line me-1"></i>
-                                Tambah Permission
-                            </button>
-                        </div>
                     </div>
                     <!-- Placeholder untuk MenuModal component -->
                     <Modal 
