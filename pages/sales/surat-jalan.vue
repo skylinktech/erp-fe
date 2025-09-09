@@ -129,12 +129,15 @@
                                       </template>
                                   </Column>
                                   <Column field="noSuratJalan" header="No. Surat Jalan" :sortable="true">
-                                      <template #body="slotProps">
-                                          <span>
-                                              {{ slotProps.data.noSuratJalan || '-' }}
-                                          </span>
-                                      </template>
-                                  </Column>
+                                        <template #body="slotProps">
+                                            <a 
+                                                @click="navigateTo(`/sales/surat-jalan-detail?id=${slotProps.data.id}`)" 
+                                                style="cursor: pointer; color: #666bff; text-decoration: underline;"
+                                            >
+                                                {{ slotProps.data.noSuratJalan }}
+                                            </a>
+                                        </template>
+                                    </Column>
                                   <Column field="salesOrder.noSo" header="No. SO" :sortable="true">
                                       <template #body="slotProps">
                                           <span v-if="slotProps.data.salesOrder?.noSo && slotProps.data.salesOrder?.id">
