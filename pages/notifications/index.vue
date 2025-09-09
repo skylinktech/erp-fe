@@ -49,8 +49,7 @@
             <!-- Empty State -->
             <div v-else-if="notificationsStore.notifications.length === 0" class="text-center py-5">
               <i class="ri-checkbox-circle-line ri-48px text-success mb-3"></i>
-              <h6 class="text-muted">Tidak ada notifikasi stock</h6>
-              <p class="text-muted mb-0">Semua stock sudah di-posting</p>
+              <h6 class="text-muted">Tidak ada notifikasi saat ini</h6>
             </div>
 
             <!-- Notifications List -->
