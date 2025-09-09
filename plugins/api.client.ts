@@ -190,8 +190,10 @@ export default defineNuxtPlugin(() => {
     // Stock In & Stock Out
     stockIn                : () => `${apiBase}/stock-in`,
     stockInExport          : () => `${apiBase}/stock-in/export`,
+    stockInNotifications   : () => `${apiBase}/stock-in/notifications`,
     stockOut               : () => `${apiBase}/stock-out`,
     stockOutExport         : () => `${apiBase}/stock-out/export`,
+    stockOutNotifications  : () => `${apiBase}/stock-out/notifications`,
     stock                  : () => `${apiBase}/stock`,
     stockExportExcel       : () => `${apiBase}/stock/export-excel`,
     validateStockBatch     : () => `${apiBase}/stock/validate-batch`,

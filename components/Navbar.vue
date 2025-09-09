@@ -73,20 +73,99 @@
     
             <ul class="navbar-nav flex-row align-items-center ms-auto">
 
-                <!-- Notification: This dropdown will also need a Vue-native implementation if used. -->
-                <li class="nav-item dropdown-notifications navbar-dropdown dropdown me-4 me-xl-1" @click="showNotificationToast">
+                <!-- Notification: Stock notifications -->
+                <li class="nav-item dropdown-notifications navbar-dropdown dropdown me-4 me-xl-1" ref="notificationDropdownRef">
                     <a
                     class="nav-link btn btn-text-secondary rounded-pill btn-icon dropdown-toggle hide-arrow"
                     href="javascript:void(0);"
-                    data-bs-toggle="dropdown"
-                    data-bs-auto-close="outside"
-                    aria-expanded="false"
+                    @click.prevent="isNotificationDropdownOpen = !isNotificationDropdownOpen"
                     >
                     <i class="ri-notification-2-line ri-22px"></i>
                     <span
+                        v-if="notificationsStore.hasUnreadNotifications"
                         class="position-absolute top-0 start-50 translate-middle-y badge badge-dot bg-danger mt-2 border"></span>
                     </a>
                     <!-- Dropdown content here -->
+                    <ul class="dropdown-menu dropdown-menu-end py-0 mt-3" :class="{show: isNotificationDropdownOpen}">
+                        <li class="dropdown-menu-header border-bottom py-50">
+                            <div class="dropdown-header d-flex align-items-center py-2">
+                            <h6 class="mb-0 me-auto">Notifikasi Stock</h6>
+                            <div class="d-flex align-items-center h6 mb-0">
+                                <span v-if="notificationsStore.unreadCount > 0" class="badge rounded-pill bg-label-primary fs-xsmall me-2">{{ notificationsStore.unreadCount }} New</span>
+                                <a href="javascript:void(0)" class="dropdown-notifications-all p-2" @click="markAllNotificationsAsRead" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Mark all as read" data-bs-original-title="Mark all as read"><i class="icon-base ri ri-mail-open-line text-heading"></i></a>
+                            </div>
+                            </div>
+                        </li>
+                        <li class="dropdown-notifications-list scrollable-container ps">
+                            <ul class="list-group list-group-flush">
+                                <!-- Loading state -->
+                                <li v-if="notificationsStore.loading" class="list-group-item text-center py-3">
+                                    <div class="spinner-border spinner-border-sm" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <small class="text-muted ms-2">Memuat notifikasi...</small>
+                                </li>
+                                
+                                <!-- No notifications -->
+                                <li v-else-if="notificationsStore.notifications.length === 0" class="list-group-item text-center py-3">
+                                    <i class="ri-checkbox-circle-line ri-24px text-success mb-2"></i>
+                                    <p class="text-muted mb-0">Tidak ada notifikasi stock</p>
+                                    <small class="text-muted">Semua stock sudah di-posting</small>
+                                </li>
+                                
+                                <!-- Stock notifications -->
+                                <li 
+                                    v-for="notification in notificationsStore.notifications.slice(0, 8)" 
+                                    :key="notification.id"
+                                    class="list-group-item list-group-item-action dropdown-notifications-item waves-effect"
+                                    @click="handleNotificationClick(notification)"
+                                >
+                                    <div class="d-flex">
+                                        <div class="flex-shrink-0 me-3">
+                                            <div class="avatar">
+                                                <span 
+                                                    class="avatar-initial rounded-circle"
+                                                    :class="notification.type === 'stock_in' ? 'bg-label-warning' : 'bg-label-danger'"
+                                                >
+                                                    <i 
+                                                        class="icon-base"
+                                                        :class="notification.type === 'stock_in' ? 'ri-arrow-down-line' : 'ri-arrow-up-line'"
+                                                    ></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <h6 class="small mb-1">
+                                                {{ notification.type === 'stock_in' ? 'Stock In' : 'Stock Out' }} 
+                                                {{ notification.type === 'stock_in' ? notification.noSi : notification.noSo }} 
+                                                belum di-posting
+                                            </h6>
+                                            <small class="mb-1 d-block text-body">
+                                                Quantity: {{ notification.quantity }} | 
+                                                {{ notification.warehouseName }}
+                                            </small>
+                                            <small class="text-body-secondary">
+                                                {{ notificationsStore.formatTimeAgo(notification.createdAt) }} • 
+                                                {{ notification.createdByName }}
+                                            </small>
+                                        </div>
+                                        <div class="flex-shrink-0 dropdown-notifications-actions">
+                                            <a href="javascript:void(0)" class="dropdown-notifications-read" @click.stop="markNotificationAsRead(notification.id)">
+                                                <span class="badge badge-dot"></span>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </li>
+                            </ul>
+                        </li>
+                        <li class="border-top">
+                            <div class="d-grid p-4">
+                            <a class="btn btn-primary btn-sm d-flex waves-effect waves-light" href="javascript:void(0);" @click="viewAllNotifications">
+                                <small class="align-middle">Lihat semua notifikasi</small>
+                            </a>
+                            </div>
+                        </li>
+                        </ul>
                 </li>
                 <!--/ Notification -->
 
@@ -152,6 +231,7 @@
     import { useSuratJalanStore } from '~/stores/surat-jalan'
     import { useQuotationStore } from '~/stores/quotation'
     import { useVendorStore } from '~/stores/vendor'
+    import { useNotificationsStore } from '~/stores/notifications'
     import { usePermissions } from '~/composables/usePermissions'
 
     const { $api }    = useNuxtApp()
@@ -168,6 +248,7 @@
     const suratJalanLocalStore = useSuratJalanStore()
     const quotationLocalStore = useQuotationStore()
     const vendorLocalStore = useVendorStore()
+    const notificationsStore = useNotificationsStore()
     const { userHasPermission, userHasRole } = usePermissions()
     
     // --- Search bar logic ---
@@ -619,8 +700,50 @@
     };
     // --- End Avatar Dropdown Logic ---
 
+    // --- Notification Dropdown Logic ---
+    const isNotificationDropdownOpen = ref(false);
+    const notificationDropdownRef = ref(null);
+
+    const handleNotificationClickOutside = (event) => {
+        if (notificationDropdownRef.value && !notificationDropdownRef.value.contains(event.target)) {
+            isNotificationDropdownOpen.value = false;
+        }
+    };
+
+    const markNotificationAsRead = async (notificationId) => {
+        await notificationsStore.markAsRead(notificationId);
+    };
+
+    const markAllNotificationsAsRead = async () => {
+        await notificationsStore.markAllAsRead();
+    };
+
+    const handleNotificationClick = (notification) => {
+        // Navigate to appropriate page based on notification type
+        if (notification.type === 'stock_in') {
+            router.push('/inventory/stock-in');
+        } else if (notification.type === 'stock_out') {
+            router.push('/inventory/stock-out');
+        }
+        isNotificationDropdownOpen.value = false;
+    };
+
+    const viewAllNotifications = () => {
+        router.push('/notifications/stock');
+        isNotificationDropdownOpen.value = false;
+    };
+    // --- End Notification Dropdown Logic ---
+
     onMounted(async () => {
         userStore.loadUser()
+        
+        // Load notifications
+        await notificationsStore.fetchNotifications()
+        
+        // Set up polling for notifications every 30 seconds
+        const notificationInterval = setInterval(async () => {
+            await notificationsStore.fetchNotifications()
+        }, 30000)
         
         // Pre-load data untuk search (jika belum ada)
         try {
@@ -668,11 +791,21 @@
         
         window.addEventListener('keydown', handleKeydown);
         document.addEventListener('click', handleClickOutside);
+        document.addEventListener('click', handleNotificationClickOutside);
+        
+        // Store interval for cleanup
+        window.notificationInterval = notificationInterval
     })
 
     onUnmounted(() => {
         window.removeEventListener('keydown', handleKeydown);
         document.removeEventListener('click', handleClickOutside);
+        document.removeEventListener('click', handleNotificationClickOutside);
+        
+        // Clear notification polling interval
+        if (window.notificationInterval) {
+            clearInterval(window.notificationInterval);
+        }
     });
 
     const toggleSidebar = () => {
@@ -684,14 +817,6 @@
         toast.info({
             title: 'Info',
             message: 'Fitur My Profile akan segera tersedia. Ditunggu ya!',
-            color: 'blue'
-        });
-    }
-    const showNotificationToast = () => {
-        const toast = useToast();
-        toast.info({
-            title: 'Info',
-            message: 'Fitur Notification akan segera tersedia. Ditunggu ya!',
             color: 'blue'
         });
     }

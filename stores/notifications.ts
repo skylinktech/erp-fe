@@ -59,7 +59,7 @@ export const useNotificationsStore = defineStore('notifications', {
         }
 
         // Fetch stock in notifications
-        const stockInResponse = await fetch(`${$api.stockIn()}?status=not_posted&limit=10`, {
+        const stockInResponse = await fetch(`${$api.stockInNotifications()}?status=not_posted&limit=10`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
@@ -69,7 +69,7 @@ export const useNotificationsStore = defineStore('notifications', {
         })
 
         // Fetch stock out notifications
-        const stockOutResponse = await fetch(`${$api.stockOut()}?status=not_posted&limit=10`, {
+        const stockOutResponse = await fetch(`${$api.stockOutNotifications()}?status=not_posted&limit=10`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
