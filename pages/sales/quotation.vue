@@ -365,8 +365,6 @@
                                                 class="v-select-style"
                                                 :disabled="!form.customerId"
                                                 :searchable="true"
-                                                :max-height="300"
-                                                :max-options="100"
                                                 :clearable="true"
                                                 :filter-by="(option, label, search) => {
                                                     const product = option;
@@ -414,7 +412,7 @@
                                                          Customer ini tidak memiliki produk
                                                      </span>
                                                                                                          <span v-else-if="customerProducts.length > 0">
-                                                          {{ customerProducts.length }} produk tersedia (maksimal 100 ditampilkan)
+                                                          {{ customerProducts.length }} produk tersedia
                                                       </span>
                                                      <span v-else>
                                                          Pilih customer terlebih dahulu
@@ -788,7 +786,7 @@ const filters = ref({
     }
   };
 
-  // ✅ IMPROVED: Computed property untuk filtered customer products dengan limit
+  // ✅ IMPROVED: Computed property untuk filtered customer products tanpa limit
   const filteredCustomerProducts = computed(() => {
     if (!customerProducts.value || !Array.isArray(customerProducts.value)) {
       return [];
@@ -800,10 +798,7 @@ const filters = ref({
       displayName: `${product.sku} | ${product.name}`
     }));
     
-    // Limit jumlah produk yang ditampilkan untuk performa
-    const limited = productsWithDisplayName.slice(0, 100);
-    
-    return limited;
+    return productsWithDisplayName;
   });
 
   const onQuantityChange = (index) => {
@@ -875,9 +870,9 @@ const filters = ref({
           align-items: center !important;
       }
 
-      /* ✅ NEW: Limit dropdown height dan tambahkan scroll */
+      /* ✅ NEW: Dropdown dengan scroll tanpa batasan tinggi */
       :deep(.v-select-style .vs__dropdown-menu) {
-          max-height: 300px !important;
+          max-height: 500px !important;
           overflow-y: auto !important;
       }
 

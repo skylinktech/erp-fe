@@ -34,7 +34,7 @@
                 </div>
               </td>
               <td>
-                <span class="fw-semibold">{{ item.quantity }}</span>
+                <span class="fw-semibold">{{ Math.round(item.quantity) }}</span>
               </td>
               <td>
                 <span class="fw-semibold">{{ formatRupiah(item.price) }}</span>

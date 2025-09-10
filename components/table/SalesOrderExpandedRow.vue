@@ -47,10 +47,10 @@
                 </span>
               </td>
               <td>
-                <span class="fw-medium">{{ item.quantity }}</span>
+                <span class="fw-medium">{{ Math.round(item.quantity) }}</span>
               </td>
               <td>
-                <span class="fw-medium">{{ item.deliveredQty || 0 }}</span>
+                <span class="fw-medium">{{ Math.round(item.deliveredQty || 0) }}</span>
               </td>
               <td>
                 <span class="fw-medium">{{ formatRupiah(item.price) }}</span>

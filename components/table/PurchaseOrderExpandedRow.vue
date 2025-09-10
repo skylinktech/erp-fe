@@ -40,11 +40,11 @@
                 <span v-else class="text-muted">-</span>
               </td>
               <td>
-                <span class="fw-semibold">{{ item.quantity }}</span>
+                <span class="fw-semibold">{{ Math.round(item.quantity) }}</span>
               </td>
               <td>
                 <div class="d-flex align-items-center">
-                  <span class="fw-semibold me-2">{{ item.receivedQty || 0 }}</span>
+                  <span class="fw-semibold me-2">{{ Math.round(item.receivedQty || 0) }}</span>
                   <span v-if="item.statusPartial" class="badge bg-label-warning">
                     <i class="ri-time-line me-1"></i>Partial
                   </span>
