@@ -344,7 +344,7 @@
                                                 :get-option-label="product => `${product.sku} | ${product.name}`"
                                                 :reduce="product => product.id"
                                                 placeholder="-- Pilih Produk --"
-                                                class="product-select"
+                                                :class="['product-select', { 'is-invalid': isProductDuplicate(item.productId, index) }]"
                                                 :filterable="true"
                                                 :searchable="true"
                                                 :clearable="true"
@@ -355,6 +355,9 @@
                                                            product.sku.toLowerCase().includes(searchLower);
                                                 }"
                                             />
+                                            <div v-if="isProductDuplicate(item.productId, index)" class="invalid-feedback">
+                                                Produk ini sudah dipilih sebelumnya
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="mb-3 col-lg-4 col-xl-3 col-12 mb-0">
@@ -541,11 +544,33 @@ const openCustomerDetails = (customerId) => {
     router.push({ path: `/sales/customer-detail`, query: { id: customerId } });
 };
 
+// Check if product is duplicate
+const isProductDuplicate = (productId, currentIndex) => {
+    if (!productId || !form.value.customerProducts) return false;
+    
+    return form.value.customerProducts.some((item, index) => 
+        index !== currentIndex && item.productId === productId
+    );
+};
+
 </script>
 
 <style scoped>
     :deep(.product-select .vs__dropdown-toggle) {
         height: 48px !important;
         border-radius: 7px;
+    }
+    
+    :deep(.product-select.is-invalid .vs__dropdown-toggle) {
+        border-color: #dc3545;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    }
+    
+    .invalid-feedback {
+        display: block;
+        width: 100%;
+        margin-top: 0.25rem;
+        font-size: 0.875em;
+        color: #dc3545;
     }
 </style>

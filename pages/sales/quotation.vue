@@ -347,8 +347,8 @@
                                 </div>
                             </div>
                             <div class="tab-pane fade" id="form-tabs-items" role="tabpanel">
-                                <div class="alert alert-info mb-4">
-                                    <ul class="mb-0 mt-2">
+                                <div class="alert alert-secondary mb-6">
+                                    <ul class="align-items-center py-0 px-2 mt-3">
                                         <li><strong>Pilih customer terlebih dahulu</strong> di tab "Informasi Quotation"</li>
                                     </ul>
                                 </div>
@@ -402,22 +402,22 @@
                                                 </template>
                                              </v-select>
                                              <small class="text-muted">
-                                                 <span v-if="loading">
-                                                     <i class="ri-loader-4-line me-1"></i>
-                                                     Memuat produk...
-                                                 </span>
-                                                 <span v-else>
-                                                     <span v-if="form.customerId && customerProducts.length === 0" class="text-warning">
-                                                         <i class="ri-error-warning-line me-1"></i>
-                                                         Customer ini tidak memiliki produk
-                                                     </span>
-                                                                                                         <span v-else-if="customerProducts.length > 0">
-                                                          {{ customerProducts.length }} produk tersedia
-                                                      </span>
-                                                     <span v-else>
-                                                         Pilih customer terlebih dahulu
-                                                     </span>
-                                                 </span>
+                                                    <span v-if="loading">
+                                                        <i class="ri-loader-4-line me-1"></i>
+                                                        Memuat produk...
+                                                    </span>
+                                                    <span v-else>
+                                                            <span v-if="form.customerId && customerProducts.length === 0" class="text-warning">
+                                                                <i class="ri-error-warning-line me-1"></i>
+                                                                Customer ini tidak memiliki produk
+                                                            </span>
+                                                            <span v-else-if="customerProducts.length > 0">
+                                                            {{ customerProducts.length }} produk tersedia
+                                                            </span>
+                                                            <span v-else>
+                                                                Pilih customer terlebih dahulu
+                                                            </span>
+                                                    </span>
                                              </small>
                                          </div>
                                          <div class="col-md-2">
@@ -458,9 +458,6 @@
                                      >
                                          Tambah Item
                                      </button>
-                                     <small v-if="!form.customerId" class="text-muted d-block mt-2">
-                                         Pilih customer terlebih dahulu untuk menambah item
-                                     </small>
                                  </div>
                                  <div class="d-flex justify-content-end mt-4">
                                      <span class="fw-bold fs-5">Grand Total: {{ formatRupiah(grandTotal) }}</span>

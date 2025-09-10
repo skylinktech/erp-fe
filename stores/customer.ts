@@ -126,6 +126,13 @@ export const useCustomerStore = defineStore('customer', {
       this.validationErrors = [];
       const { $api } = useNuxtApp()
 
+      // Validasi unik produk di frontend
+      if (!this.validateUniqueProducts()) {
+        this.validationErrors = ['Produk yang sama tidak boleh dipilih lebih dari sekali'];
+        this.loading = false;
+        return;
+      }
+
       try {
         const token        = localStorage.getItem('token')
 
@@ -405,6 +412,18 @@ export const useCustomerStore = defineStore('customer', {
             productId: null,
             priceSell: 0
         });
+    },
+
+    validateUniqueProducts() {
+        if (!this.form.customerProducts) return true;
+        
+        const productIds = this.form.customerProducts
+            .map(item => item.productId)
+            .filter(id => id !== null);
+        
+        const uniqueProductIds = [...new Set(productIds)];
+        
+        return productIds.length === uniqueProductIds.length;
     },
 
     removeItem(index: number) {
