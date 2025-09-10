@@ -192,7 +192,8 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
           toast.error({
             title: 'Error',
             message: `Tidak dapat memuat data Purchase Order: ${e.message}`,
-            color: 'red'
+            color: 'red',
+            position: 'topRight',
           });
         }
       } finally {
@@ -340,7 +341,9 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
                      toast.error({
                       title: 'Error',
                       message: errorData.errors.map((e: any) => e.message).join('<br>'),
-                      color: 'red'
+                      color: 'red',
+                      position: 'topRight',
+                      layout: 2,
                     });
                 } else {
                     // Tampilkan detail error jika ada
@@ -364,7 +367,8 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
                 toast.success({
                   title: 'Success',
                   message: `Purchase Order berhasil ${this.isEditMode ? 'diperbarui' : 'dibuat'}.`,
-                  color: 'green'
+                  color: 'green',
+                  position: 'topRight',
                 });
             }
 
@@ -376,7 +380,8 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
             toast.error({
               title: 'Error',
               message: error.message || 'Operasi gagal',
-              color: 'red'
+              color: 'red',
+              position: 'topRight',
             });
         } finally {
             this.loading = false;

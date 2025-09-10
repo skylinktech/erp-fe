@@ -485,7 +485,9 @@ export const useSalesOrderStore = defineStore('salesOrder', {
                 toast.success({
                   title: 'Success',
                   message: `Sales Order berhasil ${this.isEditMode ? 'diperbarui' : 'dibuat'}.`,
-                  color: 'green'
+                  color: 'green',
+                  position: 'topRight',
+                  layout: 2,
                 });
             }
 
@@ -497,7 +499,9 @@ export const useSalesOrderStore = defineStore('salesOrder', {
             toast.error({
               title: 'Error',
               message: error.message || 'Operasi gagal',
-              color: 'red'
+              color: 'red',
+              position: 'topRight',
+              layout: 2,
             });
         } finally {
             this.loading = false;
@@ -546,14 +550,18 @@ export const useSalesOrderStore = defineStore('salesOrder', {
           toast.success({
             title: 'Success',
             message: 'Sales Order berhasil dihapus.',
-            color: 'green'
+            color: 'green',
+            position: 'topRight',
+            layout: 2,
           });
       } catch (error: any) {
           const toast = useToast();
           toast.error({
             title: 'Error',
             message: error.message || 'Gagal menghapus Sales Order',
-            color: 'red'
+            color: 'red',
+            position: 'topRight',
+            layout: 2,
           });
       } finally {
           this.loading = false;
@@ -587,7 +595,9 @@ export const useSalesOrderStore = defineStore('salesOrder', {
             toast.success({
             title: 'Success',
             message: 'Sales Order berhasil diapprove.',
-            color: 'green'
+            color: 'green',
+            position: 'topRight',
+            layout: 2,
           });
 
           return true;
@@ -597,7 +607,9 @@ export const useSalesOrderStore = defineStore('salesOrder', {
           toast.error({
             title: 'Error',
             message: error.message || 'Gagal mengapprove sales order.',
-            color: 'red'
+            color: 'red',
+            position: 'topRight',
+            layout: 2,
           });
           return false;
       } finally {
@@ -632,7 +644,9 @@ export const useSalesOrderStore = defineStore('salesOrder', {
           toast.success({
             title: 'Success',
             message: 'Sales Order berhasil direject.',
-            color: 'green'
+            color: 'green',
+            position: 'topRight',
+            layout: 2,
           });
 
           return true;
@@ -642,7 +656,9 @@ export const useSalesOrderStore = defineStore('salesOrder', {
           toast.error({
             title: 'Error',
             message: error.message || 'Gagal mereject sales order.',
-            color: 'red'
+            color: 'red',
+            position: 'topRight',
+            layout: 2,
           });
           return false;
       } finally {
@@ -691,7 +707,9 @@ export const useSalesOrderStore = defineStore('salesOrder', {
             toast.error({
               title: 'Error',
               message: error.data?.message || error.message || 'Operasi gagal',
-              color: 'red'
+              color: 'red',
+              position: 'topRight',
+              layout: 2,
             });
             throw error;
         } finally {
@@ -724,7 +742,9 @@ export const useSalesOrderStore = defineStore('salesOrder', {
         toast.error({
           title: 'Error',
           message: 'Gagal memuat daftar perusahaan.',
-          color: 'red'
+          color: 'red',
+          position: 'topRight',
+          layout: 2,
         });
         return [];
       }
@@ -759,7 +779,9 @@ export const useSalesOrderStore = defineStore('salesOrder', {
             toast.error({
             title: 'Error',
             message: 'Gagal memuat daftar cabang.',
-            color: 'red'
+            color: 'red',
+            position: 'topRight',
+            layout: 2,
             });
             return [];
         }
@@ -790,7 +812,9 @@ export const useSalesOrderStore = defineStore('salesOrder', {
             toast.error({ 
             title: 'Error',
             message: 'Gagal memuat daftar customer.',
-            color: 'red'
+            color: 'red',
+            position: 'topRight',
+            layout: 2,
             });
             return [];
         }
@@ -809,7 +833,9 @@ export const useSalesOrderStore = defineStore('salesOrder', {
               toast.error({
                 title: 'Error',
                 message: 'Tidak dapat memuat data Sales Order.',
-                color: 'red'
+                color: 'red',
+                position: 'topRight',
+                layout: 2,
               });
               return;
           }

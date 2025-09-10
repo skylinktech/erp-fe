@@ -445,7 +445,7 @@
                                                     const product = option;
                                                     const searchLower = search.toLowerCase();
                                                     return product.name.toLowerCase().includes(searchLower) || 
-                                                           product.sku.toLowerCase().includes(searchLower);
+                                                    product.sku.toLowerCase().includes(searchLower);
                                                 }"
                                             >
                                                 <template #option="option">
