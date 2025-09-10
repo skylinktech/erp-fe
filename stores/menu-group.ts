@@ -52,65 +52,13 @@ export const useMenuGroupStore = defineStore('menu-group', {
         validationErrors: [],
     }),
   getters: {
-    // Memfilter menu group berdasarkan permission user
+    // Menu groups sudah difilter di backend, jadi kita hanya perlu mengembalikan data yang sudah ada
     filteredMenuGroups: (state) => {
-      // Gunakan import untuk mengakses user store
-      const userStore = useUserStore()
-      
       // Pastikan user store sudah siap
-      if (!userStore.user || !state.sidebarMenuGroups) return []
+      if (!state.sidebarMenuGroups) return []
       
-      // Cek apakah user adalah superadmin
-      const isSuperAdmin = userStore.user.roles.some(role => role.name === 'superadmin')
-      
-      return state.sidebarMenuGroups.filter(group => {
-        // Jika menu group adalah Admin, hanya tampilkan untuk superadmin
-        if (group.name === 'Admin' || group.jenisMenu === 7) {
-          return isSuperAdmin
-        }
-        
-        // Jika user adalah superadmin, tampilkan semua menu group (kecuali Admin yang sudah dihandle di atas)
-        if (isSuperAdmin) {
-          return true
-        }
-        
-        // Filter berdasarkan permission menu group untuk user non-superadmin
-        const groupPermissionName = `view_${group.name.toLowerCase().replace(/ & /g, '_').replace(/ /g, '_')}`
-        
-        // Cek apakah user memiliki permission untuk menu group ini
-        const hasGroupPermission = userStore.hasPermission(groupPermissionName)
-        
-        // Cek apakah user memiliki permission untuk salah satu menu detail di dalam group ini
-        let hasDetailPermission = false
-        if (group.menuDetails && group.menuDetails.length > 0) {
-          hasDetailPermission = group.menuDetails.some(detail => {
-            const detailPermissionName = `view_${detail.name.toLowerCase().replace(/ & /g, '_').replace(/ /g, '_')}`
-            return userStore.hasPermission(detailPermissionName)
-          })
-        }
-        
-        // Tampilkan group jika user memiliki permission untuk group ATAU salah satu detail di dalamnya
-        return hasGroupPermission || hasDetailPermission
-      }).map(group => {
-        // Buat copy dari group untuk menghindari mutasi state
-        const groupCopy = { ...group }
-        
-        // Filter menu details untuk group ini
-        if (groupCopy.menuDetails && groupCopy.menuDetails.length > 0) {
-          // Jika superadmin, tampilkan semua menu details
-          if (isSuperAdmin) {
-            return groupCopy
-          }
-          
-          // Untuk user non-superadmin, filter berdasarkan permission
-          groupCopy.menuDetails = groupCopy.menuDetails.filter(detail => {
-            const detailPermissionName = `view_${detail.name.toLowerCase().replace(/ & /g, '_').replace(/ /g, '_')}`
-            return userStore.hasPermission(detailPermissionName)
-          })
-        }
-        
-        return groupCopy
-      })
+      // Backend sudah memfilter berdasarkan permission, jadi kita hanya perlu mengembalikan data yang sudah difilter
+      return state.sidebarMenuGroups
     }
   },
   actions: {

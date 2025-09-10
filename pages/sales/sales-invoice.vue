@@ -1,3 +1,4 @@
+<!-- Updated export functionality -->
 <template>
     <div class="content-wrapper">
         <!-- Content -->
@@ -254,8 +255,8 @@
                                                 <a href="javascript:;" class="btn btn-sm btn-text-secondary rounded-pill btn-icon dropdown-toggle hide-arrow" data-bs-toggle="dropdown"><i class="ri-more-2-fill"></i>
                                                 </a>
                                                 <ul class="dropdown-menu">
-                                                    <li v-if="userHasRole('superadmin') || userHasPermission('view_sales_invoice')">
-                                                        <a class="dropdown-item" href="javascript:void(0)" @click="viewSalesInvoiceDetails(slotProps.data.id)">
+                                                    <li v-if="userHasRole('superadmin') || (userHasPermission('view_sales_invoice'))">
+                                                        <a class="dropdown-item" href="javascript:void(0)" @click="viewSalesOrderDetails(slotProps.data.id)">
                                                             <i class="ri-eye-line me-2"></i> Lihat Detail
                                                         </a>
                                                     </li>
@@ -264,7 +265,7 @@
                                                             <i class="ri-edit-box-line me-2"></i> Edit
                                                         </a>
                                                     </li>
-                                                    <li v-if="userHasRole('superadmin') || userHasPermission('delete_sales_invoice')">
+                                                    <li v-if="userHasRole('superadmin') || (userHasPermission('delete_sales_invoice'))">
                                                         <a class="dropdown-item text-danger" href="javascript:void(0)" @click="salesInvoiceStore.deleteSalesInvoice(slotProps.data.id)">
                                                             <i class="ri-delete-bin-7-line me-2"></i> Hapus
                                                         </a>
@@ -658,6 +659,7 @@ const rowsPerPageOptionsArray = ref([10, 25, 50, 100]);
 const modalTitle = computed(() => isEditMode.value ? 'Edit Sales Invoice' : 'Tambah Sales Invoice');
 const modalDescription = computed(() => isEditMode.value ? 'Silakan ubah data Sales Invoice di bawah ini.' : 'Silakan isi form di bawah ini untuk menambahkan data Sales Invoice baru.');
 
+
 // Computed untuk menghitung sisa pembayaran berdasarkan grand total
 const remainingAmount = computed(() => {
   const total = grandTotal.value;
@@ -845,7 +847,7 @@ watch(() => form.value.perusahaanId, (newPerusahaanId) => {
 });
 
 // Watcher untuk salesOrderId - auto fill data ketika dipilih
-watch(() => form.value.salesOrderId, async (newSalesOrderId, oldSalesOrderId) => {
+watch(() => form.value.salesOrderId, (newSalesOrderId, oldSalesOrderId) => {
   if (newSalesOrderId && newSalesOrderId !== oldSalesOrderId) {
     const selectedSalesOrder = salesOrders.value?.find(so => so.id === newSalesOrderId);
     
@@ -892,10 +894,10 @@ watch(() => form.value.salesOrderId, async (newSalesOrderId, oldSalesOrderId) =>
       
       // ✅ AUTO FILL SALES ORDER ITEMS - HANYA JIKA BUKAN EDIT MODE
       if (!isEditMode.value) {
-        try {
-          // Fetch detail sales order dengan items
-          await salesOrderStore.getSalesOrderDetails(newSalesOrderId);
-          const detailedSalesOrder = salesOrderStore.salesOrder;
+        // Fetch detail sales order dengan items
+        salesOrderStore.getSalesOrderDetails(newSalesOrderId)
+          .then(() => {
+            const detailedSalesOrder = salesOrderStore.salesOrder;
           
             if (detailedSalesOrder && detailedSalesOrder.salesOrderItems) {
             
@@ -943,13 +945,13 @@ watch(() => form.value.salesOrderId, async (newSalesOrderId, oldSalesOrderId) =>
             // DPP akan otomatis dihitung dari watcher salesInvoiceItemsTotal
             
           }
-        } catch (error) {
-          console.error('❌ Error fetching sales order details for auto fill:', error);
-          // Fallback: create empty items array
-          form.value.salesInvoiceItems = [];
+          })
+          .catch((error) => {
+            console.error('❌ Error fetching sales order details for auto fill:', error);
+            // Fallback: create empty items array
+            form.value.salesInvoiceItems = [];
+          });
         }
-        } else {
-      }
       
       
     }
@@ -1111,8 +1113,106 @@ const onSort = (event) => {
     }
 };
 
+// Export data function
 const exportData = (format) => {
-    if (format === 'csv') myDataTableRef.value.exportCSV();
+    if (format === 'excel') {
+        const toast = useToast();
+        
+        // Cek apakah ada filter yang diterapkan
+        const hasFilters = filters.value.customerId || filters.value.source || filters.value.status || filters.value.search;
+        
+        toast.info({
+            title: 'Info',
+            message: hasFilters 
+                ? 'Sedang mempersiapkan data sesuai filter untuk export Excel...' 
+                : 'Sedang mempersiapkan semua data untuk export Excel...',
+            color: 'blue'
+        });
+        
+        // Ambil semua data yang sesuai dengan filter untuk export Excel
+        salesInvoiceStore.fetchAllSalesInvoicesForExport()
+            .then((allData) => {
+                if (allData && allData.length > 0) {
+                    // Gunakan fungsi export Excel khusus untuk Sales Invoice
+                    return exportSalesInvoiceExcel(allData)
+                        .then(() => {
+                            toast.success({
+                                title: 'Success',
+                                message: `Excel berhasil dibuat dengan ${allData.length} data Sales Invoice${hasFilters ? ' sesuai filter' : ''}`,
+                                color: 'green',
+                                position: 'topRight',
+                                layout: 2
+                            });
+                        });
+                } else {
+                    toast.warning({
+                        title: 'Warning',
+                        message: 'Tidak ada data untuk diexport',
+                        color: 'orange',
+                        position: 'topRight',
+                        layout: 2
+                    });
+                }
+            })
+            .catch((error) => {
+                console.error('Error exporting Excel:', error);
+                toast.error({
+                    title: 'Error',
+                    message: 'Gagal membuat Excel',
+                    color: 'red',
+                    position: 'topRight',
+                    layout: 2
+                });
+            });
+    } else if (format === 'pdf') {
+        const toast = useToast();
+        // Cek apakah ada filter yang diterapkan
+        const hasFilters = filters.value.customerId || filters.value.source || filters.value.status || filters.value.search;
+        
+        toast.info({
+            title: 'Info',
+            message: hasFilters 
+                ? 'Sedang mempersiapkan data sesuai filter untuk export PDF...' 
+                : 'Sedang mempersiapkan semua data untuk export PDF...',
+            color: 'blue'
+        });
+        
+        // Ambil semua data yang sesuai dengan filter untuk export PDF
+        salesInvoiceStore.fetchAllSalesInvoicesForExport()
+            .then((allData) => {
+                if (allData && allData.length > 0) {
+                    // Gunakan fungsi export PDF khusus untuk Sales Invoice
+                    return exportSalesInvoicePDF(allData)
+                        .then(() => {
+                            toast.success({
+                                title: 'Success',
+                                message: `PDF berhasil dibuat dengan ${allData.length} data Sales Invoice${hasFilters ? ' sesuai filter' : ''}`,
+                                color: 'green',
+                                position: 'topRight',
+                                layout: 2
+                            });
+                        });
+                } else {
+                    toast.warning({
+                        title: 'Warning',
+                        message: 'Tidak ada data untuk diexport',
+                        color: 'orange',
+                        position: 'topRight',
+                        layout: 2
+                    });
+                }
+            })
+            .catch((error) => {
+                console.error('Error exporting PDF:', error);
+                toast.error({
+                    title: 'Error',
+                    message: 'Gagal membuat PDF',
+                    color: 'red',
+                    position: 'topRight',
+                    layout: 2
+                });
+            });
+    }
 };
 
 
@@ -1150,26 +1250,25 @@ const onProductChange = (index) => {
 };
 
 // ✅ NEW: Function untuk update stock info
-const updateStockInfo = async (index) => {
+const updateStockInfo = (index) => {
   const item = form.value.salesInvoiceItems[index];
   if (item.productId && item.warehouseId) {
-    try {
-      const stockStore = useStocksStore();
-      stockStore.params.search = ''; // Reset search if any
-      stockStore.params.rows = 1; // We only need one record
-      const response = await stockStore.fetchStocksPaginated({
-        productId: item.productId,
-        warehouseId: item.warehouseId,
-      });
+    const stockStore = useStocksStore();
+    stockStore.params.search = ''; // Reset search if any
+    stockStore.params.rows = 1; // We only need one record
+    stockStore.fetchStocksPaginated({
+      productId: item.productId,
+      warehouseId: item.warehouseId,
+    }).then((response) => {
       if (response && response.data && response.data.length > 0) {
         item.stock = response.data[0];
       } else {
         item.stock = { quantity: 0 };
       }
-    } catch (error) {
+    }).catch((error) => {
       console.error('Failed to fetch stock info:', error);
       item.stock = { quantity: 0 };
-    }
+    });
   } else {
     item.stock = { quantity: 0 };
   }
@@ -1282,6 +1381,592 @@ const formatDate = (dateString) => {
         day  : '2-digit',
         month: '2-digit',
         year : 'numeric'
+    });
+};
+
+// Fungsi export PDF khusus untuk Sales Invoice
+const exportSalesInvoicePDF = (dataToExport) => {
+    return Promise.all([
+        import('jspdf'),
+        import('jspdf-autotable')
+    ]).then(([{ default: jsPDF }, { default: autoTable }]) => {
+
+    // Definisikan kolom yang akan diexport
+    const columnDefinitions = [
+        { field: 'noInvoice', header: 'No. Invoice' },
+        { field: 'customer.name', header: 'Nama Customer' },
+        { field: 'status', header: 'Status' },
+        { field: 'date', header: 'Tanggal' },
+        { field: 'dueDate', header: 'Jatuh Tempo' },
+        { field: 'salesOrder.perusahaan.nmPerusahaan', header: 'Perusahaan' },
+        { field: 'total', header: 'Total' },
+        { field: 'paidAmount', header: 'Dibayar' },
+        { field: 'remainingAmount', header: 'Sisa' }
+    ];
+
+    const head = [columnDefinitions.map(col => col.header)];
+
+    if (!dataToExport || dataToExport.length === 0) {
+        console.warn('Tidak ada data untuk diexport');
+        const doc = new jsPDF('landscape');
+        doc.setFontSize(16);
+        doc.text('Laporan Sales Invoices', 14, 15);
+        doc.setFontSize(12);
+        doc.text('Tidak ada data yang tersedia untuk export', 14, 50);
+        doc.save('sales-invoices-empty.pdf');
+        return;
+    }
+
+    const body = dataToExport.map(row => columnDefinitions.map(col => {
+        let value = '';
+        
+        if (col.field.includes('.')) {
+            const fields = col.field.split('.');
+            let currentValue = row;
+            for (const field of fields) {
+                currentValue = currentValue?.[field];
+            }
+            value = currentValue || '-';
+        } else {
+            value = row[col.field] || '-';
+        }
+
+        // Format khusus untuk field tertentu
+        if (col.field === 'date' || col.field === 'dueDate') {
+            if (value && value !== '-') {
+                value = new Date(value).toLocaleDateString('id-ID');
+            }
+        } else if (col.field === 'total' || col.field === 'paidAmount' || col.field === 'remainingAmount') {
+            if (value && value !== '-') {
+                const numValue = parseFloat(value);
+                if (!isNaN(numValue)) {
+                    value = new Intl.NumberFormat('id-ID', {
+                        style: 'currency',
+                        currency: 'IDR',
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0
+                    }).format(numValue);
+                }
+            }
+        } else if (col.field === 'status') {
+            if (value === 'unpaid') value = 'Unpaid';
+            else if (value === 'partial') value = 'Partial';
+            else if (value === 'paid') value = 'Paid';
+        }
+
+        return String(value);
+    }));
+
+    // Definisikan lebar kolom
+    const columnStyles = {
+        0: { cellWidth: 30 }, // No. Invoice
+        1: { cellWidth: 32 }, // Nama Customer
+        2: { cellWidth: 30 }, // Status
+        3: { cellWidth: 30 }, // Tanggal
+        4: { cellWidth: 30 }, // Jatuh Tempo
+        5: { cellWidth: 30 }, // Perusahaan
+        6: { cellWidth: 30 }, // Dibayar
+        7: { cellWidth: 30 }, // Sisa
+        8: { cellWidth: 30 } // Total
+    };
+
+    // Ambil info perusahaan dari user atau data yang tersedia
+    const userData = userStore.user;
+    let companyInfo = {
+        name: 'PT. ANDARA PRIMA UTAMA',
+        address: 'Jl. Kelapa Dua No.21 RT.008 RW.003 Kec. Cilincing Kel. Cilincing - Jakarta Utara',
+        email: 'andaraprimautama@gmail.com',
+        phone: '+62 812-7522-9704',
+        logo: null
+    };
+
+    // Coba ambil dari user data jika tersedia
+    if (userData?.perusahaan) {
+        companyInfo.name = userData.perusahaan.nmPerusahaan || companyInfo.name;
+        companyInfo.address = userData.perusahaan.alamatPerusahaan || companyInfo.address;
+        companyInfo.email = userData.perusahaan.emailPerusahaan || companyInfo.email;
+        companyInfo.phone = userData.perusahaan.tlpPerusahaan || companyInfo.phone;
+    }
+
+    // Hitung grand total
+    let grandTotal = 0;
+    let totalPaid = 0;
+    let totalRemaining = 0;
+    dataToExport.forEach(row => {
+        const totalValue = parseFloat(row.total) || 0;
+        const paidValue = parseFloat(row.paidAmount) || 0;
+        const remainingValue = parseFloat(row.remainingAmount) || 0;
+        grandTotal += totalValue;
+        totalPaid += paidValue;
+        totalRemaining += remainingValue;
+    });
+
+    // Format grand total
+    const formattedGrandTotal = new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    }).format(grandTotal);
+
+    const formattedTotalPaid = new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    }).format(totalPaid);
+
+    const formattedTotalRemaining = new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    }).format(totalRemaining);
+
+    // Buat PDF
+    const doc = new jsPDF('landscape');
+    const pageWidth = doc.internal.pageSize.width;
+    const pageHeight = doc.internal.pageSize.height;
+
+    // Gunakan font yang tersedia di jsPDF
+    const fontFamily = 'helvetica';
+
+    // Logo perusahaan (jika ada)
+    if (companyInfo.logo) {
+        try {
+            doc.addImage(companyInfo.logo, 'PNG', pageWidth - 60, 10, 50, 20);
+        } catch (e) {
+            void e;
+        }
+    }
+
+    // Info perusahaan di kanan atas
+    doc.setFontSize(10);
+    doc.setFont(fontFamily, 'bold');
+    if (companyInfo.name) doc.text(String(companyInfo.name), pageWidth - 10, 15, { align: 'right' });
+
+    doc.setFontSize(8);
+    doc.setFont(fontFamily, 'normal');
+    if (companyInfo.address) doc.text(String(companyInfo.address), pageWidth - 10, 22, { align: 'right' });
+    if (companyInfo.email) doc.text(`Email: ${String(companyInfo.email)}`, pageWidth - 10, 28, { align: 'right' });
+    if (companyInfo.phone) doc.text(`Telp: ${String(companyInfo.phone)}`, pageWidth - 10, 34, { align: 'right' });
+
+    // Judul di kiri atas
+    doc.setFontSize(16);
+    doc.setFont(fontFamily, 'bold');
+    doc.text('Laporan Sales Invoices', 14, 15);
+
+    // Timestamp dan jumlah data
+    doc.setFontSize(10);
+    doc.setFont(fontFamily, 'normal');
+    doc.text(`Dibuat pada: ${new Date().toLocaleString('id-ID')}`, 14, 25);
+    doc.text(`Total Data: ${dataToExport.length}`, 14, 32);
+
+    // Info filter
+    const filterInfo = [];
+    if (filters.value.customerId) {
+        const customer = customers.value?.find(c => c.id === filters.value.customerId);
+        if (customer) {
+            filterInfo.push(`Customer: ${customer.name}`);
+        }
+    }
+    if (filters.value.source) {
+        filterInfo.push(`Source: ${filters.value.source}`);
+    }
+    if (filters.value.status) {
+        const statusLabel = filters.value.status.charAt(0).toUpperCase() + filters.value.status.slice(1);
+        filterInfo.push(`Status: ${statusLabel}`);
+    }
+    if (filters.value.search) {
+        filterInfo.push(`Pencarian: ${filters.value.search}`);
+    }
+
+    // Tampilkan filter info
+    if (filterInfo.length > 0) {
+        doc.setFontSize(8);
+        doc.setFont(fontFamily, 'italic');
+        filterInfo.forEach((info, index) => {
+            doc.text(info, 14, 40 + (index * 6));
+        });
+    }
+
+    // Buat tabel
+    autoTable(doc, {
+        head: head,
+        body: body,
+        startY: filterInfo.length > 0 ? 50 + (filterInfo.length * 6) : 45,
+        styles: {
+            font: fontFamily,
+            fontSize: 7,
+            cellPadding: 2,
+            overflow: 'linebreak',
+            halign: 'left',
+        },
+        headStyles: {
+            fillColor: [41, 128, 185],
+            textColor: 255,
+            fontStyle: 'bold',
+            halign: 'center',
+        },
+        alternateRowStyles: {
+            fillColor: [245, 245, 245],
+        },
+        margin: { top: 30, right: 10, bottom: 10, left: 10 },
+        tableWidth: 'auto',
+        columnStyles: columnStyles,
+        didDrawPage: function (data) {
+            // Tambahkan nomor halaman
+            const pageCount = doc.internal.getNumberOfPages();
+            doc.setFontSize(8);
+            doc.setFont(fontFamily, 'normal');
+            doc.text(`Halaman ${pageCount}`, data.settings.margin.left, doc.internal.pageSize.height - 10);
+        },
+        didParseCell: function (data) {
+            // Highlight kolom total
+            if (data.column.index === columnDefinitions.findIndex(col => col.field === 'paidAmount')) {
+                if (data.section === 'head') {
+                    data.cell.styles.textColor = [255, 255, 255];
+                } else {
+                    data.cell.styles.fontStyle = 'bold';
+                    data.cell.styles.fillColor = [200, 255, 200];
+                }
+            }
+            if (data.column.index === columnDefinitions.findIndex(col => col.field === 'remainingAmount')) {
+                if (data.section === 'head') {
+                    data.cell.styles.textColor = [255, 255, 255];
+                } else {
+                    data.cell.styles.fontStyle = 'bold';
+                    data.cell.styles.fillColor = [255, 200, 200];
+                }
+            }
+        },
+    });
+
+    // Grand total setelah tabel
+    const finalY = doc.lastAutoTable.finalY || 200;
+
+    // Garis pemisah
+    doc.setDrawColor(200, 200, 200);
+    doc.line(10, finalY + 5, doc.internal.pageSize.width - 10, finalY + 5);
+
+    // Grand total
+    doc.setFontSize(12);
+    doc.setFont(fontFamily, 'bold');
+    doc.text('Grand Total:', 10, finalY + 20);
+    doc.text(String(formattedGrandTotal), doc.internal.pageSize.width - 10, finalY + 20, { align: 'right' });
+
+    // Total dibayar
+    doc.setFontSize(10);
+    doc.setFont(fontFamily, 'bold');
+    doc.text('Total Dibayar:', 10, finalY + 30);
+    doc.text(String(formattedTotalPaid), doc.internal.pageSize.width - 10, finalY + 30, { align: 'right' });
+
+    // Total sisa
+    doc.setFontSize(10);
+    doc.setFont(fontFamily, 'bold');
+    doc.text('Total Sisa:', 10, finalY + 40);
+    doc.text(String(formattedTotalRemaining), doc.internal.pageSize.width - 10, finalY + 40, { align: 'right' });
+
+    // Info ringkasan
+    doc.setFontSize(8);
+    doc.setFont(fontFamily, 'normal');
+    doc.text(`Total Sales Invoices: ${dataToExport.length}`, 10, finalY + 55);
+
+    // Pastikan pembagian tidak menghasilkan NaN atau Infinity
+    let rataRata = 0;
+    if (dataToExport.length > 0) {
+        rataRata = grandTotal / dataToExport.length;
+    }
+    doc.text(
+        `Rata-rata per Invoice: ${new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(rataRata)}`,
+        10,
+        finalY + 62
+    );
+
+    doc.save('sales-invoices.pdf');
+    });
+};
+
+// Fungsi export Excel khusus untuk Sales Invoice
+const exportSalesInvoiceExcel = (dataToExport) => {
+    return Promise.all([
+        import('xlsx')
+    ]).then(([XLSX]) => {
+        // Definisikan kolom yang akan diexport
+        const columnDefinitions = [
+            { field: 'noInvoice', header: 'No. Invoice' },
+            { field: 'customer.name', header: 'Nama Customer' },
+            { field: 'status', header: 'Status' },
+            { field: 'date', header: 'Tanggal' },
+            { field: 'dueDate', header: 'Jatuh Tempo' },
+            { field: 'salesOrder.perusahaan.nmPerusahaan', header: 'Perusahaan' },
+            { field: 'total', header: 'Total' },
+            { field: 'paidAmount', header: 'Dibayar' },
+            { field: 'remainingAmount', header: 'Sisa' }
+        ];
+
+        if (!dataToExport || dataToExport.length === 0) {
+            console.warn('Tidak ada data untuk diexport');
+            return;
+        }
+
+        // Ambil info perusahaan dari user atau data yang tersedia
+        const userData = userStore.user;
+        let companyInfo = {
+            name: 'PT. ANDARA PRIMA UTAMA',
+            address: 'Jl. Kelapa Dua No.21 RT.008 RW.003 Kec. Cilincing Kel. Cilincing - Jakarta Utara',
+            email: 'andaraprimautama@gmail.com',
+            phone: '+62 812-7522-9704'
+        };
+
+        // Coba ambil dari user data jika tersedia
+        if (userData?.perusahaan) {
+            companyInfo.name = userData.perusahaan.nmPerusahaan || companyInfo.name;
+            companyInfo.address = userData.perusahaan.alamatPerusahaan || companyInfo.address;
+            companyInfo.email = userData.perusahaan.emailPerusahaan || companyInfo.email;
+            companyInfo.phone = userData.perusahaan.tlpPerusahaan || companyInfo.phone;
+        }
+
+        // Hitung grand total
+        let grandTotal = 0;
+        let totalPaid = 0;
+        let totalRemaining = 0;
+        dataToExport.forEach(row => {
+            const totalValue = parseFloat(row.total) || 0;
+            const paidValue = parseFloat(row.paidAmount) || 0;
+            const remainingValue = parseFloat(row.remainingAmount) || 0;
+            grandTotal += totalValue;
+            totalPaid += paidValue;
+            totalRemaining += remainingValue;
+        });
+
+        // Format grand total
+        const formattedGrandTotal = new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(grandTotal);
+
+        const formattedTotalPaid = new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(totalPaid);
+
+        const formattedTotalRemaining = new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(totalRemaining);
+
+        // Buat data untuk Excel
+        const excelData = [];
+
+        // Header perusahaan
+        excelData.push([companyInfo.name]);
+        excelData.push([companyInfo.address]);
+        excelData.push([`Email: ${companyInfo.email}`]);
+        excelData.push([`Telp: ${companyInfo.phone}`]);
+        excelData.push([]); // Baris kosong
+
+        // Judul laporan
+        excelData.push(['Laporan Sales Invoices']);
+        excelData.push([`Dibuat pada: ${new Date().toLocaleString('id-ID')}`]);
+        excelData.push([`Total Data: ${dataToExport.length}`]);
+
+        // Info filter
+        const filterInfo = [];
+        if (filters.value.customerId) {
+            const customer = customers.value?.find(c => c.id === filters.value.customerId);
+            if (customer) {
+                filterInfo.push(`Customer: ${customer.name}`);
+            }
+        }
+        if (filters.value.source) {
+            const sourceLabel = filters.value.source.charAt(0).toUpperCase() + filters.value.source.slice(1);
+            filterInfo.push(`Source: ${sourceLabel}`);
+        }
+        if (filters.value.status) {
+            const statusLabel = filters.value.status.charAt(0).toUpperCase() + filters.value.status.slice(1);
+            filterInfo.push(`Status: ${statusLabel}`);
+        }
+        if (filters.value.search) {
+            filterInfo.push(`Pencarian: ${filters.value.search}`);
+        }
+
+        // Tampilkan filter info
+        if (filterInfo.length > 0) {
+            filterInfo.forEach((info) => {
+                excelData.push([info]);
+            });
+        }
+
+        excelData.push([]); // Baris kosong
+
+        // Header tabel
+        excelData.push(columnDefinitions.map(col => col.header));
+
+        // Data tabel
+        dataToExport.forEach(row => {
+            const rowData = columnDefinitions.map(col => {
+                let value = '';
+                
+                if (col.field.includes('.')) {
+                    const fields = col.field.split('.');
+                    let currentValue = row;
+                    for (const field of fields) {
+                        currentValue = currentValue?.[field];
+                    }
+                    value = currentValue || '-';
+                } else {
+                    value = row[col.field] || '-';
+                }
+
+                // Format khusus untuk field tertentu
+                if (col.field === 'date' || col.field === 'dueDate') {
+                    if (value && value !== '-') {
+                        value = new Date(value).toLocaleDateString('id-ID');
+                    }
+                } else if (col.field === 'total' || col.field === 'paidAmount' || col.field === 'remainingAmount') {
+                    if (value && value !== '-') {
+                        const numValue = parseFloat(value);
+                        if (!isNaN(numValue)) {
+                            value = new Intl.NumberFormat('id-ID', {
+                                style: 'currency',
+                                currency: 'IDR',
+                                minimumFractionDigits: 0,
+                                maximumFractionDigits: 0
+                            }).format(numValue);
+                        }
+                    }
+                } else if (col.field === 'status') {
+                    if (value === 'unpaid') value = 'Unpaid';
+                    else if (value === 'partial') value = 'Partial';
+                    else if (value === 'paid') value = 'Paid';
+                }
+
+                return String(value);
+            });
+            excelData.push(rowData);
+        });
+
+        // Baris kosong
+        excelData.push([]);
+
+        // Summary
+        excelData.push(['Grand Total:', formattedGrandTotal]);
+        excelData.push(['Total Dibayar:', formattedTotalPaid]);
+        excelData.push(['Total Sisa:', formattedTotalRemaining]);
+        excelData.push(['Total Sales Invoices:', dataToExport.length]);
+
+        // Pastikan pembagian tidak menghasilkan NaN atau Infinity
+        let rataRata = 0;
+        if (dataToExport.length > 0) {
+            rataRata = grandTotal / dataToExport.length;
+        }
+        excelData.push([
+            'Rata-rata per Invoice:', 
+            new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(rataRata)
+        ]);
+
+        // Buat workbook
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet(excelData);
+
+        // Set column widths
+        const colWidths = [
+            { wch: 20 }, // No. Invoice
+            { wch: 25 }, // Nama Customer
+            { wch: 15 }, // Status
+            { wch: 15 }, // Tanggal
+            { wch: 15 }, // Jatuh Tempo
+            { wch: 25 }, // Perusahaan
+            { wch: 20 }, // Total
+            { wch: 20 }, // Dibayar
+            { wch: 20 }  // Sisa
+        ];
+        ws['!cols'] = colWidths;
+
+        // Style untuk header perusahaan
+        const headerRow = 0;
+        if (ws[`A${headerRow + 1}`]) {
+            ws[`A${headerRow + 1}`].s = { font: { bold: true, size: 14 } };
+        }
+
+        // Style untuk judul laporan
+        const titleRow = 5;
+        if (ws[`A${titleRow + 1}`]) {
+            ws[`A${titleRow + 1}`].s = { font: { bold: true, size: 12 } };
+        }
+
+        // Style untuk header tabel
+        const tableHeaderRow = titleRow + 3 + filterInfo.length + 1;
+        columnDefinitions.forEach((_, index) => {
+            const cellRef = XLSX.utils.encode_cell({ r: tableHeaderRow, c: index });
+            if (ws[cellRef]) {
+                ws[cellRef].s = {
+                    font: { bold: true, color: { rgb: "FFFFFF" } },
+                    fill: { fgColor: { rgb: "2980B9" } },
+                    alignment: { horizontal: "center" },
+                    border: {
+                        top: { style: "thin", color: { rgb: "000000" } },
+                        bottom: { style: "thin", color: { rgb: "000000" } },
+                        left: { style: "thin", color: { rgb: "000000" } },
+                        right: { style: "thin", color: { rgb: "000000" } }
+                    }
+                };
+            }
+        });
+
+        // Tambahkan border pada semua data tabel
+        for (let row = tableHeaderRow + 1; row < tableHeaderRow + 1 + dataToExport.length; row++) {
+            for (let col = 0; col < columnDefinitions.length; col++) {
+                const cellRef = XLSX.utils.encode_cell({ r: row, c: col });
+                if (ws[cellRef]) {
+                    if (!ws[cellRef].s) ws[cellRef].s = {};
+                    ws[cellRef].s.border = {
+                        top: { style: "thin", color: { rgb: "000000" } },
+                        bottom: { style: "thin", color: { rgb: "000000" } },
+                        left: { style: "thin", color: { rgb: "000000" } },
+                        right: { style: "thin", color: { rgb: "000000" } }
+                    };
+                }
+            }
+        }
+
+        // Style untuk summary
+        const summaryStartRow = tableHeaderRow + dataToExport.length + 2;
+        if (ws[`A${summaryStartRow + 1}`]) {
+            ws[`A${summaryStartRow + 1}`].s = { font: { bold: true } };
+        }
+        if (ws[`A${summaryStartRow + 2}`]) {
+            ws[`A${summaryStartRow + 2}`].s = { font: { bold: true } };
+        }
+        if (ws[`A${summaryStartRow + 3}`]) {
+            ws[`A${summaryStartRow + 3}`].s = { font: { bold: true } };
+        }
+        if (ws[`A${summaryStartRow + 4}`]) {
+            ws[`A${summaryStartRow + 4}`].s = { font: { bold: true } };
+        }
+        if (ws[`A${summaryStartRow + 5}`]) {
+            ws[`A${summaryStartRow + 5}`].s = { font: { bold: true } };
+        }
+
+        XLSX.utils.book_append_sheet(wb, ws, 'Sales Invoices');
+        XLSX.writeFile(wb, 'sales-invoices.xlsx');
     });
 };
 

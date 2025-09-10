@@ -559,10 +559,93 @@ onMounted(async () => {
 });
 
 const exportData = (format) => {
-    if (format === 'csv') {
-        myDataTableRef.value.exportCSV();
+    if (format === 'excel') {
+        const toast = useToast();
+        
+        // Cek apakah ada filter yang diterapkan
+        const hasFilters = globalFilterValue.value;
+        
+        toast.info({
+            title: 'Info',
+            message: hasFilters 
+                ? 'Sedang mempersiapkan data sesuai filter untuk export Excel...' 
+                : 'Sedang mempersiapkan semua data untuk export Excel...',
+            color: 'blue'
+        });
+        
+        // Ambil semua data yang sesuai dengan filter untuk export Excel
+        stockTransferStore.fetchAllStockTransfersForExport()
+            .then((allData) => {
+                if (allData && allData.length > 0) {
+                    // Gunakan fungsi export Excel khusus untuk Stock Transfer
+                    return exportStockTransferExcel(allData)
+                        .then(() => {
+                            toast.success({
+                                title: 'Success',
+                                message: `Excel berhasil dibuat dengan ${allData.length} data Stock Transfer${hasFilters ? ' sesuai filter' : ''}`,
+                                color: 'green',
+                                position: 'topRight',
+                                layout: 2
+                            });
+                        });
+                } else {
+                    toast.warning({
+                        title: 'Warning',
+                        message: 'Tidak ada data untuk diexport',
+                        color: 'orange',
+                        position: 'topRight',
+                        layout: 2
+                    });
+                }
+            })
+            .catch((error) => {
+                console.error('Error exporting Excel:', error);
+                toast.error({
+                    title: 'Error',
+                    message: 'Gagal membuat Excel',
+                    color: 'red',
+                    position: 'topRight',
+                    layout: 2
+                });
+            });
     } else if (format === 'pdf') {
-        myDataTableRef.value.exportPDF();
+        const toast = useToast();
+        
+        // Ambil semua data yang sesuai dengan filter untuk export PDF
+        stockTransferStore.fetchAllStockTransfersForExport()
+            .then((allData) => {
+                if (allData && allData.length > 0) {
+                    // Gunakan fungsi export PDF khusus untuk Stock Transfer
+                    return exportStockTransferPDF(allData)
+                        .then(() => {
+                            toast.success({
+                                title: 'Success',
+                                message: `PDF berhasil dibuat dengan ${allData.length} data Stock Transfer`,
+                                color: 'green',
+                                position: 'topRight',
+                                layout: 2
+                            });
+                        });
+                } else {
+                    toast.warning({
+                        title: 'Warning',
+                        message: 'Tidak ada data untuk diexport',
+                        color: 'orange',
+                        position: 'topRight',
+                        layout: 2
+                    });
+                }
+            })
+            .catch((error) => {
+                console.error('Error exporting PDF:', error);
+                toast.error({
+                    title: 'Error',
+                    message: 'Gagal membuat PDF',
+                    color: 'red',
+                    position: 'topRight',
+                    layout: 2
+                });
+            });
     }
 };
 
@@ -612,6 +695,423 @@ const getStatusBadge = (status) => {
         case 'approved':
             return { text: 'Approved', class: 'badge rounded-pill bg-label-success' };
     }
+};
+
+// Fungsi export PDF khusus untuk Stock Transfer
+const exportStockTransferPDF = (dataToExport) => {
+    return Promise.all([
+        import('jspdf'),
+        import('jspdf-autotable')
+    ]).then(([{ default: jsPDF }, { default: autoTable }]) => {
+
+    // Definisikan kolom yang akan diexport
+    const columnDefinitions = [
+        { field: 'noTransfer', header: 'No. Transfer' },
+        { field: 'perusahaan.nmPerusahaan', header: 'Perusahaan' },
+        { field: 'penerima', header: 'Penerima' },
+        { field: 'cabang.nmCabang', header: 'Cabang' },
+        { field: 'date', header: 'Tanggal' },
+        { field: 'fromWarehouse.name', header: 'Dari Gudang' },
+        { field: 'toWarehouse.name', header: 'Ke Gudang' },
+        { field: 'status', header: 'Status' }
+    ];
+
+    const head = [columnDefinitions.map(col => col.header)];
+
+    if (!dataToExport || dataToExport.length === 0) {
+        console.warn('Tidak ada data untuk diexport');
+        const doc = new jsPDF('landscape');
+        doc.setFontSize(16);
+        doc.text('Laporan Stock Transfers', 14, 15);
+        doc.setFontSize(12);
+        doc.text('Tidak ada data yang tersedia untuk export', 14, 50);
+        doc.save('stock-transfers-empty.pdf');
+        return;
+    }
+
+    const body = dataToExport.map(row => columnDefinitions.map(col => {
+        let value = '';
+        
+        if (col.field.includes('.')) {
+            const fields = col.field.split('.');
+            let currentValue = row;
+            for (const field of fields) {
+                currentValue = currentValue?.[field];
+            }
+            value = currentValue || '-';
+        } else {
+            value = row[col.field] || '-';
+        }
+
+        // Format khusus untuk field tertentu
+        if (col.field === 'date') {
+            if (value && value !== '-') {
+                value = new Date(value).toLocaleDateString('id-ID');
+            }
+        } else if (col.field === 'status') {
+            if (value === 'draft') value = 'Draft';
+            else if (value === 'approved') value = 'Approved';
+            else if (value === 'rejected') value = 'Rejected';
+        }
+
+        return String(value);
+    }));
+
+    // Definisikan lebar kolom
+    const columnStyles = {
+        0: { cellWidth: 34 }, // No. Transfer
+        1: { cellWidth: 36 }, // Perusahaan
+        2: { cellWidth: 34 }, // Penerima
+        3: { cellWidth: 34 }, // Cabang
+        4: { cellWidth: 34 }, // Tanggal
+        5: { cellWidth: 34 }, // Dari Gudang
+        6: { cellWidth: 34 }, // Ke Gudang
+        7: { cellWidth: 34 }  // Status
+    };
+
+    // Ambil info perusahaan dari user atau data yang tersedia
+    const userData = userStore.user;
+    let companyInfo = {
+        name: 'PT. ANDARA PRIMA UTAMA',
+        address: 'Jl. Kelapa Dua No.21 RT.008 RW.003 Kec. Cilincing Kel. Cilincing - Jakarta Utara',
+        email: 'andaraprimautama@gmail.com',
+        phone: '+62 812-7522-9704',
+        logo: null
+    };
+
+    // Coba ambil dari user data jika tersedia
+    if (userData?.perusahaan) {
+        companyInfo.name = userData.perusahaan.nmPerusahaan || companyInfo.name;
+        companyInfo.address = userData.perusahaan.alamatPerusahaan || companyInfo.address;
+        companyInfo.email = userData.perusahaan.emailPerusahaan || companyInfo.email;
+        companyInfo.phone = userData.perusahaan.tlpPerusahaan || companyInfo.phone;
+    }
+
+    // Buat PDF
+    const doc = new jsPDF('landscape');
+    const pageWidth = doc.internal.pageSize.width;
+    const pageHeight = doc.internal.pageSize.height;
+
+    // Gunakan font yang tersedia di jsPDF
+    const fontFamily = 'helvetica';
+
+    // Logo perusahaan (jika ada)
+    if (companyInfo.logo) {
+        try {
+            doc.addImage(companyInfo.logo, 'PNG', pageWidth - 60, 10, 50, 20);
+        } catch (e) {
+            void e;
+        }
+    }
+
+    // Info perusahaan di kanan atas
+    doc.setFontSize(10);
+    doc.setFont(fontFamily, 'bold');
+    if (companyInfo.name) doc.text(String(companyInfo.name), pageWidth - 10, 15, { align: 'right' });
+
+    doc.setFontSize(8);
+    doc.setFont(fontFamily, 'normal');
+    if (companyInfo.address) doc.text(String(companyInfo.address), pageWidth - 10, 22, { align: 'right' });
+    if (companyInfo.email) doc.text(`Email: ${String(companyInfo.email)}`, pageWidth - 10, 28, { align: 'right' });
+    if (companyInfo.phone) doc.text(`Telp: ${String(companyInfo.phone)}`, pageWidth - 10, 34, { align: 'right' });
+
+    // Judul di kiri atas
+    doc.setFontSize(16);
+    doc.setFont(fontFamily, 'bold');
+    doc.text('Laporan Stock Transfers', 14, 15);
+
+    // Timestamp dan jumlah data
+    doc.setFontSize(10);
+    doc.setFont(fontFamily, 'normal');
+    doc.text(`Dibuat pada: ${new Date().toLocaleString('id-ID')}`, 14, 25);
+    doc.text(`Total Data: ${dataToExport.length}`, 14, 32);
+
+    // Info filter (untuk stock transfer tidak ada filter khusus, hanya search)
+    const filterInfo = [];
+    if (globalFilterValue.value) {
+        filterInfo.push(`Pencarian: ${globalFilterValue.value}`);
+    }
+
+    // Tampilkan filter info
+    if (filterInfo.length > 0) {
+        doc.setFontSize(8);
+        doc.setFont(fontFamily, 'italic');
+        filterInfo.forEach((info, index) => {
+            doc.text(info, 14, 40 + (index * 6));
+        });
+    }
+
+    // Buat tabel
+    autoTable(doc, {
+        head: head,
+        body: body,
+        startY: filterInfo.length > 0 ? 50 + (filterInfo.length * 6) : 45,
+        styles: {
+            font: fontFamily,
+            fontSize: 7,
+            cellPadding: 2,
+            overflow: 'linebreak',
+            halign: 'left',
+        },
+        headStyles: {
+            fillColor: [41, 128, 185],
+            textColor: 255,
+            fontStyle: 'bold',
+            halign: 'center',
+        },
+        alternateRowStyles: {
+            fillColor: [245, 245, 245],
+        },
+        margin: { top: 30, right: 10, bottom: 10, left: 10 },
+        tableWidth: 'auto',
+        columnStyles: columnStyles,
+        didDrawPage: function (data) {
+            // Tambahkan nomor halaman
+            const pageCount = doc.internal.getNumberOfPages();
+            doc.setFontSize(8);
+            doc.setFont(fontFamily, 'normal');
+            doc.text(`Halaman ${pageCount}`, data.settings.margin.left, doc.internal.pageSize.height - 10);
+        },
+    });
+
+    // Info ringkasan setelah tabel
+    const finalY = doc.lastAutoTable.finalY || 200;
+
+    // Garis pemisah
+    doc.setDrawColor(200, 200, 200);
+    doc.line(10, finalY + 5, doc.internal.pageSize.width - 10, finalY + 5);
+
+    // Info ringkasan
+    doc.setFontSize(8);
+    doc.setFont(fontFamily, 'normal');
+    doc.text(`Total Stock Transfers: ${dataToExport.length}`, 10, finalY + 20);
+
+    // Hitung statistik status
+    const statusCounts = dataToExport.reduce((acc, row) => {
+        const status = row.status || 'unknown';
+        acc[status] = (acc[status] || 0) + 1;
+        return acc;
+    }, {});
+
+    let yPos = finalY + 30;
+    Object.entries(statusCounts).forEach(([status, count]) => {
+        const statusLabel = status === 'draft' ? 'Draft' : 
+        status === 'approved' ? 'Approved' : 
+        status === 'rejected' ? 'Rejected' : status;
+        doc.text(`${statusLabel}: ${count}`, 10, yPos);
+        yPos += 8;
+    });
+
+    doc.save('stock-transfers.pdf');
+    });
+};
+
+// Fungsi export Excel khusus untuk Stock Transfer
+const exportStockTransferExcel = (dataToExport) => {
+    return Promise.all([
+        import('xlsx')
+    ]).then(([XLSX]) => {
+        // Definisikan kolom yang akan diexport
+        const columnDefinitions = [
+            { field: 'noTransfer', header: 'No. Transfer' },
+            { field: 'perusahaan.nmPerusahaan', header: 'Perusahaan' },
+            { field: 'penerima', header: 'Penerima' },
+            { field: 'cabang.nmCabang', header: 'Cabang' },
+            { field: 'date', header: 'Tanggal' },
+            { field: 'fromWarehouse.name', header: 'Dari Gudang' },
+            { field: 'toWarehouse.name', header: 'Ke Gudang' },
+            { field: 'status', header: 'Status' }
+        ];
+
+        if (!dataToExport || dataToExport.length === 0) {
+            console.warn('Tidak ada data untuk diexport');
+            return;
+        }
+
+        // Ambil info perusahaan dari user atau data yang tersedia
+        const userData = userStore.user;
+        let companyInfo = {
+            name: 'PT. ANDARA PRIMA UTAMA',
+            address: 'Jl. Kelapa Dua No.21 RT.008 RW.003 Kec. Cilincing Kel. Cilincing - Jakarta Utara',
+            email: 'andaraprimautama@gmail.com',
+            phone: '+62 812-7522-9704'
+        };
+
+        // Coba ambil dari user data jika tersedia
+        if (userData?.perusahaan) {
+            companyInfo.name = userData.perusahaan.nmPerusahaan || companyInfo.name;
+            companyInfo.address = userData.perusahaan.alamatPerusahaan || companyInfo.address;
+            companyInfo.email = userData.perusahaan.emailPerusahaan || companyInfo.email;
+            companyInfo.phone = userData.perusahaan.tlpPerusahaan || companyInfo.phone;
+        }
+
+        // Buat data untuk Excel
+        const excelData = [];
+
+        // Header perusahaan
+        excelData.push([companyInfo.name]);
+        excelData.push([companyInfo.address]);
+        excelData.push([`Email: ${companyInfo.email}`]);
+        excelData.push([`Telp: ${companyInfo.phone}`]);
+        excelData.push([]); // Baris kosong
+
+        // Judul laporan
+        excelData.push(['Laporan Stock Transfers']);
+        excelData.push([`Dibuat pada: ${new Date().toLocaleString('id-ID')}`]);
+        excelData.push([`Total Data: ${dataToExport.length}`]);
+
+        // Info filter (untuk stock transfer tidak ada filter khusus, hanya search)
+        const filterInfo = [];
+        if (globalFilterValue.value) {
+            filterInfo.push(`Pencarian: ${globalFilterValue.value}`);
+        }
+
+        // Tampilkan filter info
+        if (filterInfo.length > 0) {
+            filterInfo.forEach((info) => {
+                excelData.push([info]);
+            });
+        }
+
+        excelData.push([]); // Baris kosong
+
+        // Header tabel
+        excelData.push(columnDefinitions.map(col => col.header));
+
+        // Data tabel
+        dataToExport.forEach(row => {
+            const rowData = columnDefinitions.map(col => {
+                let value = '';
+                
+                if (col.field.includes('.')) {
+                    const fields = col.field.split('.');
+                    let currentValue = row;
+                    for (const field of fields) {
+                        currentValue = currentValue?.[field];
+                    }
+                    value = currentValue || '-';
+                } else {
+                    value = row[col.field] || '-';
+                }
+
+                // Format khusus untuk field tertentu
+                if (col.field === 'date') {
+                    if (value && value !== '-') {
+                        value = new Date(value).toLocaleDateString('id-ID');
+                    }
+                } else if (col.field === 'status') {
+                    if (value === 'draft') value = 'Draft';
+                    else if (value === 'approved') value = 'Approved';
+                    else if (value === 'rejected') value = 'Rejected';
+                }
+
+                return String(value);
+            });
+            excelData.push(rowData);
+        });
+
+        // Baris kosong
+        excelData.push([]);
+
+        // Summary
+        excelData.push(['Total Stock Transfers:', dataToExport.length]);
+
+        // Hitung status counts
+        const statusCounts = {};
+        dataToExport.forEach(row => {
+            const status = row.status || 'unknown';
+            statusCounts[status] = (statusCounts[status] || 0) + 1;
+        });
+
+        // Tampilkan status summary
+        Object.entries(statusCounts).forEach(([status, count]) => {
+            const statusLabel = status === 'draft' ? 'Draft' : 
+                               status === 'approved' ? 'Approved' : 
+                               status === 'rejected' ? 'Rejected' : status;
+            excelData.push([`${statusLabel}:`, count]);
+        });
+
+        // Buat workbook
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet(excelData);
+
+        // Set column widths
+        const colWidths = [
+            { wch: 20 }, // No. Transfer
+            { wch: 25 }, // Perusahaan
+            { wch: 20 }, // Penerima
+            { wch: 20 }, // Cabang
+            { wch: 15 }, // Tanggal
+            { wch: 20 }, // Dari Gudang
+            { wch: 20 }, // Ke Gudang
+            { wch: 15 }  // Status
+        ];
+        ws['!cols'] = colWidths;
+
+        // Style untuk header perusahaan
+        const headerRow = 0;
+        if (ws[`A${headerRow + 1}`]) {
+            ws[`A${headerRow + 1}`].s = { font: { bold: true, size: 14 } };
+        }
+
+        // Style untuk judul laporan
+        const titleRow = 5;
+        if (ws[`A${titleRow + 1}`]) {
+            ws[`A${titleRow + 1}`].s = { font: { bold: true, size: 12 } };
+        }
+
+        // Style untuk header tabel
+        const tableHeaderRow = titleRow + 3 + filterInfo.length + 1;
+        columnDefinitions.forEach((_, index) => {
+            const cellRef = XLSX.utils.encode_cell({ r: tableHeaderRow, c: index });
+            if (ws[cellRef]) {
+                ws[cellRef].s = {
+                    font: { bold: true, color: { rgb: "FFFFFF" } },
+                    fill: { fgColor: { rgb: "2980B9" } },
+                    alignment: { horizontal: "center" },
+                    border: {
+                        top: { style: "thin", color: { rgb: "000000" } },
+                        bottom: { style: "thin", color: { rgb: "000000" } },
+                        left: { style: "thin", color: { rgb: "000000" } },
+                        right: { style: "thin", color: { rgb: "000000" } }
+                    }
+                };
+            }
+        });
+
+        // Tambahkan border pada semua data tabel
+        for (let row = tableHeaderRow + 1; row < tableHeaderRow + 1 + dataToExport.length; row++) {
+            for (let col = 0; col < columnDefinitions.length; col++) {
+                const cellRef = XLSX.utils.encode_cell({ r: row, c: col });
+                if (ws[cellRef]) {
+                    if (!ws[cellRef].s) ws[cellRef].s = {};
+                    ws[cellRef].s.border = {
+                        top: { style: "thin", color: { rgb: "000000" } },
+                        bottom: { style: "thin", color: { rgb: "000000" } },
+                        left: { style: "thin", color: { rgb: "000000" } },
+                        right: { style: "thin", color: { rgb: "000000" } }
+                    };
+                }
+            }
+        }
+
+        // Style untuk summary
+        const summaryStartRow = tableHeaderRow + dataToExport.length + 2;
+        if (ws[`A${summaryStartRow + 1}`]) {
+            ws[`A${summaryStartRow + 1}`].s = { font: { bold: true } };
+        }
+
+        // Style untuk status counts
+        Object.keys(statusCounts).forEach((_, index) => {
+            const statusRow = summaryStartRow + 1 + index;
+            if (ws[`A${statusRow + 1}`]) {
+                ws[`A${statusRow + 1}`].s = { font: { bold: true } };
+            }
+        });
+
+        XLSX.utils.book_append_sheet(wb, ws, 'Stock Transfers');
+        XLSX.writeFile(wb, 'stock-transfers.xlsx');
+    });
 };
 </script>
 

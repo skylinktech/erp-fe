@@ -212,7 +212,7 @@
                     <small class="text-muted">{{ formatTimeAgo(session.lastActivity) }}</small>
                   </div>
                 </div>
-                <div class="ms-2">
+                <div class="ms-2" v-if="userHasRole('superadmin')">
                   <button @click="forceLogoutUser(session.sessionId)" class="btn btn-sm btn-outline-danger"
                     title="Force Logout">
                     <i class="ri-logout-box-r-line"></i>
@@ -591,12 +591,16 @@
     storeToRefs
   } from 'pinia'
   import {
+    ref,
     onMounted,
     onUnmounted
   } from 'vue'
   import {
     useDynamicTitle
   } from '~/composables/useDynamicTitle'
+  import {
+    usePermissions 
+  } from '~/composables/usePermissions'
 
   definePageMeta({
     layout: 'default',
@@ -622,6 +626,7 @@
   const salesStatisticsStore = useSalesStatisticsStore()
   const salesByCustomerStore = useSalesByCustomerStore()
   const topProductsStore = useTopProductsStore()
+  const { userHasRole } = usePermissions()
 
   const {
     chartData,
@@ -716,6 +721,9 @@
     return `${diffInDays} hari yang lalu`
   }
 
+  // Store interval reference for cleanup
+  const interval = ref(null)
+
   onMounted(async () => {
     userStore.loadUser();
     await salesOrderStore.fetchStats();
@@ -726,16 +734,18 @@
     await topProductsStore.fetchTopProducts();
     setListTitle('Dashboard')
 
-    // Auto refresh user sessions every 30 seconds
-    const interval = setInterval(async () => {
+    // Auto refresh user sessions every 60 seconds
+    interval.value = setInterval(async () => {
       await userSessionStore.fetchActiveUsers();
     }, 60000);
+  });
 
-    // Cleanup interval on unmount
-    onUnmounted(() => {
-      clearInterval(interval);
-    });
-  })
+  // Cleanup interval on unmount
+  onUnmounted(() => {
+    if (interval.value) {
+      clearInterval(interval.value);
+    }
+  });
 </script>
 
 <style scoped>

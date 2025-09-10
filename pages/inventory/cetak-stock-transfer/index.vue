@@ -1,12 +1,12 @@
 <template>
     <div v-if="loading" class="text-center p-6">
       <ProgressSpinner 
-                    style="width: 50px; height: 50px" 
-                    strokeWidth="4"
-                    fill="transparent"
-                    animationDuration="1s"
-                />
-                <div class="mt-3 text-muted">Memuat data...</div>
+        style="width: 50px; height: 50px" 
+        strokeWidth="4"
+        fill="transparent"
+        animationDuration="1s"
+      />
+      <div class="mt-3 text-muted">Memuat data...</div>
     </div>
     <div v-else-if="error" class="alert alert-danger m-6">{{ error.message }}</div>
     <div v-else-if="stockTransfer" class="p-6">
@@ -39,15 +39,12 @@
             <p class="mb-0">
               Email: {{ stockTransfer.perusahaan?.emailPerusahaan || '-' }}
             </p>
-            <p class="mb-0">
-              NPWP: {{ stockTransfer.perusahaan?.npwpPerusahaan || '-' }}
-            </p>
           </div>
         </div>
         
         <!-- Invoice Header - Right -->
         <div class="invoice-header text-end">
-          <h2 class="mb-4 text-capitalize fw-bold">STOCK TRANSFER</h2>
+          <h2 class="mb-4 text-capitalize fw-bold">BERITA ACARA</h2>
           <table style="font-size: 12px; width: 100%;">
             <tr>
               <td style="text-align: right;">No. Stock Transfer</td>
@@ -78,14 +75,14 @@
         </div>
       </div>
 
-      <div class="table-responsive border border-bottom-0 rounded">
+      <div class="table-responsive border-bottom-0 rounded">
         <table class="table m-0">
           <thead class="table-dark table-head-white">
             <tr>
-              <th>No</th>
-              <th>Produk</th>
-              <th>Jumlah</th>
-              <th>Keterangan</th>
+              <th style="font-size: 12px;">No</th>
+              <th style="font-size: 12px;">Produk</th>
+              <th style="font-size: 12px;">Jumlah</th>
+              <th style="font-size: 12px;">Keterangan</th>
             </tr>
           </thead>
           <tbody>
@@ -98,9 +95,19 @@
           </tbody>
         </table>
       </div>
-      <div class="table-responsive">
+      <div class="table-responsive mt-5">
         <table class="table m-0 table-borderless">
           <tbody>
+            <tr>
+              <td colspan="4" class="px-0 pt-6 align-top" style="max-width: 320px; width: 320px; min-width: 220px;">
+                <p class="mb-2">
+                  <span class="fw-medium text-heading">Catatan:</span>
+                </p>
+                <p class="mb-0" style="white-space: pre-line; word-break: break-word; max-width: 320px; font-size: 12px;">
+                  {{ stockTransfer.description }}
+                </p>
+              </td>
+            </tr>
             <tr>
               <td class="align-top px-0 py-6">
                 <p class="mb-1 mt-5">
@@ -131,7 +138,7 @@
                 <span>{{ stockTransfer.transferByUser?.fullName || '-' }}</span>
               </td>
               <td colspan="2" class="text-end p-5" style="padding-right: 1em !important;">
-                <span style="margin-right: 1em;">{{ stockTransfer.transferByUser?.fullName || '-' }}</span>
+                <span style="margin-right: 1em;">{{ stockTransfer.penerima || '-' }}</span>
               </td>
             </tr>
           </tbody>

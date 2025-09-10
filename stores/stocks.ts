@@ -405,6 +405,57 @@ export const useStocksStore = defineStore('stocks', {
             console.error('Error fetching stocks for export:', error)
             throw error
         }
+    },
+
+    async fetchAllStocksForExport() {
+        const toast = useToast();
+        const { $api } = useNuxtApp();
+        try {
+            const token = localStorage.getItem('token');
+            const url = new URL($api.stock());
+            const params = new URLSearchParams({
+                page: '1',
+                rows: '10000', // Ambil semua data
+                sortField: this.params.sortField || 'created_at',
+                sortOrder: this.params.sortOrder?.toString() || '2',
+                draw: '1',
+                search: this.params.search || '',
+                includeItems: 'true',
+            });
+            
+            if (this.params.productId) {
+                params.append('productId', this.params.productId.toString());
+            }
+            if (this.params.warehouseId) {
+                params.append('warehouseId', this.params.warehouseId.toString());
+            }
+            
+            url.search = params.toString();
+            
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                },
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error('Gagal mengambil data untuk export');
+            }
+
+            const result = await response.json();
+            return Array.isArray(result.data) ? result.data : [];
+        } catch (error) {
+            console.error('Error fetching all stocks for export:', error);
+            toast.error({
+                title: 'Error',
+                message: 'Gagal mengambil data stock untuk export',
+                color: 'red',
+            });
+            return [];
+        }
     }
   }
 })

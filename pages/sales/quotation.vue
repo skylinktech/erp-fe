@@ -1,3 +1,4 @@
+<!-- Updated export functionality -->
 <template>
     <div class="content-wrapper">
         <!-- Content -->
@@ -749,10 +750,105 @@ const filters = ref({
       }
   };
 
+  // Export data function
   const exportData = (format) => {
-      if (format === 'csv' && myDataTableRef.value) {
-          myDataTableRef.value.exportCSV();
-      } else {
+      if (format === 'excel') {
+          const toast = useToast();
+          
+          // Cek apakah ada filter yang diterapkan
+          const hasFilters = filters.value.customerId || filters.value.status || filters.value.search;
+          
+          toast.info({
+              title: 'Info',
+              message: hasFilters 
+                  ? 'Sedang mempersiapkan data sesuai filter untuk export Excel...' 
+                  : 'Sedang mempersiapkan semua data untuk export Excel...',
+              color: 'blue'
+          });
+          
+          // Ambil semua data yang sesuai dengan filter untuk export Excel
+          quotationStore.fetchAllQuotationsForExport()
+              .then((allData) => {
+                  if (allData && allData.length > 0) {
+                      // Gunakan fungsi export Excel khusus untuk Quotation
+                      return exportQuotationExcel(allData)
+                          .then(() => {
+                              toast.success({
+                                  title: 'Success',
+                                  message: `Excel berhasil dibuat dengan ${allData.length} data Quotation${hasFilters ? ' sesuai filter' : ''}`,
+                                  color: 'green',
+                                  position: 'topRight',
+                                  layout: 2
+                              });
+                          });
+                  } else {
+                      toast.warning({
+                          title: 'Warning',
+                          message: 'Tidak ada data untuk diexport',
+                          color: 'orange',
+                          position: 'topRight',
+                          layout: 2
+                      });
+                  }
+              })
+              .catch((error) => {
+                  console.error('Error exporting Excel:', error);
+                  toast.error({
+                      title: 'Error',
+                      message: 'Gagal membuat Excel',
+                      color: 'red',
+                      position: 'topRight',
+                      layout: 2
+                  });
+              });
+      } else if (format === 'pdf') {
+          const toast = useToast();
+          // Cek apakah ada filter yang diterapkan
+          const hasFilters = filters.value.customerId || filters.value.status || filters.value.search;
+          
+          toast.info({
+              title: 'Info',
+              message: hasFilters 
+                  ? 'Sedang mempersiapkan data sesuai filter untuk export PDF...' 
+                  : 'Sedang mempersiapkan semua data untuk export PDF...',
+              color: 'blue'
+          });
+          
+          // Ambil semua data yang sesuai dengan filter untuk export PDF
+          quotationStore.fetchAllQuotationsForExport()
+              .then((allData) => {
+                  if (allData && allData.length > 0) {
+                      // Gunakan fungsi export PDF khusus untuk Quotation
+                      return exportQuotationPDF(allData)
+                          .then(() => {
+                              toast.success({
+                                  title: 'Success',
+                                  message: `PDF berhasil dibuat dengan ${allData.length} data Quotation${hasFilters ? ' sesuai filter' : ''}`,
+                                  color: 'green',
+                                  position: 'topRight',
+                                  layout: 2
+                              });
+                          });
+                  } else {
+                      toast.warning({
+                          title: 'Warning',
+                          message: 'Tidak ada data untuk diexport',
+                          color: 'orange',
+                          position: 'topRight',
+                          layout: 2
+                      });
+                  }
+              })
+              .catch((error) => {
+                  console.error('Error exporting PDF:', error);
+                  toast.error({
+                      title: 'Error',
+                      message: 'Gagal membuat PDF',
+                      color: 'red',
+                      position: 'topRight',
+                      layout: 2
+                  });
+              });
       }
   };
 
@@ -842,6 +938,513 @@ const filters = ref({
               return { text: '-', class: 'badge rounded-pill bg-label-light' };
       }
   };
+
+// Fungsi export PDF khusus untuk Quotation
+const exportQuotationPDF = (dataToExport) => {
+    return Promise.all([
+        import('jspdf'),
+        import('jspdf-autotable')
+    ]).then(([{ default: jsPDF }, { default: autoTable }]) => {
+
+      // Definisikan kolom yang akan diexport
+      const columnDefinitions = [
+          { field: 'noQuotation', header: 'No. Quotation' },
+          { field: 'customer.name', header: 'Nama Customer' },
+          { field: 'status', header: 'Status' },
+          { field: 'date', header: 'Tanggal' },
+          { field: 'validUntil', header: 'Valid Until' },
+          { field: 'perusahaan.nmPerusahaan', header: 'Perusahaan' },
+          { field: 'cabang.nmCabang', header: 'Cabang' },
+          { field: 'total', header: 'Total' }
+      ];
+
+      const head = [columnDefinitions.map(col => col.header)];
+
+      if (!dataToExport || dataToExport.length === 0) {
+          console.warn('Tidak ada data untuk diexport');
+          const doc = new jsPDF('landscape');
+          doc.setFontSize(16);
+          doc.text('Laporan Quotations', 14, 15);
+          doc.setFontSize(12);
+          doc.text('Tidak ada data yang tersedia untuk export', 14, 50);
+          doc.save('quotations-empty.pdf');
+          return;
+      }
+
+      const body = dataToExport.map(row => columnDefinitions.map(col => {
+          let value = '';
+          
+          if (col.field.includes('.')) {
+              const fields = col.field.split('.');
+              let currentValue = row;
+              for (const field of fields) {
+                  currentValue = currentValue?.[field];
+              }
+              value = currentValue || '-';
+          } else {
+              value = row[col.field] || '-';
+          }
+
+          // Format khusus untuk field tertentu
+          if (col.field === 'date' || col.field === 'validUntil') {
+              if (value && value !== '-') {
+                  value = new Date(value).toLocaleDateString('id-ID');
+              }
+          } else if (col.field === 'total') {
+              if (value && value !== '-') {
+                  const numValue = parseFloat(value);
+                  if (!isNaN(numValue)) {
+                      value = new Intl.NumberFormat('id-ID', {
+                          style: 'currency',
+                          currency: 'IDR',
+                          minimumFractionDigits: 0,
+                          maximumFractionDigits: 0
+                      }).format(numValue);
+                  }
+              }
+          } else if (col.field === 'status') {
+              if (value === 'draft') value = 'Draft';
+              else if (value === 'approved') value = 'Approved';
+              else if (value === 'rejected') value = 'Rejected';
+          }
+
+          return String(value);
+      }));
+
+      // Definisikan lebar kolom
+      const columnStyles = {
+        0: { cellWidth: 34 }, // No. Quotation
+        1: { cellWidth: 37 }, // Nama Customer
+        2: { cellWidth: 34 }, // Status
+        3: { cellWidth: 34 }, // Tanggal
+        4: { cellWidth: 34 }, // Valid Until
+        5: { cellWidth: 34 }, // Perusahaan
+        6: { cellWidth: 34 }, // Cabang
+        7: { cellWidth: 34 } // Total
+      };
+
+      // Ambil info perusahaan dari user atau data yang tersedia
+      const userData = userStore.user;
+      let companyInfo = {
+          name: 'PT. ANDARA PRIMA UTAMA',
+          address: 'Jl. Kelapa Dua No.21 RT.008 RW.003 Kec. Cilincing Kel. Cilincing - Jakarta Utara',
+          email: 'andaraprimautama@gmail.com',
+          phone: '+62 812-7522-9704',
+          logo: null
+      };
+
+      // Coba ambil dari user data jika tersedia
+      if (userData?.perusahaan) {
+          companyInfo.name = userData.perusahaan.nmPerusahaan || companyInfo.name;
+          companyInfo.address = userData.perusahaan.alamatPerusahaan || companyInfo.address;
+          companyInfo.email = userData.perusahaan.emailPerusahaan || companyInfo.email;
+          companyInfo.phone = userData.perusahaan.tlpPerusahaan || companyInfo.phone;
+      }
+
+      // Hitung grand total
+      let grandTotal = 0;
+      dataToExport.forEach(row => {
+          const totalValue = parseFloat(row.total) || 0;
+          grandTotal += totalValue;
+      });
+
+      // Format grand total
+      const formattedGrandTotal = new Intl.NumberFormat('id-ID', {
+          style: 'currency',
+          currency: 'IDR',
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0
+      }).format(grandTotal);
+
+      // Buat PDF
+      const doc = new jsPDF('landscape');
+      const pageWidth = doc.internal.pageSize.width;
+      const pageHeight = doc.internal.pageSize.height;
+
+      // Gunakan font yang tersedia di jsPDF
+      const fontFamily = 'helvetica';
+
+      // Logo perusahaan (jika ada)
+      if (companyInfo.logo) {
+          try {
+              doc.addImage(companyInfo.logo, 'PNG', pageWidth - 60, 10, 50, 20);
+          } catch (e) {
+              void e;
+          }
+      }
+
+      // Info perusahaan di kanan atas
+      doc.setFontSize(10);
+      doc.setFont(fontFamily, 'bold');
+      if (companyInfo.name) doc.text(String(companyInfo.name), pageWidth - 10, 15, { align: 'right' });
+
+      doc.setFontSize(8);
+      doc.setFont(fontFamily, 'normal');
+      if (companyInfo.address) doc.text(String(companyInfo.address), pageWidth - 10, 22, { align: 'right' });
+      if (companyInfo.email) doc.text(`Email: ${String(companyInfo.email)}`, pageWidth - 10, 28, { align: 'right' });
+      if (companyInfo.phone) doc.text(`Telp: ${String(companyInfo.phone)}`, pageWidth - 10, 34, { align: 'right' });
+
+      // Judul di kiri atas
+      doc.setFontSize(16);
+      doc.setFont(fontFamily, 'bold');
+      doc.text('Laporan Quotations', 14, 15);
+
+      // Timestamp dan jumlah data
+      doc.setFontSize(10);
+      doc.setFont(fontFamily, 'normal');
+      doc.text(`Dibuat pada: ${new Date().toLocaleString('id-ID')}`, 14, 25);
+      doc.text(`Total Data: ${dataToExport.length}`, 14, 32);
+
+      // Info filter
+      const filterInfo = [];
+      if (filters.value.customerId) {
+          const customer = customers.value?.find(c => c.id === filters.value.customerId);
+          if (customer) {
+              filterInfo.push(`Customer: ${customer.name}`);
+          }
+      }
+      if (filters.value.status) {
+          const statusLabel = filters.value.status.charAt(0).toUpperCase() + filters.value.status.slice(1);
+          filterInfo.push(`Status: ${statusLabel}`);
+      }
+      if (filters.value.search) {
+          filterInfo.push(`Pencarian: ${filters.value.search}`);
+      }
+
+      // Tampilkan filter info
+      if (filterInfo.length > 0) {
+          doc.setFontSize(8);
+          doc.setFont(fontFamily, 'italic');
+          filterInfo.forEach((info, index) => {
+              doc.text(info, 14, 40 + (index * 6));
+          });
+      }
+
+      // Buat tabel
+      autoTable(doc, {
+          head: head,
+          body: body,
+          startY: filterInfo.length > 0 ? 50 + (filterInfo.length * 6) : 45,
+          styles: {
+              font: fontFamily,
+              fontSize: 7,
+              cellPadding: 2,
+              overflow: 'linebreak',
+              halign: 'left',
+          },
+          headStyles: {
+              fillColor: [41, 128, 185],
+              textColor: 255,
+              fontStyle: 'bold',
+              halign: 'center',
+          },
+          alternateRowStyles: {
+              fillColor: [245, 245, 245],
+          },
+          margin: { top: 30, right: 10, bottom: 10, left: 10 },
+          tableWidth: 'auto',
+          columnStyles: columnStyles,
+          didDrawPage: function (data) {
+              // Tambahkan nomor halaman
+              const pageCount = doc.internal.getNumberOfPages();
+              doc.setFontSize(8);
+              doc.setFont(fontFamily, 'normal');
+              doc.text(`Halaman ${pageCount}`, data.settings.margin.left, doc.internal.pageSize.height - 10);
+          },
+          didParseCell: function (data) {
+              // Highlight kolom total
+              if (data.column.index === columnDefinitions.findIndex(col => col.field === 'total')) {
+                  if (data.section === 'head') {
+                      data.cell.styles.textColor = [255, 255, 255];
+                  } else {
+                      data.cell.styles.fontStyle = 'bold';
+                      data.cell.styles.fillColor = [200, 255, 200];
+                  }
+              }
+          },
+      });
+
+      // Grand total setelah tabel
+      const finalY = doc.lastAutoTable.finalY || 200;
+
+      // Garis pemisah
+      doc.setDrawColor(200, 200, 200);
+      doc.line(10, finalY + 5, doc.internal.pageSize.width - 10, finalY + 5);
+
+      // Grand total
+      doc.setFontSize(12);
+      doc.setFont(fontFamily, 'bold');
+      doc.text('Grand Total:', 10, finalY + 20);
+      doc.text(String(formattedGrandTotal), doc.internal.pageSize.width - 10, finalY + 20, { align: 'right' });
+
+      // Info ringkasan
+      doc.setFontSize(8);
+      doc.setFont(fontFamily, 'normal');
+      doc.text(`Total Quotations: ${dataToExport.length}`, 10, finalY + 30);
+
+      // Pastikan pembagian tidak menghasilkan NaN atau Infinity
+      let rataRata = 0;
+      if (dataToExport.length > 0) {
+          rataRata = grandTotal / dataToExport.length;
+      }
+      doc.text(
+          `Rata-rata per Quotation: ${new Intl.NumberFormat('id-ID', {
+              style: 'currency',
+              currency: 'IDR',
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 0
+          }).format(rataRata)}`,
+          10,
+          finalY + 37
+      );
+
+      doc.save('quotations.pdf');
+    });
+};
+
+// Fungsi export Excel khusus untuk Quotation
+const exportQuotationExcel = (dataToExport) => {
+    return Promise.all([
+        import('xlsx')
+    ]).then(([XLSX]) => {
+        // Definisikan kolom yang akan diexport
+        const columnDefinitions = [
+            { field: 'noQuotation', header: 'No. Quotation' },
+            { field: 'customer.name', header: 'Nama Customer' },
+            { field: 'status', header: 'Status' },
+            { field: 'date', header: 'Tanggal' },
+            { field: 'validUntil', header: 'Valid Until' },
+            { field: 'perusahaan.nmPerusahaan', header: 'Perusahaan' },
+            { field: 'cabang.nmCabang', header: 'Cabang' },
+            { field: 'total', header: 'Total' }
+        ];
+
+        if (!dataToExport || dataToExport.length === 0) {
+            console.warn('Tidak ada data untuk diexport');
+            return;
+        }
+
+        // Ambil info perusahaan dari user atau data yang tersedia
+        const userData = userStore.user;
+        let companyInfo = {
+            name: 'PT. ANDARA PRIMA UTAMA',
+            address: 'Jl. Kelapa Dua No.21 RT.008 RW.003 Kec. Cilincing Kel. Cilincing - Jakarta Utara',
+            email: 'andaraprimautama@gmail.com',
+            phone: '+62 812-7522-9704'
+        };
+
+        // Coba ambil dari user data jika tersedia
+        if (userData?.perusahaan) {
+            companyInfo.name = userData.perusahaan.nmPerusahaan || companyInfo.name;
+            companyInfo.address = userData.perusahaan.alamatPerusahaan || companyInfo.address;
+            companyInfo.email = userData.perusahaan.emailPerusahaan || companyInfo.email;
+            companyInfo.phone = userData.perusahaan.tlpPerusahaan || companyInfo.phone;
+        }
+
+        // Hitung grand total
+        let grandTotal = 0;
+        dataToExport.forEach(row => {
+            const totalValue = parseFloat(row.total) || 0;
+            grandTotal += totalValue;
+        });
+
+        // Format grand total
+        const formattedGrandTotal = new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(grandTotal);
+
+        // Buat data untuk Excel
+        const excelData = [];
+
+        // Header perusahaan
+        excelData.push([companyInfo.name]);
+        excelData.push([companyInfo.address]);
+        excelData.push([`Email: ${companyInfo.email}`]);
+        excelData.push([`Telp: ${companyInfo.phone}`]);
+        excelData.push([]); // Baris kosong
+
+        // Judul laporan
+        excelData.push(['Laporan Quotations']);
+        excelData.push([`Dibuat pada: ${new Date().toLocaleString('id-ID')}`]);
+        excelData.push([`Total Data: ${dataToExport.length}`]);
+
+        // Info filter
+        const filterInfo = [];
+        if (filters.value.customerId) {
+            const customer = customers.value?.find(c => c.id === filters.value.customerId);
+            if (customer) {
+                filterInfo.push(`Customer: ${customer.name}`);
+            }
+        }
+        if (filters.value.status) {
+            const statusLabel = filters.value.status.charAt(0).toUpperCase() + filters.value.status.slice(1);
+            filterInfo.push(`Status: ${statusLabel}`);
+        }
+        if (filters.value.search) {
+            filterInfo.push(`Pencarian: ${filters.value.search}`);
+        }
+
+        // Tampilkan filter info
+        if (filterInfo.length > 0) {
+            filterInfo.forEach((info) => {
+                excelData.push([info]);
+            });
+        }
+
+        excelData.push([]); // Baris kosong
+
+        // Header tabel
+        excelData.push(columnDefinitions.map(col => col.header));
+
+        // Data tabel
+        dataToExport.forEach(row => {
+            const rowData = columnDefinitions.map(col => {
+                let value = '';
+                
+                if (col.field.includes('.')) {
+                    const fields = col.field.split('.');
+                    let currentValue = row;
+                    for (const field of fields) {
+                        currentValue = currentValue?.[field];
+                    }
+                    value = currentValue || '-';
+                } else {
+                    value = row[col.field] || '-';
+                }
+
+                // Format khusus untuk field tertentu
+                if (col.field === 'date' || col.field === 'validUntil') {
+                    if (value && value !== '-') {
+                        value = new Date(value).toLocaleDateString('id-ID');
+                    }
+                } else if (col.field === 'total') {
+                    if (value && value !== '-') {
+                        const numValue = parseFloat(value);
+                        if (!isNaN(numValue)) {
+                            value = new Intl.NumberFormat('id-ID', {
+                                style: 'currency',
+                                currency: 'IDR',
+                                minimumFractionDigits: 0,
+                                maximumFractionDigits: 0
+                            }).format(numValue);
+                        }
+                    }
+                } else if (col.field === 'status') {
+                    if (value === 'draft') value = 'Draft';
+                    else if (value === 'approved') value = 'Approved';
+                    else if (value === 'rejected') value = 'Rejected';
+                }
+
+                return String(value);
+            });
+            excelData.push(rowData);
+        });
+
+        // Baris kosong
+        excelData.push([]);
+
+        // Summary
+        excelData.push(['Grand Total:', formattedGrandTotal]);
+        excelData.push(['Total Quotations:', dataToExport.length]);
+
+        // Pastikan pembagian tidak menghasilkan NaN atau Infinity
+        let rataRata = 0;
+        if (dataToExport.length > 0) {
+            rataRata = grandTotal / dataToExport.length;
+        }
+        excelData.push([
+            'Rata-rata per Quotation:', 
+            new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(rataRata)
+        ]);
+
+        // Buat workbook
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet(excelData);
+
+        // Set column widths
+        const colWidths = [
+            { wch: 20 }, // No. Quotation
+            { wch: 25 }, // Nama Customer
+            { wch: 15 }, // Status
+            { wch: 15 }, // Tanggal
+            { wch: 15 }, // Valid Until
+            { wch: 25 }, // Perusahaan
+            { wch: 20 }, // Cabang
+            { wch: 20 }  // Total
+        ];
+        ws['!cols'] = colWidths;
+
+        // Style untuk header perusahaan
+        const headerRow = 0;
+        if (ws[`A${headerRow + 1}`]) {
+            ws[`A${headerRow + 1}`].s = { font: { bold: true, size: 14 } };
+        }
+
+        // Style untuk judul laporan
+        const titleRow = 5;
+        if (ws[`A${titleRow + 1}`]) {
+            ws[`A${titleRow + 1}`].s = { font: { bold: true, size: 12 } };
+        }
+
+        // Style untuk header tabel
+        const tableHeaderRow = titleRow + 3 + filterInfo.length + 1;
+        columnDefinitions.forEach((_, index) => {
+            const cellRef = XLSX.utils.encode_cell({ r: tableHeaderRow, c: index });
+            if (ws[cellRef]) {
+                ws[cellRef].s = {
+                    font: { bold: true, color: { rgb: "FFFFFF" } },
+                    fill: { fgColor: { rgb: "2980B9" } },
+                    alignment: { horizontal: "center" },
+                    border: {
+                        top: { style: "thin", color: { rgb: "000000" } },
+                        bottom: { style: "thin", color: { rgb: "000000" } },
+                        left: { style: "thin", color: { rgb: "000000" } },
+                        right: { style: "thin", color: { rgb: "000000" } }
+                    }
+                };
+            }
+        });
+
+        // Tambahkan border pada semua data tabel
+        for (let row = tableHeaderRow + 1; row < tableHeaderRow + 1 + dataToExport.length; row++) {
+            for (let col = 0; col < columnDefinitions.length; col++) {
+                const cellRef = XLSX.utils.encode_cell({ r: row, c: col });
+                if (ws[cellRef]) {
+                    if (!ws[cellRef].s) ws[cellRef].s = {};
+                    ws[cellRef].s.border = {
+                        top: { style: "thin", color: { rgb: "000000" } },
+                        bottom: { style: "thin", color: { rgb: "000000" } },
+                        left: { style: "thin", color: { rgb: "000000" } },
+                        right: { style: "thin", color: { rgb: "000000" } }
+                    };
+                }
+            }
+        }
+
+        // Style untuk summary
+        const summaryStartRow = tableHeaderRow + dataToExport.length + 2;
+        if (ws[`A${summaryStartRow + 1}`]) {
+            ws[`A${summaryStartRow + 1}`].s = { font: { bold: true } };
+        }
+        if (ws[`A${summaryStartRow + 2}`]) {
+            ws[`A${summaryStartRow + 2}`].s = { font: { bold: true } };
+        }
+        if (ws[`A${summaryStartRow + 3}`]) {
+            ws[`A${summaryStartRow + 3}`].s = { font: { bold: true } };
+        }
+
+        XLSX.utils.book_append_sheet(wb, ws, 'Quotations');
+        XLSX.writeFile(wb, 'quotations.xlsx');
+    });
+};
 
   // Row expansion methods
   const onRowToggle = (event) => {

@@ -24,6 +24,7 @@
   const author = route.meta.author;
   const robots = route.meta.robots;
   const viewport = route.meta.viewport;
+  const generator = route.meta.generator || 'Kainnova Digital Solutions';
 </script>
 
 <style>

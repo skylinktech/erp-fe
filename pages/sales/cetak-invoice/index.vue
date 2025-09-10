@@ -48,7 +48,7 @@
         
         <!-- Invoice Header - Right -->
         <div class="invoice-header text-end">
-          <h2 class="mb-4 text-capitalize fw-bold">SALES INVOICE</h2>
+          <h2 class="mb-4 text-capitalize fw-bold">INVOICE</h2>
           <table style="font-size: 12px; width: 100%;">
             <tr>
               <td style="text-align: right;">No. Invoice</td>

@@ -1054,5 +1054,64 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
             this.stats = defaultStats;
         }
     },
+
+    async fetchAllPurchaseOrdersForExport() {
+        const toast = useToast();
+        const { $api } = useNuxtApp();
+        try {
+            const token = localStorage.getItem('token');
+            
+            // Buat URL dengan parameter yang sama seperti filter saat ini
+            const url = new URL($api.purchaseOrder());
+            const params = new URLSearchParams({
+                page: '1',
+                rows: '10000', // Ambil semua data
+                sortField: this.params.sortField || 'created_at',
+                sortOrder: this.params.sortOrder?.toString() || '2',
+                draw: '1',
+                search: this.params.search || '',
+                includeItems: 'true',
+            });
+
+            // Tambahkan filter yang aktif
+            if (this.params.vendorId) {
+                params.append('vendorId', this.params.vendorId.toString());
+            }
+            if (this.params.poType) {
+                params.append('poType', this.params.poType);
+            }
+            if (this.params.status) {
+                params.append('status', this.params.status);
+            }
+
+            url.search = params.toString();
+
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error('Gagal mengambil data untuk export');
+            }
+
+            const result = await response.json();
+            return Array.isArray(result.data) ? result.data : [];
+        } catch (error) {
+            console.error('Error fetching all purchase orders for export:', error);
+            toast.error({
+                title: 'Error',
+                message: 'Gagal mengambil data untuk export',
+                color: 'red',
+                position: 'topRight',
+            });
+            return [];
+        }
+    },
   }
 })

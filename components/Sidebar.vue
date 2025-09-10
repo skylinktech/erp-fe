@@ -100,10 +100,7 @@
     });
 
     const filteredAndSortedMenuGroups = computed(() => {
-      // Pastikan user store sudah siap
-      if (!userStore.user) return [];
-      
-      // Gunakan filteredMenuGroups dari store yang sudah memfilter berdasarkan permission
+      // Gunakan filteredMenuGroups dari store yang sudah memfilter berdasarkan permission di backend
       const filteredGroups = menuGroupsStore.filteredMenuGroups;
       
       if (!filteredGroups || filteredGroups.length === 0) return [];
@@ -176,13 +173,17 @@
 
     onMounted(async () => {
       await userStore.loadUser();
-      await menuGroupsStore.fetchAllMenuGroups();
-      setActiveGroup();
+      // Pastikan user sudah loaded sebelum fetch menu groups
+      if (userStore.user) {
+        await menuGroupsStore.fetchAllMenuGroups();
+        setActiveGroup();
+      }
     });
 
     // Watch untuk user store agar menu groups di-refresh ketika user berubah
-    watch(() => userStore.user, async () => {
-      if (userStore.user) {
+    watch(() => userStore.user, async (newUser, oldUser) => {
+      // Hanya fetch ulang jika user benar-benar berubah (bukan dari null ke user)
+      if (newUser && newUser !== oldUser) {
         await menuGroupsStore.fetchAllMenuGroups();
         setActiveGroup();
       }

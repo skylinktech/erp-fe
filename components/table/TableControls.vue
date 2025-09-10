@@ -19,7 +19,7 @@
             <i class="ri-upload-2-line me-1"></i> Export
           </button>
           <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="javascript:void(0)" @click="handleExport('csv')">CSV</a></li>
+            <li><a class="dropdown-item" href="javascript:void(0)" @click="handleExport('excel')">Excel</a></li>
             <li><a class="dropdown-item" href="javascript:void(0)" @click="handleExport('pdf')">PDF</a></li>
           </ul>
         </div>
@@ -72,7 +72,7 @@
               <i class="ri-upload-2-line me-1"></i> Export
             </button>
             <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="javascript:void(0)" @click="handleExport('csv')">CSV</a></li>
+              <li><a class="dropdown-item" href="javascript:void(0)" @click="handleExport('excel')">Excel</a></li>
               <li><a class="dropdown-item" href="javascript:void(0)" @click="handleExport('pdf')">PDF</a></li>
             </ul>
           </div>
