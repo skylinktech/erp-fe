@@ -157,6 +157,12 @@
                                     </template>
                                 </Column>
                                 <Column field="warehouse.name" header="Gudang" :sortable="true"></Column>
+                                <Column field="postedByUser.fullName" header="Pengirim" :sortable="true"></Column>
+                                <Column field="postedAt" header="Dipost pada" :sortable="true" v-if="userHasRole('superadmin')">
+                                    <template #body="slotProps">
+                                        {{ slotProps.data.postedAt ? new Date(slotProps.data.postedAt).toLocaleString('id-ID') : '-' }}
+                                    </template>
+                                </Column>
                                 <Column field="purchaseOrder.receivedByUser.fullName" header="Penerima" :sortable="true"></Column>
                                 <Column header="Actions" :exportable="false" style="min-width:8rem">
                                     <template #body="slotProps">
@@ -174,7 +180,7 @@
                                                         <i class="ri-eye-line me-2"></i> Lihat Detail
                                                     </a>
                                                 </li>
-                                                <li v-if="userHasRole('superadmin') || (userHasPermission('delete_stock_in') && slotProps.data.status == 'Received')">
+                                                <li v-if="userHasRole('superadmin') || (userHasPermission('delete_stock_in'))">
                                                     <a class="dropdown-item text-danger" href="javascript:void(0)" @click="deleteStockIn(slotProps.data.id)">
                                                         <i class="ri-delete-bin-7-line me-2"></i> Hapus
                                                     </a>
