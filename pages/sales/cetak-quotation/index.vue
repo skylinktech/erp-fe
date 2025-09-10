@@ -1,12 +1,12 @@
 <template>
     <div v-if="loading" class="text-center p-6">
       <ProgressSpinner 
-                    style="width: 50px; height: 50px" 
-                    strokeWidth="4"
-                    fill="transparent"
-                    animationDuration="1s"
-                />
-                <div class="mt-3 text-muted">Memuat data...</div>
+        style="width: 50px; height: 50px" 
+        strokeWidth="4"
+        fill="transparent"
+        animationDuration="1s"
+      />
+      <div class="mt-3 text-muted">Memuat data...</div>
     </div>
     <div v-else-if="error" class="alert alert-danger m-6">{{ error.message }}</div>
     <div v-else-if="quotation" class="p-6">
@@ -44,6 +44,16 @@
               <td style="text-align: right;">Tanggal</td>
               <td style="width: 20px;">:</td>
               <td style="width: 50%;">{{ new Date(quotation.date).toLocaleDateString('id-ID') }}</td>
+            </tr>
+            <tr>
+              <td style="text-align: right; vertical-align: top;">Customer</td>
+              <td style="width: 20px; vertical-align: top;">:</td>
+              <td class="text-end" style="width: 50%; vertical-align: top;">{{ quotation.customer?.name || '-' }}</td>
+            </tr>
+            <tr>
+              <td style="text-align: right;">PIC</td>
+              <td style="width: 20px;">:</td>
+              <td style="width: 50%;">{{ quotation.up || '-' }}</td>
             </tr>
           </table>
         </div>
