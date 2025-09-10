@@ -138,12 +138,13 @@ export default defineNuxtPlugin(() => {
     taxesActive: () => `${apiBase}/accounting/taxes/active`,
 
     // Journal Entries
-    journalEntries: () => `${apiBase}/accounting/journal-entries`,
-    journalEntriesStore: () => `${apiBase}/accounting/journal-entries/store`,
-    journalEntriesUpdate: (id: number | string) => `${apiBase}/accounting/journal-entries/update/${id}`,
-    journalEntriesShow: (id: number | string) => `${apiBase}/accounting/journal-entries/${id}`,
-    journalEntriesDelete: (id: number | string) => `${apiBase}/accounting/journal-entries/delete/${id}`,
-    journalEntriesSummary: () => `${apiBase}/accounting/journal-entries/summary`,
+    journals: () => `${apiBase}/accounting/journals`,
+    journalEntries: () => `${apiBase}/accounting/journals`,
+    journalEntriesStore: () => `${apiBase}/accounting/journals/store`,
+    journalEntriesUpdate: (id: number | string) => `${apiBase}/accounting/journals/update/${id}`,
+    journalEntriesShow: (id: number | string) => `${apiBase}/accounting/journals/${id}`,
+    journalEntriesDelete: (id: number | string) => `${apiBase}/accounting/journals/delete/${id}`,
+    journalEntriesSummary: () => `${apiBase}/accounting/journals/summary`,
 
     // Sales Order
     salesOrder             : () => `${apiBase}/sales-order`,

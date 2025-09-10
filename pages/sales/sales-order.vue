@@ -1530,7 +1530,7 @@ const onRowToggle = (event) => {
 
     /* ✅ NEW: Styling untuk option yang dipilih */
     :deep(.v-select-style .vs__dropdown-option--highlight) {
-        background-color: #696cff !important;
+        background-color: #4a4a4a !important;
         color: white !important;
     }
 
@@ -1557,13 +1557,13 @@ const onRowToggle = (event) => {
     }
 
     :deep(.v-select-style .vs__dropdown-option--highlight:hover) {
-        background-color: #696cff !important;
+        background-color: #4a4a4a !important;
         color: white !important;
     }
 
     /* ✅ NEW: Memastikan highlight menutupi seluruh area option */
     :deep(.v-select-style .vs__dropdown-option--highlight) {
-        background-color: #696cff !important;
+        background-color: #4a4a4a !important;
         color: white !important;
         display: block !important;
         width: 100% !important;

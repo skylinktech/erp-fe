@@ -304,7 +304,7 @@ watch(() => props.isVisible, async (newValue) => {
 }
 
 .search-input:focus {
-  border-color: #696cff;
+  border-color: #4a4a4a;
 }
 
 .search-close-btn {
@@ -355,7 +355,7 @@ watch(() => props.isVisible, async (newValue) => {
 .result-item:hover,
 .result-item.active {
   background-color: #f8f9fa;
-  border-left-color: #696cff;
+  border-left-color: #4a4a4a;
 }
 
 .result-icon {
@@ -367,7 +367,7 @@ watch(() => props.isVisible, async (newValue) => {
   align-items: center;
   justify-content: center;
   margin-right: 16px;
-  color: #696cff;
+  color: #4a4a4a;
   font-size: 18px;
 }
 
@@ -468,7 +468,7 @@ watch(() => props.isVisible, async (newValue) => {
 .quick-action-icon {
   width: 32px;
   height: 32px;
-  background: #696cff;
+  background: #4a4a4a;
   color: white;
   border-radius: 6px;
   display: flex;

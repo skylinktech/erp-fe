@@ -2,7 +2,7 @@
     <div class="content-wrapper">
         <!-- Content -->
         <div class="container-xxl flex-grow-1 container-p-y">
-            <div v-if="menuDetails.length > 0">
+            <div>
                     <h4 class="mb-1">List Menu Detail</h4>
                     <p class="mb-6">
                     List menu detail yang terdaftar di sistem
@@ -124,20 +124,6 @@
                         </div>
                     </div>
                     <!--/ menu detail cards -->
-                </div>
-                <div v-else class="text-center">
-                    <div class="d-flex flex-column align-items-center">
-                        <img src="/img/illustrations/misc-under-maintenance-illustration.png" alt="page-misc-under-maintenance" width="300" class="img-fluid" />
-                        <h4 class="mt-4">Tidak ada data Menu Detail</h4>
-                        <p class="mb-4">
-                            Saat ini belum ada data menu detail yang tersedia.<br />
-                            Silakan buat menu detail baru untuk memulai.
-                        </p>
-                        <button @click="menuDetailStore.openModal()" class="btn btn-primary">
-                            <i class="ri-add-line me-1"></i>
-                            Tambah Menu Detail
-                        </button>
-                    </div>
                 </div>
                 <!-- Placeholder untuk MenuModal component -->
             <Modal 

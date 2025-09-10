@@ -415,7 +415,6 @@
                                 <div v-for="(item, index) in form.purchaseOrderItems" :key="index" class="repeater-item mb-4">
                                     <div class="row g-3">
                                         <div class="col-12">
-                                            <label class="form-label">Gudang</label>
                                             <v-select 
                                                 v-model="item.warehouseId" 
                                                 :options="warehouses || []" 
@@ -427,7 +426,6 @@
                                                 @update:modelValue="onWarehouseChange(index)"
                                                 :clearable="true"
                                             />
-                                            <small class="text-muted">Gudang tersedia: {{ warehouses?.length || 0 }} - Pilih gudang untuk informasi tambahan (semua produk tetap tersedia)</small>
                                         </div>
                                         <div class="col-md-4">
                                             <v-select 
@@ -472,13 +470,6 @@
                                                     </div>
                                                 </template>
                                             </v-select>
-                                            <small class="text-muted">
-                                                Produk tersedia: {{ getProductsByWarehouse(item.warehouseId)?.length || 0 }} 
-                                                | Selected: {{ item.productId }}
-                                                <span class="text-info">
-                                                    (Semua produk tersedia)
-                                                </span>
-                                            </small>
                                         </div>
                                         <div class="col-md-2">
                                             <div class="form-floating form-floating-outline">
@@ -510,11 +501,11 @@
                                     </div>
                                     <hr class="my-4">
                                 </div>
-                                <div class="mt-4">
-                                    <button @click.prevent="purchaseOrderStore.addItem()" class="btn btn-primary">Tambah Item</button>
+                                <div class="mt-4 col-12">
+                                    <button @click.prevent="purchaseOrderStore.addItem()" class="btn btn-primary col-12 btn-sm">Tambah Item</button>
                                 </div>
-                                <div class="d-flex justify-content-end mt-4">
-                                    <span class="fw-bold fs-5">Grand Total: {{ formatRupiah(grandTotal) }}</span>
+                                <div class="d-flex justify-content-end mt-6">
+                                    <span class="fw-bold fs-7">Grand Total: {{ formatRupiah(grandTotal) }}</span>
                                 </div>
                             </div>
                         </div>
@@ -1083,6 +1074,7 @@ const onRowToggle = (event) => {
     :deep(.v-select-style .vs__dropdown-menu) {
         max-height: 300px !important;
         overflow-y: auto !important;
+        border-radius: 7px !important;
     }
 
     :deep(.v-select-style .vs__dropdown-option--highlight) {

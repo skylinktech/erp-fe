@@ -680,7 +680,7 @@ const getFieldError = (fieldName) => {
 
     /* Icon styling */
     .card .ri-bar-chart-line {
-        color: #696cff !important;
+        color: #4a4a4a !important;
         opacity: 0.8;
     }
 
@@ -712,7 +712,7 @@ const getFieldError = (fieldName) => {
 
     :deep(.p-datatable img[style*="cursor: pointer"]:hover) {
         transform: scale(1.05);
-        border-color: #696cff;
+        border-color: #4a4a4a;
         box-shadow: 0 2px 8px rgba(105, 108, 255, 0.3);
     }
 

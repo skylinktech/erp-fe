@@ -156,7 +156,7 @@ const getTotalQuantity = () => {
 }
 
 .text-primary {
-  color: #696cff !important;
+  color: #4a4a4a !important;
 }
 
 .text-success {

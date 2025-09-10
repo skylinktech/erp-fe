@@ -792,7 +792,7 @@ const handleSearch = async (value) => {
 }
 
 :deep(.v-select-style .vs__dropdown-toggle:focus-within) {
-  border-color: #696cff !important;
+  border-color: #4a4a4a !important;
   box-shadow: 0 0 0.375rem 0.25rem rgba(105, 108, 255, 0.08) !important;
 }
 
@@ -881,7 +881,7 @@ const handleSearch = async (value) => {
 }
 
 :deep(.v-select-style .vs__dropdown-toggle:focus-within) {
-  border-color: #696cff !important;
+  border-color: #4a4a4a !important;
   box-shadow: 0 0 0.375rem 0.25rem rgba(105, 108, 255, 0.08) !important;
 }
 

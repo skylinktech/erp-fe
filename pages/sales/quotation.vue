@@ -994,7 +994,7 @@ const filters = ref({
 
       /* ✅ NEW: Styling untuk option yang sedang dipilih - konsisten dengan purchase-order */
       :deep(.v-select-style .vs__dropdown-option--selected) {
-          background-color: #696cff !important;
+          background-color: #4a4a4a !important;
           color: white !important;
           font-weight: 600 !important;
       }
@@ -1045,7 +1045,7 @@ const filters = ref({
 
       /* ✅ NEW: Styling untuk option yang sedang difilter - konsisten dengan purchase-order */
       :deep(.v-select-style .vs__dropdown-option--highlight) {
-          background-color: #696cff !important;
+          background-color: #4a4a4a !important;
           color: white !important;
           font-weight: 600 !important;
       }
@@ -1073,13 +1073,13 @@ const filters = ref({
       }
 
       :deep(.v-select-style .vs__dropdown-option--highlight:hover) {
-          background-color: #696cff !important;
+          background-color: #4a4a4a !important;
           color: white !important;
       }
 
       /* ✅ NEW: Memastikan highlight menutupi seluruh area option */
       :deep(.v-select-style .vs__dropdown-option--highlight) {
-          background-color: #696cff !important;
+          background-color: #4a4a4a !important;
           color: white !important;
           display: block !important;
           width: 100% !important;
