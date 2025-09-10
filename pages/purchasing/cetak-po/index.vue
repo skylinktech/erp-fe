@@ -16,21 +16,32 @@
         <div v-if="purchaseOrder.perusahaan" class="logo-section">
           <div class="d-flex svg-illustration align-content-center gap-2 mb-4">
             <span class="app-brand-logo demo">
-              <img src="~/public/img/branding/andara.png" alt="logo" width="250">
+              <img
+                :src="getCompanyLogo(purchaseOrder.perusahaan.logoPerusahaan)" 
+                alt="logo Perusahaan" 
+                style="height: 60px; max-width: 200px; object-fit: contain; cursor: pointer;" 
+                @error="(e) => handleImageError(e, '/img/default-company-logo.png')"
+                @click="perusahaanStore.openImageInNewTab(purchaseOrder.perusahaan.logoPerusahaan)"
+                @load="debugImageUrl(purchaseOrder.perusahaan.logoPerusahaan)"
+                title="Klik untuk melihat gambar lengkap"
+              >
             </span>
           </div>
           <div class="text-start text-secondary-medium mt-6 mb-0" style="font-size: 12px; width: 220px; min-width: 220px;">
-            <p class="mb-0">
-              Alamat: {{ purchaseOrder.perusahaan?.alamatPerusahaan || purchaseOrder.perusahaan?.alamatPerusahaan || '-' }}
+            <p class="mb-2 fw-bold text-heading" style="font-size: 14px;">
+              {{ purchaseOrder.perusahaan?.nmPerusahaan || '-' }}
             </p>
             <p class="mb-0">
-              Telepon: {{ purchaseOrder.perusahaan?.tlpPerusahaan || purchaseOrder.perusahaan?.tlpPerusahaan || '-' }}
+              Alamat: {{ purchaseOrder.perusahaan?.alamatPerusahaan || '-' }}
             </p>
             <p class="mb-0">
-              Email: {{ purchaseOrder.perusahaan?.emailPerusahaan || purchaseOrder.perusahaan?.emailPerusahaan || '-' }}
+              Telepon: {{ purchaseOrder.perusahaan?.tlpPerusahaan || '-' }}
             </p>
             <p class="mb-0">
-              NPWP: {{ purchaseOrder.perusahaan?.npwpPerusahaan || purchaseOrder.perusahaan?.npwpPerusahaan || '-' }}
+              Email: {{ purchaseOrder.perusahaan?.emailPerusahaan || '-' }}
+            </p>
+            <p class="mb-0">
+              NPWP: {{ purchaseOrder.perusahaan?.npwpPerusahaan || '-' }}
             </p>
           </div>
         </div>
@@ -255,6 +266,7 @@
   })
   import { onMounted, computed } from 'vue';
   import { usePurchaseOrderStore } from '~/stores/purchaseOrder';
+  import { usePerusahaanStore } from '~/stores/perusahaan';
   import { storeToRefs } from 'pinia';
   import { useRoute } from 'vue-router';
   import { useDynamicTitle } from '~/composables/useDynamicTitle'
@@ -262,10 +274,11 @@
   
   // Composables
   const { setDetailTitle } = useDynamicTitle()
-  const { getCompanyLogo, handleImageError } = useImageUrl()
+  const { getCompanyLogo, handleImageError, debugImageUrl } = useImageUrl()
 
   const config             = useRuntimeConfig();
   const purchaseOrderStore = usePurchaseOrderStore();
+  const perusahaanStore    = usePerusahaanStore();
   const route              = useRoute();
   const formatRupiah       = useFormatRupiah();
   const toast              = useToast();
@@ -497,6 +510,19 @@
 
     .d-flex.justify-content-between .pt-6 {
       padding-top: 2rem !important;
+    }
+
+    /* Logo styling for print */
+    .logo-section img {
+      max-height: 60px !important;
+      max-width: 200px !important;
+      object-fit: contain !important;
+    }
+
+    /* Ensure logo is visible in print */
+    .app-brand-logo img {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
     }
   }
 </style> 

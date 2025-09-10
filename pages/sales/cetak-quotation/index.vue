@@ -15,18 +15,32 @@
         <div v-if="quotation.perusahaan" class="logo-section">
           <div class="d-flex svg-illustration align-content-center gap-2 mb-4">
             <span class="app-brand-logo demo">
-              <img src="~/public/img/branding/andara.png" alt="logo" width="250">
+              <img
+                :src="getCompanyLogo(quotation.perusahaan.logoPerusahaan)" 
+                alt="logo Perusahaan" 
+                style="height: 60px; max-width: 200px; object-fit: contain; cursor: pointer;" 
+                @error="(e) => handleImageError(e, '/img/default-company-logo.png')"
+                @click="perusahaanStore.openImageInNewTab(quotation.perusahaan.logoPerusahaan)"
+                @load="debugImageUrl(quotation.perusahaan.logoPerusahaan)"
+                title="Klik untuk melihat gambar lengkap"
+              >
             </span>
           </div>
           <div class="text-start text-secondary-medium mt-6 mb-0" style="font-size: 12px; width: 220px; min-width: 220px;">
-            <p class="mb-0">
-              Alamat: {{ quotation.perusahaan?.alamatPerusahaan || quotation.perusahaan?.alamatPerusahaan || '-' }}
+            <p class="mb-2 fw-bold text-heading" style="font-size: 14px;">
+              {{ quotation.perusahaan?.nmPerusahaan || '-' }}
             </p>
             <p class="mb-0">
-              Telepon: {{ quotation.perusahaan?.tlpPerusahaan || quotation.perusahaan?.tlpPerusahaan || '-' }}
+              Alamat: {{ quotation.perusahaan?.alamatPerusahaan || '-' }}
             </p>
             <p class="mb-0">
-              Email: {{ quotation.perusahaan?.emailPerusahaan || quotation.perusahaan?.emailPerusahaan || '-' }}
+              Telepon: {{ quotation.perusahaan?.tlpPerusahaan || '-' }}
+            </p>
+            <p class="mb-0">
+              Email: {{ quotation.perusahaan?.emailPerusahaan || '-' }}
+            </p>
+            <p class="mb-0">
+              NPWP: {{ quotation.perusahaan?.npwpPerusahaan || '-' }}
             </p>
           </div>
         </div>
@@ -217,16 +231,20 @@
   })
   import { onMounted, computed } from 'vue';
   import { useQuotationStore } from '~/stores/quotation';
+  import { usePerusahaanStore } from '~/stores/perusahaan';
   import { storeToRefs } from 'pinia';
   import { useRoute } from 'vue-router';
   import Swal from 'sweetalert2';
   import { useDynamicTitle } from '~/composables/useDynamicTitle'
+  import { useImageUrl } from '~/composables/useImageUrl'
 
   // Composables
   const { setDetailTitle } = useDynamicTitle()
+  const { getCompanyLogo, handleImageError, debugImageUrl } = useImageUrl()
 
   const config = useRuntimeConfig();
   const quotationStore = useQuotationStore();
+  const perusahaanStore = usePerusahaanStore();
   const route = useRoute();
   const formatRupiah = useFormatRupiah();
 
@@ -354,6 +372,19 @@
     .logo-section,
     .invoice-header {
       max-width: 50% !important;
+    }
+
+    /* Logo styling for print */
+    .logo-section img {
+      max-height: 60px !important;
+      max-width: 200px !important;
+      object-fit: contain !important;
+    }
+
+    /* Ensure logo is visible in print */
+    .app-brand-logo img {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
     }
   }
 </style> 

@@ -1,12 +1,12 @@
 <template>
     <div v-if="loading" class="text-center p-6">
       <ProgressSpinner 
-                    style="width: 50px; height: 50px" 
-                    strokeWidth="4"
-                    fill="transparent"
-                    animationDuration="1s"
-                />
-                <div class="mt-3 text-muted">Memuat data...</div>
+        style="width: 50px; height: 50px" 
+        strokeWidth="4"
+        fill="transparent"
+        animationDuration="1s"
+      />
+      <div class="mt-3 text-muted">Memuat data...</div>
     </div>
     <div v-else-if="error" class="alert alert-danger m-6">{{ error.message }}</div>
     <div v-else-if="suratJalan" class="p-6">
@@ -15,18 +15,32 @@
         <div v-if="suratJalan.salesOrder.perusahaan" class="logo-section">
           <div class="d-flex svg-illustration align-content-center gap-2 mb-4">
             <span class="app-brand-logo demo">
-              <img src="~/public/img/branding/andara.png" alt="logo" width="250">
+              <img
+                :src="getCompanyLogo(suratJalan.salesOrder.perusahaan.logoPerusahaan)" 
+                alt="logo Perusahaan" 
+                style="height: 60px; max-width: 200px; object-fit: contain; cursor: pointer;" 
+                @error="(e) => handleImageError(e, '/img/default-company-logo.png')"
+                @click="perusahaanStore.openImageInNewTab(suratJalan.salesOrder.perusahaan.logoPerusahaan)"
+                @load="debugImageUrl(suratJalan.salesOrder.perusahaan.logoPerusahaan)"
+                title="Klik untuk melihat gambar lengkap"
+              >
             </span>
           </div>
           <div class="text-start text-secondary-medium mt-6 mb-0" style="font-size: 12px; width: 220px; min-width: 220px;">
-            <p class="mb-0">
-              Alamat: {{ suratJalan.salesOrder.perusahaan?.alamatPerusahaan || suratJalan.salesOrder.perusahaan?.alamatPerusahaan || '-' }}
+            <p class="mb-2 fw-bold text-heading" style="font-size: 14px;">
+              {{ suratJalan.salesOrder.perusahaan?.nmPerusahaan || '-' }}
             </p>
             <p class="mb-0">
-              Telepon: {{ suratJalan.salesOrder.perusahaan?.tlpPerusahaan || suratJalan.salesOrder.perusahaan?.tlpPerusahaan || '-' }}
+              Alamat: {{ suratJalan.salesOrder.perusahaan?.alamatPerusahaan || '-' }}
             </p>
             <p class="mb-0">
-              Email: {{ suratJalan.salesOrder.perusahaan?.emailPerusahaan || suratJalan.salesOrder.perusahaan?.emailPerusahaan || '-' }}
+              Telepon: {{ suratJalan.salesOrder.perusahaan?.tlpPerusahaan || '-' }}
+            </p>
+            <p class="mb-0">
+              Email: {{ suratJalan.salesOrder.perusahaan?.emailPerusahaan || '-' }}
+            </p>
+            <p class="mb-0">
+              NPWP: {{ suratJalan.salesOrder.perusahaan?.npwpPerusahaan || '-' }}
             </p>
           </div>
         </div>
@@ -158,15 +172,19 @@
   })
   import { onMounted, computed } from 'vue';
   import { useSuratJalanStore } from '~/stores/surat-jalan';
+  import { usePerusahaanStore } from '~/stores/perusahaan';
   import { storeToRefs } from 'pinia';
   import { useRoute } from 'vue-router';
   import { useDynamicTitle } from '~/composables/useDynamicTitle'
-  
+  import { useImageUrl } from '~/composables/useImageUrl'
+
   // Composables
   const { setDetailTitle } = useDynamicTitle()
+  const { getCompanyLogo, handleImageError, debugImageUrl } = useImageUrl()
 
   const config          = useRuntimeConfig();
   const suratJalanStore = useSuratJalanStore();
+  const perusahaanStore = usePerusahaanStore();
   const route           = useRoute();
   const formatRupiah    = useFormatRupiah();
   const toast           = useToast();
@@ -202,6 +220,17 @@
 </script>
 
 <style>
+  /* Layout styles */
+  .logo-section {
+    flex: 1;
+    max-width: 50%;
+  }
+
+  .invoice-header {
+    flex: 1;
+    max-width: 50%;
+  }
+
   /* Custom styles for print */
   @media print {
     .no-print {
@@ -211,6 +240,25 @@
     /* Hide alert info when printing */
     .alert {
       display: none !important;
+    }
+
+    /* Ensure proper layout in print */
+    .logo-section,
+    .invoice-header {
+      max-width: 50% !important;
+    }
+
+    /* Logo styling for print */
+    .logo-section img {
+      max-height: 60px !important;
+      max-width: 200px !important;
+      object-fit: contain !important;
+    }
+
+    /* Ensure logo is visible in print */
+    .app-brand-logo img {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
     }
   }
 </style> 

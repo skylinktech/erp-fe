@@ -346,6 +346,14 @@ export const usePerusahaanStore = defineStore('perusahaan', {
             this.form.logoPerusahaan = file;
             this.form.logoPreview = URL.createObjectURL(file);
         }
+    },
+
+    openImageInNewTab(imagePath: string) {
+      if (imagePath) {
+        const { getCompanyLogo } = useImageUrl();
+        const fullImageUrl = getCompanyLogo(imagePath);
+        window.open(fullImageUrl, '_blank');
+      }
     }
   },
 })
