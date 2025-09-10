@@ -29,6 +29,9 @@
             <p class="mb-0">
               Email: {{ purchaseOrder.perusahaan?.emailPerusahaan || purchaseOrder.perusahaan?.emailPerusahaan || '-' }}
             </p>
+            <p class="mb-0">
+              NPWP: {{ purchaseOrder.perusahaan?.npwpPerusahaan || purchaseOrder.perusahaan?.npwpPerusahaan || '-' }}
+            </p>
           </div>
         </div>
         
