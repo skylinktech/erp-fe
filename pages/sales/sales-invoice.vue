@@ -256,7 +256,7 @@
                                                 </a>
                                                 <ul class="dropdown-menu">
                                                     <li v-if="userHasRole('superadmin') || (userHasPermission('view_sales_invoice'))">
-                                                        <a class="dropdown-item" href="javascript:void(0)" @click="viewSalesOrderDetails(slotProps.data.id)">
+                                                        <a class="dropdown-item" href="javascript:void(0)" @click="viewSalesInvoiceDetails(slotProps.data.id)">
                                                             <i class="ri-eye-line me-2"></i> Lihat Detail
                                                         </a>
                                                     </li>
