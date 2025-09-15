@@ -26,21 +26,18 @@
               >
             </span>
           </div>
-          <div class="text-start text-secondary-medium mt-6 mb-0" style="font-size: 12px; width: 220px; min-width: 220px;">
+          <div class="text-start text-secondary-medium mt-6 mb-0" style="width: 220px; min-width: 220px;">
             <p class="mb-2 fw-bold text-heading" style="font-size: 14px;">
               {{ quotation.perusahaan?.nmPerusahaan || '-' }}
             </p>
-            <p class="mb-0">
+            <p class="mb-0" style="font-size: 12px;">
               Alamat: {{ quotation.perusahaan?.alamatPerusahaan || '-' }}
             </p>
-            <p class="mb-0">
+            <p class="mb-0" style="font-size: 12px;">
               Telepon: {{ quotation.perusahaan?.tlpPerusahaan || '-' }}
             </p>
-            <p class="mb-0">
-              Email: {{ quotation.perusahaan?.emailPerusahaan || '-' }}
-            </p>
-            <p class="mb-0">
-              NPWP: {{ quotation.perusahaan?.npwpPerusahaan || '-' }}
+            <p class="mb-0" style="font-size: 12px;">
+              Email: sales@andara.co.id
             </p>
           </div>
         </div>
