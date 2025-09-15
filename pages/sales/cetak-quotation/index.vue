@@ -37,7 +37,7 @@
               Telepon: {{ quotation.perusahaan?.tlpPerusahaan || '-' }}
             </p>
             <p class="mb-0" style="font-size: 12px;">
-              Email: sales@andara.co.id
+              Email: sales@andara.co.id, {{ quotation.perusahaan?.emailPerusahaan || '-' }}
             </p>
           </div>
         </div>

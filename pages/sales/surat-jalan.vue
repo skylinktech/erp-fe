@@ -81,31 +81,15 @@
               <div class="col-12">
                   <!-- suratJalan Table -->
                   <div class="card">
-                      <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
-                          <div class="d-flex align-items-center me-3 mb-2 mb-md-0">
-                              <span class="me-2">Baris:</span>
-                              <Dropdown v-model="params.rows" :options="rowsPerPageOptionsArray" @change="handleRowsChange" placeholder="Jumlah" style="width: 8rem;" />
-                          </div>
-                          <div class="d-flex align-items-center">
-                              <div class="btn-group me-2">
-                                  <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                      <i class="ri-upload-2-line me-1"></i> Export
-                                  </button>
-                                  <ul class="dropdown-menu">
-                                      <li><a class="dropdown-item" href="javascript:void(0)" @click="exportData('csv')">CSV</a></li>
-                                      <li><a class="dropdown-item" href="javascript:void(0)" @click="exportData('pdf')">PDF</a></li>
-                                  </ul>
-                              </div>
-                              <div class="input-group">
-                                  <span class="p-input-icon-left">
-                                      <InputText
-                                          v-model="globalFilterValue"
-                                          placeholder="Cari Surat Jalan..."
-                                          class="w-full md:w-20rem"
-                                      />
-                                  </span>
-                              </div>
-                          </div>
+                      <div class="card-header">
+                          <TableControls
+                              v-model="tableControls"
+                              :rows-per-page-options="rowsPerPageOptionsArray"
+                              search-placeholder="Cari Surat Jalan..."
+                              @rows-change="handleRowsChange"
+                              @search="handleSearch"
+                              @export="exportData"
+                          />
                       </div>
                       <div class="card-datatable table-responsive py-3 px-3">
                           <MyDataTable 
@@ -137,7 +121,7 @@
                                                 {{ slotProps.data.noSuratJalan }}
                                             </a>
                                         </template>
-                                    </Column>
+                                  </Column>
                                   <Column field="salesOrder.noSo" header="No. SO" :sortable="true">
                                       <template #body="slotProps">
                                           <span v-if="slotProps.data.salesOrder?.noSo && slotProps.data.salesOrder?.id">
@@ -437,6 +421,7 @@ import { useSalesOrderStore } from '~/stores/sales-order'
 import { useFormatRupiah } from '~/composables/formatRupiah'
 import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
+import TableControls from '~/components/table/TableControls.vue'
 import vSelect from 'vue-select'
 import Dropdown from 'primevue/dropdown'
 import Column from 'primevue/column'
@@ -481,6 +466,10 @@ search: '',
 const globalFilterValue = ref('');
 const alamatSamaDenganCustomer = ref(false)
 const salesOrderItems = ref([]) // State untuk menyimpan sales order items
+const tableControls = ref({
+    rows: 10,
+    search: '',
+});
 
 const rowsPerPageOptionsArray = ref([10, 25, 50, 100]);
 const modalTitle = computed(() => isEditMode.value ? 'Edit Surat Jalan' : 'Tambah Surat Jalan');
@@ -521,6 +510,10 @@ onMounted(async () => {
       modalInstance = new bootstrap.Modal(modalElement)
   }
   setListTitle('Surat Jalan', suratJalans.value.length)
+  
+  // Initialize table controls
+  tableControls.value.rows = Number(params.value.rows) || 10;
+  tableControls.value.search = globalFilterValue.value;
 });
 
 watch(showModal, (newValue) => {
@@ -697,6 +690,15 @@ watch(globalFilterValue, useDebounceFn((newValue) => {
   filters.value.search = newValue;
 }, 500));
 
+// Watch untuk sinkronisasi table controls
+watch(() => params.value.rows, (newValue) => {
+    tableControls.value.rows = Number(newValue) || 10;
+});
+
+watch(() => globalFilterValue.value, (newValue) => {
+    tableControls.value.search = newValue;
+});
+
 watch(filters, (newFilters) => {
   const { page, rows, ...restFilters } = newFilters;
   suratJalanStore.setFilters(restFilters);
@@ -711,6 +713,12 @@ const onPage = (event) => {
 const handleRowsChange = (value) => {
   const rowsValue = Number(value) || 10;
   params.value.rows = rowsValue;
+  params.value.first = 0;
+  suratJalanStore.fetchSuratJalans();
+};
+
+const handleSearch = (value) => {
+  globalFilterValue.value = value;
   params.value.first = 0;
   suratJalanStore.fetchSuratJalans();
 };

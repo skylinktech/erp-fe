@@ -72,10 +72,10 @@
                     <div class="card">
                         <div class="card-body">
                             <div class="row">
-                                <div class="col-md-6">
+                                <div class="col-md-6 mb-2">
                                     <v-select v-model="filters.customerId" :options="customers || []" label="name" :reduce="v => v.id" placeholder="Pilih Customer" class="v-select-style"/>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-6 mb-2">
                                     <v-select v-model="filters.status" :options="statusOptions" label="label" :reduce="option => option.value" placeholder="Pilih Status" class="v-select-style"/>
                                 </div>
                             </div>
@@ -85,31 +85,15 @@
                 <div class="col-12">
                     <!-- quotation Table -->
                     <div class="card">
-                        <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
-                            <div class="d-flex align-items-center me-3 mb-2 mb-md-0">
-                                <span class="me-2">Baris:</span>
-                                <Dropdown v-model="params.rows" :options="rowsPerPageOptionsArray" @change="handleRowsChange" placeholder="Jumlah" style="width: 8rem;" />
-                            </div>
-                            <div class="d-flex align-items-center">
-                                <div class="btn-group me-2">
-                                    <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <i class="ri-upload-2-line me-1"></i> Export
-                                    </button>
-                                    <ul class="dropdown-menu">
-                                        <li><a class="dropdown-item" href="javascript:void(0)" @click="exportData('csv')">CSV</a></li>
-                                        <li><a class="dropdown-item" href="javascript:void(0)" @click="exportData('pdf')">PDF</a></li>
-                                    </ul>
-                                </div>
-                                <div class="input-group">
-                                    <span class="p-input-icon-left">
-                                        <InputText
-                                            v-model="globalFilterValue"
-                                            placeholder="Cari Quotation..."
-                                            class="w-full md:w-20rem"
-                                        />
-                                    </span>
-                                </div>
-                            </div>
+                        <div class="card-header">
+                            <TableControls
+                                v-model="tableControls"
+                                :rows-per-page-options="rowsPerPageOptionsArray"
+                                search-placeholder="Cari Quotation..."
+                                @rows-change="handleRowsChange"
+                                @search="handleSearch"
+                                @export="exportData"
+                            />
                         </div>
                         <div class="card-datatable table-responsive py-3 px-3">
                             <MyDataTable 
@@ -135,7 +119,16 @@
                                             {{ params.first + slotProps.index + 1 }}
                                         </template>
                                     </Column>
-                                    <Column field="noQuotation" header="No. Quotation" :sortable="true"></Column>
+                                    <Column field="noQuotation" header="No. Quotation" :sortable="true">
+                                        <template #body="slotProps">
+                                            <a 
+                                                @click="navigateTo(`/sales/quotation-detail?id=${slotProps.data.id}`)" 
+                                                style="cursor: pointer; color: #666bff; text-decoration: underline;"
+                                            >
+                                                {{ slotProps.data.noQuotation }}
+                                            </a>
+                                        </template>
+                                  </Column>
                                     <Column field="customer.name" header="Nama Customer" :sortable="true"></Column>
                                     <Column field="status" header="Status" :sortable="true">
                                         <template #body="slotProps">
@@ -493,6 +486,7 @@
   import { usePermissions } from '~/composables/usePermissions'
 import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
+import TableControls from '~/components/table/TableControls.vue'
 import QuotationExpandedRow from '~/components/table/QuotationExpandedRow.vue'
 import vSelect from 'vue-select'
 import Dropdown from 'primevue/dropdown'
@@ -534,6 +528,10 @@ import InputText from 'primevue/inputtext'
 const globalFilterValue = ref('');
 const attachmentPreview = ref(null);
 const expandedRows = ref({});
+const tableControls = ref({
+    rows: 10,
+    search: '',
+});
 const filters = ref({
     search: '',
     customerId: null,
@@ -591,6 +589,10 @@ const filters = ref({
           modalInstance = new bootstrap.Modal(modalElement)
       }
       setListTitle('Quotation', quotations.value.length)
+      
+      // Initialize table controls
+      tableControls.value.rows = Number(params.value.rows) || 10;
+      tableControls.value.search = globalFilterValue.value;
   });
 
   watch(showModal, (newValue) => {
@@ -732,15 +734,29 @@ const filters = ref({
       }
   });
 
+  // Watch untuk sinkronisasi table controls
+  watch(() => params.value.rows, (newValue) => {
+      tableControls.value.rows = Number(newValue) || 10;
+  });
+
+  watch(() => globalFilterValue.value, (newValue) => {
+      tableControls.value.search = newValue;
+  });
+
   const onPage = (event) => {
       if (event) {
           quotationStore.setPagination(event);
       }
   };
-  const handleRowsChange = () => {
-      if (!params.value) return;
-      const oldRows = params.value.rows;
-      params.value.rows = Number(params.value.rows) || 10;
+  const handleRowsChange = (value) => {
+      const rowsValue = Number(value) || 10;
+      params.value.rows = rowsValue;
+      params.value.first = 0;
+      quotationStore.fetchQuotations();
+  };
+
+  const handleSearch = (value) => {
+      globalFilterValue.value = value;
       params.value.first = 0;
       quotationStore.fetchQuotations();
   };

@@ -142,24 +142,6 @@
                             ><i class="ri-printer-line ri-16px scaleX-n1-rtl me-2"></i>Print Quotation</span
                         >
                         </button>
-                        <button class="btn btn-outline-secondary d-grid w-100 mb-4">Download</button>
-                        <div class="d-flex mb-4">
-                        <a
-                            class="btn btn-outline-secondary d-grid w-100 me-4"
-                            target="_blank"
-                            href="./app-invoice-print.html">
-                            Print
-                        </a>
-                        <a href="./app-invoice-edit.html" class="btn btn-outline-secondary d-grid w-100"> Edit </a>
-                        </div>
-                        <button
-                        class="btn btn-success d-grid w-100"
-                        data-bs-toggle="offcanvas"
-                        data-bs-target="#addPaymentOffcanvas">
-                        <span class="d-flex align-items-center justify-content-center text-nowrap"
-                            ><i class="ri-money-dollar-circle-line ri-16px me-2"></i>Add Payment</span
-                        >
-                        </button>
                     </div>
                     </div>
                 </div>
