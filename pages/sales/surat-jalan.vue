@@ -318,17 +318,14 @@
                                   <i class="ri-alert-line me-2"></i>
                                   <strong>Info:</strong> 
                                   <p class="mb-0 mt-2">
-                                      Silakan ubah status partial di halaman sales order detail agar dapat memilih product yang tersedia.
+                                      Sales Order yang dipilih belum memiliki item dengan status partial. 
+                                      Silakan ubah status partial di halaman sales order detail atau pilih sales order lain yang sudah memiliki item dengan status partial.
                                   </p>
                                   <div class="mt-2">
-                                      <a :href="`/sales/sales-order-detail?id=${form.salesOrderId}`" target="_blank" class="btn btn-sm btn-outline-warning me-2">
+                                      <a :href="`/sales/sales-order-detail?id=${form.salesOrderId}`" target="_blank" class="btn btn-sm btn-outline-warning">
                                           <i class="ri-external-link-line me-1"></i>
                                           Buka Sales Order Detail
                                       </a>
-                                      <button @click="refreshSalesOrderItems" class="btn btn-sm btn-outline-info">
-                                          <i class="ri-refresh-line me-1"></i>
-                                          Refresh Data
-                                      </button>
                                   </div>
                               </div>
                               
@@ -583,34 +580,42 @@ watch(() => form.value.salesOrderId, async (newSalesOrderId, oldSalesOrderId) =>
             // Clear existing items
             form.value.suratJalanItems = [];
 
-            // Auto fill items dari sales order - HANYA YANG STATUS_PARTIAL = TRUE
-            detailedSalesOrder.salesOrderItems
-              .filter(soItem => soItem.statusPartial === true)
-              .forEach((soItem, index) => {
-                const suratJalanItem = {
-                  productId: soItem.productId,
-                  warehouseId: soItem.warehouseId,
-                  quantity: Math.floor(Number(soItem.quantity)) || 0,
-                  description: soItem.description || '',
-                  // Sertakan info produk jika ada
-                  product: soItem.product ? {
-                    id: soItem.product.id,
-                    name: soItem.product.name,
-                    sku: soItem.product.sku,
-                    priceSell: soItem.product.priceSell,
-                    unit: soItem.product.unit
-                  } : null,
-                  // Sertakan info gudang jika ada
-                  warehouse: soItem.warehouse ? {
-                    id: soItem.warehouse.id,
-                    name: soItem.warehouse.name
-                  } : null,
-                  // Referensi ke sales order item
-                  salesOrderItemId: soItem.id
-                };
+            // Auto fill items dari sales order - YANG STATUS_PARTIAL = TRUE ATAU JIKA STATUS DELIVERED
+            const itemsToProcess = detailedSalesOrder.salesOrderItems.filter(soItem => {
+              // Jika ada item dengan status partial, gunakan yang partial saja
+              const hasPartialItems = detailedSalesOrder.salesOrderItems.some(item => item.statusPartial === true);
+              if (hasPartialItems) {
+                return soItem.statusPartial === true;
+              }
+              // Fallback: jika tidak ada item partial tapi status delivered, gunakan semua item
+              return detailedSalesOrder.status === 'delivered';
+            });
 
-                form.value.suratJalanItems.push(suratJalanItem);
-              });
+            itemsToProcess.forEach((soItem, index) => {
+              const suratJalanItem = {
+                productId: soItem.productId,
+                warehouseId: soItem.warehouseId,
+                quantity: Math.floor(Number(soItem.quantity)) || 0,
+                description: soItem.description || '',
+                // Sertakan info produk jika ada
+                product: soItem.product ? {
+                  id: soItem.product.id,
+                  name: soItem.product.name,
+                  sku: soItem.product.sku,
+                  priceSell: soItem.product.priceSell,
+                  unit: soItem.product.unit
+                } : null,
+                // Sertakan info gudang jika ada
+                warehouse: soItem.warehouse ? {
+                  id: soItem.warehouse.id,
+                  name: soItem.warehouse.name
+                } : null,
+                // Referensi ke sales order item
+                salesOrderItemId: soItem.id
+              };
+
+              form.value.suratJalanItems.push(suratJalanItem);
+            });
 
             
           } else {
@@ -860,7 +865,18 @@ const hasPartialItems = computed(() => {
     return false;
   }
   
-  return salesOrderItems.value.some(item => item.statusPartial === true);
+  // Cek apakah ada item dengan status partial = true
+  const hasPartial = salesOrderItems.value.some(item => item.statusPartial === true);
+  
+  // Fallback: jika tidak ada item partial, cek apakah sales order status adalah 'delivered'
+  if (!hasPartial) {
+    const selectedSalesOrder = salesOrders.value?.find(so => so.id === form.value.salesOrderId);
+    if (selectedSalesOrder && selectedSalesOrder.status === 'delivered') {
+      return true; // Allow editing jika status delivered
+    }
+  }
+  
+  return hasPartial;
 })
 
 // ✅ NEW: Watcher untuk memantau perubahan sales order items
@@ -868,45 +884,6 @@ watch(salesOrderItems, (newItems) => {
   // Watcher untuk memantau perubahan sales order items
 }, { deep: true })
 
-// ✅ NEW: Function untuk refresh sales order items
-const refreshSalesOrderItems = async () => {
-  if (form.value.salesOrderId) {
-    try {
-      await salesOrderStore.getSalesOrderDetails(form.value.salesOrderId);
-      const detailedSalesOrder = salesOrderStore.salesOrder;
-      
-      if (detailedSalesOrder && detailedSalesOrder.salesOrderItems) {
-        salesOrderItems.value = detailedSalesOrder.salesOrderItems;
-        
-        // Re-filter items yang status partial = true
-        const partialItems = detailedSalesOrder.salesOrderItems
-          .filter(soItem => soItem.statusPartial === true)
-          .map((soItem, index) => ({
-            productId: soItem.productId,
-            warehouseId: soItem.warehouseId,
-            quantity: Math.floor(Number(soItem.quantity)) || 0,
-            description: soItem.description || '',
-            product: soItem.product ? {
-              id: soItem.product.id,
-              name: soItem.product.name,
-              sku: soItem.product.sku,
-              priceSell: soItem.product.priceSell,
-              unit: soItem.product.unit
-            } : null,
-            warehouse: soItem.warehouse ? {
-              id: soItem.warehouse.id,
-              name: soItem.warehouse.name
-            } : null,
-            salesOrderItemId: soItem.id
-          }));
-        
-        form.value.suratJalanItems = partialItems;
-      }
-            } catch (error) {
-          // Error refreshing sales order items
-        }
-  }
-}
 
 
 
