@@ -426,10 +426,26 @@ export const useSalesInvoiceStore = defineStore('salesInvoice', {
             if (!response.ok) {
                 const errorData = await response.json();
                 if (response.status === 422) {
-                    this.validationErrors = errorData.errors;
+                    // ✅ DEBUG: Log struktur error untuk analisis VineJS
+                    console.log('🔍 Debug VineJS Validation Errors:', errorData);
+                    console.log('🔍 VineJS Errors array:', errorData.errors);
+                    
+                    // ✅ VineJS error structure: errors adalah array of objects
+                    this.validationErrors = errorData.errors || [];
+                    
+                    // ✅ Create user-friendly error message dari VineJS errors
+                    const errorMessages = (errorData.errors || []).map((e: any) => {
+                        if (typeof e === 'object' && e.message) {
+                            return e.message;
+                        } else if (typeof e === 'string') {
+                            return e;
+                        }
+                        return 'Error validasi tidak dikenal';
+                    });
+                    
                     toast.error({
-                      title: 'Error',
-                      message: errorData.errors.map((e: any) => e.message).join('<br>'),
+                      title: 'Error Validasi',
+                      message: errorMessages.length > 0 ? errorMessages.join('<br>') : 'Data yang dikirim tidak valid',
                       color: 'red'
                     });
                 } else {

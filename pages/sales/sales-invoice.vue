@@ -319,6 +319,7 @@
                                             :reduce="so => so.id" 
                                             placeholder="Pilih Sales Order" 
                                             class="v-select-style sales-order-select"
+                                            :class="{ 'is-invalid': hasFieldError('salesOrderId') }"
                                             :filterable="true"
                                             :searchable="true"
                                             :get-option-label="getSalesOrderLabel"
@@ -336,35 +337,86 @@
                                                 </div>
                                             </template>
                                         </v-select>
+                                        <div v-if="hasFieldError('salesOrderId')" class="invalid-feedback d-block">
+                                            {{ getFieldError('salesOrderId') }}
+                                        </div>
                                     </div>
                                     <div class="col-md-6">
-                                        <v-select v-model="form.customerId" :options="customers" label="name" :reduce="c => c.id" placeholder="Pilih Customer" class="v-select-style" :disabled="!!form.salesOrderId"/>
+                                        <v-select 
+                                            v-model="form.customerId" 
+                                            :options="customers" 
+                                            label="name" 
+                                            :reduce="c => c.id" 
+                                            placeholder="Pilih Customer" 
+                                            class="v-select-style"
+                                            :class="{ 'is-invalid': hasFieldError('customerId') }"
+                                            :disabled="!!form.salesOrderId"
+                                        />
+                                        <div v-if="hasFieldError('customerId')" class="invalid-feedback d-block">
+                                            {{ getFieldError('customerId') }}
+                                        </div>
                                         <div v-if="form.salesOrderId" class="form-text mt-1">
                                             <small class="text-muted">📋 Customer diambil dari Sales Order yang dipilih</small>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
                                         <div class="form-floating form-floating-outline">
-                                            <input type="date" v-model="form.date" class="form-control" required>
+                                            <input 
+                                                type="date" 
+                                                v-model="form.date" 
+                                                class="form-control" 
+                                                :class="{ 'is-invalid': hasFieldError('date') }"
+                                                required
+                                            >
                                             <label>Tanggal Invoice</label>
+                                            <div v-if="hasFieldError('date')" class="invalid-feedback">
+                                                {{ getFieldError('date') }}
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
                                         <div class="form-floating form-floating-outline">
-                                            <input type="date" v-model="form.dueDate" class="form-control" required>
+                                            <input 
+                                                type="date" 
+                                                v-model="form.dueDate" 
+                                                class="form-control" 
+                                                :class="{ 'is-invalid': hasFieldError('dueDate') }"
+                                                required
+                                            >
                                             <label>Jatuh Tempo Invoice</label>
+                                            <div v-if="hasFieldError('dueDate')" class="invalid-feedback">
+                                                {{ getFieldError('dueDate') }}
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
                                         <div class="form-floating form-floating-outline">
-                                            <input type="text" v-model="form.up" class="form-control" placeholder="UP">
+                                            <input 
+                                                type="text" 
+                                                v-model="form.up" 
+                                                class="form-control" 
+                                                :class="{ 'is-invalid': hasFieldError('up') }"
+                                                placeholder="UP"
+                                            >
                                             <label>UP</label>
+                                            <div v-if="hasFieldError('up')" class="invalid-feedback">
+                                                {{ getFieldError('up') }}
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
                                         <div class="form-floating form-floating-outline">
-                                            <input type="text" v-model="form.email" class="form-control" placeholder="Email">
+                                            <input 
+                                                type="text" 
+                                                v-model="form.email" 
+                                                class="form-control" 
+                                                :class="{ 'is-invalid': hasFieldError('email') }"
+                                                placeholder="Email"
+                                            >
                                             <label>Email Penagihan</label>
+                                            <div v-if="hasFieldError('email')" class="invalid-feedback">
+                                                {{ getFieldError('email') }}
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
@@ -439,8 +491,16 @@
                                     </div>
                                     <div class="col-md-12">
                                         <div class="form-floating form-floating-outline">
-                                            <textarea v-model="form.description" class="form-control" placeholder="Deskripsi Invoice"></textarea>
+                                            <textarea 
+                                                v-model="form.description" 
+                                                class="form-control" 
+                                                :class="{ 'is-invalid': hasFieldError('description') }"
+                                                placeholder="Deskripsi Invoice"
+                                            ></textarea>
                                             <label>Deskripsi Invoice</label>
+                                            <div v-if="hasFieldError('description')" class="invalid-feedback">
+                                                {{ getFieldError('description') }}
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
@@ -667,6 +727,63 @@ const isUpdatingFromWatcher = ref(false);
 const rowsPerPageOptionsArray = ref([10, 25, 50, 100]);
 const modalTitle = computed(() => isEditMode.value ? 'Edit Sales Invoice' : 'Tambah Sales Invoice');
 const modalDescription = computed(() => isEditMode.value ? 'Silakan ubah data Sales Invoice di bawah ini.' : 'Silakan isi form di bawah ini untuk menambahkan data Sales Invoice baru.');
+
+// ✅ Helper function untuk mendapatkan validation error per field (VineJS)
+const getFieldError = (fieldName) => {
+  if (!validationErrors.value) {
+    return null;
+  }
+  
+  console.log('🔍 Looking for field:', fieldName, 'in errors:', validationErrors.value);
+  
+  // ✅ VineJS struktur error: Array of objects dengan format { field: 'fieldName', message: 'Error message', rule: 'ruleName' }
+  if (Array.isArray(validationErrors.value)) {
+    const error = validationErrors.value.find(err => {
+      console.log('🔍 Checking VineJS error:', err);
+      
+      if (typeof err === 'object' && err !== null) {
+        // VineJS error structure: { field: 'description', message: 'Field description wajib diisi', rule: 'required' }
+        return err.field === fieldName;
+      }
+      
+      // Fallback untuk string errors
+      if (typeof err === 'string') {
+        return err.toLowerCase().includes(fieldName.toLowerCase());
+      }
+      
+      return false;
+    });
+    
+    if (error) {
+      console.log('🎯 Found VineJS error for', fieldName, ':', error);
+      
+      if (typeof error === 'object' && error.message) {
+        return error.message;
+      } else if (typeof error === 'string') {
+        return error;
+      }
+    }
+  }
+  
+  // ✅ Fallback: Jika validationErrors berupa object (compatibility)
+  if (typeof validationErrors.value === 'object' && !Array.isArray(validationErrors.value)) {
+    if (validationErrors.value[fieldName]) {
+      const fieldErrors = validationErrors.value[fieldName];
+      if (Array.isArray(fieldErrors) && fieldErrors.length > 0) {
+        return fieldErrors[0]; // Ambil error pertama
+      } else if (typeof fieldErrors === 'string') {
+        return fieldErrors;
+      }
+    }
+  }
+  
+  return null;
+};
+
+// ✅ Helper function untuk mengecek apakah field memiliki error
+const hasFieldError = (fieldName) => {
+  return getFieldError(fieldName) !== null;
+};
 
 
 // Computed untuk menghitung sisa pembayaran berdasarkan grand total
@@ -2114,6 +2231,21 @@ const exportSalesInvoiceExcel = (dataToExport) => {
 
     .text-primary {
         color: #666CFF !important;
+    }
+
+    /* ✅ NEW: Styling untuk v-select dengan validation error */
+    :deep(.v-select-style.is-invalid .vs__dropdown-toggle) {
+        border-color: #dc3545 !important;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+    }
+
+    /* Styling untuk invalid feedback */
+    .invalid-feedback.d-block {
+        display: block !important;
+        width: 100%;
+        margin-top: 0.25rem;
+        font-size: 0.875rem;
+        color: #dc3545;
     }
 
     /* Responsive design untuk payment summary */
