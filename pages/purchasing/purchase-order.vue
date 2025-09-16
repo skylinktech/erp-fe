@@ -639,9 +639,9 @@ onMounted(async () => {
     
     // Load data menggunakan method store yang standar
     try {
-        // ✅ FIXED: Gunakan fetchAllProducts untuk memuat semua produk tanpa pagination
+        // ✅ FIXED: Gunakan fetchAllVendors dan fetchAllProducts untuk memuat semua data tanpa pagination
         await Promise.all([
-            vendorStore.fetchVendors(),
+            vendorStore.fetchAllVendors(), // Load semua vendor tanpa pagination
             perusahaanStore.fetchPerusahaans(),
             productStore.fetchAllProducts(), // Load semua produk tanpa pagination
             warehouseStore.fetchWarehouses(),

@@ -291,6 +291,48 @@ export const useVendorStore = defineStore('vendor', {
         this.fetchVendors();
     },
 
+    // ✅ NEW: Method untuk mengambil semua vendor tanpa pagination
+    async fetchAllVendors() {
+      const toast = useToast();
+      this.loading = true;
+      this.error = null;
+      const { $api } = useNuxtApp();
+      
+      try {
+        const token = localStorage.getItem('token');
+        
+        console.log('🌍 Fetching ALL vendors for dropdown...');
+        
+        const response = await fetch($api.dataVendor(), {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json',
+          }
+        });
+        
+        if (response.ok) {
+          const result = await response.json();
+          this.vendors = result || [];
+          console.log(`👥 Fetched ${this.vendors.length} vendors for dropdown`);
+          return this.vendors;
+        } else {
+          throw new Error('Gagal memuat semua vendor');
+        }
+      } catch (error) {
+        console.error('Error fetching all vendors:', error);
+        this.error = error;
+        toast.error({
+          title: 'Error',
+          message: 'Gagal memuat semua vendor',
+          color: 'red',
+          position: 'topRight',
+        });
+        return [];
+      } finally {
+        this.loading = false;
+      }
+    },
+
     handleLogoChange(file: File) {
         if (file) {
             // Validasi file tidak kosong
