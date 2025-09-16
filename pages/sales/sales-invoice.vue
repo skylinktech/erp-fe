@@ -451,21 +451,30 @@
                                             <div class="card-body mt-3">
                                                 <div class="row text-sm">
                                                     <div class="col-6">
-                                                        <div class="mb-2">
+                                                        <div v-if="!form.salesOrderId" class="mb-2">
                                                             <span class="text-muted">Subtotal:</span><br>
                                                             <strong>{{ formatRupiah(form.total) }}</strong>
+                                                        </div>
+                                                        <div v-if="form.salesOrderId" class="mb-2">
+                                                            <span class="text-muted">Total dari Sales Order:</span><br>
+                                                            <strong>{{ formatRupiah(form.total) }}</strong>
+                                                            <br><small class="text-info">Sudah termasuk discount & PPN</small>
                                                         </div>
                                                         <div class="mb-2">
                                                             <span class="text-muted">DPP (Subtotal × 11/12):</span><br>
                                                             <strong class="text-info">{{ formatRupiah(form.dpp) }}</strong>
                                                         </div>
-                                                        <div class="mb-2">
+                                                        <div v-if="!form.salesOrderId" class="mb-2">
                                                             <span class="text-muted">Discount ({{ form.discountPercent }}%):</span><br>
                                                             <strong class="text-danger">-{{ formatRupiah(discountAmount) }}</strong>
                                                         </div>
-                                                        <div class="mb-2">
+                                                        <div v-if="!form.salesOrderId" class="mb-2">
                                                             <span class="text-muted">Tax ({{ form.taxPercent }}%):</span><br>
                                                             <strong class="text-success">+{{ formatRupiah(taxAmount) }}</strong>
+                                                        </div>
+                                                        <div v-if="form.salesOrderId" class="mb-2">
+                                                            <span class="text-muted">Discount & Tax:</span><br>
+                                                            <small class="text-muted">Sudah termasuk dalam total SO</small>
                                                         </div>
                                                         <hr class="my-2">
                                                         <div class="mb-2">
@@ -699,6 +708,12 @@ const paymentStatusClass = computed(() => {
 const discountAmount = computed(() => {
   const total = Number(form.value.total) || 0;
   const discountPercent = Number(form.value.discountPercent) || 0;
+  
+  // ✅ FIX: Jika menggunakan Sales Order, discount sudah include di total, jadi discountAmount = 0
+  if (form.value.salesOrderId) {
+    return 0; // Karena discount sudah include di total Sales Order
+  }
+  
   const result = total * (discountPercent / 100);
   // Bulatkan ke integer untuk menghindari desimal
   return Math.round(result);
@@ -719,7 +734,12 @@ const taxAmount = computed(() => {
   const discountPercent = Number(form.value.discountPercent) || 0;
   const taxPercent = Number(form.value.taxPercent) || 0;
   
-  // Tax dihitung setelah discount
+  // ✅ FIX: Jika menggunakan Sales Order, total sudah include PPN, jadi taxAmount = 0
+  if (form.value.salesOrderId) {
+    return 0; // Karena PPN sudah include di total Sales Order
+  }
+  
+  // Tax dihitung setelah discount (untuk manual input tanpa Sales Order)
   const totalAfterDiscount = total - (total * (discountPercent / 100));
   const result = totalAfterDiscount * (taxPercent / 100);
   // Bulatkan ke integer untuk menghindari desimal
@@ -857,6 +877,7 @@ watch(() => form.value.salesOrderId, (newSalesOrderId, oldSalesOrderId) => {
       form.value.customerId = selectedSalesOrder.customerId || selectedSalesOrder.customer?.id;
       form.value.discountPercent = selectedSalesOrder.discountPercent || 0;
       form.value.taxPercent = selectedSalesOrder.taxPercent || 0;
+      // ✅ FIX: Total dari SO sudah final (termasuk discount & PPN)
       form.value.total = Math.round(Number(selectedSalesOrder.total)) || 0;
       
       // Jika ada data perusahaan dan cabang di sales order

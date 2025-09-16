@@ -369,15 +369,23 @@ export const useSalesInvoiceStore = defineStore('salesInvoice', {
             formData.append('description', this.form.description || '');
             formData.append('total', this.form.total?.toString() || '0');
             
-            // Calculate grand total (total - discount + tax)
+            // ✅ FIX: Calculate grand total dengan logika yang benar
             const total = Number(this.form.total) || 0;
             const discountPercent = Number(this.form.discountPercent) || 0;
             const taxPercent = Number(this.form.taxPercent) || 0;
             
-            const discountAmount = total * (discountPercent / 100);
-            const totalAfterDiscount = total - discountAmount;
-            const taxAmount = totalAfterDiscount * (taxPercent / 100);
-            const grandTotal = totalAfterDiscount + taxAmount;
+            let grandTotal;
+            
+            // Jika ada salesOrderId, total sudah final (termasuk discount & PPN)
+            if (this.form.salesOrderId) {
+                grandTotal = total; // Total dari SO sudah final
+            } else {
+                // Manual calculation untuk invoice tanpa SO
+                const discountAmount = total * (discountPercent / 100);
+                const totalAfterDiscount = total - discountAmount;
+                const taxAmount = totalAfterDiscount * (taxPercent / 100);
+                grandTotal = totalAfterDiscount + taxAmount;
+            }
             
             // Calculate remaining amount based on grand total
             const paidAmount = Number(this.form.paidAmount) || 0;
