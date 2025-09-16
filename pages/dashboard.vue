@@ -80,7 +80,42 @@
               </div>
               <div class="card-body">
                 <div class="fp-growth-chart-container">
-                  <Chart type="bar" :data="chartData" :options="chartOptions" />
+                  <!-- Debug Info -->
+                  <div v-if="chartData?.labels?.length === 0" class="alert alert-info">
+                    <i class="ri-information-line me-2"></i>
+                    <strong>Info:</strong> Tidak ada aturan asosiasi yang ditemukan. 
+                    Pastikan ada transaksi penjualan dengan multiple produk untuk menghasilkan diagram FP-Growth.
+                  </div>
+                  
+                  <!-- Loading State -->
+                  <div v-else-if="!chartData || !chartData.labels" class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                      <span class="visually-hidden">Loading FP-Growth...</span>
+                    </div>
+                    <p class="mt-2">Memuat data FP-Growth...</p>
+                  </div>
+                  
+                  <!-- Chart -->
+                  <div v-else>
+                    <Chart 
+                      type="bar" 
+                      :data="chartData" 
+                      :options="chartOptions" 
+                      style="height: 300px;"
+                    />
+                    <!-- Fallback jika Chart component error -->
+                    <div v-if="!chartData?.datasets?.[0]?.data?.length" class="alert alert-warning mt-2">
+                      <i class="ri-alert-line me-2"></i>
+                      Chart component loaded but no data to display
+                    </div>
+                  </div>
+                  
+                  <!-- Debug Console Logs -->
+                  <div v-if="false" class="mt-2">
+                    <small class="text-muted">
+                      Debug: {{ chartData?.labels?.length || 0 }} rules found
+                    </small>
+                  </div>
                 </div>
               </div>
             </div>
@@ -602,6 +637,9 @@
     usePermissions 
   } from '~/composables/usePermissions'
 
+  // Untuk debugging Chart component
+  import { onMounted as onMountedVue } from 'vue'
+
   definePageMeta({
     layout: 'default',
     middleware: 'auth',
@@ -725,9 +763,16 @@
   const interval = ref(null)
 
   onMounted(async () => {
+    console.log('🔍 Dashboard: Starting to load dashboard data...');
+    
     userStore.loadUser();
     await salesOrderStore.fetchStats();
+    
+    console.log('🔍 Dashboard: About to fetch association rules...');
     await dashboardStore.fetchAssociationRules();
+    console.log('🔍 Dashboard: Association rules fetch completed');
+    console.log('🔍 Dashboard: Current chartData:', dashboardStore.chartData);
+    
     await userSessionStore.fetchActiveUsers();
     await salesStatisticsStore.fetchSalesStatistics();
     await salesByCustomerStore.fetchSalesByCustomer();

@@ -18,6 +18,22 @@ type UserSession = {
   }
 }
 
+// Helper function untuk mendapatkan sesi terbaru per user
+const getLatestSessionPerUser = (sessions: UserSession[]) => {
+  const userSessionMap = new Map<number, UserSession>()
+  
+  sessions.forEach(session => {
+    const existingSession = userSessionMap.get(session.userId)
+    
+    if (!existingSession || 
+        new Date(session.lastActivity).getTime() > new Date(existingSession.lastActivity).getTime()) {
+      userSessionMap.set(session.userId, session)
+    }
+  })
+  
+  return Array.from(userSessionMap.values())
+}
+
 export const useUserSessionStore = defineStore('userSession', {
   state: () => ({
     activeUsers: [] as UserSession[],
@@ -30,7 +46,9 @@ export const useUserSessionStore = defineStore('userSession', {
   }),
 
   getters: {
-    totalActiveUsers: (state) => state.activeUsers.length,
+    totalActiveUsers: (state) => {
+      return getLatestSessionPerUser(state.activeUsers).length
+    },
     
     activeUsersByDevice: (state) => {
       const deviceCount = {
@@ -39,7 +57,9 @@ export const useUserSessionStore = defineStore('userSession', {
         tablet: 0,
       }
       
-      state.activeUsers.forEach(session => {
+      const latestSessions = getLatestSessionPerUser(state.activeUsers)
+      
+      latestSessions.forEach(session => {
         if (deviceCount[session.deviceType as keyof typeof deviceCount] !== undefined) {
           deviceCount[session.deviceType as keyof typeof deviceCount]++
         }
@@ -49,24 +69,33 @@ export const useUserSessionStore = defineStore('userSession', {
     },
 
     recentActiveUsers: (state) => {
-      const sortedUsers = state.activeUsers
+      const latestSessions = getLatestSessionPerUser(state.activeUsers)
         .sort((a, b) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime())
       
+      console.log('🔍 User Session Debug: Total sessions from API:', state.activeUsers.length)
+      console.log('🔍 User Session Debug: Unique users after deduplication:', latestSessions.length)
+      console.log('🔍 User Session Debug: Latest sessions:', latestSessions.map(s => ({
+        userId: s.userId,
+        fullName: s.user.fullName,
+        lastActivity: s.lastActivity,
+        deviceType: s.deviceType
+      })))
+      
       // Update showLoadMore berdasarkan jumlah data
-      state.showLoadMore = sortedUsers.length > state.displayedCount
+      state.showLoadMore = latestSessions.length > state.displayedCount
       
       // Update isExpanded jika semua data sudah ditampilkan
-      state.isExpanded = state.displayedCount >= sortedUsers.length
+      state.isExpanded = state.displayedCount >= latestSessions.length
       
-      return sortedUsers.slice(0, state.displayedCount)
+      return latestSessions.slice(0, state.displayedCount)
     },
 
     hasMoreUsers: (state) => {
-      return state.activeUsers.length > state.displayedCount
+      return getLatestSessionPerUser(state.activeUsers).length > state.displayedCount
     },
 
     isFullyExpanded: (state) => {
-      return state.displayedCount >= state.activeUsers.length
+      return state.displayedCount >= getLatestSessionPerUser(state.activeUsers).length
     }
   },
 
