@@ -7,7 +7,7 @@ import type { User } from './userManagement'
 import type { Perusahaan } from './perusahaan'
 import type { Cabang } from './cabang'
 import type { Product } from './product'
-import type { Customer } from './customer'
+import type { Customer, CustomerProduct } from './customer'
 
 export interface QuotationItem {
   id             : string
@@ -21,8 +21,6 @@ export interface QuotationItem {
   updatedAt      : string
   product?       : Product
 }
-
-// CustomerProduct interface sudah didefinisikan di customer.ts
 
 export interface Quotation {
   id                 : string
@@ -79,6 +77,13 @@ interface QuotationState {
   showModal       : boolean
   validationErrors: any[]
   customerProducts: CustomerProduct[]
+  statistics      : {
+    totalQuotations   : number
+    approvedQuotations: number
+    pendingQuotations : number
+    rejectedQuotations: number
+    totalValue        : number
+  }
 }
 
 export const useQuotationStore = defineStore('quotation', {
@@ -120,6 +125,13 @@ export const useQuotationStore = defineStore('quotation', {
     showModal       : false,
     validationErrors: [],
     customerProducts: [],
+    statistics      : {
+        totalQuotations   : 0,
+        approvedQuotations: 0,
+        pendingQuotations : 0,
+        rejectedQuotations: 0,
+        totalValue        : 0
+    },
   }),
   actions: {
     async fetchQuotations(suppressError = false) {
@@ -323,6 +335,7 @@ export const useQuotationStore = defineStore('quotation', {
             } else {
                 this.closeModal();
                 await this.fetchQuotations();
+                await this.fetchStatistics(); // Refresh statistik setelah save
                 toast.success({
                   title: 'Success',
                   message: `Quotation berhasil ${this.isEditMode ? 'diperbarui' : 'dibuat'}.`,
@@ -388,6 +401,7 @@ export const useQuotationStore = defineStore('quotation', {
             }
   
             await this.fetchQuotations();
+            await this.fetchStatistics(); // Refresh statistik setelah delete
             toast.success({
               title   : 'Success',
               message : 'Quotation berhasil dihapus.',
@@ -432,6 +446,7 @@ export const useQuotationStore = defineStore('quotation', {
           }
 
           await this.fetchQuotations();
+          await this.fetchStatistics(); // Refresh statistik setelah approve
           toast.success({
             title: 'Success',
             message: 'Quotation berhasil diapprove.',
@@ -479,6 +494,7 @@ export const useQuotationStore = defineStore('quotation', {
           }
 
           await this.fetchQuotations();
+          await this.fetchStatistics(); // Refresh statistik setelah reject
           toast.success({
             title: 'Success',
             message: 'Quotation berhasil direject.',
@@ -789,6 +805,44 @@ export const useQuotationStore = defineStore('quotation', {
                 position: 'topRight',
             });
             return [];
+        }
+    },
+
+    async fetchStatistics() {
+        const toast = useToast();
+        this.error = null;
+        const { $api } = useNuxtApp();
+        
+        try {
+            const token = localStorage.getItem('token');
+            
+            const response = await fetch($api.quotation() + '/statistics', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error('Gagal mengambil statistik quotation');
+            }
+
+            const result = await response.json();
+            this.statistics = result.data;
+            
+        } catch (error: any) {
+            console.error('Error fetching quotation statistics:', error);
+            this.error = error;
+            toast.error({
+                title: 'Error',
+                message: 'Gagal memuat statistik quotation',
+                color: 'red',
+                position: 'topRight',
+                layout: 2,
+            });
         }
     },
   }

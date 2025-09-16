@@ -14,15 +14,14 @@
                     <div class="card">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-4">
-                                <h5 class="mb-1">Total Orders</h5>
-                                <span class="badge bg-label-primary rounded-pill">Yearly</span>
+                                <h5 class="mb-1">Total Quotations</h5>
+                                <span class="badge bg-label-primary rounded-pill">Total</span>
                             </div>
                             <div class="d-flex align-items-center">
-                                <h1 class="mb-0 display-4">15</h1>
-                                <i class="ri-arrow-up-s-line ri-24px text-success"></i>
-                                <span class="fw-medium text-success">15.8%</span>
+                                <h1 class="mb-0 display-4">{{ statistics?.totalQuotations || 0 }}</h1>
+                                <i class="ri-file-text-line ri-24px text-primary ms-2"></i>
                             </div>
-                            <p class="mb-0 mt-2">Analytics for last year</p>
+                            <p class="mb-0 mt-2">Total semua quotation dalam sistem</p>
                         </div>
                     </div>
                 </div>
@@ -30,15 +29,14 @@
                     <div class="card">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-4">
-                                <h5 class="mb-1">Pending Orders</h5>
-                                <span class="badge bg-label-warning rounded-pill">Weekly</span>
+                                <h5 class="mb-1">Quotations Approved</h5>
+                                <span class="badge bg-label-success rounded-pill">Approved</span>
                             </div>
                             <div class="d-flex align-items-center">
-                                <h1 class="mb-0 display-4">5</h1>
-                                <i class="ri-arrow-down-s-line ri-24px text-danger"></i>
-                                <span class="fw-medium text-danger">8.2%</span>
+                                <h1 class="mb-0 display-4">{{ statistics?.approvedQuotations || 0 }}</h1>
+                                <i class="ri-check-line ri-24px text-success ms-2"></i>
                             </div>
-                            <p class="mb-0 mt-2">Analytics for last week</p>
+                            <p class="mb-0 mt-2">Total quotation yang sudah disetujui</p>
                         </div>
                     </div>
                 </div>
@@ -516,7 +514,7 @@ import InputText from 'primevue/inputtext'
   const { userHasPermission, userHasRole } = usePermissions();
   const permissionStore                    = usePermissionsStore()
 
-  const { quotations, loading, totalRecords, params, form, isEditMode, showModal, validationErrors, customerProducts } = storeToRefs(quotationStore)
+  const { quotations, loading, totalRecords, params, form, isEditMode, showModal, validationErrors, customerProducts, statistics } = storeToRefs(quotationStore)
   const { customers }     = storeToRefs(customerStore)
   const { perusahaans } = storeToRefs(perusahaanStore)
   const { cabangs }     = storeToRefs(cabangStore)
@@ -577,6 +575,7 @@ const filters = ref({
   onMounted(() => {
       
       quotationStore.fetchQuotations();
+      quotationStore.fetchStatistics();
       customerStore.fetchCustomers();
       perusahaanStore.fetchPerusahaans();
       cabangStore.fetchCabangs();

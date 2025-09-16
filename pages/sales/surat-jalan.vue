@@ -14,14 +14,13 @@
                       <div class="card-body">
                           <div class="d-flex justify-content-between align-items-center mb-4">
                               <h5 class="mb-1">Total Surat Jalan</h5>
-                              <span class="badge bg-label-primary rounded-pill">Yearly</span>
+                              <span class="badge bg-label-primary rounded-pill">Total</span>
                           </div>
                           <div class="d-flex align-items-center">
-                              <h1 class="mb-0 display-4">15</h1>
-                              <i class="ri-arrow-up-s-line ri-24px text-success"></i>
-                              <span class="fw-medium text-success">15.8%</span>
+                              <h1 class="mb-0 display-4">{{ statistics?.totalSuratJalans || 0 }}</h1>
+                              <i class="ri-truck-line ri-24px text-primary ms-2"></i>
                           </div>
-                          <p class="mb-0 mt-2">Analytics for last year</p>
+                          <p class="mb-0 mt-2">Total semua surat jalan dalam sistem</p>
                       </div>
                   </div>
               </div>
@@ -29,15 +28,14 @@
                   <div class="card">
                       <div class="card-body">
                           <div class="d-flex justify-content-between align-items-center mb-4">
-                              <h5 class="mb-1">Pending Surat Jalan</h5>
-                              <span class="badge bg-label-warning rounded-pill">Weekly</span>
+                              <h5 class="mb-1">From Delivered SO</h5>
+                              <span class="badge bg-label-success rounded-pill">Delivered</span>
                           </div>
                           <div class="d-flex align-items-center">
-                              <h1 class="mb-0 display-4">5</h1>
-                              <i class="ri-arrow-down-s-line ri-24px text-danger"></i>
-                              <span class="fw-medium text-danger">8.2%</span>
+                              <h1 class="mb-0 display-4">{{ statistics?.withDeliveredSO || 0 }}</h1>
+                              <i class="ri-check-line ri-24px text-success ms-2"></i>
                           </div>
-                          <p class="mb-0 mt-2">Analytics for last week</p>
+                          <p class="mb-0 mt-2">Surat jalan dari SO delivered</p>
                       </div>
                   </div>
               </div>
@@ -452,7 +450,7 @@ const { userHasPermission, userHasRole } = usePermissions();
 const permissionStore       = usePermissionsStore()
 const salesOrderStore       = useSalesOrderStore()
 
-const { suratJalans, loading, totalRecords, params, form, isEditMode, showModal, validationErrors } = storeToRefs(suratJalanStore)
+const { suratJalans, loading, totalRecords, params, form, isEditMode, showModal, validationErrors, statistics } = storeToRefs(suratJalanStore)
 const { customers }   = storeToRefs(customerStore)
 const { salesOrders, customerProducts } = storeToRefs(salesOrderStore)
 const { warehouses }  = storeToRefs(warehouseStore)
@@ -479,6 +477,7 @@ let modalInstance = null;
 onMounted(async () => {
   userStore.loadUser();
   suratJalanStore.fetchSuratJalans();
+  suratJalanStore.fetchStatistics();
   customerStore.fetchCustomers();
   salesOrderStore.fetchSalesOrders();
   warehouseStore.fetchWarehouses();

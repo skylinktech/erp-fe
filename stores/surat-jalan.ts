@@ -117,6 +117,13 @@ interface SuratJalanState {
   isEditMode      : boolean
   showModal       : boolean
   validationErrors: any[]
+  statistics      : {
+    totalSuratJalans   : number
+    withApprovedSO     : number
+    withPartialSO      : number
+    withDeliveredSO    : number
+    manualSuratJalans  : number
+  }
 }
 
 export const useSuratJalanStore = defineStore('suratJalan', {
@@ -151,6 +158,13 @@ export const useSuratJalanStore = defineStore('suratJalan', {
     isEditMode      : false,
     showModal       : false,
     validationErrors: [],
+    statistics      : {
+        totalSuratJalans  : 0,
+        withApprovedSO    : 0,
+        withPartialSO     : 0,
+        withDeliveredSO   : 0,
+        manualSuratJalans : 0,
+    },
   }),
   getters: {
   },
@@ -307,6 +321,7 @@ export const useSuratJalanStore = defineStore('suratJalan', {
               this.suratJalan = null;
               this.selectedSuratJalan = null;
               await this.fetchSuratJalans();
+              await this.fetchStatistics(); // Refresh statistik setelah save
               
               toast.success({
                   title: 'Success',
@@ -378,6 +393,7 @@ export const useSuratJalanStore = defineStore('suratJalan', {
         // Refresh data
         try {
           await this.fetchSuratJalans();
+          await this.fetchStatistics(); // Refresh statistik setelah delete
         } catch (fetchError) {
           this.loading = false;
         }
@@ -702,6 +718,44 @@ export const useSuratJalanStore = defineStore('suratJalan', {
       } finally {
         this.loading = false;
       }
+    },
+
+    async fetchStatistics() {
+        const toast = useToast();
+        this.error = null;
+        const { $api } = useNuxtApp();
+        
+        try {
+            const token = localStorage.getItem('token');
+            
+            const response = await fetch($api.suratJalan() + '/statistics', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error('Gagal mengambil statistik surat jalan');
+            }
+
+            const result = await response.json();
+            this.statistics = result.data;
+            
+        } catch (error: any) {
+            console.error('Error fetching surat jalan statistics:', error);
+            this.error = error;
+            toast.error({
+                title: 'Error',
+                message: 'Gagal memuat statistik surat jalan',
+                color: 'red',
+                position: 'topRight',
+                layout: 2,
+            });
+        }
     },
   }
 })
