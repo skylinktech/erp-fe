@@ -736,7 +736,32 @@ export const useQuotationStore = defineStore('quotation', {
         })
         if (!response.ok) throw new Error('Gagal mengambil data produk untuk customer')
         const result = await response.json()
-        this.customerProducts = result.data.customerProducts || []
+        const rawCustomerProducts = result.data?.customerProducts || []
+        // Normalisasi data agar field noInterchange, sku, name selalu tersedia pada root item
+        this.customerProducts = rawCustomerProducts.map((item: any) => {
+          // Jika bentuknya ProductCustomer dengan relasi product
+          if (item && item.product) {
+            const p = item.product || {}
+            return {
+              // utamakan field dari product
+              id: p.id ?? item.productId ?? item.id,
+              sku: p.sku ?? item.sku ?? '',
+              name: p.name ?? item.name ?? '',
+              noInterchange: p.noInterchange ?? item.noInterchange ?? '',
+              unit: p.unit ?? item.unit ?? undefined,
+              priceSell: item.priceSell ?? p.priceSell ?? 0,
+            }
+          }
+          // Jika sudah flatten, pastikan properti kunci tersedia
+          return {
+            id: item.id ?? item.productId,
+            sku: item.sku ?? '',
+            name: item.name ?? '',
+            noInterchange: item.noInterchange ?? '',
+            unit: item.unit ?? undefined,
+            priceSell: item.priceSell ?? 0,
+          }
+        })
       } catch (error) {
         console.error('Error fetching products for customer:', error)
         // Jangan hapus produk yang ada jika fetch gagal

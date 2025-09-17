@@ -350,7 +350,7 @@
                                             <v-select 
                                                 v-model="item.productId" 
                                                 :options="filteredCustomerProducts" 
-                                                :get-option-label="product => `${product.sku} | ${product.name}`"
+                                                :get-option-label="product => `${product.sku} | ${product.name}${product.noInterchange ? ' | ' + product.noInterchange : ''}`"
                                                 :reduce="p => p.id" 
                                                 placeholder="Cari berdasarkan part number atau nama produk..." 
                                                 @update:modelValue="onProductChange(index)" 
@@ -362,7 +362,8 @@
                                                     const product = option;
                                                     const searchLower = search.toLowerCase();
                                                     return product.name.toLowerCase().includes(searchLower) || 
-                                                           product.sku.toLowerCase().includes(searchLower);
+                                                           product.sku.toLowerCase().includes(searchLower) ||
+                                                           (product.noInterchange ? String(product.noInterchange).toLowerCase().includes(searchLower) : false);
                                                 }"
                                                 :close-on-select="true"
                                                 :loading="loading"
@@ -903,7 +904,7 @@ const filters = ref({
     // Tambahkan displayName untuk pencarian yang lebih baik
     const productsWithDisplayName = customerProducts.value.map(product => ({
       ...product,
-      displayName: `${product.sku} | ${product.name}`
+      displayName: `${product.sku || ''} | ${product.name || ''}${product.noInterchange ? ' | ' + product.noInterchange : ''}`
     }));
     
     return productsWithDisplayName;
@@ -1498,7 +1499,7 @@ const exportQuotationExcel = (dataToExport) => {
       }
 
       :deep(.v-select-style .vs__dropdown-option:hover) {
-          background-color: #f8f9fa !important;
+          background-color: #666bff !important;
       }
 
       :deep(.v-select-style .vs__dropdown-option--highlight) {
@@ -1604,7 +1605,7 @@ const exportQuotationExcel = (dataToExport) => {
 
       /* ✅ NEW: Styling untuk option yang sedang dipilih - konsisten dengan purchase-order */
       :deep(.v-select-style .vs__dropdown-option--selected) {
-          background-color: #4a4a4a !important;
+          background-color: #666bff !important;
           color: white !important;
           font-weight: 600 !important;
       }
@@ -1655,7 +1656,7 @@ const exportQuotationExcel = (dataToExport) => {
 
       /* ✅ NEW: Styling untuk option yang sedang difilter - konsisten dengan purchase-order */
       :deep(.v-select-style .vs__dropdown-option--highlight) {
-          background-color: #4a4a4a !important;
+          background-color: #666bff !important;
           color: white !important;
           font-weight: 600 !important;
       }
@@ -1678,18 +1679,18 @@ const exportQuotationExcel = (dataToExport) => {
       }
 
       :deep(.v-select-style .vs__dropdown-option:hover) {
-          background-color: #f8f9fa !important;
+          background-color: #666bff !important;
           color: #333 !important;
       }
 
       :deep(.v-select-style .vs__dropdown-option--highlight:hover) {
-          background-color: #4a4a4a !important;
+          background-color: #666bff !important;
           color: white !important;
       }
 
       /* ✅ NEW: Memastikan highlight menutupi seluruh area option */
       :deep(.v-select-style .vs__dropdown-option--highlight) {
-          background-color: #4a4a4a !important;
+          background-color: #666bff !important;
           color: white !important;
           display: block !important;
           width: 100% !important;
