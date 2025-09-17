@@ -579,9 +579,13 @@ const postedCount = computed(() => {
 const totalDebit = computed(() => {
   if (!journalStore.journals || !Array.isArray(journalStore.journals)) return 0
   return journalStore.journals.reduce((sum, j) => {
-    // Hitung total debit dari journal lines
     if (j.journalLines && Array.isArray(j.journalLines)) {
-      return sum + j.journalLines.reduce((lineSum, line) => lineSum + (line.debit || 0), 0)
+      const linesTotal = j.journalLines.reduce((lineSum, line) => {
+        const rawDebit = (line && typeof line.debit !== 'undefined' && line.debit !== null) ? line.debit : 0
+        const numericDebit = Number(rawDebit)
+        return lineSum + (Number.isNaN(numericDebit) ? 0 : numericDebit)
+      }, 0)
+      return sum + linesTotal
     }
     return sum
   }, 0)

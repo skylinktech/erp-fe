@@ -1,21 +1,19 @@
 export const useFormatRupiah = () => {
-  return (number: number | string): string => {
-    if (number === null || number === '' || number === undefined) return ''
+  const formatter = new Intl.NumberFormat('id-ID', {
+    maximumFractionDigits: 0,
+    minimumFractionDigits: 0,
+  })
 
-    let number_string = number.toString().replace(/\./g, ',').replace(/[^,\d]/g, ''),
-        split = number_string.split(','),
-        sisa = split[0].length % 3,
-        rupiah = split[0].substring(0, sisa),
-        ribuan = split[0].substring(sisa).match(/\d{3}/gi)
+  return (value: number | string): string => {
+    if (value === null || value === undefined || value === '') return 'Rp 0'
 
-    if (ribuan) {
-      let separator = sisa ? '.' : ''
-      rupiah += separator + ribuan.join('.')
-    }
+    // Bersihkan input string lalu konversi ke number
+    const numericValue = typeof value === 'string'
+      ? Number(value.replace(/[^0-9.-]/g, ''))
+      : value
 
-    rupiah = split[1] != undefined ? rupiah + ',' + split[1] : rupiah
-    rupiah = rupiah.replace(',00', '');
+    if (Number.isNaN(numericValue)) return 'Rp 0'
 
-    return 'Rp ' + rupiah
+    return `Rp ${formatter.format(Math.round(numericValue))}`
   }
 }
