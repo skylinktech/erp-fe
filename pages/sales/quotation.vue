@@ -117,11 +117,13 @@
                                             {{ params.first + slotProps.index + 1 }}
                                         </template>
                                     </Column>
-                                    <Column field="noQuotation" header="No. Quotation" :sortable="true">
+                                    <Column field="noQuotation" header="No. Quotation" :sortable="true" class="text-nowrap">
                                         <template #body="slotProps">
                                             <a 
                                                 @click="navigateTo(`/sales/quotation-detail?id=${slotProps.data.id}`)" 
                                                 style="cursor: pointer; color: #666bff; text-decoration: underline;"
+                                                class="text-primary"
+                                                title="View detail"
                                             >
                                                 {{ slotProps.data.noQuotation }}
                                             </a>

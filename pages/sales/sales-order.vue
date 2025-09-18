@@ -164,6 +164,8 @@
                                             <a 
                                                 @click="navigateTo(`/sales/sales-order-detail?id=${slotProps.data.id}`)" 
                                                 style="cursor: pointer; color: #666bff; text-decoration: underline;"
+                                                title="View detail"
+                                                class="text-primary"
                                             >
                                                 {{ slotProps.data.noSo || '-' }}
                                             </a>

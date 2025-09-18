@@ -110,20 +110,23 @@
                                           {{ params.first + slotProps.index + 1 }}
                                       </template>
                                   </Column>
-                                  <Column field="noSuratJalan" header="No. Surat Jalan" :sortable="true">
+                                  <Column field="noSuratJalan" header="No. Surat Jalan" :sortable="true" class="text-nowrap">
                                         <template #body="slotProps">
                                             <a 
                                                 @click="navigateTo(`/sales/surat-jalan-detail?id=${slotProps.data.id}`)" 
                                                 style="cursor: pointer; color: #666bff; text-decoration: underline;"
+                                                title="View detail"
+                                                class="text-primary"
                                             >
                                                 {{ slotProps.data.noSuratJalan }}
                                             </a>
                                         </template>
                                   </Column>
-                                  <Column field="salesOrder.noSo" header="No. SO" :sortable="true">
+                                  <Column field="salesOrder.noSo" header="No. SO" :sortable="true" class="text-nowrap">
                                       <template #body="slotProps">
                                           <span v-if="slotProps.data.salesOrder?.noSo && slotProps.data.salesOrder?.id">
-                                              <a :href="`/sales/sales-order-detail?id=${slotProps.data.salesOrder.id}`" class="text-primary"
+                                              <a :href="`/sales/sales-order-detail?id=${slotProps.data.salesOrder.id}`"
+                                              class="text-primary"
                                               style="text-decoration: underline;"
                                               title="Lihat Sales Order"
                                               >

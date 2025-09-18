@@ -181,14 +181,18 @@
                                             {{ params.first + slotProps.index + 1 }}
                                         </template>
                                     </Column>
-                                    <Column field="noInvoice" header="No. Invoice" :sortable="true">
+                                    <Column field="noInvoice" header="No. Invoice" :sortable="true" class="text-nowrap">
                                         <template #body="slotProps">
-                                            <span>
+                                            <a 
+                                                @click="navigateTo(`/purchasing/purchase-invoice-detail?id=${slotProps.data.id}`)" 
+                                                style="cursor: pointer; color: #666bff; text-decoration: underline;"
+                                                class="text-primary"
+                                                title="View detail"
+                                            >
                                                 {{ slotProps.data.noInvoice || '-' }}
-                                            </span>
+                                            </a>
                                         </template>
                                     </Column>
-
                                     <Column field="perusahaan.nmPerusahaan" header="Perusahaan" :sortable="true">
                                         <template #body="slotProps">
                                             <span>

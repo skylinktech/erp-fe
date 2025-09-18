@@ -205,6 +205,7 @@
                                             <a 
                                                 @click="navigateTo(`/sales/sales-invoice-detail?id=${slotProps.data.id}`)" 
                                                 style="cursor: pointer; color: #666bff; text-decoration: underline;"
+                                                title="View detail"
                                             >
                                                 {{ slotProps.data.noInvoice || '-' }}
                                             </a>

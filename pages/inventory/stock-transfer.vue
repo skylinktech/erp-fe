@@ -280,9 +280,14 @@
                                     <div class="mb-4 col-lg-4 col-xl-4 col-12 mb-0">
                                         <div class="form-floating form-floating-outline stock-transfer-item-select">
                                             <CustomSelect2 v-model="item.stock" :options="productsInWarehouse"
-                                                :get-option-label="option => option.label" searchable clearable
+                                                :get-option-label="option => `${option.product?.sku || ''} | ${option.product?.name || ''}`" searchable clearable
                                                 placeholder="-- Pilih Produk --"
-                                              
+                                                :filter-by="(option, label, search) => {
+                                                    const product = option.product;
+                                                    const searchLower = search.toLowerCase();
+                                                    return (product?.name && product.name.toLowerCase().includes(searchLower)) || 
+                                                           (product?.sku && product.sku.toLowerCase().includes(searchLower));
+                                                }"
                                             />
                                         </div>
                                     </div>
@@ -312,21 +317,21 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="mt-0">
-                                <button class="btn btn-sm btn-primary" @click.prevent="stockTransferStore.addItem()">
+                            <div class="mt-0 mb-6">
+                                <button class="btn btn-sm btn-primary w-100" @click.prevent="stockTransferStore.addItem()">
                                     <i class="ri-add-line me-1"></i>
                                     <span class="align-middle">Tambah Item</span>
                                 </button>
                             </div> 
                             <div class="d-flex justify-content-end">
+                                <button type="button" class="btn btn-outline-secondary me-2" @click="stockTransferStore.closeModal()">
+                                    Tutup
+                                </button>
                                 <button
                                     type="submit"
-                                    class="btn btn-primary me-2"
+                                    class="btn btn-primary"
                                 >
                                     {{ isEditMode ? 'Update' : 'Simpan' }}
-                                </button>
-                                <button type="button" class="btn btn-secondary" @click="stockTransferStore.closeModal()">
-                                    Batal
                                 </button>
                             </div>
                         </div>

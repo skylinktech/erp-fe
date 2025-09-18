@@ -128,11 +128,13 @@
                                             {{ params.first + slotProps.index + 1 }}
                                         </template>
                                     </Column>
-                                    <Column field="noPo" header="No. PO" :sortable="true">
+                                    <Column field="noPo" header="No. PO" :sortable="true" class="text-nowrap">
                                         <template #body="slotProps">
                                             <a 
                                                 @click="navigateTo(`/purchasing/purchase-order-detail?id=${slotProps.data.id}`)" 
                                                 style="cursor: pointer; color: #666bff; text-decoration: underline;"
+                                                title="View detail"
+                                                class="text-primary"
                                             >
                                                 {{ slotProps.data.noPo }}
                                             </a>

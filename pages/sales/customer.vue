@@ -339,15 +339,15 @@
                                     <div class="mb-6 col-lg-6 col-xl-6 col-12 mb-0">
                                         <div class="form-floating form-floating-outline">
                                             <CustomSelect2 v-model="item.productId" :options="allProducts"
-                                                :get-option-label="option => option.label" searchable clearable
+                                                :get-option-label="option => `${option.sku} | ${option.name}`" searchable clearable
                                                 :reduce="product => product.id"
                                                 placeholder="-- Pilih Produk --"
 
                                                 :filter-by="(option, label, search) => {
                                                     const product = option;
                                                     const searchLower = search.toLowerCase();
-                                                    return product.name.toLowerCase().includes(searchLower) || 
-                                                           product.sku.toLowerCase().includes(searchLower);
+                                                    return (product.name && product.name.toLowerCase().includes(searchLower)) || 
+                                                           (product.sku && product.sku.toLowerCase().includes(searchLower));
                                                 }"
                                             />
                                             <div v-if="isProductDuplicate(item.productId, index)" class="invalid-feedback">
@@ -378,13 +378,13 @@
                                 </div>
                             </div>
                             <div class="mt-0">
-                                <button class="btn btn-sm btn-primary" @click.prevent="customerStore.addItem()">
+                                <button class="btn btn-sm btn-primary w-100" @click.prevent="customerStore.addItem()">
                                     <i class="ri-add-line me-1"></i>
                                     <span class="align-middle">Tambah Item</span>
                                 </button>
                             </div>  
                             <div class="modal-footer mt-6">
-                                <button type="button" class="btn btn-outline-secondary" @click="customerStore.closeModal()">Tutup</button>
+                                <button type="button" class="btn btn-outline-secondary me-2" @click="customerStore.closeModal()">Tutup</button>
                                 <button type="submit" class="btn btn-primary" :disabled="loading">
                                     <span v-if="loading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                                     Simpan
