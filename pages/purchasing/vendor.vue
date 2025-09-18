@@ -280,7 +280,7 @@
                                         class="form-control" 
                                         v-model="form.name" 
                                         placeholder="Masukkan nama vendor"
-                                        required
+                                        
                                     >
                                     <label>Nama Vendor</label>
                                 </div>
@@ -292,7 +292,7 @@
                                         class="form-control" 
                                         v-model="form.email" 
                                         placeholder="Masukkan email vendor"
-                                        required
+                                        
                                     >
                                     <label>Email Vendor</label>
                                 </div>
@@ -304,7 +304,7 @@
                                     class="form-control" 
                                     v-model="form.phone" 
                                     placeholder="Masukkan no. telp vendor"
-                                    required
+                                    
                                     >
                                     <label>No. Telp Vendor</label>
                                 </div>

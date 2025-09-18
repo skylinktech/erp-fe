@@ -130,7 +130,7 @@
                                 <Column field="alamat_pegawai" header="Alamat" :sortable="true" style="width:18%"></Column>
                                 <Column field="status_pegawai" header="Status" :sortable="true" style="width:8%">
                                     <template #body="slotProps">
-                                        <span :class="getStatusBadge(slotProps.data.status_pegawai).class">
+                                        <span >
                                             {{ getStatusBadge(slotProps.data.status_pegawai).text }}
                                         </span>
                                     </template>
@@ -243,12 +243,11 @@
                                     </div>
                                     <div class="col-md-3">
                                         <div class="form-floating form-floating-outline">
-                                            <v-select
-                                                v-model="form.pendidikan_pegawai"
-                                                :options="pendidikanOptions"
-                                                label="label"
+                                            <CustomSelect2 v-model="form.pendidikan_pegawai" :options="pendidikanOptions"
+                                                :get-option-label="option => option.label"
                                                 :reduce="option => Number(option.value)"
-                                                :get-option-key="option => option.value"
+                                                searchable 
+                                                clearable
                                                 placeholder="-- Pilih Pendidikan --"
                                                 id="select-pendidikan"
                                                 class="select-pendidikan"
@@ -269,11 +268,9 @@
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-floating form-floating-outline">
-                                            <v-select
-                                                v-model="form.jenis_kelamin_pegawai"
-                                                :options="jenisKelaminOptions"
-                                                label="label"
-                                                :reduce="option => option.value"
+                                            <CustomSelect2 v-model="form.jenis_kelamin_pegawai" :options="jenisKelaminOptions"
+                                                :get-option-label="option => option.label"
+                                                :reduce="option => option.id" searchable clearable
                                                 :get-option-key="option => option.value"
                                                 placeholder="-- Pilih Jenis Kelamin --"
                                                 id="select-jk"
@@ -347,11 +344,9 @@
                                         </div>
                                     </div>
                                     <div class="col-md-6">
-                                        <v-select
-                                            v-model="form.jabatan_id"
-                                            :options="jabatans"
-                                            label="nmJabatan"
-                                            :reduce="jabatan => jabatan.id"
+                                        <CustomSelect2 v-model="form.jabatan_id" :options="jabatans"
+                                            :get-option-label="option => option.nmJabatan"
+                                            :reduce="option => option.id" searchable clearable
                                             :get-option-key="option => option.id"
                                             placeholder="-- Pilih Jabatan --"
                                             id="jabatan"
@@ -359,11 +354,9 @@
                                         />    
                                     </div>
                                     <div class="col-md-6">
-                                        <v-select
-                                            v-model="form.perusahaan_id"
-                                            :options="perusahaans"
-                                            label="nmPerusahaan"
-                                            :reduce="perusahaan => perusahaan.id"
+                                        <CustomSelect2 v-model="form.perusahaan_id" :options="perusahaans"
+                                            :get-option-label="option => option.nmPerusahaan"
+                                            :reduce="option => option.id" searchable clearable
                                             :get-option-key="option => option.id"
                                             placeholder="-- Pilih Perusahaan --"
                                             id="perusahaan"
@@ -372,11 +365,9 @@
                                         />    
                                     </div>
                                     <div class="col-md-6">
-                                        <v-select
-                                            v-model="form.cabang_id"
-                                            :options="filteredCabang"
-                                            label="nmCabang"
-                                            :reduce="cabang => cabang.id"
+                                        <CustomSelect2 v-model="form.cabang_id" :options="filteredCabang"
+                                            :get-option-label="option => option.nmCabang"
+                                            :reduce="option => option.id" searchable clearable
                                             :get-option-key="option => option.id"
                                             placeholder="-- Pilih Cabang --"
                                             id="cabang"
@@ -384,11 +375,9 @@
                                         />    
                                     </div>
                                     <div class="col-md-6">
-                                        <v-select
-                                            v-model="form.divisi_id"
-                                            :options="divisis"
-                                            label="nmDivisi"
-                                            :reduce="divisi => divisi.id"
+                                        <CustomSelect2 v-model="form.divisi_id" :options="divisis"
+                                            :get-option-label="option => option.nmDivisi"
+                                            :reduce="option => option.id" searchable clearable
                                             :get-option-key="option => option.id"
                                             placeholder="-- Pilih Divisi --"
                                             id="divisi"
@@ -397,11 +386,9 @@
                                         />    
                                     </div>
                                     <div class="col-md-6">
-                                        <v-select
-                                            v-model="form.departemen_id"
-                                            :options="filteredDepartemen"
-                                            label="nmDepartemen"
-                                            :reduce="departemen => departemen.id"
+                                        <CustomSelect2 v-model="form.departemen_id" :options="filteredDepartemen"
+                                            :get-option-label="option => option.nmDepartemen"
+                                            :reduce="option => option.id" searchable clearable
                                             :get-option-key="option => option.id"
                                             placeholder="-- Pilih Departemen --"
                                             id="departemen"
@@ -449,11 +436,9 @@
                                     </div>
                                     <div class="col-md-12">
                                         <div class="form-floating form-floating-outline">
-                                            <v-select
-                                                v-model="form.status_pegawai"
-                                                :options="statusPegawaiOptions"
-                                                label="label"
-                                                :reduce="option => option.value"
+                                            <CustomSelect2 v-model="form.status_pegawai" :options="statusPegawaiOptions"
+                                                :get-option-label="option => option.label"
+                                                :reduce="option => option.id" searchable clearable
                                                 :get-option-key="option => option.value"
                                                 placeholder="-- Pilih Status Pegawai --"
                                                 id="select-status-pegawai"
@@ -518,6 +503,7 @@ import { usePermissionsStore } from '~/stores/permissions'
 import { useUserStore } from '~/stores/user'
 import { usePermissions } from '~/composables/usePermissions'
 import vSelect from 'vue-select'
+import CustomSelect2 from '~/components/CustomSelect2.vue'
 import 'vue-select/dist/vue-select.css'
 import { useDebounceFn } from '@vueuse/core'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
@@ -700,7 +686,6 @@ const statusPegawaiOptions = [
     { label: 'Tidak diketahui', value: 5 }
 ];
 
-
 const getStatusBadge = (status) => {
     switch (status) {
         case 1:
@@ -721,24 +706,23 @@ const getStatusBadge = (status) => {
 </script>
  
  <style scoped>
-    :deep(.divisi .vs__dropdown-toggle),
-    :deep(.departemen .vs__dropdown-toggle),
-    :deep(.jabatan .vs__dropdown-toggle),
-    :deep(.perusahaan .vs__dropdown-toggle),
-    :deep(.cabang .vs__dropdown-toggle),
-    :deep(.select-jenis-kelamin .vs__dropdown-toggle),
-    :deep(.select-pendidikan .vs__dropdown-toggle),
-    :deep(.select-status-pegawai .vs__dropdown-toggle) {
-        height: 48px !important;
-        border-radius: 7px;
-    }
+<style scoped>
 
-    .avatar-preview {
-        transition: all 0.3s ease;
-    }
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .card-body {
+    padding: 16px;
+  }
+  
+  .form-label {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+}
 
-    .avatar-preview:hover {
-        transform: scale(1.05);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    }
- </style>
+@media (max-width: 576px) {
+  .card-body {
+    padding: 12px;
+  }
+}
+</style>

@@ -77,19 +77,19 @@
                                     <input type="hidden" v-model="form.date" class="form-control">
                                     <input type="hidden" v-model="form.dueDate" class="form-control">
                                     <div class="col-md-4">
-                                        <v-select v-model="form.perusahaanId" :options="perusahaans" label="nmPerusahaan" :reduce="p => p.id" placeholder="Pilih Perusahaan" class="v-select-style"/>
+                                        <CustomSelect2 v-model="form.perusahaanId" :options="perusahaans" :get-option-label="option => option.nmPerusahaan" :reduce="option => option.id" searchable clearable placeholder="Pilih Perusahaan" />
                                     </div>
                                     <div class="col-md-4">
-                                        <v-select v-model="form.cabangId" :options="filteredCabangs" label="nmCabang" :reduce="c => c.id" placeholder="Pilih Cabang" class="v-select-style"/>
+                                        <CustomSelect2 v-model="form.cabangId" :options="filteredCabangs" :get-option-label="option => option.nmCabang" :reduce="option => option.id" searchable clearable placeholder="Pilih Cabang" />
                                     </div>
                                     <div class="col-md-4">
-                                        <v-select v-model="form.warehouseId" :options="warehouses"
-                                        :get-option-label="w => `${w.name} (${w.code})`" :reduce="w => w.id" placeholder="Pilih Gudang" class="v-select-style"/>
+                                        <CustomSelect2 v-model="form.warehouseId" :options="warehouses"
+                                        :get-option-label="option => option.label" searchable clearable :reduce="w => w.id" placeholder="Pilih Gudang" />
                                     </div>
                                 </div>
                                 <div class="row mt-5">
                                     <div class="col-md-4">
-                                        <v-select v-model="form.customerId" :options="customers" label="name" :reduce="c => c.id" placeholder="Pilih Pelanggan" class="v-select-style"/>
+                                        <CustomSelect2 v-model="form.customerId" :options="customers" :get-option-label="option => option.name" :reduce="option => option.id" searchable clearable placeholder="Pilih Pelanggan" />
                                     </div>
                                     <div class="col-md-4">
                                         <div class="form-floating form-floating-outline">
@@ -110,7 +110,7 @@
                                         <button @click="prevPage" :disabled="isFirstPage" class="slider-arrow prev-arrow">‹</button>
                                         <div class="article-row row g-4 g-lg-3 px-5">
                                             <article class="product-card col-6 col-sm-4 col-lg-3 col-md-3 mb-5" v-for="product in products" :key="product.id">
-                                                <div class="card-custom" @click="toggleProductInOrder(product)" :class="{ 'selected': isProductInOrder(product.id) }" style="margin-bottom: 0;">
+                                                <div class="card-custom" @click="toggleProductInOrder(product)"  style="margin-bottom: 0;">
                                                     <div class="img-wrapper">
                                                         <img 
                                                             :src="getProductImage(product.image) || '/img/branding/logo.png'" 
@@ -203,15 +203,15 @@
                     <div class="payment-methods">
                         <h5>Payment Method</h5>
                         <div class="d-flex 2 justify-content-center gap-2">
-                            <button class="payment-btn" @click="form.paymentMethod = 'cash'" :class="{ active: form.paymentMethod === 'cash' }">
+                            <button class="payment-btn" @click="form.paymentMethod = 'cash'" >
                                 <i class="ri-cash-line"></i>
                                 <span>Cash</span>
                             </button>
-                            <button class="payment-btn" @click="form.paymentMethod = 'card'" :class="{ active: form.paymentMethod === 'card' }">
+                            <button class="payment-btn" @click="form.paymentMethod = 'card'" >
                                 <i class="ri-bank-card-line"></i>
                                 <span>Card</span>
                             </button>
-                            <button class="payment-btn" @click="form.paymentMethod = 'transfer'" :class="{ active: form.paymentMethod === 'transfer' }">
+                            <button class="payment-btn" @click="form.paymentMethod = 'transfer'" >
                                 <i class="ri-exchange-dollar-line"></i>
                                 <span>Transfer</span>
                             </button>
@@ -243,6 +243,7 @@
     import { useStocksStore } from '~/stores/stocks'
     import { useUserStore } from '~/stores/user'
     import vSelect from 'vue-select'
+import CustomSelect2 from '~/components/CustomSelect2.vue'
     import Dropdown from 'primevue/dropdown'
     import Paginator from 'primevue/paginator';
     import Column from 'primevue/column'
@@ -406,7 +407,6 @@
     };
 
     const saveBills = async () => {
-        
 
         if (!form.value.perusahaanId || !form.value.cabangId || !form.value.warehouseId || !form.value.customerId) {
             toast.fire({
@@ -489,8 +489,6 @@
         const today = new Date().toISOString().split('T')[0];
         form.value.date = today;
         form.value.dueDate = today;
-
-        
 
         salesOrderStore.fetchSalesOrders();
         customerStore.fetchCustomers();
@@ -671,44 +669,22 @@
 </script>
 
 <style scoped>
-    .v-select-style {
-        min-height: 48px;
-    }
 
-    :deep(.v-select-style .vs__dropdown-toggle) {
-        height: 48px !important;
-        border-radius: 7px;
-    }
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .card-body {
+    padding: 16px;
+  }
+  
+  .form-label {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+}
 
-    /* ✅ NEW: Responsive styling untuk text truncation di tablet dan mobile */
-    @media (max-width: 768px) {
-        :deep(.v-select-style .vs__selected) {
-            white-space: nowrap !important;
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
-            max-width: 100% !important;
-        }
-
-        :deep(.v-select-style .vs__placeholder) {
-            white-space: nowrap !important;
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
-            max-width: 100% !important;
-        }
-
-        :deep(.v-select-style .vs__selected-options) {
-            overflow: hidden !important;
-        }
-    }
-
-    @media (max-width: 576px) {
-        :deep(.v-select-style .vs__selected) {
-            font-size: 14px !important;
-            padding: 2px 4px !important;
-        }
-
-        :deep(.v-select-style .vs__placeholder) {
-            font-size: 14px !important;
-        }
-    }
+@media (max-width: 576px) {
+  .card-body {
+    padding: 12px;
+  }
+}
 </style>

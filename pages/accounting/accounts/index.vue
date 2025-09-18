@@ -238,7 +238,7 @@
                                 </Column>
                                 <Column field="category" header="Kategori" :sortable="true" style="min-width:150px">
                                     <template #body="slotProps">
-                                        <span :class="getTypeBadgeClass(slotProps.data.category)">
+                                        <span >
                                             {{ getTypeLabel(slotProps.data.category) }}
                                         </span>
                                     </template>
@@ -263,7 +263,7 @@
                                 </Column>
                                 <Column field="isParent" header="Tipe" :sortable="true" style="min-width:100px">
                                     <template #body="slotProps">
-                                        <span :class="slotProps.data.isParent ? 'badge bg-label-primary' : 'badge bg-label-secondary'">
+                                        <span >
                                             {{ slotProps.data.isParent ? 'Parent' : 'Child' }}
                                         </span>
                                     </template>
@@ -314,7 +314,7 @@
                                             class="form-control" 
                                             v-model="form.code" 
                                             placeholder="Masukkan kode akun"
-                                            required
+                                            
                                         >
                                         <label>Kode Akun *</label>
                                     </div>
@@ -326,7 +326,7 @@
                                             class="form-control" 
                                             v-model="form.name" 
                                             placeholder="Masukkan nama akun"
-                                            required
+                                            
                                         >
                                         <label>Nama Akun *</label>
                                     </div>
@@ -336,7 +336,7 @@
                                         <select 
                                             class="form-select" 
                                             v-model="form.category"
-                                            required
+                                            
                                         >
                                             <option value="">Pilih Kategori</option>
                                             <option v-for="category in accountCategories" :key="category.value" :value="category.value">
@@ -351,7 +351,7 @@
                                         <select 
                                             class="form-select" 
                                             v-model="form.normalBalance"
-                                            required
+                                            
                                         >
                                             <option value="">Pilih Normal Balance</option>
                                             <option value="debit">Debit</option>
@@ -704,70 +704,23 @@ watch(processedAccounts, (newProcessed) => {
 </script>
 
 <style scoped>
-.badge {
-    font-size: 0.75rem;
+<style scoped>
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .card-body {
+    padding: 16px;
+  }
+  
+  .form-label {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
 }
 
-.table-sm td, .table-sm th {
-    padding: 0.5rem;
-    font-size: 0.875rem;
-}
-
-.btn-group-sm .btn {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.75rem;
-}
-
-.expanded-content {
-    background-color: #f8f9fa;
-    border-left: 3px solid #0d6efd;
-}
-
-.ri-48px {
-    font-size: 3rem;
-}
-
-/* Custom styling untuk expanded row */
-.p-datatable .p-datatable-tbody > tr.p-datatable-row-expansion {
-    background: #f8f9fa;
-}
-
-.p-datatable .p-datatable-tbody > tr.p-datatable-row-expansion > td {
-    border: none;
-    padding: 0;
-}
-
-/* Styling untuk nested table di expansion */
-.p-datatable .p-datatable-tbody > tr.p-datatable-row-expansion .p-datatable {
-    box-shadow: none;
-    border: 1px solid #dee2e6;
-}
-
-/* Hover effect untuk child rows */
-.p-datatable .p-datatable-tbody > tr.p-datatable-row-expansion .p-datatable-tbody > tr:hover {
-    background: #e3f2fd !important;
-}
-
-/* Skeleton Loader */
-.skeleton-loader {
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-    background-size: 200% 100%;
-    animation: loading 1.5s infinite;
-    border-radius: 4px;
-}
-
-@keyframes loading {
-    0% {
-        background-position: 200% 0;
-    }
-    100% {
-        background-position: -200% 0;
-    }
-}
-
-/* Dark mode skeleton */
-:deep(.dark) .skeleton-loader {
-    background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
-    background-size: 200% 100%;
+@media (max-width: 576px) {
+  .card-body {
+    padding: 12px;
+  }
 }
 </style>

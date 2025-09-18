@@ -271,7 +271,7 @@
                                         class="form-control" 
                                         v-model="form.code" 
                                         placeholder="Masukkan kode customer"
-                                        required
+                                        
                                     >
                                     <label>Kode Customer</label>
                                 </div>
@@ -283,7 +283,7 @@
                                         class="form-control" 
                                         v-model="form.name" 
                                         placeholder="Masukkan nama customer"
-                                        required
+                                        
                                     >
                                     <label>Nama Customer</label>
                                 </div>
@@ -295,7 +295,7 @@
                                         class="form-control" 
                                         v-model="form.email" 
                                         placeholder="Masukkan email customer"
-                                        required
+                                        
                                     >
                                     <label>Email Customer</label>
                                 </div>
@@ -307,7 +307,7 @@
                                     class="form-control" 
                                     v-model="form.phone" 
                                     placeholder="Masukkan no. telp customer"
-                                    required
+                                    
                                     >
                                     <label>No. Telp Customer</label>
                                 </div>
@@ -338,16 +338,11 @@
                                 <div class="row">
                                     <div class="mb-6 col-lg-6 col-xl-6 col-12 mb-0">
                                         <div class="form-floating form-floating-outline">
-                                            <v-select
-                                                v-model="item.productId"
-                                                :options="allProducts"
-                                                :get-option-label="product => `${product.sku} | ${product.name}`"
+                                            <CustomSelect2 v-model="item.productId" :options="allProducts"
+                                                :get-option-label="option => option.label" searchable clearable
                                                 :reduce="product => product.id"
                                                 placeholder="-- Pilih Produk --"
-                                                :class="['product-select', { 'is-invalid': isProductDuplicate(item.productId, index) }]"
-                                                :filterable="true"
-                                                :searchable="true"
-                                                :clearable="true"
+
                                                 :filter-by="(option, label, search) => {
                                                     const product = option;
                                                     const searchLower = search.toLowerCase();
@@ -418,6 +413,7 @@ import { useProductStore } from '~/stores/product'
 import Dropdown from 'primevue/dropdown'
 import InputText from 'primevue/inputtext'
 import vSelect from 'vue-select'
+import CustomSelect2 from '~/components/CustomSelect2.vue'
 import 'vue-select/dist/vue-select.css'
 import Column from 'primevue/column'
 import { useDebounceFn } from '@vueuse/core'
@@ -459,8 +455,6 @@ const tableControls = ref({
 
 const modalTitle = computed(() => isEditMode.value ? 'Edit Customer' : 'Tambah Customer');
 const modalDescription = computed(() => isEditMode.value ? 'Silakan ubah data customer di bawah ini.' : 'Silakan isi form di bawah ini untuk menambahkan customer baru.');
-
-
 
 let modalInstance = null
 onMounted(() => {
@@ -556,21 +550,23 @@ const isProductDuplicate = (productId, currentIndex) => {
 </script>
 
 <style scoped>
-    :deep(.product-select .vs__dropdown-toggle) {
-        height: 48px !important;
-        border-radius: 7px;
-    }
-    
-    :deep(.product-select.is-invalid .vs__dropdown-toggle) {
-        border-color: #dc3545;
-        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
-    }
-    
-    .invalid-feedback {
-        display: block;
-        width: 100%;
-        margin-top: 0.25rem;
-        font-size: 0.875em;
-        color: #dc3545;
-    }
+<style scoped>
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .card-body {
+    padding: 16px;
+  }
+  
+  .form-label {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+}
+
+@media (max-width: 576px) {
+  .card-body {
+    padding: 12px;
+  }
+}
 </style>

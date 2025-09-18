@@ -57,7 +57,7 @@
               <div class="d-flex align-items-center">
                 <button @click="refreshActiveUsers" class="btn btn-sm btn-outline-primary"
                   :disabled="userSessionStore.loading">
-                  <i class="ri-refresh-line" :class="{ 'ri-spin': userSessionStore.loading }"></i>
+                  <i class="ri-refresh-line" ></i>
                 </button>
               </div>
             </div>
@@ -162,7 +162,7 @@
                         </div>
                       </div>
                       <p class="mt-3 mb-1">Minggu Ini</p>
-                      <h6 class="mb-0" :class="salesStatisticsStore.weeklyPerformanceColor">
+                      <h6 class="mb-0" >
                         {{ salesStatisticsStore.formattedThisWeekPerformance }}
                       </h6>
                     </div>
@@ -183,14 +183,14 @@
                 <div class="d-flex justify-content-around align-items-center flex-wrap gap-2">
                   <div>
                     <p class="mb-1">Performa Bulanan</p>
-                    <h6 class="mb-0" :class="salesStatisticsStore.performanceColor">
+                    <h6 class="mb-0" >
                       {{ salesStatisticsStore.formattedLastMonthPerformance }}
                     </h6>
                   </div>
                   <div>
                     <button @click="refreshSalesStatistics" class="btn btn-primary" type="button"
                       :disabled="salesStatisticsStore.loading">
-                      <i class="ri-refresh-line" :class="{ 'ri-spin': salesStatisticsStore.loading }"></i>
+                      <i class="ri-refresh-line" ></i>
                       Refresh
                     </button>
                   </div>
@@ -411,7 +411,7 @@
                     {{ salesStatisticsStore.formattedLastMonthTotal }}
                   </h5>
                   <h5 class="mb-0 me-1" v-else>Rp 0</h5>
-                  <p class="mb-0" :class="salesStatisticsStore.performanceColor" v-if="salesStatisticsStore.statistics">
+                  <p class="mb-0"  v-if="salesStatisticsStore.statistics">
                     {{ salesStatisticsStore.formattedLastMonthPerformance }}
                   </p>
                   <p class="mb-0 text-muted" v-else>0%</p>
@@ -427,7 +427,7 @@
                   </div>
                   <div>
                     <p class="mb-0 small">Performa vs Bulan Sebelumnya</p>
-                    <h6 class="mb-0" :class="salesStatisticsStore.performanceColor"
+                    <h6 class="mb-0" 
                       v-if="salesStatisticsStore.statistics">
                       {{ salesStatisticsStore.formattedLastMonthPerformance }}
                     </h6>
@@ -447,14 +447,14 @@
                     </div>
                   </div>
                   <div class="d-flex align-items-center">
-                    <p class="mb-0" :class="salesStatisticsStore.weeklyPerformanceColor"
+                    <p class="mb-0" 
                       v-if="salesStatisticsStore.statistics">
                       {{ salesStatisticsStore.formattedThisWeekPerformance }}
                     </p>
                     <p class="mb-0 text-muted" v-else>0%</p>
-                    <i class="ri-arrow-up-s-line" :class="salesStatisticsStore.weeklyPerformanceColor"
+                    <i class="ri-arrow-up-s-line" 
                       v-if="salesStatisticsStore.statistics?.performance.weekly > 0"></i>
-                    <i class="ri-arrow-down-s-line" :class="salesStatisticsStore.weeklyPerformanceColor"
+                    <i class="ri-arrow-down-s-line" 
                       v-else-if="salesStatisticsStore.statistics?.performance.weekly < 0"></i>
                   </div>
                 </div>
@@ -503,7 +503,7 @@
                     {{ salesStatisticsStore.formattedThisWeekTotal }}
                   </h5>
                   <h5 class="mb-0 me-1" v-else>Rp 0</h5>
-                  <p class="mb-0" :class="salesStatisticsStore.weeklyPerformanceColor"
+                  <p class="mb-0" 
                     v-if="salesStatisticsStore.statistics">
                     {{ salesStatisticsStore.formattedThisWeekPerformance }}
                   </p>
@@ -520,7 +520,7 @@
                   </div>
                   <div>
                     <p class="mb-0 small">Performa vs Minggu Lalu</p>
-                    <h6 class="mb-0" :class="salesStatisticsStore.weeklyPerformanceColor"
+                    <h6 class="mb-0" 
                       v-if="salesStatisticsStore.statistics">
                       {{ salesStatisticsStore.formattedThisWeekPerformance }}
                     </h6>
@@ -763,15 +763,11 @@
   const interval = ref(null)
 
   onMounted(async () => {
-    console.log('🔍 Dashboard: Starting to load dashboard data...');
     
     userStore.loadUser();
     await salesOrderStore.fetchStats();
     
-    console.log('🔍 Dashboard: About to fetch association rules...');
     await dashboardStore.fetchAssociationRules();
-    console.log('🔍 Dashboard: Association rules fetch completed');
-    console.log('🔍 Dashboard: Current chartData:', dashboardStore.chartData);
     
     await userSessionStore.fetchActiveUsers();
     await salesStatisticsStore.fetchSalesStatistics();

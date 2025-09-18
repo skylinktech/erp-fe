@@ -100,7 +100,7 @@
                                         @change="handleSelectAllChange"
                                         :indeterminate="isIndeterminate"
                                         :disabled="isHeaderCheckboxDisabled"
-                                        :class="{ 'disabled-checkbox': isHeaderCheckboxDisabled }"
+                                        
                                     />
                                 </template>
                                 <template #body="slotProps">
@@ -111,7 +111,7 @@
                                         :checked="isRowSelected(slotProps.data.id)"
                                         @change="(event) => handleCheckboxChange(slotProps.data, event.target.checked)"
                                         :disabled="slotProps.data.status === 'posted'"
-                                        :class="{ 'disabled-checkbox': slotProps.data.status === 'posted' }"
+                                        
                                     />
                                 </template>
                             </Column>
@@ -139,7 +139,7 @@
                                 <Column field="salesOrder.noSo" header="No. SO" :sortable="true" class="text-nowrap"></Column>
                                 <Column field="status" header="Status" :sortable="true">
                                     <template #body="slotProps">
-                                        <span :class="getStatusBadge(slotProps.data.status).class">
+                                        <span >
                                             {{ getStatusBadge(slotProps.data.status).text }}
                                         </span>
                                     </template>
@@ -701,38 +701,26 @@ const handleSelectAllChange = (checked) => {
     });
 };
 
-
 </script>
 
 <style scoped>
-    :deep(.status-select .vs__dropdown-toggle) ,
-    :deep(.warehouse-select .vs__dropdown-toggle) {
-        height: 48px !important;
-        border-radius: 7px;
-    }
-    
-    /* Styling untuk disabled checkbox pada data posted */
-    .disabled-checkbox {
-        opacity: 0.6;
-        cursor: not-allowed;
-        pointer-events: none;
-    }
-    
-    /* Styling untuk checkbox yang aktif */
-    .form-check-input {
-        cursor: pointer;
-        width: 18px;
-        height: 18px;
-        margin: 0;
-    }
-    
-    .form-check-input:checked {
-        background-color: #10b981;
-        border-color: #10b981;
-    }
-    
-    .form-check-input:focus {
-        border-color: #10b981;
-        box-shadow: 0 0 0 0.2rem rgba(16, 185, 129, 0.25);
-    }
+<style scoped>
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .card-body {
+    padding: 16px;
+  }
+  
+  .form-label {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+}
+
+@media (max-width: 576px) {
+  .card-body {
+    padding: 12px;
+  }
+}
 </style>

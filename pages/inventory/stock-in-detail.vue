@@ -32,7 +32,7 @@
                                         <li class="mb-2"><strong>Tanggal:</strong> {{ new Date(stockIn.date).toLocaleDateString() }}</li>
                                         <li class="mb-2"><strong>Gudang:</strong> {{ stockIn.warehouse?.name }}</li>
                                         <li class="mb-2"><strong>No. Purchase Order:</strong> {{ stockIn.purchaseOrder?.noPo || '-' }}</li>
-                                        <li class="mb-2"><strong>Status:</strong> <span :class="['badge', getStatusClass(stockIn.status)]">{{ stockIn.status }}</span></li>
+                                        <li class="mb-2"><strong>Status:</strong> <span >{{ stockIn.status }}</span></li>
                                     </ul>
                                 </div>
                             </div>

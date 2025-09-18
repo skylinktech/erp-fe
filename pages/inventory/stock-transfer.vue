@@ -130,7 +130,7 @@
                                 </Column>
                                 <Column field="status" header="Status" :sortable="true">
                                     <template #body="slotProps">
-                                        <span :class="getStatusBadge(slotProps.data.status).class">
+                                        <span >
                                             {{ getStatusBadge(slotProps.data.status).text }}
                                         </span>
                                     </template>
@@ -198,11 +198,9 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-floating form-floating-outline">
-                                    <v-select
-                                        v-model="form.perusahaanId"
-                                        :options="perusahaans"
-                                        label="nmPerusahaan"
-                                        :reduce="p => p.id"
+                                    <CustomSelect2 v-model="form.perusahaanId" :options="perusahaans"
+                                        :get-option-label="option => option.nmPerusahaan"
+                                        :reduce="option => option.id" searchable clearable
                                         placeholder="-- Pilih Perusahaan --"
                                         class="perusahaan-select"
                                     />
@@ -210,11 +208,9 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-floating form-floating-outline">
-                                    <v-select
-                                        v-model="form.cabangId"
-                                        :options="filteredCabangs"
-                                        label="nmCabang"
-                                        :reduce="c => c.id" 
+                                    <CustomSelect2 v-model="form.cabangId" :options="filteredCabangs"
+                                        :get-option-label="option => option.nmCabang"
+                                        :reduce="option => option.id" searchable clearable 
                                         placeholder="-- Pilih Cabang --"
                                         class="cabang-select"
                                     />
@@ -222,11 +218,9 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-floating form-floating-outline">
-                                    <v-select
-                                        v-model="form.fromWarehouseId"
-                                        :options="warehouses"
-                                        label="name"
-                                        :reduce="warehouse => warehouse.id" 
+                                    <CustomSelect2 v-model="form.fromWarehouseId" :options="warehouses"
+                                        :get-option-label="option => option.name"
+                                        :reduce="option => option.id" searchable clearable 
                                         placeholder="-- Pilih Gudang Asal --"
                                         class="warehouse-select"
                                     />
@@ -234,11 +228,9 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-floating form-floating-outline">
-                                    <v-select
-                                        v-model="form.toWarehouseId"
-                                        :options="warehouses"
-                                        label="name"
-                                        :reduce="warehouse => warehouse.id" 
+                                    <CustomSelect2 v-model="form.toWarehouseId" :options="warehouses"
+                                        :get-option-label="option => option.name"
+                                        :reduce="option => option.id" searchable clearable 
                                         placeholder="-- Pilih Gudang Tujuan --"
                                         class="warehouse-select"
                                     />
@@ -252,7 +244,7 @@
                                         id="date" 
                                         v-model="form.date" 
                                         placeholder="Masukkan tanggal"
-                                        required
+                                        
                                     >
                                     <label for="name">Tanggal</label>
                                 </div>
@@ -277,7 +269,7 @@
                                         id="description" 
                                         v-model="form.description" 
                                         placeholder="Masukkan deskripsi"
-                                        required
+                                        
                                     >
                                     <label for="description">Deskripsi</label>
                                 </div>
@@ -287,10 +279,8 @@
                                 <div class="row">
                                     <div class="mb-4 col-lg-4 col-xl-4 col-12 mb-0">
                                         <div class="form-floating form-floating-outline stock-transfer-item-select">
-                                            <v-select
-                                                v-model="item.stock"
-                                                :options="productsInWarehouse"
-                                                :get-option-label="option => `${option.product.name} (${option.product.unit?.name})`"
+                                            <CustomSelect2 v-model="item.stock" :options="productsInWarehouse"
+                                                :get-option-label="option => option.label" searchable clearable
                                                 placeholder="-- Pilih Produk --"
                                               
                                             />
@@ -365,6 +355,7 @@ import Swal from 'sweetalert2'
 import Dropdown from 'primevue/dropdown'
 import InputText from 'primevue/inputtext'
 import vSelect from 'vue-select'
+import CustomSelect2 from '~/components/CustomSelect2.vue'
 import 'vue-select/dist/vue-select.css'
 import { useRouter } from 'vue-router'
 import { usePermissionsStore } from '~/stores/permissions'
@@ -1116,12 +1107,23 @@ const exportStockTransferExcel = (dataToExport) => {
 </script>
 
 <style scoped>
-    :deep(.perusahaan-select .vs__dropdown-toggle),
-    :deep(.cabang-select .vs__dropdown-toggle),
-    :deep(.stock-transfer-item-select .vs__dropdown-toggle),
-    :deep(.status-select .vs__dropdown-toggle) ,
-    :deep(.warehouse-select .vs__dropdown-toggle) {
-        height: 48px !important;
-        border-radius: 7px;
-    }
+<style scoped>
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .card-body {
+    padding: 16px;
+  }
+  
+  .form-label {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+}
+
+@media (max-width: 576px) {
+  .card-body {
+    padding: 12px;
+  }
+}
 </style>

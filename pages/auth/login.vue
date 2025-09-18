@@ -24,7 +24,7 @@
                   v-model="username"
                   placeholder="Enter your username"
                   autofocus
-                  required
+                  
                 />
                 <label for="username">Username</label>
               </div>
@@ -38,13 +38,13 @@
                         class="form-control"
                         v-model="password"
                         placeholder="&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;"
-                        required
+                        
                         aria-describedby="password"
                       />
                       <label for="password">Password</label>
                     </div>
                     <span class="input-group-text cursor-pointer" @click="togglePassword">
-                      <i :class="showPassword ? 'ri-eye-line' : 'ri-eye-off-line'"></i>
+                      <i ></i>
                     </span>
                   </div>
                 </div>

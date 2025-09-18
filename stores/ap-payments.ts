@@ -164,9 +164,18 @@ export const useAPPaymentStore = defineStore('apPayment', {
 
     async fetchVendors() {
       const { $api } = useNuxtApp()
+      const toast = useToast();
+      
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch($api.vendor(), {
+        
+        if (!token) {
+          this.vendors = []
+          return
+        }
+        
+        // Gunakan dataVendor endpoint yang mengembalikan semua vendor tanpa pagination
+        const response = await fetch($api.dataVendor(), {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
@@ -177,21 +186,71 @@ export const useAPPaymentStore = defineStore('apPayment', {
 
         if (response.ok) {
           const result = await response.json()
-          this.vendors = Array.isArray(result.data) ? result.data : []
+          // dataVendor mengembalikan array langsung, bukan dengan wrapper data
+          this.vendors = Array.isArray(result) ? result : []
         } else {
-          this.vendors = []
+          // Fallback ke endpoint vendor biasa
+          try {
+            const fallbackResponse = await fetch($api.vendor(), {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+              },
+              credentials: 'include'
+            });
+            
+            if (fallbackResponse.ok) {
+              const fallbackResult = await fallbackResponse.json()
+              this.vendors = Array.isArray(fallbackResult.data) ? fallbackResult.data : []
+            } else {
+              this.vendors = []
+            }
+          } catch (fallbackError) {
+            this.vendors = []
+          }
+          
+          if (response.status === 401) {
+            toast.error({
+              title: 'Error',
+              message: 'Sesi Anda telah berakhir. Silakan login kembali.',
+              color: 'red',
+              position: 'topRight',
+            });
+          }
         }
       } catch (error) {
         console.error('Error fetching vendors:', error)
         this.vendors = []
+        
+        toast.error({
+          title: 'Error',
+          message: 'Gagal memuat data vendor',
+          color: 'red',
+          position: 'topRight',
+        });
       }
     },
 
     async fetchInvoices() {
       const { $api } = useNuxtApp()
+      const toast = useToast();
+      
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch($api.purchaseInvoice(), {
+        
+        if (!token) {
+          this.invoices = []
+          return
+        }
+        
+        // Tambahkan parameter untuk mengambil semua data
+        const params = new URLSearchParams({
+          rows: '1000', // Ambil banyak data untuk dropdown
+          page: '1'
+        });
+        
+        const response = await fetch(`${$api.purchaseInvoice()}?${params.toString()}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
@@ -202,13 +261,39 @@ export const useAPPaymentStore = defineStore('apPayment', {
 
         if (response.ok) {
           const result = await response.json()
-          this.invoices = Array.isArray(result.data) ? result.data : []
+          // Handle both paginated and direct array response
+          if (result.data && Array.isArray(result.data)) {
+            this.invoices = result.data
+          } else if (Array.isArray(result)) {
+            this.invoices = result
+          } else {
+            this.invoices = []
+          }
+          console.log(`📄 Fetched ${this.invoices.length} invoices for dropdown`);
         } else {
+          const errorText = await response.text();
+          console.error('Failed to fetch invoices:', response.status, response.statusText, errorText);
           this.invoices = []
+          
+          if (response.status === 401) {
+            toast.error({
+              title: 'Error',
+              message: 'Sesi Anda telah berakhir. Silakan login kembali.',
+              color: 'red',
+              position: 'topRight',
+            });
+          }
         }
       } catch (error) {
         console.error('Error fetching invoices:', error)
         this.invoices = []
+        
+        toast.error({
+          title: 'Error',
+          message: 'Gagal memuat data invoice',
+          color: 'red',
+          position: 'topRight',
+        });
       }
     },
 

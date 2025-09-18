@@ -72,13 +72,13 @@
                         <div class="card-body">
                             <div class="row">
                                 <div class="col-md-4">
-                                    <v-select v-model="filters.customerId" :options="customers" label="name" :reduce="c => c.id" placeholder="Pilih Customer" class="v-select-style"/>
+                                    <CustomSelect2 v-model="filters.customerId" :options="customers" :get-option-label="option => option.name" :reduce="option => option.id" searchable clearable placeholder="Pilih Customer" />
                                 </div>
                                 <div class="col-md-4">
-                                    <v-select v-model="filters.perusahaanId" :options="perusahaans" label="nmPerusahaan" :reduce="p => p.id" placeholder="Pilih Perusahaan" class="v-select-style"/>
+                                    <CustomSelect2 v-model="filters.perusahaanId" :options="perusahaans" :get-option-label="option => option.nmPerusahaan" :reduce="option => option.id" searchable clearable placeholder="Pilih Perusahaan" />
                                 </div>
                                 <div class="col-md-4">
-                                    <v-select v-model="filters.status" :options="statusOptions" label="label" :reduce="option => option.value" placeholder="Pilih Status" class="v-select-style"/>
+                                    <CustomSelect2 v-model="filters.status" :options="statusOptions" :get-option-label="option => option.label" :reduce="option => option.id" searchable clearable placeholder="Pilih Status" />
                                 </div>
                             </div>
                         </div>
@@ -159,7 +159,7 @@
                                     <Column field="customer.name" header="Nama Customer" :sortable="true"></Column>
                                     <Column field="status" header="Status" :sortable="true">
                                         <template #body="slotProps">
-                                            <span :class="getStatusBadge(slotProps.data.status).class">
+                                            <span >
                                                 {{ getStatusBadge(slotProps.data.status).text }}
                                             </span>
                                         </template>
@@ -267,14 +267,14 @@
                                 <div class="row g-4">
                                     <div class="col-md-12">
                                         <div class="form-floating form-floating-outline">
-                                            <input type="hidden" v-model="form.noSr" class="form-control" placeholder="No SR" required>
+                                            <input type="hidden" v-model="form.noSr" class="form-control" placeholder="No SR" >
                                         </div>
                                     </div>
                                      <div class="col-md-6">
-                                        <v-select v-model="form.customerId" :options="customers" label="name" :reduce="c => c.id" placeholder="Pilih Customer" class="v-select-style"/>
+                                        <CustomSelect2 v-model="form.customerId" :options="customers" :get-option-label="option => option.name" :reduce="option => option.id" searchable clearable placeholder="Pilih Customer" />
                                     </div>
                                     <div class="col-md-6">
-                                        <v-select v-model="form.salesOrderId" :options="salesOrders" label="noSo" :reduce="so => so.id" placeholder="Pilih Sales Order" class="v-select-style" :disabled="!form.customerId"/>
+                                        <CustomSelect2 v-model="form.salesOrderId" :options="salesOrders" :get-option-label="option => option.noSo" :reduce="option => option.id" searchable clearable placeholder="Pilih Sales Order"  :disabled="!form.customerId"/>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-floating form-floating-outline">
@@ -284,15 +284,15 @@
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-floating form-floating-outline">
-                                            <input type="date" v-model="form.returnDate" class="form-control" required>
+                                            <input type="date" v-model="form.returnDate" class="form-control" >
                                             <label>Tanggal Pengembalian</label>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
-                                        <v-select v-model="form.perusahaanId" :options="perusahaans" label="nmPerusahaan" :reduce="p => p.id" placeholder="Pilih Perusahaan" class="v-select-style" readonly/>
+                                        <CustomSelect2 v-model="form.perusahaanId" :options="perusahaans" :get-option-label="option => option.nmPerusahaan" :reduce="option => option.id" searchable clearable placeholder="Pilih Perusahaan"  readonly/>
                                     </div>
                                     <div class="col-md-6">
-                                        <v-select v-model="form.cabangId" :options="filteredCabangs" label="nmCabang" :reduce="c => c.id" placeholder="Pilih Cabang" class="v-select-style" readonly/>
+                                        <CustomSelect2 v-model="form.cabangId" :options="filteredCabangs" :get-option-label="option => option.nmCabang" :reduce="option => option.id" searchable clearable placeholder="Pilih Cabang"  readonly/>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-floating form-floating-outline">
@@ -319,11 +319,11 @@
                                 <div v-for="(item, index) in form.salesReturnItems" :key="index" class="repeater-item mb-4">
                                     <div class="row g-3">
                                         <div class="col-6">
-                                            <v-select v-model="item.warehouseId" :options="warehouses"
-                                            :get-option-label="w => `${w.name} (${w.code})`" :reduce="w => w.id" placeholder="Pilih Gudang" class="v-select-style" readonly/>
+                                            <CustomSelect2 v-model="item.warehouseId" :options="warehouses"
+                                            :get-option-label="option => option.label" searchable clearable :reduce="w => w.id" placeholder="Pilih Gudang"  readonly/>
                                         </div>
                                         <div class="col-md-6">
-                                            <v-select v-model="item.productId" :options="allAvailableProducts" :get-option-label="p => `${p.name} (${p.unit?.name})`" :reduce="p => p.id" placeholder="Pilih Produk" @update:modelValue="onProductChange(index)" class="v-select-style" readonly/>
+                                            <CustomSelect2 v-model="item.productId" :options="allAvailableProducts" :get-option-label="option => option.label" searchable clearable :reduce="p => p.id" placeholder="Pilih Produk" @update:modelValue="onProductChange(index)"  readonly/>
                                         </div>
                                         <div class="col-md-3">
                                             <div class="form-floating form-floating-outline">
@@ -388,6 +388,7 @@ import { usePermissions } from '~/composables/usePermissions'
 import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import vSelect from 'vue-select'
+import CustomSelect2 from '~/components/CustomSelect2.vue'
 import Dropdown from 'primevue/dropdown'
 import Column from 'primevue/column'
 import InputText from 'primevue/inputtext'
@@ -481,7 +482,6 @@ watch(showModal, (newValue) => {
             } else {
                 attachmentPreview.value = null
             }
-            
 
         } else {
             attachmentPreview.value = null
@@ -1222,51 +1222,23 @@ const exportSalesReturnExcel = (dataToExport) => {
 </script>
 
 <style scoped>
-    .v-select-style {
-        min-height: 48px;
-    }
+<style scoped>
 
-    :deep(.v-select-style .vs__dropdown-toggle),
-    :deep(.perusahaan .vs__dropdown-toggle),
-    :deep(.warehouse-select .vs__dropdown-toggle),
-    :deep(.status .vs__dropdown-toggle),
-    :deep(.vendor .vs__dropdown-toggle),
-    :deep(.product-select .vs__dropdown-toggle),
-    :deep(.cabang .vs__dropdown-toggle),
-    :deep(.select-payment-method .vs__dropdown-toggle) {
-        height: 48px !important;
-        border-radius: 7px;
-    }
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .card-body {
+    padding: 16px;
+  }
+  
+  .form-label {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+}
 
-    /* ✅ NEW: Responsive styling untuk text truncation di tablet dan mobile */
-    @media (max-width: 768px) {
-        :deep(.v-select-style .vs__selected) {
-            white-space: nowrap !important;
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
-            max-width: 100% !important;
-        }
-
-        :deep(.v-select-style .vs__placeholder) {
-            white-space: nowrap !important;
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
-            max-width: 100% !important;
-        }
-
-        :deep(.v-select-style .vs__selected-options) {
-            overflow: hidden !important;
-        }
-    }
-
-    @media (max-width: 576px) {
-        :deep(.v-select-style .vs__selected) {
-            font-size: 14px !important;
-            padding: 2px 4px !important;
-        }
-
-        :deep(.v-select-style .vs__placeholder) {
-            font-size: 14px !important;
-        }
-    }
+@media (max-width: 576px) {
+  .card-body {
+    padding: 12px;
+  }
+}
 </style>

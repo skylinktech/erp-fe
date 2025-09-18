@@ -296,7 +296,7 @@
                                         id="kodePerusahaan" 
                                         v-model="form.kodePerusahaan" 
                                         placeholder="Masukkan kode perusahaan"
-                                        required
+                                        
                                     >
                                     <label for="kodePerusahaan">Kode Perusahaan</label>
                                 </div>
@@ -305,11 +305,11 @@
                                 <div class="form-floating form-floating-outline">
                                     <input 
                                         type="text" 
-                                        :class="['form-control', { 'is-invalid': hasFieldError('nmPerusahaan') }]"
+                                        
                                         id="nmPerusahaan" 
                                         v-model="form.nmPerusahaan" 
                                         placeholder="Masukkan nama perusahaan"
-                                        required
+                                        
                                     >
                                     <label for="nmPerusahaan">Nama Perusahaan</label>
                                     <div v-if="hasFieldError('nmPerusahaan')" class="invalid-feedback">
@@ -325,7 +325,7 @@
                                         id="tlpPerusahaan" 
                                         v-model="form.tlpPerusahaan" 
                                         placeholder="Masukkan no telp perusahaan"
-                                        required
+                                        
                                     >
                                     <label for="tlpPerusahaan">No. Telp Perusahaan</label>
                                 </div>
@@ -334,11 +334,11 @@
                                 <div class="form-floating form-floating-outline">
                                     <input 
                                     type="text" 
-                                    :class="['form-control', { 'is-invalid': hasFieldError('emailPerusahaan') }]"
+                                    
                                     id="emailPerusahaan" 
                                     v-model="form.emailPerusahaan" 
                                     placeholder="Masukkan email perusahaan"
-                                    required
+                                    
                                     >
                                     <label for="emailPerusahaan">Email Perusahaan</label>
                                     <div v-if="hasFieldError('emailPerusahaan')" class="invalid-feedback">
@@ -354,7 +354,7 @@
                                     id="npwpPerusahaan" 
                                     v-model="form.npwpPerusahaan" 
                                     placeholder="Masukkan npwp perusahaan"
-                                    required
+                                    
                                     >
                                     <label for="npwpPerusahaan">NPWP Perusahaan</label>
                                 </div>

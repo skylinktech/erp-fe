@@ -72,15 +72,6 @@ export const useUserSessionStore = defineStore('userSession', {
       const latestSessions = getLatestSessionPerUser(state.activeUsers)
         .sort((a, b) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime())
       
-      console.log('🔍 User Session Debug: Total sessions from API:', state.activeUsers.length)
-      console.log('🔍 User Session Debug: Unique users after deduplication:', latestSessions.length)
-      console.log('🔍 User Session Debug: Latest sessions:', latestSessions.map(s => ({
-        userId: s.userId,
-        fullName: s.user.fullName,
-        lastActivity: s.lastActivity,
-        deviceType: s.deviceType
-      })))
-      
       // Update showLoadMore berdasarkan jumlah data
       state.showLoadMore = latestSessions.length > state.displayedCount
       

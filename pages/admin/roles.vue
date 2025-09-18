@@ -124,7 +124,7 @@
                                 placeholder="Enter a role name"
                                 tabindex="-1"
                                 v-model="form.name"
-                                required
+                                
                                 />
                             <label for="modalRoleName">Role Name</label>
                             </div>

@@ -226,7 +226,7 @@
                                 </Column>
                                 <Column field="status" header="Status" :sortable="true" style="min-width:100px">
                                     <template #body="slotProps">
-                                        <span :class="getStatusBadgeClass(slotProps.data.status)">
+                                        <span >
                                             {{ getStatusLabel(slotProps.data.status) }}
                                         </span>
                                     </template>
@@ -322,7 +322,7 @@
                                                     type="date" 
                                                     class="form-control" 
                                                     v-model="form.date" 
-                                                    required
+                                                    
                                                 >
                                                 <label>Tanggal *</label>
                                             </div>
@@ -332,7 +332,7 @@
                                                 <select 
                                                     class="form-select" 
                                                     v-model="form.status"
-                                                    required
+                                                    
                                                 >
                                                     <option value="">Pilih Status</option>
                                                     <option v-for="status in journalStatuses" :key="status.value" :value="status.value">
@@ -360,7 +360,7 @@
                                                     class="form-control" 
                                                     v-model="form.description" 
                                                     placeholder="Masukkan deskripsi jurnal"
-                                                    required
+                                                    
                                                 >
                                                 <label>Deskripsi *</label>
                                             </div>
@@ -371,15 +371,11 @@
                                     <div v-for="(line, index) in form.journalLines" :key="index" class="repeater-item mb-4">
                                         <div class="row g-3">
                                             <div class="col-md-4">
-                                                <v-select 
-                                                    v-model="line.accountId" 
-                                                    :options="accounts || []" 
-                                                    :get-option-label="account => `${account.code} - ${account.name}`"
+                                                <CustomSelect2 v-model="line.accountId" :options="accounts || []" 
+                                                    :get-option-label="option => option.label" searchable clearable
                                                     :reduce="account => account.id" 
                                                     placeholder="Pilih Akun" 
-                                                    class="v-select-style"
-                                                    :searchable="true"
-                                                    :clearable="true"
+
                                                     :close-on-select="true"
                                                     :preserve-search="false"
                                                     :filter-by="(option, label, search) => {
@@ -410,7 +406,7 @@
                                                             </div>
                                                         </div>
                                                     </template>
-                                                </v-select>
+                                                </CustomSelect2>
                                             </div>
                                             <div class="col-md-2">
                                                 <div class="form-floating form-floating-outline">
@@ -500,6 +496,7 @@ import Column from 'primevue/column'
 import Dropdown from 'primevue/dropdown'
 import InputText from 'primevue/inputtext'
 import vSelect from 'vue-select'
+import CustomSelect2 from '~/components/CustomSelect2.vue'
 import 'vue-select/dist/vue-select.css'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 
@@ -714,139 +711,23 @@ const handleSearch = async (value) => {
 </script>
 
 <style scoped>
-.badge {
-    font-size: 0.75rem;
+<style scoped>
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .card-body {
+    padding: 16px;
+  }
+  
+  .form-label {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
 }
 
-.table th {
-    background-color: #f8f9fa;
-    font-weight: 600;
-}
-
-.table tfoot {
-    background-color: #e9ecef;
-}
-
-/* Skeleton Loader */
-.skeleton-loader {
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-    background-size: 200% 100%;
-    animation: loading 1.5s infinite;
-    border-radius: 4px;
-}
-
-@keyframes loading {
-    0% {
-        background-position: 200% 0;
-    }
-    100% {
-        background-position: -200% 0;
-    }
-}
-
-/* Dark mode skeleton */
-:deep(.dark) .skeleton-loader {
-    background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
-    background-size: 200% 100%;
-}
-
-/* v-select styling */
-.v-select-style {
-    height: 48px !important;
-    border-radius: 7px;
-}
-
-:deep(.v-select-style .vs__dropdown-toggle) {
-    height: 48px !important;
-    border-radius: 7px;
-}
-
-:deep(.v-select-style .vs__search) {
-    font-size: 13px !important;
-    border: none !important;
-    outline: none !important;
-    background: transparent !important;
-    width: 100% !important;
-    min-width: 0 !important;
-}
-
-:deep(.v-select-style .vs__dropdown-menu) {
-    max-height: 250px !important;
-    overflow-y: auto !important;
-    border-radius: 7px !important;
-}
-
-:deep(.v-select-style .vs__dropdown-option--highlight) {
-    background-color: #4a4a4a !important;
-    color: white !important;
-}
-
-:deep(.v-select-style .vs__dropdown-option) {
-    padding: 10px 14px !important;
-    font-size: 13px !important;
-    line-height: 1.4 !important;
-    border-bottom: 1px solid #f0f0f0 !important;
-    white-space: normal !important;
-    word-wrap: break-word !important;
-    overflow-wrap: break-word !important;
-    min-height: auto !important;
-    height: auto !important;
-}
-
-:deep(.v-select-style .vs__dropdown-option:last-child) {
-    border-bottom: none !important;
-}
-
-:deep(.v-select-style .vs__dropdown-option:hover) {
-    background-color: #f8f9fa !important;
-    color: #666bff !important;
-}
-
-:deep(.v-select-style .vs__dropdown-option--highlight:hover) {
-    background-color: #666bff !important;
-    color: white !important;
-}
-
-:deep(.v-select-style .vs__dropdown-option--highlight) {
-    background-color: #4a4a4a !important;
-    color: white !important;
-    display: block !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
-}
-
-:deep(.v-select-style .vs__dropdown-option .d-flex) {
-    width: 100% !important;
-    display: flex !important;
-    align-items: flex-start !important;
-    justify-content: space-between !important;
-}
-
-:deep(.v-select-style .vs__dropdown-option .fw-bold) {
-    word-break: break-word !important;
-    hyphens: auto !important;
-    line-height: 1.3 !important;
-}
-
-:deep(.v-select-style .vs__dropdown-option small) {
-    word-break: break-word !important;
-    hyphens: auto !important;
-    line-height: 1.2 !important;
-    margin-top: 2px !important;
-}
-
-.is-invalid .vs__dropdown-toggle {
-    border-color: #dc3545 !important;
-    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
-}
-
-.v-select-style:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-.v-select-style:disabled .vs__dropdown-toggle {
-    background-color: #e9ecef;
-    cursor: not-allowed;
+@media (max-width: 576px) {
+  .card-body {
+    padding: 12px;
+  }
 }
 </style>

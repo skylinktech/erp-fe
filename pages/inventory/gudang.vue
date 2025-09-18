@@ -118,7 +118,7 @@
                                         id="kodeGudang" 
                                         v-model="form.code" 
                                         placeholder="Masukkan kode gudang"
-                                        required
+                                        
                                     >
                                     <label for="kodeGudang">Kode Gudang</label>
                                 </div>
@@ -131,7 +131,7 @@
                                         id="nmGudang" 
                                         v-model="form.name" 
                                         placeholder="Masukkan nama gudang"
-                                        required
+                                        
                                     >
                                     <label for="nmGudang">Nama Gudang</label>
                                 </div>
@@ -144,7 +144,7 @@
                                         id="emailGudang" 
                                         v-model="form.email" 
                                         placeholder="Masukkan email gudang"
-                                        required
+                                        
                                     >
                                     <label for="emailGudang">Email Gudang</label>
                                 </div>
@@ -157,7 +157,7 @@
                                         id="phoneGudang" 
                                         v-model="form.phone" 
                                         placeholder="Masukkan no. telepon gudang"
-                                        required
+                                        
                                     >
                                     <label for="phoneGudang">No. Telepon Gudang</label>
                                 </div>

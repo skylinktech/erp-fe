@@ -23,7 +23,7 @@
                 class="btn btn-outline-dark btn-sm"
                 :disabled="loading"
               >
-                <i class="ri-refresh-line me-1" :class="{ 'ri-loader-4-line animate-spin': loading }"></i>
+                <i class="ri-refresh-line me-1" ></i>
                 Refresh
               </button>
             </div>
@@ -58,7 +58,7 @@
                 v-for="notification in notificationsStore.notifications" 
                 :key="notification.id"
                 class="list-group-item list-group-item-action py-3 px-3"
-                :class="{ 'bg-white': !notificationsStore.readNotifications.has(notification.id) }"
+                
                 @click="handleNotificationClick(notification)"
                 style="cursor: pointer;"
               >
@@ -67,12 +67,12 @@
                     <div class="d-flex align-items-center mb-2">
                       <span 
                         class="badge me-2"
-                        :class="getTypeBadgeClass(notification.type)"
+                        
                       >
                         {{ getTypeText(notification.type) }}
                       </span>
                       <span
-                        :class="'badge ' + getStatusBadgeClass(notification.status)"
+                        
                       >
                         {{ getStatusText(notification.status) }}
                       </span>

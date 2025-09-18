@@ -108,7 +108,7 @@
                             </Column>
                             <Column field="isActive" header="Status" :sortable="true">
                                 <template #body="slotProps">
-                                    <span :class="getStatusBadge(slotProps.data.isActive).class">
+                                    <span >
                                         {{ getStatusBadge(slotProps.data.isActive).text }}
                                     </span>
                                 </template>
@@ -145,7 +145,7 @@
                                         id="username" 
                                         v-model="form.username" 
                                         placeholder="Masukkan username"
-                                        required
+                                        
                                     >
                                     <label for="username">Username</label>
                                 </div>
@@ -158,7 +158,7 @@
                                         id="full_name" 
                                         v-model="form.full_name" 
                                         placeholder="Masukkan nama user"
-                                        required
+                                        
                                     >
                                     <label for="full_name">Nama Lengkap</label>
                                 </div>
@@ -192,23 +192,19 @@
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <v-select
-                                    v-model="form.role_ids"
-                                    :options="roles"
-                                    label="name"
+                                <CustomSelect2 v-model="form.role_ids" :options="roles"
+                                    :get-option-label="option => option.name"
                                     multiple
-                                    :reduce="roles => roles.id"
+                                    :reduce="option => option.id" searchable clearable
                                     placeholder="-- Pilih Role --"
                                     id="role_ids"
                                     class="role_ids"
                                 />   
                             </div>
                             <div class="col-md-6">
-                                <v-select
-                                    v-model="form.isActive"
-                                    :options="status"
-                                    label="label"
-                                    :reduce="status => status.value"
+                                <CustomSelect2 v-model="form.isActive" :options="status"
+                                    :get-option-label="option => option.label"
+                                    :reduce="option => option.id" searchable clearable
                                     placeholder="-- Pilih Status --"
                                     id="isActive"
                                     class="isActive"
@@ -244,6 +240,7 @@ import MyDataTable from '~/components/table/MyDataTable.vue'
 import CardBox from '~/components/cards/Cards.vue'
 import { useUserManagementStore } from '~/stores/userManagement'
 import vSelect from 'vue-select'
+import CustomSelect2 from '~/components/CustomSelect2.vue'
 import 'vue-select/dist/vue-select.css'
 import Dropdown from 'primevue/dropdown'
 import InputText from 'primevue/inputtext'
@@ -304,7 +301,6 @@ const debouncedSearch = useDebounceFn(() => {
 }, 500)
 watch(globalFilterValue, debouncedSearch);
 
-
 const onPage = (event) => userStore.setPagination(event);
 
 const handleRowsChange = () => {
@@ -333,9 +329,23 @@ const getStatusBadge = (isActive) => {
 </script>
 
 <style scoped>
-    :deep(.isActive .vs__dropdown-toggle),
-    :deep(.role_ids .vs__dropdown-toggle) {
-        height: 48px !important;
-        border-radius: 7px;
-    }
+<style scoped>
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .card-body {
+    padding: 16px;
+  }
+  
+  .form-label {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+}
+
+@media (max-width: 576px) {
+  .card-body {
+    padding: 12px;
+  }
+}
 </style>

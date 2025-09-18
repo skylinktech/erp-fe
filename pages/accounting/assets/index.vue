@@ -254,7 +254,7 @@
                                 </Column>
                                 <Column field="status" header="Status" :sortable="true" style="min-width:100px">
                                     <template #body="slotProps">
-                                        <span :class="getStatusBadgeClass(slotProps.data.status)">
+                                        <span >
                                             {{ getStatusLabel(slotProps.data.status) }}
                                         </span>
                                     </template>
@@ -302,26 +302,21 @@
                 <form @submit.prevent="assetStore.saveAsset()">
                     <div class="row g-6">
                         <div class="col-md-6">
-                            <v-select 
-                                v-model="form.perusahaanId" 
-                                :options="perusahaans" 
-                                label="nmPerusahaan" 
-                                :reduce="p => p.id" 
+                            <CustomSelect2 v-model="form.perusahaanId" :options="perusahaans" 
+                                :get-option-label="option => option.nmPerusahaan" 
+                                :reduce="option => option.id" searchable clearable 
                                 placeholder="Pilih Perusahaan" 
-                                class="v-select-style"
-                                required
+
                             />
                         </div>
                         <div class="col-md-6">
-                            <v-select 
-                                v-model="form.cabangId" 
-                                :options="filteredCabangs" 
-                                label="nmCabang" 
-                                :reduce="c => c.id" 
+                            <CustomSelect2 v-model="form.cabangId" :options="filteredCabangs" 
+                                :get-option-label="option => option.nmCabang" 
+                                :reduce="option => option.id" searchable clearable 
                                 placeholder="Pilih Cabang" 
-                                class="v-select-style"
+                                
                                 :disabled="!form.perusahaanId"
-                                required
+                                
                             />
                         </div>
                         <div class="col-md-3">
@@ -331,19 +326,17 @@
                                     class="form-control" 
                                     v-model="form.name" 
                                     placeholder="Masukkan nama aset"
-                                    required
+                                    
                                 >
                                 <label>Nama Aset *</label>
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <v-select 
-                                v-model="form.vendorId" 
-                                :options="vendors" 
-                                label="name" 
-                                :reduce="v => v.id" 
+                            <CustomSelect2 v-model="form.vendorId" :options="vendors" 
+                                :get-option-label="option => option.name" 
+                                :reduce="option => option.id" searchable clearable 
                                 placeholder="Pilih Vendor" 
-                                class="v-select-style"
+                                
                             />
                         </div>
                         <div class="col-md-3">
@@ -351,7 +344,7 @@
                                 <select 
                                     class="form-select" 
                                     v-model="form.category" 
-                                    required
+                                    
                                 >
                                     <option value="">Pilih Kategori</option>
                                     <option value="computer">Computer</option>
@@ -371,7 +364,7 @@
                                     type="date" 
                                     class="form-control" 
                                     v-model="form.acquisitionDate" 
-                                    required
+                                    
                                 >
                                 <label>Tanggal Pembelian *</label>
                             </div>
@@ -384,7 +377,7 @@
                                     :value="formatRupiah(form.acquisitionCost || 0)"
                                     @input="onAcquisitionCostInput"
                                     placeholder="Masukkan nilai pembelian"
-                                    required
+                                    
                                 >
                                 <label>Nilai Pembelian *</label>
                             </div>
@@ -397,7 +390,7 @@
                                     :value="formatRupiah(form.residualValue || 0)"
                                     @input="onResidualValueInput"
                                     placeholder="Masukkan nilai sisa"
-                                    required
+                                    
                                 >
                                 <label>Nilai Sisa *</label>
                             </div>
@@ -408,7 +401,7 @@
                                 <select 
                                     class="form-select" 
                                     v-model="form.depreciationMethod"
-                                    required
+                                    
                                 >
                                     <option value="">Pilih Metode Penyusutan</option>
                                     <option v-for="method in depreciationMethods" :key="method.value" :value="method.value">
@@ -426,7 +419,7 @@
                                     v-model="form.usefulLife" 
                                     placeholder="Masukkan umur ekonomis"
                                     min="1"
-                                    required
+                                    
                                 >
                                 <label>Umur Ekonomis (Tahun) *</label>
                             </div>
@@ -438,7 +431,7 @@
                                     class="form-control" 
                                     v-model="form.location" 
                                     placeholder="Masukkan lokasi aset"
-                                    required
+                                    
                                 >
                                 <label>Lokasi *</label>
                             </div>
@@ -448,7 +441,7 @@
                                 <select 
                                     class="form-select" 
                                     v-model="form.status"
-                                    required
+                                    
                                 >
                                     <option value="">Pilih Status</option>
                                     <option v-for="status in assetStatuses" :key="status.value" :value="status.value">
@@ -503,7 +496,6 @@
             </template>
         </Modal>
 
-
     </div>
 </template>
 
@@ -523,6 +515,7 @@ import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import vSelect from 'vue-select'
+import CustomSelect2 from '~/components/CustomSelect2.vue'
 import Dropdown from 'primevue/dropdown'
 import Column from 'primevue/column'
 import InputText from 'primevue/inputtext'
@@ -695,7 +688,6 @@ onMounted(async () => {
         }
         // Fetch summary data untuk statistics yang akurat
         await fetchAssetsSummary()
-        
 
     } catch (error) {
         console.error('Error in onMounted:', error)
@@ -761,211 +753,26 @@ const onResidualValueInput = (event) => {
     assetStore.setResidualValue(value);
 };
 
-
 </script>
 
 <style scoped>
-.badge {
-    font-size: 0.75rem;
-}
+<style scoped>
 
-.v-select-style {
-    min-height: 48px;
-}
-
-:deep(.v-select-style .vs__dropdown-toggle),
-:deep(.perusahaan .vs__dropdown-toggle),
-:deep(.status .vs__dropdown-toggle),
-:deep(.customer .vs__dropdown-toggle),
-:deep(.product-select .vs__dropdown-toggle),
-:deep(.cabang .vs__dropdown-toggle) {
-    height: 48px !important;
-    border-radius: 7px;
-}
-
-/* ✅ NEW: Limit dropdown height dan tambahkan scroll */
-:deep(.v-select-style .vs__dropdown-menu) {
-    max-height: 300px !important;
-    overflow-y: auto !important;
-}
-
-/* ✅ NEW: Styling untuk option dalam dropdown */
-:deep(.v-select-style .vs__dropdown-option) {
-    padding: 8px 12px !important;
-    border-bottom: 1px solid #f0f0f0 !important;
-}
-
-:deep(.v-select-style .vs__dropdown-option:hover) {
-    background-color: #f8f9fa !important;
-}
-
-:deep(.v-select-style .vs__dropdown-option--highlight) {
-    background-color: #e3f2fd !important;
-    color: #1976d2 !important;
-}
-
-/* ✅ NEW: Styling untuk search input dalam dropdown */
-:deep(.v-select-style .vs__search) {
-    padding: 8px 12px !important;
-    font-size: 14px !important;
-    border: none !important;
-    outline: none !important;
-    background: transparent !important;
-}
-
-/* ✅ NEW: Styling untuk loading state */
-:deep(.v-select-style .vs__spinner) {
-    border-color: #1976d2 !important;
-    border-top-color: transparent !important;
-}
-
-/* ✅ NEW: Styling untuk no options message */
-:deep(.v-select-style .vs__no-options) {
-    padding: 12px !important;
-    text-align: center !important;
-    color: #6c757d !important;
-    font-style: italic !important;
-}
-
-/* ✅ NEW: Styling untuk selected option */
-:deep(.v-select-style .vs__selected) {
-    background-color: #e3f2fd !important;
-    color: #1976d2 !important;
-    border: 1px solid #1976d2 !important;
-    border-radius: 4px !important;
-    padding: 2px 6px !important;
-    margin: 2px !important;
-}
-
-/* ✅ NEW: Animasi loading untuk spinner */
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-:deep(.v-select-style .vs__spinner) {
-    animation: spin 1s linear infinite !important;
-}
-
-/* ✅ NEW: Styling untuk option yang sedang dipilih */
-:deep(.v-select-style .vs__dropdown-option--selected) {
-    background-color: #e3f2fd !important;
-    color: #1976d2 !important;
-    font-weight: 600 !important;
-}
-
-/* ✅ NEW: Styling untuk tombol clear */
-:deep(.v-select-style .vs__clear) {
-    color: #6c757d !important;
-    font-size: 16px !important;
-    padding: 4px !important;
-    margin-right: 8px !important;
-    display: block !important;
-    visibility: visible !important;
-}
-
-:deep(.v-select-style .vs__clear:hover) {
-    color: #dc3545 !important;
-}
-
-/* ✅ NEW: Styling untuk tombol dropdown */
-:deep(.v-select-style .vs__open-indicator) {
-    color: #6c757d !important;
-    margin-right: 8px !important;
-}
-
-/* ✅ NEW: Memastikan tombol clear muncul saat ada value */
-:deep(.v-select-style.vs--has-value .vs__clear) {
-    display: block !important;
-    visibility: visible !important;
-}
-
-/* ✅ NEW: Styling untuk search input yang lebih responsif */
-:deep(.v-select-style .vs__search) {
-    padding: 8px 12px !important;
-    font-size: 14px !important;
-    border: none !important;
-    outline: none !important;
-    background: transparent !important;
-    width: 100% !important;
-    min-width: 0 !important;
-}
-
-/* ✅ NEW: Memastikan dropdown muncul dengan benar */
-:deep(.v-select-style .vs__dropdown-menu) {
-    z-index: 1000 !important;
-    border: 1px solid #ddd !important;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
-}
-
-/* ✅ NEW: Styling untuk option yang sedang difilter */
-:deep(.v-select-style .vs__dropdown-option--highlight) {
-    background-color: #e3f2fd !important;
-    color: #1976d2 !important;
-    font-weight: 600 !important;
-}
-
-/* Responsive design */
+/* Responsive adjustments */
 @media (max-width: 768px) {
-    .v-select-style {
-        min-height: 44px;
-    }
-    
-    :deep(.v-select-style .vs__dropdown-toggle) {
-        height: 44px !important;
-    }
-
-    /* ✅ NEW: Responsive styling untuk text truncation di tablet dan mobile */
-    :deep(.v-select-style .vs__selected) {
-        white-space: nowrap !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-        max-width: 100% !important;
-    }
-
-    :deep(.v-select-style .vs__placeholder) {
-        white-space: nowrap !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-        max-width: 100% !important;
-    }
-
-    :deep(.v-select-style .vs__selected-options) {
-        overflow: hidden !important;
-    }
+  .card-body {
+    padding: 16px;
+  }
+  
+  .form-label {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
 }
 
 @media (max-width: 576px) {
-    :deep(.v-select-style .vs__selected) {
-        font-size: 14px !important;
-        padding: 2px 4px !important;
-    }
-
-    :deep(.v-select-style .vs__placeholder) {
-        font-size: 14px !important;
-    }
-}
-
-/* Skeleton Loader */
-.skeleton-loader {
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-    background-size: 200% 100%;
-    animation: loading 1.5s infinite;
-    border-radius: 4px;
-}
-
-@keyframes loading {
-    0% {
-        background-position: 200% 0;
-    }
-    100% {
-        background-position: -200% 0;
-    }
-}
-
-/* Dark mode skeleton */
-:deep(.dark) .skeleton-loader {
-    background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
-    background-size: 200% 100%;
+  .card-body {
+    padding: 12px;
+  }
 }
 </style>

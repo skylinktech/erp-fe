@@ -32,7 +32,7 @@
                                         <li class="mb-2"><strong>Tanggal:</strong> {{ selectedStockOut.date ? new Date(selectedStockOut.date).toLocaleDateString() : '-' }}</li>
                                         <li class="mb-2"><strong>Gudang:</strong> {{ selectedStockOut.warehouse?.name || '-' }}</li>
                                         <li class="mb-2"><strong>No. Sales Order:</strong> {{ selectedStockOut.salesOrder?.noSo || '-' }}</li>
-                                        <li class="mb-2"><strong>Status:</strong> <span :class="['badge', getStatusClass(selectedStockOut.status)]">{{ selectedStockOut.status }}</span></li>
+                                        <li class="mb-2"><strong>Status:</strong> <span >{{ selectedStockOut.status }}</span></li>
                                     </ul>
                                 </div>
                             </div>

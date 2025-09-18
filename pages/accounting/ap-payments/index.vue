@@ -243,7 +243,7 @@
                 </Column>
                 <Column field="status" header="Status" :sortable="true" style="min-width:120px">
                   <template #body="slotProps">
-                    <span :class="getStatusBadgeClass(slotProps.data.status)">
+                    <span >
                       {{ getStatusLabel(slotProps.data.status) }}
                     </span>
                   </template>
@@ -287,8 +287,7 @@
                 v-model="apPaymentStore.form.reference_number"
                 type="text"
                 class="form-control"
-                :class="{ 'is-invalid': hasError('reference_number') }"
-                required
+
               />
               <div v-if="hasError('reference_number')" class="invalid-feedback">
                 {{ getError('reference_number') }}
@@ -303,8 +302,7 @@
                 v-model="apPaymentStore.form.date"
                 type="date"
                 class="form-control"
-                :class="{ 'is-invalid': hasError('date') }"
-                required
+
               />
               <div v-if="hasError('date')" class="invalid-feedback">
                 {{ getError('date') }}
@@ -316,76 +314,33 @@
         <div class="row">
           <div class="col-md-6">
             <div class="mb-3">
-              <label class="form-label">Vendor <span class="text-danger">*</span></label>
-              <v-select 
-                v-model="apPaymentStore.form.vendor_id" 
-                :options="apPaymentStore.vendors" 
-                label="name" 
-                :reduce="v => v.id" 
-                placeholder="Pilih Vendor" 
-                class="v-select-style"
-                :class="{ 'is-invalid': hasError('vendor_id') }"
-                :searchable="true"
-                :clearable="true"
-                :close-on-select="true"
-                :max-height="300"
-                :max-options="100"
-                no-options-text="Tidak ada vendor yang tersedia"
-                no-results-text="Tidak ada vendor yang cocok dengan pencarian"
-                required
-              >
-                <template #option="option">
-                  <div class="d-flex justify-content-between align-items-center w-100">
-                    <div>
-                      <div class="fw-bold">{{ option.name }}</div>
-                      <small class="text-muted">{{ option.code }}</small>
-                    </div>
-                  </div>
-                </template>
-                <template #no-options>
-                  <div class="text-center p-3">
-                    <i class="ri-search-line me-2"></i>
-                    Tidak ada vendor yang tersedia
-                  </div>
-                </template>
-                <template #no-results>
-                  <div class="text-center p-3">
-                    <i class="ri-search-line me-2"></i>
-                    Tidak ada vendor yang cocok dengan pencarian
-                  </div>
-                </template>
-              </v-select>
-              <div v-if="hasError('vendor_id')" class="invalid-feedback">
-                {{ getError('vendor_id') }}
-              </div>
-            </div>
-          </div>
-          
-          <div class="col-md-6">
-            <div class="mb-3">
               <label class="form-label">Invoice (Opsional)</label>
-              <v-select 
+              <CustomSelect2 
                 v-model="apPaymentStore.form.invoice_id" 
                 :options="apPaymentStore.invoices" 
-                label="reference_number" 
-                :reduce="v => v.id" 
-                placeholder="Pilih Invoice" 
-                class="v-select-style"
-                :class="{ 'is-invalid': hasError('invoice_id') }"
-                :searchable="true"
-                :clearable="true"
+                :get-option-label="getInvoiceLabel" 
+                :reduce="option => option.id" 
+                placeholder="Pilih Invoice"
+                searchable
+                clearable
                 :close-on-select="true"
-                :max-height="300"
-                :max-options="100"
-                no-options-text="Tidak ada invoice yang tersedia"
-                no-results-text="Tidak ada invoice yang cocok dengan pencarian"
               >
-                <template #option="option">
+                <template #option="slotProps">
                   <div class="d-flex justify-content-between align-items-center w-100">
                     <div>
-                      <div class="fw-bold">{{ option.reference_number }}</div>
-                      <small class="text-muted">{{ formatRupiah(option.total_amount) }}</small>
+                      <div class="fw-bold">{{ slotProps.option.noInvoice || '-' }}</div>
+                      <small class="text-muted">{{ slotProps.option.vendor?.name || 'No Vendor' }}</small>
                     </div>
+                    <div class="text-end">
+                      <small class="text-muted">{{ formatDate(slotProps.option.paymentDate) }}</small>
+                      <div class="fw-semibold ms-3">{{ formatRupiah(slotProps.option.total || 0) }}</div>
+                    </div>
+                  </div>
+                </template>
+                <template #selection="slotProps">
+                  <div class="d-flex align-items-center">
+                    <span class="fw-bold text-primary me-2">{{ slotProps.option.noInvoice || '-' }}</span>
+                    <small class="text-muted">{{ slotProps.option.vendor?.name || '' }}</small>
                   </div>
                 </template>
                 <template #no-options>
@@ -400,12 +355,62 @@
                     Tidak ada invoice yang cocok dengan pencarian
                   </div>
                 </template>
-              </v-select>
+              </CustomSelect2>
               <div v-if="hasError('invoice_id')" class="invalid-feedback">
                 {{ getError('invoice_id') }}
               </div>
             </div>
           </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">Vendor <span class="text-danger">*</span></label>
+                <CustomSelect2 
+                  v-model="apPaymentStore.form.vendor_id" 
+                  :options="vendorOptions" 
+                  :get-option-label="option => option.name" 
+                  :reduce="option => option.id" 
+                  searchable 
+                  clearable 
+                  placeholder="Pilih Vendor" 
+                  :close-on-select="true"
+                  :loading="apPaymentStore.loading"
+                  :disabled="!!apPaymentStore.form.invoice_id"
+              >
+                <template #option="slotProps">
+                  <div class="d-flex justify-content-between align-items-center w-100">
+                    <div>
+                      <div class="fw-bold">{{ slotProps.option.name }}</div>
+                      <small class="text-muted">{{ slotProps.option.email || slotProps.option.phone || slotProps.option.address || 'No contact info' }}</small>
+                    </div>
+                  </div>
+                </template>
+                <template #selection="slotProps">
+                  <div class="d-flex align-items-center">
+                    <span class="fw-bold text-primary me-2">{{ slotProps.option.name }}</span>
+                    <small class="text-muted">{{ slotProps.option.email || slotProps.option.phone || slotProps.option.address || '' }}</small>
+                  </div>
+                </template>
+                <template #no-options>
+                  <div class="text-center p-3">
+                    <i class="ri-search-line me-2"></i>
+                    Tidak ada vendor yang tersedia
+                  </div>
+                </template>
+                <template #no-results>
+                  <div class="text-center p-3">
+                    <i class="ri-search-line me-2"></i>
+                    Tidak ada vendor yang cocok dengan pencarian
+                  </div>
+                </template>
+                </CustomSelect2>
+                <div v-if="!!apPaymentStore.form.invoice_id" class="form-text mt-1">
+                  <small class="text-muted">📋 Vendor diambil dari invoice yang dipilih</small>
+                </div>
+                <div v-if="hasError('vendor_id')" class="invalid-feedback">
+                  {{ getError('vendor_id') }}
+                </div>
+              </div>
+            </div>
         </div>
 
         <div class="row">
@@ -415,8 +420,7 @@
               <select
                 v-model="apPaymentStore.form.payment_method"
                 class="form-select"
-                :class="{ 'is-invalid': hasError('payment_method') }"
-                required
+
               >
                 <option
                   v-for="method in apPaymentStore.paymentMethods"
@@ -438,8 +442,8 @@
               <select
                 v-model="apPaymentStore.form.bank_account_id"
                 class="form-select"
-                :class="{ 'is-invalid': hasError('bank_account_id') }"
-                :required="apPaymentStore.form.payment_method !== 'cash'"
+                
+                :="apPaymentStore.form.payment_method !== 'cash'"
               >
                 <option value="">Pilih Rekening Bank</option>
                 <option
@@ -462,12 +466,11 @@
             <div class="mb-3">
               <label class="form-label">Jumlah <span class="text-danger">*</span></label>
               <input
-                v-model.number="apPaymentStore.form.amount"
-                type="number"
-                step="0.01"
+                :value="formatRupiah(apPaymentStore.form.amount || 0)"
+                @input="updateAmountFromInput"
+                type="text"
                 class="form-control"
-                :class="{ 'is-invalid': hasError('amount') }"
-                required
+                placeholder="Rp 0"
               />
               <div v-if="hasError('amount')" class="invalid-feedback">
                 {{ getError('amount') }}
@@ -481,8 +484,7 @@
               <select
                 v-model="apPaymentStore.form.currency"
                 class="form-select"
-                :class="{ 'is-invalid': hasError('currency') }"
-                required
+
               >
                 <option
                   v-for="currency in apPaymentStore.currencies"
@@ -506,7 +508,7 @@
                 type="number"
                 step="0.0001"
                 class="form-control"
-                :class="{ 'is-invalid': hasError('exchange_rate') }"
+                
                 :disabled="apPaymentStore.form.currency === 'IDR'"
               />
               <div v-if="hasError('exchange_rate')" class="invalid-feedback">
@@ -520,7 +522,7 @@
               <select
                 v-model="apPaymentStore.form.status"
                 class="form-select"
-                :class="{ 'is-invalid': hasError('status') }"
+                
               >
                 <option
                   v-for="status in apPaymentStore.statuses"
@@ -541,7 +543,7 @@
               <textarea
                 v-model="apPaymentStore.form.notes"
                 class="form-control"
-                :class="{ 'is-invalid': hasError('notes') }"
+                
                 rows="3"
               ></textarea>
               <div v-if="hasError('notes')" class="invalid-feedback">
@@ -590,6 +592,7 @@ import Dropdown from 'primevue/dropdown'
 import Column from 'primevue/column'
 import InputText from 'primevue/inputtext'
 import vSelect from 'vue-select'
+import CustomSelect2 from '~/components/CustomSelect2.vue'
 import 'vue-select/dist/vue-select.css'
 
 const { setListTitle, setFormTitle } = useDynamicTitle()
@@ -628,6 +631,11 @@ const totalAmount = computed(() =>
 
 const params = computed(() => apPaymentStore.params || {})
 
+// Vendor data
+const vendorOptions = computed(() => {
+  return apPaymentStore.vendors || [];
+})
+
 // Modal
 const modalTitle = computed(() => apPaymentStore.isEditMode ? 'Edit Pembayaran' : 'Tambah Pembayaran Baru')
 const modalDescription = computed(() => apPaymentStore.isEditMode ? 'Silakan ubah data pembayaran di bawah ini.' : 'Silakan isi form di bawah ini untuk menambahkan pembayaran baru.')
@@ -641,6 +649,16 @@ onMounted(async () => {
     await userStore.loadUser()
     if (apPaymentStore.payments.length === 0) {
       await apPaymentStore.fetchPayments()
+    }
+    
+    // Preload vendor data untuk dropdown
+    if (apPaymentStore.vendors.length === 0) {
+      await apPaymentStore.fetchVendors();
+    }
+    
+    // Preload invoice data untuk dropdown
+    if (apPaymentStore.invoices.length === 0) {
+      await apPaymentStore.fetchInvoices();
     }
   } catch (error) {
     console.error('Error in onMounted:', error)
@@ -683,8 +701,18 @@ watch(showModal, async (newValue) => {
 })
 
 // Methods
-const openModal = (payment) => {
+const openModal = async (payment) => {
   apPaymentStore.openModal(payment)
+  
+  // Pastikan vendor data dimuat saat modal dibuka
+  if (apPaymentStore.vendors.length === 0) {
+    await apPaymentStore.fetchVendors();
+  }
+  
+  // Pastikan invoice data dimuat saat modal dibuka
+  if (apPaymentStore.invoices.length === 0) {
+    await apPaymentStore.fetchInvoices();
+  }
 }
 
 const deletePayment = (id) => {
@@ -712,6 +740,15 @@ const formatDate = (date) => {
 const getPaymentMethodLabel = (method) => {
   const methodObj = apPaymentStore.paymentMethods.find(m => m.value === method)
   return methodObj ? methodObj.label : method
+}
+
+// Label untuk opsi invoice pada v-select
+const getInvoiceLabel = (option) => {
+  if (!option) return ''
+  const parts = []
+  if (option.noInvoice) parts.push(option.noInvoice)
+  if (option.vendor && option.vendor.name) parts.push(option.vendor.name)
+  return parts.join(' - ')
 }
 
 const getPaymentMethodBadgeClass = (method) => {
@@ -757,6 +794,68 @@ const debouncedSearch = useDebounceFn(() => {
 
 watch(globalFilterValue, debouncedSearch)
 
+// Watch vendor data changes
+watch(() => apPaymentStore.vendors, (newVendors) => {
+  // Vendor data changed, no action needed as computed property will update
+}, { deep: true })
+
+// ✅ NEW: Watcher untuk auto fill vendor ketika invoice dipilih
+watch(() => apPaymentStore.form.invoice_id, (newInvoiceId, oldInvoiceId) => {
+  if (newInvoiceId && newInvoiceId !== oldInvoiceId) {
+    // Cari invoice yang dipilih dari data invoices
+    const selectedInvoice = apPaymentStore.invoices.find(invoice => invoice.id === newInvoiceId);
+    
+    if (selectedInvoice) {
+      console.log('🧾 Invoice dipilih:', selectedInvoice);
+      
+      // Auto fill vendor dari invoice yang dipilih
+      if (selectedInvoice.vendor && selectedInvoice.vendor.id) {
+        apPaymentStore.form.vendor_id = selectedInvoice.vendor.id;
+        console.log('👤 Auto fill vendor:', selectedInvoice.vendor.name);
+      } else if (selectedInvoice.vendorId) {
+        apPaymentStore.form.vendor_id = selectedInvoice.vendorId;
+        console.log('👤 Auto fill vendor ID:', selectedInvoice.vendorId);
+      }
+      
+      // Optional: Auto fill other related data from invoice
+      if (selectedInvoice.total && !apPaymentStore.form.amount) {
+        // Hitung remaining amount jika ada
+        const remainingAmount = selectedInvoice.total - (selectedInvoice.paidAmount || 0);
+        if (remainingAmount > 0) {
+          apPaymentStore.form.amount = remainingAmount;
+          console.log('💰 Auto fill amount with remaining:', remainingAmount);
+        } else {
+          apPaymentStore.form.amount = selectedInvoice.total;
+          console.log('💰 Auto fill amount with total:', selectedInvoice.total);
+        }
+      }
+      
+      // Auto fill currency jika tersedia
+      if (selectedInvoice.currency) {
+        apPaymentStore.form.currency = selectedInvoice.currency;
+        console.log('💱 Auto fill currency:', selectedInvoice.currency);
+      }
+      
+      // Auto fill notes dengan referensi invoice
+      if (!apPaymentStore.form.notes) {
+        apPaymentStore.form.notes = `Pembayaran untuk Invoice ${selectedInvoice.noInvoice || selectedInvoice.id}`;
+        console.log('📝 Auto fill notes');
+      }
+    }
+  } else if (!newInvoiceId && oldInvoiceId) {
+    // Jika invoice di-clear, reset vendor hanya jika tidak dalam edit mode
+    if (!apPaymentStore.isEditMode) {
+      console.log('🧾 Invoice di-clear, reset vendor');
+      apPaymentStore.form.vendor_id = null;
+      
+      // Optional: Reset other fields yang di auto-fill dari invoice
+      if (!apPaymentStore.form.amount || apPaymentStore.form.amount === 0) {
+        // Hanya reset amount jika belum diisi manual
+      }
+    }
+  }
+}, { immediate: false })
+
 // Table events
 const onPage = (event) => apPaymentStore.setPagination(event)
 const onSort = (event) => apPaymentStore.setSort(event)
@@ -773,186 +872,40 @@ const handleSearch = async (value) => {
   apPaymentStore.params.first = 0
   await apPaymentStore.fetchPayments()
 }
+
+// ✅ NEW: Function untuk convert formatted rupiah back to number
+const parseRupiahToNumber = (rupiahString) => {
+  if (!rupiahString) return 0;
+  // Remove 'Rp', spaces, dots (thousand separators) and convert to number
+  return Number(rupiahString.replace(/[Rp\s.]/g, '').replace(',', '.')) || 0;
+};
+
+// ✅ NEW: Handler untuk update amount dari input yang diformat
+const updateAmountFromInput = (event) => {
+  const inputValue = event.target.value;
+  const numericValue = parseRupiahToNumber(inputValue);
+  apPaymentStore.form.amount = Math.round(numericValue);
+};
 </script>
 
 <style scoped>
-.badge {
-  font-size: 0.75rem;
-}
+<style scoped>
 
-.v-select-style {
-  min-height: 48px;
-}
-
-:deep(.v-select-style .vs__dropdown-toggle) {
-  height: 48px !important;
-  border-radius: 7px;
-  border: 1px solid #d1d7e0 !important;
-  background-color: #fff !important;
-}
-
-:deep(.v-select-style .vs__dropdown-toggle:focus-within) {
-  border-color: #4a4a4a !important;
-  box-shadow: 0 0 0.375rem 0.25rem rgba(105, 108, 255, 0.08) !important;
-}
-
-:deep(.v-select-style.is-invalid .vs__dropdown-toggle) {
-  border-color: #dc3545 !important;
-}
-
-:deep(.v-select-style .vs__dropdown-menu) {
-  max-height: 300px !important;
-  overflow-y: auto !important;
-  z-index: 1000 !important;
-  border: 1px solid #ddd !important;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
-}
-
-:deep(.v-select-style .vs__dropdown-option) {
-  padding: 8px 12px !important;
-  border-bottom: 1px solid #f0f0f0 !important;
-}
-
-:deep(.v-select-style .vs__dropdown-option:hover) {
-  background-color: #f8f9fa !important;
-}
-
-:deep(.v-select-style .vs__dropdown-option--highlight) {
-  background-color: #e3f2fd !important;
-  color: #1976d2 !important;
-}
-
-:deep(.v-select-style .vs__search) {
-  padding: 8px 12px !important;
-  font-size: 14px !important;
-  border: none !important;
-  outline: none !important;
-  background: transparent !important;
-}
-
-:deep(.v-select-style .vs__search::placeholder) {
-  color: #a1acb8 !important;
-}
-
-:deep(.v-select-style .vs__selected) {
-  background-color: #e3f2fd !important;
-  color: #1976d2 !important;
-  border: 1px solid #1976d2 !important;
-  border-radius: 4px !important;
-  padding: 2px 6px !important;
-  margin: 2px !important;
-}
-
-:deep(.v-select-style .vs__dropdown-option--selected) {
-  background-color: #e3f2fd !important;
-  color: #1976d2 !important;
-  font-weight: 600 !important;
-}
-
-:deep(.v-select-style .vs__clear) {
-  color: #6c757d !important;
-  font-size: 16px !important;
-  padding: 4px !important;
-  margin-right: 8px !important;
-  display: block !important;
-  visibility: visible !important;
-}
-
-:deep(.v-select-style .vs__clear:hover) {
-  color: #dc3545 !important;
-}
-
-:deep(.v-select-style .vs__open-indicator) {
-  color: #6c757d !important;
-  margin-right: 8px !important;
-}
-
-:deep(.v-select-style.vs--has-value .vs__clear) {
-  display: block !important;
-  visibility: visible !important;
-}
-
-:deep(.v-select-style .vs__dropdown-toggle .vs__selected-options) {
-  padding: 0.5rem 0.75rem !important;
-}
-
-:deep(.v-select-style .vs__actions) {
-  padding: 0.5rem 0.75rem !important;
-}
-
-:deep(.v-select-style .vs__dropdown-toggle:focus-within) {
-  border-color: #4a4a4a !important;
-  box-shadow: 0 0 0.375rem 0.25rem rgba(105, 108, 255, 0.08) !important;
-}
-
-:deep(.v-select-style.is-invalid .vs__dropdown-toggle) {
-  border-color: #dc3545 !important;
-}
-
-:deep(.v-select-style .vs__search::placeholder) {
-  color: #a1acb8 !important;
-}
-
-:deep(.v-select-style .vs__dropdown-toggle .vs__selected-options) {
-  padding: 0.5rem 0.75rem !important;
-}
-
-:deep(.v-select-style .vs__actions) {
-  padding: 0.5rem 0.75rem !important;
-}
-
-/* ✅ NEW: Responsive styling untuk text truncation di tablet dan mobile */
+/* Responsive adjustments */
 @media (max-width: 768px) {
-  ::deep(.v-select-style .vs__selected) {
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    max-width: 100% !important;
+  .card-body {
+    padding: 16px;
   }
-
-  ::deep(.v-select-style .vs__placeholder) {
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    max-width: 100% !important;
-  }
-
-  ::deep(.v-select-style .vs__selected-options) {
-    overflow: hidden !important;
+  
+  .form-label {
+    font-size: 13px;
+    margin-bottom: 6px;
   }
 }
 
 @media (max-width: 576px) {
-  ::deep(.v-select-style .vs__selected) {
-    font-size: 14px !important;
-    padding: 2px 4px !important;
+  .card-body {
+    padding: 12px;
   }
-
-  ::deep(.v-select-style .vs__placeholder) {
-    font-size: 14px !important;
-  }
-}
-
-/* Skeleton Loader */
-.skeleton-loader {
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-  background-size: 200% 100%;
-  animation: loading 1.5s infinite;
-  border-radius: 4px;
-}
-
-@keyframes loading {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
-}
-
-/* Dark mode skeleton */
-:deep(.dark) .skeleton-loader {
-  background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
-  background-size: 200% 100%;
 }
 </style>

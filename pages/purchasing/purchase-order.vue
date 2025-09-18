@@ -49,13 +49,43 @@
                         <div class="card-body">
                             <div class="row">
                                 <div class="col-md-4 mb-3">
-                                    <v-select v-model="filters.vendorId" :options="vendors || []" :get-option-label="v => v.name" :reduce="v => v.id" placeholder="Pilih Vendor" class="v-select-style"/>
+                                    <label class="form-label text-muted mb-2">Filter Vendor</label>
+                                    <CustomSelect2 
+                                        v-model="filters.vendorId" 
+                                        :options="vendors || []" 
+                                        :get-option-label="v => v.name" 
+                                        :reduce="v => v.id" 
+                                        placeholder="Pilih Vendor"
+                                        searchable
+                                        clearable
+                                        :loading="vendorStore.loading"
+                                        loading-text="Memuat vendor..."
+                                        
+                                    />
                                 </div>
                                 <div class="col-md-4 mb-3">
-                                    <v-select v-model="filters.poType" :options="poTypeOptions" :get-option-label="option => option.label" :reduce="option => option.value" placeholder="Pilih Tipe PO" class="v-select-style"/>
+                                    <label class="form-label text-muted mb-2">Filter Tipe PO</label>
+                                    <CustomSelect2 
+                                        v-model="filters.poType" 
+                                        :options="poTypeOptions" 
+                                        :get-option-label="option => option.label" 
+                                        :reduce="option => option.value" 
+                                        placeholder="Pilih Tipe PO"
+                                        searchable
+                                        clearable
+                                    />
                                 </div>
                                 <div class="col-md-4 mb-3">
-                                    <v-select v-model="filters.status" :options="statusOptions" :get-option-label="option => option.label" :reduce="option => option.value" placeholder="Pilih Status" class="v-select-style"/>
+                                    <label class="form-label text-muted mb-2">Filter Status</label>
+                                    <CustomSelect2 
+                                        v-model="filters.status" 
+                                        :options="statusOptions" 
+                                        :get-option-label="option => option.label" 
+                                        :reduce="option => option.value" 
+                                        placeholder="Pilih Status"
+                                        searchable
+                                        clearable
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -111,14 +141,14 @@
                                     <Column field="vendor.name" header="Nama Vendor" :sortable="true"></Column>
                                     <Column field="poType" header="Tipe PO" :sortable="true">
                                         <template #body="slotProps">
-                                            <span :class="getPoTypeBadge(slotProps.data.poType).class">
+                                            <span >
                                                 {{ getPoTypeBadge(slotProps.data.poType).text }}
                                             </span>
                                         </template>
                                     </Column>
                                     <Column field="status" header="Status PO" :sortable="true">
                                         <template #body="slotProps">
-                                            <span :class="getStatusBadge(slotProps.data.status).class">
+                                            <span >
                                                 {{ getStatusBadge(slotProps.data.status).text }}
                                             </span>
                                         </template>
@@ -257,7 +287,7 @@
                                 <div class="row g-4">
                                     <div class="col-md-12">
                                         <div class="form-floating form-floating-outline">
-                                            <input type="hidden" v-model="form.noPo" class="form-control" placeholder="No PO" required>
+                                            <input type="hidden" v-model="form.noPo" class="form-control" placeholder="No PO" >
                                         </div>
                                     </div>
                                     <div class="col-md-6">
@@ -302,65 +332,101 @@
                                         </div>
                                     </div>
                                     <div class="col-md-6">
-                                        <v-select 
+                                        <CustomSelect2 
                                             v-model="form.vendorId" 
                                             :options="vendors || []" 
                                             :get-option-label="v => v.name" 
                                             :reduce="v => v.id" 
-                                            placeholder="Pilih Vendor" 
-                                            class="v-select-style"
+                                            placeholder="Pilih Vendor"
+                                            searchable
+                                            clearable
                                             :loading="vendorStore.loading"
-                                        />
+                                            loading-text="Memuat vendor..."
+                                            
+                                        >
+                                            <template #option="{ option }">
+                                                <div class="d-flex justify-content-between align-items-center w-100">
+                                                    <div>
+                                                        <div class="fw-bold">{{ option.name }}</div>
+                                                        <small class="text-muted">{{ option.email || 'Tidak ada email' }}</small>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </CustomSelect2>
                                         <small class="text-muted">Vendor tersedia: {{ vendors?.length || 0 }}</small>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-floating form-floating-outline">
-                                            <input type="text" v-model="form.up" class="form-control" placeholder="Untuk Perhatian" required>
+                                            <input type="text" v-model="form.up" class="form-control" placeholder="Untuk Perhatian" >
                                             <label>Untuk Perhatian</label>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
                                         <div class="form-floating form-floating-outline">
-                                            <input type="date" v-model="form.date" class="form-control" required>
+                                            <input type="date" v-model="form.date" class="form-control" >
                                             <label>Tanggal PO</label>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
                                         <div class="form-floating form-floating-outline">
-                                            <input type="date" v-model="form.dueDate" class="form-control" required>
+                                            <input type="date" v-model="form.dueDate" class="form-control" >
                                             <label>Jatuh Tempo</label>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-floating form-floating-outline">
-                                            <input type="text" v-model="form.termOfPayment" class="form-control" required>
+                                            <input type="text" v-model="form.termOfPayment" class="form-control" >
                                             <label>Term Of Payment</label>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
-                                        <v-select 
+                                        <CustomSelect2 
                                             v-model="form.perusahaanId" 
                                             :options="perusahaans || []" 
                                             :get-option-label="p => p.nmPerusahaan" 
                                             :reduce="p => p.id" 
-                                            placeholder="Pilih Perusahaan" 
-                                            class="v-select-style"
+                                            placeholder="Pilih Perusahaan"
+                                            searchable
+                                            clearable
                                             :disabled="isExternalPO"
                                             :loading="perusahaanStore.loading"
-                                        />
+                                            loading-text="Memuat perusahaan..."
+                                            
+                                        >
+                                            <template #option="{ option }">
+                                                <div class="d-flex justify-content-between align-items-center w-100">
+                                                    <div>
+                                                        <div class="fw-bold">{{ option.nmPerusahaan }}</div>
+                                                        <small class="text-muted">{{ option.alamatPerusahaan || 'Tidak ada alamat' }}</small>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </CustomSelect2>
                                         <small class="text-muted">Perusahaan tersedia: {{ perusahaans?.length || 0 }}</small>
                                     </div>
                                     <div class="col-md-6">
-                                        <v-select 
+                                        <CustomSelect2 
                                             v-model="form.cabangId" 
                                             :options="filteredCabangs" 
                                             :get-option-label="c => c.nmCabang" 
                                             :reduce="c => c.id" 
-                                            placeholder="Pilih Cabang" 
-                                            class="v-select-style"
+                                            placeholder="Pilih Cabang"
+                                            searchable
+                                            clearable
                                             :disabled="isExternalPO"
                                             :loading="cabangStore.loading"
-                                        />
+                                            loading-text="Memuat cabang..."
+                                            
+                                        >
+                                            <template #option="{ option }">
+                                                <div class="d-flex justify-content-between align-items-center w-100">
+                                                    <div>
+                                                        <div class="fw-bold">{{ option.nmCabang }}</div>
+                                                        <small class="text-muted">{{ option.alamatCabang || 'Tidak ada alamat' }}</small>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </CustomSelect2>
                                         <small class="text-muted">Cabang tersedia: {{ filteredCabangs?.length || 0 }}</small>
                                     </div>
 
@@ -389,7 +455,7 @@
                                             
                                             <div v-if="form.attachmentPreview" class="mt-2">
                                                 <div class="d-flex align-items-center mb-2">
-                                                    <i :class="getFileIcon(form.attachmentPreview)" style="font-size: 1.2rem; margin-right: 0.5rem;"></i>
+                                                    <i  style="font-size: 1.2rem; margin-right: 0.5rem;"></i>
                                                     <a :href="form.attachmentPreview" target="_blank" rel="noopener noreferrer" class="d-block">Lihat Attachment</a>
                                                 </div>
                                                 <div v-if="isImageFile(form.attachmentPreview)" class="mt-2">
@@ -415,30 +481,42 @@
                                 <div v-for="(item, index) in form.purchaseOrderItems" :key="index" class="repeater-item mb-4">
                                     <div class="row g-3">
                                         <div class="col-12">
-                                            <v-select 
+                                            <label class="form-label">Gudang (Opsional)</label>
+                                            <CustomSelect2 
                                                 v-model="item.warehouseId" 
                                                 :options="warehouses || []" 
                                                 :get-option-label="w => `${w.name} (${w.code})`" 
                                                 :reduce="w => w.id" 
-                                                placeholder="Pilih Gudang (Opsional)" 
-                                                class="v-select-style"
+                                                placeholder="Pilih Gudang (Opsional)"
+                                                searchable
+                                                clearable
                                                 :loading="warehouseStore.loading"
+                                                loading-text="Memuat gudang..."
+                                                
                                                 @update:modelValue="onWarehouseChange(index)"
-                                                :clearable="true"
-                                            />
+                                            >
+                                                <template #option="{ option }">
+                                                    <div class="d-flex justify-content-between align-items-center w-100">
+                                                        <div>
+                                                            <div class="fw-bold">{{ option.name }}</div>
+                                                            <small class="text-muted">Kode: {{ option.code }}</small>
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                            </CustomSelect2>
                                         </div>
                                         <div class="col-md-4">
-                                            <v-select 
+                                            <CustomSelect2 
                                                 v-model="item.productId" 
                                                 :options="getProductsByWarehouse(item.warehouseId)" 
                                                 :get-option-label="product => `${product.sku} | ${product.name}`"
                                                 :reduce="p => p.id" 
-                                                placeholder="Cari berdasarkan SKU atau nama produk..." 
-                                                @update:modelValue="onProductChange(index)" 
-                                                class="v-select-style"
+                                                placeholder="Cari berdasarkan SKU atau nama produk..."
+                                                searchable
+                                                clearable
                                                 :loading="productStore.loading"
-                                                :searchable="true"
-                                                :clearable="true"
+                                                loading-text="Memuat produk..."
+                                                
                                                 :close-on-select="true"
                                                 :preserve-search="false"
                                                 :filter-by="(option, label, search) => {
@@ -448,8 +526,9 @@
                                                            product.sku.toLowerCase().includes(searchLower) ||
                                                            (product.noInterchange ? String(product.noInterchange).toLowerCase().includes(searchLower) : false);
                                                 }"
+                                                @update:modelValue="onProductChange(index)"
                                             >
-                                                <template #option="option">
+                                                <template #option="{ option }">
                                                     <div class="d-flex justify-content-between align-items-center w-100">
                                                         <div>
                                                             <div class="fw-bold">{{ option.sku }} | {{ option.name }}</div>
@@ -457,20 +536,12 @@
                                                         </div>
                                                     </div>
                                                 </template>
-                                                <template #selected-option="option">
+                                                <template #selection="{ option }">
                                                     <div class="d-flex align-items-center">
                                                         <span class="fw-bold">{{ option.sku }} | {{ option.name }}</span>
                                                     </div>
                                                 </template>
-                                                <template #no-options>
-                                                    <div class="text-center p-3">
-                                                        <div class="text-muted">
-                                                            <i class="ri-search-line me-2"></i>
-                                                            Tidak ada produk ditemukan
-                                                        </div>
-                                                    </div>
-                                                </template>
-                                            </v-select>
+                                            </CustomSelect2>
                                         </div>
                                         <div class="col-md-2">
                                             <div class="form-floating form-floating-outline">
@@ -554,6 +625,7 @@ import Dropdown from 'primevue/dropdown'
 import CardBox from '~/components/cards/Cards.vue'
 import Column from 'primevue/column'
 import InputText from 'primevue/inputtext'
+import CustomSelect2 from '~/components/CustomSelect2.vue'
 
 // Composables
 const { setListTitle, setFormTitle } = useDynamicTitle()
@@ -1644,11 +1716,7 @@ const onRowToggle = (event) => {
 </script>
 
 <style scoped>
-    .v-select-style {
-        height: 48px !important;
-        border-radius: 7px;
-    }
-    
+    /* Attachment Preview */
     .attachment-preview {
         transition: all 0.3s ease;
     }
@@ -1658,174 +1726,133 @@ const onRowToggle = (event) => {
         box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     }
 
-    /* ✅ NEW: Styling untuk validasi */
+    /* Validation Styles */
     .is-invalid {
         border-color: #dc3545 !important;
         box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
     }
 
-    /* ✅ NEW: Styling untuk v-select yang konsisten dengan customer */
-    :deep(.v-select-style .vs__dropdown-toggle) {
-        height: 48px !important;
-        border-radius: 7px;
-    }
-
-    :deep(.v-select-style .vs__search) {
-        padding: 8px 12px !important;
-        font-size: 14px !important;
-        border: none !important;
-        outline: none !important;
-        background: transparent !important;
-        width: 100% !important;
-        min-width: 0 !important;
-    }
-
-    :deep(.v-select-style .vs__dropdown-menu) {
-        max-height: 300px !important;
-        overflow-y: auto !important;
-        border-radius: 7px !important;
-    }
-
-    :deep(.v-select-style .vs__dropdown-option--highlight) {
-        background-color: #696cff !important;
-        color: white !important;
-    }
-
-    :deep(.v-select-style .vs__dropdown-option) {
-        padding: 12px 16px !important;
-        font-size: 14px !important;
-        line-height: 1.4 !important;
-        border-bottom: 1px solid #f0f0f0 !important;
-        white-space: normal !important;
-        word-wrap: break-word !important;
-        overflow-wrap: break-word !important;
-        min-height: auto !important;
-        height: auto !important;
-    }
-
-    :deep(.v-select-style .vs__dropdown-option:last-child) {
-        border-bottom: none !important;
-    }
-
-    :deep(.v-select-style .vs__dropdown-option:hover) {
-        background-color: #f8f9fa !important;
-        color: #333 !important;
-    }
-
-    :deep(.v-select-style .vs__dropdown-option--highlight:hover) {
-        background-color: #696cff !important;
-        color: white !important;
-    }
-
-    /* ✅ NEW: Memastikan highlight menutupi seluruh area option */
-    :deep(.v-select-style .vs__dropdown-option--highlight) {
-        background-color: #696cff !important;
-        color: white !important;
-        display: block !important;
-        width: 100% !important;
-        box-sizing: border-box !important;
-    }
-
-    /* ✅ NEW: Styling untuk content di dalam option agar highlight sempurna */
-    :deep(.v-select-style .vs__dropdown-option .d-flex) {
-        width: 100% !important;
-        display: flex !important;
-        align-items: flex-start !important;
-        justify-content: space-between !important;
-    }
-
-    :deep(.v-select-style .vs__dropdown-option .fw-bold) {
-        word-break: break-word !important;
-        hyphens: auto !important;
-        line-height: 1.3 !important;
-    }
-
-    :deep(.v-select-style .vs__dropdown-option small) {
-        word-break: break-word !important;
-        hyphens: auto !important;
-        line-height: 1.2 !important;
-        margin-top: 2px !important;
-    }
-
-    /* ✅ NEW: Responsive styling untuk text truncation di tablet dan mobile */
+    /* Responsive adjustments */
     @media (max-width: 768px) {
-        :deep(.v-select-style .vs__selected) {
-            white-space: nowrap !important;
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
-            max-width: 100% !important;
+        .card-body {
+            padding: 16px;
         }
-
-        :deep(.v-select-style .vs__placeholder) {
-            white-space: nowrap !important;
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
-            max-width: 100% !important;
-        }
-
-        :deep(.v-select-style .vs__selected-options) {
-            overflow: hidden !important;
+        
+        .form-label {
+            font-size: 13px;
+            margin-bottom: 6px;
         }
     }
 
     @media (max-width: 576px) {
-        :deep(.v-select-style .vs__selected) {
-            font-size: 14px !important;
-            padding: 2px 4px !important;
-        }
-
-        :deep(.v-select-style .vs__placeholder) {
-            font-size: 14px !important;
+        .card-body {
+            padding: 12px;
         }
     }
 
-    .is-invalid .vs__dropdown-toggle {
-        border-color: #dc3545 !important;
-        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+    /* Focus states for better accessibility */
+    .form-control:focus {
+        border-color: #696cff;
+        box-shadow: 0 0 0 3px rgba(105, 108, 255, 0.1);
     }
 
-    /* ✅ NEW: Styling untuk disabled state */
-    .v-select-style:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
+    /* Small text styling */
+    .text-muted {
+        color: #6b7280 !important;
+        font-size: 12px;
     }
 
-    .v-select-style:disabled .vs__dropdown-toggle {
-        background-color: #e9ecef;
-        cursor: not-allowed;
-    }
-
-    :deep(.v-select-style .vs__dropdown-toggle),
-    :deep(.perusahaan .vs__dropdown-toggle),
-    :deep(.warehouse-select .vs__dropdown-toggle),
-    :deep(.status .vs__dropdown-toggle),
-    :deep(.vendor .vs__dropdown-toggle),
-    :deep(.product-select .vs__dropdown-toggle),
-    :deep(.cabang .vs__dropdown-toggle) {
-        height: 48px !important;
+    /* Button styling consistency */
+    .btn {
         border-radius: 7px;
+        font-weight: 500;
+        transition: all 0.2s ease-in-out;
     }
 
-    /* ✅ NEW: Styling untuk search input yang lebih responsif */
-    :deep(.v-select-style .vs__search) {
-        padding: 8px 12px !important;
-        font-size: 14px !important;
-        border: none !important;
-        outline: none !important;
-        background: transparent !important;
-        width: 100% !important;
-        min-width: 0 !important;
+    .btn-primary {
+        background-color: #696cff;
+        border-color: #696cff;
     }
 
-    /* ✅ NEW: Memastikan dropdown muncul dengan benar */
-    :deep(.v-select-style .vs__dropdown-menu) {
-        max-height: 300px !important;
-        overflow-y: auto !important;
+    .btn-primary:hover {
+        background-color: #5a5fe7;
+        border-color: #5a5fe7;
+        transform: translateY(-1px);
     }
 
-    /* ✅ NEW: Styling untuk option yang dipilih */
-    :deep(.v-select-style .vs__dropdown-option--highlight) {
-        background-color: #696cff !important;
-        color: white !important;
+    .btn-outline-danger:hover {
+        transform: translateY(-1px);
+    }
+
+    /* Tab styling */
+    .nav-tabs .nav-link {
+        border-radius: 7px 7px 0 0;
+        font-weight: 500;
+        color: #6b7280;
+        transition: all 0.2s ease-in-out;
+    }
+
+    .nav-tabs .nav-link.active {
+        color: #696cff;
+        border-color: #696cff #696cff transparent;
+        background-color: #f8f9ff;
+    }
+
+    /* Repeater item styling */
+    .repeater-item {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 20px;
+        border: 1px solid #e9ecef;
+        transition: all 0.2s ease-in-out;
+    }
+
+    .repeater-item:hover {
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    /* High contrast mode support */
+    @media (prefers-contrast: high) {
+        .card {
+            border-width: 2px;
+        }
+        
+        .form-label {
+            font-weight: 600;
+        }
+    }
+
+    /* Reduced motion support */
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+        }
+    }
+
+    /* Force Light Mode - Ensure consistent styling */
+    .form-label {
+        color: #374151 !important;
+    }
+    
+    .text-muted {
+        color: #6b7280 !important;
+    }
+    
+    .card {
+        background-color: #fff !important;
+        border-color: #e5e7eb !important;
+    }
+    
+    .card-body {
+        background-color: #fff !important;
+    }
+    
+    .repeater-item {
+        background-color: #f8f9fa !important;
+        border-color: #e9ecef !important;
     }
 </style>

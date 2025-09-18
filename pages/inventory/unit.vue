@@ -86,7 +86,7 @@
                                         class="form-control" 
                                         v-model="form.name" 
                                         placeholder="Masukkan nama unit"
-                                        required
+                                        
                                     >
                                     <label>Nama Satuan</label>
                                 </div>
@@ -98,7 +98,7 @@
                                         class="form-control" 
                                         v-model="form.symbol" 
                                         placeholder="Masukkan simbol unit"
-                                        required
+                                        
                                     >
                                     <label>Simbol Satuan</label>
                                 </div>

@@ -43,7 +43,7 @@
                                 <div class="d-flex align-items-center gap-3 mb-6">
                                     <h5 class="mb-0">Purchase Number : {{ purchaseOrder.noPo }}</h5>
                                     <!-- ✅ STATUS BADGE -->
-                                    <span :class="getStatusBadgeClass(purchaseOrder.status)">
+                                    <span >
                                         {{ getStatusText(purchaseOrder.status) }}
                                     </span>
                                 </div>
@@ -169,7 +169,7 @@
                                     </td>
                                     <td>{{ formatRupiah(Number(item.price) * Number(item.quantity)) }}</td>
                                     <td>
-                                        <span :class="getReceiveStatusBadge(item).class">
+                                        <span >
                                             {{ getReceiveStatusBadge(item).text }}
                                         </span>
                                     </td>

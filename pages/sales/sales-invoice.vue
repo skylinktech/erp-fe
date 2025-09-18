@@ -139,10 +139,28 @@
                         <div class="card-body">
                             <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <v-select v-model="filters.customerId" :options="customers" label="name" :reduce="c => c.id" placeholder="Pilih Customer" class="v-select-style"/>
+                                    <label class="form-label text-muted mb-2">Filter Customer</label>
+                                    <CustomSelect2 
+                                        v-model="filters.customerId" 
+                                        :options="customers" 
+                                        :get-option-label="c => c.name" 
+                                        :reduce="c => c.id" 
+                                        placeholder="Pilih Customer"
+                                        searchable
+                                        clearable
+                                    />
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <v-select v-model="filters.status" :options="statusOptions" label="label" :reduce="option => option.value" placeholder="Pilih Status" class="v-select-style"/>
+                                    <label class="form-label text-muted mb-2">Filter Status</label>
+                                    <CustomSelect2 
+                                        v-model="filters.status" 
+                                        :options="statusOptions" 
+                                        :get-option-label="option => option.label" 
+                                        :reduce="option => option.value" 
+                                        placeholder="Pilih Status"
+                                        searchable
+                                        clearable
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -182,11 +200,14 @@
                                             {{ params.first + slotProps.index + 1 }}
                                         </template>
                                     </Column>
-                                    <Column field="noInvoice" header="No. Invoice" :sortable="true">
+                                    <Column field="noInvoice" header="No. Invoice" :sortable="true" class="text-nowrap">
                                         <template #body="slotProps">
-                                            <span>
+                                            <a 
+                                                @click="navigateTo(`/sales/sales-invoice-detail?id=${slotProps.data.id}`)" 
+                                                style="cursor: pointer; color: #666bff; text-decoration: underline;"
+                                            >
                                                 {{ slotProps.data.noInvoice || '-' }}
-                                            </span>
+                                            </a>
                                         </template>
                                     </Column>
                                     <Column field="salesOrder.noSo" header="No. SO" :sortable="true">
@@ -230,7 +251,7 @@
                                     </Column>
                                     <Column field="status" header="Status" :sortable="true">
                                         <template #body="slotProps">
-                                            <span :class="getStatusBadge(slotProps.data.status).class">
+                                            <span >
                                                 {{ getStatusBadge(slotProps.data.status).text }}
                                             </span>
                                         </template>
@@ -312,20 +333,17 @@
                             <div class="tab-pane fade active show" id="form-tabs-info" role="tabpanel">
                                 <div class="row g-4">
                                     <div class="col-md-6">
-                                        <v-select 
+                                        <CustomSelect2 
                                             v-model="form.salesOrderId" 
                                             :options="salesOrders || []" 
-                                            label="noSo" 
+                                            :get-option-label="getSalesOrderLabel" 
                                             :reduce="so => so.id" 
-                                            placeholder="Pilih Sales Order" 
-                                            class="v-select-style sales-order-select"
-                                            :class="{ 'is-invalid': hasFieldError('salesOrderId') }"
-                                            :filterable="true"
-                                            :searchable="true"
-                                            :get-option-label="getSalesOrderLabel"
+                                            placeholder="Pilih Sales Order"
+                                            searchable
+                                            clearable
                                             :loading="loading"
                                         >
-                                            <template #option="option">
+                                            <template #option="{ option }">
                                                 <div class="d-flex justify-content-between align-items-center w-100">
                                                     <div>
                                                         <div class="fw-bold">{{ option.noSo }}</div>
@@ -336,22 +354,45 @@
                                                     </div>
                                                 </div>
                                             </template>
-                                        </v-select>
+                                            <template #selection="{ option }">
+                                                <div class="d-flex align-items-center">
+                                                    <span class="fw-bold text-primary">{{ option.noSo }}</span>
+                                                    <span class="text-muted ms-2">- {{ option.customer?.name || 'No Customer' }}</span>
+                                                </div>
+                                            </template>
+                                        </CustomSelect2>
                                         <div v-if="hasFieldError('salesOrderId')" class="invalid-feedback d-block">
                                             {{ getFieldError('salesOrderId') }}
                                         </div>
                                     </div>
                                     <div class="col-md-6">
-                                        <v-select 
+                                        <CustomSelect2 
                                             v-model="form.customerId" 
                                             :options="customers" 
-                                            label="name" 
+                                            :get-option-label="c => c.name" 
                                             :reduce="c => c.id" 
-                                            placeholder="Pilih Customer" 
-                                            class="v-select-style"
-                                            :class="{ 'is-invalid': hasFieldError('customerId') }"
+                                            placeholder="Pilih Customer"
+                                            searchable
+                                            clearable
                                             :disabled="!!form.salesOrderId"
-                                        />
+                                        >
+                                            <template #option="{ option }">
+                                                <div class="d-flex justify-content-between align-items-center w-100">
+                                                    <div>
+                                                        <div class="fw-bold">{{ option.name }}</div>
+                                                        <small class="text-muted">{{ option.email || 'No Email' }}</small>
+                                                    </div>
+                                                    <div class="text-end">
+                                                        <small class="text-muted">{{ option.phone || '-' }}</small>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                            <template #selection="{ option }">
+                                                <div class="d-flex align-items-center">
+                                                    <span class="fw-bold">{{ option.name }}</span>
+                                                </div>
+                                            </template>
+                                        </CustomSelect2>
                                         <div v-if="hasFieldError('customerId')" class="invalid-feedback d-block">
                                             {{ getFieldError('customerId') }}
                                         </div>
@@ -365,8 +406,7 @@
                                                 type="date" 
                                                 v-model="form.date" 
                                                 class="form-control" 
-                                                :class="{ 'is-invalid': hasFieldError('date') }"
-                                                required
+
                                             >
                                             <label>Tanggal Invoice</label>
                                             <div v-if="hasFieldError('date')" class="invalid-feedback">
@@ -380,8 +420,7 @@
                                                 type="date" 
                                                 v-model="form.dueDate" 
                                                 class="form-control" 
-                                                :class="{ 'is-invalid': hasFieldError('dueDate') }"
-                                                required
+
                                             >
                                             <label>Jatuh Tempo Invoice</label>
                                             <div v-if="hasFieldError('dueDate')" class="invalid-feedback">
@@ -395,7 +434,7 @@
                                                 type="text" 
                                                 v-model="form.up" 
                                                 class="form-control" 
-                                                :class="{ 'is-invalid': hasFieldError('up') }"
+                                                
                                                 placeholder="UP"
                                             >
                                             <label>UP</label>
@@ -410,7 +449,7 @@
                                                 type="text" 
                                                 v-model="form.email" 
                                                 class="form-control" 
-                                                :class="{ 'is-invalid': hasFieldError('email') }"
+                                                
                                                 placeholder="Email"
                                             >
                                             <label>Email Penagihan</label>
@@ -420,15 +459,47 @@
                                         </div>
                                     </div>
                                     <div class="col-md-3">
-                                        <v-select
+                                        <CustomSelect2
                                             v-model="form.status"
                                             :options="statusOptions"
-                                            label="label"
+                                            :get-option-label="option => option.label"
                                             :reduce="option => option.value"
-                                            placeholder="-- Pilih Status --"
-                                            id="status"
-                                            class="status"
-                                        />   
+                                            placeholder="Pilih Status"
+                                            searchable
+                                            clearable
+                                        >
+                                            <template #option="{ option }">
+                                                <div class="d-flex align-items-center">
+                                                    <span 
+                                                        class="badge me-2"
+                                                        :class="{
+                                                            'bg-danger': option.value === 'unpaid',
+                                                            'bg-warning': option.value === 'partial', 
+                                                            'bg-success': option.value === 'paid'
+                                                        }"
+                                                    >
+                                                        {{ option.label }}
+                                                    </span>
+                                                    <span class="text-muted">
+                                                        {{ option.value === 'unpaid' ? 'Belum dibayar' : 
+                                                           option.value === 'partial' ? 'Dibayar sebagian' : 
+                                                           'Lunas' }}
+                                                    </span>
+                                                </div>
+                                            </template>
+                                            <template #selection="{ option }">
+                                                <span 
+                                                    class="badge"
+                                                    :class="{
+                                                        'bg-danger': option.value === 'unpaid',
+                                                        'bg-warning': option.value === 'partial', 
+                                                        'bg-success': option.value === 'paid'
+                                                    }"
+                                                >
+                                                    {{ option.label }}
+                                                </span>
+                                            </template>
+                                        </CustomSelect2>
                                     </div>
                                     <div class="col-md-3">
                                         <div class="form-floating form-floating-outline">
@@ -466,7 +537,7 @@
                                     <div class="col-md-3">
                                         <div class="form-floating form-floating-outline">
                                             <input type="text" :value="formatRupiah(form.dpp)" class="form-control" placeholder="DPP" readonly>
-                                            <label>DPP (Dasar Pengenaan Pajak)</label>
+                                            <label>DPP</label>
                                             <div class="form-text">
                                                 <small class="text-muted">Otomatis: Subtotal Items × 11/12</small>
                                             </div>
@@ -474,7 +545,7 @@
                                     </div>
                                     <div class="col-md-3">
                                         <div class="form-floating form-floating-outline">
-                                            <input type="text" :value="formatRupiah(form.paidAmount)" @input="updatePaidAmountFromInput" class="form-control" placeholder="Paid Amount" :class="{ 'is-invalid': !isPaidAmountValid }">
+                                            <input type="text" :value="formatRupiah(form.paidAmount)" @input="updatePaidAmountFromInput" class="form-control" placeholder="Paid Amount" >
                                             <label>Paid Amount</label>
                                             <div v-if="!isPaidAmountValid" class="invalid-feedback">
                                                 <template v-if="form.status === 'unpaid'">Paid amount harus 0 untuk status unpaid</template>
@@ -494,7 +565,7 @@
                                             <textarea 
                                                 v-model="form.description" 
                                                 class="form-control" 
-                                                :class="{ 'is-invalid': hasFieldError('description') }"
+                                                
                                                 placeholder="Deskripsi Invoice"
                                             ></textarea>
                                             <label>Deskripsi Invoice</label>
@@ -545,7 +616,7 @@
                                                     <div class="col-6">
                                                         <div class="mb-2">
                                                             <span class="text-muted">Status:</span><br>
-                                                            <span :class="paymentStatusClass">{{ form.status?.toUpperCase() || 'UNKNOWN' }}</span>
+                                                            <span >{{ form.status?.toUpperCase() || 'UNKNOWN' }}</span>
                                                         </div>
                                                         <div class="mb-2">
                                                             <span class="text-muted">Paid Amount:</span><br>
@@ -553,7 +624,7 @@
                                                         </div>
                                                         <div class="mb-2">
                                                             <span class="text-muted">Remaining:</span><br>
-                                                            <strong :class="form.remainingAmount > 0 ? 'text-warning' : 'text-success'">
+                                                            <strong >
                                                                 {{ formatRupiah(form.remainingAmount) }}
                                                             </strong>
                                                         </div>
@@ -584,10 +655,66 @@
                                 <div v-for="(item, index) in (form.salesInvoiceItems || [])" :key="index" class="repeater-item mb-4">
                                     <div class="row g-3">
                                         <div class="col-md-6">
-                                            <v-select v-model="item.productId" :options="customerProducts || []" :get-option-label="p => `${p.name} (${p.unit?.name || 'No Unit'})`" :reduce="p => p.id" placeholder="Pilih Produk" @update:modelValue="onProductChange(index)" class="v-select-style"/>
+                                            <label class="form-label">Produk</label>
+                                            <CustomSelect2 
+                                                v-model="item.productId" 
+                                                :options="customerProducts || []" 
+                                                :get-option-label="p => `${p.name} (${p.unit?.name || 'No Unit'})`" 
+                                                :reduce="p => p.id" 
+                                                placeholder="Pilih Produk" 
+                                                searchable
+                                                clearable
+                                                @update:modelValue="onProductChange(index)"
+                                            >
+                                                <template #option="{ option }">
+                                                    <div class="d-flex justify-content-between align-items-center w-100">
+                                                        <div>
+                                                            <div class="fw-bold">{{ option.name }}</div>
+                                                            <small class="text-muted">{{ option.sku }} - {{ option.unit?.name || 'No Unit' }}</small>
+                                                        </div>
+                                                        <div class="text-end">
+                                                            <small class="text-success">{{ formatRupiah(option.priceSell || 0) }}</small>
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                                <template #selection="{ option }">
+                                                    <div class="d-flex align-items-center">
+                                                        <span class="fw-bold">{{ option.name }}</span>
+                                                        <span class="text-muted ms-2">({{ option.unit?.name || 'No Unit' }})</span>
+                                                    </div>
+                                                </template>
+                                            </CustomSelect2>
                                         </div>
                                         <div class="col-md-6">
-                                            <v-select v-model="item.warehouseId" :options="warehouses" :get-option-label="w => `${w.name} (${w.code})`" :reduce="w => w.id" placeholder="Pilih Gudang" class="v-select-style" @update:modelValue="updateStockInfo(index)"/>
+                                            <label class="form-label">Gudang</label>
+                                            <CustomSelect2 
+                                                v-model="item.warehouseId" 
+                                                :options="warehouses" 
+                                                :get-option-label="w => `${w.name} (${w.code})`" 
+                                                :reduce="w => w.id" 
+                                                placeholder="Pilih Gudang"
+                                                searchable
+                                                clearable
+                                                @update:modelValue="updateStockInfo(index)"
+                                            >
+                                                <template #option="{ option }">
+                                                    <div class="d-flex justify-content-between align-items-center w-100">
+                                                        <div>
+                                                            <div class="fw-bold">{{ option.name }}</div>
+                                                            <small class="text-muted">{{ option.code }}</small>
+                                                        </div>
+                                                        <div class="text-end">
+                                                            <small class="text-info">{{ option.address || '-' }}</small>
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                                <template #selection="{ option }">
+                                                    <div class="d-flex align-items-center">
+                                                        <span class="fw-bold">{{ option.name }}</span>
+                                                        <span class="text-muted ms-2">({{ option.code }})</span>
+                                                    </div>
+                                                </template>
+                                            </CustomSelect2>
                                         </div>
                                         <div class="col-md-3">
                                             <div class="form-floating form-floating-outline">
@@ -671,6 +798,7 @@ import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import TableControls from '~/components/table/TableControls.vue'
 import vSelect from 'vue-select'
+import CustomSelect2 from '~/components/CustomSelect2.vue'
 import Dropdown from 'primevue/dropdown'
 import Column from 'primevue/column'
 import InputText from 'primevue/inputtext'
@@ -742,7 +870,7 @@ const getFieldError = (fieldName) => {
       console.log('🔍 Checking VineJS error:', err);
       
       if (typeof err === 'object' && err !== null) {
-        // VineJS error structure: { field: 'description', message: 'Field description wajib diisi', rule: 'required' }
+        // VineJS error structure: { field: 'description', message: 'Field description wajib diisi', rule: '' }
         return err.field === fieldName;
       }
       
@@ -784,7 +912,6 @@ const getFieldError = (fieldName) => {
 const hasFieldError = (fieldName) => {
   return getFieldError(fieldName) !== null;
 };
-
 
 // Computed untuk menghitung sisa pembayaran berdasarkan grand total
 const remainingAmount = computed(() => {
@@ -1090,8 +1217,7 @@ watch(() => form.value.salesOrderId, (newSalesOrderId, oldSalesOrderId) => {
             form.value.salesInvoiceItems = [];
           });
         }
-      
-      
+
     }
   } else if (!newSalesOrderId && oldSalesOrderId) {
     // Jika sales order dihapus/di-clear, reset beberapa field ke kondisi manual
@@ -1204,7 +1330,6 @@ watch(() => customerProducts, (newProducts) => {
     });
   }
 }, { deep: true });
-
 
 watch(globalFilterValue, useDebounceFn((newValue) => {
     filters.value.search = newValue;
@@ -1352,7 +1477,6 @@ const exportData = (format) => {
             });
     }
 };
-
 
 const onQuantityChange = (index) => {
   // Pastikan quantity selalu integer
@@ -2111,179 +2235,23 @@ const exportSalesInvoiceExcel = (dataToExport) => {
 </script>
 
 <style scoped>
-    .v-select-style {
-        min-height: 48px;
-    }
+<style scoped>
 
-    :deep(.v-select-style .vs__dropdown-toggle),
-    :deep(.perusahaan .vs__dropdown-toggle),
-    :deep(.warehouse-select .vs__dropdown-toggle),
-    :deep(.status .vs__dropdown-toggle),
-    :deep(.vendor .vs__dropdown-toggle),
-    :deep(.product-select .vs__dropdown-toggle),
-    :deep(.cabang .vs__dropdown-toggle),
-    :deep(.select-payment-method .vs__dropdown-toggle) {
-        height: 48px !important;
-        border-radius: 7px;
-    }
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .card-body {
+    padding: 16px;
+  }
+  
+  .form-label {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+}
 
-    /* Sales Order Select - Limit dropdown height for max 5 items */
-    :deep(.sales-order-select .vs__dropdown-menu) {
-        max-height: 250px !important; /* Approximately 5 items * 50px each */
-        overflow-y: auto !important;
-        border-radius: 7px;
-    }
-
-    :deep(.sales-order-select .vs__dropdown-option) {
-        padding: 12px 16px;
-        min-height: 50px;
-        display: flex;
-        align-items: center;
-        border-bottom: 1px solid #f0f0f0;
-    }
-
-    :deep(.sales-order-select .vs__dropdown-option:last-child) {
-        border-bottom: none;
-    }
-
-    :deep(.sales-order-select .vs__dropdown-option--highlight) {
-        background-color: #e3f2fd;
-        color: #666CFF;
-    }
-
-    :deep(.sales-order-select .vs__dropdown-option--selected) {
-        background-color: #666CFF;
-        color: white;
-    }
-
-    /* Custom scrollbar styling */
-    :deep(.sales-order-select .vs__dropdown-menu)::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    :deep(.sales-order-select .vs__dropdown-menu)::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 3px;
-    }
-
-    :deep(.sales-order-select .vs__dropdown-menu)::-webkit-scrollbar-thumb {
-        background: #c1c1c1;
-        border-radius: 3px;
-    }
-
-    :deep(.sales-order-select .vs__dropdown-menu)::-webkit-scrollbar-thumb:hover {
-        background: #a8a8a8;
-    }
-
-    /* Styling untuk field yang disabled ketika sales order dipilih */
-    :deep(.v-select-style.vs--disabled .vs__dropdown-toggle) {
-        background-color: #f8f9fa;
-        border-color: #e9ecef;
-        opacity: 0.65;
-    }
-
-    :deep(.v-select-style.vs--disabled .vs__selected) {
-        color: #6c757d;
-    }
-
-    /* Styling untuk readonly input fields */
-    .form-control:read-only {
-        background-color: #f8f9fa;
-        border-color: #e9ecef;
-        color: #6c757d;
-    }
-
-    /* Custom styling untuk form text hint */
-    .form-text small {
-        font-size: 0.75rem;
-        font-style: italic;
-    }
-
-    /* Styling untuk payment summary card */
-    .card.border-primary {
-        border-width: 2px !important;
-    }
-
-    .card-header.bg-primary {
-        background: linear-gradient(135deg, #8185ff 0%, #666CFF 100%) !important;
-    }
-
-    .card-body .text-sm {
-        font-size: 0.875rem;
-    }
-
-    .card-body .mb-2 {
-        margin-bottom: 0.75rem !important;
-    }
-
-    /* Styling untuk format rupiah yang positif dan negatif */
-    .text-danger {
-        color: #FF6D6A !important;
-    }
-
-    .text-success {
-        color: #198754 !important;
-    }
-
-    .text-warning {
-        color: #FDB935 !important;
-    }
-
-    .text-primary {
-        color: #666CFF !important;
-    }
-
-    /* ✅ NEW: Styling untuk v-select dengan validation error */
-    :deep(.v-select-style.is-invalid .vs__dropdown-toggle) {
-        border-color: #dc3545 !important;
-        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
-    }
-
-    /* Styling untuk invalid feedback */
-    .invalid-feedback.d-block {
-        display: block !important;
-        width: 100%;
-        margin-top: 0.25rem;
-        font-size: 0.875rem;
-        color: #dc3545;
-    }
-
-    /* Responsive design untuk payment summary */
-    @media (max-width: 768px) {
-        .card-body .row.text-sm .col-6 {
-            margin-bottom: 1rem;
-        }
-    }
-
-    /* ✅ NEW: Responsive styling untuk text truncation di tablet dan mobile */
-    @media (max-width: 768px) {
-        :deep(.v-select-style .vs__selected) {
-            white-space: nowrap !important;
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
-            max-width: 100% !important;
-        }
-
-        :deep(.v-select-style .vs__placeholder) {
-            white-space: nowrap !important;
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
-            max-width: 100% !important;
-        }
-
-        :deep(.v-select-style .vs__selected-options) {
-            overflow: hidden !important;
-        }
-    }
-
-    @media (max-width: 576px) {
-        :deep(.v-select-style .vs__selected) {
-            font-size: 14px !important;
-            padding: 2px 4px !important;
-        }
-
-        :deep(.v-select-style .vs__placeholder) {
-            font-size: 14px !important;
-        }
-    }
+@media (max-width: 576px) {
+  .card-body {
+    padding: 12px;
+  }
+}
 </style>

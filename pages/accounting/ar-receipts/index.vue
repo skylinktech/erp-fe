@@ -238,7 +238,7 @@
                                 </Column>
                                 <Column field="status" header="Status" :sortable="true" style="min-width:120px">
                                     <template #body="slotProps">
-                                        <span :class="getStatusBadgeClass(slotProps.data.status)">
+                                        <span >
                                             {{ getStatusLabel(slotProps.data.status) }}
                                         </span>
                                     </template>
@@ -278,7 +278,7 @@
                                             class="form-control" 
                                             v-model="form.reference_number" 
                                             placeholder="Masukkan nomor referensi"
-                                            required
+                                            
                                         >
                                         <label>Nomor Referensi *</label>
                                     </div>
@@ -289,7 +289,7 @@
                                             type="date" 
                                             class="form-control" 
                                             v-model="form.date" 
-                                            required
+                                            
                                         >
                                         <label>Tanggal *</label>
                                     </div>
@@ -299,7 +299,7 @@
                                         <select 
                                             class="form-select" 
                                             v-model="form.customer_id"
-                                            required
+                                            
                                         >
                                             <option value="">Pilih Pelanggan</option>
                                             <option v-for="customer in customers" :key="customer.id" :value="customer.id">
@@ -328,7 +328,7 @@
                                         <select 
                                             class="form-select" 
                                             v-model="form.payment_method"
-                                            required
+                                            
                                         >
                                             <option value="">Pilih Metode Pembayaran</option>
                                             <option v-for="method in paymentMethods" :key="method.value" :value="method.value">
@@ -361,7 +361,7 @@
                                             step="0.01"
                                             min="0"
                                             placeholder="Masukkan jumlah"
-                                            required
+                                            
                                         >
                                         <label>Jumlah *</label>
                                     </div>
@@ -371,7 +371,7 @@
                                         <select 
                                             class="form-select" 
                                             v-model="form.currency"
-                                            required
+                                            
                                         >
                                             <option value="">Pilih Mata Uang</option>
                                             <option v-for="currency in currencies" :key="currency.value" :value="currency.value">
@@ -390,7 +390,7 @@
                                             step="0.0001"
                                             min="0"
                                             placeholder="Masukkan kurs tukar"
-                                            required
+                                            
                                         >
                                         <label>Kurs Tukar *</label>
                                     </div>
@@ -400,7 +400,7 @@
                                         <select 
                                             class="form-select" 
                                             v-model="form.status"
-                                            required
+                                            
                                         >
                                             <option value="">Pilih Status</option>
                                             <option v-for="status in statuses" :key="status.value" :value="status.value">
@@ -640,30 +640,23 @@ const handleSearch = async (value) => {
 </script>
 
 <style scoped>
-.badge {
-    font-size: 0.75rem;
+<style scoped>
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .card-body {
+    padding: 16px;
+  }
+  
+  .form-label {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
 }
 
-/* Skeleton Loader */
-.skeleton-loader {
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-    background-size: 200% 100%;
-    animation: loading 1.5s infinite;
-    border-radius: 4px;
-}
-
-@keyframes loading {
-    0% {
-        background-position: 200% 0;
-    }
-    100% {
-        background-position: -200% 0;
-    }
-}
-
-/* Dark mode skeleton */
-:deep(.dark) .skeleton-loader {
-    background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
-    background-size: 200% 100%;
+@media (max-width: 576px) {
+  .card-body {
+    padding: 12px;
+  }
 }
 </style>

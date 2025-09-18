@@ -110,18 +110,16 @@
                                         class="form-control"
                                         v-model="form.nmDepartemen" 
                                         placeholder="Masukkan nama departemen"
-                                        required
+                                        
                                     >
                                     <label>Nama Departemen</label>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-floating form-floating-outline">
-                                    <v-select
-                                        v-model="form.divisiId"
-                                        :options="divisis"
-                                        label="nmDivisi"
-                                        :reduce="divisi => divisi.id"
+                                    <CustomSelect2 v-model="form.divisiId" :options="divisis"
+                                        :get-option-label="option => option.nmDivisi"
+                                        :reduce="option => option.id" searchable clearable
                                         placeholder="-- Pilih Divisi --"
                                         class="select-divisi"
                                     />   
@@ -154,6 +152,7 @@ import { usePermissions } from '~/composables/usePermissions'
 import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import vSelect from 'vue-select'
+import CustomSelect2 from '~/components/CustomSelect2.vue'
 import 'vue-select/dist/vue-select.css'
 import Dropdown from 'primevue/dropdown'
 import Column from 'primevue/column'
@@ -205,7 +204,6 @@ const debouncedSearch = useDebounceFn(() => {
 }, 500)
 watch(globalFilterValue, debouncedSearch);
 
-
 const onPage = (event) => departemenStore.setPagination(event);
 
 const handleRowsChange = () => {
@@ -217,9 +215,24 @@ const onSort = (event) => departemenStore.setSort(event);
 </script>
 
 <style scoped>
-    :deep(.select-divisi .vs__dropdown-toggle) {
-        height: 48px !important;
-        border-radius: 7px;
-    }
+<style scoped>
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .card-body {
+    padding: 16px;
+  }
+  
+  .form-label {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+}
+
+@media (max-width: 576px) {
+  .card-body {
+    padding: 12px;
+  }
+}
 </style>
 

@@ -61,13 +61,43 @@
                         <div class="card-body">
                             <div class="row">
                                 <div class="col-md-4 mb-3">
-                                    <v-select v-model="filters.customerId" :options="customers" label="name" :reduce="c => c.id" placeholder="Pilih Customer" class="v-select-style"/>
+                                    <label class="form-label text-muted mb-2">Filter Customer</label>
+                                    <CustomSelect2 
+                                        v-model="filters.customerId" 
+                                        :options="customers" 
+                                        :get-option-label="c => c.name" 
+                                        :reduce="c => c.id" 
+                                        placeholder="Pilih Customer"
+                                        searchable
+                                        clearable
+                                        :loading="customerStore.loading"
+                                        loading-text="Memuat customer..."
+                                        
+                                    />
                                 </div>
                                 <div class="col-md-4 mb-3">
-                                    <v-select v-model="filters.source" :options="sourceOptions" label="label" :reduce="option => option.value" placeholder="Pilih Source" class="v-select-style"/>
+                                    <label class="form-label text-muted mb-2">Filter Source</label>
+                                    <CustomSelect2 
+                                        v-model="filters.source" 
+                                        :options="sourceOptions" 
+                                        :get-option-label="option => option.label" 
+                                        :reduce="option => option.value" 
+                                        placeholder="Pilih Source"
+                                        searchable
+                                        clearable
+                                    />
                                 </div>
                                 <div class="col-md-4 mb-3">
-                                    <v-select v-model="filters.status" :options="statusOptions" label="label" :reduce="option => option.value" placeholder="Pilih Status" class="v-select-style"/>
+                                    <label class="form-label text-muted mb-2">Filter Status</label>
+                                    <CustomSelect2 
+                                        v-model="filters.status" 
+                                        :options="statusOptions" 
+                                        :get-option-label="option => option.label" 
+                                        :reduce="option => option.value" 
+                                        placeholder="Pilih Status"
+                                        searchable
+                                        clearable
+                                    />
                                 </div>
                             </div>
                             <div class="row mt-5">
@@ -149,7 +179,7 @@
                                     <Column field="customer.name" header="Nama Customer" :sortable="true"></Column>
                                     <Column field="paymentMethod" header="Metode Pembayaran" :sortable="true">
                                         <template #body="slotProps">
-                                            <span :class="getPaymentMethodBadge(slotProps.data.paymentMethod).class">
+                                            <span >
                                                 {{ getPaymentMethodBadge(slotProps.data.paymentMethod).text }}
                                             </span>
                                         </template>
@@ -163,7 +193,7 @@
                                     </Column>
                                     <Column field="status" header="Status SO" :sortable="true">
                                         <template #body="slotProps">
-                                            <span :class="getStatusBadge(slotProps.data.status).class">
+                                            <span >
                                                 {{ getStatusBadge(slotProps.data.status).text }}
                                             </span>
                                         </template>
@@ -296,64 +326,93 @@
                                 <div class="row g-4">
                                     <div class="col-md-12">
                                         <div class="form-floating form-floating-outline">
-                                            <input type="hidden" v-model="form.noSo" class="form-control" placeholder="No SO" required>
+                                            <input type="hidden" v-model="form.noSo" class="form-control" placeholder="No SO" >
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-floating form-floating-outline">
-                                            <input type="text" v-model="form.noPo" class="form-control" placeholder="No. PO" required>
+                                            <input type="text" v-model="form.noPo" class="form-control" placeholder="No. PO" >
                                             <label>No. PO</label>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
-                                        <v-select v-model="form.quotationId" :options="quotations" label="noQuotation" :reduce="q => q.id" placeholder="Pilih Quotation" class="v-select-style"/>
+                                        <CustomSelect2 
+                                            v-model="form.quotationId" 
+                                            :options="quotations" 
+                                            :get-option-label="q => q.noQuotation" 
+                                            :reduce="q => q.id" 
+                                            placeholder="Pilih Quotation"
+                                            searchable
+                                            clearable
+                                        />
                                     </div>
                                     <div class="col-md-6">
-                                        <v-select v-model="form.customerId" :options="customers" label="name" :reduce="c => c.id" placeholder="Pilih Customer" class="v-select-style"/>
+                                        <CustomSelect2 
+                                            v-model="form.customerId" 
+                                            :options="customers" 
+                                            :get-option-label="c => c.name" 
+                                            :reduce="c => c.id" 
+                                            placeholder="Pilih Customer"
+                                            searchable
+                                            clearable
+                                        />
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-floating form-floating-outline">
-                                            <input type="text" v-model="form.up" class="form-control" placeholder="Untuk Perhatian" required>
+                                            <input type="text" v-model="form.up" class="form-control" placeholder="Untuk Perhatian" >
                                             <label>Untuk Perhatian</label>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
                                         <div class="form-floating form-floating-outline">
-                                            <input type="date" v-model="form.date" class="form-control" required>
+                                            <input type="date" v-model="form.date" class="form-control" >
                                             <label>Tanggal</label>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
                                         <div class="form-floating form-floating-outline">
-                                            <input type="date" v-model="form.dueDate" class="form-control" required>
+                                            <input type="date" v-model="form.dueDate" class="form-control" >
                                             <label>Jatuh Tempo</label>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-floating form-floating-outline">
-                                            <input type="text" v-model="form.termOfPayment" class="form-control" placeholder="Term Of Payment" required>
+                                            <input type="text" v-model="form.termOfPayment" class="form-control" placeholder="Term Of Payment" >
                                             <label>Term Of Payment</label>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
-                                        <v-select v-model="form.perusahaanId" :options="perusahaans" label="nmPerusahaan" :reduce="p => p.id" placeholder="Pilih Perusahaan" class="v-select-style"/>
+                                        <CustomSelect2 
+                                            v-model="form.perusahaanId" 
+                                            :options="perusahaans" 
+                                            :get-option-label="p => p.nmPerusahaan" 
+                                            :reduce="p => p.id" 
+                                            placeholder="Pilih Perusahaan"
+                                            searchable
+                                            clearable
+                                        />
                                     </div>
                                     <div class="col-md-6">
-                                        <v-select v-model="form.cabangId" :options="filteredCabangs" label="nmCabang" :reduce="c => c.id" placeholder="Pilih Cabang" class="v-select-style"/>
+                                        <CustomSelect2 
+                                            v-model="form.cabangId" 
+                                            :options="filteredCabangs" 
+                                            :get-option-label="c => c.nmCabang" 
+                                            :reduce="c => c.id" 
+                                            placeholder="Pilih Cabang"
+                                            searchable
+                                            clearable
+                                        />
                                     </div>
                                     <div class="col-md-6">
-                                        <div class="form-floating form-floating-outline">
-                                            <v-select
-                                                v-model="form.paymentMethod"
-                                                :options="paymentMethodOptions"
-                                                label="label"
-                                                :reduce="option => option.value"
-                                                :get-option-key="option => option.value"
-                                                placeholder="-- Pilih Metode Pembayaran --"
-                                                id="select-payment-method"
-                                                class="select-payment-method"
-                                            />
-                                        </div>
+                                        <CustomSelect2 
+                                            v-model="form.paymentMethod" 
+                                            :options="paymentMethodOptions" 
+                                            :get-option-label="option => option.label" 
+                                            :reduce="option => option.value" 
+                                            placeholder="Pilih Metode Pembayaran"
+                                            searchable
+                                            clearable
+                                        />
                                     </div>
                                     <div class="col-md-3">
                                         <div class="form-floating form-floating-outline">
@@ -379,7 +438,7 @@
                                             <small class="text-muted">Ukuran maksimal 2MB</small>
                                             <div v-if="form.attachmentPreview" class="mt-2">
                                                 <div class="d-flex align-items-center mb-2">
-                                                    <i :class="getFileIcon(form.attachmentPreview)" style="font-size: 1.2rem; margin-right: 0.5rem;"></i>
+                                                    <i  style="font-size: 1.2rem; margin-right: 0.5rem;"></i>
                                                     <a :href="form.attachmentPreview" target="_blank" rel="noopener noreferrer" class="d-block">Lihat Attachment</a>
                                                 </div>
                                                 <div v-if="isImageFile(form.attachmentPreview)" class="mt-2">
@@ -412,21 +471,27 @@
                                 <div v-for="(item, index) in form.salesOrderItems" :key="index" class="repeater-item mb-4">
                                     <div class="row g-3">
                                         <div class="col-12">
-                                            <v-select v-model="item.warehouseId" :options="warehouses"
-                                            :get-option-label="w => `${w.name} (${w.code})`" :reduce="w => w.id" placeholder="Pilih Gudang SO" class="v-select-style" @update:modelValue="(value) => { item.warehouseId = value; if (item.productId) updateStockInfo(index); }"/>
+                                            <CustomSelect2 
+                                                v-model="item.warehouseId" 
+                                                :options="warehouses"
+                                                :get-option-label="w => `${w.name} (${w.code})`" 
+                                                :reduce="w => w.id" 
+                                                placeholder="Pilih Gudang SO"
+                                                searchable
+                                                clearable
+                                                @update:modelValue="(value) => { item.warehouseId = value; if (item.productId) updateStockInfo(index); }"
+                                            />
                                         </div>
                                         <div class="col-md-4">
-                                            <v-select 
+                                            <CustomSelect2 
                                                 v-model="item.productId" 
                                                 :options="filteredCustomerProducts" 
                                                 :get-option-label="product => `${product.sku} | ${product.name}`"
                                                 :reduce="p => p.id" 
-                                                placeholder="Cari berdasarkan SKU atau nama produk..." 
-                                                @update:modelValue="(value) => { item.productId = value; onProductChange(index); }" 
-                                                class="v-select-style"
+                                                placeholder="Cari berdasarkan SKU atau nama produk..."
+                                                searchable
+                                                clearable
                                                 :disabled="!form.customerId"
-                                                :searchable="true"
-                                                :clearable="true"
                                                 :close-on-select="true"
                                                 :preserve-search="false"
                                                 :filter-by="(option, label, search) => {
@@ -436,8 +501,9 @@
                                                            product.sku.toLowerCase().includes(searchLower) ||
                                                            (product.noInterchange ? String(product.noInterchange).toLowerCase().includes(searchLower) : false);
                                                 }"
+                                                @update:modelValue="(value) => { item.productId = value; onProductChange(index); }"
                                             >
-                                                <template #option="option">
+                                                <template #option="{ option }">
                                                     <div class="d-flex justify-content-between align-items-center w-100">
                                                         <div>
                                                             <div class="fw-bold">{{ option.sku }} | {{ option.name }}</div>
@@ -445,7 +511,12 @@
                                                         </div>
                                                     </div>
                                                 </template>
-                                            </v-select>
+                                                <template #selection="{ option }">
+                                                    <div class="d-flex align-items-center">
+                                                        <span class="fw-bold">{{ option.sku }} | {{ option.name }}</span>
+                                                    </div>
+                                                </template>
+                                            </CustomSelect2>
                                         </div>
                                         <div class="col-md-2">
                                             <div class="form-floating form-floating-outline">
@@ -529,6 +600,7 @@ import vSelect from 'vue-select'
 import Dropdown from 'primevue/dropdown'
 import Column from 'primevue/column'
 import InputText from 'primevue/inputtext'
+import CustomSelect2 from '~/components/CustomSelect2.vue'
 import 'vue-select/dist/vue-select.css'
 import { useDebounceFn } from '@vueuse/core'
 import { useRouter } from 'vue-router'
@@ -920,8 +992,6 @@ const exportData = async (format) => {
 const handleSubmit = () => {
     salesOrderStore.saveSalesOrder();
 };
-
-
 
 const onProductChange = (index) => {
   const item = form.value.salesOrderItems[index];
@@ -1486,152 +1556,23 @@ const onRowToggle = (event) => {
 </script>
 
 <style scoped>
-    .v-select-style {
-        min-height: 48px;
-    }
-    
-    .attachment-preview {
-        transition: all 0.3s ease;
-    }
+<style scoped>
 
-    .attachment-preview:hover {
-        transform: scale(1.05);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    }
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .card-body {
+    padding: 16px;
+  }
+  
+  .form-label {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+}
 
-    :deep(.v-select-style .vs__dropdown-toggle),
-    :deep(.perusahaan .vs__dropdown-toggle),
-    :deep(.warehouse-select .vs__dropdown-toggle),
-    :deep(.status .vs__dropdown-toggle),
-    :deep(.vendor .vs__dropdown-toggle),
-    :deep(.product-select .vs__dropdown-toggle),
-    :deep(.reset-filter-button .btn),
-    :deep(.cabang .vs__dropdown-toggle),
-    :deep(.select-payment-method .vs__dropdown-toggle) {
-        height: 48px !important;
-        border-radius: 7px;
-    }
-
-    /* ✅ NEW: Styling untuk search input yang lebih responsif */
-    :deep(.v-select-style .vs__search) {
-        padding: 8px 12px !important;
-        font-size: 14px !important;
-        border: none !important;
-        outline: none !important;
-        background: transparent !important;
-        width: 100% !important;
-        min-width: 0 !important;
-    }
-
-    /* ✅ NEW: Memastikan dropdown muncul dengan benar */
-    :deep(.v-select-style .vs__dropdown-menu) {
-        max-height: 300px !important;
-        overflow-y: auto !important;
-    }
-
-    /* ✅ NEW: Styling untuk option yang dipilih */
-    :deep(.v-select-style .vs__dropdown-option--highlight) {
-        background-color: #4a4a4a !important;
-        color: white !important;
-    }
-
-    /* ✅ NEW: Styling untuk product select yang konsisten dengan customer */
-    :deep(.v-select-style .vs__dropdown-option) {
-        padding: 12px 16px !important;
-        font-size: 14px !important;
-        line-height: 1.4 !important;
-        border-bottom: 1px solid #f0f0f0 !important;
-        white-space: normal !important;
-        word-wrap: break-word !important;
-        overflow-wrap: break-word !important;
-        min-height: auto !important;
-        height: auto !important;
-    }
-
-    :deep(.v-select-style .vs__dropdown-option:last-child) {
-        border-bottom: none !important;
-    }
-
-    :deep(.v-select-style .vs__dropdown-option:hover) {
-        background-color: #f8f9fa !important;
-        color: #333 !important;
-    }
-
-    :deep(.v-select-style .vs__dropdown-option--highlight:hover) {
-        background-color: #4a4a4a !important;
-        color: white !important;
-    }
-
-    /* ✅ NEW: Memastikan highlight menutupi seluruh area option */
-    :deep(.v-select-style .vs__dropdown-option--highlight) {
-        background-color: #4a4a4a !important;
-        color: white !important;
-        display: block !important;
-        width: 100% !important;
-        box-sizing: border-box !important;
-    }
-
-    /* ✅ NEW: Styling untuk content di dalam option agar highlight sempurna */
-    :deep(.v-select-style .vs__dropdown-option .d-flex) {
-        width: 100% !important;
-        display: flex !important;
-        align-items: flex-start !important;
-        justify-content: space-between !important;
-    }
-
-    :deep(.v-select-style .vs__dropdown-option .fw-bold) {
-        word-break: break-word !important;
-        hyphens: auto !important;
-        line-height: 1.3 !important;
-    }
-
-    :deep(.v-select-style .vs__dropdown-option small) {
-        word-break: break-word !important;
-        hyphens: auto !important;
-        line-height: 1.2 !important;
-        margin-top: 2px !important;
-    }
-
-    /* ✅ NEW: Responsive styling untuk text truncation di tablet dan mobile */
-    @media (max-width: 768px) {
-        :deep(.v-select-style .vs__selected) {
-            white-space: nowrap !important;
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
-            max-width: 100% !important;
-        }
-
-        :deep(.v-select-style .vs__placeholder) {
-            white-space: nowrap !important;
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
-            max-width: 100% !important;
-        }
-
-        :deep(.v-select-style .vs__selected-options) {
-            overflow: hidden !important;
-        }
-    }
-
-    @media (max-width: 576px) {
-        :deep(.v-select-style .vs__selected) {
-            font-size: 14px !important;
-            padding: 2px 4px !important;
-        }
-
-        :deep(.v-select-style .vs__placeholder) {
-            font-size: 14px !important;
-        }
-    }
-
-    @media (max-width: 575.98px) {
-        .reset-filter-button {
-            width: 25rem !important;
-        }
-        .reset-filter-button .btn {
-            width: 100%;
-        }
-    }
-
-
+@media (max-width: 576px) {
+  .card-body {
+    padding: 12px;
+  }
+}
 </style>

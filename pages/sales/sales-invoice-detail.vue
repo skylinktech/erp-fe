@@ -34,7 +34,7 @@
                   <div>
                     <div class="d-flex align-items-center gap-3 mb-6">
                       <h5 class="mb-0">Invoice Number : {{ salesInvoice.noInvoice }}</h5>
-                      <span :class="getStatusBadgeClass(salesInvoice.status)">
+                      <span >
                         {{ getStatusText(salesInvoice.status) }}
                       </span>
                     </div>
@@ -156,7 +156,7 @@
                           <span class="fw-medium mb-1 border-bottom pb-2" style="color: #6c757d;">{{ formatRupiah(salesInvoice?.total || 0) }}</span>
                           <span class="fw-medium mb-1 text-success" style="color: #6c757d !important;">{{ formatRupiah(salesInvoice?.paidAmount || 0) }}</span>
                           <span class="fw-medium mb-0 pt-2"
-                                :class="(salesInvoice?.remainingAmount || 0) > 0 ? 'text-danger' : 'text-success'"
+                                
                                 :style="(salesInvoice?.remainingAmount || 0) > 0 ? 'color:#ea5455' : 'color:#28c76f'">
                             {{ formatRupiah(salesInvoice?.remainingAmount || 0) }}
                           </span>
@@ -184,7 +184,7 @@
                         <div class="d-flex mb-1">
                           <span class="fw-medium" style="min-width: 120px; display: inline-block;">Status</span>
                           <span class="fw-medium me-1">:</span>
-                          <span :class="getStatusBadgeClass(salesInvoice.salesOrder?.status)" style="font-size: 0.7rem;">
+                          <span  style="font-size: 0.7rem;">
                             {{ getStatusText(salesInvoice.salesOrder?.status) }}
                           </span>
                         </div>

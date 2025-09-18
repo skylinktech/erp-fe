@@ -34,7 +34,7 @@
                                         <li class="mb-2"><strong>Tanggal:</strong> {{ new Date(stockTransfer.date).toLocaleDateString() }}</li>
                                         <li class="mb-2"><strong>Gudang Asal:</strong> {{ stockTransfer.fromWarehouse?.name }}</li>
                                         <li class="mb-2"><strong>Gudang Tujuan:</strong> {{ stockTransfer.toWarehouse?.name }}</li>
-                                        <li class="mb-2"><strong>Status:</strong> <span :class="['badge', getStatusClass(stockTransfer.status)]">{{ stockTransfer.status }}</span></li>
+                                        <li class="mb-2"><strong>Status:</strong> <span >{{ stockTransfer.status }}</span></li>
                                     </ul>
                                 </div>
                             </div>

@@ -245,7 +245,7 @@
                                 </Column>
                                 <Column field="type" header="Tipe" :sortable="true" style="min-width:100px">
                                     <template #body="slotProps">
-                                        <span :class="getTypeBadgeClass(slotProps.data.type)">
+                                        <span >
                                             {{ getTypeLabel(slotProps.data.type) }}
                                         </span>
                                     </template>
@@ -259,7 +259,7 @@
                                 </Column>
                                 <Column field="isActive" header="Status" :sortable="true" style="min-width:100px">
                                     <template #body="slotProps">
-                                        <span :class="slotProps.data.isActive ? 'badge bg-label-success' : 'badge bg-label-danger'">
+                                        <span >
                                             {{ slotProps.data.isActive ? 'Aktif' : 'Nonaktif' }}
                                         </span>
                                     </template>
@@ -318,7 +318,7 @@
                                     class="form-control" 
                                     v-model="form.code" 
                                     placeholder="Masukkan kode pajak"
-                                    required
+                                    
                                 >
                                 <label>Kode Pajak *</label>
                             </div>
@@ -330,7 +330,7 @@
                                     class="form-control" 
                                     v-model="form.name" 
                                     placeholder="Masukkan nama pajak"
-                                    required
+                                    
                                 >
                                 <label>Nama Pajak *</label>
                             </div>
@@ -340,7 +340,7 @@
                                 <select 
                                     class="form-select" 
                                     v-model="form.type"
-                                    required
+                                    
                                 >
                                     <option value="">Pilih Tipe Pajak</option>
                                     <option v-for="type in taxTypes" :key="type.value" :value="type.value">
@@ -359,7 +359,7 @@
                                     placeholder="Masukkan tarif pajak"
                                     :step="0.01"
                                     :min="0"
-                                    required
+                                    
                                 >
                                 <label>Tarif *</label>
                             </div>
@@ -545,30 +545,23 @@ const onSort = (event) => taxStore.setSort(event)
 </script>
 
 <style scoped>
-.badge {
-    font-size: 0.75rem;
+<style scoped>
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .card-body {
+    padding: 16px;
+  }
+  
+  .form-label {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
 }
 
-/* Skeleton Loader */
-.skeleton-loader {
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-    background-size: 200% 100%;
-    animation: loading 1.5s infinite;
-    border-radius: 4px;
-}
-
-@keyframes loading {
-    0% {
-        background-position: 200% 0;
-    }
-    100% {
-        background-position: -200% 0;
-    }
-}
-
-/* Dark mode skeleton */
-:deep(.dark) .skeleton-loader {
-    background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
-    background-size: 200% 100%;
+@media (max-width: 576px) {
+  .card-body {
+    padding: 12px;
+  }
 }
 </style>

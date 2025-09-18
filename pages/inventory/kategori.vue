@@ -121,7 +121,7 @@
                                         class="form-control" 
                                         v-model="form.name" 
                                         placeholder="Masukkan nama category"
-                                        required
+                                        
                                     >
                                     <label>Nama Category</label>
                                 </div>
@@ -133,7 +133,7 @@
                                         class="form-control" 
                                         v-model="form.description" 
                                         placeholder="Masukkan deskripsi category"
-                                        required
+                                        
                                     >
                                     <label>Deskripsi Category</label>
                                 </div>

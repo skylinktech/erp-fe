@@ -858,32 +858,23 @@ const exportStockExcel = (dataToExport) => {
 </script>
 
 <style scoped>
-    :deep(.status-select .vs__dropdown-toggle) ,
-    :deep(.warehouse-select .vs__dropdown-toggle) {
-        height: 48px !important;
-        border-radius: 7px;
-    }
+<style scoped>
 
-    /* Skeleton Loader */
-    .skeleton-loader {
-        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-        background-size: 200% 100%;
-        animation: loading 1.5s infinite;
-        border-radius: 4px;
-    }
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .card-body {
+    padding: 16px;
+  }
+  
+  .form-label {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+}
 
-    @keyframes loading {
-        0% {
-            background-position: 200% 0;
-        }
-        100% {
-            background-position: -200% 0;
-        }
-    }
-
-    /* Dark mode skeleton */
-    :deep(.dark) .skeleton-loader {
-        background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
-        background-size: 200% 100%;
-    }
+@media (max-width: 576px) {
+  .card-body {
+    padding: 12px;
+  }
+}
 </style>

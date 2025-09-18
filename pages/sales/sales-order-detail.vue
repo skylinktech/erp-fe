@@ -45,7 +45,7 @@
                                 <div class="d-flex align-items-center gap-3 mb-6">
                                     <h6 class="mb-0">Sales Number : {{ salesOrder.noSo || '-' }}</h6>
                                     <!-- ✅ STATUS BADGE -->
-                                    <span :class="getStatusBadgeClass(salesOrder.status || 'draft')">
+                                    <span >
                                         {{ getStatusText(salesOrder.status || 'draft') }}
                                     </span>
                                 </div>
@@ -178,7 +178,7 @@
                                     </td>
                                     <td>{{ formatRupiah(item.subtotal) }}</td>
                                     <td>
-                                        <span v-if="!isReturned(item)" :class="getDeliveryStatusBadge(item).class">
+                                        <span v-if="!isReturned(item)" >
                                             {{ getDeliveryStatusBadge(item).text }}
                                         </span>
                                         <span v-else class="badge bg-danger">RETURNED</span>

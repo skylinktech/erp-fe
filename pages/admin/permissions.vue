@@ -154,7 +154,7 @@
                                                 <template #body="slotProps">
                                                     <template v-if="Array.isArray(slotProps.data.assignedRoles) && slotProps.data.assignedRoles.length > 0">
                                                         <span v-for="r in slotProps.data.assignedRoles" :key="r.id" 
-                                                            :class="['badge', 'rounded-pill', getBadgeClass(r.id), 'mt-1']"
+                                                            
                                                             style="margin-right: 5px;">
                                                             {{ r.name }}
                                                         </span>
@@ -194,16 +194,14 @@
                                             v-model="formPermission.name"
                                             class="form-control"
                                             placeholder="Enter a permission name"
-                                            required
+                                            
                                         />
                                     </div>
                                     <div class="col-6 mb-3">
                                         <label for="menuGroup">Menu Group</label>
-                                        <v-select
-                                            v-model="formPermission.menuGroupId"
-                                            :options="menuGroups"
-                                            label="name"
-                                            :reduce="group => group.id"
+                                        <CustomSelect2 v-model="formPermission.menuGroupId" :options="menuGroups"
+                                            :get-option-label="option => option.name"
+                                            :reduce="option => option.id" searchable clearable
                                             placeholder="-- Pilih Menu Group --"
                                             id="menuGroup"
                                             class="menu-group"
@@ -211,11 +209,9 @@
                                     </div>
                                     <div class="col-6 mb-3">
                                         <label for="menuDetail">Menu Detail</label>
-                                        <v-select
-                                            v-model="formPermission.menuDetailId"
-                                            :options="filteredMenuDetails"
-                                            label="name"
-                                            :reduce="detail => detail.id"
+                                        <CustomSelect2 v-model="formPermission.menuDetailId" :options="filteredMenuDetails"
+                                            :get-option-label="option => option.name"
+                                            :reduce="option => option.id" searchable clearable
                                             placeholder="-- Pilih Menu Detail --"
                                             id="menuDetail"
                                             class="menu-detail"
@@ -249,11 +245,9 @@
                                 <div class="row g-3">
                                     <div class="col-6 mb-3">
                                         <label for="batchMenuGroup">Menu Group</label>
-                                        <v-select
-                                            v-model="batchForm.menuGroupId"
-                                            :options="menuGroups"
-                                            label="name"
-                                            :reduce="group => group.id"
+                                        <CustomSelect2 v-model="batchForm.menuGroupId" :options="menuGroups"
+                                            :get-option-label="option => option.name"
+                                            :reduce="option => option.id" searchable clearable
                                             placeholder="-- Pilih Menu Group --"
                                             id="batchMenuGroup"
                                             class="menu-group"
@@ -261,11 +255,9 @@
                                     </div>
                                     <div class="col-6 mb-3">
                                         <label for="batchMenuDetail">Menu Detail</label>
-                                        <v-select
-                                            v-model="batchForm.menuDetailId"
-                                            :options="filteredBatchMenuDetails"
-                                            label="name"
-                                            :reduce="detail => detail.id"
+                                        <CustomSelect2 v-model="batchForm.menuDetailId" :options="filteredBatchMenuDetails"
+                                            :get-option-label="option => option.name"
+                                            :reduce="option => option.id" searchable clearable
                                             placeholder="-- Pilih Menu Detail --"
                                             id="batchMenuDetail"
                                             class="menu-detail"
@@ -305,6 +297,7 @@ import MyDataTable from '~/components/table/MyDataTable.vue'
 import { usePermissionsStore } from '~/stores/permissions'
 import { useLayoutStore } from '~/stores/layout'
 import vSelect from 'vue-select'
+import CustomSelect2 from '~/components/CustomSelect2.vue'
 import Swal from 'sweetalert2'
 import 'vue-select/dist/vue-select.css'
 import Dropdown from 'primevue/dropdown'
@@ -772,7 +765,6 @@ async function openEditPermissionModal(permissionData) {
     }
 }
 
-
 const deletePermission = async (permissionId) => {
     if (!permissionId) return;
 
@@ -1058,71 +1050,23 @@ const fetchMenuGroupsAndDetails = async () => {
 </script>
  
 <style scoped>
-    :deep(.menu-group .vs__dropdown-toggle),
-    :deep(.menu-detail .vs__dropdown-toggle) {
-        height: 48px !important;
-        border-radius: 7px;
-    }
-    
-    /* Styling untuk batch actions */
-    .btn-danger {
-        background-color: #dc3545;
-        border-color: #dc3545;
-        color: white;
-    }
-    
-    .btn-danger:hover {
-        background-color: #c82333;
-        border-color: #bd2130;
-        color: white;
-    }
-    
-    .btn-danger:disabled {
-        background-color: #6c757d;
-        border-color: #6c757d;
-        opacity: 0.65;
-    }
-    
-    /* Styling untuk checkbox selection */
-    :deep(.p-checkbox) {
-        margin: 0;
-    }
-    
-    :deep(.p-checkbox .p-checkbox-box) {
-        border-radius: 4px;
-    }
-    
-    /* Styling untuk alert info */
-    .alert-info {
-        background-color: #d1ecf1;
-        border-color: #bee5eb;
-        color: #0c5460;
-    }
-    
-    .alert-info i {
-        color: #0c5460;
-    }
+<style scoped>
 
-    /* Skeleton Loader */
-    .skeleton-loader {
-        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-        background-size: 200% 100%;
-        animation: loading 1.5s infinite;
-        border-radius: 4px;
-    }
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .card-body {
+    padding: 16px;
+  }
+  
+  .form-label {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+}
 
-    @keyframes loading {
-        0% {
-            background-position: 200% 0;
-        }
-        100% {
-            background-position: -200% 0;
-        }
-    }
-
-    /* Dark mode skeleton */
-    :deep(.dark) .skeleton-loader {
-        background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
-        background-size: 200% 100%;
-    }
+@media (max-width: 576px) {
+  .card-body {
+    padding: 12px;
+  }
+}
 </style>

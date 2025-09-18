@@ -109,7 +109,7 @@
                                         class="form-control" 
                                         v-model="form.nmDivisi" 
                                         placeholder="Masukkan nama divisi"
-                                        required
+                                        
                                     >
                                     <label>Nama Divisi</label>
                                 </div>

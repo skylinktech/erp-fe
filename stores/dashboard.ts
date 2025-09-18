@@ -76,7 +76,6 @@ export const useDashboardStore = defineStore('dashboard', {
       const token = localStorage.getItem('token')
 
       try {
-        console.log('🔍 FP-Growth Debug: Fetching association rules from:', $api.associations())
         
         const rules = await $fetch<AssociationRule[]>($api.associations(), {
           headers: {
@@ -87,11 +86,7 @@ export const useDashboardStore = defineStore('dashboard', {
           credentials: 'include',
         })
 
-        console.log('🔍 FP-Growth Debug: API Response:', rules)
-        console.log('🔍 FP-Growth Debug: Rules length:', rules?.length || 0)
-
         if (rules && Array.isArray(rules) && rules.length > 0) {
-          console.log('🔍 FP-Growth Debug: Processing', rules.length, 'rules')
           
           const labels = rules.map((rule) => {
             const antecedent = rule.antecedent.join(', ')
@@ -101,8 +96,6 @@ export const useDashboardStore = defineStore('dashboard', {
           const confidences = rules.map((rule) => rule.confidence)
           this.supports = Array.isArray(rules) ? rules.map((rule) => rule.support) : null
 
-          console.log('🔍 FP-Growth Debug: Chart labels:', labels)
-          console.log('🔍 FP-Growth Debug: Chart confidences:', confidences)
 
           this.chartData = {
             labels,
@@ -115,9 +108,7 @@ export const useDashboardStore = defineStore('dashboard', {
             ],
           }
           
-          console.log('🔍 FP-Growth Debug: Chart data updated:', this.chartData)
         } else {
-          console.log('🔍 FP-Growth Debug: No rules found or empty array')
           // Set empty chart data
           this.chartData = {
             labels: [],

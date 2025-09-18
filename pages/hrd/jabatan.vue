@@ -141,7 +141,7 @@
                                         id="name" 
                                         v-model="form.nmJabatan" 
                                         placeholder="Masukkan nama jabatan"
-                                        required
+                                        
                                     >
                                     <label for="name">Nama Jabatan</label>
                                 </div>

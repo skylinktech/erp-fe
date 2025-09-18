@@ -80,7 +80,7 @@
                                         <Column field="order" header="Order" :sortable="true"></Column>
                                         <Column field="jenisMenu" header="Jenis Menu" :sortable="true">
                                             <template #body="slotProps">
-                                                <span :class="getStatusBadge(slotProps.data.jenisMenu).class">
+                                                <span >
                                                     {{ getStatusBadge(slotProps.data.jenisMenu).text }}
                                                 </span>
                                             </template>
@@ -130,7 +130,7 @@
                                         class="form-control" 
                                         v-model="form.name" 
                                         placeholder="Masukkan nama menu group"
-                                        required
+                                        
                                     >
                                     <label for="name">Nama Menu Group</label>
                                 </div>
@@ -156,16 +156,14 @@
                                     @input="form.order = $event.target.value.replace(/[^0-9]/g, '')"
                                     inputmode="numeric"
                                     pattern="[0-9]*"
-                                    required
+                                    
                                     >
                                     <label for="order">Order</label>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-floating form-floating-outline">
-                                    <v-select
-                                        v-model="form.jenisMenu"
-                                        :options="[
+                                    <CustomSelect2 v-model="form.jenisMenu" :options="[
                                             { label: 'Purchasing', value: 1 },
                                             { label: 'HRD', value: 2 },
                                             { label: 'Accounting', value: 3 },
@@ -175,8 +173,8 @@
                                             { label: 'Reports', value: 7 },
                                             { label: 'Admin', value: 8 },
                                         ]"
-                                        label="label"
-                                        :reduce="option => option.value"
+                                        :get-option-label="option => option.label"
+                                        :reduce="option => option.id" searchable clearable
                                         placeholder="-- Pilih Jenis Menu --"
                                         class="select-jenis-menu"
                                     />
@@ -211,6 +209,7 @@ import Column from 'primevue/column'
 import InputText from 'primevue/inputtext'
 import { useDebounceFn } from '@vueuse/core'
 import vSelect from 'vue-select'
+import CustomSelect2 from '~/components/CustomSelect2.vue'
 import 'vue-select/dist/vue-select.css'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 
@@ -251,7 +250,6 @@ const debouncedSearch = useDebounceFn(() => {
 }, 500)
 watch(globalFilterValue, debouncedSearch);
 
-
 const onPage = (event) => menuGroupStore.setPagination(event);
 
 const handleRowsChange = () => {
@@ -286,31 +284,23 @@ const getStatusBadge = (jenisMenu) => {
 </script>
 
 <style scoped>
-    :deep(.select-jenis-menu .vs__dropdown-toggle) {
-        height: 48px !important;
-        border-radius: 7px;
-    }
+<style scoped>
 
-    /* Skeleton Loader */
-    .skeleton-loader {
-        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-        background-size: 200% 100%;
-        animation: loading 1.5s infinite;
-        border-radius: 4px;
-    }
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .card-body {
+    padding: 16px;
+  }
+  
+  .form-label {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+}
 
-    @keyframes loading {
-        0% {
-            background-position: 200% 0;
-        }
-        100% {
-            background-position: -200% 0;
-        }
-    }
-
-    /* Dark mode skeleton */
-    :deep(.dark) .skeleton-loader {
-        background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
-        background-size: 200% 100%;
-    }
+@media (max-width: 576px) {
+  .card-body {
+    padding: 12px;
+  }
+}
 </style>

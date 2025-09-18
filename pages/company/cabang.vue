@@ -247,7 +247,7 @@
                                     id="kodeCabang" 
                                     v-model="form.kodeCabang" 
                                     placeholder="Masukkan kode cabang"
-                                    required
+                                    
                                 >
                                 <label for="kodeCabang">Kode Cabang</label>
                             </div>
@@ -260,7 +260,7 @@
                                     id="nmCabang" 
                                     v-model="form.nmCabang" 
                                     placeholder="Masukkan nama cabang"
-                                    required
+                                    
                                 >
                                 <label for="nmCabang">Nama Cabang</label>
                             </div>
@@ -279,7 +279,7 @@
                         </div>
                         <div class="col-12">
                             <div class="form-floating form-floating-outline">
-                                <select id="perusahaanId" class="form-select" v-model="form.perusahaanId" required :disabled="!perusahaans || perusahaans.length === 0">
+                                <select id="perusahaanId" class="form-select" v-model="form.perusahaanId"  :disabled="!perusahaans || perusahaans.length === 0">
                                     <option value="" disabled>
                                         {{ !perusahaans || perusahaans.length === 0 ? 'Loading perusahaan...' : 'Pilih Perusahaan' }}
                                     </option>
@@ -510,9 +510,24 @@ watch(globalFilterValue, () => {
 </script>
 
 <style scoped>
-    :deep(.perusahaanId .vs__dropdown-toggle) {
-        height: 48px !important;
-        border-radius: 7px;
-    }
+<style scoped>
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .card-body {
+    padding: 16px;
+  }
+  
+  .form-label {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+}
+
+@media (max-width: 576px) {
+  .card-body {
+    padding: 12px;
+  }
+}
 </style>
 

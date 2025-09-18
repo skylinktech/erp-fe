@@ -183,7 +183,7 @@
                                     </Column>
                                     <Column field="isService" header="Service" :sortable="true">
                                         <template #body="slotProps">
-                                            <span :class="getStatusBadge(slotProps.data.isService).class">
+                                            <span >
                                                 {{ getStatusBadge(slotProps.data.isService).text }}
                                             </span>
                                         </template>
@@ -243,10 +243,10 @@
                                 <div class="form-floating form-floating-outline">
                                     <input 
                                         type="text" 
-                                        :class="['form-control', { 'is-invalid': hasFieldError('sku') }]"
+                                        
                                         v-model="form.sku" 
                                         placeholder="Masukkan part number"
-                                        required
+                                        
                                     >
                                     <label>Part Number</label>
                                     <div v-if="hasFieldError('sku')" class="invalid-feedback">
@@ -258,10 +258,10 @@
                                 <div class="form-floating form-floating-outline">
                                     <input 
                                         type="text" 
-                                        :class="['form-control', { 'is-invalid': hasFieldError('noInterchange') }]"
+                                        
                                         v-model="form.noInterchange" 
                                         placeholder="Masukkan no interchange"
-                                        required
+                                        
                                     >
                                     <label>No Interchange</label>
                                     <div v-if="hasFieldError('noInterchange')" class="invalid-feedback">
@@ -273,10 +273,10 @@
                                 <div class="form-floating form-floating-outline">
                                     <input 
                                         type="text" 
-                                        :class="['form-control', { 'is-invalid': hasFieldError('name') }]"
+                                        
                                         v-model="form.name" 
                                         placeholder="Masukkan nama barang"
-                                        required
+                                        
                                         @input="form.name = $event.target.value.toUpperCase()"
                                     >
                                     <label>Nama Barang</label>
@@ -295,7 +295,7 @@
                                     @input="form.stockMin = $event.target.value.replace(/[^0-9]/g, '')"
                                     inputmode="numeric"
                                     pattern="[0-9]*"
-                                    required
+                                    
                                     >
                                     <label>Stok Minimum</label>
                                 </div>
@@ -324,11 +324,9 @@
                             </div>
                             <div class="col-md-3">
                                 <div class="form-floating form-floating-outline">
-                                    <v-select
-                                        v-model="form.unitId"
-                                        :options="units"
-                                        label="name"
-                                        :reduce="unit => unit.id"
+                                    <CustomSelect2 v-model="form.unitId" :options="units"
+                                        :get-option-label="option => option.name"
+                                        :reduce="option => option.id" searchable clearable
                                         placeholder="-- Pilih Satuan --"
                                         class="unit"
                                     />
@@ -341,7 +339,7 @@
                                     class="form-control" 
                                     v-model="formattedPriceBuy" 
                                     placeholder="Masukkan harga beli"
-                                    required
+                                    
                                     >
                                     <label>Harga Beli</label>
                                 </div>
@@ -353,18 +351,16 @@
                                     class="form-control" 
                                     v-model="formattedPriceSell" 
                                     placeholder="Masukkan harga jual"
-                                    required
+                                    
                                     >
                                     <label>Harga Jual</label>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-floating form-floating-outline">
-                                    <v-select
-                                        v-model="form.categoryId"
-                                        :options="kategori"
-                                        label="name"
-                                        :reduce="kategori => kategori.id"
+                                    <CustomSelect2 v-model="form.categoryId" :options="kategori"
+                                        :get-option-label="option => option.name"
+                                        :reduce="option => option.id" searchable clearable
                                         placeholder="-- Pilih Kategori --"
                                         class="kategori"
                                     />  
@@ -372,11 +368,9 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-floating form-floating-outline">
-                                    <v-select
-                                        v-model="form.kondisi"
-                                        :options="kondisiOptions"
-                                        label="label"
-                                        :reduce="option => option.value"
+                                    <CustomSelect2 v-model="form.kondisi" :options="kondisiOptions"
+                                        :get-option-label="option => option.label"
+                                        :reduce="option => option.id" searchable clearable
                                         :get-option-key="option => option.value"
                                         placeholder="-- Pilih Kondisi --"
                                         id="select-kondisi"
@@ -443,6 +437,7 @@ import { useUnitStore } from '~/stores/unit'
 import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import vSelect from 'vue-select'
+import CustomSelect2 from '~/components/CustomSelect2.vue'
 import 'vue-select/dist/vue-select.css'
 import Dropdown from 'primevue/dropdown'
 import InputText from 'primevue/inputtext'
@@ -503,7 +498,6 @@ const kondisiOptions = [
 
 const config = useRuntimeConfig();
 
-
 let modalInstance = null
 onMounted(() => {
     productStore.fetchProducts();
@@ -526,7 +520,6 @@ watch(showModal, (newValue) => {
         modalInstance?.hide()
     }
 })
-
 
 const debouncedSearch = useDebounceFn(() => {
     productStore.setSearch(globalFilterValue.value)
@@ -614,109 +607,23 @@ const getFieldError = (fieldName) => {
 </script>
 
 <style scoped>
-    :deep(.unit .vs__dropdown-toggle),
-    :deep(.kategori .vs__dropdown-toggle),
-    :deep(.select-kondisi .vs__dropdown-toggle) {
-        height: 48px !important;
-        border-radius: 7px;
-    }
-    
-    .image-preview {
-        transition: all 0.3s ease;
-    }
+<style scoped>
 
-    .image-preview:hover {
-        transform: scale(1.05);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    }
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .card-body {
+    padding: 16px;
+  }
+  
+  .form-label {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+}
 
-    /* Error styling for form validation */
-    .form-control.is-invalid {
-        border-color: #dc3545;
-        box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
-    }
-
-    .invalid-feedback {
-        display: block;
-        width: 100%;
-        margin-top: 0.25rem;
-        font-size: 0.875rem;
-        color: #dc3545;
-    }
-
-    /* Search styling */
-    .input-group .btn {
-        border-left: none;
-    }
-
-    .input-group .form-control:focus + .btn {
-        border-color: #86b7fe;
-        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-    }
-
-    /* Info text styling */
-    .form-text {
-        font-size: 0.75rem;
-        color: #6c757d;
-        margin-top: 0.25rem;
-    }
-
-    .form-text i {
-        color: #0d6efd;
-    }
-
-    /* Card styling */
-    .card h4 {
-        font-size: 2rem;
-        font-weight: 600;
-        color: #566a7f;
-        margin-bottom: 0.5rem;
-    }
-
-    .card .card-body p {
-        color: #a1acb8;
-        font-size: 0.875rem;
-    }
-
-    /* Icon styling */
-    .card .ri-bar-chart-line {
-        color: #4a4a4a !important;
-        opacity: 0.8;
-    }
-
-    .card:hover .ri-bar-chart-line {
-        opacity: 1;
-        transform: scale(1.05);
-        transition: all 0.3s ease;
-    }
-
-    /* Ensure col-6 works properly */
-    .row .col-6 {
-        flex: 0 0 50%;
-        max-width: 50%;
-    }
-
-    /* Responsive adjustments */
-    @media (max-width: 767.98px) {
-        .row .col-6 {
-            flex: 0 0 100%;
-            max-width: 100%;
-        }
-    }
-
-    /* Image clickable styling */
-    :deep(.p-datatable img[style*="cursor: pointer"]) {
-        transition: all 0.2s ease;
-        border: 2px solid transparent;
-    }
-
-    :deep(.p-datatable img[style*="cursor: pointer"]:hover) {
-        transform: scale(1.05);
-        border-color: #4a4a4a;
-        box-shadow: 0 2px 8px rgba(105, 108, 255, 0.3);
-    }
-
-    :deep(.p-datatable img[style*="cursor: pointer"]:active) {
-        transform: scale(0.98);
-    }
+@media (max-width: 576px) {
+  .card-body {
+    padding: 12px;
+  }
+}
 </style>

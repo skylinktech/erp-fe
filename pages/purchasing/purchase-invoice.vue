@@ -138,10 +138,10 @@
                         <div class="card-body">
                             <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <v-select v-model="filters.vendorId" :options="vendors" label="name" :reduce="c => c.id" placeholder="Pilih Vendor" class="v-select-style"/>
+                                    <CustomSelect2 v-model="filters.vendorId" :options="vendors" :get-option-label="option => option.name" :reduce="option => option.id" searchable clearable placeholder="Pilih Vendor" />
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <v-select v-model="filters.status" :options="statusOptions" label="label" :reduce="option => option.value" placeholder="Pilih Status" class="v-select-style"/>
+                                    <CustomSelect2 v-model="filters.status" :options="statusOptions" :get-option-label="option => option?.label || 'Unknown Status'" :reduce="option => option.value" searchable clearable placeholder="Pilih Status" />
                                 </div>
                             </div>
                         </div>
@@ -239,7 +239,7 @@
                                     </Column>
                                     <Column field="status" header="Status" :sortable="true">
                                         <template #body="slotProps">
-                                            <span :class="getStatusBadge(slotProps.data.status).class">
+                                            <span >
                                                 {{ getStatusBadge(slotProps.data.status).text }}
                                             </span>
                                         </template>
@@ -314,49 +314,47 @@
                             <div class="tab-pane fade active show" id="form-tabs-info" role="tabpanel">
                                 <div class="row g-4">
                                     <div class="col-md-6">
-                                        <v-select 
+                                        <CustomSelect2 
                                             v-model="form.purchaseOrderId" 
                                             :options="purchaseOrders || []" 
-                                            label="noPo" 
-                                            :reduce="so => so.id" 
-                                            placeholder="Pilih Purchase Order" 
-                                            class="v-select-style purchase-order-select"
-                                            :filterable="true"
-                                            :searchable="true"
-                                            :get-option-label="getPurchaseOrderLabel"
+                                            :get-option-label="getPurchaseOrderLabel" 
+                                            :reduce="option => option.id" 
+                                            placeholder="Pilih Purchase Order"
+                                            searchable
+                                            clearable
                                             :loading="loading"
                                         >
-                                            <template #option="option">
+                                            <template #option="{ option }">
                                                 <div class="d-flex justify-content-between align-items-center w-100">
                                                     <div>
-                                                        <div class="fw-bold">{{ option.noPo }}</div>
-                                                        <small class="text-muted">{{ option.vendor?.name || 'No Vendor' }}</small>
+                                                        <div class="fw-bold">{{ option.noPo || 'No PO Number' }}</div>
+                                                        <small class="text-muted">{{ option.vendor?.name || 'No Vendor Data' }}</small>
                                                     </div>
                                                     <div class="text-end">
                                                         <small class="text-muted">{{ formatDate(option.date) }}</small>
                                                     </div>
                                                 </div>
                                             </template>
-                                        </v-select>
+                                        </CustomSelect2>
                                     </div>
                                     <div class="col-md-6">
-                                        <v-select v-model="form.vendorId" :options="vendors" label="name" :reduce="c => c.id" placeholder="Pilih Vendor" class="v-select-style" :disabled="!!form.purchaseOrderId"/>
+                                        <CustomSelect2 v-model="form.vendorId" :options="vendors" :get-option-label="option => option.name" :reduce="option => option.id" searchable clearable placeholder="Pilih Vendor"  :disabled="!!form.purchaseOrderId"/>
                                         <div v-if="form.purchaseOrderId" class="form-text mt-1">
                                             <small class="text-muted">📋 Vendor diambil dari Purchase Order yang dipilih</small>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
-                                        <v-select v-model="form.perusahaanId" :options="perusahaans" label="nmPerusahaan" :reduce="p => p.id" placeholder="Pilih Perusahaan" class="v-select-style" @update:modelValue="onPerusahaanChange"/>
+                                        <CustomSelect2 v-model="form.perusahaanId" :options="perusahaans" :get-option-label="option => option.nmPerusahaan" :reduce="option => option.id" searchable clearable placeholder="Pilih Perusahaan"  @update:modelValue="onPerusahaanChange"/>
                                     </div>
                                     <div class="col-md-6">
-                                        <v-select v-model="form.cabangId" :options="filteredCabangs" label="nmCabang" :reduce="c => c.id" placeholder="Pilih Cabang" class="v-select-style" :disabled="!form.perusahaanId"/>
+                                        <CustomSelect2 v-model="form.cabangId" :options="filteredCabangs" :get-option-label="option => option.nmCabang" :reduce="option => option.id" searchable clearable placeholder="Pilih Cabang"  :disabled="!form.perusahaanId"/>
                                         <div v-if="!form.perusahaanId" class="form-text mt-1">
                                             <small class="text-muted">⚠️ Pilih perusahaan terlebih dahulu</small>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
                                         <div class="form-floating form-floating-outline">
-                                            <input type="date" v-model="form.paymentDate" class="form-control" required>
+                                            <input type="date" v-model="form.paymentDate" class="form-control" >
                                             <label>Tanggal Pembayaran</label>
                                         </div>
                                     </div>
@@ -373,25 +371,21 @@
                                         </div>
                                     </div>
                                     <div class="col-md-3">
-                                        <v-select
-                                            v-model="form.status"
-                                            :options="statusOptions"
-                                            label="label"
-                                            :reduce="option => option.value"
+                                        <CustomSelect2 v-model="form.status" :options="statusOptions"
+                                            :get-option-label="option => option?.label || 'Unknown Status'"
+                                            :reduce="option => option.value" searchable clearable
                                             placeholder="-- Pilih Status --"
                                             id="status"
                                             class="status"
                                         />   
                                     </div>
                                     <div class="col-md-3">
-                                        <v-select
-                                            v-model="form.paymentMethod"
-                                            :options="paymentMethodOptions"
-                                            label="label"
-                                            :reduce="option => option.value"
+                                        <CustomSelect2 v-model="form.paymentMethod" :options="paymentMethodOptions"
+                                            :get-option-label="option => option?.label || 'Unknown Payment Method'"
+                                            :reduce="option => option.value" searchable clearable
                                             placeholder="-- Pilih Metode Pembayaran --"
                                             id="paymentMethod"
-                                            class="v-select-style"
+                                            
                                             :clearable="false"
                                         />   
                                     </div>
@@ -439,7 +433,7 @@
                                     </div>
                                     <div class="col-md-3">
                                         <div class="form-floating form-floating-outline">
-                                            <input type="text" :value="formatRupiah(form.paidAmount)" @input="updatePaidAmountFromInput" class="form-control" placeholder="Paid Amount" :class="{ 'is-invalid': !isPaidAmountValid }">
+                                            <input type="text" :value="formatRupiah(form.paidAmount)" @input="updatePaidAmountFromInput" class="form-control" placeholder="Paid Amount" >
                                             <label>Paid Amount</label>
                                             <div v-if="!isPaidAmountValid" class="invalid-feedback">
                                                 <template v-if="form.status === 'unpaid'">Paid amount harus 0 untuk status unpaid</template>
@@ -493,7 +487,7 @@
                                                     <div class="col-6">
                                                         <div class="mb-2">
                                                             <span class="text-muted">Status:</span><br>
-                                                            <span :class="paymentStatusClass">{{ form.status?.toUpperCase() || 'UNKNOWN' }}</span>
+                                                            <span >{{ form.status?.toUpperCase() || 'UNKNOWN' }}</span>
                                                         </div>
                                                         <div class="mb-2">
                                                             <span class="text-muted">Paid Amount:</span><br>
@@ -501,7 +495,7 @@
                                                         </div>
                                                         <div class="mb-2">
                                                             <span class="text-muted">Remaining:</span><br>
-                                                            <strong :class="computedRemainingAmount > 0 ? 'text-warning' : 'text-success'">
+                                                            <strong >
                                                                 {{ formatRupiah(computedRemainingAmount) }}
                                                             </strong>
                                                         </div>
@@ -530,7 +524,6 @@
                             </div>
                             <div class="tab-pane fade" id="form-tabs-items" role="tabpanel">
 
-                                
                                 <!-- ✅ NEW: Info items dari Purchase Order -->
                                 <div v-if="form.purchaseOrderId && form.purchaseInvoiceItems && form.purchaseInvoiceItems.length > 0" class="alert alert-info mb-4">
                                     <div class="d-flex align-items-center">
@@ -566,25 +559,21 @@
                                 <div v-for="(item, index) in (form.purchaseInvoiceItems || [])" :key="index" class="repeater-item mb-4">
                                     <div class="row g-3">
                                         <div class="col-md-6">
-                                            <v-select 
-                                                v-model="item.productId" 
-                                                :options="getProductOptions(item)" 
-                                                :get-option-label="p => `${p.name} (${p.unit?.name || 'No Unit'})`" 
+                                            <CustomSelect2 v-model="item.productId" :options="getProductOptions(item)" 
+                                                :get-option-label="option => option?.name || option?.label || 'Unknown Product'" searchable clearable 
                                                 :reduce="p => p.id" 
                                                 placeholder="Pilih Produk" 
                                                 @update:modelValue="onProductChange(index)" 
-                                                class="v-select-style"
+                                                
                                                 :disabled="!!form.purchaseOrderId"
                                             />
                                         </div>
                                         <div class="col-md-6">
-                                            <v-select 
-                                                v-model="item.warehouseId" 
-                                                :options="getWarehouseOptions(item)" 
-                                                :get-option-label="w => `${w.name} (${w.code})`" 
+                                            <CustomSelect2 v-model="item.warehouseId" :options="getWarehouseOptions(item)" 
+                                                :get-option-label="option => option?.name || option?.label || 'Unknown Warehouse'" searchable clearable 
                                                 :reduce="w => w.id" 
                                                 placeholder="Pilih Gudang" 
-                                                class="v-select-style" 
+                                                 
                                                 @update:modelValue="updateStockInfo(index)"
                                                 :disabled="!!form.purchaseOrderId"
                                             />
@@ -674,6 +663,7 @@ import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import TableControls from '~/components/table/TableControls.vue'
 import vSelect from 'vue-select'
+import CustomSelect2 from '~/components/CustomSelect2.vue'
 import Dropdown from 'primevue/dropdown'
 import Column from 'primevue/column'
 import InputText from 'primevue/inputtext'
@@ -759,14 +749,19 @@ const filteredCabangs = computed(() => {
   if (!form.value.perusahaanId || !cabangs.value) {
     return [];
   }
-  return cabangs.value.filter(cabang => cabang.perusahaanId === form.value.perusahaanId);
+  
+  const filtered = cabangs.value.filter(cabang => cabang.perusahaanId === form.value.perusahaanId);
+  return filtered;
 });
 
 // ✅ NEW: Function untuk handle perubahan perusahaan
-const onPerusahaanChange = () => {
-  // Reset cabang ketika perusahaan berubah
-  form.value.cabangId = null;
-  console.log('Perusahaan berubah:', form.value.perusahaanId);
+const onPerusahaanChange = (newValue) => {
+  console.log('onPerusahaanChange called with:', newValue);
+  // Reset cabang ketika perusahaan berubah atau di-clear
+  // Note: v-model sudah mengatur form.value.perusahaanId, jadi tidak perlu set manual
+  if (form.value.cabangId !== null) {
+    form.value.cabangId = null;
+  }
 };
 
 // Flag untuk mencegah recursive watcher updates
@@ -934,6 +929,7 @@ onMounted(() => {
     purchaseOrderStore.fetchPurchaseOrders();
     warehouseStore.fetchWarehouses();
     permissionStore.fetchPermissions();
+    
 
     const modalElement = document.getElementById('PurchaseInvoiceModal')
     if (modalElement) {
@@ -972,13 +968,8 @@ watch(showModal, (newValue) => {
     }
 })
 
-watch(() => form.value.perusahaanId, (newPerusahaanId) => {
-    if (newPerusahaanId) {
-        if(!isEditMode.value) {
-            form.value.cabangId = null;
-        }
-    }
-});
+// Note: onPerusahaanChange function sudah handle perubahan perusahaan
+// Watcher ini dihapus untuk menghindari konflik dengan onPerusahaanChange
 
 // Watcher untuk purchaseOrderId - auto fill data ketika dipilih
 watch(() => form.value.purchaseOrderId, async (newPurchaseOrderId, oldPurchaseOrderId) => {
@@ -986,9 +977,13 @@ watch(() => form.value.purchaseOrderId, async (newPurchaseOrderId, oldPurchaseOr
     const selectedPurchaseOrder = purchaseOrders.value?.find(so => so.id === newPurchaseOrderId);
     
     if (selectedPurchaseOrder) {
+      console.log('📋 Purchase Order dipilih:', selectedPurchaseOrder);
       
       // Auto fill data dari purchase order yang dipilih
       form.value.vendorId = selectedPurchaseOrder.vendorId || selectedPurchaseOrder.vendor?.id;
+      if (form.value.vendorId) {
+        console.log('👤 Auto fill vendor dari PO:', selectedPurchaseOrder.vendor?.name || `ID: ${form.value.vendorId}`);
+      }
       form.value.discountPercent = selectedPurchaseOrder.discountPercent || 0;
       form.value.taxPercent = selectedPurchaseOrder.taxPercent || 0;
       form.value.total = Math.round(Number(selectedPurchaseOrder.total)) || 0;
@@ -1034,14 +1029,10 @@ watch(() => form.value.purchaseOrderId, async (newPurchaseOrderId, oldPurchaseOr
       // ✅ AUTO FILL PURCHASE ORDER ITEMS - SEMUA ITEMS TANPA VALIDASI STATUS
       if (!isEditMode.value) {
         try {
-          console.log('🔄 Fetching purchase order details for:', newPurchaseOrderId);
           
           // Fetch detail purchase order dengan items
           await purchaseOrderStore.getPurchaseOrderDetails(newPurchaseOrderId);
           const detailedPurchaseOrder = purchaseOrderStore.purchaseOrder;
-          
-          console.log('📋 Detailed Purchase Order:', detailedPurchaseOrder);
-          console.log('📦 Purchase Order Items:', detailedPurchaseOrder?.purchaseOrderItems);
           
           if (detailedPurchaseOrder && detailedPurchaseOrder.purchaseOrderItems) {
             
@@ -1053,11 +1044,8 @@ watch(() => form.value.purchaseOrderId, async (newPurchaseOrderId, oldPurchaseOr
             // Clear existing items
             form.value.purchaseInvoiceItems = [];
             
-            console.log('✅ All Items Found:', detailedPurchaseOrder.purchaseOrderItems);
-            
             // Auto fill items dari purchase order - SEMUA ITEMS TANPA VALIDASI STATUS
             detailedPurchaseOrder.purchaseOrderItems.forEach((poItem, index) => {
-              console.log(`📝 Processing item ${index}:`, poItem);
               
               const invoiceItem = {
                 productId: poItem.productId,
@@ -1085,16 +1073,12 @@ watch(() => form.value.purchaseOrderId, async (newPurchaseOrderId, oldPurchaseOr
                 purchaseOrderItemId: poItem.id
               };
               
-              console.log(`✅ Created invoice item:`, invoiceItem);
               form.value.purchaseInvoiceItems.push(invoiceItem);
             });
-            
-            console.log('🎯 Final purchaseInvoiceItems:', form.value.purchaseInvoiceItems);
             
             // DPP akan otomatis dihitung dari watcher purchaseInvoiceItemsTotal
             
           } else {
-            console.log('⚠️ No purchase order items found or items is undefined');
             form.value.purchaseInvoiceItems = [];
           }
         } catch (error) {
@@ -1103,17 +1087,17 @@ watch(() => form.value.purchaseOrderId, async (newPurchaseOrderId, oldPurchaseOr
           form.value.purchaseInvoiceItems = [];
         }
       } else {
-        console.log('📝 Edit mode - skipping auto fill of items');
       }
-      
-      
+
     }
   } else if (!newPurchaseOrderId && oldPurchaseOrderId) {
     // Jika purchase order dihapus/di-clear, reset beberapa field ke kondisi manual
+    console.log('📋 Purchase Order di-clear, reset data');
     
     // Reset ke default values tapi tetap biarkan user bisa edit
     if (!isEditMode.value) {
       form.value.vendorId = null;
+      console.log('👤 Reset vendor karena PO di-clear');
       form.value.discountPercent = 0;
       form.value.taxPercent = 0;
       form.value.total = 0;
@@ -1192,7 +1176,6 @@ watch(() => form.value.paidAmount, (newPaidAmount, oldPaidAmount) => {
   }
 });
 
-
 watch(globalFilterValue, useDebounceFn((newValue) => {
     filters.value.search = newValue;
 }, 500));
@@ -1242,7 +1225,6 @@ const exportData = (format) => {
     if (format === 'csv') myDataTableRef.value.exportCSV();
 };
 
-
 const onQuantityChange = (index) => {
   // Pastikan quantity selalu integer
   const item = form.value.purchaseInvoiceItems[index];
@@ -1264,7 +1246,7 @@ const calculateSubtotal = (index) => {
 // ✅ NEW: Function untuk mendapatkan options product
 const getProductOptions = (item) => {
   // Jika ada purchase order, gunakan product dari item tersebut
-  if (form.value.purchaseOrderId && item.product) {
+  if (form.value.purchaseOrderId && item?.product) {
     return [item.product];
   }
   
@@ -1275,7 +1257,7 @@ const getProductOptions = (item) => {
 // ✅ NEW: Function untuk mendapatkan options warehouse
 const getWarehouseOptions = (item) => {
   // Jika ada purchase order, gunakan warehouse dari item tersebut
-  if (form.value.purchaseOrderId && item.warehouse) {
+  if (form.value.purchaseOrderId && item?.warehouse) {
     return [item.warehouse];
   }
   
@@ -1422,6 +1404,8 @@ const printPurchaseInvoice = (purchaseInvoiceId) => {
 
 const getPurchaseOrderLabel = (option) => {
     if (!option) return '';
+    if (!option.noPo) return 'Invalid Purchase Order';
+    
     return `${option.noPo} - ${option.vendor?.name || 'No Vendor'}`;
 };
 
@@ -1437,164 +1421,23 @@ const formatDate = (dateString) => {
 </script>
 
 <style scoped>
-    .v-select-style {
-        min-height: 48px;
-    }
+<style scoped>
 
-    :deep(.v-select-style .vs__dropdown-toggle),
-    :deep(.perusahaan .vs__dropdown-toggle),
-    :deep(.warehouse-select .vs__dropdown-toggle),
-    :deep(.status .vs__dropdown-toggle),
-    :deep(.vendor .vs__dropdown-toggle),
-    :deep(.product-select .vs__dropdown-toggle),
-    :deep(.cabang .vs__dropdown-toggle),
-    :deep(.select-payment-method .vs__dropdown-toggle) {
-        height: 48px !important;
-        border-radius: 7px;
-    }
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .card-body {
+    padding: 16px;
+  }
+  
+  .form-label {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+}
 
-    /* Purchase Order Select - Limit dropdown height for max 5 items */
-    :deep(.purchase-order-select .vs__dropdown-menu) {
-        max-height: 250px !important; /* Approximately 5 items * 50px each */
-        overflow-y: auto !important;
-        border-radius: 7px;
-    }
-
-    :deep(.purchase-order-select .vs__dropdown-option) {
-        padding: 12px 16px;
-        min-height: 50px;
-        display: flex;
-        align-items: center;
-        border-bottom: 1px solid #f0f0f0;
-    }
-
-    :deep(.purchase-order-select .vs__dropdown-option:last-child) {
-        border-bottom: none;
-    }
-
-    :deep(.purchase-order-select .vs__dropdown-option--highlight) {
-        background-color: #e3f2fd;
-        color: #666CFF;
-    }
-
-    :deep(.purchase-order-select .vs__dropdown-option--selected) {
-        background-color: #666CFF;
-        color: white;
-    }
-
-    /* Custom scrollbar styling */
-    :deep(.purchase-order-select .vs__dropdown-menu)::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    :deep(.purchase-order-select .vs__dropdown-menu)::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 3px;
-    }
-
-    :deep(.purchase-order-select .vs__dropdown-menu)::-webkit-scrollbar-thumb {
-        background: #c1c1c1;
-        border-radius: 3px;
-    }
-
-    :deep(.purchase-order-select .vs__dropdown-menu)::-webkit-scrollbar-thumb:hover {
-        background: #a8a8a8;
-    }
-
-    /* Styling untuk field yang disabled ketika purchase order dipilih */
-    :deep(.v-select-style.vs--disabled .vs__dropdown-toggle) {
-        background-color: #f8f9fa;
-        border-color: #e9ecef;
-        opacity: 0.65;
-    }
-
-    :deep(.v-select-style.vs--disabled .vs__selected) {
-        color: #6c757d;
-    }
-
-    /* Styling untuk readonly input fields */
-    .form-control:read-only {
-        background-color: #f8f9fa;
-        border-color: #e9ecef;
-        color: #6c757d;
-    }
-
-    /* Custom styling untuk form text hint */
-    .form-text small {
-        font-size: 0.75rem;
-        font-style: italic;
-    }
-
-    /* Styling untuk payment summary card */
-    .card.border-primary {
-        border-width: 2px !important;
-    }
-
-    .card-header.bg-primary {
-        background: linear-gradient(135deg, #8185ff 0%, #666CFF 100%) !important;
-    }
-
-    .card-body .text-sm {
-        font-size: 0.875rem;
-    }
-
-    .card-body .mb-2 {
-        margin-bottom: 0.75rem !important;
-    }
-
-    /* Styling untuk format rupiah yang positif dan negatif */
-    .text-danger {
-        color: #FF6D6A !important;
-    }
-
-    .text-success {
-        color: #198754 !important;
-    }
-
-    .text-warning {
-        color: #FDB935 !important;
-    }
-
-    .text-primary {
-        color: #666CFF !important;
-    }
-
-    /* Responsive design untuk payment summary */
-    @media (max-width: 768px) {
-        .card-body .row.text-sm .col-6 {
-            margin-bottom: 1rem;
-        }
-    }
-
-    /* ✅ NEW: Responsive styling untuk text truncation di tablet dan mobile */
-    @media (max-width: 768px) {
-        :deep(.v-select-style .vs__selected) {
-            white-space: nowrap !important;
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
-            max-width: 100% !important;
-        }
-
-        :deep(.v-select-style .vs__placeholder) {
-            white-space: nowrap !important;
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
-            max-width: 100% !important;
-        }
-
-        :deep(.v-select-style .vs__selected-options) {
-            overflow: hidden !important;
-        }
-    }
-
-    @media (max-width: 576px) {
-        :deep(.v-select-style .vs__selected) {
-            font-size: 14px !important;
-            padding: 2px 4px !important;
-        }
-
-        :deep(.v-select-style .vs__placeholder) {
-            font-size: 14px !important;
-        }
-    }
+@media (max-width: 576px) {
+  .card-body {
+    padding: 12px;
+  }
+}
 </style>

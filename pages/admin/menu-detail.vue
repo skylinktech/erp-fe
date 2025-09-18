@@ -87,7 +87,7 @@
                                         <Column field="order" header="Order" :sortable="true"></Column>
                                         <Column field="status" header="Status" :sortable="true">
                                             <template #body="slotProps">
-                                                <span :class="getStatusBadge(slotProps.data.status).class">
+                                                <span >
                                                     {{ getStatusBadge(slotProps.data.status).text }}
                                                 </span>
                                             </template>
@@ -142,7 +142,7 @@
                                         class="form-control"
                                         v-model="form.name" 
                                         placeholder="Masukkan nama menu detail"
-                                        required
+                                        
                                     >
                                     <label>Nama Menu Detail</label>
                                 </div>
@@ -168,18 +168,16 @@
                                     @input="form.order = $event.target.value.replace(/[^0-9]/g, '')"
                                     inputmode="numeric"
                                     pattern="[0-9]*"
-                                    required
+                                    
                                     >
                                     <label>Order</label>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-floating form-floating-outline">
-                                    <v-select
-                                        v-model="form.status"
-                                        :options="statusOptions"
-                                        label="label"
-                                        :reduce="status => status.value"
+                                    <CustomSelect2 v-model="form.status" :options="statusOptions"
+                                        :get-option-label="option => option.label"
+                                        :reduce="option => option.id" searchable clearable
                                         placeholder="-- Pilih Status --"
                                         class="select-status"
                                     />   
@@ -187,11 +185,9 @@
                             </div>
                             <div class="col-md-12">
                                 <div class="form-floating form-floating-outline">
-                                    <v-select
-                                        v-model="form.menuGroupId"
-                                        :options="menuGroups"
-                                        label="name"
-                                        :reduce="menuGroup => menuGroup.id"
+                                    <CustomSelect2 v-model="form.menuGroupId" :options="menuGroups"
+                                        :get-option-label="option => option.name"
+                                        :reduce="option => option.id" searchable clearable
                                         placeholder="-- Pilih Menu Group --"
                                         class="select-menu-group"
                                     />   
@@ -223,6 +219,7 @@ import { useMenuDetailStore } from '~/stores/menu-detail'
 import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import vSelect from 'vue-select'
+import CustomSelect2 from '~/components/CustomSelect2.vue'
 import 'vue-select/dist/vue-select.css'
 import Dropdown from 'primevue/dropdown'
 import Column from 'primevue/column'
@@ -272,7 +269,6 @@ const debouncedSearch = useDebounceFn(() => {
 }, 500)
 watch(globalFilterValue, debouncedSearch);
 
-
 const onPage = (event) => menuDetailStore.setPagination(event);
 
 const handleRowsChange = () => {
@@ -295,33 +291,24 @@ const getStatusBadge = (status) => {
 </script>
 
 <style scoped>
-    :deep(.select-menu-group .vs__dropdown-toggle),
-    :deep(.select-status .vs__dropdown-toggle) {
-        height: 48px !important;
-        border-radius: 7px;
-    }
+<style scoped>
 
-    /* Skeleton Loader */
-    .skeleton-loader {
-        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-        background-size: 200% 100%;
-        animation: loading 1.5s infinite;
-        border-radius: 4px;
-    }
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .card-body {
+    padding: 16px;
+  }
+  
+  .form-label {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+}
 
-    @keyframes loading {
-        0% {
-            background-position: 200% 0;
-        }
-        100% {
-            background-position: -200% 0;
-        }
-    }
-
-    /* Dark mode skeleton */
-    :deep(.dark) .skeleton-loader {
-        background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
-        background-size: 200% 100%;
-    }
+@media (max-width: 576px) {
+  .card-body {
+    padding: 12px;
+  }
+}
 </style>
 

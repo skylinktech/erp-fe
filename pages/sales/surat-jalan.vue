@@ -70,7 +70,7 @@
                       <div class="card-body">
                           <div class="row">
                               <div class="col-md-12">
-                                  <v-select v-model="filters.customerId" :options="customers" label="name" :reduce="c => c.id" placeholder="Pilih Customer" class="v-select-style"/>
+                                  <CustomSelect2 v-model="filters.customerId" :options="customers" :get-option-label="option => option.name" :reduce="option => option.id" searchable clearable placeholder="Pilih Customer" />
                               </div>
                           </div>
                       </div>
@@ -171,7 +171,7 @@
                                                       </a>
                                                   </li>
                                                   <li v-if="userHasRole('superadmin') || userHasPermission('delete_surat_jalan')">
-                                                      <a class="dropdown-item text-danger" href="javascript:void(0)" @click="suratJalanStore.deleteSuratJalan(slotProps.data.id)" :class="{ 'disabled': loading }">
+                                                      <a class="dropdown-item text-danger" href="javascript:void(0)" @click="suratJalanStore.deleteSuratJalan(slotProps.data.id)" >
                                                           <i v-if="loading" class="ri-loader-4-line me-2 animate-spin"></i>
                                                           <i v-else class="ri-delete-bin-7-line me-2"></i> 
                                                           {{ loading ? 'Menghapus...' : 'Hapus' }}
@@ -219,16 +219,14 @@
                           <div class="tab-pane fade active show" id="form-tabs-info" role="tabpanel">
                               <div class="row g-4">
                                   <div class="col-md-6">
-                                      <v-select 
+                                      <CustomSelect2 
                                           v-model="form.salesOrderId" 
                                           :options="filteredSalesOrders" 
-                                          label="noSo" 
-                                          :reduce="so => so.id" 
-                                          placeholder="Pilih Sales Order" 
-                                          class="v-select-style sales-order-select"
-                                          :filterable="true"
-                                          :searchable="true"
-                                          :get-option-label="getSalesOrderLabel"
+                                          :get-option-label="getSalesOrderLabel" 
+                                          :reduce="option => option.id" 
+                                          placeholder="Pilih Sales Order"
+                                          searchable
+                                          clearable
                                           :loading="loading"
                                       >
                                           <template #option="option">
@@ -242,17 +240,17 @@
                                                   </div>
                                               </div>
                                           </template>
-                                      </v-select>
+                                      </CustomSelect2>
                                   </div>
                                   <div class="col-md-6">
-                                      <v-select v-model="form.customerId" :options="customers" label="name" :reduce="c => c.id" placeholder="Pilih Customer" class="v-select-style" :disabled="!!form.salesOrderId"/>
+                                      <CustomSelect2 v-model="form.customerId" :options="customers" :get-option-label="option => option.name" :reduce="option => option.id" searchable clearable placeholder="Pilih Customer"  :disabled="!!form.salesOrderId"/>
                                       <div v-if="form.salesOrderId" class="form-text mt-1">
                                           <small class="text-muted">📋 Customer diambil dari Sales Order yang dipilih</small>
                                       </div>
                                   </div>
                                   <div class="col-md-3">
                                       <div class="form-floating form-floating-outline">
-                                          <input type="date" v-model="form.date" class="form-control" required>
+                                          <input type="date" v-model="form.date" class="form-control" >
                                           <label>Tanggal Surat Jalan</label>
                                       </div>
                                   </div>
@@ -314,25 +312,21 @@
                               <div v-for="(item, index) in (form.suratJalanItems || [])" :key="index" class="repeater-item mb-4">
                                   <div class="row g-3">
                                       <div class="col-md-6">
-                                          <v-select 
-                                              v-model="item.productId" 
-                                              :options="customerProducts || []" 
-                                              :get-option-label="p => `${p.name} (${p.unit?.name || 'No Unit'})`" 
+                                          <CustomSelect2 v-model="item.productId" :options="customerProducts || []" 
+                                              :get-option-label="option => option.label" searchable clearable 
                                               :reduce="p => p.id" 
                                               placeholder="Pilih Produk" 
                                               @update:modelValue="onProductChange(index)" 
-                                              class="v-select-style"
+                                              
                                               :disabled="form.salesOrderId && !hasPartialItems"
                                           />
                                       </div>
                                       <div class="col-md-6">
-                                          <v-select 
-                                              v-model="item.warehouseId" 
-                                              :options="warehouses" 
-                                              :get-option-label="w => `${w.name} (${w.code})`" 
+                                          <CustomSelect2 v-model="item.warehouseId" :options="warehouses" 
+                                              :get-option-label="option => option.label" searchable clearable 
                                               :reduce="w => w.id" 
                                               placeholder="Pilih Gudang" 
-                                              class="v-select-style" 
+                                               
                                               @update:modelValue="updateStockInfo(index)"
                                               :disabled="form.salesOrderId && !hasPartialItems"
                                           />
@@ -421,6 +415,7 @@ import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import TableControls from '~/components/table/TableControls.vue'
 import vSelect from 'vue-select'
+import CustomSelect2 from '~/components/CustomSelect2.vue'
 import Dropdown from 'primevue/dropdown'
 import Column from 'primevue/column'
 import InputText from 'primevue/inputtext'
@@ -609,7 +604,6 @@ watch(() => form.value.salesOrderId, async (newSalesOrderId, oldSalesOrderId) =>
               form.value.suratJalanItems.push(suratJalanItem);
             });
 
-            
           } else {
             // ✅ NEW: Reset sales order items jika tidak ada
             salesOrderItems.value = [];
@@ -621,7 +615,6 @@ watch(() => form.value.salesOrderId, async (newSalesOrderId, oldSalesOrderId) =>
         } else {
       }
 
-      
     }
   } else if (!newSalesOrderId && oldSalesOrderId) {
     // Jika sales order dihapus/di-clear, reset beberapa field ke kondisi manual
@@ -683,7 +676,6 @@ watch(() => form.value.customerId, (val) => {
     form.value.alamatPengiriman = selectedCustomer?.address || ''
   }
 })
-
 
 watch(globalFilterValue, useDebounceFn((newValue) => {
   filters.value.search = newValue;
@@ -891,105 +883,26 @@ watch(salesOrderItems, (newItems) => {
   // Watcher untuk memantau perubahan sales order items
 }, { deep: true })
 
-
-
-
 </script>
 
 <style scoped>
-  .v-select-style {
-      min-height: 48px;
+<style scoped>
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .card-body {
+    padding: 16px;
   }
+  
+  .form-label {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+}
 
-  :deep(.v-select-style .vs__dropdown-toggle),
-  :deep(.perusahaan .vs__dropdown-toggle),
-  :deep(.warehouse-select .vs__dropdown-toggle),
-  :deep(.status .vs__dropdown-toggle),
-  :deep(.vendor .vs__dropdown-toggle),
-  :deep(.product-select .vs__dropdown-toggle),
-  :deep(.cabang .vs__dropdown-toggle),
-      :deep(.select-payment-method .vs__dropdown-toggle) {
-        height: 48px !important;
-        border-radius: 7px;
-    }
-
-    /* ✅ NEW: Styling untuk disabled v-select */
-    :deep(.v-select-style.vs--disabled .vs__dropdown-toggle) {
-        background-color: #f8f9fa !important;
-        border-color: #dee2e6 !important;
-        cursor: not-allowed !important;
-        opacity: 0.6 !important;
-    }
-
-    :deep(.v-select-style.vs--disabled .vs__selected-options) {
-        color: #6c757d !important;
-    }
-
-    /* ✅ NEW: Styling untuk disabled input */
-    .form-control:disabled {
-        background-color: #f8f9fa !important;
-        border-color: #dee2e6 !important;
-        color: #6c757d !important;
-        cursor: not-allowed !important;
-        opacity: 0.6 !important;
-    }
-
-    /* ✅ NEW: Styling untuk disabled button */
-    .btn:disabled {
-        opacity: 0.6 !important;
-        cursor: not-allowed !important;
-    }
-
-    /* ✅ NEW: Styling untuk disabled dropdown item */
-    .dropdown-item.disabled {
-        opacity: 0.6 !important;
-        cursor: not-allowed !important;
-        pointer-events: none !important;
-    }
-
-    /* ✅ NEW: Animasi loading spinner */
-    .animate-spin {
-        animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-        from {
-            transform: rotate(0deg);
-        }
-        to {
-            transform: rotate(360deg);
-        }
-    }
-
-    /* ✅ NEW: Responsive styling untuk text truncation di tablet dan mobile */
-    @media (max-width: 768px) {
-        :deep(.v-select-style .vs__selected) {
-            white-space: nowrap !important;
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
-            max-width: 100% !important;
-        }
-
-        :deep(.v-select-style .vs__placeholder) {
-            white-space: nowrap !important;
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
-            max-width: 100% !important;
-        }
-
-        :deep(.v-select-style .vs__selected-options) {
-            overflow: hidden !important;
-        }
-    }
-
-    @media (max-width: 576px) {
-        :deep(.v-select-style .vs__selected) {
-            font-size: 14px !important;
-            padding: 2px 4px !important;
-        }
-
-        :deep(.v-select-style .vs__placeholder) {
-            font-size: 14px !important;
-        }
-    }
+@media (max-width: 576px) {
+  .card-body {
+    padding: 12px;
+  }
+}
 </style>
