@@ -470,15 +470,19 @@
                                                             <span class="text-muted">Subtotal:</span><br>
                                                             <strong>{{ formatRupiah(form.total) }}</strong>
                                                         </div>
+                                                        <div v-if="form.purchaseOrderId" class="mb-2">
+                                                            <span class="text-muted">Total dari PO (sudah termasuk PPN):</span><br>
+                                                            <strong class="text-info">{{ formatRupiah(form.total) }}</strong>
+                                                        </div>
                                                         <div class="mb-2">
                                                             <span class="text-muted">DPP (Subtotal × 11/12):</span><br>
                                                             <strong class="text-info">{{ formatRupiah(form.dpp) }}</strong>
                                                         </div>
-                                                        <div class="mb-2">
+                                                        <div v-if="!form.purchaseOrderId" class="mb-2">
                                                             <span class="text-muted">Discount ({{ form.discountPercent }}%):</span><br>
                                                             <strong class="text-danger">-{{ formatRupiah(discountAmount) }}</strong>
                                                         </div>
-                                                        <div class="mb-2">
+                                                        <div v-if="!form.purchaseOrderId" class="mb-2">
                                                             <span class="text-muted">Tax ({{ form.taxPercent }}%):</span><br>
                                                             <strong class="text-success">+{{ formatRupiah(taxAmount) }}</strong>
                                                         </div>
@@ -517,8 +521,16 @@
                                                 <div>
                                                     <strong>Info Pembayaran:</strong><br>
                                                     <small class="text-muted">
-                                                        • Status akan otomatis berubah berdasarkan jumlah pembayaran<br>
-                                                        • Unpaid: Rp 0 | Partial: Sebagian | Paid: Lunas
+                                                        <template v-if="form.purchaseOrderId">
+                                                            • Total diambil dari Purchase Order (sudah termasuk PPN)<br>
+                                                            • Status akan otomatis berubah berdasarkan jumlah pembayaran<br>
+                                                            • Unpaid: Rp 0 | Partial: Sebagian | Paid: Lunas
+                                                        </template>
+                                                        <template v-else>
+                                                            • PPN akan dihitung otomatis berdasarkan subtotal<br>
+                                                            • Status akan otomatis berubah berdasarkan jumlah pembayaran<br>
+                                                            • Unpaid: Rp 0 | Partial: Sebagian | Paid: Lunas
+                                                        </template>
                                                     </small>
                                                 </div>
                                             </div>
@@ -758,9 +770,8 @@ const filteredCabangs = computed(() => {
   return filtered;
 });
 
-// ✅ NEW: Function untuk handle perubahan perusahaan
+// Function untuk handle perubahan perusahaan
 const onPerusahaanChange = (newValue) => {
-  console.log('onPerusahaanChange called with:', newValue);
   // Reset cabang ketika perusahaan berubah atau di-clear
   // Note: v-model sudah mengatur form.value.perusahaanId, jadi tidak perlu set manual
   if (form.value.cabangId !== null) {
@@ -844,6 +855,13 @@ const taxAmount = computed(() => {
 // Computed untuk grand total (total + tax - discount)
 const grandTotal = computed(() => {
   const total = Number(form.value.total) || 0;
+  
+  // ✅ FIX: Jika ada Purchase Order, total sudah final (sudah termasuk PPN)
+  if (form.value.purchaseOrderId) {
+    return Math.round(total);
+  }
+  
+  // ✅ FIX: Jika tidak ada Purchase Order, hitung PPN seperti biasa
   const discount = discountAmount.value;
   const tax = taxAmount.value;
   const result = total - discount + tax;
@@ -981,13 +999,8 @@ watch(() => form.value.purchaseOrderId, async (newPurchaseOrderId, oldPurchaseOr
     const selectedPurchaseOrder = purchaseOrders.value?.find(so => so.id === newPurchaseOrderId);
     
     if (selectedPurchaseOrder) {
-      console.log('📋 Purchase Order dipilih:', selectedPurchaseOrder);
-      
       // Auto fill data dari purchase order yang dipilih
       form.value.vendorId = selectedPurchaseOrder.vendorId || selectedPurchaseOrder.vendor?.id;
-      if (form.value.vendorId) {
-        console.log('👤 Auto fill vendor dari PO:', selectedPurchaseOrder.vendor?.name || `ID: ${form.value.vendorId}`);
-      }
       form.value.discountPercent = selectedPurchaseOrder.discountPercent || 0;
       form.value.taxPercent = selectedPurchaseOrder.taxPercent || 0;
       form.value.total = Math.round(Number(selectedPurchaseOrder.total)) || 0;
@@ -1086,7 +1099,6 @@ watch(() => form.value.purchaseOrderId, async (newPurchaseOrderId, oldPurchaseOr
             form.value.purchaseInvoiceItems = [];
           }
         } catch (error) {
-          console.error('❌ Error fetching purchase order details for auto fill:', error);
           // Fallback: create empty items array
           form.value.purchaseInvoiceItems = [];
         }
@@ -1096,12 +1108,9 @@ watch(() => form.value.purchaseOrderId, async (newPurchaseOrderId, oldPurchaseOr
     }
   } else if (!newPurchaseOrderId && oldPurchaseOrderId) {
     // Jika purchase order dihapus/di-clear, reset beberapa field ke kondisi manual
-    console.log('📋 Purchase Order di-clear, reset data');
-    
     // Reset ke default values tapi tetap biarkan user bisa edit
     if (!isEditMode.value) {
       form.value.vendorId = null;
-      console.log('👤 Reset vendor karena PO di-clear');
       form.value.discountPercent = 0;
       form.value.taxPercent = 0;
       form.value.total = 0;
@@ -1310,7 +1319,6 @@ const updateStockInfo = async (index) => {
         item.stock = { quantity: 0 };
       }
     } catch (error) {
-      console.error('Failed to fetch stock info:', error);
       item.stock = { quantity: 0 };
     }
   } else {
@@ -1366,9 +1374,7 @@ const updatePaidAmountFromInput = (event) => {
 };
 
 const viewPurchaseInvoiceDetails = (purchaseInvoiceId) => {
-    
     if (!purchaseInvoiceId) {
-        console.error('❌ Page Debug - No purchaseInvoiceId provided');
         toast.fire({
             icon: 'error',
             title: 'Parameter Tidak Valid',
@@ -1391,9 +1397,7 @@ const getStatusBadge = (status) => {
 };
 
 const printPurchaseInvoice = (purchaseInvoiceId) => {
-    
     if (!purchaseInvoiceId) {
-        console.error('❌ Page Debug - No purchaseInvoiceId provided');
         toast.fire({
             icon: 'error',
             title: 'Parameter Tidak Valid',

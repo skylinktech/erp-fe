@@ -272,12 +272,13 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
         this.purchaseInvoices = result.data
         this.totalRecords = result.meta.total
       } catch (e: any) {
-        console.error('Gagal mengambil data purchaseInvoice:', e)
         this.error = e
         toast.error({
           title: 'Error',
           message: `Tidak dapat memuat data Purchase Invoice: ${e.message}`,
-          color: 'red'
+          color: 'red',
+          position: 'topRight',
+          layout: 2
         });
       } finally {
         this.loading = false
@@ -310,12 +311,13 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
         const result = await response.json();
         this.statistics = result.data;
       } catch (e: any) {
-        console.error('Gagal mengambil statistik invoice:', e);
         this.error = e;
         toast.error({
           title: 'Error',
           message: `Tidak dapat memuat statistik invoice: ${e.message}`,
-          color: 'red'
+          color: 'red',
+          position: 'topRight',
+          layout: 2
         });
       }
     },
@@ -342,11 +344,12 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
           throw new Error('Struktur data tidak valid diterima dari API.')
         }
       } catch (error) {
-        console.error('Error fetching purchase invoice:', error)
         toast.error({
           title: 'Error',
           message: 'Gagal memuat data purchase invoice.',
-          color: 'red'
+          color: 'red',
+          position: 'topRight',
+          layout: 2
         });
       } finally {
         this.loading = false
@@ -391,10 +394,18 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
             const discountPercent = Number(this.form.discountPercent) || 0;
             const taxPercent = Number(this.form.taxPercent) || 0;
             
-            const discountAmount = total * (discountPercent / 100);
-            const totalAfterDiscount = total - discountAmount;
-            const taxAmount = totalAfterDiscount * (taxPercent / 100);
-            const grandTotal = totalAfterDiscount + taxAmount;
+            let grandTotal;
+            
+            // ✅ FIX: Jika ada purchaseOrderId, total sudah final (sudah termasuk PPN)
+            if (this.form.purchaseOrderId) {
+                grandTotal = total; // Total dari PO sudah final
+            } else {
+                // Manual calculation untuk invoice tanpa PO
+                const discountAmount = total * (discountPercent / 100);
+                const totalAfterDiscount = total - discountAmount;
+                const taxAmount = totalAfterDiscount * (taxPercent / 100);
+                grandTotal = totalAfterDiscount + taxAmount;
+            }
             
             // Calculate remaining amount based on grand total
             const paidAmount = Number(this.form.paidAmount) || 0;
@@ -439,7 +450,9 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
                     toast.error({
                       title: 'Error',
                       message: errorData.errors.map((e: any) => e.message).join('<br>'),
-                      color: 'red'
+                      color: 'red',
+                      position: 'topRight',
+                      layout: 2
                     });
                 } else {
                     throw new Error(errorData.message || 'Gagal menyimpan data Purchase Invoice');
@@ -450,7 +463,9 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
                 toast.success({
                   title: 'Success',
                   message: `Purchase Invoice berhasil ${this.isEditMode ? 'diperbarui' : 'dibuat'}.`,
-                  color: 'green'
+                  color: 'green',
+                  position: 'topRight',
+                  layout: 2
                 });
             }
 
@@ -460,7 +475,9 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
             toast.error({
               title: 'Error',
               message: error.message || 'Operasi gagal',
-              color: 'red'
+              color: 'red',
+              position: 'topRight',
+              layout: 2
             });
         } finally {
             this.loading = false;
@@ -509,13 +526,17 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
           toast.success({
             title: 'Success',
             message: 'Purchase Invoice berhasil dihapus.',
-            color: 'green'
+            color: 'green',
+            position: 'topRight',
+            layout: 2
           });
       } catch (error: any) {
           toast.error({
             title: 'Error',
             message: error.message || 'Gagal menghapus Purchase Invoice',
-            color: 'red'
+            color: 'red',
+            position: 'topRight',
+            layout: 2
           });
       } finally {
           this.loading = false;
@@ -535,7 +556,9 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
               toast.error({
                 title: 'Error',
                 message: 'Tidak dapat memuat data Purchase Invoice.',
-                color: 'red'
+                color: 'red',
+                position: 'topRight',
+                layout: 2
               });
               return;
           }
@@ -549,12 +572,6 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
               paymentMethod: fullData.paymentMethod || 'cash', // ✅ NEW: Pastikan payment method terisi
           };
 
-          // ✅ DEBUG: Log form data setelah diisi
-          console.log('🔍 Form Data After Fill:', {
-            paymentMethod: this.form.paymentMethod,
-            fullDataPaymentMethod: fullData.paymentMethod,
-            formData: this.form
-          });
 
           const dateFields = ['paymentDate'];
           dateFields.forEach(field => {
@@ -603,12 +620,6 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
         remainingAmount: 0,
         purchaseInvoiceItems: [],
       };
-      
-      // ✅ DEBUG: Log form data setelah reset
-      console.log('🔍 Form Data After Reset:', {
-        paymentMethod: this.form.paymentMethod,
-        formData: this.form
-      });
     },
 
     setPagination(event: any) {
@@ -658,17 +669,9 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
         if (resData && resData.data) {
           this.selectedPurchaseInvoice = resData.data;
         } else {
-          console.error('❌ Store Debug - Invalid response structure:', resData);
           throw new Error('Struktur data tidak valid diterima dari API.');
         }
       } catch (e: any) {
-        console.error('❌ Store Debug - fetchPurchaseInvoiceById Error details:', {
-          message: e.message,
-          status: e.status,
-          statusText: e.statusText,
-          data: e.data,
-          response: e.response
-        });
         
         this.error = e;
         
@@ -717,17 +720,9 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
           this.purchaseInvoice = resData.data;
           return resData.data;
         } else {
-          console.error('❌ Store Debug - Invalid response structure:', resData);
           throw new Error('Struktur data tidak valid diterima dari API.');
         }
       } catch (e: any) {
-        console.error('❌ Store Debug - fetchInvoiceDetailWithItems Error details:', {
-          message: e.message,
-          status: e.status,
-          statusText: e.statusText,
-          data: e.data,
-          response: e.response
-        });
         
         this.error = e;
         

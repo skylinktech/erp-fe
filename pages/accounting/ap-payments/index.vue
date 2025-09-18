@@ -451,7 +451,7 @@
                   :key="account.id"
                   :value="account.id"
                 >
-                  {{ account.name }} - {{ account.account_number }}
+                  {{ account.bank_name }} - {{ account.account_number }}
                 </option>
               </select>
               <div v-if="hasError('bank_account_id')" class="invalid-feedback">
@@ -818,15 +818,17 @@ watch(() => apPaymentStore.form.invoice_id, (newInvoiceId, oldInvoiceId) => {
       }
       
       // Optional: Auto fill other related data from invoice
+      // selectedInvoice.total sudah adalah grandTotal yang final (termasuk PPN)
+      // karena di store purchase invoice, grandTotal disimpan sebagai total
       if (selectedInvoice.total && !apPaymentStore.form.amount) {
         // Hitung remaining amount jika ada
         const remainingAmount = selectedInvoice.total - (selectedInvoice.paidAmount || 0);
         if (remainingAmount > 0) {
           apPaymentStore.form.amount = remainingAmount;
-          console.log('💰 Auto fill amount with remaining:', remainingAmount);
+          console.log('💰 Auto fill amount with remaining (final total):', remainingAmount);
         } else {
           apPaymentStore.form.amount = selectedInvoice.total;
-          console.log('💰 Auto fill amount with total:', selectedInvoice.total);
+          console.log('💰 Auto fill amount with final total:', selectedInvoice.total);
         }
       }
       
