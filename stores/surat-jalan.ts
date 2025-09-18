@@ -264,11 +264,26 @@ export const useSuratJalanStore = defineStore('suratJalan', {
         try {
             const token = localStorage.getItem('token');
 
-            // ✅ VALIDASI STOK: Jika berasal dari Sales Order (autofill), pastikan stok setiap item >= 1
-            if (this.form.salesOrderId && Array.isArray(this.form.suratJalanItems)) {
+            // ✅ VALIDASI STOK: Berlaku untuk semua kasus (dari SO maupun input manual)
+            if (Array.isArray(this.form.suratJalanItems)) {
                 const stockStore = useStocksStore();
                 for (const [idx, item] of this.form.suratJalanItems.entries()) {
-                    if (!item || !item.productId || !item.warehouseId) continue;
+                    if (!item) continue;
+
+                    // Validasi wajib pilih product & warehouse
+                    if (!item.productId || !item.warehouseId) {
+                        this.loading = false;
+                        toast.error({
+                          title  : 'Form Tidak Lengkap',
+                          message: `Produk dan gudang wajib diisi pada baris ${idx + 1}.`,
+                          color  : 'red',
+                          position: 'topRight'
+                        });
+                        return;
+                    }
+
+                    // Normalisasi quantity minimal 0
+                    const requestedQty = Math.max(0, Number(item.quantity) || 0);
 
                     try {
                         // Ambil stok terbaru per item-product-warehouse
@@ -278,14 +293,29 @@ export const useSuratJalanStore = defineStore('suratJalan', {
                             productId  : Number(item.productId),
                             warehouseId: Number(item.warehouseId),
                         })
-                        const qty = (res && res.data && res.data[0] && typeof res.data[0].quantity !== 'undefined')
+                        const availableQty = (res && res.data && res.data[0] && typeof res.data[0].quantity !== 'undefined')
                           ? Number(res.data[0].quantity) : 0
 
                         // Simpan ke item.stock agar UI konsisten
                         if (!item.stock) item.stock = {}
-                        item.stock.quantity = qty
+                        item.stock.quantity = availableQty
 
-                        if (qty < 1) {
+                        // Cegah jika qty melebihi stok
+                        if (requestedQty > availableQty) {
+                            this.loading = false
+                            const productName = item?.product?.name || `Produk ID ${item.productId}`
+                            const warehouseName = item?.warehouse?.name || `Gudang ID ${item.warehouseId}`
+                            toast.error({
+                              title  : 'Qty Melebihi Stok',
+                              message: `Baris ${idx + 1}: ${productName} di ${warehouseName} tersedia ${availableQty}, diminta ${requestedQty}.`,
+                              color  : 'red',
+                              position: 'topRight'
+                            })
+                            return
+                        }
+
+                        // Cegah jika tidak ada stok sama sekali
+                        if (availableQty < 1) {
                             this.loading = false
                             toast.error({
                               title  : 'Stok Tidak Cukup',

@@ -355,7 +355,19 @@
                                               <label>Jumlah</label>
                                           </div>
                                       </div>
-                                      <div class="col-md-6">
+                                      <div class="col-md-3">
+                                          <div class="form-floating form-floating-outline">
+                                              <input 
+                                                  type="text" 
+                                                  :value="getStockDisplay(item?.stock)" 
+                                                  class="form-control" 
+                                                  placeholder="Stock" 
+                                                  readonly
+                                              >
+                                              <label>Stock</label>
+                                          </div>
+                                      </div>
+                                      <div class="col-md-3">
                                           <div class="form-floating form-floating-outline">
                                               <input 
                                                   type="text" 
@@ -382,7 +394,7 @@
                               <div class="mt-4">
                                   <button 
                                       @click.prevent="addSuratJalanItem()" 
-                                      class="btn btn-primary"
+                                      class="btn btn-primary btn-sm w-100"
                                       :disabled="form.salesOrderId && !hasPartialItems"
                                   >
                                       Tambah Item
@@ -667,6 +679,20 @@ watch(() => form.value.salesOrderId, async (newSalesOrderId, oldSalesOrderId) =>
               form.value.suratJalanItems.push(suratJalanItem);
             });
 
+            // ✅ NEW: Setelah autofill, langsung fetch stok tiap item agar tidak "Loading..."
+            await nextTick();
+            if (form.value.suratJalanItems && form.value.suratJalanItems.length > 0) {
+              for (let i = 0; i < form.value.suratJalanItems.length; i++) {
+                const it = form.value.suratJalanItems[i];
+                if (it?.productId && it?.warehouseId) {
+                  await updateStockInfo(i);
+                } else {
+                  // Pastikan ada struktur stock default agar tidak tampil Loading...
+                  if (!it.stock) it.stock = { quantity: 0 };
+                }
+              }
+            }
+
           } else {
             // ✅ NEW: Reset sales order items jika tidak ada
             salesOrderItems.value = [];
@@ -935,6 +961,13 @@ const formatDate = (dateString) => {
   });
 };
 
+// ✅ NEW: Helper untuk menampilkan stok terkini (konsisten dengan SO)
+const getStockDisplay = (stock) => {
+  if (!stock) return 'Loading...';
+  if (stock.quantity === undefined || stock.quantity === null) return 'Loading...';
+  return Math.floor(Number(stock.quantity) || 0);
+};
+
 const filteredSalesOrders = computed(() => {
   return (salesOrders.value || []).filter(so => {
     return so.status === 'approved' || so.status === 'partial' || so.status === 'delivered';
@@ -978,7 +1011,19 @@ watch(salesOrders, (newSalesOrders) => {
 </script>
 
 <style scoped>
-<style scoped>
+
+/* Repeater item styling */
+.repeater-item {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #e9ecef;
+  transition: all 0.2s ease-in-out;
+}
+
+.repeater-item:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
