@@ -74,7 +74,7 @@
                                     <CustomSelect2 v-model="filters.customerId" :options="customers || []" :get-option-label="option => option.name" :reduce="option => option.id" searchable clearable placeholder="Pilih Customer" />
                                 </div>
                                 <div class="col-md-6 mb-2">
-                                    <CustomSelect2 v-model="filters.status" :options="statusOptions" :get-option-label="option => option.label" :reduce="option => option.id" searchable clearable placeholder="Pilih Status" />
+                                    <CustomSelect2 v-model="filters.status" :options="statusOptions" :get-option-label="option => option.label" :reduce="option => option.value" searchable clearable placeholder="Pilih Status" />
                                 </div>
                             </div>
                         </div>

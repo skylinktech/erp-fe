@@ -316,7 +316,7 @@
                                   <div class="row g-3">
                                       <div class="col-md-6">
                                           <CustomSelect2 v-model="item.productId" :options="customerProducts || []" 
-                                              :get-option-label="option => option.label" searchable clearable 
+                                              :get-option-label="option => option.name" searchable clearable 
                                               :reduce="p => p.id" 
                                               placeholder="Pilih Produk" 
                                               @update:modelValue="onProductChange(index)" 
@@ -326,7 +326,7 @@
                                       </div>
                                       <div class="col-md-6">
                                           <CustomSelect2 v-model="item.warehouseId" :options="warehouses" 
-                                              :get-option-label="option => option.label" searchable clearable 
+                                              :get-option-label="option => option.name" searchable clearable 
                                               :reduce="w => w.id" 
                                               placeholder="Pilih Gudang" 
                                                

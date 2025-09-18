@@ -84,7 +84,7 @@
                                     </div>
                                     <div class="col-md-4">
                                         <CustomSelect2 v-model="form.warehouseId" :options="warehouses"
-                                        :get-option-label="option => option.label" searchable clearable :reduce="w => w.id" placeholder="Pilih Gudang" />
+                                        :get-option-label="option => option.name" searchable clearable :reduce="w => w.id" placeholder="Pilih Gudang" />
                                     </div>
                                 </div>
                                 <div class="row mt-5">

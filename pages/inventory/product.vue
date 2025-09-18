@@ -370,7 +370,7 @@
                                 <div class="form-floating form-floating-outline">
                                     <CustomSelect2 v-model="form.kondisi" :options="kondisiOptions"
                                         :get-option-label="option => option.label"
-                                        :reduce="option => option.id" searchable clearable
+                                        :reduce="option => option.value" searchable clearable
                                         :get-option-key="option => option.value"
                                         placeholder="-- Pilih Kondisi --"
                                         id="select-kondisi"

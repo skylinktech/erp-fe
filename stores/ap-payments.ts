@@ -1,20 +1,23 @@
 import { defineStore } from 'pinia'
 import { useNuxtApp } from '#app'
 import Swal from 'sweetalert2'
+import { useUserStore } from '~/stores/user'
 
 export interface APPayment {
   id?: string
-  reference_number: string
+  referenceNumber: string
   date: string
-  vendor_id: string
-  invoice_id?: string
-  payment_method: 'cash' | 'bank_transfer' | 'check' | 'credit_card' | 'giro'
-  bank_account_id?: string
+  vendorId: string
+  invoiceId?: string
+  paymentMethod: 'cash' | 'bank_transfer' | 'check' | 'credit_card' | 'giro'
+  bankAccountId?: string
   amount: number
   currency: string
-  exchange_rate: number
+  exchangeRate: number
   notes?: string
   status: 'draft' | 'confirmed' | 'cancelled'
+  createdBy?: number
+  updatedBy?: number
   created_by?: string
   confirmed_by?: string
   confirmed_at?: string
@@ -63,15 +66,15 @@ export const useAPPaymentStore = defineStore('apPayment', {
       search: '',
     },
     form: {
-      reference_number: '',
+      referenceNumber: '',
       date: new Date().toISOString().split('T')[0],
-      vendor_id: '',
-      invoice_id: '',
-      payment_method: 'bank_transfer',
-      bank_account_id: '',
+      vendorId: '',
+      invoiceId: '',
+      paymentMethod: 'bank_transfer',
+      bankAccountId: '',
       amount: 0,
       currency: 'IDR',
-      exchange_rate: 1,
+      exchangeRate: 1,
       notes: '',
       status: 'draft'
     },
@@ -330,19 +333,22 @@ export const useAPPaymentStore = defineStore('apPayment', {
 
       try {
         const token = localStorage.getItem('token')
+        const userStore = useUserStore()
 
         const payload = {
-          reference_number: this.form.reference_number,
+          referenceNumber: this.form.referenceNumber,
           date: this.form.date,
-          vendor_id: this.form.vendor_id,
-          invoice_id: this.form.invoice_id || null,
-          payment_method: this.form.payment_method,
-          bank_account_id: this.form.bank_account_id || null,
+          vendorId: this.form.vendorId,
+          invoiceId: this.form.invoiceId || null,
+          paymentMethod: this.form.paymentMethod,
+          bankAccountId: this.form.bankAccountId || null,
           amount: this.form.amount,
           currency: this.form.currency,
-          exchange_rate: this.form.exchange_rate,
+          exchangeRate: this.form.exchangeRate,
           notes: this.form.notes,
-          status: this.form.status
+          status: this.form.status,
+          createdBy: userStore.user?.id || 1,
+          updatedBy: userStore.user?.id || 1
         };
 
         let method = 'POST';
@@ -525,15 +531,15 @@ export const useAPPaymentStore = defineStore('apPayment', {
         this.form = { ...payment };
       } else {
         this.form = {
-          reference_number: '',
+          referenceNumber: '',
           date: new Date().toISOString().split('T')[0],
-          vendor_id: '',
-          invoice_id: '',
-          payment_method: 'bank_transfer',
-          bank_account_id: '',
+          vendorId: '',
+          invoiceId: '',
+          paymentMethod: 'bank_transfer',
+          bankAccountId: '',
           amount: 0,
           currency: 'IDR',
-          exchange_rate: 1,
+          exchangeRate: 1,
           notes: '',
           status: 'draft'
         };
@@ -549,15 +555,15 @@ export const useAPPaymentStore = defineStore('apPayment', {
       this.showModal = false;
       this.isEditMode = false;
       this.form = {
-        reference_number: '',
+        referenceNumber: '',
         date: new Date().toISOString().split('T')[0],
-        vendor_id: '',
-        invoice_id: '',
-        payment_method: 'bank_transfer',
-        bank_account_id: '',
+        vendorId: '',
+        invoiceId: '',
+        paymentMethod: 'bank_transfer',
+        bankAccountId: '',
         amount: 0,
         currency: 'IDR',
-        exchange_rate: 1,
+        exchangeRate: 1,
         notes: '',
         status: 'draft'
       };

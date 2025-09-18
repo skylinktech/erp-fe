@@ -78,7 +78,7 @@
                                     <CustomSelect2 v-model="filters.perusahaanId" :options="perusahaans" :get-option-label="option => option.nmPerusahaan" :reduce="option => option.id" searchable clearable placeholder="Pilih Perusahaan" />
                                 </div>
                                 <div class="col-md-4">
-                                    <CustomSelect2 v-model="filters.status" :options="statusOptions" :get-option-label="option => option.label" :reduce="option => option.id" searchable clearable placeholder="Pilih Status" />
+                                    <CustomSelect2 v-model="filters.status" :options="statusOptions" :get-option-label="option => option.label" :reduce="option => option.value" searchable clearable placeholder="Pilih Status" />
                                 </div>
                             </div>
                         </div>
@@ -320,10 +320,10 @@
                                     <div class="row g-3">
                                         <div class="col-6">
                                             <CustomSelect2 v-model="item.warehouseId" :options="warehouses"
-                                            :get-option-label="option => option.label" searchable clearable :reduce="w => w.id" placeholder="Pilih Gudang"  readonly/>
+                                            :get-option-label="option => option.name" searchable clearable :reduce="w => w.id" placeholder="Pilih Gudang"  readonly/>
                                         </div>
                                         <div class="col-md-6">
-                                            <CustomSelect2 v-model="item.productId" :options="allAvailableProducts" :get-option-label="option => option.label" searchable clearable :reduce="p => p.id" placeholder="Pilih Produk" @update:modelValue="onProductChange(index)"  readonly/>
+                                            <CustomSelect2 v-model="item.productId" :options="allAvailableProducts" :get-option-label="option => option.name" searchable clearable :reduce="p => p.id" placeholder="Pilih Produk" @update:modelValue="onProductChange(index)"  readonly/>
                                         </div>
                                         <div class="col-md-3">
                                             <div class="form-floating form-floating-outline">

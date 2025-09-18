@@ -284,13 +284,13 @@
             <div class="mb-3">
               <label class="form-label">No. Referensi <span class="text-danger">*</span></label>
               <input
-                v-model="apPaymentStore.form.reference_number"
+                v-model="apPaymentStore.form.referenceNumber"
                 type="text"
                 class="form-control"
 
               />
-              <div v-if="hasError('reference_number')" class="invalid-feedback">
-                {{ getError('reference_number') }}
+              <div v-if="hasError('referenceNumber')" class="invalid-feedback">
+                {{ getError('referenceNumber') }}
               </div>
             </div>
           </div>
@@ -316,7 +316,7 @@
             <div class="mb-3">
               <label class="form-label">Invoice (Opsional)</label>
               <CustomSelect2 
-                v-model="apPaymentStore.form.invoice_id" 
+                v-model="apPaymentStore.form.invoiceId" 
                 :options="apPaymentStore.invoices" 
                 :get-option-label="getInvoiceLabel" 
                 :reduce="option => option.id" 
@@ -356,8 +356,8 @@
                   </div>
                 </template>
               </CustomSelect2>
-              <div v-if="hasError('invoice_id')" class="invalid-feedback">
-                {{ getError('invoice_id') }}
+              <div v-if="hasError('invoiceId')" class="invalid-feedback">
+                {{ getError('invoiceId') }}
               </div>
             </div>
           </div>
@@ -365,7 +365,7 @@
               <div class="mb-3">
                 <label class="form-label">Vendor <span class="text-danger">*</span></label>
                 <CustomSelect2 
-                  v-model="apPaymentStore.form.vendor_id" 
+                  v-model="apPaymentStore.form.vendorId" 
                   :options="vendorOptions" 
                   :get-option-label="option => option.name" 
                   :reduce="option => option.id" 
@@ -374,7 +374,7 @@
                   placeholder="Pilih Vendor" 
                   :close-on-select="true"
                   :loading="apPaymentStore.loading"
-                  :disabled="!!apPaymentStore.form.invoice_id"
+                  :disabled="!!apPaymentStore.form.invoiceId"
               >
                 <template #option="slotProps">
                   <div class="d-flex justify-content-between align-items-center w-100">
@@ -403,11 +403,11 @@
                   </div>
                 </template>
                 </CustomSelect2>
-                <div v-if="!!apPaymentStore.form.invoice_id" class="form-text mt-1">
+                <div v-if="!!apPaymentStore.form.invoiceId" class="form-text mt-1">
                   <small class="text-muted">📋 Vendor diambil dari invoice yang dipilih</small>
                 </div>
-                <div v-if="hasError('vendor_id')" class="invalid-feedback">
-                  {{ getError('vendor_id') }}
+                <div v-if="hasError('vendorId')" class="invalid-feedback">
+                  {{ getError('vendorId') }}
                 </div>
               </div>
             </div>
@@ -418,7 +418,7 @@
             <div class="mb-3">
               <label class="form-label">Metode Pembayaran <span class="text-danger">*</span></label>
               <select
-                v-model="apPaymentStore.form.payment_method"
+                v-model="apPaymentStore.form.paymentMethod"
                 class="form-select"
 
               >
@@ -430,8 +430,8 @@
                   {{ method.label }}
                 </option>
               </select>
-              <div v-if="hasError('payment_method')" class="invalid-feedback">
-                {{ getError('payment_method') }}
+              <div v-if="hasError('paymentMethod')" class="invalid-feedback">
+                {{ getError('paymentMethod') }}
               </div>
             </div>
           </div>
@@ -440,10 +440,10 @@
             <div class="mb-3">
               <label class="form-label">Rekening Bank</label>
               <select
-                v-model="apPaymentStore.form.bank_account_id"
+                v-model="apPaymentStore.form.bankAccountId"
                 class="form-select"
                 
-                :="apPaymentStore.form.payment_method !== 'cash'"
+                :="apPaymentStore.form.paymentMethod !== 'cash'"
               >
                 <option value="">Pilih Rekening Bank</option>
                 <option
@@ -454,8 +454,8 @@
                   {{ account.bank_name }} - {{ account.account_number }}
                 </option>
               </select>
-              <div v-if="hasError('bank_account_id')" class="invalid-feedback">
-                {{ getError('bank_account_id') }}
+              <div v-if="hasError('bankAccountId')" class="invalid-feedback">
+                {{ getError('bankAccountId') }}
               </div>
             </div>
           </div>
@@ -504,15 +504,15 @@
             <div class="mb-3">
               <label class="form-label">Kurs Tukar</label>
               <input
-                v-model.number="apPaymentStore.form.exchange_rate"
+                v-model.number="apPaymentStore.form.exchangeRate"
                 type="number"
                 step="0.0001"
                 class="form-control"
                 
                 :disabled="apPaymentStore.form.currency === 'IDR'"
               />
-              <div v-if="hasError('exchange_rate')" class="invalid-feedback">
-                {{ getError('exchange_rate') }}
+              <div v-if="hasError('exchangeRate')" class="invalid-feedback">
+                {{ getError('exchangeRate') }}
               </div>
             </div>
           </div>
@@ -633,6 +633,7 @@ const params = computed(() => apPaymentStore.params || {})
 
 // Vendor data
 const vendorOptions = computed(() => {
+  console.log('🔍 Vendor options computed:', apPaymentStore.vendors?.length || 0);
   return apPaymentStore.vendors || [];
 })
 
@@ -800,55 +801,35 @@ watch(() => apPaymentStore.vendors, (newVendors) => {
 }, { deep: true })
 
 // ✅ NEW: Watcher untuk auto fill vendor ketika invoice dipilih
-watch(() => apPaymentStore.form.invoice_id, (newInvoiceId, oldInvoiceId) => {
+watch(() => apPaymentStore.form.invoiceId, (newInvoiceId, oldInvoiceId) => {
+  console.log('🔍 Invoice watcher triggered:', { newInvoiceId, oldInvoiceId });
   if (newInvoiceId && newInvoiceId !== oldInvoiceId) {
+    // Pastikan data invoices sudah ter-load
+    if (apPaymentStore.invoices.length === 0) {
+      console.log('⚠️ Invoices belum ter-load, fetching...');
+      apPaymentStore.fetchInvoices().then(() => {
+        // Retry setelah data ter-load
+        const selectedInvoice = apPaymentStore.invoices.find(invoice => invoice.id === newInvoiceId);
+        if (selectedInvoice) {
+          handleInvoiceSelection(selectedInvoice);
+        }
+      });
+      return;
+    }
+    
     // Cari invoice yang dipilih dari data invoices
     const selectedInvoice = apPaymentStore.invoices.find(invoice => invoice.id === newInvoiceId);
+    console.log('🔍 Available invoices:', apPaymentStore.invoices.length);
+    console.log('🔍 Selected invoice:', selectedInvoice);
     
     if (selectedInvoice) {
-      console.log('🧾 Invoice dipilih:', selectedInvoice);
-      
-      // Auto fill vendor dari invoice yang dipilih
-      if (selectedInvoice.vendor && selectedInvoice.vendor.id) {
-        apPaymentStore.form.vendor_id = selectedInvoice.vendor.id;
-        console.log('👤 Auto fill vendor:', selectedInvoice.vendor.name);
-      } else if (selectedInvoice.vendorId) {
-        apPaymentStore.form.vendor_id = selectedInvoice.vendorId;
-        console.log('👤 Auto fill vendor ID:', selectedInvoice.vendorId);
-      }
-      
-      // Optional: Auto fill other related data from invoice
-      // selectedInvoice.total sudah adalah grandTotal yang final (termasuk PPN)
-      // karena di store purchase invoice, grandTotal disimpan sebagai total
-      if (selectedInvoice.total && !apPaymentStore.form.amount) {
-        // Hitung remaining amount jika ada
-        const remainingAmount = selectedInvoice.total - (selectedInvoice.paidAmount || 0);
-        if (remainingAmount > 0) {
-          apPaymentStore.form.amount = remainingAmount;
-          console.log('💰 Auto fill amount with remaining (final total):', remainingAmount);
-        } else {
-          apPaymentStore.form.amount = selectedInvoice.total;
-          console.log('💰 Auto fill amount with final total:', selectedInvoice.total);
-        }
-      }
-      
-      // Auto fill currency jika tersedia
-      if (selectedInvoice.currency) {
-        apPaymentStore.form.currency = selectedInvoice.currency;
-        console.log('💱 Auto fill currency:', selectedInvoice.currency);
-      }
-      
-      // Auto fill notes dengan referensi invoice
-      if (!apPaymentStore.form.notes) {
-        apPaymentStore.form.notes = `Pembayaran untuk Invoice ${selectedInvoice.noInvoice || selectedInvoice.id}`;
-        console.log('📝 Auto fill notes');
-      }
+      handleInvoiceSelection(selectedInvoice);
     }
   } else if (!newInvoiceId && oldInvoiceId) {
     // Jika invoice di-clear, reset vendor hanya jika tidak dalam edit mode
     if (!apPaymentStore.isEditMode) {
       console.log('🧾 Invoice di-clear, reset vendor');
-      apPaymentStore.form.vendor_id = null;
+      apPaymentStore.form.vendorId = null;
       
       // Optional: Reset other fields yang di auto-fill dari invoice
       if (!apPaymentStore.form.amount || apPaymentStore.form.amount === 0) {
@@ -856,7 +837,48 @@ watch(() => apPaymentStore.form.invoice_id, (newInvoiceId, oldInvoiceId) => {
       }
     }
   }
-}, { immediate: false })
+})
+
+// Helper function untuk handle invoice selection
+const handleInvoiceSelection = (selectedInvoice) => {
+  console.log('🧾 Invoice dipilih:', selectedInvoice);
+      
+  // Auto fill vendor dari invoice yang dipilih
+  if (selectedInvoice.vendor && selectedInvoice.vendor.id) {
+    apPaymentStore.form.vendorId = selectedInvoice.vendor.id;
+    console.log('👤 Auto fill vendor:', selectedInvoice.vendor.name);
+  } else if (selectedInvoice.vendorId) {
+    apPaymentStore.form.vendorId = selectedInvoice.vendorId;
+    console.log('👤 Auto fill vendor ID:', selectedInvoice.vendorId);
+  }
+  
+  // Optional: Auto fill other related data from invoice
+  // selectedInvoice.total sudah adalah grandTotal yang final (termasuk PPN)
+  // karena di store purchase invoice, grandTotal disimpan sebagai total
+  if (selectedInvoice.total && !apPaymentStore.form.amount) {
+    // Hitung remaining amount jika ada
+    const remainingAmount = selectedInvoice.total - (selectedInvoice.paidAmount || 0);
+    if (remainingAmount > 0) {
+      apPaymentStore.form.amount = remainingAmount;
+      console.log('💰 Auto fill amount with remaining (final total):', remainingAmount);
+    } else {
+      apPaymentStore.form.amount = selectedInvoice.total;
+      console.log('💰 Auto fill amount with final total:', selectedInvoice.total);
+    }
+  }
+  
+  // Auto fill currency jika tersedia
+  if (selectedInvoice.currency) {
+    apPaymentStore.form.currency = selectedInvoice.currency;
+    console.log('💱 Auto fill currency:', selectedInvoice.currency);
+  }
+  
+  // Auto fill notes dengan referensi invoice
+  if (!apPaymentStore.form.notes) {
+    apPaymentStore.form.notes = `Pembayaran untuk Invoice ${selectedInvoice.noInvoice || selectedInvoice.id}`;
+    console.log('📝 Auto fill notes');
+  }
+}
 
 // Table events
 const onPage = (event) => apPaymentStore.setPagination(event)
