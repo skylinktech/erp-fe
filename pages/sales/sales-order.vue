@@ -159,7 +159,7 @@
                                             {{ params.first + slotProps.index + 1 }}
                                         </template>
                                     </Column>
-                                    <Column field="noSo" header="No. SO" :sortable="true">
+                                    <Column field="noSo" header="No. SO" :sortable="true" class="text-nowrap">
                                         <template #body="slotProps">
                                             <a 
                                                 @click="navigateTo(`/sales/sales-order-detail?id=${slotProps.data.id}`)" 
@@ -171,7 +171,7 @@
                                             </a>
                                         </template>
                                     </Column>
-                                    <Column field="noPo" header="No. PO" :sortable="true">
+                                    <Column field="noPo" header="No. PO" :sortable="true" class="text-nowrap">
                                         <template #body="slotProps">
                                             <span>
                                                 {{ slotProps.data.noPo || '-' }}
@@ -193,9 +193,9 @@
                                             </span>
                                         </template>
                                     </Column>
-                                    <Column field="status" header="Status SO" :sortable="true">
+                                    <Column field="status" header="Status" :sortable="true">
                                         <template #body="slotProps">
-                                            <span >
+                                            <span :class="getStatusBadge(slotProps.data.status).class">
                                                 {{ getStatusBadge(slotProps.data.status).text }}
                                             </span>
                                         </template>
