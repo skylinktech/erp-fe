@@ -99,8 +99,7 @@ export default defineNuxtPlugin(() => {
     // AP Payments
     apPayments: () => `${apiBase}/accounting/ap-payments`,
     apPaymentsStore: () => `${apiBase}/accounting/ap-payments/store`,
-    apPaymentsUpdate: (id: number | string) => `${apiBase}/accounting/al
-    p-payments/update/${id}`,
+    apPaymentsUpdate: (id: number | string) => `${apiBase}/accounting/ap-payments/update/${id}`,
     apPaymentsShow: (id: number | string) => `${apiBase}/accounting/ap-payments/${id}`,
     apPaymentsDelete: (id: number | string) => `${apiBase}/accounting/ap-payments/delete/${id}`,
     apPaymentsSummary: () => `${apiBase}/accounting/ap-payments/summary`,

@@ -4,6 +4,7 @@ import Swal from 'sweetalert2'
 import { useNuxtApp } from '#app'
 import { useUserStore } from '~/stores/user'
 import type { Customer } from './customer'
+import { useStocksStore } from '~/stores/stocks'
 
 
 export interface SuratJalanItem {
@@ -262,6 +263,50 @@ export const useSuratJalanStore = defineStore('suratJalan', {
 
         try {
             const token = localStorage.getItem('token');
+
+            // ✅ VALIDASI STOK: Jika berasal dari Sales Order (autofill), pastikan stok setiap item >= 1
+            if (this.form.salesOrderId && Array.isArray(this.form.suratJalanItems)) {
+                const stockStore = useStocksStore();
+                for (const [idx, item] of this.form.suratJalanItems.entries()) {
+                    if (!item || !item.productId || !item.warehouseId) continue;
+
+                    try {
+                        // Ambil stok terbaru per item-product-warehouse
+                        stockStore.params.search = ''
+                        stockStore.params.rows = 1
+                        const res = await stockStore.fetchStocksPaginated({
+                            productId  : Number(item.productId),
+                            warehouseId: Number(item.warehouseId),
+                        })
+                        const qty = (res && res.data && res.data[0] && typeof res.data[0].quantity !== 'undefined')
+                          ? Number(res.data[0].quantity) : 0
+
+                        // Simpan ke item.stock agar UI konsisten
+                        if (!item.stock) item.stock = {}
+                        item.stock.quantity = qty
+
+                        if (qty < 1) {
+                            this.loading = false
+                            toast.error({
+                              title  : 'Stok Tidak Cukup',
+                              message: `Produk pada baris ${idx + 1} tidak memiliki stok di gudang terpilih.`,
+                              color  : 'red',
+                              position: 'topRight'
+                            })
+                            return
+                        }
+                    } catch (e) {
+                        this.loading = false
+                        toast.error({
+                          title  : 'Error Stok',
+                          message: `Gagal memeriksa stok untuk item ke-${idx + 1}.`,
+                          color  : 'red',
+                          position: 'topRight'
+                        })
+                        return
+                    }
+                }
+            }
 
             // Prepare payload data - Always include all fields for update
             const payload: any = {

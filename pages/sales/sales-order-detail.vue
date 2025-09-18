@@ -21,6 +21,15 @@
                         Jika ada perubahan yang diperlukan, silakan buat Sales Return.
                     </div>
                 </div>
+
+                <!-- ✅ ALERT untuk STOK KOSONG -->
+                <div v-if="hasEmptyStockItems" class="alert alert-warning d-flex align-items-center mb-4" role="alert">
+                    <i class="ri-alert-line me-2"></i>
+                    <div>
+                        <strong>Peringatan Stok:</strong> Ada produk dengan stok kosong di gudang terkait. 
+                        Item tersebut tidak dapat diubah statusnya. Silakan periksa stok gudang terlebih dahulu.
+                    </div>
+                </div>
                 
                 <div class="row invoice-preview">
                 <!-- Invoice -->
@@ -105,7 +114,8 @@
                                     <button 
                                          @click="deliverAllItems"
                                          class="btn btn-secondary btn-sm"
-                                         :disabled="loading || isAllItemsReceived"
+                                         :disabled="loading || isAllItemsReceived || deliverAllBlocked"
+                                         :title="deliverAllBlocked ? 'Tidak dapat Deliver All: ada produk dengan stok kosong di gudang terkait' : ''"
                                      >
                                          <i class="ri-truck-line me-2"></i>
                                          Deliver All ({{ totalPendingQuantity }} items)
@@ -373,13 +383,14 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useSalesOrderStore } from '~/stores/sales-order'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import Swal from 'sweetalert2'
 import 'sweetalert2/dist/sweetalert2.min.css'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
+import { useStocksStore } from '~/stores/stocks'
 
 // Composables
 const { setDetailTitle } = useDynamicTitle()
@@ -389,6 +400,11 @@ const route           = useRoute()
 const router          = useRouter()
 const toast           = useToast();
 const formatRupiah    = useFormatRupiah()
+const stockStore      = useStocksStore()
+
+// ✅ STATE: Blokir Deliver All jika ada stok kosong
+const deliverAllBlocked = ref(false)
+const hasEmptyStockItems = ref(false)
 
 const { salesOrder, loading } = storeToRefs(salesOrderStore)
 const soId = route.query.id
@@ -434,20 +450,19 @@ const isItemDone = (item) => {
 
 // ✅ FUNCTION untuk increase delivered quantity
 const increaseDeliveredQty = (item) => {
-    if (isReturned(item) || isDelivered.value || isItemDone(item)) return
+    if (isReturned(item) || isDelivered.value) return
     
     const currentQty = Math.floor(Number(item.deliveredQty) || 0)
     const maxQty = Math.floor(Number(item.quantity) || 0)
     
-    if (currentQty < maxQty) {
-        item.deliveredQty = currentQty + 1
-        updateDeliveredQty(item)
-    }
+    const nextQty = Math.min(currentQty + 1, maxQty)
+    item.deliveredQty = nextQty
+    updateDeliveredQty(item)
 }
 
 // ✅ FUNCTION untuk decrease delivered quantity
 const decreaseDeliveredQty = (item) => {
-    if (isReturned(item) || isDelivered.value || isItemDone(item)) return
+    if (isReturned(item) || isDelivered.value) return
     
     const currentQty = Math.floor(Number(item.deliveredQty) || 0)
     
@@ -473,19 +488,6 @@ const updateDeliveredQty = async (item) => {
     }
 
     if (isReturned(item)) return
-    
-    // Validasi: Cek apakah item sudah done
-    if (isItemDone(item)) {
-        toast.warning({
-            title: 'Aksi Tidak Diizinkan',
-            message: `Item ini sudah selesai dikirim (${item.deliveredQty}/${item.quantity}) dan tidak dapat diubah lagi.`,
-            icon: 'ri-alert-line',
-            timeout: 3000,
-            position: 'topRight',
-            layout: 2,
-        })
-        return
-    }
     
     // Pastikan deliveredQty memiliki nilai default dan bulatkan ke bawah
     if (item.deliveredQty === null || item.deliveredQty === undefined || item.deliveredQty === '') {
@@ -514,10 +516,41 @@ const updateDeliveredQty = async (item) => {
         })
         return
     }
+
+    // ✅ CEK STOK: Cegah perubahan status_partial jika stok produk di gudang terkait < 1
+    try {
+        if (item.productId && item.warehouseId) {
+            // Ambil stok terbaru
+            stockStore.params.search = ''
+            stockStore.params.rows = 1
+            const stockRes = await stockStore.fetchStocksPaginated({
+                productId  : Number(item.productId),
+                warehouseId: Number(item.warehouseId),
+            })
+            const availableQty = (stockRes && stockRes.data && stockRes.data[0] && typeof stockRes.data[0].quantity !== 'undefined')
+                ? Number(stockRes.data[0].quantity) : 0
+
+            if (availableQty < 1) {
+                toast.error({
+                    title: 'Stock Kosong',
+                    message: 'Stock pada product ini kosong, tidak dapat mengubah status',
+                    color: 'red',
+                    position: 'topRight',
+                    layout: 2,
+                })
+                // Kembalikan nilai tampilan ke data backend terbaru
+                await refreshSalesOrderDetails()
+                return
+            }
+        }
+    } catch (_e) {
+        // Jika gagal cek stok, biarkan proses lanjut tanpa memblokir (opsional: bisa juga diblokir)
+    }
     
     try {
         await salesOrderStore.updateStatusPartial(item.id, false, deliveredQty)
         await refreshSalesOrderDetails()
+        await evaluateDeliverAllAvailability()
         
         // Check if all items are now done
         await checkAllItemsStatus()
@@ -626,6 +659,55 @@ async function refreshSalesOrderDetails() {
         }, 3000)
     } finally {
         loading.value = false
+    }
+}
+
+// ✅ CEK STOK MASSAL UNTUK DELIVER ALL
+const evaluateDeliverAllAvailability = async () => {
+    try {
+        if (!salesOrder.value || !Array.isArray(salesOrder.value.salesOrderItems)) {
+            deliverAllBlocked.value = false
+            hasEmptyStockItems.value = false
+            return
+        }
+
+        // Ambil item yang masih pending
+        const pendingItems = salesOrder.value.salesOrderItems.filter((item) => {
+            const qty = Math.floor(Number(item.quantity) || 0)
+            const delivered = Math.floor(Number(item.deliveredQty) || 0)
+            return qty > delivered
+        })
+
+        if (pendingItems.length === 0) {
+            deliverAllBlocked.value = false
+            hasEmptyStockItems.value = false
+            return
+        }
+
+        // Cek stok tiap produk-gudang; jika ada yg < 1, blokir deliver all
+        let foundEmptyStock = false
+        for (const item of pendingItems) {
+            if (!item.productId || !item.warehouseId) continue
+            stockStore.params.search = ''
+            stockStore.params.rows = 1
+            const res = await stockStore.fetchStocksPaginated({
+                productId  : Number(item.productId),
+                warehouseId: Number(item.warehouseId),
+            })
+            const qty = (res && res.data && res.data[0] && typeof res.data[0].quantity !== 'undefined')
+                ? Number(res.data[0].quantity) : 0
+            if (qty < 1) {
+                foundEmptyStock = true
+                break
+            }
+        }
+        
+        deliverAllBlocked.value = foundEmptyStock
+        hasEmptyStockItems.value = foundEmptyStock
+    } catch (_e) {
+        // Jika gagal cek stok, jangan blokir agar tidak mengunci operasi secara keliru
+        deliverAllBlocked.value = false
+        hasEmptyStockItems.value = false
     }
 }
 
@@ -741,6 +823,7 @@ const deliverAllItems = async () => {
 
 onMounted(async () => {
     await refreshSalesOrderDetails()
+    await evaluateDeliverAllAvailability()
     // Set title setelah data berhasil dimuat
     if (salesOrder.value && salesOrder.value.noSo) {
         setDetailTitle('Sales Order - ' + salesOrder.value.noSo)

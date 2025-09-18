@@ -5,16 +5,16 @@ import { useUserStore } from '~/stores/user'
 
 export interface APPayment {
   id?: string
-  referenceNumber: string
+  paymentNumber: string
   date: string
   vendorId: string
   invoiceId?: string
-  paymentMethod: 'cash' | 'bank_transfer' | 'check' | 'credit_card' | 'giro'
+  method: 'cash' | 'bank_transfer' | 'check' | 'credit_card' | 'giro'
   bankAccountId?: string
   amount: number
   currency: string
   exchangeRate: number
-  notes?: string
+  description?: string
   status: 'draft' | 'confirmed' | 'cancelled'
   createdBy?: number
   updatedBy?: number
@@ -66,16 +66,16 @@ export const useAPPaymentStore = defineStore('apPayment', {
       search: '',
     },
     form: {
-      referenceNumber: '',
+      paymentNumber: '',
       date: new Date().toISOString().split('T')[0],
-      vendorId: '',
-      invoiceId: '',
-      paymentMethod: 'bank_transfer',
-      bankAccountId: '',
+      vendorId: null,
+      invoiceId: null,
+      method: 'bank_transfer',
+      bankAccountId: null,
       amount: 0,
       currency: 'IDR',
       exchangeRate: 1,
-      notes: '',
+      description: '',
       status: 'draft'
     },
     isEditMode: false,
@@ -326,6 +326,7 @@ export const useAPPaymentStore = defineStore('apPayment', {
     },
 
     async savePayment() {
+      console.log('🔍 Frontend - Starting savePayment...')
       this.loading = true
       this.validationErrors = [];
       const { $api } = useNuxtApp()
@@ -334,22 +335,23 @@ export const useAPPaymentStore = defineStore('apPayment', {
       try {
         const token = localStorage.getItem('token')
         const userStore = useUserStore()
+        
+        console.log('🔍 Frontend - Token:', token ? 'Present' : 'Missing')
+        console.log('🔍 Frontend - Form data:', this.form)
 
         const payload = {
-          referenceNumber: this.form.referenceNumber,
+          paymentNumber: this.form.paymentNumber,
           date: this.form.date,
-          vendorId: this.form.vendorId,
+          vendorId: this.form.vendorId ? Number(this.form.vendorId) : null,
           invoiceId: this.form.invoiceId || null,
-          paymentMethod: this.form.paymentMethod,
+          method: this.form.method,
           bankAccountId: this.form.bankAccountId || null,
-          amount: this.form.amount,
-          currency: this.form.currency,
-          exchangeRate: this.form.exchangeRate,
-          notes: this.form.notes,
-          status: this.form.status,
-          createdBy: userStore.user?.id || 1,
-          updatedBy: userStore.user?.id || 1
+          amount: Number(this.form.amount),
+          description: this.form.description
         };
+        
+        console.log('🔍 Frontend - Payload yang dikirim:', payload)
+
 
         let method = 'POST';
         let url = $api.apPayments();
@@ -357,6 +359,9 @@ export const useAPPaymentStore = defineStore('apPayment', {
           url = $api.apPayments() + '/' + this.form.id;
           method = 'PUT';
         }
+        
+        console.log('🔍 Frontend - Request URL:', url)
+        console.log('🔍 Frontend - Request Method:', method)
 
         const response = await fetch(url, {
           method: method,
@@ -368,16 +373,21 @@ export const useAPPaymentStore = defineStore('apPayment', {
           },
           credentials: 'include',
         })
+        
+        console.log('🔍 Frontend - Response status:', response.status)
+        console.log('🔍 Frontend - Response ok:', response.ok)
 
         let result;
         try {
           result = await response.json();
+          console.log('🔍 Frontend - Response result:', result)
         } catch (parseError) {
-          console.error('Failed to parse response as JSON:', parseError);
+          console.error('❌ Frontend - Failed to parse response as JSON:', parseError);
           throw new Error('Server response tidak valid');
         }
 
         if (!response.ok) {
+          console.error('❌ Frontend - Response not OK:', response.status, result)
           if (response.status === 422 && result.errors) {
             this.validationErrors = Object.values(result.errors).flat();
             return;
@@ -396,7 +406,9 @@ export const useAPPaymentStore = defineStore('apPayment', {
         });
 
       } catch (error: any) {
-        console.error('Error saving payment:', error)
+        console.error('❌ Frontend - Error saving payment:', error)
+        console.error('❌ Frontend - Error message:', error.message)
+        console.error('❌ Frontend - Error stack:', error.stack)
         if (this.validationErrors.length === 0) {
           toast.error({
             title: 'Error',
@@ -524,6 +536,7 @@ export const useAPPaymentStore = defineStore('apPayment', {
     },
 
     openModal(payment?: APPayment) {
+      console.log('🔍 Frontend - Opening modal with payment:', payment)
       this.isEditMode = !!payment;
       this.validationErrors = [];
       
@@ -531,20 +544,18 @@ export const useAPPaymentStore = defineStore('apPayment', {
         this.form = { ...payment };
       } else {
         this.form = {
-          referenceNumber: '',
+          paymentNumber: '',
           date: new Date().toISOString().split('T')[0],
-          vendorId: '',
-          invoiceId: '',
-          paymentMethod: 'bank_transfer',
-          bankAccountId: '',
+          vendorId: null,
+          invoiceId: null,
+          method: 'bank_transfer',
+          bankAccountId: null,
           amount: 0,
-          currency: 'IDR',
-          exchangeRate: 1,
-          notes: '',
-          status: 'draft'
+          description: ''
         };
       }
       
+      console.log('🔍 Frontend - Form initialized:', this.form)
       this.showModal = true;
       this.fetchVendors();
       this.fetchInvoices();

@@ -46,16 +46,18 @@
         <div class="invoice-header text-end">
           <h2 class="mb-4 text-capitalize fw-bold">BERITA ACARA</h2>
           <table style="font-size: 12px; width: 100%;">
-            <tr>
-              <td style="text-align: right;">No. Stock Transfer</td>
-              <td style="width: 20px;">:</td>
-              <td style="width: 50%;">{{ stockTransfer.noTransfer }}</td>
-            </tr>
-            <tr>
-              <td style="text-align: right;">Tanggal</td>
-              <td style="width: 20px;">:</td>
-              <td style="width: 50%;">{{ new Date(stockTransfer.date).toLocaleDateString('id-ID') }}</td>
-            </tr>
+            <tbody>
+              <tr>
+                <td style="text-align: right;">No. Stock Transfer</td>
+                <td style="width: 20px;">:</td>
+                <td style="width: 50%;">{{ stockTransfer.noTransfer }}</td>
+              </tr>
+              <tr>
+                <td style="text-align: right;">Tanggal</td>
+                <td style="width: 20px;">:</td>
+                <td style="width: 50%;">{{ new Date(stockTransfer.date).toLocaleDateString('id-ID') }}</td>
+              </tr>
+            </tbody>
           </table>
         </div>
       </div>

@@ -208,9 +208,9 @@
                     }}
                   </template>
                 </Column>
-                <Column field="reference_number" header="No. Referensi" :sortable="true" style="min-width:150px">
+                <Column field="paymentNumber" header="No. Referensi" :sortable="true" style="min-width:150px">
                   <template #body="slotProps">
-                    <span class="fw-semibold">{{ slotProps.data.reference_number }}</span>
+                    <span class="fw-semibold">{{ slotProps.data.paymentNumber }}</span>
                   </template>
                 </Column>
                 <Column field="date" header="Tanggal" :sortable="true" style="min-width:120px">
@@ -226,10 +226,10 @@
                     </div>
                   </template>
                 </Column>
-                <Column field="payment_method" header="Metode Pembayaran" :sortable="true" style="min-width:150px">
+                <Column field="method" header="Metode Pembayaran" :sortable="true" style="min-width:150px">
                   <template #body="slotProps">
                     <span class="badge bg-label-secondary">
-                      {{ getPaymentMethodLabel(slotProps.data.payment_method) }}
+                      {{ getPaymentMethodLabel(slotProps.data.method) }}
                     </span>
                   </template>
                 </Column>
@@ -284,13 +284,13 @@
             <div class="mb-3">
               <label class="form-label">No. Referensi <span class="text-danger">*</span></label>
               <input
-                v-model="apPaymentStore.form.referenceNumber"
+                v-model="apPaymentStore.form.paymentNumber"
                 type="text"
                 class="form-control"
 
               />
-              <div v-if="hasError('referenceNumber')" class="invalid-feedback">
-                {{ getError('referenceNumber') }}
+              <div v-if="hasError('paymentNumber')" class="invalid-feedback">
+                {{ getError('paymentNumber') }}
               </div>
             </div>
           </div>
@@ -418,7 +418,7 @@
             <div class="mb-3">
               <label class="form-label">Metode Pembayaran <span class="text-danger">*</span></label>
               <select
-                v-model="apPaymentStore.form.paymentMethod"
+                v-model="apPaymentStore.form.method"
                 class="form-select"
 
               >
@@ -430,8 +430,8 @@
                   {{ method.label }}
                 </option>
               </select>
-              <div v-if="hasError('paymentMethod')" class="invalid-feedback">
-                {{ getError('paymentMethod') }}
+              <div v-if="hasError('method')" class="invalid-feedback">
+                {{ getError('method') }}
               </div>
             </div>
           </div>
@@ -442,8 +442,7 @@
               <select
                 v-model="apPaymentStore.form.bankAccountId"
                 class="form-select"
-                
-                :="apPaymentStore.form.paymentMethod !== 'cash'"
+                :disabled="apPaymentStore.form.method === 'cash'"
               >
                 <option value="">Pilih Rekening Bank</option>
                 <option
@@ -451,7 +450,7 @@
                   :key="account.id"
                   :value="account.id"
                 >
-                  {{ account.bank_name }} - {{ account.account_number }}
+                  {{ account.bankName }} - {{ account.accountNumber }}
                 </option>
               </select>
               <div v-if="hasError('bankAccountId')" class="invalid-feedback">
@@ -541,13 +540,13 @@
             <div class="mb-3">
               <label class="form-label">Catatan</label>
               <textarea
-                v-model="apPaymentStore.form.notes"
+                v-model="apPaymentStore.form.description"
                 class="form-control"
                 
                 rows="3"
               ></textarea>
-              <div v-if="hasError('notes')" class="invalid-feedback">
-                {{ getError('notes') }}
+              <div v-if="hasError('description')" class="invalid-feedback">
+                {{ getError('description') }}
               </div>
             </div>
           </div>
@@ -851,32 +850,25 @@ const handleInvoiceSelection = (selectedInvoice) => {
     apPaymentStore.form.vendorId = selectedInvoice.vendorId;
     console.log('👤 Auto fill vendor ID:', selectedInvoice.vendorId);
   }
-  
-  // Optional: Auto fill other related data from invoice
-  // selectedInvoice.total sudah adalah grandTotal yang final (termasuk PPN)
-  // karena di store purchase invoice, grandTotal disimpan sebagai total
+
   if (selectedInvoice.total && !apPaymentStore.form.amount) {
     // Hitung remaining amount jika ada
     const remainingAmount = selectedInvoice.total - (selectedInvoice.paidAmount || 0);
     if (remainingAmount > 0) {
       apPaymentStore.form.amount = remainingAmount;
-      console.log('💰 Auto fill amount with remaining (final total):', remainingAmount);
     } else {
       apPaymentStore.form.amount = selectedInvoice.total;
-      console.log('💰 Auto fill amount with final total:', selectedInvoice.total);
     }
   }
   
   // Auto fill currency jika tersedia
   if (selectedInvoice.currency) {
     apPaymentStore.form.currency = selectedInvoice.currency;
-    console.log('💱 Auto fill currency:', selectedInvoice.currency);
   }
   
-  // Auto fill notes dengan referensi invoice
-  if (!apPaymentStore.form.notes) {
-    apPaymentStore.form.notes = `Pembayaran untuk Invoice ${selectedInvoice.noInvoice || selectedInvoice.id}`;
-    console.log('📝 Auto fill notes');
+  // Auto fill description dengan referensi invoice
+  if (!apPaymentStore.form.description) {
+    apPaymentStore.form.description = `Pembayaran untuk Invoice ${selectedInvoice.noInvoice || selectedInvoice.id}`;
   }
 }
 
