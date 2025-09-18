@@ -112,6 +112,7 @@ interface SuratJalanState {
     draw       : number
     search     : string
     customerId?: number | null
+    salesOrderId?: string | null
   }
   form            : any,
   isEditMode      : boolean
@@ -143,6 +144,7 @@ export const useSuratJalanStore = defineStore('suratJalan', {
         draw      : 1,
         search    : '',
         customerId: null,
+        salesOrderId: null,
     },
     form: {
         noSuratJalan    : '',
@@ -188,6 +190,9 @@ export const useSuratJalanStore = defineStore('suratJalan', {
 
         if (this.params.customerId) {
           params.append('customerId', this.params.customerId.toString());
+        }
+        if (this.params.salesOrderId) {
+          params.append('salesOrderId', this.params.salesOrderId.toString());
         }
           
         url.search = params.toString();
@@ -612,8 +617,9 @@ export const useSuratJalanStore = defineStore('suratJalan', {
         this.fetchSuratJalans();
     },
 
-    setFilters(filters: { customerId?: number | null, search?: string }) {
+    setFilters(filters: { customerId?: number | null, salesOrderId?: string | null, search?: string }) {
         this.params.customerId = filters.customerId;
+        this.params.salesOrderId = filters.salesOrderId;
         this.params.search = filters.search || '';
         this.params.first = 0; // reset pagination
         this.fetchSuratJalans();

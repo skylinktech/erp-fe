@@ -70,7 +70,15 @@
                       <div class="card-body">
                           <div class="row">
                               <div class="col-md-12">
-                                  <CustomSelect2 v-model="filters.customerId" :options="customers" :get-option-label="option => option.name" :reduce="option => option.id" searchable clearable placeholder="Pilih Customer" />
+                                  <CustomSelect2 
+                                      v-model="filters.salesOrderId" 
+                                      :options="filteredSalesOrders" 
+                                      :get-option-label="getSalesOrderLabel" 
+                                      :reduce="option => option?.id" 
+                                      searchable 
+                                      clearable 
+                                      placeholder="Pilih Sales Order" 
+                                  />
                               </div>
                           </div>
                       </div>
@@ -231,22 +239,20 @@
                                           searchable
                                           clearable
                                           :loading="loading"
-                                      >
-                                          <template #option="option">
-                                              <div class="d-flex justify-content-between align-items-center w-100">
-                                                  <div>
-                                                      <div class="fw-bold">{{ option.noSo }}</div>
-                                                      <small class="text-muted">{{ option.customer?.name || 'No Customer' }}</small>
-                                                  </div>
-                                                  <div class="text-end">
-                                                      <small class="text-muted">{{ formatDate(option.date) }}</small>
-                                                  </div>
-                                              </div>
-                                          </template>
-                                      </CustomSelect2>
+                                      />
                                   </div>
                                   <div class="col-md-6">
-                                      <CustomSelect2 v-model="form.customerId" :options="customers" :get-option-label="option => option.name" :reduce="option => option.id" searchable clearable placeholder="Pilih Customer"  :disabled="!!form.salesOrderId"/>
+                                      <CustomSelect2 
+                                          v-model="form.customerId" 
+                                          :options="customersOptions" 
+                                          :get-option-label="getCustomerLabel" 
+                                          :reduce="option => option?.id" 
+                                          searchable 
+                                          clearable 
+                                          placeholder="Pilih Customer"  
+                                          :disabled="!!form.salesOrderId"
+                                          :loading="loading"
+                                      />
                                       <div v-if="form.salesOrderId" class="form-text mt-1">
                                           <small class="text-muted">📋 Customer diambil dari Sales Order yang dipilih</small>
                                       </div>
@@ -316,7 +322,7 @@
                                   <div class="row g-3">
                                       <div class="col-md-6">
                                           <CustomSelect2 v-model="item.productId" :options="customerProducts || []" 
-                                              :get-option-label="option => option.name" searchable clearable 
+                                              :get-option-label="option => option?.name || 'No Name'" searchable clearable 
                                               :reduce="p => p.id" 
                                               placeholder="Pilih Produk" 
                                               @update:modelValue="onProductChange(index)" 
@@ -326,7 +332,7 @@
                                       </div>
                                       <div class="col-md-6">
                                           <CustomSelect2 v-model="item.warehouseId" :options="warehouses" 
-                                              :get-option-label="option => option.name" searchable clearable 
+                                              :get-option-label="option => option?.name || 'No Name'" searchable clearable 
                                               :reduce="w => w.id" 
                                               placeholder="Pilih Gudang" 
                                                
@@ -453,9 +459,28 @@ const { customers }   = storeToRefs(customerStore)
 const { salesOrders, customerProducts } = storeToRefs(salesOrderStore)
 const { warehouses }  = storeToRefs(warehouseStore)
 
+// ✅ FIX: Computed property untuk memastikan customers selalu reaktif
+const customersOptions = computed(() => {
+  const options = customers.value || [];
+  
+  // ✅ FIX: Pastikan setiap option memiliki struktur yang benar
+  const normalizedOptions = options.map(option => {
+    if (!option) return null;
+    return {
+      id: option.id,
+      name: option.name || 'No Name',
+      email: option.email || '',
+      phone: option.phone || '',
+      ...option // Spread semua property lainnya
+    };
+  }).filter(Boolean); // Hapus null values
+  
+  return normalizedOptions;
+});
+
 // State
 const filters = ref({
-customerId: null,
+salesOrderId: null,
 search: '',
 });
 
@@ -471,13 +496,21 @@ const rowsPerPageOptionsArray = ref([10, 25, 50, 100]);
 const modalTitle = computed(() => isEditMode.value ? 'Edit Surat Jalan' : 'Tambah Surat Jalan');
 const modalDescription = computed(() => isEditMode.value ? 'Silakan ubah data Surat Jalan di bawah ini.' : 'Silakan isi form di bawah ini untuk menambahkan data Surat Jalan baru.');
 
+
 let modalInstance = null;
 onMounted(async () => {
   userStore.loadUser();
   suratJalanStore.fetchSuratJalans();
   suratJalanStore.fetchStatistics();
   customerStore.fetchCustomers();
-  salesOrderStore.fetchSalesOrders();
+  
+  // Load Sales Orders
+  try {
+    await salesOrderStore.fetchSalesOrders();
+  } catch (error) {
+    console.error('❌ Failed to load Sales Orders:', error);
+  }
+  
   warehouseStore.fetchWarehouses();
   permissionStore.fetchPermissions();
 
@@ -492,12 +525,29 @@ onMounted(async () => {
       // Assign data ke store yang sesuai
       perusahaanStore.perusahaans = perusahaanData;
       cabangStore.cabangs         = cabangData;
-      customerStore.customers     = customerData;
+      
+      // Handle different data structures
+      if (Array.isArray(customerData)) {
+        customerStore.customers = customerData;
+      } else if (customerData && customerData.data && Array.isArray(customerData.data)) {
+        customerStore.customers = customerData.data;
+      } else if (customerData && Array.isArray(customerData.customers)) {
+        customerStore.customers = customerData.customers;
+      } else {
+        console.warn('⚠️ Unexpected customer data structure:', customerData);
+        customerStore.customers = [];
+      }
 
   } catch (error) {
       console.error('Error loading data:', error);
       // Fallback ke method lama jika endpoint data baru gagal
-      customerStore.fetchCustomers();
+      try {
+        await customerStore.fetchCustomers();
+      } catch (fallbackError) {
+        console.error('❌ Fallback also failed:', fallbackError);
+        // Set empty array as last resort
+        customerStore.customers = [];
+      }
       perusahaanStore.fetchPerusahaans();
       cabangStore.fetchCabangs();
   }
@@ -513,9 +563,19 @@ onMounted(async () => {
   tableControls.value.search = globalFilterValue.value;
 });
 
-watch(showModal, (newValue) => {
+watch(showModal, async (newValue) => {
   if (newValue) {
       modalInstance?.show()
+      
+      // Ensure customers data is loaded when modal opens
+      if (!customers.value || customers.value.length === 0) {
+        try {
+          await customerStore.fetchCustomers();
+        } catch (error) {
+          console.error('❌ Failed to load customers when modal opened:', error);
+        }
+      }
+      
       if (isEditMode.value) {
         // Fetch stock for existing items
         if (form.value.suratJalanItems && form.value.suratJalanItems.length > 0) {
@@ -744,9 +804,27 @@ if (selectedProduct) {
 
 // ✅ NEW: Function untuk getSalesOrderLabel
 const getSalesOrderLabel = (salesOrder) => {
-  if (!salesOrder) return '';
-  return `${salesOrder.noSo} - ${salesOrder.customer?.name || 'No Customer'}`;
+  if (!salesOrder) return 'No Sales Order';
+  
+  const noSo = salesOrder.noSo;
+  const customerName = salesOrder.customer?.name;
+  
+  if (!noSo) return 'No SO Number';
+  
+  return `${noSo} - ${customerName || 'No Customer'}`;
 };
+
+// ✅ FIX: Function untuk getCustomerLabel yang lebih robust
+const getCustomerLabel = (option) => {
+  if (!option) return 'No Customer';
+  
+  const name = option.name;
+  
+  if (!name) return 'No Name';
+  
+  return name;
+};
+
 
 // ✅ NEW: Function untuk calculateSubtotal
 const calculateSubtotal = (index) => {
@@ -858,7 +936,9 @@ const formatDate = (dateString) => {
 };
 
 const filteredSalesOrders = computed(() => {
-  return (salesOrders.value || []).filter(so => so.status === 'approved' || so.status === 'partial' || so.status === 'delivered')
+  return (salesOrders.value || []).filter(so => {
+    return so.status === 'approved' || so.status === 'partial' || so.status === 'delivered';
+  });
 })
 
 // ✅ NEW: Computed property untuk mengecek apakah ada item dengan status partial
@@ -885,6 +965,15 @@ const hasPartialItems = computed(() => {
 watch(salesOrderItems, (newItems) => {
   // Watcher untuk memantau perubahan sales order items
 }, { deep: true })
+
+// Watchers untuk memantau perubahan data
+watch(customers, (newCustomers) => {
+  // Customer data changed
+}, { deep: true, immediate: true })
+
+watch(salesOrders, (newSalesOrders) => {
+  // Sales Orders data changed
+}, { deep: true, immediate: true })
 
 </script>
 

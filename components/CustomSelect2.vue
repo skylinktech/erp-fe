@@ -214,7 +214,6 @@ const searchInput = ref(null)
 // Computed
 const hasValue = computed(() => {
   const hasValue = props.modelValue !== null && props.modelValue !== undefined && props.modelValue !== ''
-  // console.log('🔍 hasValue check:', { modelValue: props.modelValue, hasValue });
   return hasValue
 })
 
@@ -285,10 +284,8 @@ const closeDropdown = () => {
 }
 
 const selectOption = (option) => {
-  console.log('SelectOption called with:', option)
   try {
     const value = props.reduce(option)
-    console.log('Emitting value:', value)
     
     // Update model value first
     emit('update:modelValue', value)

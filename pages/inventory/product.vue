@@ -238,56 +238,50 @@
             >
                 <template #default>
                     <form @submit.prevent="productStore.saveProduct()">
-                        <div class="row g-6">
+                        <div class="row g-4">
                             <div class="col-md-6">
-                                <div class="form-floating form-floating-outline">
-                                    <input 
-                                        type="text" 
-                                        
-                                        v-model="form.sku" 
-                                        placeholder="Masukkan part number"
-                                        
-                                    >
-                                    <label>Part Number</label>
-                                    <div v-if="hasFieldError('sku')" class="invalid-feedback">
-                                        {{ getFieldError('sku') }}
-                                    </div>
+                                <label class="form-label">Part Number</label>
+                                <input 
+                                    type="text" 
+                                    class="form-control"
+                                    v-model="form.sku" 
+                                    placeholder="Masukkan part number"
+                                    id="sku"
+                                >
+                                <div v-if="hasFieldError('sku')" class="invalid-feedback">
+                                    {{ getFieldError('sku') }}
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="form-floating form-floating-outline">
-                                    <input 
-                                        type="text" 
-                                        
-                                        v-model="form.noInterchange" 
-                                        placeholder="Masukkan no interchange"
-                                        
-                                    >
-                                    <label>No Interchange</label>
-                                    <div v-if="hasFieldError('noInterchange')" class="invalid-feedback">
-                                        {{ getFieldError('noInterchange') }}
-                                    </div>
+                                <label class="form-label">No Interchange</label>
+                                <input 
+                                    type="text" 
+                                    class="form-control"
+                                    v-model="form.noInterchange" 
+                                    placeholder="Masukkan no interchange"
+                                    id="noInterchange"
+                                >
+                                <div v-if="hasFieldError('noInterchange')" class="invalid-feedback">
+                                    {{ getFieldError('noInterchange') }}
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="form-floating form-floating-outline">
-                                    <input 
-                                        type="text" 
-                                        
-                                        v-model="form.name" 
-                                        placeholder="Masukkan nama barang"
-                                        
-                                        @input="form.name = $event.target.value.toUpperCase()"
-                                    >
-                                    <label>Nama Barang</label>
-                                    <div v-if="hasFieldError('name')" class="invalid-feedback">
-                                        {{ getFieldError('name') }}
-                                    </div>
+                                <label class="form-label">Nama Barang</label>
+                                <input 
+                                    type="text" 
+                                    class="form-control"
+                                    v-model="form.name" 
+                                    placeholder="Masukkan nama barang"
+                                    id="name"
+                                    @input="form.name = $event.target.value.toUpperCase()"
+                                >
+                                <div v-if="hasFieldError('name')" class="invalid-feedback">
+                                    {{ getFieldError('name') }}
                                 </div>
                             </div>
                             <div class="col-md-3">
-                                <div class="form-floating form-floating-outline">
-                                    <input 
+                                <label class="form-label">Stok Minimum</label>
+                                <input 
                                     type="text" 
                                     class="form-control" 
                                     v-model="form.stockMin" 
@@ -295,88 +289,79 @@
                                     @input="form.stockMin = $event.target.value.replace(/[^0-9]/g, '')"
                                     inputmode="numeric"
                                     pattern="[0-9]*"
-                                    
-                                    >
-                                    <label>Stok Minimum</label>
-                                </div>
+                                    id="stockMin"
+                                >
                             </div>
                             <div class="col-md-3">
-                                <div class="form-floating form-floating-outline">
-                                    <input 
+                                <label class="form-label">Satuan Item</label>
+                                <input 
                                     type="text" 
                                     class="form-control" 
                                     v-model="form.satuanItem" 
                                     placeholder="Masukkan satuan item"
-                                    >
-                                    <label>Satuan Item</label>
-                                </div>
+                                    id="satuanItem"
+                                >
                             </div>
                             <div class="col-md-3">
-                                <div class="form-floating form-floating-outline">
-                                    <input 
+                                <label class="form-label">Berat</label>
+                                <input 
                                     type="text" 
                                     class="form-control" 
                                     v-model="form.berat" 
                                     placeholder="Masukkan berat"
-                                    >
-                                    <label>Berat</label>
-                                </div>
+                                    id="berat"
+                                >
                             </div>
                             <div class="col-md-3">
-                                <div class="form-floating form-floating-outline">
-                                    <CustomSelect2 v-model="form.unitId" :options="units"
-                                        :get-option-label="option => option.name"
-                                        :reduce="option => option.id" searchable clearable
-                                        placeholder="-- Pilih Satuan --"
-                                        class="unit"
-                                    />
-                                </div>
+                                <label class="form-label">Satuan</label>
+                                <CustomSelect2 v-model="form.unitId" :options="units"
+                                    :get-option-label="option => option.name"
+                                    :reduce="option => option.id" searchable clearable
+                                    placeholder="-- Pilih Satuan --"
+                                    class="unit"
+                                    id="unitId"
+                                />
                             </div>
                             <div class="col-md-3">
-                                <div class="form-floating form-floating-outline">
-                                    <input 
+                                <label class="form-label">Harga Beli</label>
+                                <input 
                                     type="text" 
                                     class="form-control" 
                                     v-model="formattedPriceBuy" 
                                     placeholder="Masukkan harga beli"
-                                    
-                                    >
-                                    <label>Harga Beli</label>
-                                </div>
+                                    id="priceBuy"
+                                >
                             </div>
                             <div class="col-md-3">
-                                <div class="form-floating form-floating-outline">
-                                    <input 
+                                <label class="form-label">Harga Jual</label>
+                                <input 
                                     type="text" 
                                     class="form-control" 
                                     v-model="formattedPriceSell" 
                                     placeholder="Masukkan harga jual"
-                                    
-                                    >
-                                    <label>Harga Jual</label>
-                                </div>
+                                    id="priceSell"
+                                >
                             </div>
                             <div class="col-md-6">
-                                <div class="form-floating form-floating-outline">
-                                    <CustomSelect2 v-model="form.categoryId" :options="kategori"
-                                        :get-option-label="option => option.name"
-                                        :reduce="option => option.id" searchable clearable
-                                        placeholder="-- Pilih Kategori --"
-                                        class="kategori"
-                                    />  
-                                </div>
+                                <label class="form-label">Kategori</label>
+                                <CustomSelect2 v-model="form.categoryId" :options="kategori"
+                                    :get-option-label="option => option.name"
+                                    :reduce="option => option.id" searchable clearable
+                                    placeholder="-- Pilih Kategori --"
+                                    class="kategori"
+                                    id="categoryId"
+                                />  
                             </div>
                             <div class="col-md-6">
-                                <div class="form-floating form-floating-outline">
-                                    <CustomSelect2 v-model="form.kondisi" :options="kondisiOptions"
-                                        :get-option-label="option => option.label"
-                                        :reduce="option => option.value" searchable clearable
-                                        :get-option-key="option => option.value"
-                                        placeholder="-- Pilih Kondisi --"
-                                        id="select-kondisi"
-                                        class="select-kondisi"
-                                    />
-                                </div>
+                                <label class="form-label">Kondisi</label>
+                                <CustomSelect2 v-model="form.kondisi" :options="kondisiOptions"
+                                    :get-option-label="option => option.label"
+                                    :reduce="option => option.value" searchable clearable
+                                    :get-option-key="option => option.value"
+                                    placeholder="-- Pilih Kondisi --"
+                                    id="kondisi"
+                                    class="select-kondisi"
+                                />
                             </div>
                             <div class="col-md-6">
                                 <div class="form-check form-switch mt-3 d-flex align-items-center">
@@ -387,26 +372,24 @@
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="form-floating form-floating-outline">
-                                    <input 
-                                        type="file" 
-                                        class="form-control"
-                                        @change="onImageChange"
-                                        accept="image/*"
-                                        placeholder="Masukkan image product"
-                                    >
-                                    <label>Gambar</label>
-                                    
-                                    <div v-if="form.imagePreview" class="mt-2">
-                                        <img 
-                                            :src="form.imagePreview" 
-                                            alt="Image Preview" 
-                                            class="image-preview"
-                                            style="height: 60px; max-width: 120px; object-fit: contain; border: 2px solid #ddd; border-radius: 8px;"
-                                            @error="(e) => handleImageError(e, '/img/default-product-image.png')"
-                                        />
-                                        <a :href="form.imagePreview" target="_blank" rel="noopener noreferrer" class="d-block mt-1">Lihat Gambar</a>
-                                    </div>
+                                <label class="form-label">Gambar</label>
+                                <input 
+                                    type="file" 
+                                    class="form-control"
+                                    @change="onImageChange"
+                                    accept="image/*"
+                                    id="image"
+                                >
+                                
+                                <div v-if="form.imagePreview" class="mt-2">
+                                    <img 
+                                        :src="form.imagePreview" 
+                                        alt="Image Preview" 
+                                        class="image-preview"
+                                        style="height: 60px; max-width: 120px; object-fit: contain; border: 2px solid #ddd; border-radius: 8px;"
+                                        @error="(e) => handleImageError(e, '/img/default-product-image.png')"
+                                    />
+                                    <a :href="form.imagePreview" target="_blank" rel="noopener noreferrer" class="d-block mt-1">Lihat Gambar</a>
                                 </div>
                             </div>
                         </div>
@@ -607,7 +590,35 @@ const getFieldError = (fieldName) => {
 </script>
 
 <style scoped>
-<style scoped>
+/* Form styling */
+.form-label {
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.form-control {
+  border-radius: 0.375rem;
+  border: 1px solid #d1d5db;
+  padding: 0.75rem;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-control:focus {
+  border-color: #696cff;
+  box-shadow: 0 0 0 0.2rem rgba(105, 108, 255, 0.25);
+  outline: 0;
+}
+
+/* Image preview styling */
+.image-preview {
+  transition: all 0.3s ease;
+}
+
+.image-preview:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
