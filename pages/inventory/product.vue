@@ -183,7 +183,7 @@
                                     </Column>
                                     <Column field="isService" header="Service" :sortable="true">
                                         <template #body="slotProps">
-                                            <span >
+                                            <span :class="getStatusBadge(slotProps.data.isService).class">
                                                 {{ getStatusBadge(slotProps.data.isService).text }}
                                             </span>
                                         </template>

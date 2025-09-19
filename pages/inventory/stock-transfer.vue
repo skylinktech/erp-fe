@@ -103,6 +103,13 @@
                                         </span>
                                     </template>
                                 </Column>
+                                <Column field="status" header="Status" :sortable="true">
+                                    <template #body="slotProps">
+                                        <span :class="getStatusBadge(slotProps.data.status).class">
+                                            {{ getStatusBadge(slotProps.data.status).text }}
+                                        </span>
+                                    </template>
+                                </Column>
                                 <Column field="date" header="Tanggal" :sortable="true" style="width:10%">
                                     <template #body="slotProps">
                                         {{ slotProps.data.date ? new Date(slotProps.data.date).toLocaleDateString() : '-' }}
@@ -128,13 +135,13 @@
                                         {{ slotProps.data.toWarehouse?.name || '-' }}
                                     </template>
                                 </Column>
-                                <Column field="status" header="Status" :sortable="true">
-                                    <template #body="slotProps">
-                                        <span >
-                                            {{ getStatusBadge(slotProps.data.status).text }}
-                                        </span>
-                                    </template>
-                                </Column>
+                                <Column field="transferByUser.fullName" header="Dibuat Oleh" :sortable="true" class="text-nowrap">
+                                        <template #body="slotProps">
+                                            <span>
+                                                {{ slotProps.data.transferByUser?.fullName || '-' }}
+                                            </span>
+                                        </template>
+                                    </Column>
                                 <Column header="Actions" :exportable="false" style="min-width:8rem">
                                     <template #body="slotProps">
                                         <div class="d-inline-block">

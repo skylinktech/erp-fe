@@ -1464,8 +1464,16 @@ const exportQuotationExcel = (dataToExport) => {
 
   </script>
 
-  <style scoped>
 <style scoped>
+
+/* Repeater item styling */
+.repeater-item {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #e9ecef;
+  transition: all 0.2s ease-in-out;
+}
 
 /* Responsive adjustments */
 @media (max-width: 768px) {

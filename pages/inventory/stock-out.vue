@@ -139,7 +139,7 @@
                                 <Column field="salesOrder.noSo" header="No. SO" :sortable="true" class="text-nowrap"></Column>
                                 <Column field="status" header="Status" :sortable="true">
                                     <template #body="slotProps">
-                                        <span >
+                                        <span :class="getStatusBadge(slotProps.data.status).class">
                                             {{ getStatusBadge(slotProps.data.status).text }}
                                         </span>
                                     </template>

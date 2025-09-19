@@ -57,6 +57,11 @@
                 <td style="width: 20px;">:</td>
                 <td style="width: 50%;">{{ new Date(stockTransfer.date).toLocaleDateString('id-ID') }}</td>
               </tr>
+              <tr>
+                <td style="text-align: right;">Penerima</td>
+                <td style="width: 20px;">:</td>
+                <td style="width: 50%;">{{ stockTransfer.penerima }}</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -82,6 +87,7 @@
           <thead class="table-dark table-head-white">
             <tr>
               <th style="font-size: 12px;">No</th>
+              <th style="font-size: 12px;">Part Number</th>
               <th style="font-size: 12px;">Produk</th>
               <th style="font-size: 12px;">Jumlah</th>
               <th style="font-size: 12px;">Keterangan</th>
@@ -90,6 +96,7 @@
           <tbody>
             <tr v-for="(item, index) in stockTransfer.stockTransferDetails" :key="item.id">
               <td>{{ index + 1 }}</td>
+              <td>{{ item.product?.sku }}</td>
               <td>{{ item.product?.name }}</td>
               <td>{{ item.quantity }} {{ item.product?.unit?.name }}</td>
               <td>{{ item.description || '-' }}</td>

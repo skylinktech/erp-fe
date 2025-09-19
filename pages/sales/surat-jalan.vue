@@ -165,6 +165,13 @@
                                           </span>
                                       </template>
                                   </Column>
+                                  <Column field="createdByUser.fullName" header="Dibuat Oleh" :sortable="true" class="text-nowrap">
+                                        <template #body="slotProps">
+                                            <span>
+                                                {{ slotProps.data.createdByUser?.fullName || '-' }}
+                                            </span>
+                                        </template>
+                                    </Column>
                                   <Column header="Actions" :exportable="false" style="min-width:8rem">
                                       <template #body="slotProps">
                                           <div class="d-inline-block">
