@@ -43,7 +43,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       '/inventory/kategori': 'view_kategori',
       '/sales/sales-order': 'view_sales_order',
       '/sales/sales-invoice': 'view_sales_invoice',
-      '/sales/surat-jalan': 'view_delivery_note',
+      '/sales/surat-jalan': 'view_surat_jalan',
       '/sales/quotation': 'view_quotation',
       '/sales/sales-return': 'view_sales_return',
       '/sales/customer': 'view_customer',
