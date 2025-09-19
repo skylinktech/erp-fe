@@ -863,12 +863,9 @@ const getFieldError = (fieldName) => {
     return null;
   }
   
-  console.log('🔍 Looking for field:', fieldName, 'in errors:', validationErrors.value);
-  
   // ✅ VineJS struktur error: Array of objects dengan format { field: 'fieldName', message: 'Error message', rule: 'ruleName' }
   if (Array.isArray(validationErrors.value)) {
     const error = validationErrors.value.find(err => {
-      console.log('🔍 Checking VineJS error:', err);
       
       if (typeof err === 'object' && err !== null) {
         // VineJS error structure: { field: 'description', message: 'Field description wajib diisi', rule: '' }
@@ -884,7 +881,6 @@ const getFieldError = (fieldName) => {
     });
     
     if (error) {
-      console.log('🎯 Found VineJS error for', fieldName, ':', error);
       
       if (typeof error === 'object' && error.message) {
         return error.message;

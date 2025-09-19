@@ -16,6 +16,29 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       await userStore.loadUser()
     }
 
+    // Pastikan user data sudah ter-load dengan menunggu loading selesai
+    if (userStore.loading) {
+      // Tunggu hingga loading selesai
+      await new Promise(resolve => {
+        const checkLoading = () => {
+          if (!userStore.loading) {
+            resolve(true)
+          } else {
+            setTimeout(checkLoading, 10)
+          }
+        }
+        checkLoading()
+      })
+    }
+
+    // Cek apakah user adalah superadmin
+    const isSuperadmin = userStore.user?.roles?.some(role => role.name === 'superadmin')
+    
+    // Jika user adalah superadmin, biarkan akses ke semua halaman
+    if (isSuperadmin) {
+      return
+    }
+
     // Cek apakah user memiliki permission view_*
     const hasViewPermission = userStore.user?.roles?.some(role => 
       role.permissions?.some(permission => 

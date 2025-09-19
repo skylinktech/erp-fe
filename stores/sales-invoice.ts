@@ -426,9 +426,6 @@ export const useSalesInvoiceStore = defineStore('salesInvoice', {
             if (!response.ok) {
                 const errorData = await response.json();
                 if (response.status === 422) {
-                    // ✅ DEBUG: Log struktur error untuk analisis VineJS
-                    console.log('🔍 Debug VineJS Validation Errors:', errorData);
-                    console.log('🔍 VineJS Errors array:', errorData.errors);
                     
                     // ✅ VineJS error structure: errors adalah array of objects
                     this.validationErrors = errorData.errors || [];

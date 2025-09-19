@@ -16,6 +16,21 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       await userStore.loadUser()
     }
 
+    // Pastikan user data sudah ter-load dengan menunggu loading selesai
+    if (userStore.loading) {
+      // Tunggu hingga loading selesai
+      await new Promise(resolve => {
+        const checkLoading = () => {
+          if (!userStore.loading) {
+            resolve(true)
+          } else {
+            setTimeout(checkLoading, 10)
+          }
+        }
+        checkLoading()
+      })
+    }
+
     // Mapping route ke permission yang diperlukan
     const routePermissionMap: Record<string, string> = {
       '/inventory/product': 'view_product',
@@ -51,6 +66,14 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       '/company/cabang': 'view_cabang',
       '/admin/roles': 'view_role',
       '/admin/permissions': 'view_permission',
+    }
+
+    // Cek apakah user adalah superadmin
+    const isSuperadmin = userStore.user?.roles?.some(role => role.name === 'superadmin')
+    
+    // Jika user adalah superadmin, biarkan akses ke semua halaman
+    if (isSuperadmin) {
+      return
     }
 
     // Dapatkan permission yang diperlukan untuk route saat ini
