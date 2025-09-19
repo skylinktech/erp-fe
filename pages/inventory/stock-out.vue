@@ -701,6 +701,17 @@ const handleSelectAllChange = (checked) => {
     });
 };
 
+definePageMeta({
+  layout: 'default',
+  middleware: ['auth', 'check-permission'],
+  title: 'Stock Out',
+  description: 'Stock Out Management',
+  keywords: 'Stock Out, Inventory, Kainnova Digital Solutions',
+  author: 'Kainnova Digital Solutions',
+  robots: 'index, follow',
+  viewport: 'width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0'
+});
+
 </script>
 
 <style scoped>

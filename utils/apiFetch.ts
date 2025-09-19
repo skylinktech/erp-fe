@@ -63,7 +63,14 @@ export const apiFetch = async <T = any>(url: string, options: any = {}) => {
         const router = useRouter()
         router.push('/auth/login')
       }
+    } else if (status === 403) {
+      // Redirect ke halaman 403 untuk permission denied
+      if (process.client) {
+        const router = useRouter()
+        router.push('/errors/403')
+      }
     }
+    // Tidak menampilkan toast untuk error 403 (permission denied)
     throw error
   }
 }

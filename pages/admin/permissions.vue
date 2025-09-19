@@ -697,7 +697,14 @@ const fetchAllPageData = async () => {
         fetchMenuGroupsAndDetails();
     } catch (error) {
         console.error("Gagal memuat data halaman:", error);
-        toast.fire('Error', 'Gagal memuat data halaman.', 'error');
+        toast.error({
+            title: 'Error',
+            icon: 'ri-close-line',
+            message: 'Gagal memuat data halaman.',
+            timeout: 3000,
+            position: 'topRight',
+            layout: 2,
+        });
     } finally {
         layoutStore.setLoading(false);
     }
@@ -802,17 +809,23 @@ const deletePermission = async (permissionId) => {
             
             await fetchAllPageData();
 
-            toast.fire({
+            toast.success({
                 title: 'Berhasil!',
-                text: 'Permission berhasil dihapus.',
-                icon: 'success'
+                icon: 'ri-check-line',
+                message: 'Permission berhasil dihapus.',
+                timeout: 3000,
+                position: 'topRight',
+                layout: 2,
             });
 
         } catch (error) {
-            toast.fire({
+            toast.error({
                 title: 'Error',
-                text: error.message,
-                icon: 'error'
+                icon: 'ri-close-line',
+                message: error.message,
+                timeout: 3000,
+                position: 'topRight',
+                layout: 2,
             });
         } finally {
             layoutStore.setLoading(false);
@@ -1047,9 +1060,19 @@ const fetchMenuGroupsAndDetails = async () => {
     ]);
 };
 
+definePageMeta({
+  layout: 'default',
+  middleware: ['auth', 'check-permission'],
+  title: 'Permissions',
+  description: 'Permission Management',
+  keywords: 'Permissions, Admin, Kainnova Digital Solutions',
+  author: 'Kainnova Digital Solutions',
+  robots: 'index, follow',
+  viewport: 'width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0'
+});
+
 </script>
  
-<style scoped>
 <style scoped>
 
 /* Responsive adjustments */

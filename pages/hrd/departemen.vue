@@ -212,6 +212,17 @@ const handleRowsChange = () => {
 };
 
 const onSort = (event) => departemenStore.setSort(event);
+
+definePageMeta({
+  layout: 'default',
+  middleware: ['auth', 'check-permission'],
+  title: 'Departemen',
+  description: 'Department Management',
+  keywords: 'Departemen, Department, HRD, Kainnova Digital Solutions',
+  author: 'Kainnova Digital Solutions',
+  robots: 'index, follow',
+  viewport: 'width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0'
+});
 </script>
 
 <style scoped>

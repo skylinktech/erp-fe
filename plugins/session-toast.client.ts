@@ -45,6 +45,7 @@ export default defineNuxtPlugin((nuxtApp) => {
           showSessionExpiredToast()
         }
       }
+      // Tidak menampilkan toast untuk error 403 (permission denied)
     },
   }) as any
 
@@ -62,6 +63,7 @@ export default defineNuxtPlugin((nuxtApp) => {
             showSessionExpiredToast()
           }
         }
+        // Tidak menampilkan toast untuk error 403 (permission denied)
       } catch {}
       return res
     }

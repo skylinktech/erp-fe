@@ -753,6 +753,17 @@ const onResidualValueInput = (event) => {
     assetStore.setResidualValue(value);
 };
 
+definePageMeta({
+  layout: 'default',
+  middleware: ['auth', 'check-permission'],
+  title: 'Aset Tetap',
+  description: 'Fixed Asset Management',
+  keywords: 'Aset Tetap, Fixed Asset, Accounting, Kainnova Digital Solutions',
+  author: 'Kainnova Digital Solutions',
+  robots: 'index, follow',
+  viewport: 'width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0'
+});
+
 </script>
 
 <style scoped>

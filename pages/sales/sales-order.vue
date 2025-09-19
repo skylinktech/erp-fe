@@ -1555,6 +1555,17 @@ const onRowToggle = (event) => {
     expandedRows.value = event.data;
 };
 
+definePageMeta({
+  layout: 'default',
+  middleware: ['auth', 'check-permission'],
+  title: 'Sales Order',
+  description: 'Sales Order Management',
+  keywords: 'Sales Order, Sales, Kainnova Digital Solutions',
+  author: 'Kainnova Digital Solutions',
+  robots: 'index, follow',
+  viewport: 'width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0'
+});
+
 </script>
 
 <style scoped>

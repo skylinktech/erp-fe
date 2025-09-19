@@ -54,7 +54,14 @@ export const authFetch = async <T = any>(endpoint: string, options: any = {}) =>
           message: 'Sesi anda telah berakhir, silakan logout dan login kembali',
           color: 'red',
         })
+      } else if (status === 403) {
+        // Redirect ke halaman 403 untuk permission denied
+        if (process.client) {
+          const router = useRouter()
+          router.push('/errors/403')
+        }
       }
+      // Tidak menampilkan toast untuk error 403 (permission denied)
 
       throw error
     }

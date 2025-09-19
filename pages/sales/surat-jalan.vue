@@ -1015,6 +1015,17 @@ watch(salesOrders, (newSalesOrders) => {
   // Sales Orders data changed
 }, { deep: true, immediate: true })
 
+definePageMeta({
+  layout: 'default',
+  middleware: ['auth', 'check-permission'],
+  title: 'Surat Jalan',
+  description: 'Delivery Note Management',
+  keywords: 'Surat Jalan, Delivery Note, Sales, Kainnova Digital Solutions',
+  author: 'Kainnova Digital Solutions',
+  robots: 'index, follow',
+  viewport: 'width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0'
+});
+
 </script>
 
 <style scoped>

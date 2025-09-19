@@ -557,6 +557,17 @@ const handleSearch = async (value) => {
 }
 
 const onSort = (event) => expenseStore.setSort(event)
+
+definePageMeta({
+  layout: 'default',
+  middleware: ['auth', 'check-permission'],
+  title: 'Expenses',
+  description: 'Expense Management',
+  keywords: 'Expenses, Accounting, Kainnova Digital Solutions',
+  author: 'Kainnova Digital Solutions',
+  robots: 'index, follow',
+  viewport: 'width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0'
+});
 </script>
 
 <style scoped>
