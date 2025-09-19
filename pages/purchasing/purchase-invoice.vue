@@ -266,7 +266,7 @@
                                                             <i class="ri-eye-line me-2"></i> Lihat Detail
                                                         </a>
                                                     </li>
-                                                    <li v-if="userHasRole('superadmin') || (userHasPermission('edit_purchase_invoice') && slotProps.data.status == 'unpaid' && slotProps.data.purchaseOrder?.status == 'partial')">
+                                                    <li v-if="userHasRole('superadmin') || userHasPermission('edit_purchase_invoice') && (slotProps.data.status == 'unpaid' || slotProps.data.status == 'partial')">
                                                         <a class="dropdown-item" href="javascript:void(0)" @click="purchaseInvoiceStore.openModal(slotProps.data, 'admin')">
                                                             <i class="ri-edit-box-line me-2"></i> Edit
                                                         </a>
