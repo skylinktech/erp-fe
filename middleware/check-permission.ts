@@ -3,7 +3,8 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   if (typeof window === 'undefined') return
   
   // Cek apakah user sudah login
-  if (!localStorage.getItem('token')) {
+  const token = localStorage.getItem('token')
+  if (!token) {
     return navigateTo('/errors/401')
   }
 
@@ -11,24 +12,11 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
     const { useUserStore } = await import('~/stores/user')
     const userStore = useUserStore()
     
-    // Load user data jika belum ada
-    if (!userStore.user) {
-      await userStore.loadUser()
-    }
-
-    // Pastikan user data sudah ter-load dengan menunggu loading selesai
-    if (userStore.loading) {
-      // Tunggu hingga loading selesai
-      await new Promise(resolve => {
-        const checkLoading = () => {
-          if (!userStore.loading) {
-            resolve(true)
-          } else {
-            setTimeout(checkLoading, 10)
-          }
-        }
-        checkLoading()
-      })
+    // Pastikan user data sudah ter-load menggunakan method yang robust
+    const user = await userStore.ensureUserLoaded()
+    
+    if (!user) {
+      return navigateTo('/errors/401')
     }
 
     // Mapping route ke permission yang diperlukan
@@ -77,7 +65,18 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
     }
 
     // Dapatkan permission yang diperlukan untuk route saat ini
-    const requiredPermission = routePermissionMap[to.path]
+    let requiredPermission = routePermissionMap[to.path]
+    
+    // Handle dynamic routes yang menggunakan pattern matching
+    if (!requiredPermission) {
+      // Cek untuk route yang menggunakan pattern matching
+      for (const [routePattern, permission] of Object.entries(routePermissionMap)) {
+        if (routePattern.endsWith('/') && to.path.startsWith(routePattern)) {
+          requiredPermission = permission
+          break
+        }
+      }
+    }
     
     if (requiredPermission) {
       // Cek apakah user memiliki permission yang diperlukan
@@ -95,7 +94,6 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
 
   } catch (error) {
     console.error('Error checking permissions:', error)
-    // Jika ada error, redirect ke 403 untuk keamanan
     return navigateTo('/errors/403')
   }
 })

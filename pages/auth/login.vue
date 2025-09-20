@@ -204,6 +204,10 @@
 
       localStorage.setItem('token', data.token.token);
       userStore.setUser(data.user)
+      
+      // Pastikan user data sudah tersimpan dan store sudah ter-update
+      await new Promise(resolve => setTimeout(resolve, 200))
+      
       toast.success({
         title: 'Login Berhasil!',
         icon: 'ri-check-line',
@@ -212,7 +216,9 @@
         position: 'topRight',
         layout: 2,
       })
-      router.push('/dashboard');
+      
+      // Redirect ke dashboard setelah user data tersimpan
+      await router.push('/dashboard');
       
     } catch (err) {
       

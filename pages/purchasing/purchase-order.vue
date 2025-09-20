@@ -790,9 +790,9 @@ watch(showModal, (newValue) => {
 
 watch(allProducts, (newProducts) => {
     if (newProducts && newProducts.length > 0) {
-        console.log(`📦 Loaded ${newProducts.length} products for purchase order form`);
+        // Produk berhasil dimuat untuk form purchase order
     } else {
-        console.log('📦 No products loaded yet');
+        // Belum ada produk yang dimuat
     }
 })
 
@@ -1128,10 +1128,6 @@ const calculateSubtotal = (index) => {
 const onWarehouseChange = async (index) => {
     if (!form.value || !form.value.purchaseOrderItems) return;
     const item = form.value.purchaseOrderItems[index];
-    
-    // Warehouse dipilih hanya untuk informasi, tidak mempengaruhi daftar produk
-    // Semua produk tetap tersedia untuk dipilih
-    console.log(`Warehouse ${item.warehouseId} dipilih untuk item ${index}, tetapi semua produk tetap tersedia`);
     
     // Force re-render untuk memastikan UI terupdate
     await nextTick();

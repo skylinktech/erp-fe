@@ -640,12 +640,12 @@
   // Untuk debugging Chart component
   import { onMounted as onMountedVue } from 'vue'
 
-  definePageMeta({
-    layout: 'default',
-    middleware: 'auth',
-    title: 'Dashboard',
-    description: 'Dashboard',
-    keywords: 'Dashboard, Kainnova Digital Solutions',
+definePageMeta({
+  layout: 'default',
+  middleware: 'auth',
+  title: 'Dashboard',
+  description: 'Dashboard',
+  keywords: 'Dashboard, Kainnova Digital Solutions',
     author: 'Kainnova Digital Solutions',
     robots: 'index, follow',
     viewport: 'width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0'
@@ -763,8 +763,12 @@
   const interval = ref(null)
 
   onMounted(async () => {
+    // Pastikan user data ter-load terlebih dahulu
+    await userStore.ensureUserLoaded();
     
-    userStore.loadUser();
+    // Refresh cache jika diperlukan
+    await userStore.refreshCacheIfNeeded();
+    
     await salesOrderStore.fetchStats();
     
     await dashboardStore.fetchAssociationRules();

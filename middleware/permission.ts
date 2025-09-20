@@ -11,24 +11,11 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
     const { useUserStore } = await import('~/stores/user')
     const userStore = useUserStore()
     
-    // Load user data jika belum ada
-    if (!userStore.user) {
-      await userStore.loadUser()
-    }
-
-    // Pastikan user data sudah ter-load dengan menunggu loading selesai
-    if (userStore.loading) {
-      // Tunggu hingga loading selesai
-      await new Promise(resolve => {
-        const checkLoading = () => {
-          if (!userStore.loading) {
-            resolve(true)
-          } else {
-            setTimeout(checkLoading, 10)
-          }
-        }
-        checkLoading()
-      })
+    // Pastikan user data sudah ter-load menggunakan method yang robust
+    const user = await userStore.ensureUserLoaded()
+    
+    if (!user) {
+      return navigateTo('/errors/401')
     }
 
     // Cek apakah user adalah superadmin
@@ -53,7 +40,6 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
 
   } catch (error) {
     console.error('Error checking permissions:', error)
-    // Jika ada error, redirect ke 403 untuk keamanan
     return navigateTo('/errors/403')
   }
 })

@@ -301,8 +301,6 @@ export const useVendorStore = defineStore('vendor', {
       try {
         const token = localStorage.getItem('token');
         
-        console.log('🌍 Fetching ALL vendors for dropdown...');
-        
         const response = await fetch($api.dataVendor(), {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -313,7 +311,7 @@ export const useVendorStore = defineStore('vendor', {
         if (response.ok) {
           const result = await response.json();
           this.vendors = result || [];
-          console.log(`👥 Fetched ${this.vendors.length} vendors for dropdown`);
+          // Fetched ${this.vendors.length} vendors for dropdown
           return this.vendors;
         } else {
           throw new Error('Gagal memuat semua vendor');

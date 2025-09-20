@@ -2,33 +2,48 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   // Hanya jalankan di client side
   if (typeof window === 'undefined') return
   
-  if (!localStorage.getItem('token')) {
+  // Tunggu sebentar untuk memastikan plugin sudah selesai
+  await new Promise(resolve => setTimeout(resolve, 100))
+  
+  const token = localStorage.getItem('token')
+  if (!token) {
     setTimeout(() => {
       document.querySelectorAll('.layout-wrapper, .layout-content-navbar').forEach(el => el.remove())
     }, 0)
     return navigateTo('/errors/401')
   }
 
-  // Cek validitas token ke backend
   try {
-    const token = localStorage.getItem('token')
-    const { $api } = useNuxtApp()
+    const { useUserStore } = await import('~/stores/user')
+    const userStore = useUserStore()
     
-    const response = await fetch($api.me(), {
-      headers: { 
-        Authorization: `Bearer ${token}`,
-        'Accept': 'application/json'
-      },
-      credentials: 'include',
-    })
+    // Pastikan user data ter-load dengan robust method
+    const user = await userStore.ensureUserLoaded()
     
-    if (!response.ok) {
-      throw new Error('Token tidak valid')
+    if (!user) {
+      localStorage.removeItem('token')
+      setTimeout(() => {
+        document.querySelectorAll('.layout-wrapper, .layout-content-navbar').forEach(el => el.remove())
+      }, 0)
+      return navigateTo('/errors/401')
     }
+    
   } catch (e) {
-    // Jangan tampilkan notifikasi error untuk validasi token
-    // Ini adalah proses normal untuk user yang tidak memiliki permission
-    console.warn('Token validation failed:', e)
+    // Jika error karena timeout atau loading, coba sekali lagi
+    if (e.message?.includes('Timeout') || e.message?.includes('loading')) {
+      try {
+        const { useUserStore } = await import('~/stores/user')
+        const userStore = useUserStore()
+        
+        const user = await userStore.ensureUserLoaded()
+        if (user) {
+          return
+        }
+      } catch (retryError) {
+        // Ignore retry error
+      }
+    }
+    
     localStorage.removeItem('token')
     setTimeout(() => {
       document.querySelectorAll('.layout-wrapper, .layout-content-navbar').forEach(el => el.remove())

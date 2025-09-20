@@ -759,9 +759,8 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
             // Jika warehouseId dipilih, tambahkan filter warehouse
             if (warehouseId) {
                 url += `&warehouseId=${warehouseId}`;
-                console.log('🏭 Fetching products for specific warehouse:', warehouseId);
             } else {
-                console.log('🌍 Fetching ALL products (no warehouse filter)');
+                // Fetch ALL products (no warehouse filter)
             }
             
             const response = await fetch(url, {
@@ -774,7 +773,6 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
             if (response.ok) {
                 const result = await response.json();
                 const products = result.data || [];
-                console.log(`📦 Fetched ${products.length} products${warehouseId ? ` for warehouse ${warehouseId}` : ' (all products)'}`);
                 return products;
             } else {
                 throw new Error(warehouseId ? 'Gagal memuat data produk untuk gudang ini' : 'Gagal memuat data produk');
@@ -798,8 +796,6 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
             const { $api } = useNuxtApp();
             const token = localStorage.getItem('token');
             
-            console.log('🌍 Fetching ALL products for purchase order...');
-            
             const response = await fetch(`${$api.product()}?includeStocks=true&rows=10000`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -810,7 +806,6 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
             if (response.ok) {
                 const result = await response.json();
                 const products = result.data || [];
-                console.log(`📦 Fetched ${products.length} products for purchase order`);
                 return products;
             } else {
                 throw new Error('Gagal memuat semua produk');
