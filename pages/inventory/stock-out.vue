@@ -157,7 +157,7 @@
                                                         <i class="ri-upload-2-line me-2"></i> Post
                                                     </a>
                                                 </li>
-                                                <li v-if="userHasRole('superadmin') || (userHasPermission('view_stock_out') && slotProps.data.status == 'posted')">
+                                                <li v-if="userHasRole('superadmin') || userHasPermission('show_stock_out')">
                                                     <a class="dropdown-item" href="javascript:void(0)" @click="viewStockOutDetails(slotProps.data.id)">
                                                         <i class="ri-eye-line me-2"></i> Lihat Detail
                                                     </a>
