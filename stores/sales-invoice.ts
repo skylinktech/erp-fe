@@ -65,6 +65,7 @@ export interface SalesInvoice {
   attachment?     : string
   customerId      : number
   salesOrderId?   : string
+  perusahaanId?   : number
   createdAt       : string
   updatedAt       : string
   customer?       : Customer
@@ -203,6 +204,8 @@ export const useSalesInvoiceStore = defineStore('salesInvoice', {
         attachment      : null,
         customerId     : null,
         salesOrderId   : null,
+        perusahaanId   : null,
+        cabangId       : null,
         salesInvoiceItems: [],
     },
     isEditMode      : false,
@@ -357,6 +360,12 @@ export const useSalesInvoiceStore = defineStore('salesInvoice', {
             // Add basic fields
             formData.append('customerId', this.form.customerId?.toString() || '');
             formData.append('salesOrderId', this.form.salesOrderId?.toString() || '');
+            if (this.form.perusahaanId !== undefined && this.form.perusahaanId !== null) {
+              formData.append('perusahaanId', this.form.perusahaanId?.toString());
+            }
+            if (this.form.cabangId !== undefined && this.form.cabangId !== null) {
+              formData.append('cabangId', this.form.cabangId?.toString());
+            }
             formData.append('up', this.form.up || '');
             formData.append('email', this.form.email || '');
             formData.append('date', this.form.date || '');
@@ -577,6 +586,8 @@ export const useSalesInvoiceStore = defineStore('salesInvoice', {
         noInvoice: '',
         customerId: null,
         salesOrderId: null,
+        perusahaanId: null,
+        cabangId: null,
         up: '',
         email: '',
         date: new Date().toISOString().split('T')[0],

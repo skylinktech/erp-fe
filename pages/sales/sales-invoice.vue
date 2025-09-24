@@ -345,7 +345,7 @@
                                             :loading="loading"
                                         >
                                             <template #option="{ option }">
-                                                <div class="d-flex justify-content-between align-items-center w-100">
+                                                <div v-if="option" class="d-flex justify-content-between align-items-center w-100">
                                                     <div>
                                                         <div class="fw-bold">{{ option.noSo }}</div>
                                                         <small class="text-muted">{{ option.customer?.name || 'No Customer' }}</small>
@@ -356,7 +356,7 @@
                                                 </div>
                                             </template>
                                             <template #selection="{ option }">
-                                                <div class="d-flex align-items-center">
+                                                <div v-if="option" class="d-flex align-items-center">
                                                     <span class="fw-bold text-primary">{{ option.noSo }}</span>
                                                     <span class="text-muted ms-2">- {{ option.customer?.name || 'No Customer' }}</span>
                                                 </div>
@@ -378,7 +378,7 @@
                                             :disabled="!!form.salesOrderId"
                                         >
                                             <template #option="{ option }">
-                                                <div class="d-flex justify-content-between align-items-center w-100">
+                                                <div v-if="option" class="d-flex justify-content-between align-items-center w-100">
                                                     <div>
                                                         <div class="fw-bold">{{ option.name }}</div>
                                                         <small class="text-muted">{{ option.email || 'No Email' }}</small>
@@ -389,7 +389,7 @@
                                                 </div>
                                             </template>
                                             <template #selection="{ option }">
-                                                <div class="d-flex align-items-center">
+                                                <div v-if="option" class="d-flex align-items-center">
                                                     <span class="fw-bold">{{ option.name }}</span>
                                                 </div>
                                             </template>
@@ -399,6 +399,64 @@
                                         </div>
                                         <div v-if="form.salesOrderId" class="form-text mt-1">
                                             <small class="text-muted">📋 Customer diambil dari Sales Order yang dipilih</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <CustomSelect2 
+                                            v-model="form.perusahaanId" 
+                                            :options="perusahaanOptions" 
+                                            :get-option-label="p => p.nmPerusahaan" 
+                                            :reduce="p => p.id" 
+                                            placeholder="Pilih Perusahaan"
+                                            searchable
+                                            clearable
+                                            :disabled="!!form.salesOrderId"
+                                        >
+                                            <template #option="{ option }">
+                                                <div v-if="option" class="d-flex justify-content-between align-items-center w-100">
+                                                    <div>
+                                                        <div class="fw-bold">{{ option.nmPerusahaan }}</div>
+                                                        <small class="text-muted">{{ option.kodePerusahaan || '-' }}</small>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                            <template #selection="{ option }">
+                                                <div v-if="option" class="d-flex align-items-center">
+                                                    <span class="fw-bold">{{ option.nmPerusahaan }}</span>
+                                                </div>
+                                            </template>
+                                        </CustomSelect2>
+                                        <div v-if="form.salesOrderId" class="form-text mt-1">
+                                            <small class="text-muted">📋 Perusahaan diambil dari Sales Order</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <CustomSelect2 
+                                            v-model="form.cabangId" 
+                                            :options="cabangOptions" 
+                                            :get-option-label="c => c.nmCabang" 
+                                            :reduce="c => c.id" 
+                                            placeholder="Pilih Cabang"
+                                            searchable
+                                            clearable
+                                            :disabled="!!form.salesOrderId || !form.perusahaanId"
+                                        >
+                                            <template #option="{ option }">
+                                                <div v-if="option" class="d-flex justify-content-between align-items-center w-100">
+                                                    <div>
+                                                        <div class="fw-bold">{{ option.nmCabang }}</div>
+                                                        <small class="text-muted">ID: {{ option.id }}</small>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                            <template #selection="{ option }">
+                                                <div v-if="option" class="d-flex align-items-center">
+                                                    <span class="fw-bold">{{ option.nmCabang }}</span>
+                                                </div>
+                                            </template>
+                                        </CustomSelect2>
+                                        <div v-if="form.salesOrderId" class="form-text mt-1">
+                                            <small class="text-muted">📋 Cabang diambil dari Sales Order</small>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
@@ -668,7 +726,7 @@
                                                 @update:modelValue="onProductChange(index)"
                                             >
                                                 <template #option="{ option }">
-                                                    <div class="d-flex justify-content-between align-items-center w-100">
+                                                    <div v-if="option" class="d-flex justify-content-between align-items-center w-100">
                                                         <div>
                                                             <div class="fw-bold">{{ option.name }}</div>
                                                             <small class="text-muted">{{ option.sku }} - {{ option.unit?.name || 'No Unit' }}</small>
@@ -679,7 +737,7 @@
                                                     </div>
                                                 </template>
                                                 <template #selection="{ option }">
-                                                    <div class="d-flex align-items-center">
+                                                    <div v-if="option" class="d-flex align-items-center">
                                                         <span class="fw-bold">{{ option.name }}</span>
                                                         <span class="text-muted ms-2">({{ option.unit?.name || 'No Unit' }})</span>
                                                     </div>
@@ -699,7 +757,7 @@
                                                 @update:modelValue="updateStockInfo(index)"
                                             >
                                                 <template #option="{ option }">
-                                                    <div class="d-flex justify-content-between align-items-center w-100">
+                                                    <div v-if="option" class="d-flex justify-content-between align-items-center w-100">
                                                         <div>
                                                             <div class="fw-bold">{{ option.name }}</div>
                                                             <small class="text-muted">{{ option.code }}</small>
@@ -710,7 +768,7 @@
                                                     </div>
                                                 </template>
                                                 <template #selection="{ option }">
-                                                    <div class="d-flex align-items-center">
+                                                    <div v-if="option" class="d-flex align-items-center">
                                                         <span class="fw-bold">{{ option.name }}</span>
                                                         <span class="text-muted ms-2">({{ option.code }})</span>
                                                     </div>
@@ -833,6 +891,8 @@ const { salesInvoices, loading, totalRecords, params, form, isEditMode, showModa
 const { customers }   = storeToRefs(customerStore)
 const { salesOrders, customerProducts } = storeToRefs(salesOrderStore)
 const { warehouses }  = storeToRefs(warehouseStore)
+const { perusahaans } = storeToRefs(perusahaanStore)
+const { cabangs }     = storeToRefs(cabangStore)
 
 // Table Controls
 const tableControls = ref({
@@ -849,6 +909,14 @@ const filters = ref({
 });
 const globalFilterValue = ref('');
 const attachmentPreview = ref(null);
+
+// Data Perusahaan & Cabang (untuk select) mengikuti pola purchase-invoice
+const perusahaanOptions = computed(() => perusahaans.value || [])
+const filteredCabangs = computed(() => {
+  if (!form.value.perusahaanId || !cabangs.value) return []
+  return cabangs.value.filter((c) => Number(c.perusahaanId) === Number(form.value.perusahaanId))
+})
+const cabangOptions = computed(() => filteredCabangs.value)
 
 // Flag untuk mencegah recursive watcher updates
 const isUpdatingFromWatcher = ref(false);
@@ -1058,6 +1126,8 @@ onMounted(() => {
     salesInvoiceStore.fetchSalesInvoices();
     salesInvoiceStore.fetchInvoiceStatistics();
     customerStore.fetchCustomers();
+    perusahaanStore.fetchPerusahaans();
+    cabangStore.fetchCabangs();
     salesOrderStore.fetchSalesOrders();
     warehouseStore.fetchWarehouses();
     permissionStore.fetchPermissions();
@@ -1100,10 +1170,8 @@ watch(showModal, (newValue) => {
 })
 
 watch(() => form.value.perusahaanId, (newPerusahaanId) => {
-    if (newPerusahaanId) {
-        if(!isEditMode.value) {
-            form.value.cabangId = null;
-        }
+    if (newPerusahaanId && !isEditMode.value) {
+        form.value.cabangId = null;
     }
 });
 
@@ -1126,7 +1194,7 @@ watch(() => form.value.salesOrderId, (newSalesOrderId, oldSalesOrderId) => {
         form.value.perusahaanId = selectedSalesOrder.perusahaanId;
       }
       if (selectedSalesOrder.cabangId) {
-        form.value.cabangId = selectedSalesOrder.cabangId;
+        form.value.cabangId = Number(selectedSalesOrder.cabangId);
       }
       
       // Auto fill tanggal jika belum ada
@@ -1228,6 +1296,9 @@ watch(() => form.value.salesOrderId, (newSalesOrderId, oldSalesOrderId) => {
       form.value.dpp = 0;
       form.value.paidAmount = 0;
       form.value.status = 'unpaid';
+      form.value.perusahaanId = null;
+      form.value.cabangId = null;
+      cabangOptions.value = [];
       // Clear sales invoice items
       if (!form.value.salesInvoiceItems) {
         form.value.salesInvoiceItems = [];

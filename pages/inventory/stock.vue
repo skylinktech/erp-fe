@@ -114,8 +114,10 @@
                                             <img 
                                                 :src="getProductImage(slotProps.data.product.image)" 
                                                 alt="Gambar Produk" 
-                                                style="height: 40px; max-width: 80px; object-fit: contain;" 
+                                                style="height: 40px; max-width: 80px; object-fit: contain; cursor: pointer;" 
                                                 @error="(e) => handleImageError(e, '/img/default-product-image.png')"
+                                                @click="openImageInNewTab(slotProps.data.product.image)"
+                                                title="Klik untuk melihat gambar lengkap"
                                             />
                                         </div>
                                         <div v-else>
@@ -354,6 +356,17 @@ const exportData = async (format) => {
 const viewStockInDetails = (stockInId) => {
     const url = `${$api.getStockInDetails(stockInId)}`;
     window.open(url, '__blank');
+};
+
+// Buka gambar produk di tab baru (mengikuti pendekatan di halaman product)
+const openImageInNewTab = (imagePath) => {
+    if (!imagePath) return;
+    const fullUrl = getProductImage(imagePath);
+    try {
+        window.open(fullUrl, '_blank', 'noopener');
+    } catch (e) {
+        console.error('Gagal membuka gambar di tab baru:', e);
+    }
 };
 
 const deleteStock = async (id) => {
