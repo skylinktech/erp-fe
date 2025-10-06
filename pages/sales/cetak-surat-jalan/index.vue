@@ -51,27 +51,27 @@
           <table style="font-size: 12px; width: 100%;">
             <tr>
               <td style="text-align: right;">No. Surat Jalan</td>
-              <td style="width: 20px;">:</td>
+              <td style="width: 40px; text-align: center;">:</td>
               <td style="width: 40%;">{{ suratJalan.noSuratJalan }}</td>
             </tr>
             <tr>
-              <td style="text-align: right;">Alamat Pengiriman</td>
-              <td style="width: 20px;">:</td>
+              <td style="text-align: right; vertical-align: top;">Alamat Pengiriman</td>
+              <td style="width: 40px; text-align: center; vertical-align: top;">:</td>
               <td style="width: 40%;">{{ suratJalan.alamatPengiriman || '-' }}</td>
             </tr>
             <tr>
               <td style="text-align: right;">Tanggal</td>
-              <td style="width: 20px;">:</td>
+              <td style="width: 40px; text-align: center;">:</td>
               <td style="width: 40%;">{{ new Date(suratJalan.date).toLocaleDateString('id-ID') }}</td>
             </tr>
             <tr>
               <td style="text-align: right;">No. Purchase Order</td>
-              <td style="width: 20px;">:</td>
+              <td style="width: 40px; text-align: center;">:</td>
               <td style="width: 40%;">{{ suratJalan.salesOrder.noPo || '-' }}</td>
             </tr>
             <tr>
               <td style="text-align: right;">PIC</td>
-              <td style="width: 20px;">:</td>
+              <td style="width: 40px; text-align: center;">:</td>
               <td style="width: 40%;">{{ suratJalan.picName || '-' }}</td>
             </tr>
           </table>
