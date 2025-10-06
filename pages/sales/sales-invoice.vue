@@ -919,7 +919,6 @@ const filteredCabangs = computed(() => {
 const cabangOptions = computed(() => {
   // ✅ FIX: Pastikan cabangOptions selalu reactive terhadap perubahan perusahaanId
   const filtered = filteredCabangs.value;
-  console.log('🔍 cabangOptions computed - perusahaanId:', form.value.perusahaanId, 'filtered cabangs:', filtered.length);
   return filtered;
 })
 
@@ -1207,7 +1206,6 @@ watch(() => form.value.salesOrderId, async (newSalesOrderId, oldSalesOrderId) =>
         // Set cabangId setelah cabangOptions sudah ter-update
         if (selectedSalesOrder.cabangId) {
           form.value.cabangId = Number(selectedSalesOrder.cabangId);
-          console.log('🔍 Auto-filled cabangId:', form.value.cabangId, 'from sales order:', selectedSalesOrder.cabangId);
         }
       }
       
@@ -1295,7 +1293,6 @@ watch(() => form.value.salesOrderId, async (newSalesOrderId, oldSalesOrderId) =>
           }
           })
           .catch((error) => {
-            console.error('❌ Error fetching sales order details for auto fill:', error);
             // Fallback: create empty items array
             form.value.salesInvoiceItems = [];
           });
@@ -1510,7 +1507,6 @@ const exportData = (format) => {
                 }
             })
             .catch((error) => {
-                console.error('Error exporting Excel:', error);
                 toast.error({
                     title: 'Error',
                     message: 'Gagal membuat Excel',
@@ -1558,7 +1554,6 @@ const exportData = (format) => {
                 }
             })
             .catch((error) => {
-                console.error('Error exporting PDF:', error);
                 toast.error({
                     title: 'Error',
                     message: 'Gagal membuat PDF',
@@ -1620,7 +1615,6 @@ const updateStockInfo = (index) => {
         item.stock = { quantity: 0 };
       }
     }).catch((error) => {
-      console.error('Failed to fetch stock info:', error);
       item.stock = { quantity: 0 };
     });
   } else {
@@ -1686,7 +1680,6 @@ const updatePaidAmountFromInput = (event) => {
 const viewSalesInvoiceDetails = (salesInvoiceId) => {
     
     if (!salesInvoiceId) {
-        console.error('❌ Page Debug - No salesInvoiceId provided');
         toast.fire({
             icon: 'error',
             title: 'Parameter Tidak Valid',
@@ -1711,7 +1704,6 @@ const getStatusBadge = (status) => {
 const printSalesInvoice = (salesInvoiceId) => {
     
     if (!salesInvoiceId) {
-        console.error('❌ Page Debug - No salesInvoiceId provided');
         toast.fire({
             icon: 'error',
             title: 'Parameter Tidak Valid',
@@ -1761,7 +1753,6 @@ const exportSalesInvoicePDF = (dataToExport) => {
     const head = [columnDefinitions.map(col => col.header)];
 
     if (!dataToExport || dataToExport.length === 0) {
-        console.warn('Tidak ada data untuk diexport');
         const doc = new jsPDF('landscape');
         doc.setFontSize(16);
         doc.text('Laporan Sales Invoices', 14, 15);
@@ -2065,7 +2056,6 @@ const exportSalesInvoiceExcel = (dataToExport) => {
         ];
 
         if (!dataToExport || dataToExport.length === 0) {
-            console.warn('Tidak ada data untuk diexport');
             return;
         }
 

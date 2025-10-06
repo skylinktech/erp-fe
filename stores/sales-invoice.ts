@@ -261,7 +261,6 @@ export const useSalesInvoiceStore = defineStore('salesInvoice', {
         this.salesInvoices = result.data
         this.totalRecords = result.meta.total
       } catch (e: any) {
-        console.error('Gagal mengambil data salesInvoice:', e)
         this.error = e
         toast.error({
           title: 'Error',
@@ -299,7 +298,6 @@ export const useSalesInvoiceStore = defineStore('salesInvoice', {
         const result = await response.json();
         this.statistics = result.data;
       } catch (e: any) {
-        console.error('Gagal mengambil statistik invoice:', e);
         this.error = e;
         toast.error({
           title: 'Error',
@@ -333,7 +331,6 @@ export const useSalesInvoiceStore = defineStore('salesInvoice', {
           throw new Error('Struktur data tidak valid diterima dari API.')
         }
       } catch (error) {
-        console.error('Error fetching sales invoice:', error)
         toast.error({
           title: 'Error',
           message: 'Gagal memuat data sales invoice.',
@@ -652,17 +649,9 @@ export const useSalesInvoiceStore = defineStore('salesInvoice', {
         if (resData && resData.data) {
           this.selectedSalesInvoice = resData.data;
         } else {
-          console.error('❌ Store Debug - Invalid response structure:', resData);
           throw new Error('Struktur data tidak valid diterima dari API.');
         }
       } catch (e: any) {
-        console.error('❌ Store Debug - fetchSalesInvoiceById Error details:', {
-          message: e.message,
-          status: e.status,
-          statusText: e.statusText,
-          data: e.data,
-          response: e.response
-        });
         
         this.error = e;
         
@@ -711,17 +700,9 @@ export const useSalesInvoiceStore = defineStore('salesInvoice', {
           this.salesInvoice = resData.data;
           return resData.data;
         } else {
-          console.error('❌ Store Debug - Invalid response structure:', resData);
           throw new Error('Struktur data tidak valid diterima dari API.');
         }
       } catch (e: any) {
-        console.error('❌ Store Debug - fetchInvoiceDetailWithItems Error details:', {
-          message: e.message,
-          status: e.status,
-          statusText: e.statusText,
-          data: e.data,
-          response: e.response
-        });
         
         this.error = e;
         
@@ -795,7 +776,6 @@ export const useSalesInvoiceStore = defineStore('salesInvoice', {
             const result = await response.json();
             return Array.isArray(result.data) ? result.data : [];
         } catch (error) {
-            console.error('Error fetching all sales invoices for export:', error);
             toast.error({
                 title: 'Error',
                 message: 'Gagal mengambil data untuk export',

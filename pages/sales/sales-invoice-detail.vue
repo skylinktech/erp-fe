@@ -338,7 +338,6 @@ const formatDate = (dateString) => {
 // ✅ ACTION METHODS
 const printSalesInvoice = (id) => {
   if (!id) {
-    console.error('❌ No salesInvoiceId provided for printing')
     Swal.fire({
       icon: 'error',
       title: 'Parameter Tidak Valid',
@@ -390,7 +389,6 @@ async function fetchInvoiceDetails() {
     try {
       await salesInvoiceStore.fetchInvoiceDetailWithItems(invoiceIdToFetch)
     } catch (error) {
-      console.error('❌ Failed to fetch invoice details:', error)
       Swal.fire({
         icon: 'error',
         title: 'Gagal Memuat Data',
@@ -399,7 +397,6 @@ async function fetchInvoiceDetails() {
       })
     }
   } else {
-    console.error('❌ Invalid invoiceId:', invoiceIdToFetch)
     Swal.fire({
       icon: 'error',
       title: 'Parameter Tidak Valid',
