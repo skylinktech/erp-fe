@@ -408,10 +408,8 @@ const postAllSelectedStockIn = async () => {
     if (result.isConfirmed) {
         try {
             loading.value = true;
-            console.log('Starting post all selected stock in...', selectedStockIns.value.map(item => item.id));
             
             const result = await stockInStore.postAllSelectedStockIn(selectedStockIns.value.map(item => item.id));
-            console.log('Post all result:', result);
             
             // Validasi response
             if (!result) {
@@ -458,15 +456,10 @@ const postAllSelectedStockIn = async () => {
                 errorMessage = error.message || error.error || JSON.stringify(error);
             }
             
-            console.error('Final error message:', errorMessage);
+            
             toast.error(errorMessage);
             
-            // Tampilkan error detail di console untuk debugging
-            console.group('Error Details');
-            console.error('Error object:', error);
-            console.error('Error type:', typeof error);
-            console.error('Error constructor:', error?.constructor?.name);
-            console.groupEnd();
+            
             
         } finally {
             loading.value = false;

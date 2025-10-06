@@ -42,7 +42,7 @@ export const useImageUrl = () => {
     const cleanPath = path.startsWith('/') ? path.substring(1) : path
     const fullUrl = `${baseUrl}/${cleanPath}`
     
-    console.log('Generated image URL:', fullUrl, 'from path:', path)
+    
     return fullUrl
   }
 
@@ -217,24 +217,14 @@ export const useImageUrl = () => {
    * Debug image URL generation
    */
   const debugImageUrl = (path: string | null | undefined) => {
-    console.group('🔍 Image URL Debug')
-    console.log('Input path:', path)
-    console.log('Config apiBase:', config.public.apiBase)
-    console.log('Config storageBase:', config.public.storageBase)
-    console.log('Config storageDriver:', config.public.storageDriver)
     
     if (path) {
       const generatedUrl = getImageUrl(path)
-      console.log('Generated URL:', generatedUrl)
       
       // Test URL accessibility
-      testImageUrl(generatedUrl).then(isAccessible => {
-        console.log('URL accessible:', isAccessible)
-        console.groupEnd()
-      })
+      testImageUrl(generatedUrl).then(() => {})
     } else {
-      console.log('No path provided')
-      console.groupEnd()
+      
     }
   }
 

@@ -307,10 +307,8 @@ const postAllSelectedStockOut = async () => {
     if (result.isConfirmed) {
         try {
             loading.value = true;
-            console.log('Starting post all selected stock out...', selectedStockOuts.value.map(item => item.id));
             
             const result = await stockOutStore.postAllStockOut(selectedStockOuts.value.map(item => item.id));
-            console.log('Post all result:', result);
             
             // Validasi response
             if (!result) {
@@ -357,19 +355,14 @@ const postAllSelectedStockOut = async () => {
                 errorMessage = error.message || error.error || JSON.stringify(error);
             }
             
-            console.error('Final error message:', errorMessage);
+            
             toast.error({
                 title: 'Error',
                 message: errorMessage,
                 color: 'red'
             });
             
-            // Tampilkan error detail di console untuk debugging
-            console.group('Error Details');
-            console.error('Error object:', error);
-            console.error('Error type:', typeof error);
-            console.error('Error constructor:', error?.constructor?.name);
-            console.groupEnd();
+            
             
         } finally {
             loading.value = false;

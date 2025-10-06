@@ -419,18 +419,7 @@
             // 3) Fallback dari store lokal (jika ada data yang sudah ter-cache)
             const localMatches = []
             try {
-                // Debug: Log store data untuk troubleshooting
-                console.log('Store data lengths:')
-                console.log('- Customers:', customerLocalStore?.customers?.length || 0)
-                console.log('- Products:', productLocalStore?.products?.length || 0)
-                console.log('- Accounts:', accountLocalStore?.accounts?.length || 0)
-                console.log('- Roles:', roleLocalStore?.roles?.length || 0)
-                console.log('- Sales Orders:', salesOrderLocalStore?.salesOrders?.length || 0)
-                console.log('- Purchase Orders:', purchaseOrderLocalStore?.purchaseOrders?.length || 0)
-                console.log('- Sales Returns:', salesReturnLocalStore?.salesReturns?.length || 0)
-                console.log('- Surat Jalans:', suratJalanLocalStore?.suratJalans?.length || 0)
-                console.log('- Quotations:', quotationLocalStore?.quotations?.length || 0)
-                console.log('- Vendors:', vendorLocalStore?.vendors?.length || 0)
+                
                 
                 if (Array.isArray(customerLocalStore?.customers) && customerLocalStore.customers.length) {
                     const filtered = customerLocalStore.customers
@@ -630,7 +619,7 @@
                 const category = result.category.split(' · ')[0] // Ambil kategori utama
                 categoryBreakdown[category] = (categoryBreakdown[category] || 0) + 1
             })
-            console.log('- Category breakdown:', categoryBreakdown)
+            
         } catch (error) {
             console.error('Error searching:', error)
             searchResults.value = []

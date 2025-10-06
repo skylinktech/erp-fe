@@ -632,7 +632,7 @@ const params = computed(() => apPaymentStore.params || {})
 
 // Vendor data
 const vendorOptions = computed(() => {
-  console.log('🔍 Vendor options computed:', apPaymentStore.vendors?.length || 0);
+  
   return apPaymentStore.vendors || [];
 })
 
@@ -729,7 +729,7 @@ const viewDetail = (payment) => {
 
 const exportData = () => {
   // Implement export functionality
-  console.log('Export data')
+  
 }
 
 const formatDate = (date) => {
@@ -801,11 +801,11 @@ watch(() => apPaymentStore.vendors, (newVendors) => {
 
 // ✅ NEW: Watcher untuk auto fill vendor ketika invoice dipilih
 watch(() => apPaymentStore.form.invoiceId, (newInvoiceId, oldInvoiceId) => {
-  console.log('🔍 Invoice watcher triggered:', { newInvoiceId, oldInvoiceId });
+  
   if (newInvoiceId && newInvoiceId !== oldInvoiceId) {
     // Pastikan data invoices sudah ter-load
     if (apPaymentStore.invoices.length === 0) {
-      console.log('⚠️ Invoices belum ter-load, fetching...');
+      
       apPaymentStore.fetchInvoices().then(() => {
         // Retry setelah data ter-load
         const selectedInvoice = apPaymentStore.invoices.find(invoice => invoice.id === newInvoiceId);
@@ -818,8 +818,7 @@ watch(() => apPaymentStore.form.invoiceId, (newInvoiceId, oldInvoiceId) => {
     
     // Cari invoice yang dipilih dari data invoices
     const selectedInvoice = apPaymentStore.invoices.find(invoice => invoice.id === newInvoiceId);
-    console.log('🔍 Available invoices:', apPaymentStore.invoices.length);
-    console.log('🔍 Selected invoice:', selectedInvoice);
+    
     
     if (selectedInvoice) {
       handleInvoiceSelection(selectedInvoice);
@@ -827,7 +826,7 @@ watch(() => apPaymentStore.form.invoiceId, (newInvoiceId, oldInvoiceId) => {
   } else if (!newInvoiceId && oldInvoiceId) {
     // Jika invoice di-clear, reset vendor hanya jika tidak dalam edit mode
     if (!apPaymentStore.isEditMode) {
-      console.log('🧾 Invoice di-clear, reset vendor');
+      
       apPaymentStore.form.vendorId = null;
       
       // Optional: Reset other fields yang di auto-fill dari invoice
@@ -840,15 +839,15 @@ watch(() => apPaymentStore.form.invoiceId, (newInvoiceId, oldInvoiceId) => {
 
 // Helper function untuk handle invoice selection
 const handleInvoiceSelection = (selectedInvoice) => {
-  console.log('🧾 Invoice dipilih:', selectedInvoice);
+  
       
   // Auto fill vendor dari invoice yang dipilih
   if (selectedInvoice.vendor && selectedInvoice.vendor.id) {
     apPaymentStore.form.vendorId = selectedInvoice.vendor.id;
-    console.log('👤 Auto fill vendor:', selectedInvoice.vendor.name);
+    
   } else if (selectedInvoice.vendorId) {
     apPaymentStore.form.vendorId = selectedInvoice.vendorId;
-    console.log('👤 Auto fill vendor ID:', selectedInvoice.vendorId);
+    
   }
 
   if (selectedInvoice.total && !apPaymentStore.form.amount) {

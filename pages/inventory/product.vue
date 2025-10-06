@@ -529,9 +529,6 @@ const exportData = async (format) => {
         } else if (format === 'excel') {
             // Ambil data dari API untuk export Excel
             const exportResult = await productStore.fetchProductsForExport();
-            console.log('Data from API for export:', exportResult);
-            console.log('Sample product data:', exportResult.data[0]);
-            console.log('Category in sample:', exportResult.data[0]?.category);
             myDataTableRef.value.exportExcel({
                 title: `Data Produk ${exportResult.nmPerusahaan}`,
                 data: exportResult.data

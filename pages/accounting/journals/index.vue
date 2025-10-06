@@ -554,12 +554,10 @@ const journalStatuses = computed(() => {
 })
 const accounts = computed(() => {
   const result = Array.isArray(journalStore.accounts) ? journalStore.accounts : []
-  console.log('Accounts computed:', result, 'Length:', result.length) // Debug log
   return result
 })
 const journals = computed(() => {
   const result = Array.isArray(journalStore.journals) ? journalStore.journals : []
-  console.log('Journals computed:', result, 'Length:', result.length, 'Loading:', journalStore.loading) // Debug log
   return result
 })
 

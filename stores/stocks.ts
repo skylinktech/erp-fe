@@ -154,6 +154,83 @@ export const useStocksStore = defineStore('stocks', {
     validationErrors: [],
   }),
   actions: {
+    openModal(data?: Partial<Stock>) {
+      this.validationErrors = []
+      if (data) {
+        this.isEditMode = true
+        this.form = {
+          id: (data as any).id,
+          productId: data.productId,
+          warehouseId: data.warehouseId,
+          quantity: data.quantity,
+          description: (data as any).description || ''
+        }
+      } else {
+        this.isEditMode = false
+        this.form = {
+          productId: undefined,
+          warehouseId: undefined,
+          quantity: 0,
+          description: ''
+        }
+      }
+      this.showModal = true
+    },
+
+    closeModal() {
+      this.showModal = false
+    },
+
+    async saveStock() {
+      const toast = useToast();
+      this.loading = true
+      this.validationErrors = []
+      try {
+        const { $api } = useNuxtApp()
+        const token = localStorage.getItem('token')
+
+        let url = $api.stock()
+        let method: 'POST' | 'PUT' = 'POST'
+        if (this.isEditMode && this.form.id) {
+          url = `${$api.stock()}/${this.form.id}`
+          method = 'PUT'
+        }
+
+        const response = await fetch(url, {
+          method,
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            productId: Number(this.form.productId),
+            warehouseId: Number(this.form.warehouseId),
+            quantity: Number(this.form.quantity),
+            description: this.form.description || ''
+          }),
+          credentials: 'include'
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ message: 'Gagal menyimpan stock' }))
+          if (errorData?.errors) {
+            this.validationErrors = Array.isArray(errorData.errors) ? errorData.errors : Object.values(errorData.errors).flat()
+          }
+          throw new Error(errorData.message || 'Gagal menyimpan stock')
+        }
+
+        this.closeModal()
+        await this.fetchStocksPaginated({ productId: this.params.productId, warehouseId: this.params.warehouseId })
+        await this.fetchStats()
+        toast.success({ title: 'Success', message: `Stock berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}`, color: 'green' })
+      } catch (error: any) {
+        toast.error({ title: 'Error', message: error.message || 'Operasi gagal', color: 'red' })
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
     async validateStockBatch(items: { productId: number, warehouseId: number, quantity: number }[]) {
         const { $api } = useNuxtApp();
         const token = localStorage.getItem('token');

@@ -117,7 +117,6 @@ export const useJournalStore = defineStore('journal', {
         }
 
         const result = await response.json()
-        console.log('Journal API Response:', result) // Debug log
         
         // Handle AdonisJS pagination structure
         if (result?.data && result.data?.data) {
@@ -158,7 +157,7 @@ export const useJournalStore = defineStore('journal', {
           search: '',
         });
         
-        console.log('Fetching accounts from:', `${$api.accounts()}?${params.toString()}`) // Debug log
+        
         const response = await fetch(`${$api.accounts()}?${params.toString()}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -168,13 +167,12 @@ export const useJournalStore = defineStore('journal', {
           credentials: 'include'
         });
 
-        console.log('Accounts API response status:', response.status) // Debug log
+        
         if (response.ok) {
           const result = await response.json()
-          console.log('Accounts API result:', result) // Debug log
+          
           // Backend mengembalikan { data: { data: [...], meta: {...} } }
           this.accounts = result?.data?.data || []
-          console.log('Accounts set to:', this.accounts) // Debug log
         } else {
           console.error('Accounts API error:', response.status, response.statusText)
         }
@@ -235,7 +233,7 @@ export const useJournalStore = defineStore('journal', {
         const totalDebit = this.form.journalLines.reduce((sum, line) => sum + (line.debit || 0), 0)
         const totalCredit = this.form.journalLines.reduce((sum, line) => sum + (line.credit || 0), 0)
         
-        console.log('Total Debit:', totalDebit, 'Total Credit:', totalCredit);
+        
         
         if (Math.abs(totalDebit - totalCredit) > 0.01) {
           const toast = useToast()
@@ -257,7 +255,6 @@ export const useJournalStore = defineStore('journal', {
           const value = this.form[key as keyof typeof this.form];
           if (value !== null && value !== undefined && value !== '') {
             formData.append(key, String(value));
-            console.log(`Added field ${key}:`, value);
           } else {
             console.warn(`Field ${key} is null, undefined, or empty`);
           }
@@ -267,7 +264,6 @@ export const useJournalStore = defineStore('journal', {
         const userStore = useUserStore()
         if (userStore.user && userStore.user.id) {
           const userId = Number(userStore.user.id); // Convert to number as expected by backend
-          console.log('User ID:', userId, 'Edit Mode:', this.isEditMode);
           
           if (this.isEditMode) {
             formData.append('updatedBy', String(userId));

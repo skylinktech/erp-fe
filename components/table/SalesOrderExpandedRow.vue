@@ -93,8 +93,7 @@ const props = defineProps({
 
 // Debug logging
 watch(() => props.salesOrder, (newSalesOrder) => {
-  console.log('🔍 SalesOrderExpandedRow - salesOrder data:', newSalesOrder)
-  console.log('🔍 SalesOrderExpandedRow - salesOrderItems:', newSalesOrder?.salesOrderItems)
+  
 }, { immediate: true, deep: true })
 
 // Composables

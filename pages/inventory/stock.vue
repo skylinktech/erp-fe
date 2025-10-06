@@ -62,6 +62,11 @@
                                 <Dropdown v-model="params.rows" :options="rowsPerPageOptionsArray" @change="stocksStore.handleRowsChange" placeholder="Jumlah" style="width: 8rem;" />
                             </div>
                             <div class="d-flex align-items-center">
+                                <div class="btn-group me-2" v-if="userHasRole('superadmin')">
+                                    <button class="btn btn-primary" type="button" @click="stocksStore.openModal()">
+                                        <i class="ri-add-line me-1"></i> Tambah
+                                    </button>
+                                </div>
                                 <div class="btn-group me-2">
                                     <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                         <i class="ri-upload-2-line me-1"></i> Export
@@ -165,6 +170,11 @@
                                             </a>
                                             <ul class="dropdown-menu">
                                                 <li>
+                                                    <a class="dropdown-item" href="javascript:void(0)" @click="stocksStore.openModal(slotProps.data)">
+                                                        <i class="ri-edit-box-line me-2"></i> Edit
+                                                    </a>
+                                                </li>
+                                                <li>
                                                     <a class="dropdown-item text-danger" href="javascript:void(0)" @click="deleteStock(slotProps.data.id)">
                                                         <i class="ri-delete-bin-7-line me-2"></i> Hapus
                                                     </a>
@@ -185,6 +195,58 @@
  
          <div class="content-backdrop fade"></div>
     </div>
+
+    <!-- Modal Tambah/Edit Stock -->
+    <Modal 
+        id="StockModal"
+        :title="isEditMode ? 'Edit Stock' : 'Tambah Stock'" 
+        :description="isEditMode ? 'Perbarui data stock.' : 'Isi form untuk menambahkan stock.'"
+        :validationErrorsFromParent="validationErrors"
+    >
+        <template #default>
+            <form @submit.prevent="stocksStore.saveStock()">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <label class="form-label">Produk</label>
+                        <CustomSelect2 
+                            v-model="form.productId" 
+                            :options="allProducts"
+                            :get-option-label="o => `${o.sku} - ${o.name}`"
+                            :reduce="o => o.id"
+                            searchable clearable
+                            placeholder="-- Pilih Produk --"
+                        />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Gudang</label>
+                        <CustomSelect2 
+                            v-model="form.warehouseId" 
+                            :options="warehouseList"
+                            :get-option-label="o => `${o.code} - ${o.name}`"
+                            :reduce="o => o.id"
+                            searchable clearable
+                            placeholder="-- Pilih Gudang --"
+                        />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Jumlah</label>
+                        <input type="number" class="form-control" v-model="form.quantity" min="0" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Deskripsi</label>
+                        <input type="text" class="form-control" v-model="form.description" placeholder="Opsional" />
+                    </div>
+                </div>
+                <div class="modal-footer mt-6">
+                    <button type="button" class="btn btn-outline-secondary" @click="stocksStore.closeModal()">Tutup</button>
+                    <button type="submit" class="btn btn-primary" :disabled="loading">
+                        <span v-if="loading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        Simpan
+                    </button>
+                </div>
+            </form>
+        </template>
+    </Modal>
 </template>
 
 <script setup>
@@ -192,6 +254,8 @@ import { ref, computed, onMounted, watch, onBeforeUnmount } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useUserStore } from '~/stores/user'
 import { useStocksStore } from '~/stores/stocks'
+import { useProductStore } from '~/stores/product'
+import { useWarehouseStore } from '~/stores/warehouse'
 import CardBox from '~/components/cards/Cards.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import { usePermissionsStore } from '~/stores/permissions'
@@ -199,6 +263,8 @@ import { usePermissions } from '~/composables/usePermissions'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import { useImageUrl } from '~/composables/useImageUrl'
 import Swal from 'sweetalert2'
+import Modal from '~/components/modal/Modal.vue'
+import CustomSelect2 from '~/components/CustomSelect2.vue'
 
 // Composables
 const { setListTitle, setFormTitle } = useDynamicTitle()
@@ -207,12 +273,16 @@ const toast = useToast()
 
 const { $api } = useNuxtApp()
 
-const myDataTableRef            = ref(null)
-const userStore                 = useUserStore()
-const stocksStore              = useStocksStore()
-const permissionStore           = usePermissionsStore()
-const { stocks, totalRecords, stats, params, loading } = storeToRefs(stocksStore)
-const globalFilterValue         = ref('');
+const myDataTableRef  = ref(null)
+const userStore       = useUserStore()
+const stocksStore     = useStocksStore()
+const productStore    = useProductStore()
+const warehouseStore  = useWarehouseStore()
+const permissionStore = usePermissionsStore()
+const { stocks, totalRecords, stats, params, loading, form, isEditMode, showModal, validationErrors } = storeToRefs(stocksStore)
+const { allProducts }   = storeToRefs(productStore)
+const { warehouseList } = storeToRefs(warehouseStore)
+const globalFilterValue = ref('');
 
 const { userHasPermission, userHasRole } = usePermissions();
 
@@ -245,13 +315,32 @@ const loadLazyData = async () => {
     }
 };
 
-onMounted(() => {
+onMounted(async () => {
     loadLazyData();
     stocksStore.fetchStats();
     permissionStore.fetchPermissions()
     userStore.loadUser()
     setListTitle('Stock', stocks.value.length)
+    // Muat opsi produk & gudang untuk select
+    await Promise.all([
+        productStore.fetchAllProducts(),
+        warehouseStore.fetchAllWarehouses(),
+    ])
 });
+
+// Modal bootstrap instance
+let modalInstance = null
+onMounted(() => {
+    const modalElement = document.getElementById('StockModal')
+    if (modalElement) {
+        // @ts-ignore
+        modalInstance = new bootstrap.Modal(modalElement)
+    }
+})
+
+watch(showModal, (newVal) => {
+    if (newVal) modalInstance?.show(); else modalInstance?.hide();
+})
 
 const exportData = async (format) => {
     try {
@@ -550,7 +639,7 @@ const exportStockPDF = async (dataToExport) => {
         }
     }
     if (filters.value.warehouseId) {
-        const warehouse = warehouses.value?.find(w => w.id === filters.value.warehouseId);
+        const warehouse = warehouseList.value?.find(w => w.id === filters.value.warehouseId);
         if (warehouse) {
             filterInfo.push(`Gudang: ${warehouse.name}`);
         }
@@ -696,7 +785,7 @@ const exportStockExcel = (dataToExport) => {
             }
         }
         if (filters.value.warehouseId) {
-            const warehouse = warehouses.value?.find(w => w.id === filters.value.warehouseId);
+            const warehouse = warehouseList.value?.find(w => w.id === filters.value.warehouseId);
             if (warehouse) {
                 filterInfo.push(`Gudang: ${warehouse.name}`);
             }

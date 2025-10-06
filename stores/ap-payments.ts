@@ -272,7 +272,7 @@ export const useAPPaymentStore = defineStore('apPayment', {
           } else {
             this.invoices = []
           }
-          console.log(`📄 Fetched ${this.invoices.length} invoices for dropdown`);
+          
         } else {
           const errorText = await response.text();
           console.error('Failed to fetch invoices:', response.status, response.statusText, errorText);
@@ -326,7 +326,7 @@ export const useAPPaymentStore = defineStore('apPayment', {
     },
 
     async savePayment() {
-      console.log('🔍 Frontend - Starting savePayment...')
+      
       this.loading = true
       this.validationErrors = [];
       const { $api } = useNuxtApp()
@@ -336,8 +336,7 @@ export const useAPPaymentStore = defineStore('apPayment', {
         const token = localStorage.getItem('token')
         const userStore = useUserStore()
         
-        console.log('🔍 Frontend - Token:', token ? 'Present' : 'Missing')
-        console.log('🔍 Frontend - Form data:', this.form)
+        
 
         const payload = {
           paymentNumber: this.form.paymentNumber,
@@ -350,7 +349,7 @@ export const useAPPaymentStore = defineStore('apPayment', {
           description: this.form.description
         };
         
-        console.log('🔍 Frontend - Payload yang dikirim:', payload)
+        
 
 
         let method = 'POST';
@@ -360,8 +359,7 @@ export const useAPPaymentStore = defineStore('apPayment', {
           method = 'PUT';
         }
         
-        console.log('🔍 Frontend - Request URL:', url)
-        console.log('🔍 Frontend - Request Method:', method)
+        
 
         const response = await fetch(url, {
           method: method,
@@ -374,13 +372,11 @@ export const useAPPaymentStore = defineStore('apPayment', {
           credentials: 'include',
         })
         
-        console.log('🔍 Frontend - Response status:', response.status)
-        console.log('🔍 Frontend - Response ok:', response.ok)
+        
 
         let result;
         try {
           result = await response.json();
-          console.log('🔍 Frontend - Response result:', result)
         } catch (parseError) {
           console.error('❌ Frontend - Failed to parse response as JSON:', parseError);
           throw new Error('Server response tidak valid');
@@ -536,7 +532,7 @@ export const useAPPaymentStore = defineStore('apPayment', {
     },
 
     openModal(payment?: APPayment) {
-      console.log('🔍 Frontend - Opening modal with payment:', payment)
+      
       this.isEditMode = !!payment;
       this.validationErrors = [];
       
@@ -555,7 +551,7 @@ export const useAPPaymentStore = defineStore('apPayment', {
         };
       }
       
-      console.log('🔍 Frontend - Form initialized:', this.form)
+      
       this.showModal = true;
       this.fetchVendors();
       this.fetchInvoices();
