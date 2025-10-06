@@ -916,7 +916,12 @@ const filteredCabangs = computed(() => {
   if (!form.value.perusahaanId || !cabangs.value) return []
   return cabangs.value.filter((c) => Number(c.perusahaanId) === Number(form.value.perusahaanId))
 })
-const cabangOptions = computed(() => filteredCabangs.value)
+const cabangOptions = computed(() => {
+  // ✅ FIX: Pastikan cabangOptions selalu reactive terhadap perubahan perusahaanId
+  const filtered = filteredCabangs.value;
+  console.log('🔍 cabangOptions computed - perusahaanId:', form.value.perusahaanId, 'filtered cabangs:', filtered.length);
+  return filtered;
+})
 
 // Flag untuk mencegah recursive watcher updates
 const isUpdatingFromWatcher = ref(false);
@@ -1169,18 +1174,21 @@ watch(showModal, (newValue) => {
     }
 })
 
-watch(() => form.value.perusahaanId, (newPerusahaanId) => {
-    if (newPerusahaanId && !isEditMode.value) {
+watch(() => form.value.perusahaanId, (newPerusahaanId, oldPerusahaanId) => {
+    // ✅ FIX: Reset cabangId ketika perusahaan berubah (kecuali saat autofill dari sales order)
+    if (newPerusahaanId !== oldPerusahaanId && !isUpdatingFromWatcher.value) {
         form.value.cabangId = null;
     }
 });
 
 // Watcher untuk salesOrderId - auto fill data ketika dipilih
-watch(() => form.value.salesOrderId, (newSalesOrderId, oldSalesOrderId) => {
+watch(() => form.value.salesOrderId, async (newSalesOrderId, oldSalesOrderId) => {
   if (newSalesOrderId && newSalesOrderId !== oldSalesOrderId) {
     const selectedSalesOrder = salesOrders.value?.find(so => so.id === newSalesOrderId);
     
     if (selectedSalesOrder) {
+      // ✅ FIX: Set flag untuk mencegah recursive updates
+      isUpdatingFromWatcher.value = true;
       
       // Auto fill data dari sales order yang dipilih
       form.value.customerId = selectedSalesOrder.customerId || selectedSalesOrder.customer?.id;
@@ -1189,13 +1197,23 @@ watch(() => form.value.salesOrderId, (newSalesOrderId, oldSalesOrderId) => {
       // ✅ FIX: Total dari SO sudah final (termasuk discount & PPN)
       form.value.total = Math.round(Number(selectedSalesOrder.total)) || 0;
       
-      // Jika ada data perusahaan dan cabang di sales order
+      // ✅ FIX: Set perusahaanId terlebih dahulu, tunggu computed property ter-update
       if (selectedSalesOrder.perusahaanId) {
         form.value.perusahaanId = selectedSalesOrder.perusahaanId;
+        
+        // Tunggu computed property cabangOptions ter-update
+        await nextTick();
+        
+        // Set cabangId setelah cabangOptions sudah ter-update
+        if (selectedSalesOrder.cabangId) {
+          form.value.cabangId = Number(selectedSalesOrder.cabangId);
+          console.log('🔍 Auto-filled cabangId:', form.value.cabangId, 'from sales order:', selectedSalesOrder.cabangId);
+        }
       }
-      if (selectedSalesOrder.cabangId) {
-        form.value.cabangId = Number(selectedSalesOrder.cabangId);
-      }
+      
+      // ✅ FIX: Reset flag setelah autofill selesai
+      await nextTick();
+      isUpdatingFromWatcher.value = false;
       
       // Auto fill tanggal jika belum ada
       if (!form.value.date && selectedSalesOrder.date) {
@@ -1287,6 +1305,9 @@ watch(() => form.value.salesOrderId, (newSalesOrderId, oldSalesOrderId) => {
   } else if (!newSalesOrderId && oldSalesOrderId) {
     // Jika sales order dihapus/di-clear, reset beberapa field ke kondisi manual
     
+    // ✅ FIX: Set flag untuk mencegah recursive updates
+    isUpdatingFromWatcher.value = true;
+    
     // Reset ke default values tapi tetap biarkan user bisa edit
     if (!isEditMode.value) {
       form.value.customerId = null;
@@ -1298,7 +1319,6 @@ watch(() => form.value.salesOrderId, (newSalesOrderId, oldSalesOrderId) => {
       form.value.status = 'unpaid';
       form.value.perusahaanId = null;
       form.value.cabangId = null;
-      cabangOptions.value = [];
       // Clear sales invoice items
       if (!form.value.salesInvoiceItems) {
         form.value.salesInvoiceItems = [];
@@ -1306,6 +1326,10 @@ watch(() => form.value.salesOrderId, (newSalesOrderId, oldSalesOrderId) => {
         form.value.salesInvoiceItems = [];
       }
     }
+    
+    // ✅ FIX: Reset flag setelah reset selesai
+    await nextTick();
+    isUpdatingFromWatcher.value = false;
   }
 });
 

@@ -7,8 +7,17 @@ export const useImageUrl = () => {
   const getImageUrl = (path: string | null | undefined, defaultImage: string = '/img/default-avatar.png') => {
     if (!path) return defaultImage
     
-    // Jika path sudah berupa full URL (S3), gunakan langsung
+    // Jika path sudah berupa full URL (GCS/S3), gunakan langsung
     if (path.startsWith('http')) {
+      // Untuk Google Cloud Storage, pastikan CORS headers
+      if (path.includes('storage.googleapis.com')) {
+        // Tambahkan timestamp untuk cache busting jika diperlukan
+        const url = new URL(path)
+        if (!url.searchParams.has('t')) {
+          url.searchParams.set('t', Date.now().toString())
+        }
+        return url.toString()
+      }
       return path
     }
     
@@ -141,7 +150,31 @@ export const useImageUrl = () => {
   const handleImageError = (event: Event, fallbackSrc: string = '/img/default-avatar.png') => {
     const target = event.target as HTMLImageElement
     if (target.src !== fallbackSrc) {
+      console.warn('Image failed to load:', target.src, 'falling back to:', fallbackSrc)
       target.src = fallbackSrc
+    }
+  }
+
+  /**
+   * Handle CORS error untuk Google Cloud Storage
+   */
+  const handleCorsError = (event: Event, originalSrc: string) => {
+    const target = event.target as HTMLImageElement
+    
+    // Jika error karena CORS, coba dengan proxy atau fallback
+    if (originalSrc.includes('storage.googleapis.com')) {
+      console.warn('CORS error untuk GCS image:', originalSrc)
+      
+      // Coba dengan mode no-cors atau gunakan fallback
+      target.crossOrigin = 'anonymous'
+      target.src = originalSrc + '?t=' + Date.now()
+      
+      // Jika masih error, gunakan fallback
+      setTimeout(() => {
+        if (target.naturalWidth === 0) {
+          target.src = '/img/default-product-image.png'
+        }
+      }, 1000)
     }
   }
 
@@ -215,6 +248,7 @@ export const useImageUrl = () => {
     getAttachmentUrl,
     getFileIcon,
     handleImageError,
+    handleCorsError,
     isS3Url,
     getFileExtension,
     isImageFile,

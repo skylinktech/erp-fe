@@ -76,6 +76,7 @@ export default defineNuxtConfig({
     '~/plugins/primevue.ts',
     '~/plugins/toast-config.client.ts',
     '~/plugins/session-toast.client.ts',
+    '~/plugins/cors-fix.client.ts',
   ],
   css: [
     '~/public/vendor/libs/select2/select2.css',
