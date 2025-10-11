@@ -6,13 +6,14 @@
           <div class="app-brand justify-content-center mt-5">
             <a href="/" class="app-brand-link gap-2">
               <span class="app-brand-logo demo">
-                <img src="/public/img/branding/logo.png" alt="" height="40" />
+                <img src="/public/img/branding/logo-2.png" alt="" height="40" />
               </span>
-              <span class="app-brand-text demo text-heading fw-semibold">Kainnova</span>
+              <span class="app-brand-text demo text-heading fw-semibold">Kaiflow</span>
+              <small class="app-brand-text demo text-heading fw-semibold">by Kainnova Digital Solutions</small>
             </a>
           </div>
           <div class="card-body mt-1">
-            <h4 class="mb-1">Welcome to Kainnova! 👋</h4>
+            <h4 class="mb-1">Welcome to KaiFlow! 👋</h4>
             <p class="mb-5">Please sign-in to your account and start the adventure</p>
 
             <form class="mb-5" @submit.prevent="handleLogin">
@@ -89,11 +90,11 @@
       middleware: 'redirect-auth',
       title: 'Login',
       description: 'Login',
-      keywords: 'Login, Kainnova Digital Solutions',
-      author: 'Kainnova Digital Solutions',
+      keywords: 'Login, KaiFlow',
+      author: 'KaiFlow',
       robots: 'index, follow',
       viewport: 'width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0',
-      generator: 'Kainnova Digital Solutions'
+      generator: 'KaiFlow'
   })
 
   import { ref, onMounted } from 'vue';
