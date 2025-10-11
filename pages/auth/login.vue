@@ -6,12 +6,12 @@
           <div class="app-brand justify-content-center mt-5">
             <a href="/" class="app-brand-link gap-2">
               <span class="app-brand-logo demo">
-                <img src="/public/img/branding/logo-2.png" alt="" height="40" />
+                <img src="/public/img/branding/logo-2.png" alt="" height="60" />
               </span>
-              <span class="app-brand-text demo text-heading fw-semibold">Kaiflow</span>
-              <small class="app-brand-text demo text-heading fw-semibold">by Kainnova Digital Solutions</small>
+              <span class="app-brand-text demo text-heading fw-bold" style="font-size: 24px;">KaiFlow</span>
             </a>
           </div>
+          <small class="manage-by mt-3 text-center text-muted">by Kainnova Digital Solutions</small>
           <div class="card-body mt-1">
             <h4 class="mb-1">Welcome to KaiFlow! 👋</h4>
             <p class="mb-5">Please sign-in to your account and start the adventure</p>
