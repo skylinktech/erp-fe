@@ -62,6 +62,7 @@ export interface SalesInvoice {
   discountPercent : number
   taxPercent      : number
   description     : string
+  ttdDigital?     : boolean
   attachment?     : string
   customerId      : number
   salesOrderId?   : string
@@ -201,6 +202,7 @@ export const useSalesInvoiceStore = defineStore('salesInvoice', {
         discountPercent : 0,
         taxPercent      : 0,
         description     : '',
+        ttdDigital      : false,
         attachment      : null,
         customerId     : null,
         salesOrderId   : null,
@@ -374,6 +376,7 @@ export const useSalesInvoiceStore = defineStore('salesInvoice', {
             formData.append('dpp', this.form.dpp?.toString() || '0');
             formData.append('description', this.form.description || '');
             formData.append('total', this.form.total?.toString() || '0');
+            formData.append('ttdDigital', this.form.ttdDigital ? 'true' : 'false');
             
             // ✅ FIX: Calculate grand total dengan logika yang benar
             const total = Number(this.form.total) || 0;
@@ -595,6 +598,7 @@ export const useSalesInvoiceStore = defineStore('salesInvoice', {
         dpp: 0,
         description: '',
         attachment: null,
+        ttdDigital: false,
         status: 'unpaid',
         paidAmount: 0,
         remainingAmount: 0,

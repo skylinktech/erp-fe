@@ -245,27 +245,28 @@
             <tr>
               <td colspan="2"></td>
             </tr>
-            <tr>
-              <td colspan="2"></td>
-            </tr>
-            <tr>
-              <td colspan="2"></td>
-            </tr>
-            <tr>
-              <td colspan="2"></td>
-            </tr>
-            <tr>
-              <td colspan="2"></td>
-            </tr>
-            <tr>
-              <td colspan="2"></td>
-            </tr>
-            <tr>
-              <td colspan="2"></td>
-            </tr>
-            <tr>
+            <tr v-if="salesInvoice?.ttdDigital === true" class="text-center px-0">
               <td colspan="2">
               </td>
+              <td></td>
+              <td>
+                <div class="ttd-container">
+                  <img class="ttd-image" src="/img/branding/Ttd Digital-2.png" alt="TTD Digital" style="height: 120px; object-fit: contain; display: block; margin: 0 auto;" />
+                  <img class="andara-image" src="/img/branding/andara.png" alt="Andara Logo" style="height: 40px; object-fit: contain; display: block; margin: -90px auto 0;" />
+                </div>
+              </td>
+            </tr>
+            <tr v-else>
+              <td colspan="2"></td>
+            </tr>
+            <tr>
+              <td colspan="2"></td>
+            </tr>
+            <tr>
+              <td colspan="2"></td>
+            </tr>
+            <tr>
+              <td colspan="2"></td>
               <td></td>
               <td colspan="4" class="text-center py-6 px-0 fw-bold" style="font-size: 12px;">
                 Ronal Aurora
@@ -404,6 +405,26 @@
 
   /* Custom styles for print */
   @media print {
+    .ttd-container {
+      position: relative;
+    }
+
+    .ttd-container .ttd-image {
+      position: relative;
+      height: 90px !important;
+      z-index: 1;
+      margin: 0 auto !important;
+      display: block !important;
+    }
+
+    .ttd-container .andara-image {
+      position: relative;
+      z-index: 2; /* pastikan logo di atas ttd jika overlap */
+      margin: -70px auto 0 !important; /* samakan dengan tampilan layar */
+      display: block !important;
+      height: 40px !important;
+      object-fit: contain !important;
+    }
     .no-print {
       display: none !important;
     }

@@ -619,7 +619,7 @@
                                             <label>Sisa Pembayaran</label>
                                         </div>
                                     </div>
-                                    <div class="col-md-12">
+                                    <div class="col-md-6">
                                         <div class="form-floating form-floating-outline">
                                             <textarea 
                                                 v-model="form.description" 
@@ -633,8 +633,14 @@
                                             </div>
                                         </div>
                                     </div>
+                                    <div class="col-md-6 d-flex align-items-center">
+                                        <div class="form-check form-switch mt-4">
+                                            <input class="form-check-input" type="checkbox" id="ttdDigitalCheckbox" v-model="form.ttdDigital">
+                                            <label class="form-check-label" for="ttdDigitalCheckbox">TTD Digital</label>
+                                        </div>
+                                    </div>
                                     <div class="col-md-6">
-                                        <div class="card border-primary">
+                                        <div class="card" style="box-shadow: none; border: #e9eaec 1px solid;">
                                             <div class="card-header">
                                                 <h6 class="mb-0">💰 Ringkasan Pembayaran</h6>
                                             </div>
@@ -693,7 +699,7 @@
                                         </div>
                                     </div>
                                     <div class="col-md-6">
-                                        <div class="alert alert-info">
+                                        <div class="alert alert-dark">
                                             <div class="d-flex align-items-center">
                                                 <div class="me-2">
                                                     <i class="ri-information-line ri-24px"></i>

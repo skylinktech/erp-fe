@@ -294,13 +294,19 @@
                                         </label>
                                     </div>
                                   </div>
+                                  <div class="col-md-6 d-flex align-items-center">
+                                      <div class="form-check form-switch mt-3">
+                                          <input class="form-check-input" type="checkbox" id="sjTtdDigitalCheckbox" v-model="form.ttdDigital">
+                                          <label class="form-check-label" for="sjTtdDigitalCheckbox">TTD Digital</label>
+                                      </div>
+                                  </div>
                                   <div class="col-md-6" v-if="!alamatSamaDenganCustomer">
                                       <div class="form-floating form-floating-outline">
                                           <textarea v-model="form.alamatPengiriman" class="form-control" placeholder="Alamat Pengiriman"></textarea>
                                           <label>Alamat Pengiriman</label>
                                       </div>
                                   </div>
-                                  <div class="col-md-12">
+                                  <div class="col-md-6">
                                       <div class="form-floating form-floating-outline">
                                           <textarea v-model="form.description" class="form-control" placeholder="Deskripsi Surat Jalan"></textarea>
                                           <label>Deskripsi Surat Jalan</label>

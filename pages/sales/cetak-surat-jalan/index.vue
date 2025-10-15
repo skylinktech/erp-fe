@@ -151,6 +151,10 @@
                       Yang menyerahkan:
                     </span>
                   </p>
+                  <div v-if="suratJalan?.ttdDigital === true" class="ttd-container">
+                    <img class="ttd-image" src="/img/branding/Ttd Digital-1.png" alt="TTD Digital" style="height: 120px; object-fit: contain; display: block; margin: 0 auto;" />
+                    <img class="andara-image" src="/img/branding/andara.png" alt="Andara Logo" style="height: 40px; object-fit: contain; display: block; margin: -90px auto 0;" />
+                  </div>
                   <p class="mt-10 text-end pt-10">
                     {{ suratJalan.createdByUser?.fullName || '-' }}
                   </p>
@@ -233,6 +237,26 @@
 
   /* Custom styles for print */
   @media print {
+    .ttd-container {
+      position: relative;
+    }
+
+    .ttd-container .ttd-image {
+      position: relative;
+      height: 90px !important;
+      z-index: 1;
+      margin: 0 auto !important;
+      display: block !important;
+    }
+
+    .ttd-container .andara-image {
+      position: relative;
+      z-index: 2;
+      margin: -70px auto 0 !important;
+      display: block !important;
+      height: 40px !important;
+      object-fit: contain !important;
+    }
     .no-print {
       display: none !important;
     }
