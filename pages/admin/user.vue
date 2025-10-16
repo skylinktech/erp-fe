@@ -101,9 +101,12 @@
                             <Column field="email" header="Email" :sortable="true"></Column>
                             <Column field="roles" header="Role" :sortable="false">
                                 <template #body="slotProps">
-                                    <span v-for="role in slotProps.data.roles" :key="role.id">
-                                        {{ role.name }}
-                                    </span>
+                                    <div v-if="slotProps.data.roles && slotProps.data.roles.length > 0">
+                                        <span v-for="(role, index) in slotProps.data.roles" :key="role.id" class="badge bg-label-primary me-1">
+                                            {{ role.name }}
+                                        </span>
+                                    </div>
+                                    <span v-else class="text-muted">-</span>
                                 </template>
                             </Column>
                             <Column field="isActive" header="Status" :sortable="true">
@@ -192,23 +195,38 @@
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <CustomSelect2 v-model="form.role_ids" :options="roles"
-                                    :get-option-label="option => option.name"
-                                    multiple
-                                    :reduce="option => option.id" searchable clearable
-                                    placeholder="-- Pilih Role --"
-                                    id="role_ids"
-                                    class="role_ids"
-                                />   
+                                <div class="form-floating form-floating-outline">
+                                    <CustomSelect2 v-model="form.role_ids" :options="roles"
+                                        :get-option-label="option => option.name"
+                                        multiple
+                                        :reduce="option => option.id" searchable clearable
+                                        placeholder="-- Pilih Role --"
+                                        id="role_ids"
+                                        class="role_ids"
+                                        style="z-index: 1;"
+                                    />
+                                </div>
+                                <div v-if="validationErrors.some(error => error.includes('role_ids'))" class="text-danger small mt-1">
+                                    {{ validationErrors.find(error => error.includes('role_ids')) }}
+                                </div>
+                                <div v-if="!form.role_ids || form.role_ids.length === 0" class="text-muted small mt-1">
+                                    Pilih minimal satu role untuk user
+                                </div>
                             </div>
                             <div class="col-md-6">
-                                <CustomSelect2 v-model="form.isActive" :options="status"
-                                    :get-option-label="option => option.label"
-                                    :reduce="option => option.id" searchable clearable
-                                    placeholder="-- Pilih Status --"
-                                    id="isActive"
-                                    class="isActive"
-                                />   
+                                <div class="form-floating form-floating-outline">
+                                    <CustomSelect2 v-model="form.isActive" :options="status"
+                                        :get-option-label="option => option.label"
+                                        :reduce="option => option.value" searchable clearable
+                                        placeholder="-- Pilih Status --"
+                                        id="isActive"
+                                        class="isActive"
+                                        style="z-index: 1;"
+                                    />
+                                </div>
+                                <div v-if="validationErrors.some(error => error.includes('isActive'))" class="text-danger small mt-1">
+                                    {{ validationErrors.find(error => error.includes('isActive')) }}
+                                </div>
                             </div>
                             <div class="d-flex justify-content-end">
                                 <button type="button" class="btn btn-outline-secondary me-2" @click="userStore.closeModal()">

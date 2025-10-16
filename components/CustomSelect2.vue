@@ -17,11 +17,19 @@
           <span v-if="!hasValue && placeholder" class="select2-selection__placeholder">
             {{ placeholder }}
           </span>
-          <span v-else-if="hasValue" class="select2-selection__single">
-            <slot name="selection" :option="selectedOption">
-              {{ getOptionLabel(selectedOption) }}
+          <div v-else-if="hasValue" class="select2-selection__single">
+            <slot name="selection" :option="selectedOption" :options="selectedOptions">
+              <template v-if="Array.isArray(modelValue)">
+                <span v-for="(option, index) in selectedOptions" :key="getOptionKey(option, index)" class="selected-tag">
+                  {{ getOptionLabel(option) }}
+                  <button type="button" class="tag-remove" @click.stop="removeOption(option)">×</button>
+                </span>
+              </template>
+              <template v-else>
+                {{ getOptionLabel(selectedOption) }}
+              </template>
             </slot>
-          </span>
+          </div>
         </div>
         <span class="select2-selection__arrow">
           <svg 
@@ -199,6 +207,10 @@ const props = defineProps({
   isInvalid: {
     type: Boolean,
     default: false
+  },
+  multiple: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -213,8 +225,10 @@ const searchInput = ref(null)
 
 // Computed
 const hasValue = computed(() => {
-  const hasValue = props.modelValue !== null && props.modelValue !== undefined && props.modelValue !== ''
-  return hasValue
+  if (Array.isArray(props.modelValue)) {
+    return props.modelValue.length > 0
+  }
+  return props.modelValue !== null && props.modelValue !== undefined && props.modelValue !== ''
 })
 
 const selectedOption = computed(() => {
@@ -223,6 +237,15 @@ const selectedOption = computed(() => {
   return props.options.find(option => {
     const reducedOption = props.reduce(option)
     return reducedOption === props.modelValue
+  })
+})
+
+const selectedOptions = computed(() => {
+  if (!Array.isArray(props.modelValue)) return []
+  
+  return props.options.filter(option => {
+    const reducedOption = props.reduce(option)
+    return props.modelValue.includes(reducedOption)
   })
 })
 
@@ -287,12 +310,27 @@ const selectOption = (option) => {
   try {
     const value = props.reduce(option)
     
-    // Update model value first
-    emit('update:modelValue', value)
+    // Handle multiple selection
+    if (Array.isArray(props.modelValue)) {
+      const currentValues = [...props.modelValue]
+      if (currentValues.includes(value)) {
+        // Remove if already selected
+        const newValue = currentValues.filter(v => v !== value)
+        emit('update:modelValue', newValue)
+      } else {
+        // Add if not selected
+        currentValues.push(value)
+        emit('update:modelValue', currentValues)
+      }
+    } else {
+      // Single selection
+      emit('update:modelValue', value)
+    }
+    
     emit('select', option)
     
     // Close dropdown after a small delay to ensure value is updated
-    if (props.closeOnSelect) {
+    if (props.closeOnSelect && !Array.isArray(props.modelValue)) {
       setTimeout(() => {
         closeDropdown()
       }, 10)
@@ -303,13 +341,30 @@ const selectOption = (option) => {
 }
 
 const clearSelection = () => {
-  emit('update:modelValue', null)
+  if (Array.isArray(props.modelValue)) {
+    emit('update:modelValue', [])
+  } else {
+    emit('update:modelValue', null)
+  }
   emit('clear')
+}
+
+const removeOption = (option) => {
+  if (!Array.isArray(props.modelValue)) return
+  
+  const reducedOption = props.reduce(option)
+  const newValue = props.modelValue.filter(value => value !== reducedOption)
+  emit('update:modelValue', newValue)
 }
 
 const isSelected = (option) => {
   if (!hasValue.value) return false
   const reducedOption = props.reduce(option)
+  
+  if (Array.isArray(props.modelValue)) {
+    return props.modelValue.includes(reducedOption)
+  }
+  
   return reducedOption === props.modelValue
 }
 
@@ -419,6 +474,7 @@ export default {
   cursor: pointer;
   transition: all 0.2s ease-in-out;
   position: relative;
+  z-index: 1;
 }
 
 .custom-select2:not(.is-disabled):hover .select2-selection {
@@ -448,11 +504,21 @@ export default {
   display: flex;
   align-items: center;
   overflow: hidden;
+  flex-wrap: wrap;
+  gap: 4px;
+  position: relative;
+  min-height: 20px;
 }
 
 .select2-selection__placeholder {
   color: #6b7280;
   font-weight: normal;
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 1;
 }
 
 .select2-selection__single {
@@ -461,6 +527,48 @@ export default {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  position: relative;
+  z-index: 2;
+  background-color: transparent;
+}
+
+/* Selected Tags */
+.selected-tag {
+  display: inline-flex;
+  align-items: center;
+  background-color: #e0e7ff;
+  color: #4338ca;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  margin: 2px;
+  border: 1px solid #c7d2fe;
+  position: relative;
+  z-index: 2;
+}
+
+.tag-remove {
+  background: none;
+  border: none;
+  color: #4338ca;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  margin-left: 4px;
+  padding: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease-in-out;
+}
+
+.tag-remove:hover {
+  background-color: #4338ca;
+  color: white;
 }
 
 /* Arrow Icon */
@@ -736,6 +844,39 @@ export default {
 /* Force Light Mode - Override any dark mode detection */
 .custom-select2-wrapper {
   color-scheme: light;
+}
+
+/* Fix for form floating conflicts */
+.custom-select2-wrapper .select2-selection {
+  background-color: #fff !important;
+  border: 1px solid #d1d5db !important;
+  color: #374151 !important;
+  position: relative;
+  z-index: 1;
+}
+
+.custom-select2-wrapper .select2-selection__rendered {
+  background-color: transparent !important;
+  position: relative;
+  z-index: 2;
+}
+
+.custom-select2-wrapper .select2-selection__placeholder {
+  background-color: transparent !important;
+  color: #6b7280 !important;
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.custom-select2-wrapper .select2-selection__single {
+  background-color: transparent !important;
+  color: #374151 !important;
+  position: relative;
+  z-index: 2;
 }
 
 .select2-selection {
