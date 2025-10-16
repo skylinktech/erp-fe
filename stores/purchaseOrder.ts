@@ -43,6 +43,7 @@ export interface PurchaseOrder {
   discountPercent    : string
   taxPercent         : string
   description        : string
+  ttdDigital?        : boolean
   attachment?        : string
   createdAt          : string
   updatedAt          : string
@@ -117,6 +118,7 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
         discountPercent: 0, 
         taxPercent: 0, 
         description: '',
+        ttdDigital: false,
         attachment: null, 
         status: 'draft',
         poType: 'internal',
@@ -275,6 +277,10 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
                     formData.append(key, value);
                 }
             });
+
+            // Pastikan ttdDigital selalu terkirim sebagai 'true'/'false'
+            formData.delete('ttdDigital');
+            formData.append('ttdDigital', this.form.ttdDigital ? 'true' : 'false');
 
             if (!this.isEditMode && userStore.user && userStore.user.id) {
                 formData.append('createdBy', userStore.user.id.toString())
@@ -857,6 +863,11 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
                 this.form.purchaseOrderItems = [];
                 this.addItem();
             }
+
+            // ✅ FIXED: Load cabang data untuk perusahaan yang dipilih saat edit mode
+            if (this.form.perusahaanId && this.form.poType === 'internal') {
+                this.loadCabangForPerusahaan(this.form.perusahaanId);
+            }
         } else {
             this.form = {
                 noPo: '',
@@ -897,6 +908,7 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
             discountPercent: 0, 
             taxPercent: 0, 
             description: '',
+          ttdDigital: false,
             attachment: null, 
             attachmentPreview: '',
             status: 'draft',
@@ -1106,6 +1118,30 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
                 position: 'topRight',
             });
             return [];
+        }
+    },
+
+    // ✅ NEW: Method untuk load cabang berdasarkan perusahaan
+    async loadCabangForPerusahaan(perusahaanId: number) {
+        try {
+            const { $api } = useNuxtApp();
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${$api.dataCabang()}?perusahaanId=${perusahaanId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json',
+                }
+            });
+            
+            if (response.ok) {
+                const cabangData = await response.json();
+                // Import cabangStore untuk mengupdate data cabang
+                const { useCabangStore } = await import('~/stores/cabang');
+                const cabangStore = useCabangStore();
+                cabangStore.cabangs = cabangData;
+            }
+        } catch (error) {
+            console.error('Error loading cabang for perusahaan:', error);
         }
     },
   }

@@ -337,8 +337,8 @@
                                         <CustomSelect2 
                                             v-model="form.vendorId" 
                                             :options="vendors || []" 
-                                            :get-option-label="v => v.name" 
-                                            :reduce="v => v.id" 
+                                            :get-option-label="v => v?.name || ''" 
+                                            :reduce="v => v?.id" 
                                             placeholder="Pilih Vendor"
                                             searchable
                                             clearable
@@ -349,8 +349,8 @@
                                             <template #option="{ option }">
                                                 <div class="d-flex justify-content-between align-items-center w-100">
                                                     <div>
-                                                        <div class="fw-bold">{{ option.name }}</div>
-                                                        <small class="text-muted">{{ option.email || 'Tidak ada email' }}</small>
+                                                        <div class="fw-bold">{{ option?.name || '' }}</div>
+                                                        <small class="text-muted">{{ option?.email || 'Tidak ada email' }}</small>
                                                     </div>
                                                 </div>
                                             </template>
@@ -385,8 +385,8 @@
                                         <CustomSelect2 
                                             v-model="form.perusahaanId" 
                                             :options="perusahaans || []" 
-                                            :get-option-label="p => p.nmPerusahaan" 
-                                            :reduce="p => p.id" 
+                                            :get-option-label="p => p?.nmPerusahaan || ''" 
+                                            :reduce="p => p?.id" 
                                             placeholder="Pilih Perusahaan"
                                             searchable
                                             clearable
@@ -398,8 +398,8 @@
                                             <template #option="{ option }">
                                                 <div class="d-flex justify-content-between align-items-center w-100">
                                                     <div>
-                                                        <div class="fw-bold">{{ option.nmPerusahaan }}</div>
-                                                        <small class="text-muted">{{ option.alamatPerusahaan || 'Tidak ada alamat' }}</small>
+                                                        <div class="fw-bold">{{ option?.nmPerusahaan || '' }}</div>
+                                                        <small class="text-muted">{{ option?.alamatPerusahaan || 'Tidak ada alamat' }}</small>
                                                     </div>
                                                 </div>
                                             </template>
@@ -410,8 +410,8 @@
                                         <CustomSelect2 
                                             v-model="form.cabangId" 
                                             :options="filteredCabangs" 
-                                            :get-option-label="c => c.nmCabang" 
-                                            :reduce="c => c.id" 
+                                            :get-option-label="c => c?.nmCabang || ''" 
+                                            :reduce="c => c?.id" 
                                             placeholder="Pilih Cabang"
                                             searchable
                                             clearable
@@ -423,8 +423,8 @@
                                             <template #option="{ option }">
                                                 <div class="d-flex justify-content-between align-items-center w-100">
                                                     <div>
-                                                        <div class="fw-bold">{{ option.nmCabang }}</div>
-                                                        <small class="text-muted">{{ option.alamatCabang || 'Tidak ada alamat' }}</small>
+                                                        <div class="fw-bold">{{ option?.nmCabang || '' }}</div>
+                                                        <small class="text-muted">{{ option?.alamatCabang || 'Tidak ada alamat' }}</small>
                                                     </div>
                                                 </div>
                                             </template>
@@ -471,7 +471,13 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-12">
+                                    <div class="col-md-6 d-flex align-items-center">
+                                        <div class="form-check form-switch mt-3">
+                                            <input class="form-check-input" type="checkbox" id="poTtdDigitalCheckbox" v-model="form.ttdDigital">
+                                            <label class="form-check-label" for="poTtdDigitalCheckbox">TTD Digital</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
                                         <div class="form-floating form-floating-outline">
                                             <textarea v-model="form.description" class="form-control" placeholder="Deskripsi"></textarea>
                                             <label>Deskripsi</label>
@@ -487,8 +493,8 @@
                                             <CustomSelect2 
                                                 v-model="item.warehouseId" 
                                                 :options="warehouses || []" 
-                                                :get-option-label="w => `${w.name} (${w.code})`" 
-                                                :reduce="w => w.id" 
+                                                :get-option-label="w => `${w?.name || ''} (${w?.code || ''})`" 
+                                                :reduce="w => w?.id" 
                                                 placeholder="Pilih Gudang (Opsional)"
                                                 searchable
                                                 clearable
@@ -500,8 +506,8 @@
                                                 <template #option="{ option }">
                                                     <div class="d-flex justify-content-between align-items-center w-100">
                                                         <div>
-                                                            <div class="fw-bold">{{ option.name }}</div>
-                                                            <small class="text-muted">Kode: {{ option.code }}</small>
+                                                            <div class="fw-bold">{{ option?.name || '' }}</div>
+                                                            <small class="text-muted">Kode: {{ option?.code || '' }}</small>
                                                         </div>
                                                     </div>
                                                 </template>
@@ -511,8 +517,8 @@
                                             <CustomSelect2 
                                                 v-model="item.productId" 
                                                 :options="getProductsByWarehouse(item.warehouseId)" 
-                                                :get-option-label="product => `${product.sku} | ${product.name}`"
-                                                :reduce="p => p.id" 
+                                                :get-option-label="product => `${product?.sku || ''} | ${product?.name || ''}`"
+                                                :reduce="p => p?.id" 
                                                 placeholder="Cari berdasarkan SKU atau nama produk..."
                                                 searchable
                                                 clearable
@@ -524,23 +530,23 @@
                                                 :filter-by="(option, label, search) => {
                                                     const product = option;
                                                     const searchLower = search.toLowerCase();
-                                                    return product.name.toLowerCase().includes(searchLower) || 
-                                                           product.sku.toLowerCase().includes(searchLower) ||
-                                                           (product.noInterchange ? String(product.noInterchange).toLowerCase().includes(searchLower) : false);
+                                                    return (product?.name || '').toLowerCase().includes(searchLower) || 
+                                                           (product?.sku || '').toLowerCase().includes(searchLower) ||
+                                                           (product?.noInterchange ? String(product.noInterchange).toLowerCase().includes(searchLower) : false);
                                                 }"
                                                 @update:modelValue="onProductChange(index)"
                                             >
                                                 <template #option="{ option }">
                                                     <div class="d-flex justify-content-between align-items-center w-100">
                                                         <div>
-                                                            <div class="fw-bold">{{ option.sku }} | {{ option.name }}</div>
-                                                            <small class="text-muted">{{ option.unit?.name || 'No Unit' }} - {{ formatRupiah(option.priceBuy) }}</small>
+                                                            <div class="fw-bold">{{ option?.sku || '' }} | {{ option?.name || '' }}</div>
+                                                            <small class="text-muted">{{ option?.unit?.name || 'No Unit' }} - {{ formatRupiah(option?.priceBuy || 0) }}</small>
                                                         </div>
                                                     </div>
                                                 </template>
                                                 <template #selection="{ option }">
                                                     <div class="d-flex align-items-center">
-                                                        <span class="fw-bold">{{ option.sku }} | {{ option.name }}</span>
+                                                        <span class="fw-bold">{{ option?.sku || '' }} | {{ option?.name || '' }}</span>
                                                     </div>
                                                 </template>
                                             </CustomSelect2>
@@ -851,7 +857,7 @@ watch(() => form.value?.perusahaanId, async (newPerusahaanId) => {
 
 const filteredCabangs = computed(() => {
     if (!form.value?.perusahaanId || !cabangs.value) return [];
-    const filtered = (cabangs.value || []).filter(c => c.perusahaanId === form.value.perusahaanId);
+    const filtered = (cabangs.value || []).filter(c => c && c.perusahaanId === form.value.perusahaanId);
     return filtered;
 });
 

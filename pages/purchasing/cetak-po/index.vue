@@ -242,7 +242,23 @@
                     <p class="mb-6 fw-medium text-heading" style="font-size: 12px;">
                       Approved By:
                     </p>
-                    <div class="mt-8 pt-6" style="border-top: 1px solid #000; display: inline-block; min-width: 150px;">
+                    <div v-if="isTtdDigital" class="ttd-container" style="position: relative; min-height: 120px;">
+                      <img 
+                        class="ttd-image" 
+                        :src="publicPath('/img/branding/Ttd Digital-2.png')" 
+                        alt="TTD Digital" 
+                        style="height: 120px; object-fit: contain; display: block; margin: 0 auto;" 
+                        @error="(e) => handleImageError(e, '/img/default-company-logo.png')"
+                      />
+                      <img 
+                        class="andara-image" 
+                        :src="publicPath('/img/branding/andara.png')" 
+                        alt="Andara Logo" 
+                        style="height: 40px; object-fit: contain; position: absolute; left: 50%; transform: translateX(-50%); bottom: 40px;" 
+                        @error="(e) => handleImageError(e, '/img/default-company-logo.png')"
+                      />
+                    </div>
+                    <div class="mt-8 pt-2">
                       <p class="mb-0 fw-medium" style="font-size: 12px;">
                         Ronal Aurora
                       </p>
@@ -284,6 +300,27 @@
   const toast              = useToast();
 
   const { purchaseOrder, loading, error } = storeToRefs(purchaseOrderStore);
+
+  // Normalisasi nilai TTD Digital agar robust terhadap tipe data dari API (boolean/string/number)
+  const isTtdDigital = computed(() => {
+    const val = purchaseOrder.value?.ttdDigital;
+    if (typeof val === 'boolean') return val;
+    if (typeof val === 'string') return ['true', '1', 'yes', 'y'].includes(val.toLowerCase());
+    if (typeof val === 'number') return val === 1;
+    return false;
+  });
+
+  // Helper untuk memastikan path sesuai base publik Nuxt (terutama saat deploy di subpath)
+  const publicPath = (p) => {
+    if (!p) return p;
+    // Jika sudah absolute http(s) atau sudah root-relative, kembalikan apa adanya
+    if (p.startsWith('http')) return p;
+    // runtime base (app.baseURL) dari useRuntimeConfig().app
+    const base = (config?.app?.baseURL) || '/';
+    // Hindari double slash
+    const joined = `${base.replace(/\/$/, '')}/${p.replace(/^\//, '')}`;
+    return joined;
+  };
 
   const getLogoUrl = (logoPath) => {
     if (!logoPath || typeof logoPath !== 'string') {
