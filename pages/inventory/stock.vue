@@ -348,7 +348,7 @@ const exportData = async (format) => {
             const toast = useToast();
             
             // Cek apakah ada filter yang diterapkan
-            const hasFilters = filters.value.productId || filters.value.warehouseId || filters.value.search;
+            const hasFilters = params.value.productId || params.value.warehouseId || params.value.search;
             
             toast.info({
                 title: 'Info',
@@ -359,15 +359,15 @@ const exportData = async (format) => {
             });
             
             // Ambil semua data yang sesuai dengan filter untuk export Excel
-            stocksStore.fetchAllStocksForExport()
-                .then((allData) => {
-                    if (allData && allData.length > 0) {
+            stocksStore.fetchStocksForExport()
+                .then((result) => {
+                    if (result && result.data && result.data.length > 0) {
                         // Gunakan fungsi export Excel khusus untuk Stock
-                        return exportStockExcel(allData)
+                        return exportStockExcel(result.data)
                             .then(() => {
                                 toast.success({
                                     title: 'Success',
-                                    message: `Excel berhasil dibuat dengan ${allData.length} data Stock${hasFilters ? ' sesuai filter' : ''}`,
+                                    message: `Excel berhasil dibuat dengan ${result.data.length} data Stock${hasFilters ? ' sesuai filter' : ''}`,
                                     color: 'green',
                                     position: 'topRight',
                                     layout: 2
@@ -397,7 +397,7 @@ const exportData = async (format) => {
             const toast = useToast();
             
             // Cek apakah ada filter yang diterapkan
-            const hasFilters = filters.value.productId || filters.value.warehouseId || filters.value.search;
+            const hasFilters = params.value.productId || params.value.warehouseId || params.value.search;
             
             toast.info({
                 title: 'Info',
@@ -408,14 +408,14 @@ const exportData = async (format) => {
             });
             
             // Ambil semua data yang sesuai dengan filter untuk export PDF
-            const allData = await stocksStore.fetchAllStocksForExport();
+            const result = await stocksStore.fetchStocksForExport();
             
-            if (allData && allData.length > 0) {
+            if (result && result.data && result.data.length > 0) {
                 // Gunakan fungsi export PDF khusus untuk Stock
-                await exportStockPDF(allData);
+                await exportStockPDF(result.data);
                 toast.success({
                     title: 'Success',
-                    message: `PDF berhasil dibuat dengan ${allData.length} data Stock${hasFilters ? ' sesuai filter' : ''}`,
+                    message: `PDF berhasil dibuat dengan ${result.data.length} data Stock${hasFilters ? ' sesuai filter' : ''}`,
                     color: 'green'
                 });
             } else {
@@ -501,15 +501,12 @@ const exportStockPDF = async (dataToExport) => {
 
     // Definisikan kolom yang akan diexport
     const columnDefinitions = [
-        { field: 'noSi', header: 'No. SI' },
-        { field: 'date', header: 'Tanggal' },
-        { field: 'purchaseOrder.noPo', header: 'No. PO' },
-        { field: 'warehouse.name', header: 'Gudang' },
-        { field: 'user.fullName', header: 'User' },
-        { field: 'product.name', header: 'Produk' },
-        { field: 'quantity', header: 'Jumlah' },
-        { field: 'description', header: 'Deskripsi' },
-        { field: 'status', header: 'Status' }
+        { field: 'product.sku', header: 'Part Number' },
+        { field: 'product.name', header: 'Nama Produk' },
+        { field: 'product.unit.name', header: 'Satuan' },
+        { field: 'warehouse.code', header: 'Kode Gudang' },
+        { field: 'warehouse.name', header: 'Nama Gudang' },
+        { field: 'quantity', header: 'Quantity' }
     ];
 
     const head = [columnDefinitions.map(col => col.header)];
@@ -518,7 +515,7 @@ const exportStockPDF = async (dataToExport) => {
         console.warn('Tidak ada data untuk diexport');
         const doc = new jsPDF('landscape');
         doc.setFontSize(16);
-        doc.text('Laporan Stock In', 14, 15);
+        doc.text('Laporan Stock', 14, 15);
         doc.setFontSize(12);
         doc.text('Tidak ada data yang tersedia untuk export', 14, 50);
         doc.save('stock-empty.pdf');
@@ -539,22 +536,14 @@ const exportStockPDF = async (dataToExport) => {
             value = row[col.field] || '-';
         }
 
-        // Format khusus untuk field tertentu
-        if (col.field === 'date') {
-            if (value && value !== '-') {
-                value = new Date(value).toLocaleDateString('id-ID');
-            }
-        } else if (col.field === 'quantity') {
+        // Format khusus untuk quantity
+        if (col.field === 'quantity') {
             if (value && value !== '-') {
                 const numValue = parseFloat(value);
                 if (!isNaN(numValue)) {
-                    value = new Intl.NumberFormat('id-ID').format(numValue);
+                    value = Math.floor(numValue);
                 }
             }
-        } else if (col.field === 'status') {
-            if (value === 'draft') value = 'Draft';
-            else if (value === 'approved') value = 'Approved';
-            else if (value === 'received') value = 'Received';
         }
 
         return String(value);
@@ -562,15 +551,12 @@ const exportStockPDF = async (dataToExport) => {
 
     // Definisikan lebar kolom
     const columnStyles = {
-        0: { cellWidth: 25 }, // No. SI
-        1: { cellWidth: 20 }, // Tanggal
-        2: { cellWidth: 25 }, // No. PO
-        3: { cellWidth: 25 }, // Gudang
-        4: { cellWidth: 25 }, // User
-        5: { cellWidth: 30 }, // Produk
-        6: { cellWidth: 20 }, // Jumlah
-        7: { cellWidth: 30 }, // Deskripsi
-        8: { cellWidth: 20 }  // Status
+        0: { cellWidth: 30 }, // Part Number
+        1: { cellWidth: 50 }, // Nama Produk
+        2: { cellWidth: 20 }, // Satuan
+        3: { cellWidth: 25 }, // Kode Gudang
+        4: { cellWidth: 40 }, // Nama Gudang
+        5: { cellWidth: 20 }  // Quantity
     };
 
     // Ambil info perusahaan dari user atau data yang tersedia
@@ -622,7 +608,7 @@ const exportStockPDF = async (dataToExport) => {
     // Judul di kiri atas
     doc.setFontSize(16);
     doc.setFont(fontFamily, 'bold');
-    doc.text('Laporan Stock In', 14, 15);
+    doc.text('Laporan Stock', 14, 15);
 
     // Timestamp dan jumlah data
     doc.setFontSize(10);
@@ -632,20 +618,20 @@ const exportStockPDF = async (dataToExport) => {
 
     // Info filter
     const filterInfo = [];
-    if (filters.value.productId) {
-        const product = products.value?.find(p => p.id === filters.value.productId);
+    if (params.value.productId) {
+        const product = allProducts.value?.find(p => p.id === params.value.productId);
         if (product) {
             filterInfo.push(`Produk: ${product.name}`);
         }
     }
-    if (filters.value.warehouseId) {
-        const warehouse = warehouseList.value?.find(w => w.id === filters.value.warehouseId);
+    if (params.value.warehouseId) {
+        const warehouse = warehouseList.value?.find(w => w.id === params.value.warehouseId);
         if (warehouse) {
             filterInfo.push(`Gudang: ${warehouse.name}`);
         }
     }
-    if (filters.value.search) {
-        filterInfo.push(`Pencarian: ${filters.value.search}`);
+    if (params.value.search) {
+        filterInfo.push(`Pencarian: ${params.value.search}`);
     }
 
     // Tampilkan filter info
@@ -700,23 +686,15 @@ const exportStockPDF = async (dataToExport) => {
     // Info ringkasan
     doc.setFontSize(8);
     doc.setFont(fontFamily, 'normal');
-    doc.text(`Total Stock In: ${dataToExport.length}`, 10, finalY + 20);
+    doc.text(`Total Stock: ${dataToExport.length}`, 10, finalY + 20);
 
-    // Hitung statistik status
-    const statusCounts = dataToExport.reduce((acc, row) => {
-        const status = row.status || 'unknown';
-        acc[status] = (acc[status] || 0) + 1;
-        return acc;
-    }, {});
-
-    let yPos = finalY + 30;
-    Object.entries(statusCounts).forEach(([status, count]) => {
-        const statusLabel = status === 'draft' ? 'Draft' : 
-                           status === 'approved' ? 'Approved' : 
-                           status === 'received' ? 'Received' : status;
-        doc.text(`${statusLabel}: ${count}`, 10, yPos);
-        yPos += 8;
+    // Hitung total quantity
+    let totalQuantity = 0;
+    dataToExport.forEach(row => {
+        const quantity = Number(row.quantity) || 0;
+        totalQuantity += quantity;
     });
+    doc.text(`Total Quantity: ${Math.floor(totalQuantity)}`, 10, finalY + 30);
 
     doc.save('stock.pdf');
 };
@@ -728,15 +706,12 @@ const exportStockExcel = (dataToExport) => {
     ]).then(([XLSX]) => {
         // Definisikan kolom yang akan diexport
         const columnDefinitions = [
-            { field: 'noSi', header: 'No. SI' },
-            { field: 'date', header: 'Tanggal' },
-            { field: 'purchaseOrder.noPo', header: 'No. PO' },
-            { field: 'warehouse.name', header: 'Gudang' },
-            { field: 'user.fullName', header: 'User' },
-            { field: 'stock.product.name', header: 'Produk' },
-            { field: 'stock.product.sku', header: 'SKU' },
-            { field: 'quantity', header: 'Quantity' },
-            { field: 'status', header: 'Status' }
+            { field: 'product.sku', header: 'Part Number' },
+            { field: 'product.name', header: 'Nama Produk' },
+            { field: 'product.unit.name', header: 'Satuan' },
+            { field: 'warehouse.code', header: 'Kode Gudang' },
+            { field: 'warehouse.name', header: 'Nama Gudang' },
+            { field: 'quantity', header: 'Quantity' }
         ];
 
         if (!dataToExport || dataToExport.length === 0) {
@@ -772,26 +747,26 @@ const exportStockExcel = (dataToExport) => {
         excelData.push([]); // Baris kosong
 
         // Judul laporan
-        excelData.push(['Laporan Stock In']);
+        excelData.push(['Laporan Stock']);
         excelData.push([`Dibuat pada: ${new Date().toLocaleString('id-ID')}`]);
         excelData.push([`Total Data: ${dataToExport.length}`]);
 
         // Info filter
         const filterInfo = [];
-        if (filters.value.productId) {
-            const product = products.value?.find(p => p.id === filters.value.productId);
+        if (params.value.productId) {
+            const product = allProducts.value?.find(p => p.id === params.value.productId);
             if (product) {
                 filterInfo.push(`Produk: ${product.name}`);
             }
         }
-        if (filters.value.warehouseId) {
-            const warehouse = warehouseList.value?.find(w => w.id === filters.value.warehouseId);
+        if (params.value.warehouseId) {
+            const warehouse = warehouseList.value?.find(w => w.id === params.value.warehouseId);
             if (warehouse) {
                 filterInfo.push(`Gudang: ${warehouse.name}`);
             }
         }
-        if (filters.value.search) {
-            filterInfo.push(`Pencarian: ${filters.value.search}`);
+        if (params.value.search) {
+            filterInfo.push(`Pencarian: ${params.value.search}`);
         }
 
         // Tampilkan filter info
@@ -822,19 +797,11 @@ const exportStockExcel = (dataToExport) => {
                     value = row[col.field] || '-';
                 }
 
-                // Format khusus untuk field tertentu
-                if (col.field === 'date') {
+                // Format khusus untuk quantity
+                if (col.field === 'quantity') {
                     if (value && value !== '-') {
-                        value = new Date(value).toLocaleDateString('id-ID');
+                        value = Math.floor(Number(value));
                     }
-                } else if (col.field === 'quantity') {
-                    if (value && value !== '-') {
-                        value = Number(value).toLocaleString('id-ID');
-                    }
-                } else if (col.field === 'status') {
-                    if (value === 'draft') value = 'Draft';
-                    else if (value === 'approved') value = 'Approved';
-                    else if (value === 'received') value = 'Received';
                 }
 
                 return String(value);
@@ -846,7 +813,7 @@ const exportStockExcel = (dataToExport) => {
         excelData.push([]);
 
         // Summary
-        excelData.push(['Total Stock In:', dataToExport.length]);
+        excelData.push(['Total Stock:', dataToExport.length]);
 
         // Hitung total quantity
         let totalQuantity = 0;
@@ -854,22 +821,7 @@ const exportStockExcel = (dataToExport) => {
             const quantity = Number(row.quantity) || 0;
             totalQuantity += quantity;
         });
-        excelData.push(['Total Quantity:', totalQuantity.toLocaleString('id-ID')]);
-
-        // Hitung status counts
-        const statusCounts = {};
-        dataToExport.forEach(row => {
-            const status = row.status || 'unknown';
-            statusCounts[status] = (statusCounts[status] || 0) + 1;
-        });
-
-        // Tampilkan status summary
-        Object.entries(statusCounts).forEach(([status, count]) => {
-            const statusLabel = status === 'draft' ? 'Draft' : 
-                               status === 'approved' ? 'Approved' : 
-                               status === 'received' ? 'Received' : status;
-            excelData.push([`${statusLabel}:`, count]);
-        });
+        excelData.push(['Total Quantity:', Math.floor(totalQuantity)]);
 
         // Buat workbook
         const wb = XLSX.utils.book_new();
@@ -877,15 +829,12 @@ const exportStockExcel = (dataToExport) => {
 
         // Set column widths
         const colWidths = [
-            { wch: 20 }, // No. SI
-            { wch: 15 }, // Tanggal
-            { wch: 20 }, // No. PO
-            { wch: 20 }, // Gudang
-            { wch: 20 }, // User
-            { wch: 25 }, // Produk
-            { wch: 15 }, // SKU
-            { wch: 15 }, // Quantity
-            { wch: 15 }  // Status
+            { wch: 20 }, // Part Number
+            { wch: 35 }, // Nama Produk
+            { wch: 15 }, // Satuan
+            { wch: 18 }, // Kode Gudang
+            { wch: 30 }, // Nama Gudang
+            { wch: 15 }  // Quantity
         ];
         ws['!cols'] = colWidths;
 
@@ -945,15 +894,7 @@ const exportStockExcel = (dataToExport) => {
             ws[`A${summaryStartRow + 2}`].s = { font: { bold: true } };
         }
 
-        // Style untuk status counts
-        Object.keys(statusCounts).forEach((_, index) => {
-            const statusRow = summaryStartRow + 2 + index;
-            if (ws[`A${statusRow + 1}`]) {
-                ws[`A${statusRow + 1}`].s = { font: { bold: true } };
-            }
-        });
-
-        XLSX.utils.book_append_sheet(wb, ws, 'Stock In');
+        XLSX.utils.book_append_sheet(wb, ws, 'Stock');
         XLSX.writeFile(wb, 'stock.xlsx');
     });
 };
