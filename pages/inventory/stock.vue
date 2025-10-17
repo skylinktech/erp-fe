@@ -160,7 +160,7 @@
                                 </Column>
                                 <Column field="quantity" header="Jumlah" :sortable="true" class="text-nowrap">
                                     <template #body="slotProps">
-                                        {{ Math.floor(slotProps.data.quantity) }}
+                                        {{ slotProps.data.quantity ? Math.floor(slotProps.data.quantity) : 0 }}
                                     </template>
                                 </Column>
                                 <Column header="Actions" :exportable="false" style="min-width:8rem" v-if="userHasRole('superadmin')">
@@ -531,22 +531,19 @@ const exportStockPDF = async (dataToExport) => {
             for (const field of fields) {
                 currentValue = currentValue?.[field];
             }
-            value = currentValue || '-';
+            value = currentValue || '';
         } else {
-            value = row[col.field] || '-';
+            value = row[col.field] || '';
         }
 
         // Format khusus untuk quantity
         if (col.field === 'quantity') {
-            if (value && value !== '-') {
-                const numValue = parseFloat(value);
-                if (!isNaN(numValue)) {
-                    value = Math.floor(numValue);
-                }
-            }
+            const numValue = parseFloat(value) || 0;
+            value = Math.floor(numValue);
         }
 
-        return String(value);
+        // Jika masih kosong setelah diproses, return empty string atau default value
+        return value !== '' ? String(value) : (col.field === 'quantity' ? '0' : '');
     }));
 
     // Definisikan lebar kolom
@@ -792,19 +789,19 @@ const exportStockExcel = (dataToExport) => {
                     for (const field of fields) {
                         currentValue = currentValue?.[field];
                     }
-                    value = currentValue || '-';
+                    value = currentValue || '';
                 } else {
-                    value = row[col.field] || '-';
+                    value = row[col.field] || '';
                 }
 
                 // Format khusus untuk quantity
                 if (col.field === 'quantity') {
-                    if (value && value !== '-') {
-                        value = Math.floor(Number(value));
-                    }
+                    const numValue = parseFloat(value) || 0;
+                    value = Math.floor(numValue);
                 }
 
-                return String(value);
+                // Jika masih kosong setelah diproses, return empty string atau default value
+                return value !== '' ? String(value) : (col.field === 'quantity' ? '0' : '');
             });
             excelData.push(rowData);
         });
