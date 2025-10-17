@@ -226,14 +226,30 @@
                     <p class="mb-6 fw-medium text-heading" style="font-size: 12px;">
                       Prepared By:
                     </p>
-                    <div class="mt-8 pt-6" style="border-top: 1px solid #000; display: inline-block; min-width: 150px;">
-                      <p class="mb-0 fw-medium" style="font-size: 12px;">
-                        {{
-                          purchaseOrder.createdByUser.fullName
-                            ? purchaseOrder.createdByUser.fullName
-                            : '-'
-                        }}
-                      </p>
+                    <div v-if="isTtdDigital" class="ttd-container" style="position: relative; min-height: 120px;">
+                      <img 
+                        class="ttd-image" 
+                        :src="publicPath('/img/branding/Ttd Digital-1.png')" 
+                        alt="TTD Digital" 
+                        style="height: 120px; object-fit: contain; display: block; margin: 0 auto;" 
+                        @error="(e) => handleImageError(e, '/img/default-company-logo.png')"
+                      />
+                      <img 
+                        class="andara-image" 
+                        :src="publicPath('/img/branding/andara.png')" 
+                        alt="Andara Logo" 
+                        style="height: 40px; object-fit: contain; position: absolute; left: 50%; transform: translateX(-50%); bottom: 90px;" 
+                        @error="(e) => handleImageError(e, '/img/default-company-logo.png')"
+                      />
+                      <div class="mt-2 pt-6" style="border-top: 1px solid #000; display: inline-block; min-width: 150px;">
+                        <p class="mb-0 fw-medium" style="font-size: 12px;">
+                          {{
+                            purchaseOrder.createdByUser.fullName
+                              ? purchaseOrder.createdByUser.fullName
+                              : '-'
+                          }}
+                        </p>
+                      </div>
                     </div>
                   </div>
                   
@@ -258,11 +274,11 @@
                         @error="(e) => handleImageError(e, '/img/default-company-logo.png')"
                       />
                     </div>
-                    <div class="mt-8 pt-2">
-                      <p class="mb-0 fw-medium" style="font-size: 12px;">
-                        Ronal Aurora
-                      </p>
-                    </div>
+                    <div class="mt-2 pt-6" style="border-top: 1px solid #000; display: inline-block; min-width: 150px;">
+                        <p class="mb-0 fw-medium" style="font-size: 12px;">
+                          Ronal Aurora
+                        </p>
+                      </div>
                   </div>
                 </div>
               </td>
