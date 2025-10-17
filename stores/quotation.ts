@@ -737,6 +737,7 @@ export const useQuotationStore = defineStore('quotation', {
         if (!response.ok) throw new Error('Gagal mengambil data produk untuk customer')
         const result = await response.json()
         const rawCustomerProducts = result.data?.customerProducts || []
+        
         // Normalisasi data agar field noInterchange, sku, name selalu tersedia pada root item
         this.customerProducts = rawCustomerProducts.map((item: any) => {
           // Jika bentuknya ProductCustomer dengan relasi product
@@ -764,8 +765,6 @@ export const useQuotationStore = defineStore('quotation', {
         })
       } catch (error) {
         console.error('Error fetching products for customer:', error)
-        // Jangan hapus produk yang ada jika fetch gagal
-        // this.customerProducts = [] 
         const toast = useToast();
         toast.error({
           title: 'Error',

@@ -346,7 +346,9 @@
                                     <div class="row g-3">
                                         <div class="col-md-4">
                                             <CustomSelect2 v-model="item.productId" :options="filteredCustomerProducts" 
-                                                :get-option-label="option => option.label" searchable clearable
+                                                :get-option-label="option => option.displayName || `${option.sku} | ${option.name}`" 
+                                                searchable 
+                                                clearable
                                                 :reduce="p => p.id" 
                                                 placeholder="Cari berdasarkan part number atau nama produk..." 
                                                 @update:modelValue="onProductChange(index)" 
@@ -356,9 +358,9 @@
                                                 :filter-by="(option, label, search) => {
                                                     const product = option;
                                                     const searchLower = search.toLowerCase();
-                                                    return product.name.toLowerCase().includes(searchLower) || 
-                                                           product.sku.toLowerCase().includes(searchLower) ||
-                                                           (product.noInterchange ? String(product.noInterchange).toLowerCase().includes(searchLower) : false);
+                                                    return (product.name && product.name.toLowerCase().includes(searchLower)) || 
+                                                           (product.sku && product.sku.toLowerCase().includes(searchLower)) ||
+                                                           (product.noInterchange && String(product.noInterchange).toLowerCase().includes(searchLower));
                                                 }"
                                                 :close-on-select="true"
                                                 :loading="loading"
@@ -367,21 +369,20 @@
                                                 :taggable="false"
 
                                             >
-                                                <template #option="option">
+                                                <template #selection="{ option }">
+                                                    <div v-if="option">
+                                                        {{ option.displayName || `${option.sku} | ${option.name}` }}
+                                                    </div>
+                                                </template>
+                                                <template #option="{ option }">
                                                     <div class="d-flex justify-content-between align-items-center w-100">
                                                         <div>
-                                                            <div class="fw-bold">{{ option.displayName }}</div>
-                                                            <small class="text-muted">{{ option.unit?.name || 'No Unit' }} - {{ formatRupiah(option.priceSell) }}</small>
+                                                            <div class="fw-bold">{{ option.displayName || `${option.sku} | ${option.name}` }}</div>
+                                                            <small class="text-muted">{{ option.unit?.name || 'No Unit' }} - {{ formatRupiah(option.priceSell || 0) }}</small>
                                                         </div>
                                                     </div>
                                                 </template>
                                                 <template #no-options>
-                                                    <div class="text-center p-3">
-                                                        <i class="ri-search-line me-2"></i>
-                                                        Tidak ada produk yang cocok dengan pencarian
-                                                    </div>
-                                                </template>
-                                                <template #no-results>
                                                     <div class="text-center p-3">
                                                         <i class="ri-search-line me-2"></i>
                                                         Tidak ada produk yang cocok dengan pencarian
@@ -897,12 +898,13 @@ const filters = ref({
     }
     
     // Tambahkan displayName untuk pencarian yang lebih baik
-    const productsWithDisplayName = customerProducts.value.map(product => ({
-      ...product,
-      displayName: `${product.sku || ''} | ${product.name || ''}${product.noInterchange ? ' | ' + product.noInterchange : ''}`
-    }));
-    
-    return productsWithDisplayName;
+    return customerProducts.value.map(product => {
+      const displayName = `${product.sku || ''} | ${product.name || ''}${product.noInterchange ? ' | ' + product.noInterchange : ''}`
+      return {
+        ...product,
+        displayName
+      }
+    });
   });
 
   const onQuantityChange = (index) => {
