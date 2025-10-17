@@ -151,7 +151,7 @@
                                         </span>
                                     </template>
                                 </Column>
-                                <Column field="warehouse.name" header="Nama Gudang" :sortable="true" class="text-nowrap" v-if="userHasRole('superadmin') || userHasRole('admin') || userHasRole('admin gudang')">
+                                <Column field="warehouse.name" header="Nama Gudang" :sortable="true" class="text-nowrap" v-if="userHasRole('superadmin') || userHasRole('admin') || userHasRole('admin gudang') || userHasRole('customer lfn')">
                                     <template #body="slotProps">
                                         <span class="badge bg-primary">
                                             {{ slotProps.data.warehouse.name }}
