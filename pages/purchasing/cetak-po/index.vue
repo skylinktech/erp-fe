@@ -226,12 +226,12 @@
                     <p class="mb-6 fw-medium text-heading" style="font-size: 12px;">
                       Prepared By:
                     </p>
-                    <div v-if="isTtdDigital" class="ttd-container" style="position: relative; min-height: 120px;">
+                    <div v-if="isTtdDigital" class="ttd-container" style="position: relative; min-height: 120px; margin-top: -50px;">
                       <img 
                         class="ttd-image" 
                         :src="publicPath('/img/branding/Ttd Digital-1.png')" 
                         alt="TTD Digital" 
-                        style="height: 120px; object-fit: contain; display: block; margin: 0 auto;" 
+                        style="height: 180px; object-fit: contain; display: block; margin: 0 auto;" 
                         @error="(e) => handleImageError(e, '/img/default-company-logo.png')"
                       />
                       <img 
