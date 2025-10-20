@@ -49,6 +49,7 @@ interface StockTransferState {
   isEditMode: boolean
   showModal: boolean
   validationErrors: any[]
+  isLoadingEditData: boolean
 }
 
 export const useStockTransferStore = defineStore('stockTransfer', {
@@ -87,6 +88,7 @@ export const useStockTransferStore = defineStore('stockTransfer', {
     isEditMode: false,
     showModal: false,
     validationErrors: [],
+    isLoadingEditData: false,
   }),
   actions: {
     async fetchStockTransfersPaginated() {
@@ -367,6 +369,11 @@ export const useStockTransferStore = defineStore('stockTransfer', {
       const toast = useToast();
       this.isEditMode = !!stockTransferData;
       this.validationErrors = [];
+      
+      // Set flag untuk prevent watcher trigger saat load edit data
+      if (stockTransferData && stockTransferData.id) {
+        this.isLoadingEditData = true;
+      }
 
       if (stockTransferData && stockTransferData.id) {
           // Ambil detail lengkap dari server
@@ -383,14 +390,42 @@ export const useStockTransferStore = defineStore('stockTransfer', {
               return;
           }
 
+          // Fetch products dulu dan tunggu sampai selesai
           if (detailedData.fromWarehouseId) {
             await this.fetchProductsByWarehouse(detailedData.fromWarehouseId);
           }
 
           const items = (detailedData.stockTransferDetails || []).map((detail: any) => {
-            const matchingStock = this.productsInWarehouse.find(p => p.product.id === detail.productId);
+            // Cari stock yang matching berdasarkan productId
+            let matchingStock = this.productsInWarehouse.find(p => p.product?.id === detail.productId);
+            
+            // Jika stock tidak ditemukan di productsInWarehouse, buat dummy object untuk display
+            if (!matchingStock) {
+              // Parse detail.product untuk memastikan bukan Proxy
+              const productData = detail.product ? JSON.parse(JSON.stringify(detail.product)) : null;
+              
+              const dummyStock = {
+                id: detail.stockId || `temp-${detail.productId}`,
+                productId: detail.productId,
+                warehouseId: detailedData.fromWarehouseId,
+                quantity: detail.quantity || 0,
+                product: productData || { 
+                  id: detail.productId, 
+                  name: 'Unknown Product', 
+                  sku: '-' 
+                },
+                warehouse: detailedData.fromWarehouse,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+              };
+              
+              // Tambahkan ke productsInWarehouse agar bisa dipilih di dropdown
+              this.productsInWarehouse.push(dummyStock);
+              matchingStock = dummyStock;
+            }
+            
             return {
-              stock: matchingStock,
+              stock: matchingStock, // Keep as reference, tidak di-convert
               productId: detail.productId,
               quantity: detail.quantity,
               description: detail.description,
@@ -406,6 +441,11 @@ export const useStockTransferStore = defineStore('stockTransfer', {
           if (this.form.stockTransferItems.length === 0) {
             this.addItem();
           }
+          
+          // Reset flag di nextTick supaya watcher sempat di-skip dulu
+          const { nextTick } = await import('vue');
+          await nextTick();
+          this.isLoadingEditData = false;
       } else {
           this.form = {
             noTransfer: '',
@@ -622,11 +662,20 @@ export const useStockTransferStore = defineStore('stockTransfer', {
         }
 
         const result = await response.json();
-        this.productsInWarehouse = result.data;
+        
+        // Ensure proper data structure with reactive copy and validation
+        this.productsInWarehouse = (result.data || [])
+          .filter((stock: any) => stock && stock.product) // Filter out items without product
+          .map((stock: any) => ({
+            ...stock,
+            // Ensure nested objects are properly structured
+            product: stock.product ? { ...stock.product } : null,
+            warehouse: stock.warehouse ? { ...stock.warehouse } : null
+          }));
 
       } catch (error) {
         this.productsInWarehouse = [];
-        console.error(error);
+        console.error('Error fetching products by warehouse:', error);
         toast.error({
           title: 'Error',
           message: 'Gagal memuat daftar produk.',

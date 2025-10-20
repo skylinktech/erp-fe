@@ -287,9 +287,16 @@
                                     <div class="mb-4 col-lg-4 col-xl-4 col-12 mb-0">
                                         <div class="form-floating form-floating-outline stock-transfer-item-select">
                                             <CustomSelect2 v-model="item.stock" :options="productsInWarehouse"
-                                                :get-option-label="option => `${option.product?.sku || ''} | ${option.product?.name || ''}`" searchable clearable
+                                                :get-option-label="option => {
+                                                    if (!option) return '';
+                                                    const sku = option.product?.sku || '';
+                                                    const name = option.product?.name || '';
+                                                    return `${sku} | ${name}`;
+                                                }" 
+                                                searchable clearable
                                                 placeholder="-- Pilih Produk --"
                                                 :filter-by="(option, label, search) => {
+                                                    if (!option || !option.product) return false;
                                                     const product = option.product;
                                                     const searchLower = search.toLowerCase();
                                                     return (product?.name && product.name.toLowerCase().includes(searchLower)) || 
@@ -387,7 +394,7 @@ const permissionStore       = usePermissionsStore()
 const perusahaanStore       = usePerusahaanStore()
 const cabangStore           = useCabangStore()
 const { userHasPermission, userHasRole } = usePermissions();
-const { stockTransfers, totalRecords, stats, params, form, isEditMode, showModal, validationErrors, productsInWarehouse } = storeToRefs(stockTransferStore)
+const { stockTransfers, totalRecords, stats, params, form, isEditMode, showModal, validationErrors, productsInWarehouse, isLoadingEditData } = storeToRefs(stockTransferStore)
 const { warehouseList: warehouses } = storeToRefs(warehouseStore)
 const { perusahaans }       = storeToRefs(perusahaanStore)
 const { cabangs }           = storeToRefs(cabangStore)
@@ -450,11 +457,23 @@ const filteredCabangs = computed(() => {
 });
 
 watch(() => form.value.fromWarehouseId, (newWarehouseId, oldWarehouseId) => {
+    // Skip watcher jika sedang loading edit data (untuk prevent double fetch)
+    if (isLoadingEditData.value) {
+        return;
+    }
+    
     if (newWarehouseId) {
-        stockTransferStore.fetchProductsByWarehouse(newWarehouseId);
-        if (oldWarehouseId && newWarehouseId !== oldWarehouseId) {
+        // Jika warehouse berubah dari yang lama (user ganti warehouse)
+        // oldWarehouseId harus bukan null dan bukan undefined, dan harus beda dengan yang baru
+        if (oldWarehouseId != null && newWarehouseId !== oldWarehouseId) {
+            stockTransferStore.fetchProductsByWarehouse(newWarehouseId);
             form.value.stockTransferItems = [];
             stockTransferStore.addItem();
+        } 
+        // Jika warehouse baru dipilih pertama kali (create mode saja)
+        // oldWarehouseId adalah null atau undefined
+        else if (oldWarehouseId == null && !isEditMode.value) {
+            stockTransferStore.fetchProductsByWarehouse(newWarehouseId);
         }
     } else {
         stockTransferStore.productsInWarehouse = [];
