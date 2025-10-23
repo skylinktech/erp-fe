@@ -137,6 +137,7 @@
               <th>Qty</th>
               <th>Price</th>
               <th>Total</th>
+              <th>Subtotal</th>
             </tr>
           </thead>
           <tbody>
@@ -257,6 +258,18 @@
               </td>
             </tr>
             <tr v-else>
+              <td colspan="2"></td>
+            </tr>
+            <tr>
+              <td colspan="2"></td>
+            </tr>
+            <tr>
+              <td colspan="2"></td>
+            </tr>
+            <tr>
+              <td colspan="2"></td>
+            </tr>
+            <tr>
               <td colspan="2"></td>
             </tr>
             <tr>
