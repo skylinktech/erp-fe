@@ -576,17 +576,8 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
                     this.purchaseOrder.status = updatedPurchaseOrder.status;
                 }
             }
-
-            // Hitung berapa StockIn yang dibuat berdasarkan selisih receivedQty
-            const oldReceivedQty = this.purchaseOrder?.purchaseOrderItems?.find(item => item.id === itemId)?.receivedQty || 0
-            const stockInsCreated = Math.abs(receivedQty - Number(oldReceivedQty))
             
-            toast.success({
-              title: 'Success',
-              message: `Status item Purchase Order berhasil diperbarui. ${stockInsCreated} Stock In baru telah dibuat.`,
-              color: 'green',
-              position: 'topRight',
-            });
+            // ✅ Toast dihapus karena sudah ada di component yang memanggilnya
             
         } catch (error: any) {
             console.error('Gagal memperbarui status item PO atau PO:', error);
@@ -628,13 +619,6 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
           }
 
           const result = await response.json();
-
-          toast.success({
-            title: 'Success',
-            message: `Berhasil menerima semua item. ${result.data?.totalStockInsCreated || 0} Stock In telah dibuat.`,
-            color: 'green',
-            position: 'topRight',
-          });
 
           return result;
       } catch (error: any) {

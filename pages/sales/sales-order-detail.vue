@@ -97,7 +97,7 @@
                             </div>
                         </div>
                         <div class="table-responsive border rounded-4 border-bottom-0">
-                            <!-- ✅ TOMBOL DELIVER ALL -->
+                            <!-- ✅ TOMBOL DELIVER ALL & DELIVER PARTIAL -->
                             <div 
                                 v-if="showDeliverAllButton" 
                                 class="p-3 bg-light border-bottom"
@@ -105,21 +105,32 @@
                             >
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
-                                        <h6 class="mb-1">Deliver All Items</h6>
+                                        <h6 class="mb-1">Deliver Items</h6>
                                         <small class="text-muted">
                                             Total pending items: {{ totalPendingItems }} 
                                             ({{ totalPendingQuantity }} units)
                                         </small>
                                     </div>
-                                    <button 
-                                         @click="deliverAllItems"
-                                         class="btn btn-secondary btn-sm"
-                                         :disabled="loading || isAllItemsReceived || deliverAllBlocked"
-                                         :title="deliverAllBlocked ? 'Tidak dapat Deliver All: ada produk dengan stok kosong di gudang terkait' : ''"
-                                     >
-                                         <i class="ri-truck-line me-2"></i>
-                                         Deliver All ({{ totalPendingQuantity }} items)
-                                     </button>
+                                    <div class="d-flex gap-2">
+                                        <button 
+                                            type="button" 
+                                            class="btn btn-warning btn-sm"
+                                            @click="openDeliverPartialModal"
+                                            :disabled="loading || isAllItemsReceived || isDelivered"
+                                        >
+                                            <i class="ri-file-list-3-line me-2"></i>
+                                            Deliver Partial
+                                        </button>
+                                        <button 
+                                             @click="deliverAllItems"
+                                             class="btn btn-secondary btn-sm"
+                                             :disabled="loading || isAllItemsReceived || deliverAllBlocked || isDelivered"
+                                             :title="deliverAllBlocked ? 'Tidak dapat Deliver All: ada produk dengan stok kosong di gudang terkait' : ''"
+                                         >
+                                             <i class="ri-truck-line me-2"></i>
+                                             Deliver All ({{ totalPendingQuantity }} items)
+                                         </button>
+                                    </div>
                                 </div>
                             </div>
                             <table class="table m-0">
@@ -155,20 +166,7 @@
                                                 type="number"
                                                 class="form-control mx-1 delivered-qty-input"
                                                 :value="Math.floor(item.deliveredQty || 0)"
-                                                @input="(e) => { 
-                                                    const intValue = Math.floor(parseInt(e.target.value) || 0);
-                                                    item.deliveredQty = intValue;
-                                                    e.target.value = intValue;
-                                                    updateDeliveredQty(item);
-                                                }"
-                                                @keydown="(e) => {
-                                                    // Mencegah input desimal (titik dan koma)
-                                                    if (e.key === '.' || e.key === ',') {
-                                                        e.preventDefault();
-                                                    }
-                                                }"
-                                                @blur="updateDeliveredQty(item)"
-                                                :disabled="isReturned(item) || isDelivered || isItemDone(item)"
+                                                disabled
                                                 min="0"
                                                 :max="item.quantity"
                                                 step="1"
@@ -379,6 +377,111 @@
             </div>
         </div>
         <!-- / Content -->
+
+        <!-- ✅ MODAL DELIVER PARTIAL -->
+        <div 
+            class="modal fade" 
+            id="deliverPartialModal" 
+            tabindex="-1" 
+            aria-labelledby="deliverPartialModalLabel" 
+            aria-hidden="true"
+            ref="deliverPartialModal"
+        >
+            <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="deliverPartialModalLabel">
+                            <i class="ri-file-list-3-line me-2"></i>
+                            Deliver Partial Items
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-info mb-4">
+                            <i class="ri-information-line me-2"></i>
+                            Atur jumlah barang yang akan dikirim untuk setiap item. Ketik langsung quantity yang diinginkan.
+                        </div>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 40%;">Produk</th>
+                                        <th style="width: 15%;" class="text-center">Ordered</th>
+                                        <th style="width: 15%;" class="text-center">Delivered</th>
+                                        <th style="width: 30%;" class="text-center">Quantity to Deliver</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="item in modalItems" :key="item.id">
+                                        <td>
+                                            <div class="fw-semibold">{{ item.product?.name || 'N/A' }}</div>
+                                            <small class="text-muted">{{ item.description || '-' }}</small>
+                                        </td>
+                                        <td class="text-center align-middle">
+                                            <span class="badge bg-primary">{{ Math.floor(Number(item.quantity) || 0) }}</span>
+                                        </td>
+                                        <td class="text-center align-middle">
+                                            <span class="badge bg-success">{{ Math.floor(Number(item.deliveredQty) || 0) }}</span>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex flex-column align-items-center justify-content-center">
+                                                <input
+                                                    type="number"
+                                                    class="form-control text-center modal-qty-input"
+                                                    v-model.number="item.tempDeliverQty"
+                                                    @input="validateModalQty(item)"
+                                                    @keydown="(e) => {
+                                                        if (e.key === '.' || e.key === ',') {
+                                                            e.preventDefault();
+                                                        }
+                                                    }"
+                                                    min="0"
+                                                    :max="getRemainingQty(item)"
+                                                    step="1"
+                                                    placeholder="0"
+                                                    style="width: 100px;"
+                                                />
+                                                <small class="text-muted mt-1">
+                                                    Max: {{ getRemainingQty(item) }} units
+                                                </small>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="alert alert-warning mt-3" v-if="totalModalDeliverQty === 0">
+                            <i class="ri-alert-line me-2"></i>
+                            Silakan pilih minimal 1 item untuk dikirim.
+                        </div>
+                        
+                        <div class="mt-3 p-3 bg-light rounded">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-semibold">Total Items to Deliver:</span>
+                                <span class="badge bg-primary fs-6">{{ totalModalDeliverQty }} units</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="ri-close-line me-2"></i>
+                            Batal
+                        </button>
+                        <button 
+                            type="button" 
+                            class="btn btn-primary" 
+                            @click="confirmDeliverPartial"
+                            :disabled="loading || totalModalDeliverQty === 0"
+                        >
+                            <i class="ri-truck-line me-2"></i>
+                            Deliver {{ totalModalDeliverQty }} Items
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -391,6 +494,7 @@ import Swal from 'sweetalert2'
 import 'sweetalert2/dist/sweetalert2.min.css'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import { useStocksStore } from '~/stores/stocks'
+import { Modal } from 'bootstrap'
 
 // Composables
 const { setDetailTitle } = useDynamicTitle()
@@ -405,6 +509,11 @@ const stockStore      = useStocksStore()
 // ✅ STATE: Blokir Deliver All jika ada stok kosong
 const deliverAllBlocked = ref(false)
 const hasEmptyStockItems = ref(false)
+
+// ✅ STATE untuk modal
+const deliverPartialModal = ref(null)
+const modalItems = ref([])
+let modalInstance = null
 
 const { salesOrder, loading } = storeToRefs(salesOrderStore)
 const soId = route.query.id
@@ -512,7 +621,10 @@ const updateDeliveredQty = async (item) => {
         toast.warning({
             title: 'Peringatan',
             message: `Quantity tidak boleh melebihi ${maxQty}`,
-            color: 'orange'
+            color: 'orange',
+            timeout: 2000,
+            position: 'topRight',
+            layout: 2,
         })
         return
     }
@@ -535,6 +647,7 @@ const updateDeliveredQty = async (item) => {
                     title: 'Stock Kosong',
                     message: 'Stock pada product ini kosong, tidak dapat mengubah status',
                     color: 'red',
+                    timeout: 2000,
                     position: 'topRight',
                     layout: 2,
                 })
@@ -552,6 +665,16 @@ const updateDeliveredQty = async (item) => {
         await refreshSalesOrderDetails()
         await evaluateDeliverAllAvailability()
         
+        // ✅ Toast success untuk update via tombol +/-
+        toast.success({
+            title: 'Berhasil',
+            message: `Delivered quantity berhasil diperbarui menjadi ${deliveredQty}`,
+            color: 'green',
+            timeout: 2000,
+            position: 'topRight',
+            layout: 2,
+        })
+        
         // Check if all items are now done
         await checkAllItemsStatus()
         
@@ -560,7 +683,10 @@ const updateDeliveredQty = async (item) => {
         toast.error({
             title: 'Update Gagal',
             message: 'Terjadi kesalahan saat memperbarui quantity.',
-            color: 'red'
+            color: 'red',
+            timeout: 2000,
+            position: 'topRight',
+            layout: 2,
         })
     }
 }
@@ -583,7 +709,10 @@ const checkAllItemsStatus = async () => {
             toast.success({
                 title: 'Semua Item Selesai!',
                 message: 'Semua item telah dikirim sepenuhnya. Status berubah menjadi Delivered.',
-                color: 'green'
+                color: 'green',
+                timeout: 2000,
+                position: 'topRight',
+                layout: 2,
             })
         }
     }
@@ -650,7 +779,10 @@ async function refreshSalesOrderDetails() {
         toast.error({
             title: 'Gagal Memuat Data',
             message: `Tidak dapat memuat detail Sales Order dengan ID: ${soIdToFetch}. ${error.message || 'Silakan coba lagi.'}`,
-            color: 'red'
+            color: 'red',
+            timeout: 2000,
+            position: 'topRight',
+            layout: 2,
         })
         
         // Redirect ke halaman sales order list setelah 3 detik
@@ -751,12 +883,206 @@ const totalPendingQuantity = computed(() => {
     }).reduce((sum, item) => sum + (Math.floor(Number(item.quantity) || 0) - Math.floor(Number(item.deliveredQty) || 0)), 0);
 });
 
+// ✅ COMPUTED untuk total quantity yang akan di-deliver di modal
+const totalModalDeliverQty = computed(() => {
+    return modalItems.value.reduce((total, item) => {
+        return total + (item.tempDeliverQty || 0)
+    }, 0)
+})
+
+// ✅ FUNCTION untuk mendapatkan remaining quantity
+const getRemainingQty = (item) => {
+    const ordered = Math.floor(Number(item.quantity) || 0)
+    const delivered = Math.floor(Number(item.deliveredQty) || 0)
+    return Math.max(0, ordered - delivered)
+}
+
+// ✅ FUNCTION untuk open modal deliver partial
+const openDeliverPartialModal = () => {
+    if (!salesOrder.value?.salesOrderItems) {
+        toast.error({
+            title: 'Error',
+            message: 'Tidak ada item yang dapat dikirim',
+            color: 'red',
+            timeout: 2000,
+            position: 'topRight',
+            layout: 2,
+        })
+        return
+    }
+
+    // Copy items dan tambahkan tempDeliverQty
+    modalItems.value = salesOrder.value.salesOrderItems.map(item => ({
+        ...item,
+        tempDeliverQty: 0 // Start dengan 0, user akan input manual
+    }))
+
+    // Initialize bootstrap modal
+    if (!modalInstance) {
+        const modalElement = document.getElementById('deliverPartialModal')
+        if (modalElement) {
+            modalInstance = new Modal(modalElement)
+        }
+    }
+    
+    modalInstance?.show()
+}
+
+// ✅ FUNCTION untuk validate quantity di modal
+const validateModalQty = (item) => {
+    const remaining = getRemainingQty(item)
+    
+    // Handle empty, null, undefined, atau NaN
+    if (item.tempDeliverQty === null || item.tempDeliverQty === undefined || item.tempDeliverQty === '' || isNaN(item.tempDeliverQty)) {
+        item.tempDeliverQty = 0
+        return
+    }
+    
+    // Bulatkan ke bilangan bulat
+    item.tempDeliverQty = Math.floor(Number(item.tempDeliverQty))
+    
+    // Validasi minimum
+    if (item.tempDeliverQty < 0) {
+        item.tempDeliverQty = 0
+    }
+    
+    // Validasi maximum
+    if (item.tempDeliverQty > remaining) {
+        item.tempDeliverQty = remaining
+        toast.warning({
+            title: 'Peringatan',
+            message: `Quantity tidak boleh melebihi ${remaining}`,
+            color: 'orange',
+            timeout: 2000,
+            position: 'topRight',
+            layout: 2,
+        })
+    }
+}
+
+// ✅ FUNCTION untuk confirm deliver partial
+const confirmDeliverPartial = async () => {
+    // Filter items yang akan di-deliver (qty > 0)
+    const itemsToDeliver = modalItems.value.filter(item => item.tempDeliverQty > 0)
+    
+    if (itemsToDeliver.length === 0) {
+        toast.warning({
+            title: 'Peringatan',
+            message: 'Silakan pilih minimal 1 item untuk dikirim',
+            color: 'orange',
+            timeout: 2000,
+            position: 'topRight',
+            layout: 2,
+        })
+        return
+    }
+
+    // ✅ TUTUP modal dulu sebelum tampilkan SweetAlert
+    modalInstance?.hide()
+
+    // ✅ Tampilkan konfirmasi SweetAlert
+    const result = await Swal.fire({
+        title: 'Konfirmasi Deliver Partial',
+        html: `
+            <div class="text-start">
+                <p class="mb-3">Anda akan mengirim barang berikut:</p>
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Produk</th>
+                                <th class="text-center">Quantity</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${itemsToDeliver.map(item => `
+                                <tr>
+                                    <td><strong>${item.product?.name || 'Unknown'}</strong></td>
+                                    <td class="text-center"><span class="badge bg-primary">${item.tempDeliverQty} units</span></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                        <tfoot class="table-light">
+                            <tr>
+                                <td class="text-end"><strong>Total:</strong></td>
+                                <td class="text-center"><strong><span class="badge bg-success">${totalModalDeliverQty.value} units</span></strong></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        `,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#28a745',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Ya, Deliver!',
+        cancelButtonText: 'Batal',
+        reverseButtons: true,
+        customClass: {
+            confirmButton: 'btn btn-success me-3',
+            cancelButton: 'btn btn-secondary',
+            actions: 'swal-button-spacing'
+        },
+        buttonsStyling: false,
+        width: '600px'
+    })
+
+    // ✅ Jika user cancel, buka kembali modal
+    if (!result.isConfirmed) {
+        modalInstance?.show()
+        return
+    }
+
+    try {
+        loading.value = true
+
+        // Process each item sequentially
+        for (const item of itemsToDeliver) {
+            const newDeliveredQty = Math.floor(Number(item.deliveredQty) || 0) + item.tempDeliverQty
+            await salesOrderStore.updateStatusPartial(item.id, false, newDeliveredQty)
+        }
+
+        // Refresh data
+        await refreshSalesOrderDetails()
+        await evaluateDeliverAllAvailability()
+
+        // Success message
+        toast.success({
+            title: 'Berhasil',
+            message: `Berhasil mengirim ${totalModalDeliverQty.value} items dari ${itemsToDeliver.length} produk`,
+            color: 'green',
+            timeout: 2000,
+            position: 'topRight',
+            layout: 2,
+        })
+
+    } catch (error) {
+        console.error('Error delivering partial items:', error)
+        toast.error({
+            title: 'Error',
+            message: error.message || 'Gagal mengirim barang',
+            color: 'red',
+            timeout: 2000,
+            position: 'topRight',
+            layout: 2,
+        })
+        // ✅ Jika error, buka kembali modal
+        modalInstance?.show()
+    } finally {
+        loading.value = false
+    }
+}
+
 const deliverAllItems = async () => {
     if (isDelivered.value || totalPendingQuantity.value === 0) {
         toast.warning({
             title: 'Peringatan',
             message: `Semua item sudah dikirim atau Sales Order sudah dalam status ${salesOrder.value?.status?.toUpperCase()}.`,
-            color: 'orange'
+            color: 'orange',
+            timeout: 2000,
+            position: 'topRight',
+            layout: 2,
         })
         return
     }
@@ -790,33 +1116,28 @@ const deliverAllItems = async () => {
         
         // ✅ REFRESH DATA
         await refreshSalesOrderDetails()
+        await evaluateDeliverAllAvailability()
         
         // ✅ TAMPILKAN SUCCESS MESSAGE
-        await Swal.fire({
-            title: 'Berhasil!',
-            text: `Semua barang telah dikirim. ${totalPendingQuantity.value} Stock Out telah dibuat.`,
-            icon: 'success',
-            confirmButtonColor: '#28a745',
-            confirmButtonText: 'OK',
-            customClass: {
-                confirmButton: 'btn btn-success'
-            },
-            buttonsStyling: false
+        toast.success({
+            title: 'Berhasil',
+            message: `Semua barang telah dikirim. ${totalPendingQuantity.value} Stock Out telah dibuat.`,
+            color: 'green',
+            timeout: 2000,
+            position: 'topRight',
+            layout: 2,
         })
         
     } catch (error) {
         console.error('Error delivering all items:', error)
         
-        await Swal.fire({
-            title: 'Error!',
-            text: error.data?.message || error.message || 'Gagal mengirim semua barang',
-            icon: 'error',
-            confirmButtonColor: '#dc3545',
-            confirmButtonText: 'OK',
-            customClass: {
-                confirmButton: 'btn btn-danger'
-            },
-            buttonsStyling: false
+        toast.error({
+            title: 'Error',
+            message: error.data?.message || error.message || 'Gagal mengirim semua barang',
+            color: 'red',
+            timeout: 2000,
+            position: 'topRight',
+            layout: 2,
         })
     }
 };
@@ -961,5 +1282,28 @@ onMounted(async () => {
     
     :global(.swal2-actions.swal-button-spacing .swal2-confirm) {
         margin-right: 1rem !important;
+    }
+
+    .modal-qty-input:focus {
+        border-color: #007bff !important;
+        box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25) !important;
+        background-color: #ffffff !important;
+        outline: none !important;
+    }
+
+    .modal-qty-input:hover {
+        border-color: #adb5bd !important;
+    }
+
+    /* Hilangkan spinner pada input number di modal */
+    .modal-qty-input::-webkit-outer-spin-button,
+    .modal-qty-input::-webkit-inner-spin-button {
+        -webkit-appearance: none !important;
+        margin: 0 !important;
+    }
+    
+    .modal-qty-input[type=number] {
+        -moz-appearance: textfield !important;
+        appearance: textfield !important;
     }
 </style>

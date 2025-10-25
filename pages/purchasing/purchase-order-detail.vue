@@ -43,7 +43,7 @@
                                 <div class="d-flex align-items-center gap-3 mb-6">
                                     <h5 class="mb-0">Purchase Number : {{ purchaseOrder.noPo }}</h5>
                                     <!-- ✅ STATUS BADGE -->
-                                    <span >
+                                    <span :class="getStatusBadgeClass(purchaseOrder.status)">
                                         {{ getStatusText(purchaseOrder.status) }}
                                     </span>
                                 </div>
@@ -86,21 +86,32 @@
                             >
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
-                                        <h6 class="mb-1">Receive All Items</h6>
+                                        <h6 class="mb-1">Receive Items</h6>
                                         <small class="text-muted">
                                             Total pending items: {{ totalPendingItems }} 
                                             ({{ totalPendingQuantity }} units)
                                         </small>
                                     </div>
-                                    <button 
-                                        type="button" 
-                                        class="btn btn-secondary btn-sm"
-                                        @click="receiveAllItems"
-                                        :disabled="loading || isAllItemsReceived"
-                                    >
-                                        <i class="ri-check-double-line me-2"></i>
-                                        Receive All ({{ totalPendingQuantity }} items)
-                                    </button>
+                                    <div class="d-flex gap-2">
+                                        <button 
+                                            type="button" 
+                                            class="btn btn-warning btn-sm"
+                                            @click="openReceivePartialModal"
+                                            :disabled="loading || isAllItemsReceived || isReceived"
+                                        >
+                                            <i class="ri-file-list-3-line me-2"></i>
+                                            Receive Partial
+                                        </button>
+                                        <button 
+                                            type="button" 
+                                            class="btn btn-secondary btn-sm"
+                                            @click="receiveAllItems"
+                                            :disabled="loading || isAllItemsReceived || isReceived"
+                                        >
+                                            <i class="ri-check-double-line me-2"></i>
+                                            Receive All ({{ totalPendingQuantity }} items)
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                             <table class="table m-0">
@@ -136,20 +147,7 @@
                                                 type="number"
                                                 class="form-control mx-1 received-qty-input"
                                                 :value="Math.floor(item.receivedQty || 0)"
-                                                @input="(e) => { 
-                                                    const intValue = Math.floor(parseInt(e.target.value) || 0);
-                                                    item.receivedQty = intValue;
-                                                    e.target.value = intValue;
-                                                    updateReceivedQty(item);
-                                                }"
-                                                @keydown="(e) => {
-                                                    // Mencegah input desimal (titik dan koma)
-                                                    if (e.key === '.' || e.key === ',') {
-                                                        e.preventDefault();
-                                                    }
-                                                }"
-                                                @blur="updateReceivedQty(item)"
-                                                :disabled="isReceived"
+                                                disabled
                                                 min="0"
                                                 :max="item.quantity"
                                                 step="1"
@@ -387,16 +385,117 @@
             </div>
         </div>
         <!-- / Content -->
+
+        <!-- ✅ MODAL RECEIVE PARTIAL -->
+        <div 
+            class="modal fade" 
+            id="receivePartialModal" 
+            tabindex="-1" 
+            aria-labelledby="receivePartialModalLabel" 
+            aria-hidden="true"
+            ref="receivePartialModal"
+        >
+            <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="receivePartialModalLabel">
+                            <i class="ri-file-list-3-line me-2"></i>
+                            Receive Partial Items
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 40%;">Produk</th>
+                                        <th style="width: 15%;" class="text-center">Ordered</th>
+                                        <th style="width: 15%;" class="text-center">Received</th>
+                                        <th style="width: 30%;" class="text-center">Quantity to Receive</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="item in modalItems" :key="item.id">
+                                        <td>
+                                            <div class="fw-semibold">{{ item.product?.name || 'N/A' }}</div>
+                                            <small class="text-muted">{{ item.description || '-' }}</small>
+                                        </td>
+                                        <td class="text-center align-middle">
+                                            <span class="badge bg-primary">{{ Math.floor(Number(item.quantity) || 0) }}</span>
+                                        </td>
+                                        <td class="text-center align-middle">
+                                            <span class="badge bg-success">{{ Math.floor(Number(item.receivedQty) || 0) }}</span>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex flex-column align-items-center justify-content-center">
+                                                <input
+                                                    type="number"
+                                                    class="form-control text-center modal-qty-input"
+                                                    v-model.number="item.tempReceiveQty"
+                                                    @input="validateModalQty(item)"
+                                                    @keydown="(e) => {
+                                                        // Mencegah input desimal (titik dan koma)
+                                                        if (e.key === '.' || e.key === ',') {
+                                                            e.preventDefault();
+                                                        }
+                                                    }"
+                                                    min="0"
+                                                    :max="getRemainingQty(item)"
+                                                    step="1"
+                                                    placeholder="0"
+                                                />
+                                                <small class="text-muted mt-1">
+                                                    Max: {{ getRemainingQty(item) }} units
+                                                </small>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="alert alert-warning mt-3" v-if="totalModalReceiveQty === 0">
+                            <i class="ri-alert-line me-2"></i>
+                            Silakan pilih minimal 1 item untuk diterima.
+                        </div>
+                        
+                        <div class="mt-3 p-3 bg-light rounded">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-semibold">Total Items to Receive:</span>
+                                <span class="badge bg-primary fs-6">{{ totalModalReceiveQty }} units</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="ri-close-line me-2"></i>
+                            Batal
+                        </button>
+                        <button 
+                            type="button" 
+                            class="btn btn-primary" 
+                            @click="confirmReceivePartial"
+                            :disabled="loading || totalModalReceiveQty === 0"
+                        >
+                            <i class="ri-check-line me-2"></i>
+                            Receive {{ totalModalReceiveQty }} Items
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
 <script setup>
-import { computed, onMounted, nextTick } from 'vue'
+import { computed, onMounted, nextTick, ref } from 'vue'
 import { usePurchaseOrderStore } from '~/stores/purchaseOrder'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import Swal from 'sweetalert2'
+import { Modal } from 'bootstrap'
 
 // Composables
 const { setDetailTitle } = useDynamicTitle()
@@ -409,6 +508,11 @@ const toast              = useToast()
 
 const { purchaseOrder, loading } = storeToRefs(purchaseOrderStore)
 const poId = route.query.id
+
+// ✅ STATE untuk modal
+const receivePartialModal = ref(null)
+const modalItems = ref([])
+let modalInstance = null
 
 // ✅ COMPUTED untuk check apakah Purchase Order sudah received
 const isReceived = computed(() => {
@@ -500,7 +604,10 @@ const receiveAllItems = async () => {
         toast.warning({
             title: 'Peringatan',
             message: `Semua item sudah diterima atau Purchase Order sudah dalam status ${purchaseOrder.value?.status?.toUpperCase()}.`,
-            color: 'orange'
+            color: 'orange',
+            timeout: 2000,
+            position: 'topRight',
+            layout: 2,
         })
         return
     }
@@ -537,7 +644,6 @@ const receiveAllItems = async () => {
         
         // ✅ TAMPILKAN SUCCESS MESSAGE
         const toast = useToast()
-        toast.success(`Semua barang telah diterima. 1 Stock In telah dibuat dengan ${totalPendingQuantity.value} items.`)
         
     } catch (error) {
         console.error('Error receiving all items:', error)
@@ -612,7 +718,10 @@ const updateReceivedQty = async (item) => {
         toast.warning({
             title: 'Peringatan',
             message: `Quantity tidak boleh melebihi ${maxQty}`,
-            color: 'orange'
+            color: 'orange',
+            timeout: 2000,
+            position: 'topRight',
+            layout: 2,
         })
         return
     }
@@ -620,6 +729,16 @@ const updateReceivedQty = async (item) => {
     try {
         await purchaseOrderStore.updateStatusPartial(item.id, false, receivedQty)
         await refreshPurchaseOrderDetails()
+        
+        // ✅ Toast success untuk update via tombol +/-
+        toast.success({
+            title: 'Berhasil',
+            message: `Received quantity berhasil diperbarui menjadi ${receivedQty}`,
+            color: 'green',
+            timeout: 2000,
+            position: 'topRight',
+            layout: 2,
+        })
         
         // Check if all items are now done
         checkAllItemsStatus()
@@ -629,7 +748,10 @@ const updateReceivedQty = async (item) => {
         toast.error({
             title: 'Update Gagal',
             message: 'Terjadi kesalahan saat memperbarui quantity.',
-            color: 'red'
+            color: 'red',
+            timeout: 2000,
+            position: 'topRight',
+            layout: 2,
         })
     }
 }
@@ -670,7 +792,10 @@ const checkAllItemsStatus = () => {
         toast.success({
             title: 'Semua Item Selesai!',
             message: 'Semua item telah diterima sepenuhnya. Status berubah menjadi Received.',
-            color: 'green'
+            color: 'green',
+            timeout: 2000,
+            position: 'topRight',
+            layout: 2,
         })
     }
 }
@@ -683,6 +808,196 @@ const totalBeforeTax = computed(() => {
     }
     return 0
 })
+
+// ✅ COMPUTED untuk total quantity yang akan di-receive di modal
+const totalModalReceiveQty = computed(() => {
+    return modalItems.value.reduce((total, item) => {
+        return total + (item.tempReceiveQty || 0)
+    }, 0)
+})
+
+// ✅ FUNCTION untuk mendapatkan remaining quantity
+const getRemainingQty = (item) => {
+    const ordered = Math.floor(Number(item.quantity) || 0)
+    const received = Math.floor(Number(item.receivedQty) || 0)
+    return Math.max(0, ordered - received)
+}
+
+// ✅ FUNCTION untuk open modal receive partial
+const openReceivePartialModal = () => {
+    if (!purchaseOrder.value?.purchaseOrderItems) {
+        toast.error({
+            title: 'Error',
+            message: 'Tidak ada item yang dapat diterima',
+            color: 'red',
+            timeout: 2000,
+            position: 'topRight',
+            layout: 2,
+        })
+        return
+    }
+
+    // Copy items dan tambahkan tempReceiveQty
+    modalItems.value = purchaseOrder.value.purchaseOrderItems.map(item => ({
+        ...item,
+        tempReceiveQty: 0 // Start dengan 0, user akan adjust dengan tombol +/-
+    }))
+
+    // Initialize bootstrap modal
+    if (!modalInstance) {
+        const modalElement = document.getElementById('receivePartialModal')
+        if (modalElement) {
+            modalInstance = new Modal(modalElement)
+        }
+    }
+    
+    modalInstance?.show()
+}
+
+// ✅ FUNCTION untuk validate quantity di modal
+const validateModalQty = (item) => {
+    const remaining = getRemainingQty(item)
+    
+    // Handle empty, null, undefined, atau NaN
+    if (item.tempReceiveQty === null || item.tempReceiveQty === undefined || item.tempReceiveQty === '' || isNaN(item.tempReceiveQty)) {
+        item.tempReceiveQty = 0
+        return
+    }
+    
+    // Bulatkan ke bilangan bulat
+    item.tempReceiveQty = Math.floor(Number(item.tempReceiveQty))
+    
+    // Validasi minimum
+    if (item.tempReceiveQty < 0) {
+        item.tempReceiveQty = 0
+    }
+    
+    // Validasi maximum
+    if (item.tempReceiveQty > remaining) {
+        item.tempReceiveQty = remaining
+        toast.warning({
+            title: 'Peringatan',
+            message: `Quantity tidak boleh melebihi ${remaining}`,
+            color: 'orange',
+            timeout: 2000,
+            position: 'topRight',
+            layout: 2,
+        })
+    }
+}
+
+// ✅ FUNCTION untuk confirm receive partial
+const confirmReceivePartial = async () => {
+    // Filter items yang akan di-receive (qty > 0)
+    const itemsToReceive = modalItems.value.filter(item => item.tempReceiveQty > 0)
+    
+    if (itemsToReceive.length === 0) {
+        toast.warning({
+            title: 'Peringatan',
+            message: 'Silakan pilih minimal 1 item untuk diterima',
+            color: 'orange',
+            timeout: 2000,
+            position: 'topRight',
+            layout: 2,
+        })
+        return
+    }
+
+    // ✅ TUTUP modal dulu sebelum tampilkan SweetAlert
+    modalInstance?.hide()
+
+    // ✅ Tampilkan konfirmasi SweetAlert
+    const result = await Swal.fire({
+        title: 'Konfirmasi Receive Partial',
+        html: `
+            <div class="text-start">
+                <p class="mb-3">Anda akan menerima barang berikut:</p>
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Produk</th>
+                                <th class="text-center">Quantity</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${itemsToReceive.map(item => `
+                                <tr>
+                                    <td><strong>${item.product?.name || 'Unknown'}</strong></td>
+                                    <td class="text-center"><span class="badge bg-primary">${item.tempReceiveQty} units</span></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                        <tfoot class="table-light">
+                            <tr>
+                                <td class="text-end"><strong>Total:</strong></td>
+                                <td class="text-center"><strong><span class="badge bg-success">${totalModalReceiveQty.value} units</span></strong></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        `,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#28a745',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Ya, Receive!',
+        cancelButtonText: 'Batal',
+        reverseButtons: true,
+        customClass: {
+            confirmButton: 'btn btn-success me-3',
+            cancelButton: 'btn btn-secondary',
+            actions: 'swal-button-spacing'
+        },
+        buttonsStyling: false,
+        width: '600px'
+    })
+
+    // ✅ Jika user cancel, buka kembali modal
+    if (!result.isConfirmed) {
+        modalInstance?.show()
+        return
+    }
+
+    try {
+        loading.value = true
+
+        // Process each item sequentially
+        for (const item of itemsToReceive) {
+            const newReceivedQty = Math.floor(Number(item.receivedQty) || 0) + item.tempReceiveQty
+            await purchaseOrderStore.updateStatusPartial(item.id, false, newReceivedQty)
+        }
+
+        // Refresh data
+        await refreshPurchaseOrderDetails()
+
+        // Success message
+        toast.success({
+            title: 'Berhasil',
+            message: `Berhasil menerima ${totalModalReceiveQty.value} items dari ${itemsToReceive.length} produk`,
+            color: 'green',
+            timeout: 2000,
+            position: 'topRight',
+            layout: 2,
+        })
+
+    } catch (error) {
+        console.error('Error receiving partial items:', error)
+        toast.error({
+            title: 'Error',
+            message: error.message || 'Gagal menerima barang',
+            color: 'red',
+            timeout: 2000,
+            position: 'topRight',
+            layout: 2,
+        })
+        // ✅ Jika error, buka kembali modal
+        modalInstance?.show()
+    } finally {
+        loading.value = false
+    }
+}
 
 onMounted(async () => {
     await refreshPurchaseOrderDetails()
@@ -754,5 +1069,28 @@ onMounted(async () => {
     
     :global(.swal2-actions.swal-button-spacing .swal2-confirm) {
         margin-right: 1rem !important;
+    }
+
+    .modal-qty-input:focus {
+        border-color: #007bff !important;
+        box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25) !important;
+        background-color: #ffffff !important;
+        outline: none !important;
+    }
+
+    .modal-qty-input:hover {
+        border-color: #adb5bd !important;
+    }
+
+    /* Hilangkan spinner pada input number di modal */
+    .modal-qty-input::-webkit-outer-spin-button,
+    .modal-qty-input::-webkit-inner-spin-button {
+        -webkit-appearance: none !important;
+        margin: 0 !important;
+    }
+    
+    .modal-qty-input[type=number] {
+        -moz-appearance: textfield !important;
+        appearance: textfield !important;
     }
 </style>
