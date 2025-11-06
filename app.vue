@@ -2,14 +2,13 @@
   <div>
     <LoadingOverlay />
     <NuxtLayout>
-      <NuxtPage :key="$route.fullPath" :transition="{ name: 'page', mode: 'out-in' }" />
+      <NuxtPage :transition="{ name: 'page', mode: 'out-in' }" />
     </NuxtLayout>
   </div>
 </template>
 
 <script setup lang="ts">
-// ✅ Key binding pada NuxtPage akan memaksa component re-render saat route berubah
-// Ini penting untuk memastikan halaman cetak selalu load data fresh
+// App.vue - tidak perlu key binding global karena bisa menyebabkan masalah pada halaman list
 </script>
 
 <style>
