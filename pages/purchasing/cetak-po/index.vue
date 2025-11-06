@@ -296,7 +296,7 @@
   definePageMeta({
     layout: 'cetak',
   })
-  import { onMounted, computed } from 'vue';
+  import { onMounted, onBeforeUnmount, computed, watch } from 'vue';
   import { usePurchaseOrderStore } from '~/stores/purchaseOrder';
   import { usePerusahaanStore } from '~/stores/perusahaan';
   import { storeToRefs } from 'pinia';
@@ -316,6 +316,36 @@
   const toast              = useToast();
 
   const { purchaseOrder, loading, error } = storeToRefs(purchaseOrderStore);
+
+  // ✅ Function untuk fetch data
+  const fetchData = async () => {
+    const purchaseOrderId = route.query.id;
+    if (!purchaseOrderId) {
+      purchaseOrderStore.error = { message: 'ID Purchase Order tidak ditemukan' };
+      return;
+    }
+
+    // Reset state sebelum fetch data baru
+    purchaseOrderStore.purchaseOrder = null;
+    purchaseOrderStore.error = null;
+
+    try {
+      await purchaseOrderStore.getPurchaseOrderDetails(purchaseOrderId);
+      if (purchaseOrder.value) {
+        setDetailTitle('Purchase Order', purchaseOrder.value.noPo);
+      }
+    } catch (e) {
+      console.error('Error fetching purchase order:', e);
+      toast.error({
+        title: 'Gagal!',
+        icon: 'ri-close-line',
+        message: e.message || 'Gagal memuat detail purchase order.',
+        timeout: 3000,
+        position: 'topRight',
+        layout: 2,
+      });
+    }
+  };
 
   // Normalisasi nilai TTD Digital agar robust terhadap tipe data dari API (boolean/string/number)
   const isTtdDigital = computed(() => {
@@ -394,23 +424,22 @@
     return subtotal - discount + tax;
   };
 
-  onMounted(async () => {
-    const purchaseOrderId = route.query.id;
-    if (purchaseOrderId) {
-      try {
-        await purchaseOrderStore.getPurchaseOrderDetails(purchaseOrderId);
-        setDetailTitle('Purchase Order', purchaseOrder.value.noPo)
-      } catch (e) {
-        toast.error({
-          title: 'Gagal!',
-          icon: 'ri-close-line',
-          message: e.message || 'Gagal memuat detail purchase order.',
-          timeout: 3000,
-          position: 'topRight',
-          layout: 2,
-        })
-      }
+  // ✅ Watch route changes untuk auto-fetch saat ID berubah
+  watch(() => route.query.id, (newId, oldId) => {
+    if (newId && newId !== oldId) {
+      fetchData();
     }
+  });
+
+  // ✅ Fetch data saat component mounted
+  onMounted(() => {
+    fetchData();
+  });
+
+  // ✅ Reset store saat component unmount
+  onBeforeUnmount(() => {
+    purchaseOrderStore.purchaseOrder = null;
+    purchaseOrderStore.error = null;
   });
 </script>
 

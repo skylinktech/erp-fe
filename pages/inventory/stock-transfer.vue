@@ -268,7 +268,7 @@
                                     <label for="penerima">Nama Penerima</label>
                                 </div>
                             </div>
-                            <div class="col-md-12">
+                            <div class="col-md-6">
                                 <div class="form-floating form-floating-outline">
                                     <input 
                                         type="text" 
@@ -279,6 +279,12 @@
                                         
                                     >
                                     <label for="description">Deskripsi</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 d-flex align-items-center">
+                                <div class="form-check form-switch mt-3">
+                                    <input class="form-check-input" type="checkbox" id="stTtdDigitalCheckbox" v-model="form.ttdDigital">
+                                    <label class="form-check-label" for="stTtdDigitalCheckbox">TTD Digital</label>
                                 </div>
                             </div>
                             <hr class="mt-7 w-70 justify-content-center" />

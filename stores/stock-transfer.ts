@@ -13,6 +13,7 @@ export interface StockTransfer {
   fromWarehouseId    : string
   toWarehouseId      : string
   status             : string
+  ttdDigital         : boolean
   fromWarehouse?     : Warehouse
   toWarehouse?       : Warehouse
   stockTransferDetails?: any[]
@@ -79,6 +80,7 @@ export const useStockTransferStore = defineStore('stockTransfer', {
       cabangId: null,
       penerima: '',
       noTransfer: '',
+      ttdDigital: false,
       date: '',
       fromWarehouseId: null,
       toWarehouseId: null,
@@ -146,6 +148,7 @@ export const useStockTransferStore = defineStore('stockTransfer', {
           penerima       : this.form.penerima,
           cabangId       : this.form.cabangId,
           date           : this.form.date,
+          ttdDigital     : this.form.ttdDigital,
           fromWarehouseId: this.form.fromWarehouseId,
           toWarehouseId  : this.form.toWarehouseId,
           description    : this.form.description,

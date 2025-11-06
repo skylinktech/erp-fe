@@ -118,36 +118,49 @@
               </td>
             </tr>
             <tr>
-              <td class="align-top px-0 py-6">
-                <p class="mb-1 mt-5">
-                  <span class="me-2 fw-medium text-heading">TTD Pengirim</span>
-                </p>
+              <td class="align-top py-6" style="width: 20%; min-width: 200px;">
+                <div class="d-flex flex-column align-items-center justify-content-center h-100" style="margin-left: 24px;">
+                  <p class="mb-1 mt-5 text-start">
+                    <span class="fw-medium text-heading">
+                      TTD Pengirim
+                    </span>
+                  </p>
+                  <div v-if="isTtdDigital" class="ttd-container">
+                    <img 
+                      class="ttd-image" 
+                      :src="ttdImageSrc" 
+                      alt="TTD Digital" 
+                      style="height: 120px; object-fit: contain; display: block; margin: 0 auto;" 
+                      @error="(e) => handleImageError(e, '/img/default-company-logo.png')"
+                    />
+                    <img 
+                      class="andara-image" 
+                      :src="publicPath('/img/branding/andara.png')" 
+                      alt="Andara Logo" 
+                      style="height: 40px; object-fit: contain; display: block; margin: -90px auto 0;" 
+                      @error="(e) => handleImageError(e, '/img/default-company-logo.png')"
+                    />
+                  </div>
+                  <p class="mt-10 text-start pt-10">
+                    {{ stockTransfer.transferByUser?.fullName || '-' }}
+                  </p>
+                </div>
               </td>
-              <td colspan="2"></td>
-              <td class="align-top px-0 py-6">
-                <p class="mb-1 mt-5 text-end">
-                  <span class="me-2 fw-medium text-heading">TTD Penerima</span>
-                </p>
-              </td>
-            </tr>
-            <tr>
-              <td colspan="2">
-              </td>
-            </tr>
-            <tr>
-              <td colspan="2">
-              </td>
-            </tr>
-            <tr>
-              <td colspan="2">
-              </td>
-            </tr>
-            <tr>
-              <td colspan="2">
-                <span>{{ stockTransfer.transferByUser?.fullName || '-' }}</span>
-              </td>
-              <td colspan="2" class="text-end p-5" style="padding-right: 1em !important;">
-                <span style="margin-right: 1em;">{{ stockTransfer.penerima || '-' }}</span>
+              <td style="width: 60%;"></td>
+              <td class="align-top py-6" style="width: 20%; min-width: 200px;">
+                <div class="d-flex flex-column align-items-center justify-content-center h-100" style="margin-right: 24px;">
+                  <p class="mb-1 mt-5 text-end">
+                    <span class="fw-medium text-heading">
+                      TTD Penerima
+                    </span>
+                  </p>
+                  <p class="mt-10 text-end pt-10">
+                    ....................
+                  </p>
+                  <p class="mt-10 text-end pt-10">
+                    {{ stockTransfer.penerima || '-' }}
+                  </p>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -170,7 +183,7 @@
     robots: 'index, follow',
     viewport: 'width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0'
   })
-  import { onMounted } from 'vue';
+  import { onMounted, onBeforeUnmount, computed, watch } from 'vue';
   import { useStockTransferStore } from '~/stores/stock-transfer';
   import { usePerusahaanStore } from '~/stores/perusahaan';
   import { storeToRefs } from 'pinia';
@@ -187,8 +200,64 @@
   const stockTransferStore = useStockTransferStore();
   const perusahaanStore = usePerusahaanStore();
   const route = useRoute();
+  const toast = useToast();
 
   const { selectedStockTransfer: stockTransfer, loading, error } = storeToRefs(stockTransferStore);
+
+  // ✅ Function untuk fetch data
+  const fetchData = async () => {
+    const stockTransferId = route.query.id;
+    if (!stockTransferId) {
+      stockTransferStore.error = { message: 'ID Stock Transfer tidak ditemukan' };
+      return;
+    }
+
+    // Reset state sebelum fetch data baru
+    stockTransferStore.selectedStockTransfer = null;
+    stockTransferStore.error = null;
+
+    try {
+      await stockTransferStore.fetchStockTransferById(stockTransferId);
+      if (stockTransfer.value) {
+        setListTitle('Stock Transfer', stockTransfer.value.length || 1);
+      }
+    } catch (e) {
+      console.error('Error fetching stock transfer:', e);
+      toast.fire('Error', e.message || 'Gagal memuat detail stock transfer.', 'error');
+    }
+  };
+
+  // Normalisasi nilai TTD Digital agar robust terhadap tipe data dari API (boolean/string/number)
+  const isTtdDigital = computed(() => {
+    const val = stockTransfer.value?.ttdDigital;
+    if (typeof val === 'boolean') return val;
+    if (typeof val === 'string') return ['true', '1', 'yes', 'y'].includes(val.toLowerCase());
+    if (typeof val === 'number') return val === 1;
+    return false;
+  });
+
+  // Helper untuk memastikan path sesuai base publik Nuxt (terutama saat deploy di subpath)
+  const publicPath = (p) => {
+    if (!p) return p;
+    // Jika sudah absolute http(s) atau sudah root-relative, kembalikan apa adanya
+    if (p.startsWith('http')) return p;
+    // runtime base (app.baseURL) dari useRuntimeConfig().app
+    const base = (config?.app?.baseURL) || '/';
+    // Hindari double slash
+    const joined = `${base.replace(/\/$/, '')}/${p.replace(/^\//, '')}`;
+    return joined;
+  };
+
+  // Tentukan gambar TTD berdasarkan ID transferByUser
+  const ttdImageSrc = computed(() => {
+    if (!isTtdDigital.value) return null;
+    const userId = stockTransfer.value?.transferByUser?.id;
+    // default
+    let file = '/img/branding/Ttd Digital-1.png';
+    if (userId === 2) file = '/img/branding/Ttd Digital-1.png';
+    if (userId === 4 || userId === 9) file = '/img/branding/Ttd Digital-3.png';
+    return publicPath(file);
+  });
 
   const getLogoUrl = (logoPath) => {
     if (!logoPath || typeof logoPath !== 'string') {
@@ -205,16 +274,22 @@
     return imageUrl;
 };
 
-  onMounted(async () => {
-    const stockTransferId = route.query.id;
-    if (stockTransferId) {
-      try {
-        await stockTransferStore.fetchStockTransferById(stockTransferId);
-      } catch (e) {
-        toast('Error', e.message || 'Gagal memuat detail stock transfer.', 'error');
-      }
+  // ✅ Watch route changes untuk auto-fetch saat ID berubah
+  watch(() => route.query.id, (newId, oldId) => {
+    if (newId && newId !== oldId) {
+      fetchData();
     }
-    setListTitle('Stock Transfer', stockTransfer.value.length)
+  });
+
+  // ✅ Fetch data saat component mounted
+  onMounted(() => {
+    fetchData();
+  });
+
+  // ✅ Reset store saat component unmount
+  onBeforeUnmount(() => {
+    stockTransferStore.selectedStockTransfer = null;
+    stockTransferStore.error = null;
   });
 </script>
 
@@ -230,8 +305,51 @@
     max-width: 50%;
   }
 
+  /* TTD Container styles for screen */
+  .ttd-container {
+    position: relative;
+    margin: 20px 0;
+  }
+
+  .ttd-container .ttd-image {
+    position: relative;
+    height: 120px;
+    z-index: 1;
+    margin: 0 auto;
+    display: block;
+  }
+
+  .ttd-container .andara-image {
+    position: relative;
+    z-index: 2;
+    margin: -90px auto 0;
+    display: block;
+    height: 40px;
+    object-fit: contain;
+  }
+
   /* Custom styles for print */
   @media print {
+    .ttd-container {
+      position: relative;
+    }
+
+    .ttd-container .ttd-image {
+      position: relative;
+      height: 90px !important;
+      z-index: 1;
+      margin: 0 auto !important;
+      display: block !important;
+    }
+
+    .ttd-container .andara-image {
+      position: relative;
+      z-index: 2;
+      margin: -70px auto 0 !important;
+      display: block !important;
+      height: 40px !important;
+      object-fit: contain !important;
+    }
     .no-print {
       display: none !important;
     }

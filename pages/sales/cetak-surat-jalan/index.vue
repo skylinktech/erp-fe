@@ -151,9 +151,21 @@
                       Yang menyerahkan:
                     </span>
                   </p>
-                  <div v-if="suratJalan?.ttdDigital === true" class="ttd-container">
-                    <img class="ttd-image" src="/img/branding/Ttd Digital-1.png" alt="TTD Digital" style="height: 120px; object-fit: contain; display: block; margin: 0 auto;" />
-                    <img class="andara-image" src="/img/branding/andara.png" alt="Andara Logo" style="height: 40px; object-fit: contain; display: block; margin: -90px auto 0;" />
+                  <div v-if="isTtdDigital" class="ttd-container">
+                    <img 
+                      class="ttd-image" 
+                      :src="ttdImageSrc" 
+                      alt="TTD Digital" 
+                      style="height: 120px; object-fit: contain; display: block; margin: 0 auto;" 
+                      @error="(e) => handleImageError(e, '/img/default-company-logo.png')"
+                    />
+                    <img 
+                      class="andara-image" 
+                      :src="publicPath('/img/branding/andara.png')" 
+                      alt="Andara Logo" 
+                      style="height: 40px; object-fit: contain; display: block; margin: -90px auto 0;" 
+                      @error="(e) => handleImageError(e, '/img/default-company-logo.png')"
+                    />
                   </div>
                   <p class="mt-10 text-end pt-10">
                     {{ suratJalan.createdByUser?.fullName || '-' }}
@@ -174,7 +186,7 @@
   definePageMeta({
     layout: 'cetak',
   })
-  import { onMounted, computed } from 'vue';
+  import { onMounted, onBeforeUnmount, computed, watch } from 'vue';
   import { useSuratJalanStore } from '~/stores/surat-jalan';
   import { usePerusahaanStore } from '~/stores/perusahaan';
   import { storeToRefs } from 'pinia';
@@ -195,6 +207,61 @@
 
   const { suratJalan, loading, error } = storeToRefs(suratJalanStore);
 
+  // ✅ Function untuk fetch data
+  const fetchData = async () => {
+    const suratJalanId = route.query.id;
+    if (!suratJalanId) {
+      suratJalanStore.error = { message: 'ID Surat Jalan tidak ditemukan' };
+      return;
+    }
+
+    // Reset state sebelum fetch data baru
+    suratJalanStore.suratJalan = null;
+    suratJalanStore.error = null;
+
+    try {
+      await suratJalanStore.fetchSuratJalanDetailWithItems(suratJalanId);
+      if (suratJalan.value) {
+        setDetailTitle('Surat Jalan', suratJalan.value.noSuratJalan);
+      }
+    } catch (e) {
+      console.error('Error fetching surat jalan:', e);
+      toast.fire('Error', e.message || 'Gagal memuat detail surat jalan.', 'error');
+    }
+  };
+
+  // Normalisasi nilai TTD Digital agar robust terhadap tipe data dari API (boolean/string/number)
+  const isTtdDigital = computed(() => {
+    const val = suratJalan.value?.ttdDigital;
+    if (typeof val === 'boolean') return val;
+    if (typeof val === 'string') return ['true', '1', 'yes', 'y'].includes(val.toLowerCase());
+    if (typeof val === 'number') return val === 1;
+    return false;
+  });
+
+  // Helper untuk memastikan path sesuai base publik Nuxt (terutama saat deploy di subpath)
+  const publicPath = (p) => {
+    if (!p) return p;
+    // Jika sudah absolute http(s) atau sudah root-relative, kembalikan apa adanya
+    if (p.startsWith('http')) return p;
+    // runtime base (app.baseURL) dari useRuntimeConfig().app
+    const base = (config?.app?.baseURL) || '/';
+    // Hindari double slash
+    const joined = `${base.replace(/\/$/, '')}/${p.replace(/^\//, '')}`;
+    return joined;
+  };
+
+  // Tentukan gambar TTD berdasarkan ID createdByUser
+  const ttdImageSrc = computed(() => {
+    if (!isTtdDigital.value) return null;
+    const userId = suratJalan.value?.createdByUser?.id;
+    // default
+    let file = '/img/branding/Ttd Digital-1.png';
+    if (userId === 2) file = '/img/branding/Ttd Digital-1.png';
+    if (userId === 4 || userId === 9) file = '/img/branding/Ttd Digital-3.png';
+    return publicPath(file);
+  });
+
   const getLogoUrl = (logoPath) => {
     if (!logoPath || typeof logoPath !== 'string') {
         return null;
@@ -210,16 +277,22 @@
     return imageUrl;
   };
 
-  onMounted(async () => {
-    const suratJalanId = route.query.id;
-    if (suratJalanId) {
-      try {
-        await suratJalanStore.fetchSuratJalanDetailWithItems(suratJalanId);
-        setDetailTitle('Surat Jalan', suratJalan.value.noSuratJalan)
-      } catch (e) {
-        toast.fire('Error', e.message || 'Gagal memuat detail surat jalan.', 'error');
-      }
+  // ✅ Watch route changes untuk auto-fetch saat ID berubah
+  watch(() => route.query.id, (newId, oldId) => {
+    if (newId && newId !== oldId) {
+      fetchData();
     }
+  });
+
+  // ✅ Fetch data saat component mounted
+  onMounted(() => {
+    fetchData();
+  });
+
+  // ✅ Reset store saat component unmount
+  onBeforeUnmount(() => {
+    suratJalanStore.suratJalan = null;
+    suratJalanStore.error = null;
   });
 </script>
 
@@ -233,6 +306,29 @@
   .invoice-header {
     flex: 1;
     max-width: 50%;
+  }
+
+  /* TTD Container styles for screen */
+  .ttd-container {
+    position: relative;
+    margin: 20px 0;
+  }
+
+  .ttd-container .ttd-image {
+    position: relative;
+    height: 120px;
+    z-index: 1;
+    margin: 0 auto;
+    display: block;
+  }
+
+  .ttd-container .andara-image {
+    position: relative;
+    z-index: 2;
+    margin: -90px auto 0;
+    display: block;
+    height: 40px;
+    object-fit: contain;
   }
 
   /* Custom styles for print */
