@@ -1,4 +1,5 @@
 <template>
+    <div :key="routeKey" class="cetak-wrapper">
     <div v-if="loading" class="text-center p-6">
       <ProgressSpinner 
         style="width: 50px; height: 50px" 
@@ -170,6 +171,7 @@
     <div v-else class="alert alert-danger m-6" role="alert">
       Stock Transfer tidak ditemukan.
     </div>
+    </div>
 </template>
 
 
@@ -203,6 +205,9 @@
   const toast = useToast();
 
   const { selectedStockTransfer: stockTransfer, loading, error } = storeToRefs(stockTransferStore);
+
+  // ✅ Computed key untuk force re-render saat route berubah (hanya untuk halaman ini)
+  const routeKey = computed(() => `stock-transfer-${route.query.id || 'new'}`);
 
   // ✅ Function untuk fetch data
   const fetchData = async () => {

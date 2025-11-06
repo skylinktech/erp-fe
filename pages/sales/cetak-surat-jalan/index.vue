@@ -1,4 +1,5 @@
 <template>
+    <div :key="routeKey" class="cetak-wrapper">
     <div v-if="loading" class="text-center p-6">
       <ProgressSpinner 
         style="width: 50px; height: 50px" 
@@ -180,6 +181,7 @@
     <div v-else class="alert alert-danger m-6" role="alert">
         Surat Jalan tidak ditemukan.
     </div>
+    </div>
 </template>
 
 <script setup>
@@ -206,6 +208,9 @@
   const toast           = useToast();
 
   const { suratJalan, loading, error } = storeToRefs(suratJalanStore);
+
+  // ✅ Computed key untuk force re-render saat route berubah (hanya untuk halaman ini)
+  const routeKey = computed(() => `surat-jalan-${route.query.id || 'new'}`);
 
   // ✅ Function untuk fetch data
   const fetchData = async () => {

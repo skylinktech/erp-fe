@@ -1,6 +1,6 @@
 <template>
+<div class="page-wrapper">
     <div class="content-wrapper">
-        <!-- Content -->
         <div class="container-xxl flex-grow-1 container-p-y">
             <h4 class="mb-1">List Stock Transfer</h4>
             <p class="mb-6">
@@ -359,9 +359,8 @@
                 </template>
             </Modal>
         </div>
-         <!-- / Content -->
- 
-         <div class="content-backdrop fade"></div>
+        <div class="content-backdrop fade"></div>
+        </div>
     </div>
 </template>
 

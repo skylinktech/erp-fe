@@ -76,35 +76,99 @@
                         <div class="col-12">
                             <!-- product Table -->
                             <div class="card">
-                                <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
-                                    <div class="d-flex align-items-center me-3 mb-2 mb-md-0">
-                                        <span class="me-2">Baris:</span>
-                                        <Dropdown v-model="params.rows" :options="rowsPerPageOptionsArray" @change="handleRowsChange" placeholder="Jumlah" style="width: 8rem;" />
+                                <div class="card-header">
+                                    <!-- Mobile: Import Excel button di atas TableControls -->
+                                    <div class="d-md-none mb-3" v-if="userHasRole('superadmin')">
+                                        <NuxtLink to="/inventory/import-product" class="btn btn-dark w-100">
+                                            <i class="ri-download-line me-1"></i> Import Excel
+                                        </NuxtLink>
                                     </div>
-                                        <div class="d-flex align-items-center">
-                                            <div class="btn-group me-2">
-                                                <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                    <i class="ri-upload-2-line me-1"></i> Export
-                                                </button>
-                                                <ul class="dropdown-menu">
-                                                    <li><a class="dropdown-item" href="javascript:void(0)" @click="exportData('csv')">CSV</a></li>
-                                                    <li><a class="dropdown-item" href="javascript:void(0)" @click="exportData('excel')">Excel</a></li>
-                                                    <li><a class="dropdown-item" href="javascript:void(0)" @click="exportData('pdf')">PDF</a></li>
-                                                </ul>
+                                    
+                                    <!-- Desktop & Mobile: TableControls -->
+                                    <div class="d-flex justify-content-between align-items-center flex-wrap">
+                                        <!-- TableControls dengan custom export -->
+                                        <div class="flex-grow-1">
+                                            <div class="table-controls-custom">
+                                                <!-- Desktop: Baris di kiri, Export & Import di tengah, Search di kanan -->
+                                                <div class="d-none d-md-flex justify-content-between align-items-center">
+                                                    <div class="d-flex align-items-center me-3">
+                                                        <span class="me-2">Baris:</span>
+                                                        <Dropdown 
+                                                            v-model="tableControls.rows" 
+                                                            :options="rowsPerPageOptionsArray" 
+                                                            @change="handleRowsChange" 
+                                                            placeholder="Jumlah" 
+                                                            style="width: 8rem;"
+                                                            :showClear="false"
+                                                        />
+                                                    </div>
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="btn-group me-2">
+                                                            <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                                <i class="ri-upload-2-line me-1"></i> Export
+                                                            </button>
+                                                            <ul class="dropdown-menu">
+                                                                <li><a class="dropdown-item" href="javascript:void(0)" @click="exportData('csv')">CSV</a></li>
+                                                                <li><a class="dropdown-item" href="javascript:void(0)" @click="exportData('excel')">Excel</a></li>
+                                                                <li><a class="dropdown-item" href="javascript:void(0)" @click="exportData('pdf')">PDF</a></li>
+                                                            </ul>
+                                                        </div>
+                                                        <div class="btn-group me-2" v-if="userHasRole('superadmin')">
+                                                            <NuxtLink to="/inventory/import-product" class="btn btn-dark btn-sm" style="min-width: 150px; min-height: 38px;">
+                                                                <i class="ri-download-line me-1"></i> Import Excel
+                                                            </NuxtLink>
+                                                        </div>
+                                                        <div class="input-group">
+                                                            <span class="p-input-icon-left">
+                                                                <InputText
+                                                                    v-model="tableControls.search"
+                                                                    placeholder="Cari berdasarkan nama, atau part number..."
+                                                                    class="w-full md:w-20rem"
+                                                                    @input="(e) => handleSearch(e.target.value)"
+                                                                />
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Mobile: Rows, Search, dan Export -->
+                                                <div class="d-md-none">
+                                                    <div class="mb-3">
+                                                        <div class="d-flex align-items-center">
+                                                            <span class="me-2" style="font-weight: 500; white-space: nowrap; color: #6c757d;">Baris:</span>
+                                                            <Dropdown 
+                                                                v-model="tableControls.rows" 
+                                                                :options="rowsPerPageOptionsArray" 
+                                                                @change="handleRowsChange" 
+                                                                placeholder="Jumlah" 
+                                                                class="flex-grow-1"
+                                                                :showClear="false"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <InputText
+                                                            v-model="tableControls.search"
+                                                            placeholder="Cari berdasarkan nama, atau part number..."
+                                                            class="w-100"
+                                                            style="height: 38px; border-radius: 6px;"
+                                                            @input="(e) => handleSearch(e.target.value)"
+                                                        />
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <div class="btn-group w-100">
+                                                            <button class="btn btn-secondary dropdown-toggle w-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                                <i class="ri-upload-2-line me-1"></i> Export
+                                                            </button>
+                                                            <ul class="dropdown-menu">
+                                                                <li><a class="dropdown-item" href="javascript:void(0)" @click="exportData('csv')">CSV</a></li>
+                                                                <li><a class="dropdown-item" href="javascript:void(0)" @click="exportData('excel')">Excel</a></li>
+                                                                <li><a class="dropdown-item" href="javascript:void(0)" @click="exportData('pdf')">PDF</a></li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div class="btn-group me-2" v-if="userHasRole('superadmin')">
-                                                <NuxtLink to="/inventory/import-product" class="btn btn-dark px-2 py-2" style="min-width: 150px; min-height: 38px;">
-                                                    <i class="ri-download-line me-1"></i> Import Excel
-                                                </NuxtLink>
-                                            </div>
-                                        <div class="input-group">
-                                            <span class="p-input-icon-left">
-                                                <InputText
-                                                    v-model="globalFilterValue"
-                                                    placeholder="Cari berdasarkan nama, atau part number..."
-                                                    class="w-full md:w-20rem"
-                                                />
-                                            </span>
                                         </div>
                                     </div>
                                 </div>
@@ -453,6 +517,13 @@ const { units } = storeToRefs(unitStore)
 
 const globalFilterValue = ref('')
 const rowsPerPageOptionsArray = ref([10, 25, 50, 100]);
+
+// Table controls state
+const tableControls = ref({
+    rows: 10,
+    search: '',
+});
+
 const modalTitle = computed(() => isEditMode.value ? 'Edit Product' : 'Tambah Product');
 const modalDescription = computed(() => isEditMode.value ? 'Silakan ubah data product di bawah ini.' : 'Silakan isi form di bawah ini untuk menambahkan product baru.');
 
@@ -483,6 +554,10 @@ const config = useRuntimeConfig();
 
 let modalInstance = null
 onMounted(() => {
+    // Initialize table controls
+    tableControls.value.rows = Number(params.value.rows) || 10;
+    tableControls.value.search = globalFilterValue.value;
+    
     productStore.fetchProducts();
     productStore.fetchTotalProducts();
     kategoriStore.fetchKategori();
@@ -504,17 +579,40 @@ watch(showModal, (newValue) => {
     }
 })
 
+// Handler untuk rows change
+const handleRowsChange = (value) => {
+    const rowsValue = Number(value) || 10;
+    params.value.rows = rowsValue;
+    params.value.first = 0;
+    productStore.fetchProducts();
+};
+
+// Handler untuk search
+const handleSearch = (value) => {
+    globalFilterValue.value = value;
+    tableControls.value.search = value;
+    params.value.first = 0;
+    // Debounce akan di-handle oleh watch globalFilterValue
+};
+
+// Watch untuk sinkronisasi table controls dengan params
+watch(() => params.value.rows, (newValue) => {
+    tableControls.value.rows = Number(newValue) || 10;
+});
+
+watch(() => params.value.search, (newValue) => {
+    if (newValue !== globalFilterValue.value) {
+        globalFilterValue.value = newValue;
+        tableControls.value.search = newValue;
+    }
+});
+
 const debouncedSearch = useDebounceFn(() => {
     productStore.setSearch(globalFilterValue.value)
 }, 500)
 watch(globalFilterValue, debouncedSearch);
 
 const onPage = (event) => productStore.setPagination(event);
-
-const handleRowsChange = () => {
-    params.value.first = 0; // Reset to first page
-    productStore.fetchProducts();
-};
 
 const onSort = (event) => productStore.setSort(event);
 

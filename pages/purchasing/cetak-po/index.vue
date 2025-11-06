@@ -1,4 +1,5 @@
 <template>
+    <div :key="routeKey" class="cetak-wrapper">
     <div v-if="loading" class="text-center p-6">
       <ProgressSpinner 
           style="width: 50px; height: 50px" 
@@ -290,6 +291,7 @@
     <div v-else class="alert alert-danger m-6" role="alert">
         Purchase Order tidak ditemukan.
     </div>
+    </div>
 </template>
 
 <script setup>
@@ -316,6 +318,9 @@
   const toast              = useToast();
 
   const { purchaseOrder, loading, error } = storeToRefs(purchaseOrderStore);
+
+  // ✅ Computed key untuk force re-render saat route berubah (hanya untuk halaman ini)
+  const routeKey = computed(() => `purchase-order-${route.query.id || 'new'}`);
 
   // ✅ Function untuk fetch data
   const fetchData = async () => {

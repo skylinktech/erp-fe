@@ -1,4 +1,6 @@
 <template>
+  <!-- ✅ Single root element untuk Vue Transition -->
+  <div class="page-wrapper">
   <div class="content-wrapper">
       <!-- Content -->
       <div class="container-xxl flex-grow-1 container-p-y">
@@ -427,6 +429,7 @@
           </Modal>
       </div>
        <div class="content-backdrop fade"></div>
+  </div>
   </div>
 </template>
 

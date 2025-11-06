@@ -1,7 +1,19 @@
 <template>
+    <!-- ✅ Single root element untuk Vue Transition -->
+    <div class="page-wrapper">
     <div class="content-wrapper">
+        <!-- ✅ Loading Overlay -->
+        <div v-if="isInitialLoading" class="d-flex justify-content-center align-items-center" style="min-height: 400px;">
+            <div class="text-center">
+                <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-3 text-muted">Memuat data Sales Order...</p>
+            </div>
+        </div>
+
         <!-- Content -->
-        <div class="container-xxl flex-grow-1 container-p-y">
+        <div v-else class="container-xxl flex-grow-1 container-p-y">
             <h4 class="mb-1">List Sales Order</h4>
             <p class="mb-6">
             List salesOrder yang terdaftar di sistem
@@ -575,7 +587,8 @@
                 </template>
             </Modal>
         </div>
-        <div class="content-backdrop fade"></div>
+    </div>
+    <div class="content-backdrop fade"></div>
     </div>
 </template>
 
@@ -619,6 +632,7 @@ const router = useRouter();
 
 // Store
 const myDataTableRef        = ref(null)
+const isInitialLoading      = ref(true) // ✅ Loading state untuk initial page load
 const salesOrderStore       = useSalesOrderStore()
 const customerStore         = useCustomerStore()
 const perusahaanStore       = usePerusahaanStore()
@@ -706,50 +720,59 @@ const statusOptions = ref([
 ]);
 
 let modalInstance = null;
-onMounted(async () => {
-    salesOrderStore.fetchSalesOrders();
-    salesOrderStore.fetchStats(); // <--- TAMBAHKAN INI
-    customerStore.fetchCustomers();
-    perusahaanStore.fetchPerusahaans();
-    cabangStore.fetchCabangs();
-    productStore.fetchProducts();
-    warehouseStore.fetchWarehouses();
-    permissionStore.fetchPermissions();
-    userStore.loadUser();
 
-    // Gunakan endpoint data baru untuk load data
-    try {
-        const [perusahaanData, cabangData, customerData] = await Promise.all([
-            salesOrderStore.fetchPerusahaanData(),
-            salesOrderStore.fetchCabangData(),
-            salesOrderStore.fetchCustomerData(),
-        ]);
-        
-        // Assign data ke store yang sesuai
-        perusahaanStore.perusahaans = perusahaanData;
-        cabangStore.cabangs         = cabangData;
-        customerStore.customers     = customerData;
+// ✅ Gunakan composable untuk data loading yang robust
+const { isLoading: isDataLoading, error: dataError, reload: reloadData } = usePageData({
+    pageName: 'Sales Order',
+    loaders: [
+        // Group 1: Master data
+        () => productStore.fetchProducts(),
+        () => warehouseStore.fetchWarehouses(),
+        () => permissionStore.fetchPermissions(),
+        () => userStore.loadUser(),
+        () => quotationStore.fetchQuotations(),
+        // Group 2: Company data with fallback
+        async () => {
+            try {
+                const [perusahaanData, cabangData, customerData] = await Promise.all([
+                    salesOrderStore.fetchPerusahaanData(),
+                    salesOrderStore.fetchCabangData(),
+                    salesOrderStore.fetchCustomerData(),
+                ]);
+                perusahaanStore.perusahaans = perusahaanData;
+                cabangStore.cabangs = cabangData;
+                customerStore.customers = customerData;
+            } catch (error) {
+                // Fallback ke method lama
+                await Promise.all([
+                    customerStore.fetchCustomers(),
+                    perusahaanStore.fetchPerusahaans(),
+                    cabangStore.fetchCabangs(),
+                ]);
+            }
+        },
+        // Group 3: Page specific data
+        () => salesOrderStore.fetchSalesOrders(),
+        () => salesOrderStore.fetchStats(),
+    ],
+    onSuccess: () => {
+        // Set title after data is loaded
+        setListTitle('Sales Order', stats.value.total || 0)
+    },
+    waitAll: true // Wait untuk semua data sebelum tampilkan halaman
+})
 
-    } catch (error) {
-        console.error('Error loading data:', error);
-        // Fallback ke method lama jika endpoint data baru gagal
-        customerStore.fetchCustomers();
-        perusahaanStore.fetchPerusahaans();
-        cabangStore.fetchCabangs();
-    }
-    
-    // Load quotations secara terpisah
-    try {
-        await quotationStore.fetchQuotations();
-    } catch (error) {
-        console.error('❌ Error loading quotations:', error);
-    }
+// ✅ Sync isDataLoading dengan isInitialLoading untuk backward compatibility
+watch(isDataLoading, (value) => {
+    isInitialLoading.value = value
+})
 
+onMounted(() => {
+    // Initialize modal
     const modalElement = document.getElementById('SalesOrderModal')
     if (modalElement) {
         modalInstance = new bootstrap.Modal(modalElement)
     }
-    setListTitle('Sales Order', salesOrders.value.length)
     
     // Initialize table controls
     tableControls.value.rows = Number(params.value.rows) || 10;

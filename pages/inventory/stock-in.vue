@@ -32,45 +32,124 @@
                 <div class="col-12">
                     <!-- stock in Table -->
                     <div class="card">
-                        <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
-                            <div class="d-flex align-items-center me-3 mb-2 mb-md-0">
-                                <span class="me-2">Baris:</span>
-                                <Dropdown v-model="params.rows" :options="rowsPerPageOptionsArray" @change="stockInStore.handleRowsChange" placeholder="Jumlah" style="width: 8rem;" />
+                        <div class="card-header">
+                            <!-- Mobile: Post All button di atas TableControls -->
+                            <div class="d-md-none mb-3">
+                                <button 
+                                    class="btn btn-dark w-100" 
+                                    type="button" 
+                                    @click="postAllSelectedStockIn"
+                                    :disabled="!Array.isArray(selectedStockIns) || selectedStockIns.length === 0"
+                                    title="Post semua stock in yang dipilih"
+                                >
+                                    <i class="ri-upload-2-line me-1"></i> Post All ({{ Array.isArray(selectedStockIns) ? selectedStockIns.length : 0 }})
+                                </button>
                             </div>
-                            <div class="d-flex align-items-center">
-                                <div class="btn-group me-2">
-                                    <button 
-                                        class="btn btn-dark px-2 py-2" 
-                                        type="button" 
-                                        @click="postAllSelectedStockIn"
-                                        :disabled="!Array.isArray(selectedStockIns) || selectedStockIns.length === 0"
-                                        title="Post semua stock in yang dipilih"
-                                        style="min-width: 150px; min-height: 38px;"
-                                    >
-                                        <i class="ri-upload-2-line me-1"></i> Post All ({{ Array.isArray(selectedStockIns) ? selectedStockIns.length : 0 }})
-                                    </button>
-                                </div>
-                                <div class="btn-group me-2">
-                                    <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <i class="ri-upload-2-line me-1"></i> Export
-                                    </button>
-                                    <ul class="dropdown-menu">
-                                        <li><a class="dropdown-item" href="javascript:void(0)" @click="exportData('csv')">
-                                            <i class="ri-file-excel-line me-2"></i> CSV (dengan Detail Item)
-                                        </a></li>
-                                        <li><a class="dropdown-item" href="javascript:void(0)" @click="exportData('pdf')">
-                                            <i class="ri-file-pdf-line me-2"></i> PDF
-                                        </a></li>
-                                    </ul>
-                                </div>
-                                <div class="input-group">
-                                    <span class="p-input-icon-left">
-                                        <InputText
-                                            v-model="globalFilterValue"
-                                            placeholder="Cari Stock In..."
-                                            class="w-full md:w-20rem"
-                                        />
-                                    </span>
+                            
+                            <!-- Desktop & Mobile: TableControls -->
+                            <div class="d-flex justify-content-between align-items-center flex-wrap">
+                                <!-- TableControls dengan custom export -->
+                                <div class="flex-grow-1">
+                                    <div class="table-controls-custom">
+                                        <!-- Desktop: Baris di kiri, Export & Post All di tengah, Search di kanan -->
+                                        <div class="d-none d-md-flex justify-content-between align-items-center">
+                                            <div class="d-flex align-items-center me-3">
+                                                <span class="me-2">Baris:</span>
+                                                <Dropdown 
+                                                    v-model="tableControls.rows" 
+                                                    :options="rowsPerPageOptionsArray" 
+                                                    @change="handleRowsChange" 
+                                                    placeholder="Jumlah" 
+                                                    style="width: 8rem;"
+                                                    :showClear="false"
+                                                />
+                                            </div>
+                                            <div class="d-flex align-items-center">
+                                                <div class="btn-group me-2">
+                                                    <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                        <i class="ri-upload-2-line me-1"></i> Export
+                                                    </button>
+                                                    <ul class="dropdown-menu">
+                                                        <li><a class="dropdown-item" href="javascript:void(0)" @click="exportData('csv')">
+                                                            <i class="ri-file-excel-line me-2"></i> CSV (dengan Detail Item)
+                                                        </a></li>
+                                                        <li><a class="dropdown-item" href="javascript:void(0)" @click="exportData('excel')">
+                                                            <i class="ri-file-excel-line me-2"></i> Excel
+                                                        </a></li>
+                                                        <li><a class="dropdown-item" href="javascript:void(0)" @click="exportData('pdf')">
+                                                            <i class="ri-file-pdf-line me-2"></i> PDF
+                                                        </a></li>
+                                                    </ul>
+                                                </div>
+                                                <div class="btn-group me-2">
+                                                    <button 
+                                                        class="btn btn-dark btn-sm" 
+                                                        type="button" 
+                                                        @click="postAllSelectedStockIn"
+                                                        :disabled="!Array.isArray(selectedStockIns) || selectedStockIns.length === 0"
+                                                        title="Post semua stock in yang dipilih"
+                                                        style="min-width: 150px; min-height: 38px;"
+                                                    >
+                                                        <i class="ri-upload-2-line me-1"></i> Post All ({{ Array.isArray(selectedStockIns) ? selectedStockIns.length : 0 }})
+                                                    </button>
+                                                </div>
+                                                <div class="input-group">
+                                                    <span class="p-input-icon-left">
+                                                        <InputText
+                                                            v-model="tableControls.search"
+                                                            placeholder="Cari Stock In..."
+                                                            class="w-full md:w-20rem"
+                                                            @input="(e) => handleSearch(e.target.value)"
+                                                        />
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Mobile: Rows, Search, dan Export -->
+                                        <div class="d-md-none">
+                                            <div class="mb-3">
+                                                <div class="d-flex align-items-center">
+                                                    <span class="me-2" style="font-weight: 500; white-space: nowrap; color: #6c757d;">Baris:</span>
+                                                    <Dropdown 
+                                                        v-model="tableControls.rows" 
+                                                        :options="rowsPerPageOptionsArray" 
+                                                        @change="handleRowsChange" 
+                                                        placeholder="Jumlah" 
+                                                        class="flex-grow-1"
+                                                        :showClear="false"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <InputText
+                                                    v-model="tableControls.search"
+                                                    placeholder="Cari Stock In..."
+                                                    class="w-100"
+                                                    style="height: 38px; border-radius: 6px;"
+                                                    @input="(e) => handleSearch(e.target.value)"
+                                                />
+                                            </div>
+                                            <div class="mb-3">
+                                                <div class="btn-group w-100">
+                                                    <button class="btn btn-secondary dropdown-toggle w-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                        <i class="ri-upload-2-line me-1"></i> Export
+                                                    </button>
+                                                    <ul class="dropdown-menu">
+                                                        <li><a class="dropdown-item" href="javascript:void(0)" @click="exportData('csv')">
+                                                            <i class="ri-file-excel-line me-2"></i> CSV (dengan Detail Item)
+                                                        </a></li>
+                                                        <li><a class="dropdown-item" href="javascript:void(0)" @click="exportData('excel')">
+                                                            <i class="ri-file-excel-line me-2"></i> Excel
+                                                        </a></li>
+                                                        <li><a class="dropdown-item" href="javascript:void(0)" @click="exportData('pdf')">
+                                                            <i class="ri-file-pdf-line me-2"></i> PDF
+                                                        </a></li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -213,6 +292,7 @@ import CardBox from '~/components/cards/Cards.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import Swal from 'sweetalert2'
 import InputText from 'primevue/inputtext'
+import Dropdown from 'primevue/dropdown'
 import 'vue-select/dist/vue-select.css'
 import { useRouter } from 'vue-router'
 import { usePermissions } from '~/composables/usePermissions'
@@ -341,7 +421,49 @@ const handleSelectAllChange = (checked) => {
 
 const rowsPerPageOptionsArray = ref([10, 25, 50, 100]);
 
+// Table controls state
+const tableControls = ref({
+    rows: 10,
+    search: '',
+});
+
 let searchDebounceTimer = null;
+
+// Handler untuk rows change
+const handleRowsChange = (value) => {
+    const rowsValue = Number(value) || 10;
+    params.value.rows = rowsValue;
+    params.value.first = 0;
+    stockInStore.handleRowsChange();
+};
+
+// Handler untuk search
+const handleSearch = (value) => {
+    globalFilterValue.value = value;
+    tableControls.value.search = value;
+    params.value.first = 0;
+    
+    if (searchDebounceTimer) {
+        clearTimeout(searchDebounceTimer);
+    }
+
+    searchDebounceTimer = setTimeout(() => {
+        stockInStore.setSearch(value);
+    }, 500);
+};
+
+// Watch untuk sinkronisasi table controls dengan params
+watch(() => params.value.rows, (newValue) => {
+    tableControls.value.rows = Number(newValue) || 10;
+});
+
+watch(() => params.value.search, (newValue) => {
+    if (newValue !== globalFilterValue.value) {
+        globalFilterValue.value = newValue;
+        tableControls.value.search = newValue;
+    }
+});
+
 watch(globalFilterValue, (newValue) => {
     if (searchDebounceTimer) {
         clearTimeout(searchDebounceTimer);
@@ -484,6 +606,10 @@ const loadLazyData = async () => {
 };
 
 onMounted(() => {
+    // Initialize table controls
+    tableControls.value.rows = Number(params.value.rows) || 10;
+    tableControls.value.search = globalFilterValue.value;
+    
     loadLazyData();
     stockInStore.fetchStats();
     warehouseStore.fetchWarehouses();
@@ -517,10 +643,19 @@ watch(stockIns, (newStockIns, oldStockIns) => {
 });
 
 const exportData = (format) => {
-    if (format === 'csv') {
+    if (format === 'csv' || format === 'excel') {
+        // Excel dari TableControls akan di-handle sebagai CSV
         exportStockInWithDetails();
     } else if (format === 'pdf') {
         myDataTableRef.value.exportPDF();
+    } else {
+        // Format tidak didukung
+        const toast = useToast();
+        toast.warning({
+            title: 'Warning',
+            message: 'Format export tidak didukung',
+            color: 'orange'
+        });
     }
 };
 
@@ -701,8 +836,6 @@ definePageMeta({
 </script>
 
 <style scoped>
-<style scoped>
-
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .card-body {

@@ -1,6 +1,10 @@
 <template>
   <div>
+    <!-- ✅ Nuxt Loading Indicator untuk transisi halaman -->
+    <NuxtLoadingIndicator color="#666CFF" :height="3" :duration="2000" :throttle="200" />
+    
     <LoadingOverlay />
+    
     <NuxtLayout>
       <NuxtPage :transition="{ name: 'page', mode: 'out-in' }" />
     </NuxtLayout>
@@ -8,7 +12,8 @@
 </template>
 
 <script setup lang="ts">
-// App.vue - tidak perlu key binding global karena bisa menyebabkan masalah pada halaman list
+// ✅ App.vue with proper loading indicator
+// NuxtLoadingIndicator akan tampil otomatis saat navigasi
 </script>
 
 <style>

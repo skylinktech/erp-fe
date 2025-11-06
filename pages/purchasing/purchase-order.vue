@@ -1,7 +1,15 @@
 <template>
+<div class="page-wrapper">
     <div class="content-wrapper">
-        <!-- Content -->
-        <div class="container-xxl flex-grow-1 container-p-y">
+        <div v-if="isInitialLoading" class="d-flex justify-content-center align-items-center" style="min-height: 400px;">
+            <div class="text-center">
+                <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-3 text-muted">Memuat data Purchase Order...</p>
+            </div>
+        </div>
+        <div v-else class="container-xxl flex-grow-1 container-p-y">
             <h4 class="mb-1">List Purchase Order</h4>
             <p class="mb-6">
             List purchaseOrder yang terdaftar di sistem
@@ -600,8 +608,9 @@
                 </template>
             </Modal>
         </div>
-         <div class="content-backdrop fade"></div>
+        <div class="content-backdrop fade"></div>
     </div>
+</div>
 </template>
 
 <script setup>
@@ -644,6 +653,7 @@ const router = useRouter();
 
 // Store
 const myDataTableRef        = ref(null)
+const isInitialLoading      = ref(true) // ✅ Loading state untuk initial page load
 const purchaseOrderStore    = usePurchaseOrderStore()
 const vendorStore           = useVendorStore()
 const perusahaanStore       = usePerusahaanStore()
@@ -716,34 +726,36 @@ const statusOptions = ref([
 ]);
 
 let modalInstance = null;
-onMounted(async () => {
-    
-    // Load data menggunakan method store yang standar
-    try {
-        // ✅ FIXED: Gunakan fetchAllVendors dan fetchAllProducts untuk memuat semua data tanpa pagination
-        await Promise.all([
-            vendorStore.fetchAllVendors(), // Load semua vendor tanpa pagination
-            perusahaanStore.fetchPerusahaans(),
-            productStore.fetchAllProducts(), // Load semua produk tanpa pagination
-            warehouseStore.fetchWarehouses(),
-            userStore.loadUser(),
-            permissionStore.fetchPermissions()
-        ]);
-        
-        // Load purchase orders and stats after other data is ready
-        await Promise.all([
-            purchaseOrderStore.fetchPurchaseOrders(),
-            purchaseOrderStore.fetchStats()
-        ]);
-        
+
+// ✅ Gunakan composable untuk data loading yang robust
+const { isLoading: isDataLoading, error: dataError, reload: reloadData } = usePageData({
+    pageName: 'Purchase Order',
+    loaders: [
+        // Group 1: Master data
+        () => vendorStore.fetchAllVendors(),
+        () => perusahaanStore.fetchPerusahaans(),
+        () => productStore.fetchAllProducts(),
+        () => warehouseStore.fetchWarehouses(),
+        () => userStore.loadUser(),
+        () => permissionStore.fetchPermissions(),
+        // Group 2: Page specific data
+        () => purchaseOrderStore.fetchPurchaseOrders(),
+        () => purchaseOrderStore.fetchStats(),
+    ],
+    onSuccess: () => {
         // Set title after data is loaded
         setListTitle('Purchase Order', stats.value.total || 0)
-        
-        // Untuk cabang, kita akan load setelah perusahaan dipilih
-    } catch (error) {
-        console.error('Error loading data:', error);
-    }
-    
+    },
+    waitAll: true // Wait untuk semua data sebelum tampilkan halaman
+})
+
+// ✅ Sync isDataLoading dengan isInitialLoading untuk backward compatibility
+watch(isDataLoading, (value) => {
+    isInitialLoading.value = value
+})
+
+onMounted(() => {
+    // Initialize modal
     const modalElement = document.getElementById('PurchaseOrderModal')
     if (modalElement) {
         modalInstance = new bootstrap.Modal(modalElement)
