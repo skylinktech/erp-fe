@@ -1,13 +1,22 @@
 <template>
-  <div v-if="layoutStore.loading" class="page-overlay">
+  <div v-if="layoutStore.loading && isPageReady" class="page-overlay">
     <div class="spinner"></div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { useLayoutStore } from '~/stores/layout'
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 
 const layoutStore = useLayoutStore()
+const route = useRoute()
+
+// Pastikan overlay tidak muncul jika halaman sudah siap
+// Ini mencegah overlay muncul saat konten sudah di-render
+const isPageReady = computed(() => {
+  return route.matched.length > 0
+})
 </script>
 
 <style scoped>

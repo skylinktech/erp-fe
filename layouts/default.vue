@@ -20,7 +20,7 @@
 
 <script setup>
 import { useLayoutStore } from '~/stores/layout';
-import { onMounted } from 'vue';
+import { onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 
 const route = useRoute();
@@ -28,8 +28,21 @@ const title = route.meta.title;
 
 const layoutStore = useLayoutStore();
 
+// Safety: Pastikan loading di-reset saat route berubah
+watch(() => route.path, () => {
+  // Reset loading setelah navigasi selesai
+  setTimeout(() => {
+    if (layoutStore.loading) {
+      console.warn('⚠️ Loading still true after route change, forcing reset')
+      layoutStore.setLoading(false)
+    }
+  }, 500)
+})
+
 onMounted(() => {
     layoutStore.initializeLayout();
+    // Pastikan loading di-reset saat layout mounted
+    layoutStore.setLoading(false);
 });
 
 const closeSidebar = () => {
