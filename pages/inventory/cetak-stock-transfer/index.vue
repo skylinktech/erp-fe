@@ -131,7 +131,7 @@
                       class="ttd-image" 
                       :src="ttdImageSrc" 
                       alt="TTD Digital" 
-                      style="height: 120px; object-fit: contain; display: block; margin: 0 auto;" 
+                      style="height: 160px; object-fit: contain; display: block; margin: 0 auto;" 
                       @error="(e) => handleImageError(e, '/img/default-company-logo.png')"
                     />
                     <img 
@@ -142,7 +142,7 @@
                       @error="(e) => handleImageError(e, '/img/default-company-logo.png')"
                     />
                   </div>
-                  <p class="mt-10 text-start pt-10">
+                  <p class="text-start pt-10">
                     {{ stockTransfer.transferByUser?.fullName || '-' }}
                   </p>
                 </div>
@@ -341,9 +341,9 @@
 
     .ttd-container .ttd-image {
       position: relative;
-      height: 90px !important;
+      height: 140px !important;
       z-index: 1;
-      margin: 0 auto !important;
+      margin: -25px auto !important;
       display: block !important;
     }
 
