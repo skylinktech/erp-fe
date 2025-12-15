@@ -1,6 +1,8 @@
 // Composable untuk menangani secure storage
 export const useSecureStorage = () => {
-  // Method untuk menyimpan data sensitif ke httpOnly cookie
+  // Method untuk menyimpan data sensitif ke secure cookie
+  // Catatan: httpOnly tidak bisa diatur dari client-side JavaScript,
+  // jadi kita gunakan cookie biasa dengan secure dan sameSite untuk keamanan
   const setSecureData = (key: string, value: any, options: {
     maxAge?: number
     secure?: boolean
@@ -11,20 +13,22 @@ export const useSecureStorage = () => {
       maxAge = 15 * 60, // 15 menit default
       secure = true,
       sameSite = 'strict',
-      httpOnly = true
+      httpOnly = false // httpOnly tidak bisa diatur dari client-side
     } = options
 
-    // Untuk data sensitif, gunakan httpOnly cookie
-    if (httpOnly) {
+    // Untuk data sensitif, gunakan secure cookie
+    // httpOnly hanya bisa diatur dari server-side, jadi kita gunakan cookie biasa
+    if (httpOnly === false) {
       const cookie = useCookie(key, {
         maxAge,
         secure,
-        sameSite,
-        httpOnly
+        sameSite
+        // httpOnly dihapus karena tidak bisa diatur dari client-side
       })
       cookie.value = JSON.stringify(value)
     } else {
-      // Untuk data non-sensitif, gunakan localStorage dengan enkripsi sederhana
+      // Jika httpOnly diperlukan, gunakan localStorage dengan enkripsi
+      // karena httpOnly cookie hanya bisa diatur dari server
       try {
         const encrypted = btoa(JSON.stringify(value))
         localStorage.setItem(`secure_${key}`, encrypted)
@@ -34,9 +38,9 @@ export const useSecureStorage = () => {
     }
   }
 
-  // Method untuk membaca data sensitif dari httpOnly cookie
-  const getSecureData = (key: string, httpOnly: boolean = true) => {
-    if (httpOnly) {
+  // Method untuk membaca data sensitif dari secure cookie
+  const getSecureData = (key: string, httpOnly: boolean = false) => {
+    if (httpOnly === false) {
       const cookie = useCookie(key)
       if (cookie.value) {
         try {
@@ -47,7 +51,7 @@ export const useSecureStorage = () => {
         }
       }
     } else {
-      // Untuk data non-sensitif dari localStorage
+      // Untuk data dari localStorage (jika httpOnly diperlukan)
       try {
         const encrypted = localStorage.getItem(`secure_${key}`)
         if (encrypted) {
@@ -62,8 +66,8 @@ export const useSecureStorage = () => {
   }
 
   // Method untuk menghapus data sensitif
-  const removeSecureData = (key: string, httpOnly: boolean = true) => {
-    if (httpOnly) {
+  const removeSecureData = (key: string, httpOnly: boolean = false) => {
+    if (httpOnly === false) {
       const cookie = useCookie(key)
       cookie.value = null
     } else {
@@ -72,7 +76,7 @@ export const useSecureStorage = () => {
   }
 
   // Method untuk mengecek apakah data sensitif masih valid
-  const isSecureDataValid = (key: string, httpOnly: boolean = true) => {
+  const isSecureDataValid = (key: string, httpOnly: boolean = false) => {
     const data = getSecureData(key, httpOnly)
     if (!data) return false
 
@@ -96,18 +100,18 @@ export const useSecureStorage = () => {
       maxAge: 15 * 60, // 15 menit
       secure: true,
       sameSite: 'strict',
-      httpOnly: true
+      httpOnly: false // httpOnly tidak bisa diatur dari client-side
     })
   }
 
   // Method untuk membaca user session data
   const getUserSession = () => {
-    return getSecureData('user_session', true)
+    return getSecureData('user_session', false)
   }
 
   // Method untuk clear user session
   const clearUserSession = () => {
-    removeSecureData('user_session', true)
+    removeSecureData('user_session', false)
   }
 
   return {

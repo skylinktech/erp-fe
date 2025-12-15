@@ -211,7 +211,7 @@
                                             </a>
                                         </template>
                                     </Column>
-                                    <Column field="salesOrder.noSo" header="No. SO" :sortable="true">
+                                    <Column field="salesOrder.noSo" header="No. SO" :sortable="true" class="text-nowrap">
                                         <template #body="slotProps">
                                             <span v-if="slotProps.data.salesOrder?.noSo && slotProps.data.salesOrder?.id">
                                                 <a :href="`/sales/sales-order-detail?id=${slotProps.data.salesOrder.id}`" class="text-primary"

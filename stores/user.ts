@@ -168,7 +168,7 @@ export const useUserStore = defineStore('user', {
     // Method untuk memvalidasi session dari secure storage
     validateSession(): boolean {
       const secureStorage = useSecureStorage()
-      return secureStorage.isSecureDataValid('user_session', true)
+      return secureStorage.isSecureDataValid('user_session', false)
     },
     
     // Method untuk mendapatkan session data
