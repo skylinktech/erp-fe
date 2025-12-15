@@ -311,7 +311,7 @@
                 :validation-errors-from-parent="validationErrors"
             >
                 <template #default>
-                    <form @submit.prevent="salesInvoiceStore.saveSalesInvoice()">
+                    <form @submit.prevent="salesInvoiceStore.saveSalesInvoice()" novalidate>
                          <div class="row">
                             <div class="col">
                                 <ul class="nav nav-tabs" role="tablist">
@@ -562,7 +562,17 @@
                                     </div>
                                     <div class="col-md-3">
                                         <div class="form-floating form-floating-outline">
-                                            <input type="number" v-model="form.discountPercent" class="form-control" placeholder="Discount (%)" :readonly="!!form.salesOrderId">
+                                            <input 
+                                                type="text" 
+                                                :value="formatForDisplay(form.discountPercent)"
+                                                class="form-control" 
+                                                placeholder="Discount (%)" 
+                                                :readonly="!!form.salesOrderId"
+                                                @input="onDiscountPercentInput"
+                                                @blur="onDiscountPercentBlur"
+                                                pattern="[0-9]+([,\.][0-9]+)?"
+                                                :required="false"
+                                            >
                                             <label>Discount Invoice (%)</label>
                                             <div v-if="form.salesOrderId" class="form-text">
                                                 <small class="text-muted">Diambil dari Sales Order</small>
@@ -574,7 +584,17 @@
                                     </div>
                                     <div class="col-md-3">
                                         <div class="form-floating form-floating-outline">
-                                            <input type="number" v-model="form.taxPercent" class="form-control" placeholder="Tax (%)" :readonly="!!form.salesOrderId">
+                                            <input 
+                                                type="text" 
+                                                :value="formatForDisplay(form.taxPercent)"
+                                                class="form-control" 
+                                                placeholder="Tax (%)" 
+                                                :readonly="!!form.salesOrderId"
+                                                @input="onTaxPercentInput"
+                                                @blur="onTaxPercentBlur"
+                                                pattern="[0-9]+([,\.][0-9]+)?"
+                                                :required="false"
+                                            >
                                             <label>Tax Invoice (%)</label>
                                             <div v-if="form.salesOrderId" class="form-text">
                                                 <small class="text-muted">Diambil dari Sales Order</small>
@@ -872,9 +892,11 @@ import { useDebounceFn } from '@vueuse/core'
 import { useRouter } from 'vue-router'
 import Swal from 'sweetalert2'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
+import { useImageUrl } from '~/composables/useImageUrl'
 
 // Composables
 const { setListTitle, setFormTitle } = useDynamicTitle()
+const { getAttachmentUrl } = useImageUrl()
 
 const config = useRuntimeConfig();
 const router = useRouter();
@@ -1092,6 +1114,95 @@ const salesInvoiceItemsTotal = computed(() => {
   return Math.round(result);
 });
 
+// Helper function untuk mengkonversi format Indonesia (koma) ke format internasional (titik)
+const convertToNumber = (value) => {
+    if (value === null || value === undefined || value === '') {
+        return 0;
+    }
+    
+    // Jika sudah berupa number, langsung return
+    if (typeof value === 'number') {
+        return value;
+    }
+    
+    // Konversi string: ganti koma dengan titik, lalu parse ke number
+    const stringValue = String(value).trim();
+    const normalizedValue = stringValue.replace(',', '.');
+    const numValue = parseFloat(normalizedValue);
+    
+    // Jika hasilnya NaN, return 0
+    return isNaN(numValue) ? 0 : numValue;
+};
+
+// Helper function untuk format number ke string dengan koma (untuk tampilan)
+const formatForDisplay = (value) => {
+    const numValue = convertToNumber(value);
+    if (numValue === 0) {
+        return '';
+    }
+    return numValue.toString().replace('.', ',');
+};
+
+// Handler untuk discountPercent input
+const onDiscountPercentInput = (event) => {
+    if (form.value.salesOrderId) return; // Jangan update jika readonly
+    
+    const target = event.target;
+    let value = target.value;
+    
+    // Validasi format: hanya angka, koma, atau titik
+    if (value && !/^[0-9]*([,\.][0-9]*)?$/.test(value)) {
+        // Jika format tidak valid, hapus karakter terakhir
+        value = value.slice(0, -1);
+        target.value = value;
+    }
+    
+    // Update form.value dengan number (konversi koma ke titik)
+    const numValue = convertToNumber(value);
+    form.value.discountPercent = numValue;
+};
+
+// Handler untuk discountPercent blur (saat field kehilangan fokus)
+const onDiscountPercentBlur = (event) => {
+    if (form.value.salesOrderId) return; // Jangan update jika readonly
+    
+    const target = event.target;
+    const numValue = convertToNumber(target.value);
+    form.value.discountPercent = numValue;
+    // Update tampilan dengan format yang benar (gunakan koma untuk Indonesia)
+    target.value = formatForDisplay(numValue);
+};
+
+// Handler untuk taxPercent input
+const onTaxPercentInput = (event) => {
+    if (form.value.salesOrderId) return; // Jangan update jika readonly
+    
+    const target = event.target;
+    let value = target.value;
+    
+    // Validasi format: hanya angka, koma, atau titik
+    if (value && !/^[0-9]*([,\.][0-9]*)?$/.test(value)) {
+        // Jika format tidak valid, hapus karakter terakhir
+        value = value.slice(0, -1);
+        target.value = value;
+    }
+    
+    // Update form.value dengan number (konversi koma ke titik)
+    const numValue = convertToNumber(value);
+    form.value.taxPercent = numValue;
+};
+
+// Handler untuk taxPercent blur (saat field kehilangan fokus)
+const onTaxPercentBlur = (event) => {
+    if (form.value.salesOrderId) return; // Jangan update jika readonly
+    
+    const target = event.target;
+    const numValue = convertToNumber(target.value);
+    form.value.taxPercent = numValue;
+    // Update tampilan dengan format yang benar (gunakan koma untuk Indonesia)
+    target.value = formatForDisplay(numValue);
+};
+
 // Watch untuk sinkronisasi table controls
 watch(() => params.value.rows, (newValue) => {
     tableControls.value.rows = Number(newValue) || 10;
@@ -1165,6 +1276,10 @@ watch(showModal, (newValue) => {
                 attachmentPreview.value = null
             }
             
+            // Pastikan discountPercent dan taxPercent berupa number
+            form.value.discountPercent = convertToNumber(form.value.discountPercent);
+            form.value.taxPercent = convertToNumber(form.value.taxPercent);
+            
             // Fetch stock for existing items
             if (form.value.salesInvoiceItems && form.value.salesInvoiceItems.length > 0) {
                 form.value.salesInvoiceItems.forEach((item, index) => {
@@ -1197,8 +1312,8 @@ watch(() => form.value.salesOrderId, async (newSalesOrderId, oldSalesOrderId) =>
       
       // Auto fill data dari sales order yang dipilih
       form.value.customerId = selectedSalesOrder.customerId || selectedSalesOrder.customer?.id;
-      form.value.discountPercent = selectedSalesOrder.discountPercent || 0;
-      form.value.taxPercent = selectedSalesOrder.taxPercent || 0;
+      form.value.discountPercent = convertToNumber(selectedSalesOrder.discountPercent);
+      form.value.taxPercent = convertToNumber(selectedSalesOrder.taxPercent);
       // ✅ FIX: Total dari SO sudah final (termasuk discount & PPN)
       form.value.total = Math.round(Number(selectedSalesOrder.total)) || 0;
       

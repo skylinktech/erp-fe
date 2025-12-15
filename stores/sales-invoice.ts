@@ -371,8 +371,33 @@ export const useSalesInvoiceStore = defineStore('salesInvoice', {
             formData.append('dueDate', this.form.dueDate || '');
             formData.append('status', this.form.status || 'unpaid');
             formData.append('paidAmount', this.form.paidAmount?.toString() || '0');
-            formData.append('discountPercent', this.form.discountPercent?.toString() || '0');
-            formData.append('taxPercent', this.form.taxPercent?.toString() || '0');
+            
+            // Pastikan discountPercent dan taxPercent selalu berupa number
+            // Handle jika value adalah string dengan koma (format Indonesia)
+            let discountPercentValue = 0;
+            if (typeof this.form.discountPercent === 'number') {
+                discountPercentValue = this.form.discountPercent;
+            } else if (typeof this.form.discountPercent === 'string') {
+                // Konversi koma ke titik untuk parsing
+                const normalizedValue = this.form.discountPercent.replace(',', '.');
+                discountPercentValue = parseFloat(normalizedValue) || 0;
+            } else {
+                discountPercentValue = Number(this.form.discountPercent) || 0;
+            }
+            
+            let taxPercentValue = 0;
+            if (typeof this.form.taxPercent === 'number') {
+                taxPercentValue = this.form.taxPercent;
+            } else if (typeof this.form.taxPercent === 'string') {
+                // Konversi koma ke titik untuk parsing
+                const normalizedValue = this.form.taxPercent.replace(',', '.');
+                taxPercentValue = parseFloat(normalizedValue) || 0;
+            } else {
+                taxPercentValue = Number(this.form.taxPercent) || 0;
+            }
+            
+            formData.append('discountPercent', discountPercentValue.toString());
+            formData.append('taxPercent', taxPercentValue.toString());
             formData.append('dpp', this.form.dpp?.toString() || '0');
             formData.append('description', this.form.description || '');
             formData.append('total', this.form.total?.toString() || '0');
@@ -567,6 +592,10 @@ export const useSalesInvoiceStore = defineStore('salesInvoice', {
                   this.form[field] = formatDate(this.form[field]);
               }
           });
+          
+          // Pastikan discountPercent dan taxPercent selalu berupa number
+          this.form.discountPercent = Number(this.form.discountPercent) || 0;
+          this.form.taxPercent = Number(this.form.taxPercent) || 0;
       } else {
           this.resetForm();
       }

@@ -363,6 +363,20 @@ export const useSalesOrderStore = defineStore('salesOrder', {
                 // Khusus untuk field source, selalu kirim meskipun null/undefined
                 if (key === 'source') {
                     formData.append(key, value ?? '');
+                } else if (key === 'discountPercent' || key === 'taxPercent') {
+                    // Pastikan discountPercent dan taxPercent selalu berupa number
+                    // Handle jika value adalah string dengan koma (format Indonesia)
+                    let numValue = 0;
+                    if (typeof value === 'number') {
+                        numValue = value;
+                    } else if (typeof value === 'string') {
+                        // Konversi koma ke titik untuk parsing
+                        const normalizedValue = value.replace(',', '.');
+                        numValue = parseFloat(normalizedValue) || 0;
+                    } else {
+                        numValue = Number(value) || 0;
+                    }
+                    formData.append(key, numValue.toString());
                 } else if (value !== null && value !== undefined) {
                     formData.append(key, value);
                 }
@@ -805,6 +819,10 @@ export const useSalesOrderStore = defineStore('salesOrder', {
                   formData[field] = formatDate(formData[field]);
               }
           });
+
+          // Pastikan discountPercent dan taxPercent selalu berupa number
+          formData.discountPercent = Number(formData.discountPercent) || 0;
+          formData.taxPercent = Number(formData.taxPercent) || 0;
 
           this.form = formData;
           

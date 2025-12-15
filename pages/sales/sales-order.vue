@@ -316,7 +316,7 @@
                 :validation-errors-from-parent="validationErrors"
             >
                 <template #default>
-                    <form @submit.prevent="handleSubmit">
+                    <form @submit.prevent="handleSubmit" novalidate>
                          <div class="row">
                             <div class="col">
                                 <ul class="nav nav-tabs" role="tablist">
@@ -430,13 +430,31 @@
                                     </div>
                                     <div class="col-md-3">
                                         <div class="form-floating form-floating-outline">
-                                            <input type="number" v-model="form.discountPercent" class="form-control" placeholder="Discount (%)">
+                                            <input 
+                                                type="text" 
+                                                :value="formatForDisplay(form.discountPercent)"
+                                                class="form-control" 
+                                                placeholder="Discount (%)"
+                                                @input="onDiscountPercentInput"
+                                                @blur="onDiscountPercentBlur"
+                                                pattern="[0-9]+([,\.][0-9]+)?"
+                                                :required="false"
+                                            >
                                             <label>Discount (%)</label>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
                                         <div class="form-floating form-floating-outline">
-                                            <input type="number" v-model="form.taxPercent" class="form-control" placeholder="Tax (%)">
+                                            <input 
+                                                type="text" 
+                                                :value="formatForDisplay(form.taxPercent)"
+                                                class="form-control" 
+                                                placeholder="Tax (%)"
+                                                @input="onTaxPercentInput"
+                                                @blur="onTaxPercentBlur"
+                                                pattern="[0-9]+([,\.][0-9]+)?"
+                                                :required="false"
+                                            >
                                             <label>Tax (%)</label>
                                         </div>
                                     </div>
@@ -500,8 +518,8 @@
                                             <CustomSelect2 
                                                 v-model="item.productId" 
                                                 :options="filteredCustomerProducts" 
-                                                :get-option-label="product => `${product.sku} | ${product.name}`"
-                                                :reduce="p => p.id" 
+                                                :get-option-label="product => product ? `${product.sku || ''} | ${product.name || ''}` : ''"
+                                                :reduce="p => p ? p.id : null" 
                                                 placeholder="Cari berdasarkan SKU atau nama produk..."
                                                 searchable
                                                 clearable
@@ -509,25 +527,26 @@
                                                 :close-on-select="true"
                                                 :preserve-search="false"
                                                 :filter-by="(option, label, search) => {
+                                                    if (!option) return false;
                                                     const product = option;
                                                     const searchLower = search.toLowerCase();
-                                                    return product.name.toLowerCase().includes(searchLower) || 
-                                                           product.sku.toLowerCase().includes(searchLower) ||
-                                                           (product.noInterchange ? String(product.noInterchange).toLowerCase().includes(searchLower) : false);
+                                                    return (product.name && product.name.toLowerCase().includes(searchLower)) || 
+                                                           (product.sku && product.sku.toLowerCase().includes(searchLower)) ||
+                                                           (product.noInterchange && String(product.noInterchange).toLowerCase().includes(searchLower));
                                                 }"
                                                 @update:modelValue="(value) => { item.productId = value; onProductChange(index); }"
                                             >
                                                 <template #option="{ option }">
-                                                    <div class="d-flex justify-content-between align-items-center w-100">
+                                                    <div v-if="option" class="d-flex justify-content-between align-items-center w-100">
                                                         <div>
-                                                            <div class="fw-bold">{{ option.sku }} | {{ option.name }}</div>
-                                                            <small class="text-muted">{{ option.unit?.name || 'No Unit' }} - {{ formatRupiah(option.priceSell) }}</small>
+                                                            <div class="fw-bold">{{ option.sku || '' }} | {{ option.name || '' }}</div>
+                                                            <small class="text-muted">{{ option.unit?.name || 'No Unit' }} - {{ formatRupiah(option.priceSell || 0) }}</small>
                                                         </div>
                                                     </div>
                                                 </template>
                                                 <template #selection="{ option }">
-                                                    <div class="d-flex align-items-center">
-                                                        <span class="fw-bold">{{ option.sku }} | {{ option.name }}</span>
+                                                    <div v-if="option" class="d-flex align-items-center">
+                                                        <span class="fw-bold">{{ option.sku || '' }} | {{ option.name || '' }}</span>
                                                     </div>
                                                 </template>
                                             </CustomSelect2>
@@ -808,6 +827,10 @@ watch(showModal, async (newValue) => {
                 form.value.attachmentPreview = null
             }
             
+            // Pastikan discountPercent dan taxPercent berupa number
+            form.value.discountPercent = convertToNumber(form.value.discountPercent);
+            form.value.taxPercent = convertToNumber(form.value.taxPercent);
+            
             // Fetch stock for existing items
             if (form.value.salesOrderItems && form.value.salesOrderItems.length > 0) {
                 // Delay sedikit untuk memastikan semua data sudah ter-load
@@ -891,10 +914,15 @@ watch(() => customerProducts, (newProducts) => {
 });
 
 watch(() => salesOrderStore.customerProducts, (newProducts) => {
-  if (form.value.salesOrderItems && newProducts) {
+  // Jangan reset productId saat edit mode jika produk sudah ada di item.product
+  if (form.value.salesOrderItems && newProducts && !isEditMode.value) {
     form.value.salesOrderItems.forEach(item => {
-      const productExists = newProducts.some(p => p.id === item.productId);
-      if (!productExists) {
+      // Cek apakah produk ada di newProducts atau di item.product (untuk edit mode)
+      const productExists = newProducts.some(p => p && p.id === item.productId);
+      const productInItem = item.product && item.product.id === item.productId;
+      
+      if (!productExists && !productInItem && item.productId) {
+        // Hanya reset jika produk benar-benar tidak ada dan bukan edit mode
         item.productId = null;
         item.price = 0;
         item.quantity = 1;
@@ -918,11 +946,36 @@ const filteredCustomerProducts = computed(() => {
     // Limit jumlah produk yang ditampilkan untuk performa
     const limited = customerProducts.value.slice(0, 100);
     
-    // Tambahkan field displayName untuk pencarian
-    return limited.map(product => ({
-        ...product,
-        displayName: `${product.sku || ''} | ${product.name || ''}`
-    }));
+    // Tambahkan produk dari salesOrderItems yang sudah dipilih (untuk edit mode)
+    const productsMap = new Map();
+    
+    // Tambahkan produk dari customerProducts
+    limited.forEach(product => {
+        if (product && product.id) {
+            productsMap.set(product.id, {
+                ...product,
+                displayName: `${product.sku || ''} | ${product.name || ''}`
+            });
+        }
+    });
+    
+    // Tambahkan produk dari salesOrderItems jika belum ada di productsMap
+    if (form.value.salesOrderItems && Array.isArray(form.value.salesOrderItems)) {
+        form.value.salesOrderItems.forEach(item => {
+            if (item.productId && item.product && !productsMap.has(item.productId)) {
+                // Jika produk ada di item.product (dari preload), tambahkan ke map
+                const product = item.product;
+                if (product) {
+                    productsMap.set(item.productId, {
+                        ...product,
+                        displayName: `${product.sku || ''} | ${product.name || ''}`
+                    });
+                }
+            }
+        });
+    }
+    
+    return Array.from(productsMap.values());
 });
 
 watch(globalFilterValue, useDebounceFn((newValue) => {
@@ -1014,7 +1067,92 @@ const exportData = async (format) => {
     }
 };
 
+// Helper function untuk mengkonversi format Indonesia (koma) ke format internasional (titik)
+const convertToNumber = (value) => {
+    if (value === null || value === undefined || value === '') {
+        return 0;
+    }
+    
+    // Jika sudah berupa number, langsung return
+    if (typeof value === 'number') {
+        return value;
+    }
+    
+    // Konversi string: ganti koma dengan titik, lalu parse ke number
+    const stringValue = String(value).trim();
+    const normalizedValue = stringValue.replace(',', '.');
+    const numValue = parseFloat(normalizedValue);
+    
+    // Jika hasilnya NaN, return 0
+    return isNaN(numValue) ? 0 : numValue;
+};
+
+// Helper function untuk format number ke string dengan koma (untuk tampilan)
+const formatForDisplay = (value) => {
+    const numValue = convertToNumber(value);
+    if (numValue === 0) {
+        return '';
+    }
+    return numValue.toString().replace('.', ',');
+};
+
+// Handler untuk discountPercent input
+const onDiscountPercentInput = (event) => {
+    const target = event.target;
+    let value = target.value;
+    
+    // Validasi format: hanya angka, koma, atau titik
+    if (value && !/^[0-9]*([,\.][0-9]*)?$/.test(value)) {
+        // Jika format tidak valid, hapus karakter terakhir
+        value = value.slice(0, -1);
+        target.value = value;
+    }
+    
+    // Update form.value dengan number (konversi koma ke titik)
+    const numValue = convertToNumber(value);
+    form.value.discountPercent = numValue;
+};
+
+// Handler untuk discountPercent blur (saat field kehilangan fokus)
+const onDiscountPercentBlur = (event) => {
+    const target = event.target;
+    const numValue = convertToNumber(target.value);
+    form.value.discountPercent = numValue;
+    // Update tampilan dengan format yang benar (gunakan koma untuk Indonesia)
+    target.value = formatForDisplay(numValue);
+};
+
+// Handler untuk taxPercent input
+const onTaxPercentInput = (event) => {
+    const target = event.target;
+    let value = target.value;
+    
+    // Validasi format: hanya angka, koma, atau titik
+    if (value && !/^[0-9]*([,\.][0-9]*)?$/.test(value)) {
+        // Jika format tidak valid, hapus karakter terakhir
+        value = value.slice(0, -1);
+        target.value = value;
+    }
+    
+    // Update form.value dengan number (konversi koma ke titik)
+    const numValue = convertToNumber(value);
+    form.value.taxPercent = numValue;
+};
+
+// Handler untuk taxPercent blur (saat field kehilangan fokus)
+const onTaxPercentBlur = (event) => {
+    const target = event.target;
+    const numValue = convertToNumber(target.value);
+    form.value.taxPercent = numValue;
+    // Update tampilan dengan format yang benar (gunakan koma untuk Indonesia)
+    target.value = formatForDisplay(numValue);
+};
+
 const handleSubmit = () => {
+    // Pastikan discountPercent dan taxPercent selalu berupa number
+    form.value.discountPercent = convertToNumber(form.value.discountPercent);
+    form.value.taxPercent = convertToNumber(form.value.taxPercent);
+    
     salesOrderStore.saveSalesOrder();
 };
 
