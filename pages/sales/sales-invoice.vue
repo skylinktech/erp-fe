@@ -336,7 +336,7 @@
                                     <div class="col-md-6">
                                         <CustomSelect2 
                                             v-model="form.salesOrderId" 
-                                            :options="salesOrders || []" 
+                                            :options="salesOrdersForSelect || []" 
                                             :get-option-label="getSalesOrderLabel" 
                                             :reduce="so => so.id" 
                                             placeholder="Pilih Sales Order"
@@ -743,9 +743,9 @@
                                             <label class="form-label">Produk</label>
                                             <CustomSelect2 
                                                 v-model="item.productId" 
-                                                :options="customerProducts || []" 
-                                                :get-option-label="p => `${p.name} (${p.unit?.name || 'No Unit'})`" 
-                                                :reduce="p => p.id" 
+                                                :options="customerProducts" 
+                                                :get-option-label="p => p && p.name ? `${p.name} (${p.unit?.name || 'No Unit'})` : ''" 
+                                                :reduce="p => p?.id" 
                                                 placeholder="Pilih Produk" 
                                                 searchable
                                                 clearable
@@ -866,7 +866,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useSalesInvoiceStore } from '~/stores/sales-invoice'
 import { useCustomerStore } from '~/stores/customer'
@@ -917,10 +917,18 @@ const salesOrderStore       = useSalesOrderStore()
 
 const { salesInvoices, loading, totalRecords, params, form, isEditMode, showModal, validationErrors, statistics } = storeToRefs(salesInvoiceStore)
 const { customers }   = storeToRefs(customerStore)
-const { salesOrders, customerProducts } = storeToRefs(salesOrderStore)
+const { salesOrdersForSelect, customerProducts: rawCustomerProducts } = storeToRefs(salesOrderStore)
 const { warehouses }  = storeToRefs(warehouseStore)
 const { perusahaans } = storeToRefs(perusahaanStore)
 const { cabangs }     = storeToRefs(cabangStore)
+
+// ✅ FIX: Filter out undefined/null customerProducts untuk menghindari error
+const customerProducts = computed(() => {
+  if (!rawCustomerProducts.value || !Array.isArray(rawCustomerProducts.value)) {
+    return []
+  }
+  return rawCustomerProducts.value.filter(p => p !== null && p !== undefined && p.id)
+})
 
 // Table Controls
 const tableControls = ref({
@@ -1242,6 +1250,9 @@ const paymentMethodOptions = ref([
 ]);
 
 let modalInstance = null;
+let modalHiddenHandler = null;
+let modalShowHandler = null;
+
 onMounted(() => {
     userStore.loadUser();
     salesInvoiceStore.fetchSalesInvoices();
@@ -1256,6 +1267,24 @@ onMounted(() => {
     const modalElement = document.getElementById('SalesInvoiceModal')
     if (modalElement) {
         modalInstance = new bootstrap.Modal(modalElement)
+        
+        // ✅ FIX: Tambahkan event listener untuk sinkronisasi state ketika modal ditutup oleh Bootstrap (klik backdrop, ESC, dll)
+        modalHiddenHandler = () => {
+            // Sinkronkan dengan store state ketika modal ditutup oleh Bootstrap
+            if (salesInvoiceStore.showModal) {
+                salesInvoiceStore.closeModal()
+            }
+        }
+        
+        modalShowHandler = () => {
+            // Pastikan showModal di store sudah true
+            if (!salesInvoiceStore.showModal) {
+                salesInvoiceStore.showModal = true
+            }
+        }
+        
+        modalElement.addEventListener('hidden.bs.modal', modalHiddenHandler)
+        modalElement.addEventListener('show.bs.modal', modalShowHandler)
     }
     setListTitle('Sales Invoice', salesInvoices.value.length)
 
@@ -1264,9 +1293,39 @@ onMounted(() => {
     tableControls.value.search = globalFilterValue.value;
 });
 
-watch(showModal, (newValue) => {
+// ✅ FIX: Cleanup event listeners saat component unmount
+onUnmounted(() => {
+    const modalElement = document.getElementById('SalesInvoiceModal')
+    if (modalElement) {
+        if (modalHiddenHandler) {
+            modalElement.removeEventListener('hidden.bs.modal', modalHiddenHandler)
+        }
+        if (modalShowHandler) {
+            modalElement.removeEventListener('show.bs.modal', modalShowHandler)
+        }
+    }
+});
+
+watch(showModal, async (newValue) => {
     if (newValue) {
-        modalInstance?.show()
+        // ✅ FIX: Pastikan modal instance ada, jika tidak buat ulang
+        if (!modalInstance) {
+            await nextTick()
+            const modalElement = document.getElementById('SalesInvoiceModal')
+            if (modalElement) {
+                modalInstance = new bootstrap.Modal(modalElement)
+            } else {
+                console.error('Modal element not found')
+                return
+            }
+        }
+        
+        // ✅ FIX: Pastikan modal belum terbuka sebelum show
+        const modalElement = document.getElementById('SalesInvoiceModal')
+        if (modalElement && !modalElement.classList.contains('show')) {
+            modalInstance.show()
+        }
+        
         if (isEditMode.value) {
             if (form.value.attachment_url) {
                 attachmentPreview.value = form.value.attachment_url
@@ -1280,6 +1339,15 @@ watch(showModal, (newValue) => {
             form.value.discountPercent = convertToNumber(form.value.discountPercent);
             form.value.taxPercent = convertToNumber(form.value.taxPercent);
             
+            // ✅ FIX: Fetch customer products jika ada customerId (untuk dropdown produk di items)
+            if (form.value.customerId) {
+                try {
+                    await salesOrderStore.fetchProductsForCustomer(form.value.customerId);
+                } catch (error) {
+                    console.error('Error fetching customer products:', error)
+                }
+            }
+            
             // Fetch stock for existing items
             if (form.value.salesInvoiceItems && form.value.salesInvoiceItems.length > 0) {
                 form.value.salesInvoiceItems.forEach((item, index) => {
@@ -1290,7 +1358,13 @@ watch(showModal, (newValue) => {
             attachmentPreview.value = null
         }
     } else {
-        modalInstance?.hide()
+        // ✅ FIX: Pastikan modal instance ada sebelum hide
+        if (modalInstance) {
+            const modalElement = document.getElementById('SalesInvoiceModal')
+            if (modalElement && modalElement.classList.contains('show')) {
+                modalInstance.hide()
+            }
+        }
     }
 })
 
@@ -1304,18 +1378,26 @@ watch(() => form.value.perusahaanId, (newPerusahaanId, oldPerusahaanId) => {
 // Watcher untuk salesOrderId - auto fill data ketika dipilih
 watch(() => form.value.salesOrderId, async (newSalesOrderId, oldSalesOrderId) => {
   if (newSalesOrderId && newSalesOrderId !== oldSalesOrderId) {
-    const selectedSalesOrder = salesOrders.value?.find(so => so.id === newSalesOrderId);
+    const selectedSalesOrder = salesOrdersForSelect.value?.find(so => so.id === newSalesOrderId);
     
     if (selectedSalesOrder) {
       // ✅ FIX: Set flag untuk mencegah recursive updates
       isUpdatingFromWatcher.value = true;
       
-      // Auto fill data dari sales order yang dipilih
-      form.value.customerId = selectedSalesOrder.customerId || selectedSalesOrder.customer?.id;
-      form.value.discountPercent = convertToNumber(selectedSalesOrder.discountPercent);
-      form.value.taxPercent = convertToNumber(selectedSalesOrder.taxPercent);
-      // ✅ FIX: Total dari SO sudah final (termasuk discount & PPN)
-      form.value.total = Math.round(Number(selectedSalesOrder.total)) || 0;
+      // ✅ FIX: Batch semua updates dalam satu batch untuk mengurangi DOM changes berturut-turut
+      // Gunakan nextTick untuk memastikan semua perubahan dilakukan dalam satu render cycle
+      await nextTick()
+      
+      // Auto fill data dari sales order yang dipilih - batch semua perubahan
+      const updates = {
+        customerId: selectedSalesOrder.customerId || selectedSalesOrder.customer?.id,
+        discountPercent: convertToNumber(selectedSalesOrder.discountPercent),
+        taxPercent: convertToNumber(selectedSalesOrder.taxPercent),
+        total: Math.round(Number(selectedSalesOrder.total)) || 0,
+      }
+      
+      // Apply semua updates sekaligus
+      Object.assign(form.value, updates)
       
       // ✅ FIX: Set perusahaanId terlebih dahulu, tunggu computed property ter-update
       if (selectedSalesOrder.perusahaanId) {
@@ -1449,7 +1531,7 @@ watch(() => form.value.salesOrderId, async (newSalesOrderId, oldSalesOrderId) =>
     await nextTick();
     isUpdatingFromWatcher.value = false;
   }
-});
+}, { flush: 'post' }); // ✅ FIX: Gunakan flush: 'post' untuk batch DOM updates dan mengurangi scroll anchoring warning
 
 // Watcher untuk status - auto adjust paid amount
 watch(() => form.value.status, (newStatus, oldStatus) => {
@@ -1708,7 +1790,7 @@ const calculateSubtotal = (index) => {
 const onProductChange = (index) => {
   const selectedProductId = form.value.salesInvoiceItems[index].productId;
   const selectedProduct = customerProducts.value && Array.isArray(customerProducts.value) 
-    ? customerProducts.value.find(p => p && p.id === selectedProductId)
+    ? customerProducts.value.find(p => p && p !== null && p !== undefined && p.id === selectedProductId)
     : null;
 
   if (selectedProduct) {

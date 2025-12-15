@@ -161,8 +161,14 @@ const props = defineProps({
   getOptionLabel: {
     type: Function,
     default: (option) => {
-      if (typeof option === 'string' || typeof option === 'number') return option
-      return option?.label || option?.name || option?.title || String(option)
+      // ✅ FIX: Handle undefined/null options
+      if (option === null || option === undefined) {
+        return ''
+      }
+      if (typeof option === 'string' || typeof option === 'number') {
+        return option
+      }
+      return option?.label || option?.name || option?.title || String(option || '')
     }
   },
   getOptionKey: {
@@ -234,34 +240,67 @@ const hasValue = computed(() => {
 const selectedOption = computed(() => {
   if (!hasValue.value) return null
   
-  return props.options.find(option => {
-    const reducedOption = props.reduce(option)
-    return reducedOption === props.modelValue
+  // ✅ FIX: Filter out undefined/null options
+  const validOptions = (props.options || []).filter(option => option !== null && option !== undefined)
+  
+  return validOptions.find(option => {
+    try {
+      const reducedOption = props.reduce(option)
+      return reducedOption === props.modelValue
+    } catch (error) {
+      console.warn('Error in reduce function:', error, option)
+      return false
+    }
   })
 })
 
 const selectedOptions = computed(() => {
   if (!Array.isArray(props.modelValue)) return []
   
-  return props.options.filter(option => {
-    const reducedOption = props.reduce(option)
-    return props.modelValue.includes(reducedOption)
+  // ✅ FIX: Filter out undefined/null options
+  const validOptions = (props.options || []).filter(option => option !== null && option !== undefined)
+  
+  return validOptions.filter(option => {
+    try {
+      const reducedOption = props.reduce(option)
+      return props.modelValue.includes(reducedOption)
+    } catch (error) {
+      console.warn('Error in reduce function:', error, option)
+      return false
+    }
   })
 })
 
 const filteredOptions = computed(() => {
+  // ✅ FIX: Filter out undefined/null options terlebih dahulu
+  const validOptions = (props.options || []).filter(option => option !== null && option !== undefined)
+  
   if (!searchTerm.value || !props.searchable) {
-    return props.options
+    return validOptions
   }
 
   if (props.filterBy && typeof props.filterBy === 'function') {
-    return props.options.filter(option => props.filterBy(option, props.getOptionLabel(option), searchTerm.value))
+    return validOptions.filter(option => {
+      if (!option) return false
+      try {
+        return props.filterBy(option, props.getOptionLabel(option), searchTerm.value)
+      } catch (error) {
+        console.warn('Error in filterBy function:', error, option)
+        return false
+      }
+    })
   }
 
   // Default filter
-  return props.options.filter(option => {
-    const label = props.getOptionLabel(option).toString().toLowerCase()
-    return label.includes(searchTerm.value.toLowerCase())
+  return validOptions.filter(option => {
+    if (!option) return false
+    try {
+      const label = props.getOptionLabel(option)?.toString()?.toLowerCase() || ''
+      return label.includes(searchTerm.value.toLowerCase())
+    } catch (error) {
+      console.warn('Error filtering option:', error, option)
+      return false
+    }
   })
 })
 
@@ -666,6 +705,11 @@ export default {
   overflow-y: auto;
   overflow-x: hidden;
   padding: 4px 0;
+  /* ✅ FIX: Disable scroll anchoring untuk mencegah warning */
+  overflow-anchor: none;
+  contain: layout style paint;
+  scroll-behavior: smooth;
+  will-change: scroll-position;
 }
 
 .select2-results__options {

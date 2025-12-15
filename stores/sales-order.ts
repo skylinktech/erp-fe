@@ -95,6 +95,7 @@ export interface CustomerProduct extends Product {
 
 interface SalesOrderState {
   salesOrders       : SalesOrder[]
+  salesOrdersForSelect: SalesOrder[] // ✅ FIX: State terpisah untuk select dropdown agar tidak tertimpa
   salesOrder        : SalesOrder | null
   originalSalesOrder: SalesOrder | null
   customerProducts  : CustomerProduct[]
@@ -124,6 +125,7 @@ interface SalesOrderState {
 export const useSalesOrderStore = defineStore('salesOrder', {
   state: (): SalesOrderState => ({
     salesOrders       : [],
+    salesOrdersForSelect: [], // ✅ FIX: State terpisah untuk select dropdown
     salesOrder        : null,
     originalSalesOrder: null,
     customerProducts  : [],
@@ -274,7 +276,7 @@ export const useSalesOrderStore = defineStore('salesOrder', {
         const url = new URL($api.salesOrder())
         const params = new URLSearchParams({
             page: '1',
-            rows: '10000', // Ambil semua data (maksimal 10000)
+            rows: '500', // ✅ FIX: Limit ke 500 untuk performa (backend juga limit 1000)
             sortField: 'created_at',
             sortOrder: '2', // Descending (terbaru dulu)
             draw: '1',
@@ -297,8 +299,8 @@ export const useSalesOrderStore = defineStore('salesOrder', {
         if (!response.ok) throw new Error('Gagal mengambil data salesOrder untuk select')
 
         const result = await response.json()
-        // Update salesOrders dengan semua data untuk dropdown
-        this.salesOrders = Array.isArray(result.data) ? result.data : []
+        // ✅ FIX: Update salesOrdersForSelect (state terpisah) agar tidak tertimpa oleh fetchSalesOrders
+        this.salesOrdersForSelect = Array.isArray(result.data) ? result.data : []
       } catch (e: any) {
         console.error('Gagal mengambil data salesOrder untuk select:', e)
         this.error = e
@@ -367,7 +369,11 @@ export const useSalesOrderStore = defineStore('salesOrder', {
         })
         if (!response.ok) throw new Error('Gagal mengambil data produk untuk customer')
         const result = await response.json()
-        this.customerProducts = result.data.customerProducts || []
+        // ✅ FIX: Filter out undefined/null values untuk menghindari error di component
+        const products = result.data.customerProducts || []
+        this.customerProducts = Array.isArray(products) 
+          ? products.filter(p => p !== null && p !== undefined && p.id) 
+          : []
       } catch (error) {
         console.error('Error fetching products for customer:', error)
         // Jangan hapus produk yang ada jika fetch gagal
