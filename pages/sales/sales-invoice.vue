@@ -1133,9 +1133,26 @@ const convertToNumber = (value) => {
         return value;
     }
     
-    // Konversi string: ganti koma dengan titik, lalu parse ke number
+    // ✅ FIX: Konversi string dengan benar - ganti SEMUA koma dengan titik
     const stringValue = String(value).trim();
-    const normalizedValue = stringValue.replace(',', '.');
+    // Hapus semua pemisah ribuan (titik) terlebih dahulu, lalu ganti koma dengan titik
+    // Contoh: "6,25" -> "6.25", "1.234,56" -> "1234.56"
+    let normalizedValue = stringValue;
+    
+    // Jika ada koma, kemungkinan format Indonesia (koma sebagai desimal separator)
+    if (normalizedValue.includes(',')) {
+        // Hapus semua titik (pemisah ribuan), lalu ganti koma dengan titik
+        normalizedValue = normalizedValue.replace(/\./g, '').replace(',', '.');
+    } else {
+        // Jika tidak ada koma, hapus titik yang mungkin pemisah ribuan
+        // Tapi tetap pertahankan titik sebagai desimal separator jika ada
+        const parts = normalizedValue.split('.');
+        if (parts.length > 2) {
+            // Ada lebih dari 1 titik, berarti titik pertama adalah pemisah ribuan
+            normalizedValue = parts.slice(0, -1).join('') + '.' + parts[parts.length - 1];
+        }
+    }
+    
     const numValue = parseFloat(normalizedValue);
     
     // Jika hasilnya NaN, return 0
@@ -1148,7 +1165,8 @@ const formatForDisplay = (value) => {
     if (numValue === 0) {
         return '';
     }
-    return numValue.toString().replace('.', ',');
+    // ✅ FIX: Ganti SEMUA titik dengan koma untuk format Indonesia
+    return numValue.toString().replace(/\./g, ',');
 };
 
 // Handler untuk discountPercent input
@@ -1389,10 +1407,21 @@ watch(() => form.value.salesOrderId, async (newSalesOrderId, oldSalesOrderId) =>
       await nextTick()
       
       // Auto fill data dari sales order yang dipilih - batch semua perubahan
+      // ✅ FIX: Pastikan discountPercent dan taxPercent dikonversi dengan benar
+      const rawDiscountPercent = selectedSalesOrder.discountPercent;
+      const rawTaxPercent = selectedSalesOrder.taxPercent;
+      
+      // Debug log untuk troubleshooting
+      console.log('🔍 Sales Order discountPercent:', {
+        raw: rawDiscountPercent,
+        type: typeof rawDiscountPercent,
+        converted: convertToNumber(rawDiscountPercent)
+      });
+      
       const updates = {
         customerId: selectedSalesOrder.customerId || selectedSalesOrder.customer?.id,
-        discountPercent: convertToNumber(selectedSalesOrder.discountPercent),
-        taxPercent: convertToNumber(selectedSalesOrder.taxPercent),
+        discountPercent: convertToNumber(rawDiscountPercent),
+        taxPercent: convertToNumber(rawTaxPercent),
         total: Math.round(Number(selectedSalesOrder.total)) || 0,
       }
       

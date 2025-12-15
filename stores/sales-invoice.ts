@@ -372,32 +372,41 @@ export const useSalesInvoiceStore = defineStore('salesInvoice', {
             formData.append('status', this.form.status || 'unpaid');
             formData.append('paidAmount', this.form.paidAmount?.toString() || '0');
             
-            // Pastikan discountPercent dan taxPercent selalu berupa number
+            // ✅ FIX: Pastikan discountPercent dan taxPercent selalu berupa number
             // Handle jika value adalah string dengan koma (format Indonesia)
-            let discountPercentValue = 0;
-            if (typeof this.form.discountPercent === 'number') {
-                discountPercentValue = this.form.discountPercent;
-            } else if (typeof this.form.discountPercent === 'string') {
-                // Konversi koma ke titik untuk parsing
-                const normalizedValue = this.form.discountPercent.replace(',', '.');
-                discountPercentValue = parseFloat(normalizedValue) || 0;
-            } else {
-                discountPercentValue = Number(this.form.discountPercent) || 0;
-            }
+            const convertToNumber = (value: any): number => {
+                if (value === null || value === undefined || value === '') {
+                    return 0;
+                }
+                if (typeof value === 'number') {
+                    return value;
+                }
+                const stringValue = String(value).trim();
+                // ✅ FIX: Ganti SEMUA koma dengan titik untuk format Indonesia
+                // Hapus titik pemisah ribuan terlebih dahulu jika ada koma
+                let normalizedValue = stringValue;
+                if (normalizedValue.includes(',')) {
+                    normalizedValue = normalizedValue.replace(/\./g, '').replace(',', '.');
+                }
+                const numValue = parseFloat(normalizedValue);
+                return isNaN(numValue) ? 0 : numValue;
+            };
             
-            let taxPercentValue = 0;
-            if (typeof this.form.taxPercent === 'number') {
-                taxPercentValue = this.form.taxPercent;
-            } else if (typeof this.form.taxPercent === 'string') {
-                // Konversi koma ke titik untuk parsing
-                const normalizedValue = this.form.taxPercent.replace(',', '.');
-                taxPercentValue = parseFloat(normalizedValue) || 0;
-            } else {
-                taxPercentValue = Number(this.form.taxPercent) || 0;
-            }
+            let discountPercentValue = convertToNumber(this.form.discountPercent);
+            let taxPercentValue = convertToNumber(this.form.taxPercent);
             
-            formData.append('discountPercent', discountPercentValue.toString());
-            formData.append('taxPercent', taxPercentValue.toString());
+            // ✅ FIX: Pastikan nilai yang dikirim adalah number yang benar (gunakan titik sebagai desimal separator)
+            // FormData akan mengirim sebagai string, jadi pastikan formatnya benar
+            formData.append('discountPercent', discountPercentValue.toString().replace(',', '.'));
+            formData.append('taxPercent', taxPercentValue.toString().replace(',', '.'));
+            
+            // Debug log untuk troubleshooting
+            console.log('💾 Saving discountPercent:', {
+              original: this.form.discountPercent,
+              converted: discountPercentValue,
+              type: typeof discountPercentValue,
+              stringValue: discountPercentValue.toString().replace(',', '.')
+            });
             formData.append('dpp', this.form.dpp?.toString() || '0');
             formData.append('description', this.form.description || '');
             formData.append('total', this.form.total?.toString() || '0');
