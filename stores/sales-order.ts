@@ -264,6 +264,57 @@ export const useSalesOrderStore = defineStore('salesOrder', {
       }
     },
 
+    // ✅ NEW: Method untuk fetch semua sales orders tanpa pagination (untuk select2 dropdown)
+    async fetchAllSalesOrdersForSelect(suppressError = false) {
+      this.error = null
+      const { $api } = useNuxtApp()
+      try {
+        const token = localStorage.getItem('token');
+
+        const url = new URL($api.salesOrder())
+        const params = new URLSearchParams({
+            page: '1',
+            rows: '10000', // Ambil semua data (maksimal 10000)
+            sortField: 'created_at',
+            sortOrder: '2', // Descending (terbaru dulu)
+            draw: '1',
+            search: '',
+            includeItems: 'false', // Tidak perlu items untuk dropdown
+        });
+          
+        url.search = params.toString();
+
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        })
+
+        if (!response.ok) throw new Error('Gagal mengambil data salesOrder untuk select')
+
+        const result = await response.json()
+        // Update salesOrders dengan semua data untuk dropdown
+        this.salesOrders = Array.isArray(result.data) ? result.data : []
+      } catch (e: any) {
+        console.error('Gagal mengambil data salesOrder untuk select:', e)
+        this.error = e
+        
+        // Hanya tampilkan notifikasi error jika tidak di-suppress
+        if (!suppressError) {
+          const toast = useToast();
+          toast.error({
+            title: 'Error',
+            message: `Tidak dapat memuat data Sales Order: ${e?.message || e}`,
+            color: 'red'
+          });
+        }
+      }
+    },
+
     async fetchStats() {
         const { $api } = useNuxtApp();
         const defaultStats = {

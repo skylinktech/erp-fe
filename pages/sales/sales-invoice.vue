@@ -1249,7 +1249,7 @@ onMounted(() => {
     customerStore.fetchCustomers();
     perusahaanStore.fetchPerusahaans();
     cabangStore.fetchCabangs();
-    salesOrderStore.fetchSalesOrders();
+    salesOrderStore.fetchAllSalesOrdersForSelect(true); // Fetch semua sales orders untuk select2 dropdown
     warehouseStore.fetchWarehouses();
     permissionStore.fetchPermissions();
 
