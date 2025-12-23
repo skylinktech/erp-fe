@@ -1599,7 +1599,8 @@ watch(() => form.value.salesOrderId, async (newSalesOrderId, oldSalesOrderId) =>
       }
       form.value.paidAmount = 0;
       form.value.status = 'unpaid';
-      form.value.perusahaanId = null;
+      // ✅ FIX: Jangan reset perusahaanId jika sudah ada (biarkan user pilih manual)
+      // form.value.perusahaanId = null;
       form.value.cabangId = null;
       // Clear sales invoice items
       if (!form.value.salesInvoiceItems) {

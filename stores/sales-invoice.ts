@@ -359,9 +359,34 @@ export const useSalesInvoiceStore = defineStore('salesInvoice', {
             // Add basic fields
             formData.append('customerId', this.form.customerId?.toString() || '');
             formData.append('salesOrderId', this.form.salesOrderId?.toString() || '');
-            if (this.form.perusahaanId !== undefined && this.form.perusahaanId !== null) {
-              formData.append('perusahaanId', this.form.perusahaanId?.toString());
+            
+            // ✅ FIX: PerusahaanId harus selalu ada - ambil dari sales order jika belum ada
+            let perusahaanIdToSend = this.form.perusahaanId;
+            
+            // Jika perusahaanId belum ada tapi ada salesOrderId, ambil dari sales order
+            if (!perusahaanIdToSend && this.form.salesOrderId) {
+              // Import sales order store untuk akses salesOrdersForSelect
+              const { useSalesOrderStore } = await import('~/stores/sales-order');
+              const salesOrderStore = useSalesOrderStore();
+              const selectedSalesOrder = salesOrderStore.salesOrdersForSelect?.find(so => so.id === this.form.salesOrderId);
+              if (selectedSalesOrder?.perusahaanId) {
+                perusahaanIdToSend = selectedSalesOrder.perusahaanId;
+              }
             }
+            
+            // ✅ FIX: Validasi perusahaanId harus ada sebelum submit
+            if (!perusahaanIdToSend) {
+              toast.error({
+                title: 'Error Validasi',
+                message: 'Perusahaan harus dipilih atau pilih Sales Order yang memiliki perusahaan',
+                color: 'red'
+              });
+              this.loading = false;
+              return;
+            }
+            
+            formData.append('perusahaanId', perusahaanIdToSend.toString());
+            
             if (this.form.cabangId !== undefined && this.form.cabangId !== null) {
               formData.append('cabangId', this.form.cabangId?.toString());
             }
