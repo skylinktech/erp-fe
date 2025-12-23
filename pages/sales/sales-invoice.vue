@@ -1070,6 +1070,11 @@ const discountAmount = computed(() => {
 
 // Computed untuk DPP (Dasar Pengenaan Pajak) = subtotal sales order items * 11/12
 const dppAmount = computed(() => {
+  // ✅ FIX: Jika perusahaanId = 3, DPP = 0
+  if (form.value.perusahaanId === 3) {
+    return 0;
+  }
+  
   // DPP dihitung dari subtotal sales invoice items, bukan dari total
   const subtotalItems = salesInvoiceItemsTotal.value;
   const result = subtotalItems * 11 / 12;
@@ -1248,8 +1253,13 @@ watch(salesInvoiceItemsTotal, (newTotal) => {
 
 // ✅ NEW: Watcher untuk auto update DPP berdasarkan subtotal items
 watch(salesInvoiceItemsTotal, (newSubtotal) => {
-  // Auto calculate DPP: subtotal items * 11/12
-  form.value.dpp = Math.round(Number(newSubtotal) * 11 / 12);
+  // ✅ FIX: Jika perusahaanId = 2, DPP = 0
+  if (form.value.perusahaanId === 3) {
+    form.value.dpp = 0;
+  } else {
+    // Auto calculate DPP: subtotal items * 11/12
+    form.value.dpp = Math.round(Number(newSubtotal) * 11 / 12);
+  }
 });
 
 const statusOptions = ref([
@@ -1357,6 +1367,17 @@ watch(showModal, async (newValue) => {
             form.value.discountPercent = convertToNumber(form.value.discountPercent);
             form.value.taxPercent = convertToNumber(form.value.taxPercent);
             
+            // ✅ FIX: Update DPP berdasarkan perusahaanId saat edit mode
+            if (form.value.perusahaanId === 3) {
+              form.value.dpp = 0;
+            } else if (form.value.salesInvoiceItems && form.value.salesInvoiceItems.length > 0) {
+              // Recalculate DPP jika ada items
+              const subtotalItems = form.value.salesInvoiceItems.reduce((total, item) => {
+                return total + (Number(item.quantity || 0) * Number(item.price || 0));
+              }, 0);
+              form.value.dpp = Math.round(subtotalItems * 11 / 12);
+            }
+            
             // ✅ FIX: Fetch customer products jika ada customerId (untuk dropdown produk di items)
             if (form.value.customerId) {
                 try {
@@ -1390,6 +1411,15 @@ watch(() => form.value.perusahaanId, (newPerusahaanId, oldPerusahaanId) => {
     // ✅ FIX: Reset cabangId ketika perusahaan berubah (kecuali saat autofill dari sales order)
     if (newPerusahaanId !== oldPerusahaanId && !isUpdatingFromWatcher.value) {
         form.value.cabangId = null;
+    }
+    
+    // ✅ FIX: Update DPP ketika perusahaan berubah
+    if (newPerusahaanId === 2) {
+        form.value.dpp = 0;
+    } else {
+        // Recalculate DPP berdasarkan subtotal items
+        const subtotalItems = salesInvoiceItemsTotal.value;
+        form.value.dpp = Math.round(Number(subtotalItems) * 11 / 12);
     }
 });
 
@@ -1431,6 +1461,13 @@ watch(() => form.value.salesOrderId, async (newSalesOrderId, oldSalesOrderId) =>
       // ✅ FIX: Set perusahaanId terlebih dahulu, tunggu computed property ter-update
       if (selectedSalesOrder.perusahaanId) {
         form.value.perusahaanId = selectedSalesOrder.perusahaanId;
+        
+        // ✅ FIX: Update DPP berdasarkan perusahaanId
+        if (selectedSalesOrder.perusahaanId === 3) {
+          form.value.dpp = 0;
+        } else {
+          // DPP akan di-update oleh watcher salesInvoiceItemsTotal setelah items diisi
+        }
         
         // Tunggu computed property cabangOptions ter-update
         await nextTick();
@@ -1474,7 +1511,7 @@ watch(() => form.value.salesOrderId, async (newSalesOrderId, oldSalesOrderId) =>
       if (!isEditMode.value) {
         // Fetch detail sales order dengan items
         salesOrderStore.getSalesOrderDetails(newSalesOrderId)
-          .then(() => {
+          .then(async () => {
             const detailedSalesOrder = salesOrderStore.salesOrder;
           
             if (detailedSalesOrder && detailedSalesOrder.salesOrderItems) {
@@ -1520,7 +1557,18 @@ watch(() => form.value.salesOrderId, async (newSalesOrderId, oldSalesOrderId) =>
               form.value.salesInvoiceItems.push(invoiceItem);
             });
             
+            // ✅ FIX: Update DPP setelah items diisi
             // DPP akan otomatis dihitung dari watcher salesInvoiceItemsTotal
+            // Tapi pastikan cek perusahaanId juga
+            await nextTick();
+            if (form.value.perusahaanId === 3) {
+              form.value.dpp = 0;
+            } else {
+              const subtotalItems = form.value.salesInvoiceItems.reduce((total, item) => {
+                return total + (Number(item.quantity || 0) * Number(item.price || 0));
+              }, 0);
+              form.value.dpp = Math.round(subtotalItems * 11 / 12);
+            }
             
           }
           })
@@ -1543,7 +1591,12 @@ watch(() => form.value.salesOrderId, async (newSalesOrderId, oldSalesOrderId) =>
       form.value.discountPercent = 0;
       form.value.taxPercent = 0;
       form.value.total = 0;
-      form.value.dpp = 0;
+      // ✅ FIX: Reset DPP berdasarkan perusahaanId (jika masih ada)
+      if (form.value.perusahaanId === 3) {
+        form.value.dpp = 0;
+      } else {
+        form.value.dpp = 0; // Reset ke 0 karena items sudah di-clear
+      }
       form.value.paidAmount = 0;
       form.value.status = 'unpaid';
       form.value.perusahaanId = null;
