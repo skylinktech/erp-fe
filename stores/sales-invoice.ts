@@ -5,6 +5,62 @@ import { useNuxtApp } from '#app'
 import { useUserStore } from '~/stores/user'
 import type { Customer } from './customer'
 
+// ✅ Helper function untuk format field name menjadi lebih user-friendly
+const formatFieldName = (fieldName: string): string => {
+  const fieldMap: Record<string, string> = {
+    'customerId': 'Customer',
+    'perusahaanId': 'Perusahaan',
+    'cabangId': 'Cabang',
+    'salesOrderId': 'Sales Order',
+    'date': 'Tanggal Invoice',
+    'dueDate': 'Jatuh Tempo',
+    'up': 'UP',
+    'email': 'Email Penagihan',
+    'status': 'Status',
+    'discountPercent': 'Discount (%)',
+    'taxPercent': 'Tax (%)',
+    'dpp': 'DPP',
+    'total': 'Total',
+    'paidAmount': 'Jumlah Dibayar',
+    'remainingAmount': 'Sisa Pembayaran',
+    'description': 'Deskripsi',
+    'ttdDigital': 'TTD Digital',
+    'salesInvoiceItems': 'Item Invoice',
+    'productId': 'Produk',
+    'warehouseId': 'Gudang',
+    'quantity': 'Jumlah',
+    'price': 'Harga',
+    'subtotal': 'Subtotal',
+    'deliveredQty': 'Jumlah Terkirim',
+    'isReturned': 'Status Retur'
+  };
+  
+  return fieldMap[fieldName] || fieldName
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/^./, str => str.toUpperCase())
+    .trim();
+};
+
+// ✅ Helper function untuk mendapatkan error message dari rule
+const getErrorMessageFromRule = (rule: string, fieldName: string): string => {
+  const ruleMessages: Record<string, string> = {
+    'required': `${fieldName} wajib diisi`,
+    'number': `${fieldName} harus berupa angka`,
+    'string': `${fieldName} harus berupa teks`,
+    'date': `${fieldName} harus berupa tanggal yang valid`,
+    'enum': `${fieldName} tidak valid`,
+    'min': `${fieldName} terlalu kecil`,
+    'max': `${fieldName} terlalu besar`,
+    'minLength': `${fieldName} terlalu pendek`,
+    'maxLength': `${fieldName} terlalu panjang`,
+    'email': `${fieldName} harus berupa email yang valid`,
+    'exists': `Data ${fieldName} tidak ditemukan`,
+    'unique': `Data ${fieldName} sudah ada`
+  };
+  
+  return ruleMessages[rule] || `${fieldName} tidak valid`;
+};
+
 
 
 export interface SalesInvoiceItem {
@@ -495,23 +551,75 @@ export const useSalesInvoiceStore = defineStore('salesInvoice', {
                 const errorData = await response.json();
                 if (response.status === 422) {
                     
-                    // ✅ VineJS error structure: errors adalah array of objects
+                    // ✅ VineJS error structure: errors adalah array of objects dengan format { field, message, rule }
                     this.validationErrors = errorData.errors || [];
                     
-                    // ✅ Create user-friendly error message dari VineJS errors
-                    const errorMessages = (errorData.errors || []).map((e: any) => {
-                        if (typeof e === 'object' && e.message) {
-                            return e.message;
+                    // ✅ Create user-friendly error message dari VineJS errors dengan format yang lebih spesifik
+                    const errorMessages: string[] = [];
+                    const errorFields: Record<string, string[]> = {};
+                    
+                    (errorData.errors || []).forEach((e: any) => {
+                        let fieldName = 'Field';
+                        let errorMessage = 'Error validasi tidak dikenal';
+                        
+                        if (typeof e === 'object' && e !== null) {
+                            // Format: { field: 'customerId', message: 'Field customerId wajib diisi', rule: 'required' }
+                            fieldName = e.field || e.name || 'Field';
+                            
+                            // Format field name menjadi lebih user-friendly
+                            const friendlyFieldName = formatFieldName(fieldName);
+                            
+                            // Ambil message, jika tidak ada buat dari rule
+                            if (e.message) {
+                                errorMessage = e.message;
+                            } else if (e.rule) {
+                                errorMessage = getErrorMessageFromRule(e.rule, friendlyFieldName);
+                            } else {
+                                errorMessage = `${friendlyFieldName} tidak valid`;
+                            }
+                            
+                            // Group by field untuk menghindari duplikasi
+                            if (!errorFields[fieldName]) {
+                                errorFields[fieldName] = [];
+                            }
+                            errorFields[fieldName].push(errorMessage);
                         } else if (typeof e === 'string') {
-                            return e;
+                            // Jika error berupa string, langsung tambahkan ke errorMessages
+                            errorMessages.push(e);
                         }
-                        return 'Error validasi tidak dikenal';
                     });
+                    
+                    // Buat list error messages yang unik per field
+                    Object.keys(errorFields).forEach(field => {
+                        const friendlyFieldName = formatFieldName(field);
+                        const messages = errorFields[field];
+                        if (messages.length > 0) {
+                            // Jika ada multiple errors untuk field yang sama, gabungkan
+                            errorMessages.push(`<strong>${friendlyFieldName}:</strong> ${messages.join(', ')}`);
+                        }
+                    });
+                    
+                    // Jika tidak ada error yang terformat, gunakan summary atau message default
+                    if (errorMessages.length === 0) {
+                        if (errorData.summary) {
+                            errorMessages.push(errorData.summary);
+                        } else if (errorData.message) {
+                            errorMessages.push(errorData.message);
+                        } else {
+                            errorMessages.push('Data yang dikirim tidak valid. Silakan periksa kembali form yang diisi.');
+                        }
+                    }
+                    
+                    // Tampilkan toast dengan format yang lebih baik
+                    const toastMessage = errorMessages.length > 0 
+                        ? errorMessages.join('<br>')
+                        : 'Data yang dikirim tidak valid. Silakan periksa kembali form yang diisi.';
                     
                     toast.error({
                       title: 'Error Validasi',
-                      message: errorMessages.length > 0 ? errorMessages.join('<br>') : 'Data yang dikirim tidak valid',
-                      color: 'red'
+                      message: toastMessage,
+                      color: 'red',
+                      duration: 5000 // Tampilkan lebih lama untuk error validasi
                     });
                 } else {
                     throw new Error(errorData.message || 'Gagal menyimpan data salesInvoice');

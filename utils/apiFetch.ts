@@ -13,6 +13,39 @@ export const apiFetch = async <T = any>(url: string, options: any = {}) => {
 
   if (token) {
     customHeaders.Authorization = `Bearer ${token}`
+    
+    // Tambahkan lokasi user ke header jika tersedia (hanya untuk request yang terautentikasi)
+    // Menggunakan lazy import untuk menghindari load composable jika tidak diperlukan
+    if (process.client) {
+      try {
+        // Lazy import composable untuk optimasi
+        const locationCacheModule = await import('~/composables/useLocationCache').catch(() => null)
+        if (locationCacheModule) {
+          const { useLocationCache } = locationCacheModule
+          const { getLocation } = useLocationCache()
+          
+          // Get location dengan timeout untuk menghindari blocking request terlalu lama
+          const locationPromise = getLocation()
+          const timeoutPromise = new Promise<null>((resolve) => 
+            setTimeout(() => resolve(null), 2000) // Timeout 2 detik
+          )
+          
+          const location = await Promise.race([locationPromise, timeoutPromise])
+          
+          if (location) {
+            customHeaders['X-Latitude'] = location.latitude.toString()
+            customHeaders['X-Longitude'] = location.longitude.toString()
+          }
+        }
+      } catch (error) {
+        // Jangan block request jika gagal mendapatkan lokasi
+        // Error bisa terjadi jika user menolak izin atau geolocation tidak tersedia
+        // Hanya log di development mode
+        if (process.dev) {
+          console.debug('Tidak dapat mendapatkan lokasi untuk activity log:', error)
+        }
+      }
+    }
   }
 
   const method = options.method?.toUpperCase() || 'GET'
