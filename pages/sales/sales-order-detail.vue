@@ -147,7 +147,7 @@
                             </thead>
                             <tbody>
                                 <tr v-for="item in (salesOrder.salesOrderItems || [])" :key="item.id" class="position-relative">
-                                    <td class="text-nowrap text-heading">{{ item.product?.name || '-' }}</td>
+                                    <td class="text-nowrap text-heading">{{ getProductDisplayName(item.product) }}</td>
                                     <td class="text-nowrap">{{ item.description || '-' }}</td>
                                     <td>{{ formatRupiah(item.price) }}</td>
                                     <td>{{ item.quantity }}</td>
@@ -415,7 +415,7 @@
                                 <tbody>
                                     <tr v-for="item in modalItems" :key="item.id">
                                         <td>
-                                            <div class="fw-semibold">{{ item.product?.name || 'N/A' }}</div>
+                                            <div class="fw-semibold">{{ getProductDisplayName(item.product) }}</div>
                                             <small class="text-muted">{{ item.description || '-' }}</small>
                                         </td>
                                         <td class="text-center align-middle">
@@ -995,12 +995,17 @@ const confirmDeliverPartial = async () => {
                             </tr>
                         </thead>
                         <tbody>
-                            ${itemsToDeliver.map(item => `
+                            ${itemsToDeliver.map(item => {
+                                const productName = item.product?.name || 'Unknown';
+                                const partNumber = item.product?.sku || item.product?.noInterchange || '';
+                                const displayName = partNumber ? `${productName} | ${partNumber}` : productName;
+                                return `
                                 <tr>
-                                    <td><strong>${item.product?.name || 'Unknown'}</strong></td>
+                                    <td><strong>${displayName}</strong></td>
                                     <td class="text-center"><span class="badge bg-primary">${item.tempDeliverQty} units</span></td>
                                 </tr>
-                            `).join('')}
+                            `;
+                            }).join('')}
                         </tbody>
                         <tfoot class="table-light">
                             <tr>
@@ -1140,6 +1145,17 @@ const deliverAllItems = async () => {
             layout: 2,
         })
     }
+};
+
+// ✅ NEW: Function untuk menampilkan Product Name + Part Number
+const getProductDisplayName = (product) => {
+    if (!product) return '-';
+    
+    const name = product.name || 'No Name';
+    // Asumsikan part number disimpan di field sku, fallback ke noInterchange jika ada
+    const partNumber = product.sku || product.noInterchange || '';
+    
+    return partNumber ? `${name} | ${partNumber}` : name;
 };
 
 onMounted(async () => {

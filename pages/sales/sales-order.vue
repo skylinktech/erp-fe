@@ -518,7 +518,7 @@
                                             <CustomSelect2 
                                                 v-model="item.productId" 
                                                 :options="filteredCustomerProducts" 
-                                                :get-option-label="product => product ? `${product.sku || ''} | ${product.name || ''}` : ''"
+                                                :get-option-label="getProductLabel"
                                                 :reduce="p => p ? p.id : null" 
                                                 placeholder="Cari berdasarkan SKU atau nama produk..."
                                                 searchable
@@ -539,14 +539,14 @@
                                                 <template #option="{ option }">
                                                     <div v-if="option" class="d-flex justify-content-between align-items-center w-100">
                                                         <div>
-                                                            <div class="fw-bold">{{ option.sku || '' }} | {{ option.name || '' }}</div>
+                                                            <div class="fw-bold">{{ getProductLabel(option) }}</div>
                                                             <small class="text-muted">{{ option.unit?.name || 'No Unit' }} - {{ formatRupiah(option.priceSell || 0) }}</small>
                                                         </div>
                                                     </div>
                                                 </template>
                                                 <template #selection="{ option }">
                                                     <div v-if="option" class="d-flex align-items-center">
-                                                        <span class="fw-bold">{{ option.sku || '' }} | {{ option.name || '' }}</span>
+                                                        <span class="fw-bold">{{ getProductLabel(option) }}</span>
                                                     </div>
                                                 </template>
                                             </CustomSelect2>
@@ -937,6 +937,17 @@ const filteredCabangs = computed(() => {
     return cabangs.value.filter(c => c.perusahaanId === form.value.perusahaanId);
 });
 
+// ✅ NEW: Function untuk menampilkan Product Name + Part Number (SKU)
+const getProductLabel = (option) => {
+  if (!option) return 'No Product';
+
+  const name = option.name || 'No Name';
+  // Asumsikan part number disimpan di field sku, fallback ke noInterchange jika ada
+  const partNumber = option.sku || option.noInterchange || '';
+
+  return partNumber ? `${name} | ${partNumber}` : name;
+};
+
 // ✅ NEW: Computed property untuk filtered customer products dengan displayName
 const filteredCustomerProducts = computed(() => {
     if (!customerProducts.value || !Array.isArray(customerProducts.value)) {
@@ -954,7 +965,7 @@ const filteredCustomerProducts = computed(() => {
         if (product && product.id) {
             productsMap.set(product.id, {
                 ...product,
-                displayName: `${product.sku || ''} | ${product.name || ''}`
+                displayName: getProductLabel(product)
             });
         }
     });
@@ -968,7 +979,7 @@ const filteredCustomerProducts = computed(() => {
                 if (product) {
                     productsMap.set(item.productId, {
                         ...product,
-                        displayName: `${product.sku || ''} | ${product.name || ''}`
+                        displayName: getProductLabel(product)
                     });
                 }
             }
