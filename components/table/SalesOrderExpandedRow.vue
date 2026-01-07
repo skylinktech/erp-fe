@@ -37,7 +37,7 @@
               </td>
               <td>
                 <div class="d-flex flex-column">
-                  <span class="fw-medium">{{ item.product?.name || '-' }}</span>
+                  <span class="fw-medium">{{ getProductDisplayName(item.product) }}</span>
                   <small class="text-muted">{{ item.description || '-' }}</small>
                 </div>
               </td>
@@ -143,6 +143,17 @@ const getDeliveryStatusBadge = (item) => {
   } else {
     return { text: 'Partial', class: 'badge rounded-pill bg-label-warning' }
   }
+}
+
+// ✅ NEW: Function untuk menampilkan Product Name + Part Number
+const getProductDisplayName = (product) => {
+  if (!product) return '-';
+  
+  const name = product.name || 'No Name';
+  // Asumsikan part number disimpan di field sku, fallback ke noInterchange jika ada
+  const partNumber = product.sku || product.noInterchange || '';
+  
+  return partNumber ? `${name} | ${partNumber}` : name;
 }
 </script>
 
