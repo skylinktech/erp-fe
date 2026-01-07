@@ -336,8 +336,8 @@
                               <div v-for="(item, index) in (form.suratJalanItems || [])" :key="index" class="repeater-item mb-4">
                                   <div class="row g-3">
                                       <div class="col-md-6">
-                                          <CustomSelect2 v-model="item.productId" :options="customerProducts || []" 
-                                              :get-option-label="option => option?.name || 'No Name'" searchable clearable 
+                                      <CustomSelect2 v-model="item.productId" :options="customerProducts || []" 
+                                              :get-option-label="getProductLabel" searchable clearable 
                                               :reduce="p => p.id" 
                                               placeholder="Pilih Produk" 
                                               @update:modelValue="onProductChange(index)" 
@@ -865,6 +865,17 @@ const getCustomerLabel = (option) => {
   if (!name) return 'No Name';
   
   return name;
+};
+
+// ✅ NEW: Function untuk menampilkan Product Name + Part Number (SKU)
+const getProductLabel = (option) => {
+  if (!option) return 'No Product';
+
+  const name = option.name || 'No Name';
+  // Asumsikan part number disimpan di field sku, fallback ke noInterchange jika ada
+  const partNumber = option.sku || option.noInterchange || '';
+
+  return partNumber ? `${name} | ${partNumber}` : name;
 };
 
 
