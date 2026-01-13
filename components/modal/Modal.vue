@@ -8,11 +8,11 @@
                         <h4 class="modal-title mb-2 pb-0">{{ title }}</h4>
                         <p>{{ description }}</p>
                         </div>
-                        <div v-if="validationErrors && validationErrors.length > 0" class="px-2 py-2 mb-2 w-90 mx-auto">
+                        <div v-if="validationErrors && Array.isArray(validationErrors) && validationErrors.length > 0" class="px-2 py-2 mb-2 w-90 mx-auto">
                             <h6 class="text-danger px-4 mb-2"><strong>Terdapat kesalahan validasi data:</strong></h6>
                             <ul>
-                              <li v-for="err in validationErrors" :key="err.message || err">
-                              {{ typeof err === 'string' ? err : err.message }}
+                              <li v-for="(err, index) in validationErrors" :key="index">
+                              {{ typeof err === 'string' ? err : (err?.message || String(err)) }}
                               </li>
                             </ul>
                         </div>
@@ -25,7 +25,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, defineProps, defineEmits } from 'vue'
+import { computed } from 'vue'
 
 const props = defineProps({
   id: {
@@ -46,12 +46,12 @@ const props = defineProps({
   }
 });
 
-const validationErrors = ref([]); 
-
-// Watch for changes in the prop and update the local ref
-watch(() => props.validationErrorsFromParent, (newVal) => {
-  validationErrors.value = newVal;
-}, { immediate: true });
+// Use computed instead of ref + watch for better reactivity
+// This avoids lifecycle hook issues and is more performant
+const validationErrors = computed(() => {
+  const errors = props.validationErrorsFromParent;
+  return Array.isArray(errors) ? errors : [];
+});
 </script>
 
 <style scoped>

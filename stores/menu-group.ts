@@ -54,8 +54,10 @@ export const useMenuGroupStore = defineStore('menu-group', {
   getters: {
     // Menu groups sudah difilter di backend, jadi kita hanya perlu mengembalikan data yang sudah ada
     filteredMenuGroups: (state) => {
-      // Pastikan user store sudah siap
-      if (!state.sidebarMenuGroups) return []
+      // Pastikan sidebarMenuGroups ada dan merupakan array
+      if (!state.sidebarMenuGroups || !Array.isArray(state.sidebarMenuGroups)) {
+        return []
+      }
       
       // Backend sudah memfilter berdasarkan permission, jadi kita hanya perlu mengembalikan data yang sudah difilter
       return state.sidebarMenuGroups
@@ -139,11 +141,13 @@ export const useMenuGroupStore = defineStore('menu-group', {
         }
 
         const result = await response.json();
-        this.sidebarMenuGroups = result.data || [];
+        
+        // Handle pagination response format
+        const menuGroups = result.data || result || [];
+        this.sidebarMenuGroups = Array.isArray(menuGroups) ? menuGroups : [];
       } catch (e: any) {
         this.error = e.message
-        // Fail silently for sidebar
-        console.error(`Tidak dapat memuat data menu group untuk sidebar: ${e.message}`);
+        console.error(`Tidak dapat memuat data menu group untuk sidebar: ${e.message}`, e);
       } finally {
         this.loading = false
       }

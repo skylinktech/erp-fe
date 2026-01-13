@@ -6,14 +6,14 @@
           <div class="app-brand justify-content-center mt-5">
             <a href="/" class="app-brand-link gap-2">
               <span class="app-brand-logo demo">
-                <img src="/public/img/branding/logo-2.png" alt="" height="60" />
+                <img src="/public/img/branding/logo.png" alt="" height="60" />
               </span>
-              <span class="app-brand-text demo text-heading fw-bold" style="font-size: 24px;">KaiFlow</span>
+              <span class="app-brand-text demo text-heading fw-bold" style="font-size: 24px;">Skylink ERP</span>
             </a>
           </div>
-          <small class="manage-by mt-3 text-center text-muted">by Kainnova Digital Solutions</small>
+          <small class="manage-by mt-3 text-center text-muted">by PT Sinergi Innovate Pratama</small>
           <div class="card-body mt-1">
-            <h4 class="mb-1">Welcome to KaiFlow! 👋</h4>
+            <h4 class="mb-1">Welcome to Skylink ERP! 👋</h4>
             <p class="mb-5">Please sign-in to your account and start the adventure</p>
 
             <form class="mb-5" @submit.prevent="handleLogin">
@@ -90,7 +90,7 @@
       middleware: 'redirect-auth',
       title: 'Login',
       description: 'Login',
-      keywords: 'Login, KaiFlow',
+      keywords: 'Login, Skylink ERP',
       author: 'KaiFlow',
       robots: 'index, follow',
       viewport: 'width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0',
@@ -100,11 +100,13 @@
   import { ref, onMounted } from 'vue';
   import { useRouter } from 'vue-router';
   import { useUserStore } from '~/stores/user';
+  import { checkMyRole } from '~/utils/checkRole';
 
   const { $api }  = useNuxtApp()
   const toast     = useToast();
   const userStore = useUserStore();
   const router    = useRouter();
+  const ssoService = useSsoService();
 
   const username    = ref('');
   const password    = ref('');
@@ -150,31 +152,15 @@
     pending.value = true;
     error.value = null;
     try {
+      // Step 1: Authenticate dengan SSO
+      const ssoResponse = await ssoService.authenticate(username.value, password.value);
       
-      const response = await fetch($api.login(), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: username.value,
-          password: password.value,
-          remember_me: rememberMe.value,
-        }),
-        credentials: 'include'
-      });
-
-      if (!response.ok) {
-        let errorData = {};
-        try {
-          errorData = await response.json();
-        } catch (e) {
-        }
-        error.value = errorData?.message || `Terjadi kesalahan (${response.status})`;
+      if (!ssoResponse || !ssoResponse.access_token) {
+        error.value = 'Gagal autentikasi dengan SSO.';
         toast.error({
           title: 'Login Gagal!',
           icon: 'ri-close-line',
-          message: `Gagal login: ${error.value}`,
+          message: error.value,
           timeout: 3000,
           position: 'topRight',
           layout: 2,
@@ -183,15 +169,17 @@
         return;
       }
 
-      const data = await response.json();
+      // Step 2: Get user info dari SSO
+      const ssoUserInfo = await ssoService.getUserInfo(ssoResponse.access_token);
+      console.log('🔐 SSO User Info:', ssoUserInfo);
+      console.log('🔐 SSO Roles:', ssoUserInfo?.roles);
       
-
-      if (!data.token || !data.token.token) {
-        error.value = 'Token tidak ditemukan pada response server.';
+      if (!ssoUserInfo) {
+        error.value = 'Gagal mendapatkan informasi user dari SSO.';
         toast.error({
           title: 'Login Gagal!',
           icon: 'ri-close-line',
-          message: `Gagal login: ${error.value}`,
+          message: error.value,
           timeout: 3000,
           position: 'topRight',
           layout: 2,
@@ -200,15 +188,72 @@
         return;
       }
 
-      // Save credentials if remember me is checked
+      // Step 3: Save credentials if remember me is checked
       saveCredentials();
 
-      localStorage.setItem('token', data.token.token);
-      userStore.setUser(data.user)
+      // Step 4: Simpan SSO token ke localStorage
+      localStorage.setItem('token', ssoResponse.access_token);
+      localStorage.setItem('sso_token', ssoResponse.access_token); // Simpan juga untuk logout nanti
+      
+      // Step 5: Fetch user data dari backend ERP menggunakan SSO token
+      // Backend ERP akan sync user data dari SSO dan mengembalikan data user yang benar
+      let userData = null;
+      try {
+        const backendResponse = await fetch($api.me(), {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${ssoResponse.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include'
+        });
+
+        if (backendResponse.ok) {
+          userData = await backendResponse.json();
+          console.log('✅ User data from backend ERP:', userData);
+          console.log('✅ Roles from backend:', userData.roles);
+          // Gunakan data dari backend ERP (yang sudah sync dengan SSO)
+          userStore.setUser(userData);
+        } else {
+          // Jika backend belum support SSO, gunakan data dari SSO sebagai fallback
+          console.warn('Backend ERP belum support SSO, menggunakan data dari SSO');
+          userData = {
+            id: ssoUserInfo.id,
+            username: ssoUserInfo.username || ssoUserInfo.email,
+            email: ssoUserInfo.email,
+            fullName: ssoUserInfo.name,
+            roles: (ssoUserInfo.roles || []).map((roleName) => ({
+              id: 0,
+              name: roleName,
+              permissions: []
+            })),
+          };
+          userStore.setUser(userData);
+        }
+      } catch (backendError) {
+        // Jika error, gunakan data dari SSO sebagai fallback
+        console.warn('Error fetching user from backend ERP:', backendError);
+        userData = {
+          id: ssoUserInfo.id,
+          username: ssoUserInfo.username || ssoUserInfo.email,
+          email: ssoUserInfo.email,
+          fullName: ssoUserInfo.name,
+          roles: (ssoUserInfo.roles || []).map((roleName) => ({
+            id: 0,
+            name: roleName,
+            permissions: []
+          })),
+        };
+        userStore.setUser(userData);
+      }
       
       // Pastikan user data sudah tersimpan dan store sudah ter-update
-      await new Promise(resolve => setTimeout(resolve, 200))
-      
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      // Debug: cek role setelah login
+      console.log('🎯 Final user data in store:', userStore.user);
+      console.log('🎯 Final roles:', userStore.user?.roles);
+
       toast.success({
         title: 'Login Berhasil!',
         icon: 'ri-check-line',
@@ -216,18 +261,18 @@
         timeout: 3000,
         position: 'topRight',
         layout: 2,
-      })
+      });
       
       // Redirect ke dashboard setelah user data tersimpan
       await router.push('/dashboard');
       
     } catch (err) {
-      
-      error.value = err?.data?.message || err.message || 'Terjadi kesalahan saat login.';
+      const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan saat login.';
+      error.value = errorMessage;
       toast.error({
         title: 'Login Gagal!',
         icon: 'ri-close-line',
-        message: `Gagal login: ${error.value}`,
+        message: `Gagal login: ${errorMessage}`,
         timeout: 3000,
         position: 'topRight',
         layout: 2,

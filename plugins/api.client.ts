@@ -16,6 +16,20 @@ export default defineNuxtPlugin(() => {
     logout      : () => `${authBase}/logout`,
     me          : () => `${authBase}/me`,
     refreshToken: () => `${authBase}/refresh-token`,
+    
+    // SSO Auth (direct to SSO server)
+    ssoToken    : () => {
+      const ssoUrl = config.public.ssoUrl || 'http://localhost:8000'
+      return `${ssoUrl}/api/oauth/token`
+    },
+    ssoUser     : () => {
+      const ssoUrl = config.public.ssoUrl || 'http://localhost:8000'
+      return `${ssoUrl}/api/oauth/user`
+    },
+    ssoLogout   : () => {
+      const ssoUrl = config.public.ssoUrl || 'http://localhost:8000'
+      return `${ssoUrl}/api/oauth/logout`
+    },
 
     // Dashboard
     associations: () => `${apiBase}/associations`,
@@ -183,6 +197,10 @@ export default defineNuxtPlugin(() => {
     // Product
     product: () => `${apiBase}/product`,
     productExportExcel: () => `${apiBase}/product/export-excel`,
+
+    // Service
+    service: () => `${apiBase}/service`,
+    serviceExportExcel: () => `${apiBase}/service/export-excel`,
 
     // Import
     import: () => `${apiBase}/import`,

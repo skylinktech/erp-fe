@@ -289,7 +289,7 @@
 </template>
  
 <script setup>
-import { ref, computed, onMounted, watch, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, watch, onBeforeUnmount, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import Modal from '~/components/modal/Modal.vue'
 import CardBox from '~/components/cards/Cards.vue'
@@ -377,6 +377,9 @@ const batchForm = ref({
     menuDetailId: null,
 })
 
+// Track if batch modal is open to prevent watcher from running after modal is closed
+const isBatchModalOpen = ref(false);
+
 const rowsPerPageOptionsArray = ref([
     { label: '10', value: 10 },
     { label: '20', value: 20 },
@@ -403,22 +406,34 @@ const handleCloseModal = () => {
 };
 
 const handleCloseBatchModal = () => {
-    const modalEl = document.getElementById('UpdateBatchPermissionModal'); 
-    if (modalEl) {
-        const modal = bootstrap.Modal.getInstance(modalEl);
-        modal.hide();
+    try {
+        // Mark modal as closed first to prevent watchers from running
+        isBatchModalOpen.value = false;
         
-        // Bersihkan backdrop setelah modal tertutup
-        modalEl.addEventListener('hidden.bs.modal', () => {
-            document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
-            document.body.style.overflow = '';
-        }, { once: true });
+        const modalEl = document.getElementById('UpdateBatchPermissionModal'); 
+        if (modalEl) {
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) {
+                modal.hide();
+                
+                // Bersihkan backdrop setelah modal tertutup
+                modalEl.addEventListener('hidden.bs.modal', () => {
+                    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+                    document.body.style.overflow = '';
+                }, { once: true });
+            }
+        }
+        
+        // Reset form and validation errors
+        batchForm.value = {
+            menuGroupId: null,
+            menuDetailId: null,
+        };
+        batchValidationErrors.value = [];
+    } catch (error) {
+        console.error('Error closing batch modal:', error);
+        isBatchModalOpen.value = false;
     }
-    batchForm.value = {
-        menuGroupId: null,
-        menuDetailId: null,
-    };
-    batchValidationErrors.value = [];
 };
 
 const resetFormState = () => {
@@ -721,29 +736,56 @@ function openAddPermissionModal() {
 }
 
 function openUpdateBatchModal() {
-    if (selectedPermissions.value.length === 0) {
+    try {
+        if (selectedPermissions.value.length === 0) {
+            toast.error({
+                title: 'Peringatan!',
+                icon: 'ri-error-warning-line',
+                message: 'Tidak ada permission yang dipilih untuk diupdate.',
+                timeout: 3000,
+                position: 'topRight',
+                layout: 2,
+            });
+            return;
+        }
+        
+        // Reset form batch
+        batchForm.value = {
+            menuGroupId: null,
+            menuDetailId: null,
+        };
+        batchValidationErrors.value = [];
+        
+        // Ensure menuDetails is initialized
+        if (!Array.isArray(menuDetails.value)) {
+            menuDetails.value = [];
+        }
+        
+        // Mark modal as open before showing
+        isBatchModalOpen.value = true;
+        
+        const modalEl = document.getElementById('UpdateBatchPermissionModal');
+        if (modalEl) {
+            const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+            
+            // Listen for modal close events
+            modalEl.addEventListener('hidden.bs.modal', () => {
+                isBatchModalOpen.value = false;
+            }, { once: true });
+            
+            modalInstance.show();
+        }
+    } catch (error) {
+        console.error('Error opening batch update modal:', error);
+        isBatchModalOpen.value = false;
         toast.error({
-            title: 'Peringatan!',
-            icon: 'ri-error-warning-line',
-            message: 'Tidak ada permission yang dipilih untuk diupdate.',
+            title: 'Error!',
+            icon: 'ri-close-line',
+            message: 'Terjadi kesalahan saat membuka modal.',
             timeout: 3000,
             position: 'topRight',
             layout: 2,
         });
-        return;
-    }
-    
-    // Reset form batch
-    batchForm.value = {
-        menuGroupId: null,
-        menuDetailId: null,
-    };
-    batchValidationErrors.value = [];
-    
-    const modalEl = document.getElementById('UpdateBatchPermissionModal');
-    if (modalEl) {
-        const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
-        modalInstance.show();
     }
 }
 
@@ -988,9 +1030,14 @@ const handleUpdateBatchPermission = async () => {
         // Clear selection
         selectedPermissions.value = [];
         
+        // Close modal first before refreshing data to avoid reactivity issues
+        handleCloseBatchModal();
+        
+        // Use nextTick to ensure modal is fully closed before refreshing
+        await nextTick();
+        
         // Refresh data
         await fetchAllPageData();
-        handleCloseBatchModal();
         
         if (failed === 0) {
             toast.success({
@@ -1026,30 +1073,55 @@ const handleUpdateBatchPermission = async () => {
 };
 
 const filteredMenuDetails = computed(() => {
-    if (!formPermission.value.menuGroupId || !Array.isArray(menuDetails.value)) {
+    try {
+        if (!formPermission.value?.menuGroupId || !Array.isArray(menuDetails.value)) {
+            return [];
+        }
+        return menuDetails.value; // details are already filtered by fetchMenuDetails
+    } catch (error) {
+        console.error('Error in filteredMenuDetails:', error);
         return [];
     }
-    return menuDetails.value; // details are already filtered by fetchMenuDetails
 });
 
 const filteredBatchMenuDetails = computed(() => {
-    if (!batchForm.value.menuGroupId || !Array.isArray(menuDetails.value)) {
+    try {
+        if (!batchForm.value?.menuGroupId || !Array.isArray(menuDetails.value)) {
+            return [];
+        }
+        return menuDetails.value;
+    } catch (error) {
+        console.error('Error in filteredBatchMenuDetails:', error);
         return [];
     }
-    return menuDetails.value;
 });
 
 watch(() => formPermission.value.menuGroupId, (newVal, oldVal) => {
-  if (newVal !== oldVal) {
-    formPermission.value.menuDetailId = null; // Reset detail when group changes
-    fetchMenuDetails(newVal);
+  try {
+    if (newVal !== oldVal) {
+      formPermission.value.menuDetailId = null; // Reset detail when group changes
+      if (newVal) {
+        fetchMenuDetails(newVal);
+      }
+    }
+  } catch (error) {
+    console.error('Error in formPermission menuGroupId watcher:', error);
   }
 })
 
 watch(() => batchForm.value.menuGroupId, (newVal, oldVal) => {
-  if (newVal !== oldVal) {
-    batchForm.value.menuDetailId = null; // Reset detail when group changes
-    fetchMenuDetails(newVal);
+  try {
+    // Only update if modal is open to prevent errors after modal is closed
+    if (!isBatchModalOpen.value) return;
+    
+    if (newVal !== oldVal) {
+      batchForm.value.menuDetailId = null; // Reset detail when group changes
+      if (newVal) {
+        fetchMenuDetails(newVal);
+      }
+    }
+  } catch (error) {
+    console.error('Error in batchForm menuGroupId watcher:', error);
   }
 })
 

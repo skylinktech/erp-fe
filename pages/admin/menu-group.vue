@@ -163,18 +163,13 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-floating form-floating-outline">
-                                    <CustomSelect2 v-model="form.jenisMenu" :options="[
-                                            { label: 'Purchasing', value: 1 },
-                                            { label: 'HRD', value: 2 },
-                                            { label: 'Accounting', value: 3 },
-                                            { label: 'Inventory', value: 4 },
-                                            { label: 'Sales', value: 5 },
-                                            { label: 'Company', value: 6 },
-                                            { label: 'Reports', value: 7 },
-                                            { label: 'Admin', value: 8 },
-                                        ]"
+                                    <CustomSelect2 
+                                        v-model="form.jenisMenu" 
+                                        :options="jenisMenuOptions"
                                         :get-option-label="option => option.label"
-                                        :reduce="option => option.id" searchable clearable
+                                        :reduce="option => option.value" 
+                                        searchable 
+                                        clearable
                                         placeholder="-- Pilih Jenis Menu --"
                                         class="select-jenis-menu"
                                     />
@@ -199,7 +194,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { storeToRefs } from 'pinia';
 import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
@@ -225,23 +220,48 @@ const rowsPerPageOptionsArray = ref([10, 25, 50, 100]);
 const modalTitle = computed(() => isEditMode.value ? 'Edit Menu Group' : 'Tambah Menu Group');
 const modalDescription = computed(() => isEditMode.value ? 'Ubah detail menu group.' : 'Isi untuk menambah menu group baru.');
 
+const jenisMenuOptions = [
+    { label: 'Purchasing', value: 1 },
+    { label: 'HRD', value: 2 },
+    { label: 'Accounting', value: 3 },
+    { label: 'Inventory', value: 4 },
+    { label: 'Sales', value: 5 },
+    { label: 'Company', value: 6 },
+    { label: 'Reports', value: 7 },
+    { label: 'Admin', value: 8 },
+];
+
 let modalInstance = null
-onMounted(() => {
+
+const initializeModal = async () => {
+    await nextTick()
+    const modalElement = document.getElementById('MenuGroupModal')
+    if (modalElement && typeof bootstrap !== 'undefined' && !modalInstance) {
+        modalInstance = new bootstrap.Modal(modalElement)
+    }
+}
+
+onMounted(async () => {
     if (menuGroupStore.menuGroups.length === 0) {
         menuGroupStore.fetchMenuGroups();
     }
-    const modalElement = document.getElementById('MenuGroupModal')
-    if (modalElement) {
-        modalInstance = new bootstrap.Modal(modalElement)
-    }
+    await initializeModal()
     setListTitle('Menu Group', menuGroups.value.length)
 });
 
-watch(showModal, (newValue) => {
-    if (newValue) {
-        modalInstance?.show()
-    } else {
-        modalInstance?.hide()
+watch(showModal, async (newValue) => {
+    await initializeModal()
+    
+    if (modalInstance) {
+        try {
+            if (newValue) {
+                modalInstance.show()
+            } else {
+                modalInstance.hide()
+            }
+        } catch (error) {
+            console.error('Error toggling modal:', error)
+        }
     }
 })
 
@@ -295,8 +315,6 @@ definePageMeta({
 </script>
 
 <style scoped>
-<style scoped>
-
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .card-body {

@@ -177,7 +177,7 @@
                                 <div class="form-floating form-floating-outline">
                                     <CustomSelect2 v-model="form.status" :options="statusOptions"
                                         :get-option-label="option => option.label"
-                                        :reduce="option => option.id" searchable clearable
+                                        :reduce="option => option.value" searchable clearable
                                         placeholder="-- Pilih Status --"
                                         class="select-status"
                                     />   

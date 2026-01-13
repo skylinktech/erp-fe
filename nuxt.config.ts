@@ -65,6 +65,10 @@ export default defineNuxtConfig({
       authBase: process.env.NUXT_PUBLIC_AUTH_BASE,
       storageBase: process.env.NUXT_PUBLIC_STORAGE_BASE,
       storageDriver: process.env.NUXT_PUBLIC_STORAGE_DRIVER || 'local',
+      // SSO Configuration
+      ssoUrl: process.env.NUXT_PUBLIC_SSO_URL || 'http://localhost:8000',
+      ssoClientId: process.env.NUXT_PUBLIC_SSO_CLIENT_ID || '',
+      ssoClientSecret: process.env.NUXT_PUBLIC_SSO_CLIENT_SECRET || '',
     }
   },
   imports: {

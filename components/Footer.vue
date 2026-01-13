@@ -4,7 +4,7 @@
         <div class="footer-container d-flex align-items-center justify-content-between py-4 flex-md-row flex-column">
           <div class="text-body mb-2 mb-md-0">
             © {{ new Date().getFullYear() }}, made with <span class="text-danger"><i class="tf-icons ri-heart-fill"></i></span> by
-            <a href="#" target="_blank" class="footer-link">Kainnova Digital Solutions</a>
+            <a href="#" target="_blank" class="footer-link">PT Sinergi Innovate Pratama</a>
           </div>
         </div>
       </div>

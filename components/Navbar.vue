@@ -914,34 +914,55 @@
 
     const handleLogout = async () => {
         try {
+            // Ambil SSO token sebelum clear localStorage
+            const ssoToken = localStorage.getItem('sso_token')
+            const ssoService = useSsoService()
+            
             // Bersihkan data lokal terlebih dahulu
             userStore.clearUser()
             document.documentElement.className = ''
             localStorage.removeItem('token')
+            localStorage.removeItem('sso_token')
 
-            // Coba logout dari server
-            const response = await fetch($api.logout(), {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                credentials: 'include'
-            });
-
-            // Cek status response sebelum parsing data
-            if (!response.ok) {
-                let errorData = {};
+            // Logout dari SSO jika ada token
+            if (ssoToken) {
                 try {
-                    errorData = await response.json();
-                } catch (e) {
-                    // Ignore parsing error
+                    await ssoService.logout(ssoToken)
+                } catch (ssoError) {
+                    console.warn('SSO logout gagal:', ssoError)
+                    // Tidak menampilkan error ke user karena logout lokal sudah berhasil
                 }
-                console.warn('Logout dari server gagal:', errorData?.message || `Status: ${response.status}`);
+            }
+
+            // Coba logout dari server (jika masih menggunakan auth lama)
+            try {
+                const response = await fetch($api.logout(), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include'
+                });
+
+                // Cek status response sebelum parsing data
+                if (!response.ok) {
+                    let errorData = {};
+                    try {
+                        errorData = await response.json();
+                    } catch (e) {
+                        // Ignore parsing error
+                    }
+                    console.warn('Logout dari server gagal:', errorData?.message || `Status: ${response.status}`);
+                    // Tidak menampilkan error ke user karena logout lokal sudah berhasil
+                }
+            } catch (serverError) {
+                // Tangani error fetch (network error, server tidak tersedia, dll)
+                console.warn('Gagal menghubungi server untuk logout:', serverError.message);
                 // Tidak menampilkan error ke user karena logout lokal sudah berhasil
             }
         } catch (error) {
-            // Tangani error fetch (network error, server tidak tersedia, dll)
-            console.warn('Gagal menghubungi server untuk logout:', error.message);
+            // Tangani error umum
+            console.warn('Error saat logout:', error.message);
             // Tidak menampilkan error ke user karena logout lokal sudah berhasil
         } finally {
             // Selalu redirect ke halaman login, meskipun logout server gagal

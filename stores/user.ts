@@ -210,6 +210,7 @@ export const useUserStore = defineStore('user', {
       this.user = null
       this.lastLoadTime = 0
       localStorage.removeItem('token')
+      localStorage.removeItem('sso_token') // Clear SSO token juga
       localStorage.removeItem('user')
       localStorage.removeItem('user_cache')
       
