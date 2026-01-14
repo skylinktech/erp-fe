@@ -296,6 +296,8 @@ import CardBox from '~/components/cards/Cards.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import { usePermissionsStore } from '~/stores/permissions'
 import { useLayoutStore } from '~/stores/layout'
+import { useMenuGroupStore } from '~/stores/menu-group'
+import { useMenuDetailStore } from '~/stores/menu-detail'
 import vSelect from 'vue-select'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
 import Swal from 'sweetalert2'
@@ -315,6 +317,8 @@ const myDataTableRef = ref(null)
 const globalFilterValue = ref('')
 const permissionsStore = usePermissionsStore()
 const layoutStore = useLayoutStore()
+const menuGroupStore = useMenuGroupStore()
+const menuDetailStore = useMenuDetailStore()
 const permissions = ref([])
 const totalRecords = ref(0)
 const loading = ref(false)
@@ -336,6 +340,11 @@ const stats = ref({
 const filters = ref({
   global: { value: null, matchMode: FilterMatchMode.CONTAINS },
 })
+
+// Use stores for menu groups
+const menuGroups = computed(() => menuGroupStore.menuGroups)
+// Menu details perlu ref lokal karena di-fetch berdasarkan groupId
+const menuDetails = ref([])
 
 let searchDebounceTimer = null;
 watch(globalFilterValue, (newValue) => {
@@ -362,8 +371,6 @@ const isEditMode = ref(false)
 const selectedPermission = ref(null)
 const validationErrors = ref([])
 const batchValidationErrors = ref([])
-const menuGroups = ref([])
-const menuDetails = ref([])
 
 const formPermission = ref({
     id: null,
@@ -448,32 +455,25 @@ const resetFormState = () => {
 
 const loadLazyData = async () => {
     try {
-        const params = new URLSearchParams({
-            draw: lazyParams.value.draw.toString(),
-            start: lazyParams.value.first.toString(),
-            length: lazyParams.value.rows.toString(),
-            search: lazyParams.value.search || '',
-            sortField: lazyParams.value.sortField || 'id',
-            sortOrder: lazyParams.value.sortOrder || 'desc',
+        // Update store params
+        permissionsStore.setParams({
+            first: lazyParams.value.first,
+            rows: lazyParams.value.rows,
+            sortField: lazyParams.value.sortField,
+            sortOrder: lazyParams.value.sortOrder,
+            search: lazyParams.value.search,
+            draw: lazyParams.value.draw,
         });
-
-        const response = await fetch(`${$api.permissions()}?${params.toString()}`, {
-             headers: {
-                 'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                 'Content-Type': 'application/json',
-                 'Accept': 'application/json',
-             },
-             credentials: 'include'
-        });
-        if (!response.ok) {
-            throw new Error('Gagal mengambil data permissions');
-        }
-        const result = await response.json();
-        permissions.value = result.data || []; 
-        totalRecords.value = parseInt(result.recordsFiltered ?? result.recordsTotal ?? 0, 10);
         
-        if (result.draw) {
-            lazyParams.value.draw = parseInt(result.draw);
+        // Fetch menggunakan store
+        await permissionsStore.fetchPermissions();
+        
+        // Update local refs dari store
+        permissions.value = permissionsStore.permissions;
+        totalRecords.value = permissionsStore.totalRecords;
+        
+        if (permissionsStore.params.draw) {
+            lazyParams.value.draw = permissionsStore.params.draw;
         }
         
         // Reset selection when data changes
@@ -493,27 +493,15 @@ const fetchStats = async () => {
     roles: []
   };
   try {
-    const response = await fetch($api.getTotalPermission(), {
-        headers: { 
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
-        }
-    });
-
-    if (response.ok) {
-      const result = await response.json();
-      if (result && typeof result === 'object' && result !== null) {
-        stats.value = {
-            total: result.total,
-            roles: result.roles
-        };
-      } else {
-        stats.value = defaultStats;
-        console.warn('Data statistik dari API tidak dalam format objek yang diharapkan atau null:', result);
-      }
+    const result = await permissionsStore.fetchStats();
+    if (result && typeof result === 'object' && result !== null) {
+      stats.value = {
+          total: result.total,
+          roles: result.roles
+      };
     } else {
-        stats.value = defaultStats;
-        console.error('Gagal mengambil data statistik, status respons:', response.status);
+      stats.value = defaultStats;
+      console.warn('Data statistik dari API tidak dalam format objek yang diharapkan atau null:', result);
     }
   } catch (error) {
     console.error('Gagal mengambil data statistik (exception):', error);
@@ -524,90 +512,53 @@ const fetchStats = async () => {
 const handleSavePermission = async () => {
     layoutStore.setLoading(true);
     try {
-        const token = localStorage.getItem('token');
-        
-        let response;
-        let url;
+        const permissionIdToUpdate = isEditMode.value ? formPermission.value.id : null;
+        if (isEditMode.value && !permissionIdToUpdate) {
+            toast.error({
+                title: 'Gagal!',
+                icon: 'ri-close-line',
+                message: 'ID Permission tidak ditemukan untuk update.',
+                timeout: 3000,
+                position: 'topRight',
+                layout: 2,
+            })
+            return;
+        }
 
         const payload = {
             name: formPermission.value.name,
             menuGroupIds: formPermission.value.menuGroupId ? [formPermission.value.menuGroupId] : [],
             menuDetailIds: formPermission.value.menuDetailId ? [formPermission.value.menuDetailId] : [],
+            ...(permissionIdToUpdate && { id: permissionIdToUpdate }),
         };
         
-        if (isEditMode.value) {
-            const permissionIdToUpdate = formPermission.value.id;
-            if (!permissionIdToUpdate) {
-                toast.error({
-                    title: 'Gagal!',
-                    icon: 'ri-close-line',
-                    message: 'ID Permission tidak ditemukan untuk update.',
-                    timeout: 3000,
-                    position: 'topRight',
-                    layout: 2,
-                })
-                return;
-            }
-            url = $api.permissionUpdate(permissionIdToUpdate);
-            response = await fetch(url, {
-                method: 'PUT',
-                body: JSON.stringify(payload),
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'include'
-            });
-        } else {
-            url = $api.permissionStore();
-            response = await fetch(url, {
-                method: 'POST',
-                body: JSON.stringify(payload),
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'include'
-            });
-        }
-
-        if (response.ok) {
-            selectedPermissions.value = []; // Reset selection
-            await fetchAllPageData();
-            handleCloseModal();
-            permissionsStore.fetchPermissions();
-            toast.success({
-                title: 'Berhasil!',
-                icon: 'ri-check-line',
-                message: 'Permission berhasil disimpan',
-                timeout: 3000,
-                position: 'topRight',
-                layout: 2,
-            })
-        } else {
-            const errorData = await response.json();
-            if (errorData.errors) {
-                validationErrors.value = Object.values(errorData.errors).flat();
-            } else {
-                toast.error({
-                    title: 'Gagal!',
-                    icon: 'ri-close-line',
-                    message: errorData.message || 'Gagal menyimpan permission',
-                    timeout: 3000,
-                    position: 'topRight',
-                    layout: 2,
-                })
-            }
-        }
-    } catch (error) {
-        toast.error({
-            title: 'Gagal!',
-            icon: 'ri-close-line',
-            message: error.message || 'Terjadi kesalahan saat menyimpan data.',
+        await permissionsStore.savePermission(payload);
+        
+        selectedPermissions.value = []; // Reset selection
+        await fetchAllPageData();
+        handleCloseModal();
+        
+        toast.success({
+            title: 'Berhasil!',
+            icon: 'ri-check-line',
+            message: 'Permission berhasil disimpan',
             timeout: 3000,
             position: 'topRight',
             layout: 2,
         })
+    } catch (error) {
+        if (permissionsStore.validationErrors.length > 0) {
+            validationErrors.value = permissionsStore.validationErrors;
+        } else {
+            toast.error({
+                title: 'Gagal!',
+                icon: 'ri-close-line',
+                message: 'Terjadi kesalahan saat menyimpan data',
+                timeout: 3000,
+                position: 'topRight',
+                layout: 2,
+            })
+        }
     } finally {
         layoutStore.setLoading(false);
     }
@@ -656,21 +607,10 @@ const getBadgeClass = (roleId) => {
     return classMap[roleId] || 'bg-label-info';
 };
 
-// Fungsi untuk mengambil data menu groups
+// Fungsi untuk mengambil data menu groups - menggunakan store
 const fetchMenuGroups = async () => {
     try {
-        const token = localStorage.getItem('token')
-        const response = await fetch($api.menuGroups(), {
-            headers: { 
-                Authorization: `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        })
-        
-        if (!response.ok) throw new Error('Gagal mengambil data menu groups')
-        
-        const data = await response.json()
-        menuGroups.value = data.data || data
+        await menuGroupStore.fetchMenuGroups()
     } catch (error) {
         console.error('Error fetching menu groups:', error)
     }
@@ -679,19 +619,18 @@ const fetchMenuGroups = async () => {
 // Fungsi untuk mengambil data menu details berdasarkan group
 const fetchMenuDetails = async (groupId) => {
     if (!groupId) {
-        menuDetails.value = [];
         return;
-    };
+    }
     try {
-        const token = localStorage.getItem('token');
         const response = await fetch($api.getMenuDetails(groupId), {
             headers: { 
-                Authorization: `Bearer ${token}`,
                 'Content-Type': 'application/json'
-            }
+            },
+            credentials: 'include', // Cookie-based auth
         });
         if (!response.ok) throw new Error('Gagal mengambil data menu details');
         const data = await response.json();
+        // Update menuDetails ref (temporary solution, ideally should use store)
         menuDetails.value = Array.isArray(data.menuDetails) ? data.menuDetails : [];
     } catch (error) {
         console.error('Error fetching menu details:', error);
@@ -831,24 +770,7 @@ const deletePermission = async (permissionId) => {
     if (result.isConfirmed) {
         layoutStore.setLoading(true);
         try {
-            const token = localStorage.getItem('token');
-
-            const url = $api.permissionDelete(permissionId);
-
-            const response = await fetch(url, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                },
-                credentials: 'include'
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Gagal menghapus permission');
-            }
-            
+            await permissionsStore.deletePermission(permissionId);
             await fetchAllPageData();
 
             toast.success({
@@ -862,9 +784,9 @@ const deletePermission = async (permissionId) => {
 
         } catch (error) {
             toast.error({
-                title: 'Error',
+                title: 'Gagal!',
                 icon: 'ri-close-line',
-                message: error.message,
+                message: 'Terjadi kesalahan saat menghapus permission',
                 timeout: 3000,
                 position: 'topRight',
                 layout: 2,
@@ -903,34 +825,8 @@ const deleteBatchPermissions = async () => {
     if (result.isConfirmed) {
         layoutStore.setLoading(true);
         try {
-            const token = localStorage.getItem('token');
             const permissionIds = selectedPermissions.value.map(permission => permission.id);
-            
-            // Delete permissions one by one
-            const deletePromises = permissionIds.map(async (permissionId) => {
-                const url = $api.permissionDelete(permissionId);
-                const response = await fetch(url, {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`,
-                    },
-                    credentials: 'include'
-                });
-                
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(`Gagal menghapus permission ID ${permissionId}: ${errorData.message || 'Unknown error'}`);
-                }
-                
-                return { id: permissionId, success: true };
-            });
-
-            const results = await Promise.allSettled(deletePromises);
-            
-            // Count successful and failed deletions
-            const successful = results.filter(result => result.status === 'fulfilled').length;
-            const failed = results.filter(result => result.status === 'rejected').length;
+            const { successful, failed } = await permissionsStore.deleteBatchPermissions(permissionIds);
             
             // Clear selection
             selectedPermissions.value = [];
@@ -963,7 +859,7 @@ const deleteBatchPermissions = async () => {
             toast.error({
                 title: 'Error!',
                 icon: 'ri-close-line',
-                message: 'Terjadi kesalahan saat menghapus permissions: ' + error.message,
+                message: 'Terjadi kesalahan saat menghapus permissions: ' + (error?.message || 'Unknown error'),
                 timeout: 5000,
                 position: 'topRight',
                 layout: 2,
@@ -993,39 +889,13 @@ const handleUpdateBatchPermission = async () => {
 
     layoutStore.setLoading(true);
     try {
-        const token = localStorage.getItem('token');
         const permissionIds = selectedPermissions.value.map(permission => permission.id);
+        const payload = {
+            menuGroupIds: [batchForm.value.menuGroupId],
+            menuDetailIds: [batchForm.value.menuDetailId],
+        };
         
-        // Gunakan endpoint yang sudah ada untuk update individual permission
-        // Update satu per satu karena tidak ada endpoint batch update
-        const updatePromises = permissionIds.map(async (permissionId) => {
-            const response = await fetch($api.permissionUpdate(permissionId), {
-                method: 'PUT',
-                body: JSON.stringify({
-                    name: selectedPermissions.value.find(p => p.id === permissionId)?.name,
-                    menuGroupIds: [batchForm.value.menuGroupId],
-                    menuDetailIds: [batchForm.value.menuDetailId],
-                }),
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'include'
-            });
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(`Gagal mengupdate permission ID ${permissionId}: ${errorData.message || 'Unknown error'}`);
-            }
-            
-            return { id: permissionId, success: true };
-        });
-
-        const results = await Promise.allSettled(updatePromises);
-        
-        // Count successful and failed updates
-        const successful = results.filter(result => result.status === 'fulfilled').length;
-        const failed = results.filter(result => result.status === 'rejected').length;
+        const { successful, failed } = await permissionsStore.updateBatchPermissions(permissionIds, payload);
         
         // Clear selection
         selectedPermissions.value = [];
@@ -1062,7 +932,7 @@ const handleUpdateBatchPermission = async () => {
         toast.error({
             title: 'Gagal!',
             icon: 'ri-close-line',
-            message: error.message || 'Terjadi kesalahan saat mengupdate batch permission.',
+            message: 'Terjadi kesalahan saat mengupdate batch permission.',
             timeout: 3000,
             position: 'topRight',
             layout: 2,

@@ -140,7 +140,6 @@ export const useQuotationStore = defineStore('quotation', {
       this.error = null
       const { $api } = useNuxtApp()
       try {
-        const token = localStorage.getItem('token');
         const url = new URL($api.quotation())
         const params = new URLSearchParams({
             page     : Math.floor((this.params.first / this.params.rows) + 1).toString(),
@@ -164,11 +163,10 @@ export const useQuotationStore = defineStore('quotation', {
         const response = await fetch(url, {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
             'Content-Type': 'application/json'
           },
-          credentials: 'include'
+          credentials: 'include' // Cookie-based auth
         })
 
         if (!response.ok) throw new Error('Gagal mengambil data quotation')
@@ -204,8 +202,6 @@ export const useQuotationStore = defineStore('quotation', {
         const userStore = useUserStore();
 
         try {
-            const token        = localStorage.getItem('token');
-
             const formData = new FormData()
 
             const dataToAppend = { ...this.form };
@@ -297,11 +293,10 @@ export const useQuotationStore = defineStore('quotation', {
             const response = await fetch(url, {
                 method: method,
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json',
                 },
                 body: formData,
-                credentials: 'include',
+                credentials: 'include', // Cookie-based auth
             });
 
             if (!response.ok) {
@@ -384,15 +379,12 @@ export const useQuotationStore = defineStore('quotation', {
         }
   
         try {
-            const token = localStorage.getItem('token');
-  
             const response = await fetch(`${$api.quotation()}/${id}`, {
                 method: 'DELETE',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json',
                 },
-                credentials: 'include',
+                credentials: 'include', // Cookie-based auth
             });
   
             if (!response.ok) {
@@ -428,16 +420,13 @@ export const useQuotationStore = defineStore('quotation', {
       this.error = null;
       const { $api } = useNuxtApp();
       try {
-          const token = localStorage.getItem('token');
-
           const response = await fetch($api.approveQuotation(quotationId), {
               method: 'PATCH',
               headers: {
-                  'Authorization': `Bearer ${token}`,
                   'Content-Type' : 'application/json',
                   'Accept'       : 'application/json',
               },
-              credentials: 'include',
+              credentials: 'include', // Cookie-based auth
           });
 
           if (!response.ok) {
@@ -476,16 +465,13 @@ export const useQuotationStore = defineStore('quotation', {
       this.error = null;
       const { $api } = useNuxtApp();
       try {
-          const token = localStorage.getItem('token');
-
           const response = await fetch($api.rejectQuotation(quotationId), {
               method: 'PATCH',
               headers: {
-                  'Authorization': `Bearer ${token}`,
                   'Content-Type' : 'application/json',
                   'Accept'       : 'application/json',
               },
-              credentials: 'include',
+              credentials: 'include', // Cookie-based auth
           });
 
           if (!response.ok) {
@@ -641,14 +627,11 @@ export const useQuotationStore = defineStore('quotation', {
       const { $api } = useNuxtApp();
       
       try {
-        const token        = localStorage.getItem('token');
-
         const resData = await apiFetch($api.getQuotationDetails(quotationId), {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
           },
-          credentials: 'include',
+          credentials: 'include', // Cookie-based auth (apiFetch already handles this)
         });
         
         if (resData && resData.data) {
@@ -678,14 +661,11 @@ export const useQuotationStore = defineStore('quotation', {
         const { $api } = useNuxtApp();
         
         try {
-            const token = localStorage.getItem('token');
-
             const resData = await apiFetch($api.getQuotationDetails(quotationId), {
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json',
                 },
-                credentials: 'include',
+                credentials: 'include', // Cookie-based auth (apiFetch already handles this)
             });
             
             if (resData && resData.data) {
@@ -725,14 +705,11 @@ export const useQuotationStore = defineStore('quotation', {
         return
       }
       try {
-        const token = localStorage.getItem('token');
-
         const response = await fetch($api.customer() + '/' + customerId, {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
           },
-          credentials: 'include',
+          credentials: 'include', // Cookie-based auth
         })
         if (!response.ok) throw new Error('Gagal mengambil data produk untuk customer')
         const result = await response.json()
@@ -780,8 +757,6 @@ export const useQuotationStore = defineStore('quotation', {
         const toast = useToast();
         const { $api } = useNuxtApp();
         try {
-            const token = localStorage.getItem('token');
-            
             // Buat URL dengan parameter yang sama seperti filter saat ini
             const url = new URL($api.quotation());
             const params = new URLSearchParams({
@@ -807,7 +782,6 @@ export const useQuotationStore = defineStore('quotation', {
             const response = await fetch(url, {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json',
                     'Content-Type': 'application/json'
                 },
@@ -838,16 +812,13 @@ export const useQuotationStore = defineStore('quotation', {
         const { $api } = useNuxtApp();
         
         try {
-            const token = localStorage.getItem('token');
-            
             const response = await fetch($api.quotation() + '/statistics', {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json',
                     'Content-Type': 'application/json'
                 },
-                credentials: 'include'
+                credentials: 'include' // Cookie-based auth
             });
 
             if (!response.ok) {

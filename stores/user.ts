@@ -209,8 +209,7 @@ export const useUserStore = defineStore('user', {
     clearUser() {
       this.user = null
       this.lastLoadTime = 0
-      localStorage.removeItem('token')
-      localStorage.removeItem('sso_token') // Clear SSO token juga
+      // Token sekarang disimpan di httpOnly cookie, akan dihapus oleh server saat logout
       localStorage.removeItem('user')
       localStorage.removeItem('user_cache')
       
@@ -223,9 +222,9 @@ export const useUserStore = defineStore('user', {
       usernameCookie.value = null;
     },
     async loadUser() {
-      const token = localStorage.getItem('token')
-      if (!token) return
-
+      // Cookie-based auth: tidak perlu check localStorage lagi
+      // Token otomatis dikirim via httpOnly cookie
+      
       // Jika user sudah ada dan tidak dalam loading state, return
       if (this.user && !this.loading) return
 
@@ -277,10 +276,9 @@ export const useUserStore = defineStore('user', {
       try {
         const response = await fetch($api.me(), {
           headers: {
-            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
-          credentials: 'include',
+          credentials: 'include', // Token otomatis dikirim via cookie
         })
         
         if (!response.ok) {
@@ -299,15 +297,12 @@ export const useUserStore = defineStore('user', {
     },
     // Method untuk memvalidasi token tanpa mengubah user data
     async validateToken() {
-      const token = localStorage.getItem('token')
-      if (!token) return false
-
+      // Cookie-based auth: token validation via API call
       const { $api } = useNuxtApp()
 
       try {
         const response = await fetch($api.me(), {
           headers: {
-            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
           credentials: 'include',
@@ -321,11 +316,7 @@ export const useUserStore = defineStore('user', {
     
     // Method untuk memastikan user data tersedia
     async ensureUserLoaded() {
-      // Cek token dulu
-      const token = localStorage.getItem('token')
-      if (!token) {
-        return null
-      }
+      // Cookie-based auth: langsung check user state, tidak perlu check localStorage
       
       if (this.user && !this.loading) {
         return this.user

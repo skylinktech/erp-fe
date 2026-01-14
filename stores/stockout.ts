@@ -65,7 +65,6 @@ export const useStockOutStore = defineStore('stockOut', {
       this.loading = true;
       try {
         const { $api } = useNuxtApp();
-        const token = localStorage.getItem('token');
         const params = new URLSearchParams({
             page     : ((this.params.first / this.params.rows) + 1).toString(),
             rows     : this.params.rows.toString(),
@@ -77,10 +76,10 @@ export const useStockOutStore = defineStore('stockOut', {
 
         const response = await fetch(`${$api.stockOut()}?${params.toString()}`, {
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
-            }
+            },
+            credentials: 'include', // Cookie-based auth
         });
 
         if (!response.ok) {
@@ -107,14 +106,11 @@ export const useStockOutStore = defineStore('stockOut', {
         this.loading = true;
         const { $api }     = useNuxtApp();
         const url          = `${$api.stockOut()}`;
-        const token        = localStorage.getItem('token');
-
         const response = await fetch(url, {
           headers: {
             'Accept': 'application/json',
-            'Authorization': `Bearer ${token}`,
           },
-          credentials: 'include'
+          credentials: 'include', // Cookie-based auth
         });
 
         if (!response.ok) {
@@ -137,17 +133,14 @@ export const useStockOutStore = defineStore('stockOut', {
       this.error = null
       try {
         const { $api } = useNuxtApp()
-        const token = localStorage.getItem('token')
-
         const url = `${$api.stockOut()}/${id}`
 
         const response = await fetch(url, {
           method: 'DELETE',
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
-          credentials: 'include',
+          credentials: 'include', // Cookie-based auth
         })
 
         if (!response.ok) {
@@ -169,17 +162,14 @@ export const useStockOutStore = defineStore('stockOut', {
     async postStockOut(id: string) {
       try {
         const { $api } = useNuxtApp()
-        const token = localStorage.getItem('token')
-
         const url = `${$api.postStockOut(id)}`
 
         const response = await fetch(url, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
-          credentials: 'include',
+          credentials: 'include', // Cookie-based auth
         })
 
         if (!response.ok) {
@@ -206,12 +196,11 @@ export const useStockOutStore = defineStore('stockOut', {
       };
       try {
         const { $api } = useNuxtApp()
-        const token = localStorage.getItem('token')
         const response = await fetch($api.countStockOut(), {
             headers: { 
-                Authorization: `Bearer ${token}`,
                 'Content-Type': 'application/json'
-            }
+            },
+            credentials: 'include', // Cookie-based auth
         });
     
         if (response.ok) {
@@ -269,14 +258,12 @@ export const useStockOutStore = defineStore('stockOut', {
       this.error = null
       try {
         const { $api } = useNuxtApp()
-        const token = localStorage.getItem('token')
-
         const response = await fetch(`${$api.getStockOutDetails(id)}`, {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
+          credentials: 'include', // Cookie-based auth
         })
 
         if (!response.ok) {
@@ -345,15 +332,13 @@ export const useStockOutStore = defineStore('stockOut', {
     async exportStockOutWithDetails() {
       try {
         const { $api } = useNuxtApp();
-        const token = localStorage.getItem('token');
-        
         // Ambil semua data stock out dengan detail untuk export
         const response = await fetch(`${$api.stockOutExport()}`, {
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
-            }
+            },
+            credentials: 'include', // Cookie-based auth
         });
 
         if (!response.ok) {
@@ -372,16 +357,13 @@ export const useStockOutStore = defineStore('stockOut', {
     async postAllStockOut(ids: string[]) {
       try {
         const { $api } = useNuxtApp();
-        const token = localStorage.getItem('token');
-
         const response = await fetch($api.postAllStockOut(), {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ ids }),
-          credentials: 'include',
+          credentials: 'include', // Cookie-based auth
         });
 
         if (!response.ok) {

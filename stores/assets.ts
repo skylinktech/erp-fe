@@ -110,7 +110,6 @@ export const useAssetStore = defineStore('asset', {
       const { $api } = useNuxtApp()
       const toast = useToast();
       try {
-        const token = localStorage.getItem('token');
         const params = new URLSearchParams({
           page: Math.floor((this.params.first / this.params.rows) + 1).toString(),
           rows: Math.floor(this.params.rows).toString(),
@@ -121,11 +120,10 @@ export const useAssetStore = defineStore('asset', {
 
         const response = await fetch(`${$api.assets()}?${params.toString()}`, {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
-          credentials: 'include'
+          credentials: 'include' // Cookie-based auth
         });
 
         if (!response.ok) {
@@ -153,14 +151,11 @@ export const useAssetStore = defineStore('asset', {
     async fetchAssetsSummary() {
       try {
         const { $api } = useNuxtApp()
-        const token = localStorage.getItem('token')
-        
         const response = await fetch($api.assetsSummary(), {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
           },
-          credentials: 'include'
+          credentials: 'include' // Cookie-based auth
         })
 
         if (response.ok) {
@@ -180,8 +175,6 @@ export const useAssetStore = defineStore('asset', {
       const { $api } = useNuxtApp()
       const toast = useToast();
       try {
-        const token = localStorage.getItem('token')
-
         // Gunakan JSON data instead of FormData
         const payload = {
           name: this.form.name,
@@ -212,11 +205,10 @@ export const useAssetStore = defineStore('asset', {
           method: method,
           body: JSON.stringify(payload),
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
-          credentials: 'include',
+          credentials: 'include', // Cookie-based auth
         })
 
         let result;
@@ -277,15 +269,13 @@ export const useAssetStore = defineStore('asset', {
 
       if (result.isConfirmed) {
         try {
-          const token = localStorage.getItem('token');
           const response = await fetch($api.assetsDelete(id), {
             method: 'DELETE',
             headers: {
-              'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json',
               'Accept': 'application/json',
             },
-            credentials: 'include'
+            credentials: 'include' // Cookie-based auth
           });
 
           if (!response.ok) {

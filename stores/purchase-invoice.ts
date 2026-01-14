@@ -232,8 +232,6 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
       this.error = null
       const { $api } = useNuxtApp()
         try {
-        const token        = localStorage.getItem('token');
-
         const url = new URL($api.purchaseInvoice())
         const params = new URLSearchParams({
             page     : Math.floor((this.params.first / this.params.rows) + 1).toString(),
@@ -259,7 +257,6 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
         const response = await fetch(url, {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept'       : 'application/json',
             'Content-Type' : 'application/json'
           },
@@ -292,16 +289,13 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
       const { $api } = useNuxtApp();
       
       try {
-        const token = localStorage.getItem('token');
-        
         const response = await fetch($api.purchaseInvoiceStatistics(), {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
             'Content-Type': 'application/json'
           },
-          credentials: 'include'
+          credentials: 'include' // Cookie-based auth
         });
 
         if (!response.ok) {
@@ -328,14 +322,11 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
       this.error = null
       const { $api } = useNuxtApp()
       try {
-        const token = localStorage.getItem('token');
-
         const resData = await apiFetch($api.purchaseInvoiceShow(invoiceId), {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
           },
-          credentials: 'include',
+          credentials: 'include', // Cookie-based auth (apiFetch already handles this)
         })
         
         if (resData && resData.data) {
@@ -364,8 +355,6 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
         const userStore = useUserStore();
 
         try {
-            const token = localStorage.getItem('token');
-
             // Prepare FormData for file upload
             const formData = new FormData();
             
@@ -436,11 +425,10 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
             const response = await fetch(url, {
                 method: method,
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json',
                 },
                 body: formData,
-                credentials: 'include',
+                credentials: 'include', // Cookie-based auth
             });
 
             if (!response.ok) {
@@ -506,15 +494,12 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
       }
 
       try {
-          const token = localStorage.getItem('token');
-
           const response = await fetch(`${$api.purchaseInvoice()}/${id}`, {
               method: 'DELETE',
               headers: {
-                  'Authorization': `Bearer ${token}`,
                   'Accept': 'application/json',
               },
-              credentials: 'include',
+              credentials: 'include', // Cookie-based auth
           });
 
           if (!response.ok) {
@@ -655,14 +640,11 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
       const { $api } = useNuxtApp();
       
       try {
-        const token = localStorage.getItem('token');
-
         const resData = await apiFetch($api.purchaseInvoiceShow(invoiceId), {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
           },
-          credentials: 'include',
+          credentials: 'include', // Cookie-based auth (apiFetch already handles this)
         });
         
         
@@ -704,14 +686,11 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
       const { $api } = useNuxtApp();
       
       try {
-        const token = localStorage.getItem('token');
-
         const resData = await apiFetch($api.purchaseInvoiceShow(invoiceId), {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
           },
-          credentials: 'include',
+          credentials: 'include', // Cookie-based auth (apiFetch already handles this)
         });
         
         

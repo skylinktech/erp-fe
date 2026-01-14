@@ -284,14 +284,12 @@ const downloadTemplate = async () => {
     const toast     = useToast();
     try {
         downloadingTemplate.value = true
-        const token = localStorage.getItem('token')
         
         const response = await fetch(`${$api.import()}/template`, {
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Accept': 'application/json',
             },
-            credentials: 'include'
+            credentials: 'include', // Cookie-based auth
         })
 
         if (!response.ok) {
@@ -349,18 +347,16 @@ const uploadFile = async () => {
         uploadSuccess.value = ''
         importResults.value = null
 
-        const token = localStorage.getItem('token')
         const formData = new FormData()
         formData.append('excel_file', selectedFile.value)
 
         const response = await fetch(`${$api.import()}/products-stocks`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Accept': 'application/json',
             },
             body: formData,
-            credentials: 'include'
+            credentials: 'include', // Cookie-based auth
         })
 
         const result = await response.json()

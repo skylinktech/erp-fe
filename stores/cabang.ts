@@ -62,8 +62,6 @@ export const useCabangStore = defineStore('cabang', {
       const { $api } = useNuxtApp()
 
       try {
-        const token = localStorage.getItem('token');
-
         const url = new URL($api.cabang())
         url.searchParams.append('page', this.params.page.toString())
         url.searchParams.append('rows', this.params.rows.toString())
@@ -78,11 +76,10 @@ export const useCabangStore = defineStore('cabang', {
         const response = await fetch(url, {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
             'Content-Type': 'application/json'
           },
-          credentials: 'include'
+          credentials: 'include', // Cookie-based auth
         })
         
         if (!response.ok) throw new Error('Gagal mengambil data cabang')
@@ -105,15 +102,13 @@ export const useCabangStore = defineStore('cabang', {
         }
         this.loading = true
         const { $api } = useNuxtApp()
-        const token = localStorage.getItem('token');
-
         try {
             const response = await fetch($api.cabang() + `?perusahaan_id=${perusahaanId}`, {
                  method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json',
                 },
+                credentials: 'include', // Cookie-based auth
             })
             const result = await response.json()
             this.cabangs = result.data || []
@@ -131,17 +126,14 @@ export const useCabangStore = defineStore('cabang', {
       const { $api } = useNuxtApp()
 
       try {
-        const token        = localStorage.getItem('token');
-
         await fetch($api.cabang(), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
           },
           body: JSON.stringify(this.form),
-          credentials: 'include',
+          credentials: 'include', // Cookie-based auth
         })
         this.closeModal()
         await this.fetchCabangs()
@@ -169,18 +161,15 @@ export const useCabangStore = defineStore('cabang', {
       if (!this.form.id) return
       
       const { $api } = useNuxtApp()
-      const token = localStorage.getItem('token');
-
       try {
         await fetch($api.cabang() + `/${this.form.id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
           },
           body: JSON.stringify(this.form),
-          credentials: 'include',
+          credentials: 'include', // Cookie-based auth
         })
         this.closeModal()
         await this.fetchCabangs()
@@ -231,15 +220,12 @@ export const useCabangStore = defineStore('cabang', {
 
       
       try {
-        const token = localStorage.getItem('token');
-
         await fetch($api.cabang() + `/${id}`, {
           method: 'DELETE',
            headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
           },
-          credentials: 'include',
+          credentials: 'include', // Cookie-based auth
         })
         await this.fetchCabangs()
         toast.success({

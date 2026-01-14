@@ -75,7 +75,6 @@ export const useUserManagementStore = defineStore('user-management', {
         this.loading = true;
         const { $api } = useNuxtApp();
         try {
-            const token = localStorage.getItem('token');
             const params = new URLSearchParams({
                 page: ((this.params.first / this.params.rows) + 1).toString(),
                 rows: this.params.rows.toString(),
@@ -86,11 +85,10 @@ export const useUserManagementStore = defineStore('user-management', {
 
             const response = await fetch(`${$api.users()}?${params.toString()}`, {
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
                 },
-                credentials: 'include'
+                credentials: 'include', // Cookie-based auth
             });
 
             if (!response.ok) {
@@ -116,13 +114,11 @@ export const useUserManagementStore = defineStore('user-management', {
         const toast = useToast();
         const { $api } = useNuxtApp();
         try {
-            const token = localStorage.getItem('token')
             const response = await fetch($api.roles(), {
                 headers: { 
-                    Authorization: `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
-                credentials: 'include'
+                credentials: 'include', // Cookie-based auth
             })
             
             if (!response.ok) throw new Error('Gagal mengambil data role')
@@ -149,13 +145,11 @@ export const useUserManagementStore = defineStore('user-management', {
             totalAdmin: undefined
         };
         try {
-            const token = localStorage.getItem('token');
             const response = await fetch($api.countTotalUsers(), {
                 headers: { 
-                    Authorization: `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
-                credentials: 'include'
+                credentials: 'include', // Cookie-based auth
             });
 
             if (response.ok) {
@@ -176,7 +170,6 @@ export const useUserManagementStore = defineStore('user-management', {
         const { $api } = useNuxtApp();
 
         try {
-            const token = localStorage.getItem('token');
             let url = $api.users();
             let method = 'POST';
 
@@ -201,12 +194,11 @@ export const useUserManagementStore = defineStore('user-management', {
             const response = await fetch(url, {
                 method,
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json',
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(payload),
-                credentials: 'include'
+                credentials: 'include', // Cookie-based auth
             });
 
             if (!response.ok) {
@@ -258,15 +250,12 @@ export const useUserManagementStore = defineStore('user-management', {
       }
 
       try {
-          const token = localStorage.getItem('token');
-
           const response = await fetch(`${$api.users()}/${id}`, {
               method: 'DELETE',
               headers: {
-                  'Authorization': `Bearer ${token}`,
                   'Accept': 'application/json',
               },
-              credentials: 'include',
+              credentials: 'include', // Cookie-based auth
           });
 
           if (!response.ok) {

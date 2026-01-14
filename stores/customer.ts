@@ -72,7 +72,6 @@ export const useCustomerStore = defineStore('customer', {
       this.error = null
       const { $api } = useNuxtApp()
       try {
-        const token = localStorage.getItem('token');
         const params = new URLSearchParams({
             page: Math.floor((this.params.first / this.params.rows) + 1).toString(),
             rows: Math.floor(this.params.rows).toString(),
@@ -83,11 +82,10 @@ export const useCustomerStore = defineStore('customer', {
 
         const response = await fetch(`${$api.customer()}?${params.toString()}`, {
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
             },
-            credentials: 'include'
+            credentials: 'include' // Cookie-based auth
         });
 
         if (!response.ok) {
@@ -134,8 +132,6 @@ export const useCustomerStore = defineStore('customer', {
       }
 
       try {
-        const token        = localStorage.getItem('token')
-
         const formData = new FormData()
         
         // Hanya kirim field yang diperlukan untuk backend
@@ -173,10 +169,9 @@ export const useCustomerStore = defineStore('customer', {
           method: method,
           body: formData,
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
           },
-          credentials: 'include',
+          credentials: 'include', // Cookie-based auth
         })
 
         // Handle response parsing dengan error catching
@@ -240,15 +235,12 @@ export const useCustomerStore = defineStore('customer', {
 
       this.loading = true;
       try {
-          const token = localStorage.getItem('token');
-
           const response = await fetch($api.customer() + `/${id}`, {
               method: 'DELETE',
               headers: {
-                  'Authorization': `Bearer ${token}`,
                   'Accept': 'application/json',
               },
-              credentials: 'include',
+              credentials: 'include', // Cookie-based auth
           });
 
           if (!response.ok) {
@@ -278,13 +270,11 @@ export const useCustomerStore = defineStore('customer', {
       this.error = null;
       const { $api } = useNuxtApp();
       try {
-        const token = localStorage.getItem('token');
         const response = await fetch(`${$api.customer()}/${customerId}`, {
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Accept': 'application/json',
             },
-            credentials: 'include'
+            credentials: 'include' // Cookie-based auth
         });
 
         if (!response.ok) {
@@ -324,11 +314,10 @@ export const useCustomerStore = defineStore('customer', {
             // Fetch complete data for editing
             this.loading = true;
             const { $api } = useNuxtApp();
-            const token = localStorage.getItem('token');
             try {
                 const response = await fetch(`${$api.customer()}/${customer.id}`, {
-                    headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' },
-                    credentials: 'include'
+                    headers: { 'Accept': 'application/json' },
+                    credentials: 'include' // Cookie-based auth
                 });
                 if (!response.ok) throw new Error('Gagal mengambil detail data pelanggan.');
                 const result = await response.json();

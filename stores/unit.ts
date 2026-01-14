@@ -59,12 +59,11 @@ export const useUnitStore = defineStore('unit', {
             search   : this.params.search || '',
         });
 
-        const token = localStorage.getItem('token');
         const response = await fetch(`${$api.unit()}?${params.toString()}`, {
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Accept': 'application/json',
-            }
+            },
+            credentials: 'include' // Cookie-based auth
         });
 
         if (!response.ok) {
@@ -94,8 +93,6 @@ export const useUnitStore = defineStore('unit', {
       const { $api } = useNuxtApp();
 
       try {
-        const token = localStorage.getItem('token');
-
         let url = $api.unit();
         let method = 'POST';
 
@@ -109,12 +106,11 @@ export const useUnitStore = defineStore('unit', {
         const response = await fetch(url, {
           method,
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
             'Content-Type': 'application/json'
           },
           body: body,
-          credentials: 'include'
+          credentials: 'include', // Cookie-based auth
         });
 
         if (!response.ok) {
@@ -169,14 +165,12 @@ export const useUnitStore = defineStore('unit', {
       }
 
       try {
-          const token = localStorage.getItem('token');
           const response = await fetch(`${$api.unit()}/${id}`, {
             method: 'DELETE',
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Accept': 'application/json',
             },
-            credentials: 'include',
+            credentials: 'include', // Cookie-based auth
           });
 
           if (!response.ok) {

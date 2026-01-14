@@ -73,17 +73,15 @@ export const useDashboardStore = defineStore('dashboard', {
   actions: {
     async fetchAssociationRules() {
       const { $api } = useNuxtApp()
-      const token = localStorage.getItem('token')
 
       try {
         
         const rules = await $fetch<AssociationRule[]>($api.associations(), {
           headers: {
-            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
             Accept: 'application/json',
           },
-          credentials: 'include',
+          credentials: 'include', // Cookie-based auth
         })
 
         if (rules && Array.isArray(rules) && rules.length > 0) {

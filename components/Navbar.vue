@@ -310,17 +310,12 @@
                 { key: 'role', label: 'Roles', icon: 'ri-shield-user-line', list: $api.roles?.(), path: '/settings/roles' }
             ].filter(e => !!e.list)
 
-            const token = process.client 
-                ? (useCookie('token')?.value || (typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null))
-                : null
-            const authHeader = token ? { Authorization: `Bearer ${token}` } : {}
-
+            // Menggunakan cookie-based auth, tidak perlu token di header
             const requests = endpoints.map(async (e) => {
                 try {
                     const data = await $fetch(buildUrl(e.list), {
-                        credentials: 'include',
+                        credentials: 'include', // Cookie-based auth
                         headers: {
-                            ...authHeader,
                             Accept: 'application/json'
                         },
                     })
@@ -914,58 +909,47 @@
 
     const handleLogout = async () => {
         try {
-            // Ambil SSO token sebelum clear localStorage
-            const ssoToken = localStorage.getItem('sso_token')
-            const ssoService = useSsoService()
-            
             // Bersihkan data lokal terlebih dahulu
             userStore.clearUser()
             document.documentElement.className = ''
-            localStorage.removeItem('token')
-            localStorage.removeItem('sso_token')
 
-            // Logout dari SSO jika ada token
-            if (ssoToken) {
-                try {
-                    await ssoService.logout(ssoToken)
-                } catch (ssoError) {
-                    console.warn('SSO logout gagal:', ssoError)
-                    // Tidak menampilkan error ke user karena logout lokal sudah berhasil
-                }
-            }
-
-            // Coba logout dari server (jika masih menggunakan auth lama)
+            // Cookie-based auth: logout dari server akan otomatis clear cookies
             try {
+                // Logout dari server backend (akan clear cookie)
                 const response = await fetch($api.logout(), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include' // PENTING: kirim cookies untuk autentikasi
+                });
+
+                // Cek status response
+                if (!response.ok) {
+                    console.warn('Logout dari server gagal:', response.status);
+                }
+            } catch (serverError) {
+                console.warn('Gagal menghubungi server untuk logout:', serverError.message);
+            }
+            
+            // Logout dari SSO (server SSO akan clear cookie-nya juga)
+            const ssoService = useSsoService()
+            try {
+                // SSO logout juga akan clear cookie di SSO server
+                await fetch(`${useRuntimeConfig().public.authBase}/api/oauth/logout`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     credentials: 'include'
                 });
-
-                // Cek status response sebelum parsing data
-                if (!response.ok) {
-                    let errorData = {};
-                    try {
-                        errorData = await response.json();
-                    } catch (e) {
-                        // Ignore parsing error
-                    }
-                    console.warn('Logout dari server gagal:', errorData?.message || `Status: ${response.status}`);
-                    // Tidak menampilkan error ke user karena logout lokal sudah berhasil
-                }
-            } catch (serverError) {
-                // Tangani error fetch (network error, server tidak tersedia, dll)
-                console.warn('Gagal menghubungi server untuk logout:', serverError.message);
-                // Tidak menampilkan error ke user karena logout lokal sudah berhasil
+            } catch (ssoError) {
+                console.warn('SSO logout gagal:', ssoError)
             }
         } catch (error) {
-            // Tangani error umum
             console.warn('Error saat logout:', error.message);
-            // Tidak menampilkan error ke user karena logout lokal sudah berhasil
         } finally {
-            // Selalu redirect ke halaman login, meskipun logout server gagal
+            // Selalu redirect ke halaman login
             router.push('/auth/login')
         }
     }

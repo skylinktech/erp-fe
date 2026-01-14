@@ -63,7 +63,6 @@ export const useWarehouseStore = defineStore('warehouse', {
           this.loading = true
           const { $api } = useNuxtApp();
           try {
-            const token = localStorage.getItem('token');
             const params = new URLSearchParams({
                 page     : Math.floor((this.params.first / this.params.rows) + 1).toString(),
                 rows     : Math.floor(this.params.rows).toString(),
@@ -75,9 +74,8 @@ export const useWarehouseStore = defineStore('warehouse', {
             const response = await fetch(`${$api.warehouse()}?${params.toString()}`, {
               headers: {
                 'Accept': 'application/json',
-                'Authorization': `Bearer ${token}`,
               },
-              credentials: 'include'
+              credentials: 'include', // Cookie-based auth
             });
             const result = await response.json()
             this.warehouses = result.data
@@ -98,13 +96,11 @@ export const useWarehouseStore = defineStore('warehouse', {
             this.loading = true;
             const { $api } = useNuxtApp();
             try {
-                const token = localStorage.getItem('token');
                 const response = await fetch(`${$api.warehouse()}?all=true`, {
                     headers: {
                         'Accept': 'application/json',
-                        'Authorization': `Bearer ${token}`,
                     },
-                    credentials: 'include'
+                    credentials: 'include', // Cookie-based auth
                 });
                 const result = await response.json();
                 this.warehouseList = result.data;
@@ -126,13 +122,11 @@ export const useWarehouseStore = defineStore('warehouse', {
               total: undefined,
             };
             try {
-              const token = localStorage.getItem('token');
               const response = await fetch($api.getTotalWarehouse(), {
                   headers: { 
-                      Authorization: `Bearer ${token}`,
                       'Content-Type': 'application/json'
                   },
-                  credentials: 'include'
+                  credentials: 'include', // Cookie-based auth
               });
           
               if (response.ok) {
@@ -153,8 +147,6 @@ export const useWarehouseStore = defineStore('warehouse', {
             const { $api } = useNuxtApp();
     
             try {
-                const token = localStorage.getItem('token');
-    
                 let url = $api.warehouse();
                 let method = 'POST';
     
@@ -166,12 +158,11 @@ export const useWarehouseStore = defineStore('warehouse', {
                 const response = await fetch(url, {
                     method,
                     headers: {
-                        'Authorization': `Bearer ${token}`,
                         'Accept': 'application/json',
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(this.form),
-                    credentials: 'include'
+                    credentials: 'include', // Cookie-based auth
                 });
     
                 if (!response.ok) {
@@ -223,16 +214,13 @@ export const useWarehouseStore = defineStore('warehouse', {
           }
     
           try {
-              const token = localStorage.getItem('token');
-    
               const response = await fetch(`${$api.warehouse()}/${id}`, {
                   method: 'DELETE',
                   headers: {
-                      'Authorization': `Bearer ${token}`,
                       'Accept': 'application/json',
                       'Content-Type': 'application/json'
                   },
-                  credentials: 'include',
+                  credentials: 'include', // Cookie-based auth
               });
     
               if (!response.ok) {

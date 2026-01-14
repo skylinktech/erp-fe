@@ -654,14 +654,11 @@ const exportData = (format) => {
 const fetchAssetsSummary = async () => {
   try {
     const { $api } = useNuxtApp()
-    const token = localStorage.getItem('token')
-    
     const response = await fetch($api.assetsSummary(), {
       headers: {
-        'Authorization': `Bearer ${token}`,
         'Accept': 'application/json',
       },
-      credentials: 'include'
+      credentials: 'include', // Cookie-based auth
     })
 
     if (response.ok) {

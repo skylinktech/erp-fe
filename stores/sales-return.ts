@@ -149,9 +149,6 @@ export const useSalesReturnStore = defineStore('salesReturn', {
       this.error = null
       const { $api } = useNuxtApp()
       try {
-        const token        = localStorage.getItem('token');
-
-
         const url = new URL($api.salesReturn())
         const params = new URLSearchParams({
             page     : Math.floor((this.params.first / this.params.rows) + 1).toString(),
@@ -176,7 +173,6 @@ export const useSalesReturnStore = defineStore('salesReturn', {
         const response = await fetch(url, {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept'       : 'application/json',
             'Content-Type' : 'application/json'
           },
@@ -215,14 +211,11 @@ export const useSalesReturnStore = defineStore('salesReturn', {
         return
       }
       try {
-        const token = localStorage.getItem('token');
-
         const response = await fetch($api.getSalesOrderForSalesReturn(customerId), {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
           },
-          credentials: 'include',
+          credentials: 'include', // Cookie-based auth
         })
         if (!response.ok) throw new Error('Gagal mengambil data sales order untuk customer')
         const result = await response.json()
@@ -276,8 +269,6 @@ export const useSalesReturnStore = defineStore('salesReturn', {
         const userStore = useUserStore();
 
         try {
-            const token        = localStorage.getItem('token');
-
             const formData = new FormData()
 
             // Append main form data
@@ -340,11 +331,10 @@ export const useSalesReturnStore = defineStore('salesReturn', {
             const response = await fetch(url, {
                 method: method,
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json',
                 },
                 body: formData,
-                credentials: 'include',
+                credentials: 'include', // Cookie-based auth
             });
 
             if (!response.ok) {
@@ -405,15 +395,12 @@ export const useSalesReturnStore = defineStore('salesReturn', {
       }
 
       try {
-          const token = localStorage.getItem('token');
-
           const response = await fetch(`${$api.salesReturn()}/${id}`, {
               method: 'DELETE',
               headers: {
-                  'Authorization': `Bearer ${token}`,
                   'Accept': 'application/json',
               },
-              credentials: 'include',
+              credentials: 'include', // Cookie-based auth
           });
 
           if (!response.ok) {
@@ -444,16 +431,13 @@ export const useSalesReturnStore = defineStore('salesReturn', {
       this.error = null;
       const { $api } = useNuxtApp();
       try {
-          const token = localStorage.getItem('token');
-
           const response = await fetch($api.approveSalesReturn(salesReturnId), {
               method: 'PATCH',
               headers: {
-                  'Authorization': `Bearer ${token}`,
                   'Content-Type' : 'application/json',
                   'Accept'       : 'application/json',
               },
-              credentials: 'include',
+              credentials: 'include', // Cookie-based auth
           });
 
           if (!response.ok) {
@@ -488,16 +472,13 @@ export const useSalesReturnStore = defineStore('salesReturn', {
       this.error = null;
       const { $api } = useNuxtApp();
       try {
-          const token = localStorage.getItem('token');
-
           const response = await fetch($api.rejectSalesReturn(salesReturnId), {
               method: 'PATCH',
               headers: {
-                  'Authorization': `Bearer ${token}`,
                   'Content-Type' : 'application/json',
                   'Accept'       : 'application/json',
               },
-              credentials: 'include',
+              credentials: 'include', // Cookie-based auth
           });
 
           if (!response.ok) {
@@ -661,14 +642,11 @@ export const useSalesReturnStore = defineStore('salesReturn', {
       this.error = null;
       const { $api } = useNuxtApp();
       try {
-        const token        = localStorage.getItem('token');
-
         const resData = await apiFetch($api.getSalesReturnDetails(srId), {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
           },
-          credentials: 'include',
+          credentials: 'include', // Cookie-based auth (apiFetch already handles this)
         });
         if (resData && resData.data) {
           this.salesReturn = resData.data;
@@ -687,8 +665,6 @@ export const useSalesReturnStore = defineStore('salesReturn', {
         const toast = useToast();
         const { $api } = useNuxtApp();
         try {
-            const token = localStorage.getItem('token');
-            
             // Buat URL dengan parameter yang sama seperti filter saat ini
             const url = new URL($api.salesReturn());
             const params = new URLSearchParams({
@@ -717,11 +693,10 @@ export const useSalesReturnStore = defineStore('salesReturn', {
             const response = await fetch(url, {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json',
                     'Content-Type': 'application/json'
                 },
-                credentials: 'include'
+                credentials: 'include' // Cookie-based auth
             });
 
             if (!response.ok) {

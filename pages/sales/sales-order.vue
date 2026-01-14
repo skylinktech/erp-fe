@@ -1262,14 +1262,13 @@ const updateStockInfo = async (index) => {
                     // Coba ambil stock dengan cara yang berbeda
                     try {
                         const { $api } = useNuxtApp();
-                        const token = localStorage.getItem('token');
                         
                         // Coba dengan parameter all=true
                         const fallbackResponse = await fetch(`${$api.stock()}?productId=${item.productId}&warehouseId=${item.warehouseId}&all=true`, {
                             headers: {
-                                'Authorization': `Bearer ${token}`,
                                 'Accept': 'application/json',
-                            }
+                            },
+                            credentials: 'include', // Cookie-based auth
                         });
                         
                         if (fallbackResponse.ok) {

@@ -112,7 +112,6 @@ export const useAPPaymentStore = defineStore('apPayment', {
       const toast = useToast();
       const { $api } = useNuxtApp()
       try {
-        const token = localStorage.getItem('token');
         const params = new URLSearchParams({
           page: Math.floor((this.params.first / this.params.rows) + 1).toString(),
           rows: Math.floor(this.params.rows).toString(),
@@ -123,11 +122,10 @@ export const useAPPaymentStore = defineStore('apPayment', {
 
         const response = await fetch(`${$api.apPayments()}?${params.toString()}`, {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
-          credentials: 'include'
+          credentials: 'include' // Cookie-based auth
         });
 
         if (!response.ok) {
@@ -170,21 +168,13 @@ export const useAPPaymentStore = defineStore('apPayment', {
       const toast = useToast();
       
       try {
-        const token = localStorage.getItem('token');
-        
-        if (!token) {
-          this.vendors = []
-          return
-        }
-        
         // Gunakan dataVendor endpoint yang mengembalikan semua vendor tanpa pagination
         const response = await fetch($api.dataVendor(), {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
-          credentials: 'include'
+          credentials: 'include' // Cookie-based auth
         });
 
         if (response.ok) {
@@ -196,7 +186,6 @@ export const useAPPaymentStore = defineStore('apPayment', {
           try {
             const fallbackResponse = await fetch($api.vendor(), {
               headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
               },
@@ -240,13 +229,6 @@ export const useAPPaymentStore = defineStore('apPayment', {
       const toast = useToast();
       
       try {
-        const token = localStorage.getItem('token');
-        
-        if (!token) {
-          this.invoices = []
-          return
-        }
-        
         // Tambahkan parameter untuk mengambil semua data
         const params = new URLSearchParams({
           rows: '1000', // Ambil banyak data untuk dropdown
@@ -255,11 +237,10 @@ export const useAPPaymentStore = defineStore('apPayment', {
         
         const response = await fetch(`${$api.purchaseInvoice()}?${params.toString()}`, {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
-          credentials: 'include'
+          credentials: 'include' // Cookie-based auth
         });
 
         if (response.ok) {
@@ -303,14 +284,12 @@ export const useAPPaymentStore = defineStore('apPayment', {
     async fetchBankAccounts() {
       const { $api } = useNuxtApp()
       try {
-        const token = localStorage.getItem('token');
         const response = await fetch($api.bankAccounts(), {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
-          credentials: 'include'
+          credentials: 'include' // Cookie-based auth
         });
 
         if (response.ok) {
@@ -333,7 +312,6 @@ export const useAPPaymentStore = defineStore('apPayment', {
       const toast = useToast();
 
       try {
-        const token = localStorage.getItem('token')
         const userStore = useUserStore()
         
         
@@ -365,11 +343,10 @@ export const useAPPaymentStore = defineStore('apPayment', {
           method: method,
           body: JSON.stringify(payload),
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
-          credentials: 'include',
+          credentials: 'include', // Cookie-based auth
         })
         
         
@@ -436,17 +413,15 @@ export const useAPPaymentStore = defineStore('apPayment', {
 
       if (result.isConfirmed) {
         try {
-          const token = localStorage.getItem('token');
           const url = $api.apPayments() + '/' + id;
 
           const response = await fetch(url, {
             method: 'DELETE',
             headers: {
-              'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json',
               'Accept': 'application/json',
             },
-            credentials: 'include'
+            credentials: 'include' // Cookie-based auth
           });
 
           if (!response.ok) {
@@ -493,17 +468,15 @@ export const useAPPaymentStore = defineStore('apPayment', {
       const toast = useToast();
       
       try {
-        const token = localStorage.getItem('token');
         const url = $api.apPayments() + '/' + id + '/confirm';
 
         const response = await fetch(url, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
-          credentials: 'include'
+          credentials: 'include' // Cookie-based auth
         });
 
         if (!response.ok) {

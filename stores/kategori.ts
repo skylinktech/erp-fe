@@ -67,17 +67,15 @@ export const useKategoriStore = defineStore('kategori', {
       this.error = null
       const { $api } = useNuxtApp()
       try {
-        const token = localStorage.getItem('token');
         const url = new URL($api.categories())
 
         const response = await fetch(url, {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
             'Content-Type': 'application/json'
           },
-          credentials: 'include'
+          credentials: 'include' // Cookie-based auth
         })
         if (!response.ok) throw new Error('Gagal mengambil data kategori')
 
@@ -115,16 +113,13 @@ export const useKategoriStore = defineStore('kategori', {
             tooling: undefined,
         };
         try {
-            const token = localStorage.getItem('token');
-
             const response = await fetch($api.countProductByCategory(), {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json',
                     'Content-Type': 'application/json'
                 },
-                credentials: 'include'
+                credentials: 'include' // Cookie-based auth
             });
             if (!response.ok) throw new Error('Gagal mengambil data statistik')
 
@@ -142,8 +137,6 @@ export const useKategoriStore = defineStore('kategori', {
         const { $api } = useNuxtApp();
 
         try {
-            const token     = localStorage.getItem('token');
-
             let url = $api.categories();
             let method = 'POST';
 
@@ -156,12 +149,11 @@ export const useKategoriStore = defineStore('kategori', {
             const response = await fetch(url, {
                 method,
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json',
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(this.form),
-                credentials: 'include'
+                credentials: 'include', // Cookie-based auth
             });
 
             if (!response.ok) {
@@ -217,15 +209,12 @@ export const useKategoriStore = defineStore('kategori', {
       }
 
       try {
-          const token = localStorage.getItem('token');
-
           const response = await fetch($api.categories() + `/${id}`, {
               method: 'DELETE',
               headers: {
-                  'Authorization': `Bearer ${token}`,
                   'Accept': 'application/json',
               },
-              credentials: 'include',
+              credentials: 'include', // Cookie-based auth
           });
 
           if (!response.ok) {

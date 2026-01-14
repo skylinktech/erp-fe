@@ -60,7 +60,6 @@ export const usePerusahaanStore = defineStore('perusahaan', {
       this.loading = true
       const { $api } = useNuxtApp()
       try {
-        const token = localStorage.getItem('token');
         const params = new URLSearchParams({
             page     : ((this.params.first / this.params.rows) + 1).toString(),
             rows     : this.params.rows.toString(),
@@ -72,10 +71,9 @@ export const usePerusahaanStore = defineStore('perusahaan', {
         const response = await fetch(`${$api.perusahaan()}?${params.toString()}`, {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
           },
-          credentials: 'include'
+          credentials: 'include' // Cookie-based auth
         })
         
         if (!response.ok) throw new Error('Gagal mengambil data perusahaan')
@@ -100,8 +98,6 @@ export const usePerusahaanStore = defineStore('perusahaan', {
         const { $api } = useNuxtApp();
 
         try {
-            const token = localStorage.getItem('token');
-
             const formData = new FormData();
             Object.keys(this.form).forEach(key => {
                 if (key === 'logoPerusahaan' && this.form[key] instanceof File) {
@@ -122,11 +118,10 @@ export const usePerusahaanStore = defineStore('perusahaan', {
             const response = await fetch(url, {
                 method,
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json',
                 },
                 body: formData,
-                credentials: 'include'
+                credentials: 'include', // Cookie-based auth
             });
 
             // Handle response parsing dengan error catching
@@ -191,15 +186,12 @@ export const usePerusahaanStore = defineStore('perusahaan', {
       }
 
       try {
-          const token = localStorage.getItem('token');
-
           const response = await fetch(`${$api.perusahaan()}/${id}`, {
               method: 'DELETE',
               headers: {
-                  'Authorization': `Bearer ${token}`,
                   'Accept': 'application/json',
               },
-              credentials: 'include',
+              credentials: 'include', // Cookie-based auth
           });
 
           if (!response.ok) {

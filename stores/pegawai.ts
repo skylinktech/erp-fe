@@ -57,7 +57,6 @@ export const usePegawaiStore = defineStore('pegawai', {
             this.loading = true
             const { $api } = useNuxtApp()
             try {
-                const token = localStorage.getItem('token');
                 const params = new URLSearchParams({
                     start: this.params.first.toString(),
                     length: this.params.rows.toString(),
@@ -69,11 +68,10 @@ export const usePegawaiStore = defineStore('pegawai', {
 
                 const response = await fetch(`${$api.pegawai()}?${params.toString()}`, {
                     headers: {
-                        'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json',
                         'Accept': 'application/json',
                     },
-                    credentials: 'include'
+                    credentials: 'include' // Cookie-based auth
                 });
 
                 if (!response.ok) {
@@ -106,13 +104,11 @@ export const usePegawaiStore = defineStore('pegawai', {
             const { $api } = useNuxtApp()
             const defaultStats = { total: undefined, pkwtt: undefined, pkwt: undefined, resign: undefined, outsource: undefined };
             try {
-                const token = localStorage.getItem('token');
                 const response = await fetch($api.pegawaiCountByStatus(), {
                     headers: {
-                        Authorization: `Bearer ${token}`,
                         'Content-Type': 'application/json'
                     },
-                    credentials: 'include'
+                    credentials: 'include' // Cookie-based auth
                 });
 
                 if (response.ok) {
@@ -148,8 +144,6 @@ export const usePegawaiStore = defineStore('pegawai', {
             }
             
             try {
-                const token = localStorage.getItem('token');
-
                 let response;
                 let url;
 
@@ -160,20 +154,16 @@ export const usePegawaiStore = defineStore('pegawai', {
                     response = await fetch(url, {
                         method: 'POST',
                         body: formData,
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                        },
-                        credentials: 'include'
+                        headers: {},
+                        credentials: 'include', // Cookie-based auth
                     });
                 } else {
                     url = $api.pegawai();
                     response = await fetch(url, {
                         method: 'POST',
                         body: formData,
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                        },
-                        credentials: 'include'
+                        headers: {},
+                        credentials: 'include', // Cookie-based auth
                     });
                 }
                 
@@ -233,15 +223,12 @@ export const usePegawaiStore = defineStore('pegawai', {
 
             if (result.isConfirmed) {
                 try {
-                    const token = localStorage.getItem('token');
-
                     const response = await fetch($api.pegawaiDelete(id), {
                         method: 'DELETE',
                         headers: {
-                            'Authorization': `Bearer ${token}`,
                             'Content-Type': 'application/json',
                         },
-                        credentials: 'include'
+                        credentials: 'include' // Cookie-based auth
                     });
 
                     if (!response.ok) {

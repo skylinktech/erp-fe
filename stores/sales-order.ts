@@ -199,8 +199,6 @@ export const useSalesOrderStore = defineStore('salesOrder', {
       this.error = null
       const { $api } = useNuxtApp()
         try {
-        const token        = localStorage.getItem('token');
-
         const url = new URL($api.salesOrder())
         const params = new URLSearchParams({
             page     : Math.floor((this.params.first / this.params.rows) + 1).toString(),
@@ -233,11 +231,10 @@ export const useSalesOrderStore = defineStore('salesOrder', {
         const response = await fetch(url, {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept'       : 'application/json',
             'Content-Type' : 'application/json'
           },
-          credentials: 'include'
+          credentials: 'include' // Cookie-based auth
         })
 
         if (!response.ok) throw new Error('Gagal mengambil data salesOrder')
@@ -271,8 +268,6 @@ export const useSalesOrderStore = defineStore('salesOrder', {
       this.error = null
       const { $api } = useNuxtApp()
       try {
-        const token = localStorage.getItem('token');
-
         const url = new URL($api.salesOrder())
         const params = new URLSearchParams({
             page: '1',
@@ -289,11 +284,10 @@ export const useSalesOrderStore = defineStore('salesOrder', {
         const response = await fetch(url, {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
             'Content-Type': 'application/json'
           },
-          credentials: 'include'
+          credentials: 'include' // Cookie-based auth
         })
 
         if (!response.ok) throw new Error('Gagal mengambil data salesOrder untuk select')
@@ -328,13 +322,11 @@ export const useSalesOrderStore = defineStore('salesOrder', {
           deliveredLast4Months: undefined,
         };
         try {
-          const token = localStorage.getItem('token');
           const response = await fetch($api.countSalesOrderByStatus(), {
               headers: { 
-                  Authorization: `Bearer ${token}`,
                   'Content-Type': 'application/json'
               },
-              credentials: 'include'
+              credentials: 'include' // Cookie-based auth
           });
       
           if (response.ok) {
@@ -358,14 +350,11 @@ export const useSalesOrderStore = defineStore('salesOrder', {
         return
       }
       try {
-        const token = localStorage.getItem('token');
-
         const response = await fetch($api.customer() + '/' + customerId, {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
           },
-          credentials: 'include',
+          credentials: 'include', // Cookie-based auth
         })
         if (!response.ok) throw new Error('Gagal mengambil data produk untuk customer')
         const result = await response.json()
@@ -397,8 +386,6 @@ export const useSalesOrderStore = defineStore('salesOrder', {
         // Hapus validasi stok sebelum membuat Sales Order agar tetap bisa membuat SO meski stok < 1
 
         try {
-            const token        = localStorage.getItem('token');
-
             const formData = new FormData()
 
             // Append main form data
@@ -480,11 +467,10 @@ export const useSalesOrderStore = defineStore('salesOrder', {
             const response = await fetch(url, {
                 method: method,
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json',
                 },
                 body: formData,
-                credentials: 'include',
+                credentials: 'include', // Cookie-based auth
             });
 
             if (!response.ok) {
@@ -551,15 +537,12 @@ export const useSalesOrderStore = defineStore('salesOrder', {
       }
 
       try {
-          const token = localStorage.getItem('token');
-
           const response = await fetch(`${$api.salesOrder()}/${id}`, {
               method: 'DELETE',
               headers: {
-                  'Authorization': `Bearer ${token}`,
                   'Accept': 'application/json',
               },
-              credentials: 'include',
+              credentials: 'include', // Cookie-based auth
           });
 
           if (!response.ok) {
@@ -595,16 +578,13 @@ export const useSalesOrderStore = defineStore('salesOrder', {
       this.error = null;
       const { $api } = useNuxtApp();
       try {
-          const token = localStorage.getItem('token');
-
           const response = await fetch($api.approveSalesOrder(salesOrderId), {
               method: 'PATCH',
               headers: {
-                  'Authorization': `Bearer ${token}`,
                   'Content-Type' : 'application/json',
                   'Accept'       : 'application/json',
               },
-              credentials: 'include',
+              credentials: 'include', // Cookie-based auth
           });
 
           if (!response.ok) {
@@ -644,16 +624,13 @@ export const useSalesOrderStore = defineStore('salesOrder', {
       this.error = null;
       const { $api } = useNuxtApp();
       try {
-          const token = localStorage.getItem('token');
-
           const response = await fetch($api.rejectSalesOrder(salesOrderId), {
               method: 'PATCH',
               headers: {
-                  'Authorization': `Bearer ${token}`,
                   'Content-Type' : 'application/json',
                   'Accept'       : 'application/json',
               },
-              credentials: 'include',
+              credentials: 'include', // Cookie-based auth
           });
 
           if (!response.ok) {
@@ -693,19 +670,16 @@ export const useSalesOrderStore = defineStore('salesOrder', {
         this.error = null;
         const { $api } = useNuxtApp();
         try {
-            const token        = localStorage.getItem('token');
-
             const resData = await apiFetch($api.salesOrderItemUpdateStatusPartial(itemId), {
                 method: 'PATCH',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json',
                     'Content-Type': 'application/json',
                 },
                 body: { 
                     deliveredQty: deliveredQty 
                 },
-                credentials: 'include',
+                credentials: 'include', // Cookie-based auth (apiFetch already handles this)
             });
 
             const updatedSalesOrderItem = resData.data.salesOrderItem;
@@ -743,12 +717,11 @@ export const useSalesOrderStore = defineStore('salesOrder', {
     async fetchPerusahaanData() {
       try {
         const { $api } = useNuxtApp();
-        const token = localStorage.getItem('token');
         const response = await fetch($api.dataPerusahaan(), {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
-          }
+          },
+          credentials: 'include', // Cookie-based auth
         });
 
         if (!response.ok) {
@@ -776,16 +749,15 @@ export const useSalesOrderStore = defineStore('salesOrder', {
     async fetchCabangData(perusahaanId?: number) {
         try {
             const { $api } = useNuxtApp();
-            const token = localStorage.getItem('token');
             const url = perusahaanId 
             ? `${$api.dataCabang()}?perusahaanId=${perusahaanId}`
             : $api.dataCabang();
             
             const response = await fetch(url, {
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Accept': 'application/json',
-            }
+            },
+            credentials: 'include', // Cookie-based auth
             });
 
             if (!response.ok) {
@@ -813,12 +785,11 @@ export const useSalesOrderStore = defineStore('salesOrder', {
     async fetchCustomerData() {
         try {
             const { $api } = useNuxtApp();
-            const token = localStorage.getItem('token');
             const response = await fetch($api.dataCustomer(), {
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Accept': 'application/json',
-            }
+            },
+            credentials: 'include', // Cookie-based auth
             });
 
             if (!response.ok) {
@@ -1012,16 +983,13 @@ export const useSalesOrderStore = defineStore('salesOrder', {
       const { $api } = useNuxtApp();
       
       try {
-          const token = localStorage.getItem('token');
-
           const response = await fetch($api.deliverAllSalesOrderItems(salesOrderId), {
               method: 'POST',
               headers: {
-                  'Authorization': `Bearer ${token}`,
                   'Content-Type' : 'application/json',
                   'Accept'       : 'application/json',
               },
-              credentials: 'include',
+              credentials: 'include', // Cookie-based auth
           });
 
           if (!response.ok) {
@@ -1060,8 +1028,6 @@ export const useSalesOrderStore = defineStore('salesOrder', {
         const { $api } = useNuxtApp();
         
         try {
-            const token = localStorage.getItem('token');
-
             const url = new URL($api.salesOrder())
             const params = new URLSearchParams({
                 page: '1',
@@ -1093,11 +1059,10 @@ export const useSalesOrderStore = defineStore('salesOrder', {
             const response = await fetch(url, {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json',
                     'Content-Type': 'application/json'
                 },
-                credentials: 'include'
+                credentials: 'include' // Cookie-based auth
             });
 
             if (!response.ok) throw new Error('Gagal mengambil data salesOrder untuk export');
@@ -1125,14 +1090,11 @@ export const useSalesOrderStore = defineStore('salesOrder', {
       const { $api } = useNuxtApp();
       
       try {
-        const token = localStorage.getItem('token');
-
         const resData = await apiFetch($api.getSalesOrderDetails(soId), {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
           },
-          credentials: 'include',
+          credentials: 'include', // Cookie-based auth (apiFetch already handles this)
         });
         
         
@@ -1157,10 +1119,9 @@ export const useSalesOrderStore = defineStore('salesOrder', {
             
             const fallbackData = await apiFetch(fallbackUrl, {
               headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`,
                 'Accept': 'application/json',
               },
-              credentials: 'include',
+              credentials: 'include', // Cookie-based auth (apiFetch already handles this)
             });
             
             if (fallbackData && fallbackData.data) {

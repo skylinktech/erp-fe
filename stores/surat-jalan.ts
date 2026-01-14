@@ -179,8 +179,6 @@ export const useSuratJalanStore = defineStore('suratJalan', {
       this.error   = null
       const { $api } = useNuxtApp()
         try {
-        const token        = localStorage.getItem('token');
-
         const url = new URL($api.suratJalan())
         const params = new URLSearchParams({
             page     : Math.floor((this.params.first / this.params.rows) + 1).toString(),
@@ -203,11 +201,10 @@ export const useSuratJalanStore = defineStore('suratJalan', {
         const response = await fetch(url, {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept'       : 'application/json',
             'Content-Type' : 'application/json'
           },
-          credentials: 'include'
+          credentials: 'include' // Cookie-based auth
         })
 
         if (!response.ok) throw new Error('Gagal mengambil data suratJalan')
@@ -229,18 +226,15 @@ export const useSuratJalanStore = defineStore('suratJalan', {
       this.error = null
       const { $api } = useNuxtApp()
       try {
-        const token = localStorage.getItem('token');
-
         // ✅ PERBAIKAN: Add cache-busting parameter untuk force fresh data
         const url = `${$api.suratJalanShow(suratJalanId)}?_t=${Date.now()}`;
 
         const resData = await apiFetch(url, {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
             'Cache-Control': 'no-cache', // ✅ Force no cache
           },
-          credentials: 'include',
+          credentials: 'include', // Cookie-based auth (apiFetch already handles this)
         })
         
         
@@ -264,8 +258,6 @@ export const useSuratJalanStore = defineStore('suratJalan', {
         const userStore = useUserStore();
 
         try {
-            const token = localStorage.getItem('token');
-
             // ✅ VALIDASI STOK: Berlaku untuk semua kasus (dari SO maupun input manual)
             if (Array.isArray(this.form.suratJalanItems)) {
                 const stockStore = useStocksStore();
@@ -378,12 +370,11 @@ export const useSuratJalanStore = defineStore('suratJalan', {
             const response = await fetch(url, {
                 method: method,
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json',
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(payload),
-                credentials: 'include',
+                credentials: 'include', // Cookie-based auth
             });
 
             if (!response.ok) {
@@ -453,16 +444,14 @@ export const useSuratJalanStore = defineStore('suratJalan', {
       }
 
       try {
-        const token = localStorage.getItem('token');
         const deleteUrl = `${$api.suratJalan()}/${id}`;
         
         const response = await fetch(deleteUrl, {
             method: 'DELETE',
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Accept': 'application/json',
             },
-            credentials: 'include',
+            credentials: 'include', // Cookie-based auth
         });
 
         if (!response.ok) {
@@ -510,12 +499,11 @@ export const useSuratJalanStore = defineStore('suratJalan', {
     async fetchPerusahaanData() {
       try {
         const { $api } = useNuxtApp();
-        const token = localStorage.getItem('token');
         const response = await fetch($api.dataPerusahaan(), {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
-          }
+          },
+          credentials: 'include', // Cookie-based auth
         });
 
         if (!response.ok) {
@@ -541,16 +529,15 @@ export const useSuratJalanStore = defineStore('suratJalan', {
     async fetchCabangData(perusahaanId?: number) {
         try {
             const { $api } = useNuxtApp();
-            const token = localStorage.getItem('token');
             const url = perusahaanId 
             ? `${$api.dataCabang()}?perusahaanId=${perusahaanId}`
             : $api.dataCabang();
             
             const response = await fetch(url, {
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Accept': 'application/json',
-            }
+            },
+            credentials: 'include', // Cookie-based auth
             });
 
             if (!response.ok) {
@@ -575,12 +562,11 @@ export const useSuratJalanStore = defineStore('suratJalan', {
     async fetchCustomerData() {
       try {
           const { $api } = useNuxtApp();
-          const token = localStorage.getItem('token');
           const response = await fetch($api.dataCustomer(), {
           headers: {
-              'Authorization': `Bearer ${token}`,
               'Accept': 'application/json',
-          }
+          },
+          credentials: 'include', // Cookie-based auth
           });
 
           if (!response.ok) {
@@ -710,14 +696,11 @@ export const useSuratJalanStore = defineStore('suratJalan', {
       const { $api } = useNuxtApp();
       
       try {
-        const token = localStorage.getItem('token');
-
         const resData = await apiFetch($api.suratJalanShow(suratJalanId), {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
           },
-          credentials: 'include',
+          credentials: 'include', // Cookie-based auth (apiFetch already handles this)
         });
         
         
@@ -760,14 +743,11 @@ export const useSuratJalanStore = defineStore('suratJalan', {
       const { $api } = useNuxtApp();
       
       try {
-        const token = localStorage.getItem('token');
-
         const resData = await apiFetch($api.suratJalanShow(suratJalanId), {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
           },
-          credentials: 'include',
+          credentials: 'include', // Cookie-based auth (apiFetch already handles this)
         });
         
         
@@ -811,16 +791,13 @@ export const useSuratJalanStore = defineStore('suratJalan', {
         const { $api } = useNuxtApp();
         
         try {
-            const token = localStorage.getItem('token');
-            
             const response = await fetch($api.suratJalan() + '/statistics', {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json',
                     'Content-Type': 'application/json'
                 },
-                credentials: 'include'
+                credentials: 'include' // Cookie-based auth
             });
 
             if (!response.ok) {

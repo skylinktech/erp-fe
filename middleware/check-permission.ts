@@ -2,12 +2,8 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   // Hanya jalankan di client side
   if (typeof window === 'undefined') return
   
-  // Cek apakah user sudah login
-  const token = localStorage.getItem('token')
-  if (!token) {
-    return navigateTo('/errors/401')
-  }
-
+  // Cookie-based auth: tidak perlu check localStorage
+  
   try {
     const { useUserStore } = await import('~/stores/user')
     const userStore = useUserStore()

@@ -57,8 +57,6 @@ export const useVendorStore = defineStore('vendor', {
       this.error = null
       const { $api } = useNuxtApp()
       try {
-        const token = localStorage.getItem('token');
-
         const params = new URLSearchParams({
             page     : Math.floor((this.params.first / this.params.rows) + 1).toString(),
             rows     : Math.floor(this.params.rows).toString(),
@@ -73,11 +71,10 @@ export const useVendorStore = defineStore('vendor', {
         const response = await fetch(url, {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
             'Content-Type': 'application/json'
           },
-          credentials: 'include'
+          credentials: 'include' // Cookie-based auth
         })
         
         if (!response.ok) throw new Error('Gagal mengambil data vendor')
@@ -108,8 +105,6 @@ export const useVendorStore = defineStore('vendor', {
         const { $api } = useNuxtApp();
 
         try {
-            const token        = localStorage.getItem('token');
-
             // Siapkan FormData untuk pengiriman data, termasuk file logo jika ada
             const formData = new FormData();
             
@@ -137,11 +132,10 @@ export const useVendorStore = defineStore('vendor', {
             const response = await fetch(url, {
                 method: method,
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json',
                 },
                 body: formData,
-                credentials: 'include',
+                credentials: 'include', // Cookie-based auth
             });
 
             if (!response.ok) {
@@ -197,15 +191,12 @@ export const useVendorStore = defineStore('vendor', {
       }
 
       try {
-          const token = localStorage.getItem('token');
-
           const response = await fetch($api.vendor() + `/${id}`, {
               method: 'DELETE',
               headers: {
-                  'Authorization': `Bearer ${token}`,
                   'Accept': 'application/json',
               },
-              credentials: 'include',
+              credentials: 'include', // Cookie-based auth
           });
 
           if (!response.ok) {
@@ -299,13 +290,11 @@ export const useVendorStore = defineStore('vendor', {
       const { $api } = useNuxtApp();
       
       try {
-        const token = localStorage.getItem('token');
-        
         const response = await fetch($api.dataVendor(), {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
-          }
+          },
+          credentials: 'include', // Cookie-based auth
         });
         
         if (response.ok) {

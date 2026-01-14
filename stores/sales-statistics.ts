@@ -105,15 +105,13 @@ export const useSalesStatisticsStore = defineStore('salesStatistics', {
       
       try {
         const { $api } = useNuxtApp()
-        const token = localStorage.getItem('token')
         
         const response = await fetch($api.salesOrderStatistics(), {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
             'Content-Type': 'application/json'
           },
-          credentials: 'include'
+          credentials: 'include' // Cookie-based auth
         })
 
         if (!response.ok) {

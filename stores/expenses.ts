@@ -83,7 +83,6 @@ export const useExpenseStore = defineStore('expense', {
       this.error = null
       const { $api } = useNuxtApp()
       try {
-        const token = localStorage.getItem('token');
         const params = new URLSearchParams({
           page: Math.floor((this.params.first / this.params.rows) + 1).toString(),
           limit: Math.floor(this.params.rows).toString(),
@@ -92,11 +91,10 @@ export const useExpenseStore = defineStore('expense', {
 
         const response = await fetch(`${$api.expenses()}?${params.toString()}`, {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
-          credentials: 'include'
+          credentials: 'include' // Cookie-based auth
         });
 
         if (!response.ok) {
@@ -134,14 +132,12 @@ export const useExpenseStore = defineStore('expense', {
     async fetchBankAccounts() {
       const { $api } = useNuxtApp()
       try {
-        const token = localStorage.getItem('token');
         const response = await fetch($api.bankAccounts(), {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
-          credentials: 'include'
+          credentials: 'include' // Cookie-based auth
         });
 
         if (response.ok) {
@@ -156,14 +152,12 @@ export const useExpenseStore = defineStore('expense', {
     async fetchDepartments() {
       const { $api } = useNuxtApp()
       try {
-        const token = localStorage.getItem('token');
         const response = await fetch($api.dataDepartemen(), {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
-          credentials: 'include'
+          credentials: 'include' // Cookie-based auth
         });
 
         if (response.ok) {
@@ -181,8 +175,6 @@ export const useExpenseStore = defineStore('expense', {
       const { $api } = useNuxtApp()
 
       try {
-        const token = localStorage.getItem('token')
-
         const formData = new FormData()
         
         const fieldsToSend = ['expenseNumber', 'date', 'description', 'amount', 'paymentMethod', 'bankAccountId', 'departemenId'];
@@ -209,10 +201,9 @@ export const useExpenseStore = defineStore('expense', {
           method: method,
           body: formData,
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
           },
-          credentials: 'include',
+          credentials: 'include', // Cookie-based auth
         })
 
         let result;
@@ -272,15 +263,13 @@ export const useExpenseStore = defineStore('expense', {
 
       if (result.isConfirmed) {
         try {
-          const token = localStorage.getItem('token');
           const response = await fetch($api.expensesDelete(id), {
             method: 'DELETE',
             headers: {
-              'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json',
               'Accept': 'application/json',
             },
-            credentials: 'include'
+            credentials: 'include' // Cookie-based auth
           });
 
           if (!response.ok) {

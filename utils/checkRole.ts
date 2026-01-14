@@ -5,14 +5,11 @@
 
 export const checkMyRole = () => {
   try {
-    // Cek localStorage
-    const token = localStorage.getItem('token')
-    const ssoToken = localStorage.getItem('sso_token')
+    // Token sekarang disimpan di httpOnly cookie, tidak bisa diakses dari JavaScript
     const userCache = localStorage.getItem('user')
     
     console.log('=== CHECK MY ROLE DEBUG ===')
-    console.log('Token exists:', !!token)
-    console.log('SSO Token exists:', !!ssoToken)
+    console.log('Note: Token sekarang disimpan di httpOnly cookie (tidak bisa diakses dari JS)')
     console.log('User cache:', userCache ? JSON.parse(userCache) : null)
     
     // Cek Pinia store
@@ -34,8 +31,6 @@ export const checkMyRole = () => {
     console.log('=== END DEBUG ===')
     
     return {
-      token: !!token,
-      ssoToken: !!ssoToken,
       userCache: userCache ? JSON.parse(userCache) : null,
     }
   } catch (error) {

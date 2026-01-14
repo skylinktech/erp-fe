@@ -97,7 +97,6 @@ export const useStockTransferStore = defineStore('stockTransfer', {
       this.loading = true;
       try {
         const { $api } = useNuxtApp();
-        const token = localStorage.getItem('token');
         const params = new URLSearchParams({
             page     : Math.floor((this.params.first / this.params.rows) + 1).toString(),
             rows     : Math.floor(this.params.rows).toString(),
@@ -109,10 +108,10 @@ export const useStockTransferStore = defineStore('stockTransfer', {
 
         const response = await fetch(`${$api.stockTransfer()}?${params.toString()}`, {
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
-            }
+            },
+            credentials: 'include', // Cookie-based auth
         });
 
         if (!response.ok) {
@@ -139,7 +138,6 @@ export const useStockTransferStore = defineStore('stockTransfer', {
       this.loading = true
       try {
         const { $api } = useNuxtApp()
-        const token = localStorage.getItem('token')
         let response
         let url
   
@@ -168,10 +166,9 @@ export const useStockTransferStore = defineStore('stockTransfer', {
             method: 'PUT',
             body: JSON.stringify(payload),
             headers: {
-              'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json',
             },
-            credentials: 'include',
+            credentials: 'include', // Cookie-based auth
           })
         }
         else {
@@ -181,10 +178,9 @@ export const useStockTransferStore = defineStore('stockTransfer', {
             method: 'POST',
             body: JSON.stringify(payload),
             headers: {
-              'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json',
             },
-            credentials: 'include',
+            credentials: 'include', // Cookie-based auth
           })
         }
   
@@ -225,14 +221,12 @@ export const useStockTransferStore = defineStore('stockTransfer', {
         this.loading = true;
         const { $api }     = useNuxtApp();
         const url          = `${$api.stockTransfer()}`;
-        const token        = localStorage.getItem('token');
 
         const response = await fetch(url, {
           headers: {
             'Accept': 'application/json',
-            'Authorization': `Bearer ${token}`,
           },
-          credentials: 'include'
+          credentials: 'include', // Cookie-based auth
         });
 
         if (!response.ok) {
@@ -255,18 +249,16 @@ export const useStockTransferStore = defineStore('stockTransfer', {
       this.error = null
       try {
         const { $api } = useNuxtApp()
-        const token = localStorage.getItem('token')
 
         const url = `${$api.stockTransfer()}/${id}`
 
         const response = await fetch(url, {
           method: 'DELETE',
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
-          credentials: 'include',
+          credentials: 'include', // Cookie-based auth
         })
 
         if (!response.ok) {
@@ -290,16 +282,13 @@ export const useStockTransferStore = defineStore('stockTransfer', {
       this.error = null;
       const { $api } = useNuxtApp();
       try {
-          const token        = localStorage.getItem('token');
-
           const response = await fetch($api.approveStockTransfer(stockTransferId), {
               method: 'PATCH',
               headers: {
-                  'Authorization': `Bearer ${token}`,
                   'Content-Type' : 'application/json',
                   'Accept'       : 'application/json',
               },
-              credentials: 'include',
+              credentials: 'include', // Cookie-based auth
           });
 
           if (!response.ok) {
@@ -337,12 +326,11 @@ export const useStockTransferStore = defineStore('stockTransfer', {
       };
       try {
         const { $api } = useNuxtApp()
-        const token = localStorage.getItem('token')
         const response = await fetch($api.countStockTransfer(), {
             headers: { 
-                Authorization: `Bearer ${token}`,
                 'Content-Type': 'application/json'
-            }
+            },
+            credentials: 'include', // Cookie-based auth
         });
     
         if (response.ok) {
@@ -476,12 +464,11 @@ export const useStockTransferStore = defineStore('stockTransfer', {
       const toast = useToast();
       try {
         const { $api } = useNuxtApp();
-        const token = localStorage.getItem('token');
         const response = await fetch($api.dataPerusahaan(), {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
-          }
+          },
+          credentials: 'include', // Cookie-based auth
         });
 
         if (!response.ok) {
@@ -507,16 +494,15 @@ export const useStockTransferStore = defineStore('stockTransfer', {
       const toast = useToast();
       try {
         const { $api } = useNuxtApp();
-        const token = localStorage.getItem('token');
         const url = perusahaanId 
           ? `${$api.dataCabang()}?perusahaanId=${perusahaanId}`
           : $api.dataCabang();
           
         const response = await fetch(url, {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
-          }
+          },
+          credentials: 'include', // Cookie-based auth
         });
 
         if (!response.ok) {
@@ -542,12 +528,11 @@ export const useStockTransferStore = defineStore('stockTransfer', {
       const toast = useToast();
       try {
         const { $api } = useNuxtApp();
-        const token = localStorage.getItem('token');
         const response = await fetch($api.dataWarehouse(), {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
-          }
+          },
+          credentials: 'include', // Cookie-based auth
         });
 
         if (!response.ok) {
@@ -596,14 +581,13 @@ export const useStockTransferStore = defineStore('stockTransfer', {
       this.error = null
       try {
         const { $api } = useNuxtApp()
-        const token = localStorage.getItem('token')
 
         const response = await fetch(`${$api.getStockTransferDetails(id)}`, {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
+          credentials: 'include', // Cookie-based auth
         })
 
         if (!response.ok) {
@@ -652,12 +636,11 @@ export const useStockTransferStore = defineStore('stockTransfer', {
       this.loading = true;
       try {
         const { $api } = useNuxtApp();
-        const token = localStorage.getItem('token');
         const response = await fetch(`${$api.stock()}?warehouseId=${warehouseId}&all=true`, {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
-          }
+          },
+          credentials: 'include', // Cookie-based auth
         });
 
         if (!response.ok) {
@@ -693,8 +676,6 @@ export const useStockTransferStore = defineStore('stockTransfer', {
         const toast = useToast();
         const { $api } = useNuxtApp();
         try {
-            const token = localStorage.getItem('token');
-            
             // Buat URL dengan parameter yang sama seperti filter saat ini
             const url = new URL($api.stockTransfer());
             const params = new URLSearchParams({
@@ -712,11 +693,10 @@ export const useStockTransferStore = defineStore('stockTransfer', {
             const response = await fetch(url, {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json',
                     'Content-Type': 'application/json'
                 },
-                credentials: 'include'
+                credentials: 'include' // Cookie-based auth
             });
 
             if (!response.ok) {

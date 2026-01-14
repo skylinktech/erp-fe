@@ -28,18 +28,16 @@ export const useTopProductsStore = defineStore('top-products', {
   actions: {
     async fetchTopProducts(period: '1m' | '3m' | '6m' = '1m') {
       const { $api } = useNuxtApp()
-      const token = localStorage.getItem('token')
 
       this.loading = true
       this.error = null
       try {
         const data = await $fetch<TopProduct[]>($api.salesOrderTopProducts(), {
           headers: {
-            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
             Accept: 'application/json',
           },
-          credentials: 'include',
+          credentials: 'include', // Cookie-based auth
           query: { period, limit: 10 },
         })
         this.items = Array.isArray(data) ? data.slice(0, 10) : []

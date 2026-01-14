@@ -151,12 +151,27 @@
   const handleLogin = async () => {
     pending.value = true;
     error.value = null;
+    
+    // Clear any invalid cookies before login
+    if (process.client) {
+      const { clearInvalidCookies } = await import('~/utils/clearInvalidCookies')
+      clearInvalidCookies()
+    }
+    
     try {
       // Step 1: Authenticate dengan SSO
       const ssoResponse = await ssoService.authenticate(username.value, password.value);
       
+      // Debug: log response untuk troubleshooting
+      console.log('SSO Response:', ssoResponse);
+      
       if (!ssoResponse || !ssoResponse.access_token) {
         error.value = 'Gagal autentikasi dengan SSO.';
+        console.error('SSO Authentication failed:', {
+          hasResponse: !!ssoResponse,
+          response: ssoResponse,
+          hasAccessToken: !!ssoResponse?.access_token,
+        });
         toast.error({
           title: 'Login Gagal!',
           icon: 'ri-close-line',
@@ -168,11 +183,27 @@
         pending.value = false;
         return;
       }
+      
+      // Validasi token sebelum menyimpan
+      if (ssoResponse.access_token === 'null' || ssoResponse.access_token === 'undefined' || !ssoResponse.access_token.trim()) {
+        error.value = 'Token tidak valid dari SSO.';
+        console.error('Invalid token from SSO:', ssoResponse.access_token);
+        toast.error({
+          title: 'Login Gagal!',
+          icon: 'ri-close-line',
+          message: error.value,
+          timeout: 3000,
+          position: 'topRight',
+          layout: 2,
+        });
+        pending.value = false;
+        return;
+      }
+      
+      console.log('✅ Valid SSO token received:', ssoResponse.access_token.substring(0, 30) + '...');
 
       // Step 2: Get user info dari SSO
       const ssoUserInfo = await ssoService.getUserInfo(ssoResponse.access_token);
-      console.log('🔐 SSO User Info:', ssoUserInfo);
-      console.log('🔐 SSO Roles:', ssoUserInfo?.roles);
       
       if (!ssoUserInfo) {
         error.value = 'Gagal mendapatkan informasi user dari SSO.';
@@ -191,21 +222,41 @@
       // Step 3: Save credentials if remember me is checked
       saveCredentials();
 
-      // Step 4: Simpan SSO token ke localStorage
-      localStorage.setItem('token', ssoResponse.access_token);
-      localStorage.setItem('sso_token', ssoResponse.access_token); // Simpan juga untuk logout nanti
+      // Step 4: Dengan cookie-based auth, token sudah otomatis disimpan di httpOnly cookie
+      // Tidak perlu simpan ke localStorage lagi untuk keamanan yang lebih baik
+      console.log('✅ SSO Authentication successful, token stored in httpOnly cookie');
       
       // Step 5: Fetch user data dari backend ERP menggunakan SSO token
       // Backend ERP akan sync user data dari SSO dan mengembalikan data user yang benar
       let userData = null;
       try {
+        const requestHeaders = {
+          'Authorization': `Bearer ${ssoResponse.access_token}`,
+          'Content-Type': 'application/json',
+        };
+        
+        console.log('📤 Requesting user data from ERP backend...', {
+          url: $api.me(),
+          token_preview: ssoResponse.access_token.substring(0, 30) + '...',
+          token_length: ssoResponse.access_token.length,
+          full_token: ssoResponse.access_token, // Debug: show full token
+          headers: requestHeaders,
+          method: 'GET',
+          credentials: 'include',
+        });
+        
+        // Kirim token di Authorization header untuk cross-domain request
+        // Cookie dari SSO domain tidak akan dikirim ke ERP domain (different domain)
         const backendResponse = await fetch($api.me(), {
           method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${ssoResponse.access_token}`,
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include'
+          headers: requestHeaders,
+          credentials: 'include' // Untuk menerima cookie dari ERP backend
+        });
+        
+        console.log('📥 ERP backend response:', {
+          status: backendResponse.status,
+          ok: backendResponse.ok,
+          headers: Object.fromEntries(backendResponse.headers.entries()),
         });
 
         if (backendResponse.ok) {
@@ -215,8 +266,17 @@
           // Gunakan data dari backend ERP (yang sudah sync dengan SSO)
           userStore.setUser(userData);
         } else {
-          // Jika backend belum support SSO, gunakan data dari SSO sebagai fallback
-          console.warn('Backend ERP belum support SSO, menggunakan data dari SSO');
+          // Error dari backend, log detail error
+          const errorText = await backendResponse.text().catch(() => 'No error text');
+          console.error('❌ Backend ERP error:', {
+            status: backendResponse.status,
+            statusText: backendResponse.statusText,
+            errorText: errorText.substring(0, 200),
+          });
+          
+          // Jika 401, kemungkinan token invalid atau user sync gagal
+          // Gunakan data dari SSO sebagai fallback
+          console.warn('Backend ERP error, menggunakan data dari SSO sebagai fallback');
           userData = {
             id: ssoUserInfo.id,
             username: ssoUserInfo.username || ssoUserInfo.email,

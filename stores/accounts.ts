@@ -87,7 +87,6 @@ export const useAccountStore = defineStore('account', {
       const toast = useToast();
       const { $api } = useNuxtApp()
       try {
-        const token = localStorage.getItem('token');
         const params = new URLSearchParams({
           page: Math.floor((this.params.first / this.params.rows) + 1).toString(),
           rows: Math.floor(this.params.rows).toString(),
@@ -98,11 +97,10 @@ export const useAccountStore = defineStore('account', {
 
         const response = await fetch(`${$api.accounts()}?${params.toString()}`, {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
-          credentials: 'include'
+          credentials: 'include' // Cookie-based auth
         });
 
         if (!response.ok) {
@@ -151,16 +149,13 @@ export const useAccountStore = defineStore('account', {
       const toast = useToast();
       const { $api } = useNuxtApp()
       try {
-        const token = localStorage.getItem('token');
-        
         // Gunakan endpoint chart-of-accounts yang mengembalikan semua top-level accounts
         const response = await fetch($api.accountsChartOfAccounts(), {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
-          credentials: 'include'
+          credentials: 'include' // Cookie-based auth
         });
 
         if (!response.ok) {
@@ -200,14 +195,12 @@ export const useAccountStore = defineStore('account', {
     async fetchParentAccounts() {
       const { $api } = useNuxtApp()
       try {
-        const token = localStorage.getItem('token');
         const response = await fetch($api.accountsParentAccounts(), {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
-          credentials: 'include'
+          credentials: 'include' // Cookie-based auth
         });
 
         if (response.ok) {
@@ -229,8 +222,6 @@ export const useAccountStore = defineStore('account', {
       const toast = useToast();
 
       try {
-        const token = localStorage.getItem('token')
-
         // Gunakan JSON data instead of FormData
         const payload = {
           code: this.form.code,
@@ -255,11 +246,10 @@ export const useAccountStore = defineStore('account', {
           method: method,
           body: JSON.stringify(payload),
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
-          credentials: 'include',
+          credentials: 'include', // Cookie-based auth
         })
 
         let result;
@@ -321,17 +311,15 @@ export const useAccountStore = defineStore('account', {
 
       if (result.isConfirmed) {
         try {
-          const token = localStorage.getItem('token');
           const url = $api.accounts() + '/' + id;
 
           const response = await fetch(url, {
             method: 'DELETE',
             headers: {
-              'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json',
               'Accept': 'application/json',
             },
-            credentials: 'include'
+            credentials: 'include' // Cookie-based auth
           });
 
           if (!response.ok) {

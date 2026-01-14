@@ -66,12 +66,11 @@ export const useMenuDetailStore = defineStore('menu-detail', {
             search   : this.params.search || '',
         });
 
-        const token = localStorage.getItem('token');
         const response = await fetch(`${$api.menuDetails()}?${params.toString()}`, {
             headers: {
-              'Authorization': `Bearer ${token}`,
               'Accept': 'application/json',
-            }
+            },
+            credentials: 'include', // Cookie-based auth
         });
 
         if (!response.ok) {
@@ -99,12 +98,11 @@ export const useMenuDetailStore = defineStore('menu-detail', {
     async fetchMenuGroupsForSelect() {
         const { $api } = useNuxtApp();
         try {
-            const token = localStorage.getItem('token');
             const response = await fetch($api.menuGroups(), {
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json',
-                }
+                },
+                credentials: 'include', // Cookie-based auth
             });
             if (!response.ok) throw new Error('Gagal mengambil data menu groups');
             const result = await response.json();
@@ -128,8 +126,6 @@ export const useMenuDetailStore = defineStore('menu-detail', {
       const { $api } = useNuxtApp();
 
       try {
-        const token = localStorage.getItem('token');
-
         let url = $api.menuDetails();
         let method = 'POST';
 
@@ -143,12 +139,11 @@ export const useMenuDetailStore = defineStore('menu-detail', {
         const response = await fetch(url, {
           method,
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
             'Content-Type': 'application/json'
           },
           body: body,
-          credentials: 'include'
+          credentials: 'include', // Cookie-based auth
         });
 
         if (!response.ok) {
@@ -212,15 +207,12 @@ export const useMenuDetailStore = defineStore('menu-detail', {
       }
 
       try {
-          const token = localStorage.getItem('token');
-
           const response = await fetch(`${$api.menuDetails()}/${id}`, {
             method: 'DELETE',
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Accept': 'application/json',
             },
-            credentials: 'include',
+            credentials: 'include', // Cookie-based auth
           });
 
           if (!response.ok) {

@@ -105,7 +105,6 @@ export const useProductStore = defineStore('product', {
       this.error = null
       const { $api } = useNuxtApp()
       try {
-        const token = localStorage.getItem('token')
         const params = new URLSearchParams({
             page: Math.floor((this.params.first / this.params.rows) + 1).toString(),
             rows: Math.floor(this.params.rows).toString(),
@@ -124,11 +123,10 @@ export const useProductStore = defineStore('product', {
 
         const response = await fetch(`${$api.product()}?${params.toString()}`, {
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
             },
-            credentials: 'include'
+            credentials: 'include' // Cookie-based auth
         });
 
         if (!response.ok) {
@@ -169,7 +167,6 @@ export const useProductStore = defineStore('product', {
       const { $api } = useNuxtApp();
       
       try {
-        const token = localStorage.getItem('token');
         const params = new URLSearchParams({
           rows: '10000', // Ambil semua produk dengan limit yang sangat besar
           sortField: 'name', // Urutkan berdasarkan nama untuk kemudahan pencarian
@@ -179,10 +176,9 @@ export const useProductStore = defineStore('product', {
 
         const response = await fetch(`${$api.product()}?${params.toString()}`, {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
           },
-          credentials: 'include'
+          credentials: 'include' // Cookie-based auth
         });
 
         if (!response.ok) {
@@ -218,7 +214,6 @@ export const useProductStore = defineStore('product', {
       const { $api } = useNuxtApp();
       
       try {
-        const token = localStorage.getItem('token');
         const params = new URLSearchParams({
           warehouseId: warehouseId.toString(),
           includeStocks: 'true',
@@ -227,10 +222,9 @@ export const useProductStore = defineStore('product', {
 
         const response = await fetch(`${$api.product()}?${params.toString()}`, {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
           },
-          credentials: 'include'
+          credentials: 'include' // Cookie-based auth
         });
 
         if (!response.ok) {
@@ -261,8 +255,6 @@ export const useProductStore = defineStore('product', {
       const { $api } = useNuxtApp();
 
       try {
-          const token = localStorage.getItem('token');
-
           const formData = new FormData();
           Object.keys(this.form).forEach(key => {
             const value = this.form[key as keyof typeof this.form];
@@ -290,11 +282,10 @@ export const useProductStore = defineStore('product', {
           const response = await fetch(url, {
               method: 'POST',
               headers: {
-                  'Authorization': `Bearer ${token}`,
                   'Accept': 'application/json',
               },
               body: formData,
-              credentials: 'include'
+              credentials: 'include', // Cookie-based auth
           });
 
           // Handle response parsing dengan error catching
@@ -380,15 +371,12 @@ export const useProductStore = defineStore('product', {
       
       this.loading = true;
       try {
-          const token = localStorage.getItem('token');
-
           const response = await fetch($api.product() + `/${id}`, {
               method: 'DELETE',
               headers: {
-                  'Authorization': `Bearer ${token}`,
                   'Accept': 'application/json',
               },
-              credentials: 'include',
+              credentials: 'include', // Cookie-based auth
           });
 
           if (!response.ok) {
@@ -565,14 +553,12 @@ export const useProductStore = defineStore('product', {
       const toast     = useToast();
         const { $api } = useNuxtApp()
         try {
-            const token = localStorage.getItem('token')
             const response = await fetch(`${$api.product()}/totalProducts`, {
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
                 },
-                credentials: 'include'
+                credentials: 'include' // Cookie-based auth
             });
 
             if (!response.ok) {
@@ -596,7 +582,6 @@ export const useProductStore = defineStore('product', {
       const toast     = useToast();
         const { $api } = useNuxtApp()
         try {
-            const token = localStorage.getItem('token')
             const params = new URLSearchParams({
                 search: this.params.search || '',
             });
@@ -608,11 +593,10 @@ export const useProductStore = defineStore('product', {
 
             const response = await fetch(`${$api.productExportExcel()}?${params.toString()}`, {
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
                 },
-                credentials: 'include'
+                credentials: 'include' // Cookie-based auth
             });
 
             if (!response.ok) {

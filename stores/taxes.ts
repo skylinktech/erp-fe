@@ -75,7 +75,6 @@ export const useTaxStore = defineStore('tax', {
       const { $api } = useNuxtApp()
       const toast = useToast()
       try {
-        const token = localStorage.getItem('token');
         const params = new URLSearchParams({
           page: Math.floor((this.params.first / this.params.rows) + 1).toString(),
           rows: Math.floor(this.params.rows).toString(),
@@ -86,11 +85,10 @@ export const useTaxStore = defineStore('tax', {
 
         const response = await fetch(`${$api.taxes()}?${params.toString()}`, {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
-          credentials: 'include'
+          credentials: 'include' // Cookie-based auth
         });
 
         if (!response.ok) {
@@ -122,8 +120,6 @@ export const useTaxStore = defineStore('tax', {
       const toast = useToast()
 
       try {
-        const token = localStorage.getItem('token')
-
         // Debug: log form data
         console.log('Form data:', this.form)
         console.log('Is edit mode:', this.isEditMode)
@@ -153,11 +149,10 @@ export const useTaxStore = defineStore('tax', {
           method: method,
           body: JSON.stringify(payload),
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
-          credentials: 'include',
+          credentials: 'include', // Cookie-based auth
         })
 
         let result;
@@ -222,15 +217,13 @@ export const useTaxStore = defineStore('tax', {
 
       if (result.isConfirmed) {
         try {
-          const token = localStorage.getItem('token');
           const response = await fetch($api.taxesDelete(id), {
             method: 'DELETE',
             headers: {
-              'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json',
               'Accept': 'application/json',
             },
-            credentials: 'include'
+            credentials: 'include' // Cookie-based auth
           });
 
           if (!response.ok) {

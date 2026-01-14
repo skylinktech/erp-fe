@@ -112,15 +112,13 @@ export const useUserSessionStore = defineStore('userSession', {
       
       try {
         const { $api } = useNuxtApp()
-        const token = localStorage.getItem('token')
 
         const response = await $fetch<{ success: boolean; data: UserSession[] }>($api.userSessionsActiveUsers(), {
           headers: {
-            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
             Accept: 'application/json',
           },
-          credentials: 'include',
+          credentials: 'include', // Token otomatis dikirim via cookie
         })
 
         if (response.success) {
@@ -141,16 +139,15 @@ export const useUserSessionStore = defineStore('userSession', {
     async forceLogoutUser(sessionId: string) {
       try {
         const { $api } = useNuxtApp()
-        const token = localStorage.getItem('token')
 
+        // Cookie-based auth: token akan otomatis dikirim via cookie
         await $fetch($api.userSessionsForceLogout(sessionId), {
           method: 'POST',
           headers: {
-            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
             Accept: 'application/json',
           },
-          credentials: 'include',
+          credentials: 'include', // PENTING: kirim cookies untuk autentikasi
         })
 
         // Refresh data setelah force logout
@@ -163,7 +160,6 @@ export const useUserSessionStore = defineStore('userSession', {
     async cleanupExpiredSessions() {
       try {
         const { $api } = useNuxtApp()
-        const token = localStorage.getItem('token')
 
         await $fetch($api.userSessionsCleanupExpired(), {
           method: 'POST',

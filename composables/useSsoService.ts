@@ -72,11 +72,24 @@ export const useSsoService = () => {
           'Content-Type': 'application/x-www-form-urlencoded',
           Accept: 'application/json',
         },
+        credentials: 'include', // PENTING: Untuk menerima cookies dari server
         body: formData.toString(),
       })
 
+      console.log('SSO Token Request:', {
+        url: `${ssoUrl}/api/oauth/token`,
+        status: response.status,
+        ok: response.ok,
+        headers: Object.fromEntries(response.headers.entries()),
+      });
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
+        
+        console.error('SSO Token Request Failed:', {
+          status: response.status,
+          errorData,
+        });
         
         // Handle error spesifik
         if (errorData.error === 'access_denied') {
@@ -96,6 +109,7 @@ export const useSsoService = () => {
       }
 
       const data: SsoTokenResponse = await response.json()
+      console.log('SSO Token Response Data:', data);
       return data
     } catch (error: any) {
       console.error('SSO Authentication error:', error)
@@ -121,6 +135,7 @@ export const useSsoService = () => {
           Authorization: `Bearer ${token}`,
           Accept: 'application/json',
         },
+        credentials: 'include', // PENTING: Untuk mengirim cookies ke server
       })
 
       if (!response.ok) {
@@ -153,6 +168,7 @@ export const useSsoService = () => {
           Authorization: `Bearer ${token}`,
           Accept: 'application/json',
         },
+        credentials: 'include', // PENTING: Untuk mengirim cookies ke server
       })
 
       return response.ok

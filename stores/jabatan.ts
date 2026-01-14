@@ -69,7 +69,6 @@ export const useJabatanStore = defineStore('jabatan', {
       const { $api } = useNuxtApp()
       
       try {
-        const token = localStorage.getItem('token');
         const params = new URLSearchParams({
             page     : ((this.params.first / this.params.rows) + 1).toString(),
             rows     : this.params.rows.toString(),
@@ -81,10 +80,9 @@ export const useJabatanStore = defineStore('jabatan', {
         const response = await fetch(`${$api.jabatan()}?${params.toString()}`, {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
           },
-          credentials: 'include'
+          credentials: 'include' // Cookie-based auth
         })
         const result = await response.json()
         this.jabatans = (result.data || []).map((item: any) => ({
@@ -117,13 +115,11 @@ export const useJabatanStore = defineStore('jabatan', {
             general_manager: undefined,
         };
         try {
-            const token = localStorage.getItem('token');
             const response = await fetch($api.countPegawaiByJabatan(), {
                 headers: { 
-                    Authorization: `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
-                credentials: 'include'
+                credentials: 'include' // Cookie-based auth
             });
 
             if (response.ok) {
@@ -143,8 +139,6 @@ export const useJabatanStore = defineStore('jabatan', {
         const { $api } = useNuxtApp();
 
         try {
-            const token = localStorage.getItem('token');
-
             let url = $api.jabatan();
             let method = 'POST';
 
@@ -156,12 +150,11 @@ export const useJabatanStore = defineStore('jabatan', {
             const response = await fetch(url, {
                 method,
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json',
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ nm_jabatan: this.form.nmJabatan }),
-                credentials: 'include'
+                credentials: 'include', // Cookie-based auth
             });
 
             if (!response.ok) {
@@ -216,15 +209,12 @@ export const useJabatanStore = defineStore('jabatan', {
       }
 
       try {
-          const token = localStorage.getItem('token');
-
           const response = await fetch(`${$api.jabatan()}/${id}`, {
               method: 'DELETE',
               headers: {
-                  'Authorization': `Bearer ${token}`,
                   'Accept': 'application/json',
               },
-              credentials: 'include',
+              credentials: 'include', // Cookie-based auth
           });
 
           if (!response.ok) {

@@ -849,12 +849,11 @@ watch(() => form.value?.perusahaanId, async (newPerusahaanId) => {
         // Load cabang berdasarkan perusahaan yang dipilih
         try {
             const { $api } = useNuxtApp();
-            const token = localStorage.getItem('token');
             const response = await fetch(`${$api.dataCabang()}?perusahaanId=${newPerusahaanId}`, {
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json',
-                }
+                },
+                credentials: 'include', // Cookie-based auth
             });
             
             if (response.ok) {

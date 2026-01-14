@@ -109,7 +109,6 @@ export const useARReceiptStore = defineStore('arReceipt', {
       const toast = useToast();
       const { $api } = useNuxtApp()
       try {
-        const token = localStorage.getItem('token');
         const params = new URLSearchParams({
           page: Math.floor((this.params.first / this.params.rows) + 1).toString(),
           rows: Math.floor(this.params.rows).toString(),
@@ -120,11 +119,10 @@ export const useARReceiptStore = defineStore('arReceipt', {
 
         const response = await fetch(`${$api.arReceipts()}?${params.toString()}`, {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
-          credentials: 'include'
+          credentials: 'include' // Cookie-based auth
         });
 
         if (!response.ok) {
@@ -165,14 +163,12 @@ export const useARReceiptStore = defineStore('arReceipt', {
     async fetchCustomers() {
       const { $api } = useNuxtApp()
       try {
-        const token = localStorage.getItem('token');
         const response = await fetch($api.customer(), {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
-          credentials: 'include'
+          credentials: 'include' // Cookie-based auth
         });
 
         if (response.ok) {
@@ -190,14 +186,12 @@ export const useARReceiptStore = defineStore('arReceipt', {
     async fetchInvoices() {
       const { $api } = useNuxtApp()
       try {
-        const token = localStorage.getItem('token');
         const response = await fetch($api.salesInvoice(), {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
-          credentials: 'include'
+          credentials: 'include' // Cookie-based auth
         });
 
         if (response.ok) {
@@ -215,14 +209,12 @@ export const useARReceiptStore = defineStore('arReceipt', {
     async fetchBankAccounts() {
       const { $api } = useNuxtApp()
       try {
-        const token = localStorage.getItem('token');
         const response = await fetch($api.bankAccounts(), {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
-          credentials: 'include'
+          credentials: 'include' // Cookie-based auth
         });
 
         if (response.ok) {
@@ -244,8 +236,6 @@ export const useARReceiptStore = defineStore('arReceipt', {
       const toast = useToast();
 
       try {
-        const token = localStorage.getItem('token')
-
         const payload = {
           reference_number: this.form.reference_number,
           date: this.form.date,
@@ -271,11 +261,10 @@ export const useARReceiptStore = defineStore('arReceipt', {
           method: method,
           body: JSON.stringify(payload),
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
-          credentials: 'include',
+          credentials: 'include', // Cookie-based auth
         })
 
         let result;
@@ -337,17 +326,15 @@ export const useARReceiptStore = defineStore('arReceipt', {
 
       if (result.isConfirmed) {
         try {
-          const token = localStorage.getItem('token');
           const url = $api.arReceipts() + '/' + id;
 
           const response = await fetch(url, {
             method: 'DELETE',
             headers: {
-              'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json',
               'Accept': 'application/json',
             },
-            credentials: 'include'
+            credentials: 'include' // Cookie-based auth
           });
 
           if (!response.ok) {
@@ -394,17 +381,15 @@ export const useARReceiptStore = defineStore('arReceipt', {
       const toast = useToast();
       
       try {
-        const token = localStorage.getItem('token');
         const url = $api.arReceipts() + '/' + id + '/confirm';
 
         const response = await fetch(url, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
-          credentials: 'include'
+          credentials: 'include' // Cookie-based auth
         });
 
         if (!response.ok) {

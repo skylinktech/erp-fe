@@ -78,12 +78,11 @@ export const useMenuGroupStore = defineStore('menu-group', {
             all      : 'true',
         });
 
-        const token = localStorage.getItem('token');
         const response = await fetch(`${$api.menuGroups()}?${params.toString()}`, {
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Accept': 'application/json',
-            }
+            },
+            credentials: 'include', // Cookie-based auth
         });
 
         if (!response.ok) {
@@ -128,12 +127,11 @@ export const useMenuGroupStore = defineStore('menu-group', {
             rows     : '999', // Ambil semua data
         });
 
-        const token = localStorage.getItem('token');
         const response = await fetch(`${$api.menuGroupsAll()}?${params.toString()}`, {
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Accept': 'application/json',
-            }
+            },
+            credentials: 'include', // Cookie-based auth
         });
 
         if (!response.ok) {
@@ -159,8 +157,6 @@ export const useMenuGroupStore = defineStore('menu-group', {
       const { $api } = useNuxtApp();
 
       try {
-        const token = localStorage.getItem('token');
-
         let url = $api.menuGroups();
         let method = 'POST';
 
@@ -174,12 +170,11 @@ export const useMenuGroupStore = defineStore('menu-group', {
         const response = await fetch(url, {
           method,
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
             'Content-Type': 'application/json'
           },
           body: body,
-          credentials: 'include'
+          credentials: 'include' // Cookie-based auth
         });
 
         if (!response.ok) {
@@ -237,15 +232,12 @@ export const useMenuGroupStore = defineStore('menu-group', {
       }
 
       try {
-          const token = localStorage.getItem('token');
-
           const response = await fetch(`${$api.menuGroups()}/${id}`, {
             method: 'DELETE',
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Accept': 'application/json',
             },
-            credentials: 'include',
+            credentials: 'include', // Cookie-based auth
           });
 
           if (!response.ok) {

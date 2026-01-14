@@ -93,7 +93,6 @@ export const useJournalStore = defineStore('journal', {
       this.error = null
       const { $api } = useNuxtApp()
       try {
-        const token = localStorage.getItem('token');
         const params = new URLSearchParams({
           page: Math.floor((this.params.first / this.params.rows) + 1).toString(),
           limit: Math.floor(this.params.rows).toString(), // Backend menggunakan 'limit', bukan 'rows'
@@ -104,11 +103,10 @@ export const useJournalStore = defineStore('journal', {
 
         const response = await fetch(`${$api.journals()}?${params.toString()}`, {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
-          credentials: 'include'
+          credentials: 'include' // Cookie-based auth
         });
 
         if (!response.ok) {
@@ -147,7 +145,6 @@ export const useJournalStore = defineStore('journal', {
     async fetchAccounts() {
       const { $api } = useNuxtApp()
       try {
-        const token = localStorage.getItem('token');
         // Gunakan parameter yang sama seperti accountStore tetapi dengan rows yang lebih besar
         const params = new URLSearchParams({
           page: '1',
@@ -160,11 +157,10 @@ export const useJournalStore = defineStore('journal', {
         
         const response = await fetch(`${$api.accounts()}?${params.toString()}`, {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
-          credentials: 'include'
+          credentials: 'include' // Cookie-based auth
         });
 
         
@@ -246,7 +242,6 @@ export const useJournalStore = defineStore('journal', {
           this.loading = false
           return
         }
-        const token = localStorage.getItem('token')
 
         const formData = new FormData()
         
@@ -326,10 +321,9 @@ export const useJournalStore = defineStore('journal', {
           method: method,
           body: formData,
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
           },
-          credentials: 'include',
+          credentials: 'include', // Cookie-based auth
         })
 
         console.log('Response status:', response.status);
@@ -397,15 +391,13 @@ export const useJournalStore = defineStore('journal', {
 
       if (result.isConfirmed) {
         try {
-          const token = localStorage.getItem('token');
           const response = await fetch(`${$api.journals()}/${id}`, {
             method: 'DELETE',
             headers: {
-              'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json',
               'Accept': 'application/json',
             },
-            credentials: 'include'
+            credentials: 'include' // Cookie-based auth
           });
 
           if (!response.ok) {
@@ -451,15 +443,13 @@ export const useJournalStore = defineStore('journal', {
 
       if (result.isConfirmed) {
         try {
-          const token = localStorage.getItem('token');
           const response = await fetch(`${$api.journals()}/${id}/post`, {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json',
               'Accept': 'application/json',
             },
-            credentials: 'include'
+            credentials: 'include' // Cookie-based auth
           });
 
           if (!response.ok) {

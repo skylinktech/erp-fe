@@ -68,13 +68,11 @@ export const useRolesStore = defineStore('roles', {
                     'search[value]': this.params.search || '',
                 });
                 
-                const token = localStorage.getItem('token');
                 const response = await fetch(`${$api.roles()}?${queryParams.toString()}`, {
                     headers: {
-                        'Authorization': `Bearer ${token}`,
                         'Accept': 'application/json',
                     },
-                    credentials: 'include'
+                    credentials: 'include', // Cookie-based auth
                 });
 
                 if (!response.ok) {
@@ -107,14 +105,12 @@ export const useRolesStore = defineStore('roles', {
         async fetchPermissions() {
             const { $api } = useNuxtApp()
             const toast = useToast();
-            const token = localStorage.getItem('token');
             try {
                 const res = await fetch($api.getPermissions(), {
                     headers: { 
-                        Authorization: `Bearer ${token}`,
                         'Accept': 'application/json'
                     },
-                    credentials: 'include'
+                    credentials: 'include', // Cookie-based auth
                 });
 
                 if (!res.ok) {
@@ -142,7 +138,6 @@ export const useRolesStore = defineStore('roles', {
             const toast = useToast();
 
             try {
-                const token = localStorage.getItem('token');
                 let url = $api.roleStore();
                 let method = 'POST';
 
@@ -159,12 +154,11 @@ export const useRolesStore = defineStore('roles', {
                 const response = await fetch(url, {
                     method,
                     headers: {
-                        'Authorization': `Bearer ${token}`,
                         'Accept': 'application/json',
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(payload),
-                    credentials: 'include'
+                    credentials: 'include', // Cookie-based auth
                 });
 
                 if (!response.ok) {
@@ -226,15 +220,12 @@ export const useRolesStore = defineStore('roles', {
 
             this.loading = true;
             try {
-                const token = localStorage.getItem('token');
-
                 const response = await fetch($api.roleDelete(id), {
                     method: 'DELETE',
                     headers: {
-                        'Authorization': `Bearer ${token}`,
                         'Accept': 'application/json',
                     },
-                    credentials: 'include',
+                    credentials: 'include', // Cookie-based auth
                 });
 
                 if (!response.ok) {
@@ -271,16 +262,14 @@ export const useRolesStore = defineStore('roles', {
 
             if (role) {
                 const { $api } = useNuxtApp();
-                const token = localStorage.getItem('token');
                 const toast = useToast();
 
                 try {
                     const response = await fetch($api.roleShow(role.id), {
                         headers: { 
-                            Authorization: `Bearer ${token}`,
                             'Accept': 'application/json'
                         },
-                        credentials: 'include'
+                        credentials: 'include', // Cookie-based auth
                     });
                     if (!response.ok) throw new Error('Gagal memuat detail role.');
                     const roleData = await response.json();

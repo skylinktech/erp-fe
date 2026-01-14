@@ -142,7 +142,6 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
       this.error = null
       const { $api } = useNuxtApp()
       try {
-        const token = localStorage.getItem('token');
         const url = new URL($api.purchaseOrder())
         const params = new URLSearchParams({
             page     : Math.floor((this.params.first / this.params.rows) + 1).toString(),
@@ -169,11 +168,10 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
         const response = await fetch(url, {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
             'Content-Type': 'application/json'
           },
-          credentials: 'include'
+          credentials: 'include' // Cookie-based auth
         })
 
         if (!response.ok) throw new Error('Gagal mengambil data purchaseOrder')
@@ -215,8 +213,6 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
         const userStore = useUserStore();
 
         try {
-            const token        = localStorage.getItem('token');
-
             const formData = new FormData()
 
             const dataToAppend = { ...this.form };
@@ -332,11 +328,10 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
             const response = await fetch(url, {
                 method: method,
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json',
                 },
                 body: formData,
-                credentials: 'include',
+                credentials: 'include', // Cookie-based auth
             });
 
             if (!response.ok) {
@@ -416,15 +411,12 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
         }
   
         try {
-            const token = localStorage.getItem('token');
-  
             const response = await fetch(`${$api.purchaseOrder()}/${id}`, {
                 method: 'DELETE',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json',
                 },
-                credentials: 'include',
+                credentials: 'include', // Cookie-based auth
             });
   
             if (!response.ok) {
@@ -457,16 +449,13 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
       this.error = null;
       const { $api } = useNuxtApp();
       try {
-          const token = localStorage.getItem('token');
-
           const response = await fetch($api.approvePurchaseOrder(purchaseOrderId), {
               method: 'PATCH',
               headers: {
-                  'Authorization': `Bearer ${token}`,
                   'Content-Type' : 'application/json',
                   'Accept'       : 'application/json',
               },
-              credentials: 'include',
+              credentials: 'include', // Cookie-based auth
           });
 
           if (!response.ok) {
@@ -502,16 +491,13 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
       this.error = null;
       const { $api } = useNuxtApp();
       try {
-          const token = localStorage.getItem('token');
-
           const response = await fetch($api.rejectPurchaseOrder(purchaseOrderId), {
               method: 'PATCH',
               headers: {
-                  'Authorization': `Bearer ${token}`,
                   'Content-Type' : 'application/json',
                   'Accept'       : 'application/json',
               },
-              credentials: 'include',
+              credentials: 'include', // Cookie-based auth
           });
 
           if (!response.ok) {
@@ -548,19 +534,16 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
         this.error = null;
         const { $api } = useNuxtApp();
         try {
-            const token        = localStorage.getItem('token');
-
             const resData = await apiFetch($api.purchaseOrderItemUpdateStatusPartial(itemId), {
                 method: 'PATCH',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json',
                     'Content-Type': 'application/json',
                 },
                 body: { 
                     receivedQty: receivedQty 
                 },
-                credentials: 'include',
+                credentials: 'include', // Cookie-based auth (apiFetch already handles this)
             });
 
             const updatedPurchaseOrderItem = resData.data.purchaseOrderItem;
@@ -601,16 +584,13 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
       const { $api } = useNuxtApp();
       
       try {
-          const token = localStorage.getItem('token');
-
           const response = await fetch($api.receiveAllPurchaseOrderItems(purchaseOrderId), {
               method: 'POST',
               headers: {
-                  'Authorization': `Bearer ${token}`,
                   'Content-Type' : 'application/json',
                   'Accept'       : 'application/json',
               },
-              credentials: 'include',
+              credentials: 'include', // Cookie-based auth
           });
 
           if (!response.ok) {
@@ -641,12 +621,11 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
         const toast = useToast();
         try {
           const { $api } = useNuxtApp();
-          const token = localStorage.getItem('token');
           const response = await fetch($api.dataPerusahaan(), {
             headers: {
-              'Authorization': `Bearer ${token}`,
               'Accept': 'application/json',
-            }
+            },
+            credentials: 'include', // Cookie-based auth
           });
   
           if (!response.ok) {
@@ -673,16 +652,15 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
         const toast = useToast();
         try {
             const { $api } = useNuxtApp();
-            const token = localStorage.getItem('token');
             const url = perusahaanId 
             ? `${$api.dataCabang()}?perusahaanId=${perusahaanId}`
             : $api.dataCabang();
             
             const response = await fetch(url, {
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Accept': 'application/json',
-            }
+            },
+            credentials: 'include', // Cookie-based auth
             });
 
             if (!response.ok) {
@@ -709,12 +687,11 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
         const toast = useToast();
         try {
             const { $api } = useNuxtApp();
-            const token = localStorage.getItem('token');
             const response = await fetch($api.dataVendor(), {
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Accept': 'application/json',
-            }
+            },
+            credentials: 'include', // Cookie-based auth
             });
 
             if (!response.ok) {
@@ -741,7 +718,6 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
         const toast = useToast();
         try {
             const { $api } = useNuxtApp();
-            const token = localStorage.getItem('token');
             
             // Selalu muat semua produk dengan jumlah yang besar
             let url = `${$api.product()}?includeStocks=true&rows=10000`;
@@ -784,13 +760,12 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
         const toast = useToast();
         try {
             const { $api } = useNuxtApp();
-            const token = localStorage.getItem('token');
             
             const response = await fetch(`${$api.product()}?includeStocks=true&rows=10000`, {
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json',
-                }
+                },
+                credentials: 'include', // Cookie-based auth
             });
             
             if (response.ok) {
@@ -950,14 +925,11 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
       const { $api } = useNuxtApp();
       
       try {
-        const token        = localStorage.getItem('token');
-
         const resData = await apiFetch($api.getPurchaseOrderDetails(poId), {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
           },
-          credentials: 'include',
+          credentials: 'include', // Cookie-based auth (apiFetch already handles this)
         });
         
         if (resData && resData.data) {
@@ -987,14 +959,11 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
         const { $api } = useNuxtApp();
         
         try {
-            const token = localStorage.getItem('token');
-
             const resData = await apiFetch($api.getPurchaseOrderDetails(purchaseOrderId), {
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json',
                 },
-                credentials: 'include',
+                credentials: 'include', // Cookie-based auth (apiFetch already handles this)
             });
             
             if (resData && resData.data) {
@@ -1024,15 +993,12 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
         const { $api } = useNuxtApp()
         const defaultStats = { total: 0, approved: 0, rejected: 0, draft: 0, received: 0 };
         try {
-            const token = localStorage.getItem('token');
-            
             const response = await fetch($api.countPurchaseOrderByStatus(), {
                 headers: {
-                    Authorization: `Bearer ${token}`,
                     'Content-Type': 'application/json',
                     'Accept': 'application/json'
                 },
-                credentials: 'include'
+                credentials: 'include' // Cookie-based auth
             });
             
             if (response.ok) {
@@ -1050,8 +1016,6 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
         const toast = useToast();
         const { $api } = useNuxtApp();
         try {
-            const token = localStorage.getItem('token');
-            
             // Buat URL dengan parameter yang sama seperti filter saat ini
             const url = new URL($api.purchaseOrder());
             const params = new URLSearchParams({
@@ -1080,11 +1044,10 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
             const response = await fetch(url, {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json',
                     'Content-Type': 'application/json'
                 },
-                credentials: 'include'
+                credentials: 'include' // Cookie-based auth
             });
 
             if (!response.ok) {
@@ -1109,12 +1072,11 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
     async loadCabangForPerusahaan(perusahaanId: number) {
         try {
             const { $api } = useNuxtApp();
-            const token = localStorage.getItem('token');
             const response = await fetch(`${$api.dataCabang()}?perusahaanId=${perusahaanId}`, {
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json',
-                }
+                },
+                credentials: 'include', // Cookie-based auth
             });
             
             if (response.ok) {

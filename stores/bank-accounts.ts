@@ -76,7 +76,6 @@ export const useBankAccountStore = defineStore('bankAccount', {
       this.error = null
       const { $api } = useNuxtApp()
       try {
-        const token = localStorage.getItem('token');
         const params = new URLSearchParams({
           page: Math.floor((this.params.first / this.params.rows) + 1).toString(),
           rows: Math.floor(this.params.rows).toString(),
@@ -87,11 +86,10 @@ export const useBankAccountStore = defineStore('bankAccount', {
 
         const response = await fetch(`${$api.bankAccounts()}?${params.toString()}`, {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
-          credentials: 'include'
+          credentials: 'include' // Cookie-based auth
         });
 
         if (!response.ok) {
@@ -122,8 +120,6 @@ export const useBankAccountStore = defineStore('bankAccount', {
       const { $api } = useNuxtApp()
 
       try {
-        const token = localStorage.getItem('token')
-
         const formData = new FormData()
         
         const fieldsToSend = ['account_name', 'account_number', 'bank_name', 'currency', 'opening_balance'];
@@ -145,10 +141,9 @@ export const useBankAccountStore = defineStore('bankAccount', {
           method: method,
           body: formData,
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
           },
-          credentials: 'include',
+          credentials: 'include', // Cookie-based auth
         })
 
         let result;
@@ -208,15 +203,13 @@ export const useBankAccountStore = defineStore('bankAccount', {
 
       if (result.isConfirmed) {
         try {
-          const token = localStorage.getItem('token');
           const response = await fetch($api.bankAccountsDelete(id), {
             method: 'DELETE',
             headers: {
-              'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json',
               'Accept': 'application/json',
             },
-            credentials: 'include'
+            credentials: 'include' // Cookie-based auth
           });
 
           if (!response.ok) {

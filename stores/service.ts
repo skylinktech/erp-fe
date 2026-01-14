@@ -91,7 +91,6 @@ export const useServiceStore = defineStore('service', {
       this.error = null
       const { $api } = useNuxtApp()
       try {
-        const token = localStorage.getItem('token')
         const params = new URLSearchParams({
           page: Math.floor(this.params.first / this.params.rows + 1).toString(),
           rows: Math.floor(this.params.rows).toString(),
@@ -102,11 +101,10 @@ export const useServiceStore = defineStore('service', {
 
         const response = await fetch(`${$api.service()}?${params.toString()}`, {
           headers: {
-            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
             Accept: 'application/json',
           },
-          credentials: 'include',
+          credentials: 'include', // Cookie-based auth
         })
 
         if (!response.ok) {
@@ -143,8 +141,6 @@ export const useServiceStore = defineStore('service', {
       const { $api } = useNuxtApp()
 
       try {
-        const token = localStorage.getItem('token')
-
         const formData = new FormData()
         Object.keys(this.form).forEach((key) => {
           const value = this.form[key as keyof typeof this.form]
@@ -164,11 +160,10 @@ export const useServiceStore = defineStore('service', {
         const response = await fetch(url, {
           method: 'POST',
           headers: {
-            Authorization: `Bearer ${token}`,
             Accept: 'application/json',
           },
           body: formData,
-          credentials: 'include',
+          credentials: 'include', // Cookie-based auth
         })
 
         let result
@@ -250,15 +245,12 @@ export const useServiceStore = defineStore('service', {
 
       this.loading = true
       try {
-        const token = localStorage.getItem('token')
-
         const response = await fetch($api.service() + `/${id}`, {
           method: 'DELETE',
           headers: {
-            Authorization: `Bearer ${token}`,
             Accept: 'application/json',
           },
-          credentials: 'include',
+          credentials: 'include', // Cookie-based auth
         })
 
         if (!response.ok) {
@@ -349,14 +341,12 @@ export const useServiceStore = defineStore('service', {
       const toast = useToast()
       const { $api } = useNuxtApp()
       try {
-        const token = localStorage.getItem('token')
         const response = await fetch(`${$api.service()}/totalServices`, {
           headers: {
-            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
             Accept: 'application/json',
           },
-          credentials: 'include',
+          credentials: 'include', // Cookie-based auth
         })
 
         if (!response.ok) {
@@ -380,18 +370,16 @@ export const useServiceStore = defineStore('service', {
       const toast = useToast()
       const { $api } = useNuxtApp()
       try {
-        const token = localStorage.getItem('token')
         const params = new URLSearchParams({
           search: this.params.search || '',
         })
 
         const response = await fetch(`${$api.serviceExportExcel()}?${params.toString()}`, {
           headers: {
-            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
             Accept: 'application/json',
           },
-          credentials: 'include',
+          credentials: 'include', // Cookie-based auth
         })
 
         if (!response.ok) {

@@ -187,7 +187,6 @@ export const useStocksStore = defineStore('stocks', {
       this.validationErrors = []
       try {
         const { $api } = useNuxtApp()
-        const token = localStorage.getItem('token')
 
         let url = $api.stock()
         let method: 'POST' | 'PUT' = 'POST'
@@ -199,7 +198,6 @@ export const useStocksStore = defineStore('stocks', {
         const response = await fetch(url, {
           method,
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
             'Content-Type': 'application/json'
           },
@@ -209,7 +207,7 @@ export const useStocksStore = defineStore('stocks', {
             quantity: Number(this.form.quantity),
             description: this.form.description || ''
           }),
-          credentials: 'include'
+          credentials: 'include' // Cookie-based auth
         })
 
         if (!response.ok) {
@@ -233,16 +231,15 @@ export const useStocksStore = defineStore('stocks', {
     },
     async validateStockBatch(items: { productId: number, warehouseId: number, quantity: number }[]) {
         const { $api } = useNuxtApp();
-        const token = localStorage.getItem('token');
         try {
             const response = await fetch(`${$api.validateStockBatch()}`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
                 },
                 body: JSON.stringify({ items }),
+                credentials: 'include', // Cookie-based auth
             });
 
             if (!response.ok) {
@@ -262,7 +259,6 @@ export const useStocksStore = defineStore('stocks', {
       this.loading = true;
       try {
         const { $api } = useNuxtApp();
-        const token = localStorage.getItem('token');
         const params = new URLSearchParams({
             page     : Math.floor((this.params.first / this.params.rows) + 1).toString(),
             rows     : Math.floor(this.params.rows).toString(),
@@ -281,10 +277,10 @@ export const useStocksStore = defineStore('stocks', {
 
         const response = await fetch(`${$api.stock()}?${params.toString()}`, {
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
-            }
+            },
+            credentials: 'include', // Cookie-based auth
         });
 
         if (!response.ok) {
@@ -312,14 +308,12 @@ export const useStocksStore = defineStore('stocks', {
         this.loading = true;
         const { $api }     = useNuxtApp();
         const url          = `${$api.stock()}`;
-        const token        = localStorage.getItem('token');
 
         const response = await fetch(url, {
           headers: {
             'Accept': 'application/json',
-            'Authorization': `Bearer ${token}`,
           },
-          credentials: 'include'
+          credentials: 'include', // Cookie-based auth
         });
 
         if (!response.ok) {
@@ -342,17 +336,15 @@ export const useStocksStore = defineStore('stocks', {
       this.error = null
       try {
         const { $api } = useNuxtApp()
-        const token = localStorage.getItem('token')
 
         const url = `${$api.stock()}/${id}`
 
         const response = await fetch(url, {
           method: 'DELETE',
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
-          credentials: 'include',
+          credentials: 'include', // Cookie-based auth
         })
 
         if (!response.ok) {
@@ -378,12 +370,11 @@ export const useStocksStore = defineStore('stocks', {
       };
       try {
         const { $api } = useNuxtApp()
-        const token = localStorage.getItem('token')
         const response = await fetch($api.getTotalStock(), {
             headers: { 
-                Authorization: `Bearer ${token}`,
                 'Content-Type': 'application/json'
-            }
+            },
+            credentials: 'include', // Cookie-based auth
         });
     
         if (response.ok) {
@@ -445,7 +436,6 @@ export const useStocksStore = defineStore('stocks', {
     async fetchStocksForExport() {
         const { $api } = useNuxtApp()
         try {
-            const token = localStorage.getItem('token')
             const params = new URLSearchParams({
                 search: this.params.search || '',
                 all: 'true' // Tambahkan parameter all untuk mengambil semua data
@@ -461,7 +451,6 @@ export const useStocksStore = defineStore('stocks', {
 
             const response = await fetch(`${$api.stockExportExcel()}?${params.toString()}`, {
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
                 },
@@ -488,7 +477,6 @@ export const useStocksStore = defineStore('stocks', {
         const toast = useToast();
         const { $api } = useNuxtApp();
         try {
-            const token = localStorage.getItem('token');
             const url = new URL($api.stock());
             const params = new URLSearchParams({
                 page: '1',
@@ -511,11 +499,10 @@ export const useStocksStore = defineStore('stocks', {
             
             const response = await fetch(url, {
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
                 },
-                credentials: 'include'
+                credentials: 'include' // Cookie-based auth
             });
 
             if (!response.ok) {

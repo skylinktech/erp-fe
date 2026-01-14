@@ -129,46 +129,37 @@ export const useNotificationsStore = defineStore('notifications', {
       try {
         const { $api } = useNuxtApp()
         
-        // Check if we're in the browser before accessing localStorage
-        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
-        
-        if (!token) {
-          throw new Error('Token tidak ditemukan')
-        }
+        // Cookie-based auth: token otomatis dikirim via httpOnly cookie
 
         // Fetch all notifications in parallel
         const [stockInResponse, stockOutResponse, purchaseOrderResponse, salesOrderResponse] = await Promise.all([
           fetch(`${$api.stockInNotifications()}?status=not_posted&limit=10`, {
             headers: {
-              'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json',
               'Accept': 'application/json',
             },
-            credentials: 'include'
+            credentials: 'include' // Cookie-based auth
           }),
           fetch(`${$api.stockOutNotifications()}?status=not_posted&limit=10`, {
             headers: {
-              'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json',
               'Accept': 'application/json',
             },
-            credentials: 'include'
+            credentials: 'include' // Cookie-based auth
           }),
           fetch(`${$api.purchaseOrderNotifications()}?status=draft&limit=10`, {
             headers: {
-              'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json',
               'Accept': 'application/json',
             },
-            credentials: 'include'
+            credentials: 'include' // Cookie-based auth
           }),
           fetch(`${$api.salesOrderNotifications()}?status=draft&limit=10`, {
             headers: {
-              'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json',
               'Accept': 'application/json',
             },
-            credentials: 'include'
+            credentials: 'include' // Cookie-based auth
           })
         ])
 

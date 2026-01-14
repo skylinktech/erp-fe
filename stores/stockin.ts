@@ -75,7 +75,6 @@ export const useStockStore = defineStore('stock', {
       this.loading = true;
       try {
         const { $api } = useNuxtApp();
-        const token = localStorage.getItem('token');
         const params = new URLSearchParams({
             page     : ((this.params.first / this.params.rows) + 1).toString(),
             rows     : this.params.rows.toString(),
@@ -87,10 +86,10 @@ export const useStockStore = defineStore('stock', {
 
         const response = await fetch(`${$api.stockIn()}?${params.toString()}`, {
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
-            }
+            },
+            credentials: 'include', // Cookie-based auth
         });
 
         if (!response.ok) {
@@ -123,14 +122,11 @@ export const useStockStore = defineStore('stock', {
         this.loading = true;
         const { $api }     = useNuxtApp();
         const url          = `${$api.stockIn()}`;
-        const token        = localStorage.getItem('token');
-
         const response = await fetch(url, {
           headers: {
             'Accept': 'application/json',
-            'Authorization': `Bearer ${token}`,
           },
-          credentials: 'include'
+          credentials: 'include', // Cookie-based auth
         });
 
         if (!response.ok) {
@@ -156,17 +152,14 @@ export const useStockStore = defineStore('stock', {
       this.error = null
       try {
         const { $api } = useNuxtApp()
-        const token = localStorage.getItem('token')
-
         const url = `${$api.stockIn()}/${id}`
 
         const response = await fetch(url, {
           method: 'DELETE',
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
-          credentials: 'include',
+          credentials: 'include', // Cookie-based auth
         })
 
         if (!response.ok) {
@@ -194,12 +187,11 @@ export const useStockStore = defineStore('stock', {
       };
       try {
         const { $api } = useNuxtApp()
-        const token = localStorage.getItem('token')
         const response = await fetch($api.countStockIn(), {
             headers: { 
-                Authorization: `Bearer ${token}`,
                 'Content-Type': 'application/json'
-            }
+            },
+            credentials: 'include', // Cookie-based auth
         });
     
         if (response.ok) {
@@ -277,14 +269,12 @@ export const useStockStore = defineStore('stock', {
       this.error = null
       try {
         const { $api } = useNuxtApp()
-        const token = localStorage.getItem('token')
-
         const response = await fetch(`${$api.getStockInDetails(id)}`, {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
+          credentials: 'include', // Cookie-based auth
         })
 
         if (!response.ok) {
@@ -487,15 +477,13 @@ export const useStockStore = defineStore('stock', {
     async exportStockInWithDetails() {
       try {
         const { $api } = useNuxtApp();
-        const token = localStorage.getItem('token');
-        
         // Ambil semua data stock in dengan detail untuk export
         const response = await fetch(`${$api.stockInExport()}`, {
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
-            }
+            },
+            credentials: 'include', // Cookie-based auth
         });
 
         if (!response.ok) {
@@ -517,20 +505,13 @@ export const useStockStore = defineStore('stock', {
         console.log('Store: Starting postAllStockIn with ids:', ids);
         
         const { $api } = useNuxtApp();
-        const token = localStorage.getItem('token');
-
-        if (!token) {
-          throw new Error('Token tidak ditemukan');
-        }
-
         const response = await fetch($api.postAllStockIn(), {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ ids }),
-          credentials: 'include',
+          credentials: 'include', // Cookie-based auth
         });
 
         console.log('Store: Response status:', response.status);
@@ -570,17 +551,14 @@ export const useStockStore = defineStore('stock', {
     async postStockIn(id: string) {
       try {
         const { $api } = useNuxtApp();
-        const token = localStorage.getItem('token');
-
         const url = `${$api.postStockIn(id)}`;
 
         const response = await fetch(url, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
-          credentials: 'include',
+          credentials: 'include', // Cookie-based auth
         });
 
         if (!response.ok) {

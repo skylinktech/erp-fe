@@ -62,12 +62,11 @@ export const useDepartemenStore = defineStore('departemen', {
             search   : this.params.search || '',
         });
 
-        const token = localStorage.getItem('token');
         const response = await fetch(`${$api.departemen()}?${params.toString()}`, {
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Accept': 'application/json',
-            }
+            },
+            credentials: 'include', // Cookie-based auth
         });
 
         if (!response.ok) {
@@ -95,12 +94,11 @@ export const useDepartemenStore = defineStore('departemen', {
     async fetchDivisisForSelect() {
         const { $api } = useNuxtApp();
         try {
-            const token = localStorage.getItem('token');
             const response = await fetch($api.divisi(), {
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json',
-                }
+                },
+                credentials: 'include', // Cookie-based auth
             });
             if (!response.ok) throw new Error('Gagal mengambil data divisi');
             const result = await response.json();
@@ -123,8 +121,6 @@ export const useDepartemenStore = defineStore('departemen', {
       const { $api } = useNuxtApp();
 
       try {
-        const token = localStorage.getItem('token');
-
         let url = $api.departemen();
         let method = 'POST';
 
@@ -141,12 +137,11 @@ export const useDepartemenStore = defineStore('departemen', {
         const response = await fetch(url, {
           method,
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
             'Content-Type': 'application/json'
           },
           body: body,
-          credentials: 'include'
+          credentials: 'include', // Cookie-based auth
         });
 
         if (!response.ok) {
@@ -204,15 +199,12 @@ export const useDepartemenStore = defineStore('departemen', {
       }
 
       try {
-          const token = localStorage.getItem('token');
-
           const response = await fetch(`${$api.departemen()}/${id}`, {
             method: 'DELETE',
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Accept': 'application/json',
             },
-            credentials: 'include',
+            credentials: 'include', // Cookie-based auth
           });
 
           if (!response.ok) {
@@ -290,14 +282,13 @@ export const useDepartemenStore = defineStore('departemen', {
         }
         this.loading = true
         const { $api } = useNuxtApp()
-        const token = localStorage.getItem('token');
         try {
             const response = await fetch($api.departemen() + `?divisi_id=${divisiId}`, {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json',
                 },
+                credentials: 'include', // Cookie-based auth
             })
             if (!response.ok) {
                 throw new Error('Gagal mengambil data departemen by divisi');
