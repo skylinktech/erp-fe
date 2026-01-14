@@ -8,8 +8,6 @@ export const clearInvalidCookies = () => {
   // Get all cookies
   const cookies = document.cookie.split(';')
   
-  console.log('Clearing invalid cookies...', { count: cookies.length })
-  
   // Clear each cookie
   cookies.forEach(cookie => {
     const [name] = cookie.split('=')
@@ -25,8 +23,6 @@ export const clearInvalidCookies = () => {
       })
     })
   })
-  
-  console.log('✅ Cookies cleared')
 }
 
 /**

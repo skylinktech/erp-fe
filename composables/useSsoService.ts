@@ -76,20 +76,8 @@ export const useSsoService = () => {
         body: formData.toString(),
       })
 
-      console.log('SSO Token Request:', {
-        url: `${ssoUrl}/api/oauth/token`,
-        status: response.status,
-        ok: response.ok,
-        headers: Object.fromEntries(response.headers.entries()),
-      });
-
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
-        
-        console.error('SSO Token Request Failed:', {
-          status: response.status,
-          errorData,
-        });
         
         // Handle error spesifik
         if (errorData.error === 'access_denied') {
@@ -109,10 +97,8 @@ export const useSsoService = () => {
       }
 
       const data: SsoTokenResponse = await response.json()
-      console.log('SSO Token Response Data:', data);
       return data
     } catch (error: any) {
-      console.error('SSO Authentication error:', error)
       throw error
     }
   }
@@ -124,29 +110,27 @@ export const useSsoService = () => {
    */
   const getUserInfo = async (token: string): Promise<SsoUserInfo | null> => {
     if (!ssoUrl || !token) {
-      console.error('SSO URL or token is missing')
       return null
     }
 
     try {
-      const response = await fetch(`${ssoUrl}/api/oauth/user`, {
+      const response = await fetch(`${ssoUrl}/api/oauth/user?client_id=${clientId}`, {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,
           Accept: 'application/json',
+          'X-Client-Id': clientId, // Untuk auto-update last_seen_at
         },
         credentials: 'include', // PENTING: Untuk mengirim cookies ke server
       })
 
       if (!response.ok) {
-        console.error('Failed to get user info from SSO:', response.status)
         return null
       }
 
       const data: SsoUserInfo = await response.json()
       return data
     } catch (error) {
-      console.error('SSO Get User Info error:', error)
       return null
     }
   }
@@ -173,7 +157,6 @@ export const useSsoService = () => {
 
       return response.ok
     } catch (error) {
-      console.error('SSO Logout error:', error)
       return false
     }
   }

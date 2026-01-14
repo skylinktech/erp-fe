@@ -162,16 +162,8 @@
       // Step 1: Authenticate dengan SSO
       const ssoResponse = await ssoService.authenticate(username.value, password.value);
       
-      // Debug: log response untuk troubleshooting
-      console.log('SSO Response:', ssoResponse);
-      
       if (!ssoResponse || !ssoResponse.access_token) {
         error.value = 'Gagal autentikasi dengan SSO.';
-        console.error('SSO Authentication failed:', {
-          hasResponse: !!ssoResponse,
-          response: ssoResponse,
-          hasAccessToken: !!ssoResponse?.access_token,
-        });
         toast.error({
           title: 'Login Gagal!',
           icon: 'ri-close-line',
@@ -187,7 +179,6 @@
       // Validasi token sebelum menyimpan
       if (ssoResponse.access_token === 'null' || ssoResponse.access_token === 'undefined' || !ssoResponse.access_token.trim()) {
         error.value = 'Token tidak valid dari SSO.';
-        console.error('Invalid token from SSO:', ssoResponse.access_token);
         toast.error({
           title: 'Login Gagal!',
           icon: 'ri-close-line',
@@ -199,8 +190,6 @@
         pending.value = false;
         return;
       }
-      
-      console.log('✅ Valid SSO token received:', ssoResponse.access_token.substring(0, 30) + '...');
 
       // Step 2: Get user info dari SSO
       const ssoUserInfo = await ssoService.getUserInfo(ssoResponse.access_token);
@@ -224,7 +213,6 @@
 
       // Step 4: Dengan cookie-based auth, token sudah otomatis disimpan di httpOnly cookie
       // Tidak perlu simpan ke localStorage lagi untuk keamanan yang lebih baik
-      console.log('✅ SSO Authentication successful, token stored in httpOnly cookie');
       
       // Step 5: Fetch user data dari backend ERP menggunakan SSO token
       // Backend ERP akan sync user data dari SSO dan mengembalikan data user yang benar
@@ -235,16 +223,6 @@
           'Content-Type': 'application/json',
         };
         
-        console.log('📤 Requesting user data from ERP backend...', {
-          url: $api.me(),
-          token_preview: ssoResponse.access_token.substring(0, 30) + '...',
-          token_length: ssoResponse.access_token.length,
-          full_token: ssoResponse.access_token, // Debug: show full token
-          headers: requestHeaders,
-          method: 'GET',
-          credentials: 'include',
-        });
-        
         // Kirim token di Authorization header untuk cross-domain request
         // Cookie dari SSO domain tidak akan dikirim ke ERP domain (different domain)
         const backendResponse = await fetch($api.me(), {
@@ -252,31 +230,14 @@
           headers: requestHeaders,
           credentials: 'include' // Untuk menerima cookie dari ERP backend
         });
-        
-        console.log('📥 ERP backend response:', {
-          status: backendResponse.status,
-          ok: backendResponse.ok,
-          headers: Object.fromEntries(backendResponse.headers.entries()),
-        });
 
         if (backendResponse.ok) {
           userData = await backendResponse.json();
-          console.log('✅ User data from backend ERP:', userData);
-          console.log('✅ Roles from backend:', userData.roles);
           // Gunakan data dari backend ERP (yang sudah sync dengan SSO)
           userStore.setUser(userData);
         } else {
-          // Error dari backend, log detail error
-          const errorText = await backendResponse.text().catch(() => 'No error text');
-          console.error('❌ Backend ERP error:', {
-            status: backendResponse.status,
-            statusText: backendResponse.statusText,
-            errorText: errorText.substring(0, 200),
-          });
-          
           // Jika 401, kemungkinan token invalid atau user sync gagal
           // Gunakan data dari SSO sebagai fallback
-          console.warn('Backend ERP error, menggunakan data dari SSO sebagai fallback');
           userData = {
             id: ssoUserInfo.id,
             username: ssoUserInfo.username || ssoUserInfo.email,
@@ -292,7 +253,6 @@
         }
       } catch (backendError) {
         // Jika error, gunakan data dari SSO sebagai fallback
-        console.warn('Error fetching user from backend ERP:', backendError);
         userData = {
           id: ssoUserInfo.id,
           username: ssoUserInfo.username || ssoUserInfo.email,
@@ -309,10 +269,6 @@
       
       // Pastikan user data sudah tersimpan dan store sudah ter-update
       await new Promise(resolve => setTimeout(resolve, 200));
-
-      // Debug: cek role setelah login
-      console.log('🎯 Final user data in store:', userStore.user);
-      console.log('🎯 Final roles:', userStore.user?.roles);
 
       toast.success({
         title: 'Login Berhasil!',

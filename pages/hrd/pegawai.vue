@@ -270,7 +270,7 @@
                                         <div class="form-floating form-floating-outline">
                                             <CustomSelect2 v-model="form.jenis_kelamin_pegawai" :options="jenisKelaminOptions"
                                                 :get-option-label="option => option.label"
-                                                :reduce="option => option.id" searchable clearable
+                                                :reduce="option => option.value" searchable clearable
                                                 :get-option-key="option => option.value"
                                                 placeholder="-- Pilih Jenis Kelamin --"
                                                 id="select-jk"
@@ -434,11 +434,11 @@
                                             <label for="tunjangan_pegawai">Tunjangan Pegawai</label>
                                         </div>
                                     </div>
-                                    <div class="col-md-12">
+                                    <div class="col-md-6">
                                         <div class="form-floating form-floating-outline">
                                             <CustomSelect2 v-model="form.status_pegawai" :options="statusPegawaiOptions"
                                                 :get-option-label="option => option.label"
-                                                :reduce="option => option.id" searchable clearable
+                                                :reduce="option => option.value" searchable clearable
                                                 :get-option-key="option => option.value"
                                                 placeholder="-- Pilih Status Pegawai --"
                                                 id="select-status-pegawai"
