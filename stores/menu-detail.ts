@@ -10,6 +10,8 @@ export interface MenuDetail {
   route: string
   status: number
   order: number
+  isReferenceable: boolean
+  referenceCode: string
   menuGroupId: number
   menu_group?: MenuGroup
 }
@@ -129,7 +131,17 @@ export const useMenuDetailStore = defineStore('menu-detail', {
         let url = $api.menuDetails();
         let method = 'POST';
 
-        const body = JSON.stringify(this.form);
+        // Ensure data is in camelCase format for backend validator
+        const payload = {
+          ...this.form,
+          isReferenceable: this.form.isReferenceable ?? false,
+          referenceCode: this.form.referenceCode ?? '',
+        };
+        // Remove snake_case properties if they exist
+        delete (payload as any).is_referenceable;
+        delete (payload as any).reference_code;
+
+        const body = JSON.stringify(payload);
 
         if (this.isEditMode && this.form.id) {
           url = `${$api.menuDetails()}/${this.form.id}`;
@@ -252,13 +264,20 @@ export const useMenuDetailStore = defineStore('menu-detail', {
       this.isEditMode = !!menuDetail;
       this.validationErrors = [];
       if (menuDetail) {
-        this.form = { ...menuDetail };
+        // Normalize data: handle both camelCase and snake_case from API
+        this.form = { 
+          ...menuDetail,
+          isReferenceable: menuDetail.isReferenceable ?? (menuDetail as any).is_referenceable ?? false,
+          referenceCode: menuDetail.referenceCode ?? (menuDetail as any).reference_code ?? '',
+        };
       } else {
         this.form = {
           name: '',
           route: '',
           order: undefined,
           status: 1,
+          isReferenceable: false,
+          referenceCode: '',
           menuGroupId: undefined,
         };
       }

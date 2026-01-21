@@ -170,6 +170,16 @@
               </td>
               <td colspan="4" class="px-0 pt-6 align-top">
                 <div class="d-flex flex-column align-items-end">
+                  <div v-if="(getProductSubtotal() + getServiceSubtotal()) > 0" class="mb-2 d-flex justify-content-end" style="min-width: 320px; font-size: 12px;">
+                    <span class="fw-medium text-heading" style="min-width: 110px; font-size: 12px;">Product Subtotal</span>
+                    <span class="fw-medium text-heading px-2 text-end" style="width: 30px; display: inline-block; font-size: 12px;">:</span>
+                    <span class="fw-semibold text-end flex-grow-1" style="min-width: 110px; font-size: 12px;">{{ formatRupiah(getProductSubtotal()) || 0 }}</span>
+                  </div>
+                  <div v-if="(getProductSubtotal() + getServiceSubtotal()) > 0" class="mb-2 d-flex justify-content-end" style="min-width: 320px; font-size: 12px;">
+                    <span class="fw-medium text-heading" style="min-width: 110px; font-size: 12px;">Service Subtotal</span>
+                    <span class="fw-medium text-heading px-2 text-end" style="width: 30px; display: inline-block; font-size: 12px;">:</span>
+                    <span class="fw-semibold text-end flex-grow-1" style="min-width: 110px; font-size: 12px;">{{ formatRupiah(getServiceSubtotal()) || 0 }}</span>
+                  </div>
                   <div class="mb-2 d-flex justify-content-end" style="min-width: 320px; font-size: 12px;">
                     <span class="fw-medium text-heading" style="min-width: 110px; font-size: 12px;">Subtotal</span>
                     <span class="fw-medium text-heading px-2 text-end" style="width: 30px; display: inline-block; font-size: 12px;">:</span>
@@ -262,24 +272,23 @@
     return imageUrl;
   };
 
-  const calculateSubtotal = () => {
+  const getProductSubtotal = () => {
     if (!quotation.value) return 0;
-    
-    // ✅ PRIORITAS: Gunakan salesInvoiceItems jika ada
-    if (quotation.value.quotationItems && quotation.value.quotationItems.length > 0) {
-      return quotation.value.quotationItems.reduce((total, item) => {
-        return total + (Number(item.subtotal) || 0);
-      }, 0);
-    }
-    
-    // ✅ FALLBACK: Gunakan salesOrderItems jika salesInvoiceItems tidak ada
-    if (quotation.value.salesOrder?.salesOrderItems) {
-      return quotation.value.salesOrder.salesOrderItems.reduce((total, item) => {
-        return total + (Number(item.subtotal) || 0);
-      }, 0);
-    }
-    
-    return 0;
+    const q = quotation.value;
+    if (q.productSubtotal != null && q.productSubtotal !== '') return Number(q.productSubtotal);
+    return (q.quotationItems || []).reduce((s, i) => s + (Number(i.subtotal) || 0), 0);
+  };
+  const getServiceSubtotal = () => {
+    if (!quotation.value) return 0;
+    const q = quotation.value;
+    if (q.serviceSubtotal != null && q.serviceSubtotal !== '') return Number(q.serviceSubtotal);
+    return (q.quotationServices || []).reduce((s, i) => s + (Number(i.subtotal) || (Number(i.quantity) || 0) * (Number(i.price) || 0)), 0);
+  };
+  const calculateSubtotal = () => {
+    const product = getProductSubtotal();
+    const service = getServiceSubtotal();
+    if (product > 0 || service > 0) return product + service;
+    return (quotation.value?.salesOrder?.salesOrderItems || []).reduce((s, i) => s + (Number(i.subtotal) || 0), 0);
   };
 
   const calculateDiscount = () => {
@@ -297,6 +306,9 @@
   };
 
   const calculateGrandTotal = () => {
+    if (quotation.value?.grandTotal != null && quotation.value.grandTotal !== '') {
+      return Number(quotation.value.grandTotal);
+    }
     const subtotal = calculateSubtotal();
     const discount = calculateDiscount();
     const tax = calculateTax();

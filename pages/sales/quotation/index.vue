@@ -120,7 +120,7 @@
                                     <Column field="noQuotation" header="No. Quotation" :sortable="true" class="text-nowrap">
                                         <template #body="slotProps">
                                             <a 
-                                                @click="navigateTo(`/sales/quotation-detail?id=${slotProps.data.id}`)" 
+                                                @click="navigateTo(`/sales/quotation/detail/${slotProps.data.id}`)" 
                                                 style="cursor: pointer; color: #666bff; text-decoration: underline;"
                                                 class="text-primary"
                                                 title="View detail"
@@ -129,7 +129,7 @@
                                             </a>
                                         </template>
                                   </Column>
-                                    <Column field="customer.name" header="Nama Customer" :sortable="true"></Column>
+                                    <Column field="customer.name" header="Customer" :sortable="true"></Column>
                                     <Column field="status" header="Status" :sortable="true">
                                         <template #body="slotProps">
                                             <span :class="getStatusBadge(slotProps.data.status).class">
@@ -137,53 +137,65 @@
                                             </span>
                                         </template>
                                     </Column>
-                                    <Column field="createdByUser.fullName" header="Dibuat Oleh" :sortable="true">
-                                        <template #body="slotProps">
-                                            <span>
-                                                {{ slotProps.data.createdByUser?.fullName || '-' }}
-                                            </span>
-                                        </template>
-                                    </Column>
-                                    <Column field="approvedByUser.fullName" header="Approved By" :sortable="true">
+                                    <Column field="approvedByUser.fullName" header="Approved By" :sortable="true" class="text-nowrap">
                                         <template #body="slotProps">
                                             <span>
                                                 {{ slotProps.data.approvedByUser?.fullName || '-' }}
                                             </span>
                                         </template>
                                     </Column>
-                                    <Column field="up" header="Untuk Perhatian" :sortable="true"></Column>
-                                    <Column field="created_at" header="Tanggal Quotation" :sortable="true">
+                                    <Column field="up" header="UP" :sortable="true"></Column>
+                                    <Column field="created_at" header="Tanggal" :sortable="true">
                                         <template #body="slotProps">
                                             {{ slotProps.data.date ? new Date(slotProps.data.date).toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-' }}
                                         </template>
                                     </Column>
-                                    <Column field="validUntil" header="Berlaku Sampai" :sortable="true">
+                                    <Column field="validUntil" header="Valid Until" :sortable="true" class="text-nowrap">
                                         <template #body="slotProps">
                                             {{ slotProps.data.validUntil ? new Date(slotProps.data.validUntil).toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-' }}
                                         </template>
                                     </Column>
-                                    <Column field="perusahaan.nmPerusahaan" header="Perusahaan" :sortable="true">
+                                    <Column field="siteInvest.siNumber" header="SI" :sortable="true">
                                         <template #body="slotProps">
-                                            {{ slotProps.data.perusahaan?.nmPerusahaan || '-' }}
+                                            <span class="text-nowrap">
+                                                {{ slotProps.data.siteInvest?.siNumber || '-' }}
+                                            </span>
                                         </template>
                                     </Column>
-                                    <Column field="cabang.nmCabang" header="Cabang" :sortable="true">
+                                    <Column field="site.name" header="Site" :sortable="true">
                                         <template #body="slotProps">
-                                            {{ slotProps.data.cabang?.nmCabang || '-' }}
+                                            {{ slotProps.data.site?.name || '-' }}
+                                        </template>
+                                    </Column>
+                                    <Column field="costCenter.name" header="Cost Center" :sortable="true" class="text-nowrap">
+                                        <template #body="slotProps">
+                                            {{ slotProps.data.costCenter?.name || '-' }}
+                                        </template>
+                                    </Column>
+                                    <Column field="createdByUser.fullName" header="Dibuat Oleh" :sortable="true" class="text-nowrap">
+                                        <template #body="slotProps">
+                                            <span>
+                                                {{ slotProps.data.createdByUser?.fullName || '-' }}
+                                            </span>
                                         </template>
                                     </Column>
                                     <Column header="Actions" :exportable="false" style="min-width:8rem">
                                         <template #body="slotProps">
-                                            <div class="d-inline-block">
-                                                <a href="javascript:;" class="btn btn-sm btn-text-secondary rounded-pill btn-icon dropdown-toggle hide-arrow" data-bs-toggle="dropdown"><i class="ri-more-2-fill"></i>
+                                            <div class="dropdown d-inline-block">
+                                                <a href="javascript:;" class="btn btn-sm btn-text-secondary rounded-pill btn-icon dropdown-toggle hide-arrow" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed"}'><i class="ri-more-2-fill"></i>
                                                 </a>
-                                                <ul class="dropdown-menu">
-                                                    <li v-if="userHasPermission('approve_purchase_order') && slotProps.data.status == 'draft'">
+                                                <ul class="dropdown-menu dropdown-menu-end quotation-actions-dropdown">
+                                                    <li v-if="(userHasRole('superadmin') || userHasPermission('edit_purchase_order')) && slotProps.data.status === 'draft'">
+                                                        <a class="dropdown-item" href="javascript:void(0)" @click="quotationStore.submitQuotation(slotProps.data.id)">
+                                                            <i class="ri-send-plane-line me-2"></i> Submit Quotation
+                                                        </a>
+                                                    </li>
+                                                    <li v-if="(userHasRole('superadmin') || userHasPermission('approve_purchase_order')) && slotProps.data.status === 'pending'">
                                                         <a class="dropdown-item" href="javascript:void(0)" @click="quotationStore.approveQuotation(slotProps.data.id)">
                                                             <i class="ri-check-line me-2"></i> Approve
                                                         </a>
                                                     </li>
-                                                    <li v-if="userHasRole('superadmin') || (userHasPermission('reject_purchase_order') && slotProps.data.status == 'draft')">
+                                                    <li v-if="(userHasRole('superadmin') || userHasPermission('reject_purchase_order')) && slotProps.data.status === 'pending'">
                                                         <a class="dropdown-item" href="javascript:void(0)" @click="quotationStore.rejectQuotation(slotProps.data.id)">
                                                             <i class="ri-close-line me-2"></i> Reject
                                                         </a>
@@ -225,6 +237,7 @@
                 :title="modalTitle" 
                 :description="modalDescription"
                 :validation-errors-from-parent="validationErrors"
+                dialog-class="modal-xl"
             >
                 <template #default>
                     <form @submit.prevent="quotationStore.saveQuotation()">
@@ -243,6 +256,12 @@
                                             <span class="d-none d-sm-block">List Product</span>
                                         </button>
                                     </li>
+                                    <li class="nav-item">
+                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#form-tabs-services" role="tab" aria-selected="false" type="button">
+                                            <span class="ri-service-line ri-20px d-sm-none"></span>
+                                            <span class="d-none d-sm-block">Services</span>
+                                        </button>
+                                    </li>
                                 </ul>
                             </div>
                         </div>
@@ -250,88 +269,82 @@
                             <div class="tab-pane fade active show" id="form-tabs-info" role="tabpanel">
                                 <div class="row g-4">
                                     <div class="col-md-12">
-                                        <div class="form-floating form-floating-outline">
-                                            <input type="hidden" v-model="form.noQuotation" class="form-control" placeholder="No PO" >
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <CustomSelect2 v-model="form.customerId" :options="customers || []" :get-option-label="option => option.name" :reduce="option => option.id" searchable clearable placeholder="Pilih Customer" />
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-floating form-floating-outline">
-                                            <input type="text" v-model="form.up" class="form-control" placeholder="Untuk Perhatian" >
-                                            <label>Untuk Perhatian</label>
-                                        </div>
+                                        <input type="hidden" v-model="form.noQuotation" class="form-control" placeholder="No Quotation" >
                                     </div>
                                     <div class="col-md-3">
-                                        <div class="form-floating form-floating-outline">
-                                            <input type="date" v-model="form.date" class="form-control" >
-                                            <label>Tanggal Quotation</label>
-                                        </div>
+                                        <label class="form-label text-muted">Site Investment</label>
+                                        <CustomSelect2 v-model="form.siteInvestId" :options="siteInvests" :get-option-label="s => s ? ((s.siNumber || '') + ' - ' + (s.name || '')) : ''" :reduce="s => s?.id" searchable clearable placeholder="Pilih Site Investment" @update:modelValue="onSiteInvestChange" />
+                                        <small class="text-muted d-block mt-1">Hanya yang sudah approved</small>
                                     </div>
                                     <div class="col-md-3">
-                                        <div class="form-floating form-floating-outline">
-                                            <input type="date" v-model="form.shipDate" class="form-control">
-                                            <label>Tanggal Pengiriman</label>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-floating form-floating-outline">
-                                            <input type="date" v-model="form.validUntil" class="form-control" >
-                                            <label>Berlaku Sampai</label>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <CustomSelect2 v-model="form.perusahaanId" :options="perusahaans || []" 
-                                            :get-option-label="option => option.nmPerusahaan" 
-                                            :reduce="option => option.id" searchable clearable 
-                                            placeholder="Pilih Perusahaan" 
-                                            
-                                        />
-                                    </div>
-                                    <div class="col-md-6">
-                                        <CustomSelect2 v-model="form.cabangId" :options="filteredCabangs" 
-                                            :get-option-label="option => option.nmCabang" 
-                                            :reduce="option => option.id" searchable clearable 
-                                            placeholder="Pilih Cabang" 
-                                            
-                                        />
-                                    </div>
-
-                                    <div class="col-md-3">
-                                        <div class="form-floating form-floating-outline">
-                                            <input type="number" v-model="form.discountPercent" class="form-control" placeholder="Discount (%)">
-                                            <label>Discount (%)</label>
-                                        </div>
+                                        <label class="form-label text-muted">Customer</label>
+                                        <CustomSelect2 v-model="form.customerId" :options="customers || []" :get-option-label="option => option?.name ?? ''" :reduce="option => option?.id" searchable clearable placeholder="Pilih Customer" />
+                                        <small class="text-muted d-block mt-1">Otomatis berdasarkan Site Investment</small>
                                     </div>
                                     <div class="col-md-3">
-                                        <div class="form-floating form-floating-outline">
-                                            <input type="number" v-model="form.taxPercent" class="form-control" placeholder="Tax (%)">
-                                            <label>Tax (%)</label>
-                                        </div>
+                                        <label class="form-label text-muted">Site</label>
+                                        <CustomSelect2 v-model="form.siteId" :options="sites" :get-option-label="s => s ? ((s.code || '') + ' - ' + (s.name || '')) : ''" :reduce="s => s?.id" searchable clearable placeholder="Pilih Site" />
+                                        <small class="text-muted d-block mt-1">Otomatis berdasarkan Site Investment</small>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label text-muted">Cost Center</label>
+                                        <CustomSelect2 v-model="form.costCenterId" :options="costCenters" :get-option-label="c => c ? ((c.code || '') + ' - ' + (c.name || '')) : ''" :reduce="c => c?.id" searchable clearable placeholder="Pilih Cost Center" />
+                                        <small class="text-muted d-block mt-1">Otomatis berdasarkan Site Investment</small>
                                     </div>
                                     <div class="col-md-6">
-                                        <div class="form-floating form-floating-outline">
-                                            <input type="text" v-model="form.fobPoint" class="form-control" placeholder="FOB Point">
-                                            <label>FOB Point</label>
-                                        </div>
+                                        <label class="form-label text-muted">Untuk Perhatian</label>
+                                        <input type="text" v-model="form.up" class="form-control" placeholder="Untuk Perhatian" >
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label text-muted">Tanggal Quotation</label>
+                                        <input type="date" v-model="form.date" class="form-control" >
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label text-muted">Berlaku Sampai</label>
+                                        <input type="date" v-model="form.validUntil" class="form-control" >
                                     </div>
                                     <div class="col-md-6">
-                                        <div class="form-floating form-floating-outline">
-                                            <input type="text" v-model="form.termsOfPayment" class="form-control" placeholder="Terms of Payment">
-                                            <label>Terms of Payment</label>
-                                        </div>
+                                        <label class="form-label text-muted">Terms of Payment</label>
+                                        <CustomSelect2 v-model="form.termsOfPayment" :options="termsOfPaymentOptions" :get-option-label="o => o.label" :reduce="o => o.value" searchable clearable placeholder="Pilih" />
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label text-muted">Minimum Period (bulan)</label>
+                                        <CustomSelect2 v-model="form.minimumPeriod" :options="minimumPeriodOptions" :get-option-label="o => o.label" :reduce="o => o.value" searchable clearable placeholder="Pilih" />
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label text-muted">DP (%)</label>
+                                        <input type="number" v-model.number="form.dpPercent" class="form-control" placeholder="DP (%)">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label text-muted">Discount (%)</label>
+                                        <input type="number" v-model.number="form.discountPercent" class="form-control" placeholder="Discount (%)">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label text-muted">Tax (%)</label>
+                                        <input type="number" v-model.number="form.taxPercent" class="form-control" placeholder="Tax (%)">
                                     </div>
                                     <div class="col-md-6">
-                                        <div class="form-floating form-floating-outline">
-                                            <input type="text" v-model="form.prNumber" class="form-control" placeholder="PR Number">
-                                            <label>PR Number</label>
-                                        </div>
+                                        <label class="form-label text-muted">Attachment (PDF, Excel, Word, Image)</label>
+                                        <input type="file" @change="onFileChange" class="form-control" accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx,.csv">
+                                        <small class="text-muted d-block mt-1">Maks. 2MB</small>
+                                        <a v-if="form.attachmentPreview" :href="form.attachmentPreview" target="_blank" rel="noopener noreferrer" class="d-block mt-1 small">Lihat attachment saat ini</a>
                                     </div>
                                     <div class="col-md-12">
-                                        <div class="form-floating form-floating-outline">
-                                            <textarea v-model="form.description" class="form-control" placeholder="Deskripsi"></textarea>
-                                            <label>Deskripsi</label>
+                                        <label class="form-label text-muted">Deskripsi</label>
+                                        <textarea v-model="form.description" class="form-control" placeholder="Deskripsi"></textarea>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check form-check-inline mt-4">
+                                            <input type="checkbox" v-model="form.slaGuarantee" class="form-check-input" id="slaGuarantee">
+                                            <label class="form-check-label" for="slaGuarantee">SLA Guarantee</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input type="checkbox" v-model="form.support" class="form-check-input" id="support">
+                                            <label class="form-check-label" for="support">Support</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input type="checkbox" v-model="form.performance" class="form-check-input" id="performance">
+                                            <label class="form-check-label" for="performance">Performance</label>
                                         </div>
                                     </div>
                                 </div>
@@ -346,10 +359,10 @@
                                     <div class="row g-3">
                                         <div class="col-md-4">
                                             <CustomSelect2 v-model="item.productId" :options="filteredCustomerProducts" 
-                                                :get-option-label="option => option.displayName || `${option.sku} | ${option.name}`" 
+                                                :get-option-label="option => option ? (option.displayName || `${option.sku || ''} | ${option.name || ''}`) : ''" 
                                                 searchable 
                                                 clearable
-                                                :reduce="p => p.id" 
+                                                :reduce="p => p?.id" 
                                                 placeholder="Cari berdasarkan part number atau nama produk..." 
                                                 @update:modelValue="onProductChange(index)" 
                                                 
@@ -448,9 +461,65 @@
                                      </button>
                                  </div>
                                  <div class="d-flex justify-content-end mt-4">
+                                     <span class="fw-bold fs-5">Subtotal Product: {{ formatRupiah(itemsSubtotal) }}</span>
+                                 </div>
+                                 <div class="d-flex justify-content-end mt-2">
                                      <span class="fw-bold fs-5">Grand Total: {{ formatRupiah(grandTotal) }}</span>
                                  </div>
                              </div>
+                             <div class="tab-pane fade" id="form-tabs-services" role="tabpanel">
+                                 <div class="alert alert-secondary mb-4">
+                                     <strong>Services:</strong> Pilih service, unit, dan quantity. Harga diisi otomatis dari master service.
+                                 </div>
+                                 <div v-for="(item, idx) in form.quotationServices" :key="'svc-'+idx" class="repeater-item mb-4">
+                                     <div class="row g-3">
+                                         <div class="col-md-4">
+                                             <label class="form-label text-muted">Service</label>
+                                             <CustomSelect2 v-model="item.serviceId" :options="services" :get-option-label="s => s?.name ?? ''" :reduce="s => s?.id" searchable clearable placeholder="Pilih Service" @update:modelValue="onServiceChange(idx)" />
+                                         </div>
+                                         <div class="col-md-2">
+                                             <label class="form-label text-muted">Unit</label>
+                                             <CustomSelect2 v-model="item.unitId" :options="units" :get-option-label="u => u ? (u.symbol || u.name || '') : ''" :reduce="u => u?.id" searchable clearable placeholder="Unit" />
+                                         </div>
+                                         <div class="col-md-2">
+                                            <label class="form-label text-muted">Unit</label>
+                                            <input type="number" v-model.number="item.quantity" @input="calculateServiceSubtotal(idx)" class="form-control" placeholder="Qty" min="1">
+                                         </div>
+                                         <div class="col-md-2">
+                                            <label class="form-label text-muted">Harga</label>
+                                            <input type="text" :value="formatRupiah(item.price)" class="form-control" placeholder="Harga" readonly>
+                                         </div>
+                                         <div class="col-md-2">
+                                            <label class="form-label text-muted">Subtotal</label>
+                                            <input type="text" :value="formatRupiah(item.subtotal)" class="form-control" placeholder="Subtotal" readonly>
+                                         </div>
+                                         <div class="col-12 d-flex justify-content-end">
+                                             <button @click.prevent="quotationStore.removeServiceItem(idx)" class="btn btn-outline-danger">Hapus</button>
+                                         </div>
+                                     </div>
+                                     <hr class="my-4">
+                                 </div>
+                                 <div class="mt-4">
+                                     <button @click.prevent="quotationStore.addServiceItem()" class="btn btn-primary">Tambah Service</button>
+                                 </div>
+                                 <div class="d-flex justify-content-end mt-4">
+                                     <span class="fw-bold fs-5">Subtotal Service: {{ formatRupiah(serviceSubtotal) }}</span>
+                                 </div>
+                                 <div class="d-flex justify-content-end mt-2">
+                                     <span class="fw-bold fs-5">Grand Total: {{ formatRupiah(grandTotal) }}</span>
+                                 </div>
+                             </div>
+                         </div>
+                         <!-- Ringkasan: service_subtotal, product_subtotal, grand_total -->
+                         <div class="border-top mt-4 pt-4 px-4">
+                             <h6 class="text-muted mb-3">Ringkasan</h6>
+                             <div class="d-flex justify-content-between py-1"><span class="text-muted">Product Subtotal</span><span class="fw-medium">{{ formatRupiah(itemsSubtotal) }}</span></div>
+                             <div class="d-flex justify-content-between py-1"><span class="text-muted">Service Subtotal</span><span class="fw-medium">{{ formatRupiah(serviceSubtotal) }}</span></div>
+                             <div class="d-flex justify-content-between py-1"><span class="text-muted">Subtotal</span><span>{{ formatRupiah(formSubtotal) }}</span></div>
+                             <div class="d-flex justify-content-between py-1"><span class="text-muted">Discount ({{ form.discountPercent ?? 0 }}%)</span><span>{{ formatRupiah(formDiscountAmount) }}</span></div>
+                             <div class="d-flex justify-content-between py-1"><span class="text-muted">Setelah Diskon</span><span>{{ formatRupiah(formAfterDiscount) }}</span></div>
+                             <div class="d-flex justify-content-between py-1"><span class="text-muted">Pajak ({{ form.taxPercent ?? 0 }}%)</span><span>{{ formatRupiah(formTaxAmount) }}</span></div>
+                             <div class="d-flex justify-content-between py-1 border-top mt-2 pt-2"><span class="fw-bold">Grand Total</span><span class="fw-bold fs-5 text-primary">{{ formatRupiah(grandTotal) }}</span></div>
                          </div>
                          <div class="modal-footer mt-6">
                               <button type="button" class="btn btn-outline-secondary" @click="quotationStore.closeModal()">Tutup</button>
@@ -468,13 +537,12 @@
   </template>
 
   <script setup>
-  import { ref, computed, onMounted, watch } from 'vue'
+  import { ref, computed, onMounted, watch, nextTick } from 'vue'
   import { storeToRefs } from 'pinia'
   import { useQuotationStore } from '~/stores/quotation'
   import { useCustomerStore } from '~/stores/customer'
-  import { usePerusahaanStore } from '~/stores/perusahaan'
-  import { useCabangStore } from '~/stores/cabang'
   import { useProductStore } from '~/stores/product'
+  import { useServiceStore } from '~/stores/service'
   import { useUserStore } from '~/stores/user'
   import { usePermissionsStore } from '~/stores/permissions'
   import { usePermissions } from '~/composables/usePermissions'
@@ -501,10 +569,9 @@ import InputText from 'primevue/inputtext'
   // Store
   const myDataTableRef                     = ref(null)
   const quotationStore                     = useQuotationStore()
-  const customerStore                        = useCustomerStore()
-  const perusahaanStore                    = usePerusahaanStore()
-  const cabangStore                        = useCabangStore()
+  const customerStore                      = useCustomerStore()
   const productStore                       = useProductStore()
+  const serviceStore                       = useServiceStore()
   const userStore                          = useUserStore()
 
   const formatRupiah                       = useFormatRupiah()
@@ -512,12 +579,16 @@ import InputText from 'primevue/inputtext'
   const permissionStore                    = usePermissionsStore()
 
   const { quotations, loading, totalRecords, params, form, isEditMode, showModal, validationErrors, customerProducts, statistics } = storeToRefs(quotationStore)
-  const { customers }     = storeToRefs(customerStore)
-  const { perusahaans } = storeToRefs(perusahaanStore)
-  const { cabangs }     = storeToRefs(cabangStore)
+  const { customers }   = storeToRefs(customerStore)
   const { products }    = storeToRefs(productStore)
+  const { services }    = storeToRefs(serviceStore)
   const { user }        = storeToRefs(userStore)
   const { permissions } = storeToRefs(permissionStore)
+
+  const siteInvests = ref([])
+  const sites = ref([])
+  const costCenters = ref([])
+  const units = ref([])
 
 // State
 const globalFilterValue = ref('');
@@ -543,30 +614,72 @@ const filters = ref({
       return description;
   });
 
-  const grandTotal = computed(() => {
-    if (!form.value || !form.value.quotationItems) return 0;
-
-    const totalItems = (form.value.quotationItems || []).reduce((total, item) => {
-      return total + (Number(item.subtotal) || 0);
-    }, 0);
-
-    const discountPercent = Number(form.value.discountPercent) || 0;
-    const taxPercent = Number(form.value.taxPercent) || 0;
-
-    const discountAmount = totalItems * (discountPercent / 100);
-    const totalAfterDiscount = totalItems - discountAmount;
-    const taxAmount = totalAfterDiscount * (taxPercent / 100);
-
-    const finalTotal = totalAfterDiscount + taxAmount;
-    
-    return finalTotal;
+  const itemsSubtotal = computed(() => {
+    if (!form.value?.quotationItems) return 0;
+    return (form.value.quotationItems || []).reduce((s, i) => s + (Number(i.subtotal) || (Number(i.quantity) || 0) * (Number(i.price) || 0)), 0);
   });
+
+  const serviceSubtotal = computed(() => {
+    if (!form.value?.quotationServices) return 0;
+    return (form.value.quotationServices || []).reduce((s, i) => s + (Number(i.subtotal) || 0), 0);
+  });
+
+  const formSubtotal = computed(() => itemsSubtotal.value + serviceSubtotal.value);
+  const formDiscountAmount = computed(() => formSubtotal.value * (Number(form.value?.discountPercent) || 0) / 100);
+  const formAfterDiscount = computed(() => formSubtotal.value - formDiscountAmount.value);
+  const formTaxAmount = computed(() => formAfterDiscount.value * (Number(form.value?.taxPercent) || 0) / 100);
+  const grandTotal = computed(() => formAfterDiscount.value + formTaxAmount.value);
 
   const statusOptions = ref([
       { label: 'Draft', value: 'draft' },
+      { label: 'Pending', value: 'pending' },
       { label: 'Approved', value: 'approved' },
       { label: 'Rejected', value: 'rejected' },
+      { label: 'Expired', value: 'expired' },
   ]);
+
+  const termsOfPaymentOptions = ref([
+      { label: 'Postpaid', value: 'postpaid' },
+      { label: 'Prepaid', value: 'prepaid' },
+      { label: 'Down Payment', value: 'down_payment' },
+  ]);
+
+  const minimumPeriodOptions = ref([
+      { label: '12', value: '12' },
+      { label: '24', value: '24' },
+      { label: '36', value: '36' },
+      { label: '48', value: '48' },
+      { label: '60', value: '60' },
+  ]);
+
+  const fetchSiteInvests = async () => {
+    const { $api } = useNuxtApp();
+    try {
+      const r = await fetch(`${$api.siteInvestment()}?page=1&rows=500&status=approved`, { headers: { 'Accept': 'application/json' }, credentials: 'include' });
+      if (r.ok) { const j = await r.json(); siteInvests.value = j.data || []; }
+    } catch (e) { console.error('fetchSiteInvests', e); }
+  };
+  const fetchSites = async () => {
+    const { $api } = useNuxtApp();
+    try {
+      const r = await fetch(`${$api.sites()}?page=1&rows=500`, { headers: { 'Accept': 'application/json' }, credentials: 'include' });
+      if (r.ok) { const j = await r.json(); sites.value = j.data || []; }
+    } catch (e) { console.error('fetchSites', e); }
+  };
+  const fetchCostCenters = async () => {
+    const { $api } = useNuxtApp();
+    try {
+      const r = await fetch(`${$api.costCenters()}?page=1&rows=500`, { headers: { 'Accept': 'application/json' }, credentials: 'include' });
+      if (r.ok) { const j = await r.json(); costCenters.value = j.data || []; }
+    } catch (e) { console.error('fetchCostCenters', e); }
+  };
+  const fetchUnits = async () => {
+    const { $api } = useNuxtApp();
+    try {
+      const r = await fetch($api.unit(), { headers: { 'Accept': 'application/json' }, credentials: 'include' });
+      if (r.ok) { const j = await r.json(); units.value = j.data || j || []; }
+    } catch (e) { console.error('fetchUnits', e); }
+  };
 
   let modalInstance = null;
   onMounted(() => {
@@ -574,11 +687,14 @@ const filters = ref({
       quotationStore.fetchQuotations();
       quotationStore.fetchStatistics();
       customerStore.fetchCustomers();
-      perusahaanStore.fetchPerusahaans();
-      cabangStore.fetchCabangs();
       productStore.fetchProducts();
+      serviceStore.fetchServices();
       userStore.loadUser();
       permissionStore.fetchPermissions();
+      fetchSiteInvests();
+      fetchSites();
+      fetchCostCenters();
+      fetchUnits();
       
       const modalElement = document.getElementById('QuotationModal')
       if (modalElement) {
@@ -594,6 +710,36 @@ const filters = ref({
   watch(showModal, (newValue) => {
       if (newValue) {
           modalInstance?.show()
+          // Saat edit: prepend opsi dari relasi ke daftar Select2 agar nilai terpilih bisa tampil (pakai == agar tipe number/string tidak masalah)
+          nextTick(() => {
+              nextTick(() => {
+                  if (!isEditMode.value || !form.value) return
+                  const sid = form.value.siteInvestId ?? form.value.siteInvest?.id
+                  if (sid != null && !siteInvests.value.some(s => (s.id ?? s) == sid)) {
+                      const obj = (typeof form.value.siteInvest === 'object' && form.value.siteInvest)
+                          ? { ...form.value.siteInvest, id: sid } : { id: sid, siNumber: '-', name: '-' }
+                      siteInvests.value = [obj, ...siteInvests.value]
+                  }
+                  const siteId = form.value.siteId ?? form.value.site?.id
+                  if (siteId != null && !sites.value.some(s => (s.id ?? s) == siteId)) {
+                      const obj = (typeof form.value.site === 'object' && form.value.site)
+                          ? { ...form.value.site, id: siteId } : { id: siteId, code: '-', name: '-' }
+                      sites.value = [obj, ...sites.value]
+                  }
+                  const ccId = form.value.costCenterId ?? form.value.costCenter?.id
+                  if (ccId != null && !costCenters.value.some(c => (c.id ?? c) == ccId)) {
+                      const obj = (typeof form.value.costCenter === 'object' && form.value.costCenter)
+                          ? { ...form.value.costCenter, id: ccId } : { id: ccId, code: '-', name: '-' }
+                      costCenters.value = [obj, ...costCenters.value]
+                  }
+                  const cid = form.value.customerId ?? form.value.customer?.id
+                  if (cid != null && !(customers.value || []).some(c => (c.id ?? c) == cid)) {
+                      const obj = (typeof form.value.customer === 'object' && form.value.customer)
+                          ? { ...form.value.customer, id: cid } : { id: cid, name: '-' }
+                      customers.value = [obj, ...(customers.value || [])]
+                  }
+              })
+          })
       } else {
           modalInstance?.hide()
       }
@@ -615,15 +761,7 @@ const filters = ref({
       }
   }, { deep: true })
 
-  watch(() => form.value?.perusahaanId, (newPerusahaanId) => {
-      if (newPerusahaanId && form.value) {
-          if(!isEditMode.value) {
-              form.value.cabangId = null;
-          }
-      }
-  });
-
-  // ✅ NEW: Watcher untuk customerId - fetch products untuk customer yang dipilih
+  // Watcher untuk customerId - fetch products untuk customer yang dipilih
   watch(() => form.value?.customerId, (newCustomerId, oldCustomerId) => {
       if (newCustomerId) {
           quotationStore.fetchProductsForCustomer(newCustomerId);
@@ -710,12 +848,6 @@ const filters = ref({
               });
           }
       }
-  });
-
-  const filteredCabangs = computed(() => {
-      if (!form.value?.perusahaanId || !cabangs.value) return [];
-      const filtered = (cabangs.value || []).filter(c => c.perusahaanId === form.value.perusahaanId);
-      return filtered;
   });
 
   const debouncedSearch = useDebounceFn(() => {
@@ -866,8 +998,7 @@ const filters = ref({
 
   function onFileChange(e) {
     if (!form.value) return;
-    
-    const file = e.target.files[0];
+    const file = e.target?.files?.[0];
     if (file) {
       form.value.attachment = file;
       attachmentPreview.value = URL.createObjectURL(file);
@@ -875,20 +1006,52 @@ const filters = ref({
       form.value.attachment = null;
       attachmentPreview.value = null;
     }
+    e.target.value = '';
   }
+
+  const onSiteInvestChange = (siteInvestId) => {
+    if (!form.value) return;
+    if (!siteInvestId) {
+      form.value.customerId = null;
+      form.value.siteId = null;
+      return;
+    }
+    const si = siteInvests.value.find(s => s.id === siteInvestId);
+    if (si) {
+      const cid = si.customerId ?? si.customer_id;
+      const sid = si.siteId ?? si.site_id;
+      if (cid != null) form.value.customerId = cid;
+      if (sid != null) form.value.siteId = sid;
+    }
+  };
 
   const onProductChange = (index) => {
     if (!form.value || !form.value.quotationItems) return;
-    
     const selectedProductId = form.value.quotationItems[index].productId;
     const selectedProduct = customerProducts.value.find(p => p.id === selectedProductId);
-
     if (selectedProduct) {
       const item = form.value.quotationItems[index];
-      // ✅ NEW: Gunakan priceSell dari customerProducts untuk harga jual
       item.price = Number(selectedProduct.priceSell) || 0;
       calculateSubtotal(index);
     }
+  };
+
+  const onServiceChange = (index) => {
+    if (!form.value?.quotationServices || !services.value) return;
+    const item = form.value.quotationServices[index];
+    const svc = services.value.find(s => s.id === item.serviceId);
+    if (svc) {
+      item.price = Number(svc.price) || 0;
+      calculateServiceSubtotal(index);
+    }
+  };
+
+  const calculateServiceSubtotal = (index) => {
+    if (!form.value?.quotationServices) return;
+    const item = form.value.quotationServices[index];
+    const q = Number(item.quantity) || 0;
+    const p = Number(item.price) || 0;
+    item.subtotal = q * p;
   };
 
   // ✅ IMPROVED: Computed property untuk filtered customer products tanpa limit
@@ -935,20 +1098,18 @@ const filters = ref({
       if (!quotationId) {
           return;
       }
-      router.push({ path: `/sales/quotation-detail`, query: { id: quotationId } });
+      navigateTo(`/sales/quotation/detail/${quotationId}`);
   };
 
   const getStatusBadge = (status) => {
-      if (!status) {
-          return { text: '-', class: 'badge rounded-pill bg-label-light' };
-      }
-      
+      if (!status) return { text: '-', class: 'badge rounded-pill bg-label-light' };
       switch (status) {
           case 'draft': return { text: 'Draft', class: 'badge rounded-pill bg-label-secondary' };
-          case 'approved': return { text: 'Approved', class: 'badge rounded-pill bg-label-primary' };
+          case 'pending': return { text: 'Pending', class: 'badge rounded-pill bg-label-warning' };
+          case 'approved': return { text: 'Approved', class: 'badge rounded-pill bg-label-success' };
           case 'rejected': return { text: 'Rejected', class: 'badge rounded-pill bg-label-danger' };
-          default: 
-              return { text: '-', class: 'badge rounded-pill bg-label-light' };
+          case 'expired': return { text: 'Expired', class: 'badge rounded-pill bg-label-dark' };
+          default: return { text: status, class: 'badge rounded-pill bg-label-light' };
       }
   };
 
@@ -995,7 +1156,7 @@ const exportQuotationPDF = (dataToExport) => {
               }
               value = currentValue || '-';
           } else {
-              value = row[col.field] || '-';
+              value = (col.field === 'total' ? (row.grandTotal ?? row.total) : row[col.field]) || '-';
           }
 
           // Format khusus untuk field tertentu
@@ -1054,10 +1215,10 @@ const exportQuotationPDF = (dataToExport) => {
           companyInfo.phone = userData.perusahaan.tlpPerusahaan || companyInfo.phone;
       }
 
-      // Hitung grand total
+      // Hitung grand total (gunakan grandTotal atau total)
       let grandTotal = 0;
       dataToExport.forEach(row => {
-          const totalValue = parseFloat(row.total) || 0;
+          const totalValue = parseFloat(row.grandTotal ?? row.total) || 0;
           grandTotal += totalValue;
       });
 
@@ -1254,10 +1415,10 @@ const exportQuotationExcel = (dataToExport) => {
             companyInfo.phone = userData.perusahaan.tlpPerusahaan || companyInfo.phone;
         }
 
-        // Hitung grand total
+        // Hitung grand total (gunakan grandTotal atau total)
         let grandTotal = 0;
         dataToExport.forEach(row => {
-            const totalValue = parseFloat(row.total) || 0;
+            const totalValue = parseFloat(row.grandTotal ?? row.total) || 0;
             grandTotal += totalValue;
         });
 
@@ -1325,7 +1486,7 @@ const exportQuotationExcel = (dataToExport) => {
                     }
                     value = currentValue || '-';
                 } else {
-                    value = row[col.field] || '-';
+                    value = (col.field === 'total' ? (row.grandTotal ?? row.total) : row[col.field]) || '-';
                 }
 
                 // Format khusus untuk field tertentu
@@ -1478,6 +1639,10 @@ const exportQuotationExcel = (dataToExport) => {
   </script>
 
 <style scoped>
+/* Dropdown Actions table: tampil di atas agar tidak tertutup overflow */
+:deep(.quotation-actions-dropdown) {
+  z-index: 1100 !important;
+}
 
 /* Repeater item styling */
 .repeater-item {

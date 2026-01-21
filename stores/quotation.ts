@@ -22,38 +22,58 @@ export interface QuotationItem {
   product?       : Product
 }
 
+export interface QuotationServiceItem {
+  id?: number
+  quotationId?: string
+  unitId: number
+  serviceId: number
+  quantity: number
+  price: number
+  subtotal: number
+  service?: { id: number; name: string; code?: string; price?: number }
+  unit?: { id: number; symbol?: string; name?: string }
+}
+
 export interface Quotation {
   id                 : string
-  name?              : string
   noQuotation        : string
   up                 : string
+  siteInvestId       : string
   customerId         : number
-  perusahaanId       : number
-  cabangId           : number
+  siteId             : number
+  costCenterId       : number
   date               : string
   validUntil         : string
-  shipDate           : string
-  fobPoint           : string
-  termsOfPayment     : string
-  prNumber           : string
   status             : string
-  total              : string
-  discountPercent    : string
-  taxPercent         : string
+  termsOfPayment     : string
+  minimumPeriod      : string
+  serviceSubtotal?   : number | string
+  productSubtotal?   : number | string
+  total              : string | number
+  grandTotal?        : number | string
+  discountPercent    : number | string
+  taxPercent         : number | string
+  dpPercent          : number | string
+  slaGuarantee       : boolean
+  support            : boolean
+  performance        : boolean
+  attachment         : string | null
   description        : string
   createdAt          : string
   updatedAt          : string
-  createdBy          : number
+  createdBy          : number | null
   approvedBy         : number | null
   rejectedBy         : number | null
   approvedAt         : string | null
   rejectedAt         : string | null
-  customer?            : Customer
-  perusahaan?        : Perusahaan
-  cabang?            : Cabang
+  customer?          : Customer
+  siteInvest?        : { id: string; siNumber?: string; name?: string }
+  site?              : { id: number; code?: string; name?: string }
+  costCenter?        : { id: number; code?: string; name?: string }
   createdByUser?     : User
   approvedByUser?    : User
-  quotationItems?: QuotationItem[]
+  quotationItems?    : QuotationItem[]
+  quotationServices? : QuotationServiceItem[]
 }
 
 interface QuotationState {
@@ -106,20 +126,25 @@ export const useQuotationStore = defineStore('quotation', {
     form: {
         noQuotation: '',
         up: '',
+        siteInvestId: null,
         customerId: null,
-        perusahaanId: null,
-        cabangId: null,
+        siteId: null,
+        costCenterId: null,
         date: new Date().toISOString().split('T')[0], 
         validUntil: new Date().toISOString().split('T')[0], 
-        shipDate: new Date().toISOString().split('T')[0], 
-        fobPoint: '',
-        termsOfPayment: '',
-        prNumber: '',
+        termsOfPayment: 'postpaid',
+        minimumPeriod: '12',
         discountPercent: 0, 
         taxPercent: 0, 
+        dpPercent: 0,
+        slaGuarantee: false,
+        support: false,
+        performance: false,
+        attachment: null,
         description: '',
         status: 'draft',
-        quotationItems: []
+        quotationItems: [],
+        quotationServices: []
     },
     isEditMode      : false,
     showModal       : false,
@@ -206,27 +231,40 @@ export const useQuotationStore = defineStore('quotation', {
 
             const dataToAppend = { ...this.form };
             delete dataToAppend.quotationItems;
+            delete dataToAppend.quotationServices;
             delete dataToAppend.customer;
-            delete dataToAppend.perusahaan;
-            delete dataToAppend.cabang;
+            delete dataToAppend.siteInvest;
+            delete dataToAppend.site;
+            delete dataToAppend.costCenter;
             delete dataToAppend.createdByUser;
             delete dataToAppend.approvedByUser;
             delete dataToAppend.receivedByUser;
             delete dataToAppend.rejectedByUser;
+            delete dataToAppend.attachment;
             
             // Untuk create, hapus noQuotation karena di-generate di backend
             if (!this.isEditMode) {
                 delete dataToAppend.noQuotation;
             }
 
-            // Validasi frontend sebelum kirim
+            // Validasi: minimal 1 item produk ATAU 1 service
+            const hasItems = (this.form.quotationItems || []).some((i: any) => i.productId && i.quantity > 0);
+            const hasServices = (this.form.quotationServices || []).some((s: any) => s.serviceId && s.quantity > 0);
+            if (!hasItems && !hasServices) {
+                throw new Error('Minimal harus ada 1 item produk atau 1 service');
+            }
+
+            if (!dataToAppend.siteInvestId) {
+                throw new Error('Site Investment harus dipilih');
+            }
             if (!dataToAppend.customerId) {
                 throw new Error('Customer harus dipilih');
             }
-            
-            // ✅ NEW: Validasi bahwa customer memiliki produk
-            if (this.customerProducts.length === 0) {
-                throw new Error('Customer yang dipilih tidak memiliki produk. Silakan pilih customer lain atau tambahkan produk untuk customer ini.');
+            if (!dataToAppend.siteId) {
+                throw new Error('Site harus dipilih');
+            }
+            if (!dataToAppend.costCenterId) {
+                throw new Error('Cost Center harus dipilih');
             }
             if (!dataToAppend.up || dataToAppend.up.trim() === '') {
                 throw new Error('Untuk Perhatian harus diisi');
@@ -238,12 +276,21 @@ export const useQuotationStore = defineStore('quotation', {
                 throw new Error('Status harus dipilih');
             }
 
+            // Validasi produk hanya jika ada item produk
+            if (hasItems && this.customerProducts.length === 0) {
+                throw new Error('Customer yang dipilih tidak memiliki produk. Silakan pilih customer lain, tambah produk untuk customer ini, atau gunakan tab Service.');
+            }
+
             Object.keys(dataToAppend).forEach(key => {
                 const value = dataToAppend[key];
                 if (value !== null && value !== undefined && value !== '') {
                     formData.append(key, value);
                 }
             });
+
+            if (this.form.attachment instanceof File) {
+                formData.append('attachment', this.form.attachment);
+            }
 
             if (!this.isEditMode && userStore.user && userStore.user.id) {
                 formData.append('createdBy', userStore.user.id.toString())
@@ -254,29 +301,26 @@ export const useQuotationStore = defineStore('quotation', {
                     formData.append('rejectedBy', userStore.user.id.toString())
                 }
             }
-            // Validasi items
-            if (!this.form.quotationItems || this.form.quotationItems.length === 0) {
-                throw new Error('Minimal harus ada 1 item produk');
-            }
-
-            // Validasi setiap item
-            const validItems = this.form.quotationItems.filter((item: any) => 
-                item.productId && item.quantity && item.quantity > 0 && item.price && item.price > 0
+            const validItems = (this.form.quotationItems || []).filter((item: any) => 
+                item.productId && item.quantity && item.quantity > 0 && item.price != null
+            );
+            const validServices = (this.form.quotationServices || []).filter((s: any) => 
+                s.serviceId && s.unitId && s.quantity > 0 && s.price != null
             );
             
-            // ✅ NEW: Validasi bahwa semua produk adalah produk customer
-            const customerProductIds = this.customerProducts.map(p => p.id);
-            for (const item of validItems) {
-                if (!customerProductIds.includes(item.productId)) {
-                    throw new Error(`Produk dengan ID ${item.productId} tidak dimiliki oleh customer yang dipilih`);
-                }
-            }
-            
-            if (validItems.length === 0) {
-                throw new Error('Minimal harus ada 1 item produk yang valid (produk, quantity > 0, harga > 0)');
+            if (validItems.length === 0 && validServices.length === 0) {
+                throw new Error('Minimal harus ada 1 item produk atau 1 service yang valid');
             }
 
-            // Append hanya items yang valid
+            if (validItems.length > 0) {
+                const customerProductIds = this.customerProducts.map(p => p.id);
+                for (const item of validItems) {
+                    if (!customerProductIds.includes(item.productId)) {
+                        throw new Error(`Produk dengan ID ${item.productId} tidak dimiliki oleh customer yang dipilih`);
+                    }
+                }
+            }
+
             validItems.forEach((item: any, i: number) => {
                 Object.keys(item).forEach(itemKey => {
                     const value = item[itemKey];
@@ -284,6 +328,15 @@ export const useQuotationStore = defineStore('quotation', {
                        formData.append(`quotationItems[${i}][${itemKey}]`, value);
                     }
                 });
+            });
+
+            validServices.forEach((s: any, i: number) => {
+                const sub = Number(s.subtotal) || (Number(s.quantity) || 0) * (Number(s.price) || 0);
+                formData.append(`quotationServices[${i}][unitId]`, s.unitId);
+                formData.append(`quotationServices[${i}][serviceId]`, s.serviceId);
+                formData.append(`quotationServices[${i}][quantity]`, s.quantity);
+                formData.append(`quotationServices[${i}][price]`, s.price);
+                formData.append(`quotationServices[${i}][subtotal]`, String(sub));
             });
 
             const method = 'POST';
@@ -505,19 +558,107 @@ export const useQuotationStore = defineStore('quotation', {
       }
     },
 
+    async submitQuotation(quotationId: string) {
+      const toast = useToast();
+      this.error = null;
+      const { $api } = useNuxtApp();
+      try {
+        const response = await fetch($api.submitQuotation(quotationId), {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ message: 'Gagal submit quotation' }));
+          throw new Error(errorData.message || 'Gagal submit quotation');
+        }
+
+        await this.fetchQuotations();
+        await this.fetchStatistics();
+        toast.success({
+          title: 'Success',
+          message: 'Quotation berhasil di-submit (status: pending).',
+          color: 'green',
+          position: 'topRight',
+          layout: 2,
+        });
+
+        return true;
+      } catch (error: any) {
+        console.error('Error submit quotation:', error);
+        toast.error({
+          title: 'Error',
+          message: error.message || 'Gagal submit quotation.',
+          color: 'red',
+          position: 'topRight',
+          layout: 2,
+        });
+        return false;
+      }
+    },
+
     openModal(quotationData: Quotation | null = null) {
         this.isEditMode = !!quotationData;
         this.validationErrors = [];
 
         if (quotationData) {
-            const formatDate = (dateStr: string | null) => dateStr ? new Date(dateStr).toISOString().split('T')[0] : null;
-            
-            // Salin data dan format tanggal dengan benar
+            const raw = JSON.parse(JSON.stringify(quotationData));
+            // Relasi: pastikan dipakai bila API pakai snake_case key
+            const siteInvest = raw.siteInvest ?? raw.site_invest;
+            const site = raw.site;
+            const costCenter = raw.costCenter ?? raw.cost_center;
+            const customer = raw.customer;
+            // Normalisasi: dukung snake_case dari API ke camelCase; fallback ID dari relasi
             const formData: { [key: string]: any } = {
-                ...JSON.parse(JSON.stringify(quotationData)),
+                ...raw,
+                siteInvestId: raw.siteInvestId ?? raw.site_invest_id ?? siteInvest?.id,
+                customerId: raw.customerId ?? raw.customer_id ?? customer?.id,
+                siteId: raw.siteId ?? raw.site_id ?? site?.id,
+                costCenterId: raw.costCenterId ?? raw.cost_center_id ?? costCenter?.id,
+                quotationItems: raw.quotationItems ?? raw.quotation_items ?? [],
+                quotationServices: raw.quotationServices ?? raw.quotation_services ?? [],
+                siteInvest,
+                site,
+                costCenter,
+                customer,
+                up: raw.up ?? raw.untuk_perhatian ?? '',
+                description: raw.description ?? raw.deskripsi ?? '',
             };
+            // Hapus duplikat snake_case agar tidak mengganggu
+            delete formData.site_invest_id;
+            delete formData.customer_id;
+            delete formData.site_id;
+            delete formData.cost_center_id;
+            delete formData.quotation_items;
+            delete formData.quotation_services;
+            delete formData.site_invest;
+            delete formData.cost_center;
 
-            const dateFields = ['date', 'validUntil', 'approvedAt', 'rejectedAt', 'shipDate'];
+            // Normalisasi tiap quotationItems: productId
+            formData.quotationItems = (formData.quotationItems || []).map((i: any) => ({
+                ...i,
+                productId: i.productId ?? i.product_id,
+                quantity: Number(i.quantity) || 0,
+                price: Number(i.price) || 0,
+                subtotal: Number(i.subtotal) || (Number(i.quantity) || 0) * (Number(i.price) || 0),
+                description: i.description ?? null,
+            }));
+            // Normalisasi tiap quotationServices: serviceId, unitId
+            formData.quotationServices = (formData.quotationServices || []).map((s: any) => ({
+                ...s,
+                serviceId: s.serviceId ?? s.service_id,
+                unitId: s.unitId ?? s.unit_id,
+                quantity: Number(s.quantity) || 0,
+                price: Number(s.price) || 0,
+                subtotal: Number(s.subtotal) || (Number(s.quantity) || 0) * (Number(s.price) || 0),
+            }));
+
+            const formatDate = (dateStr: string | null) => dateStr ? new Date(dateStr).toISOString().split('T')[0] : null;
+            const dateFields = ['date', 'validUntil', 'approvedAt', 'rejectedAt'];
             dateFields.forEach(field => {
                 if (formData[field]) {
                     formData[field] = formatDate(formData[field]);
@@ -526,13 +667,18 @@ export const useQuotationStore = defineStore('quotation', {
 
             this.form = formData;
 
-            // Pastikan quotationItems ada
             if (!this.form.quotationItems || this.form.quotationItems.length === 0) {
                 this.form.quotationItems = [];
                 this.addItem();
             }
-            
-            // ✅ NEW: Jika ada customerId, fetch products untuk customer
+            if (!this.form.quotationServices || this.form.quotationServices.length === 0) {
+                this.form.quotationServices = [];
+                this.addServiceItem();
+            }
+            this.form.attachment = null;
+            if (quotationData.attachment) {
+                this.form.attachmentPreview = quotationData.attachment;
+            }
             if (this.form.customerId) {
                 this.fetchProductsForCustomer(this.form.customerId);
             }
@@ -540,22 +686,28 @@ export const useQuotationStore = defineStore('quotation', {
             this.form = {
                 noQuotation: '',
                 up: '',
+                siteInvestId: null,
                 customerId: null,
-                perusahaanId: null,
-                cabangId: null,
+                siteId: null,
+                costCenterId: null,
                 date: new Date().toISOString().split('T')[0], 
                 validUntil: new Date().toISOString().split('T')[0], 
-                shipDate: new Date().toISOString().split('T')[0], 
-                fobPoint: '',
-                termsOfPayment: '',
-                prNumber: '',
+                termsOfPayment: 'postpaid',
+                minimumPeriod: '12',
                 discountPercent: 0, 
                 taxPercent: 0, 
+                dpPercent: 0,
+                slaGuarantee: false,
+                support: false,
+                performance: false,
+                attachment: null,
                 description: '',
                 status: 'draft',
                 quotationItems: [],
+                quotationServices: [],
             };
-            this.addItem(); // Tambahkan satu item default untuk PO baru
+            this.addItem();
+            this.addServiceItem();
         }
         this.showModal = true;
     },
@@ -566,20 +718,25 @@ export const useQuotationStore = defineStore('quotation', {
         this.form = {
             noQuotation: '',
             up: '',
+            siteInvestId: null,
             customerId: null,
-            perusahaanId: null,
-            cabangId: null,
+            siteId: null,
+            costCenterId: null,
             date: new Date().toISOString().split('T')[0], 
             validUntil: new Date().toISOString().split('T')[0], 
-            shipDate: new Date().toISOString().split('T')[0], 
-            fobPoint: '',
-            termsOfPayment: '',
-            prNumber: '',
+            termsOfPayment: 'postpaid',
+            minimumPeriod: '12',
             discountPercent: 0, 
             taxPercent: 0, 
+            dpPercent: 0,
+            slaGuarantee: false,
+            support: false,
+            performance: false,
+            attachment: null,
             description: '',
             status: 'draft',
             quotationItems: [],
+            quotationServices: [],
         };
         this.validationErrors = [];
     },
@@ -593,6 +750,21 @@ export const useQuotationStore = defineStore('quotation', {
 
     removeItem(index: number) {
         this.form.quotationItems.splice(index, 1);
+    },
+
+    addServiceItem() {
+        this.form.quotationServices = this.form.quotationServices || [];
+        this.form.quotationServices.push({
+            unitId: null,
+            serviceId: null,
+            quantity: 1,
+            price: 0,
+            subtotal: 0,
+        });
+    },
+
+    removeServiceItem(index: number) {
+        this.form.quotationServices.splice(index, 1);
     },
 
     setPagination(event: any) {
@@ -625,20 +797,21 @@ export const useQuotationStore = defineStore('quotation', {
       this.loading = true;
       this.error = null;
       const { $api } = useNuxtApp();
-      
+      // Pakai GET /api/quotation/:id (show) — preload sama, menghindari konflik path getQuotationDetails
+      const url = `${$api.quotation()}/${quotationId}`;
       try {
-        const resData = await apiFetch($api.getQuotationDetails(quotationId), {
+        const resData = await apiFetch(url, {
           headers: {
             'Accept': 'application/json',
           },
           credentials: 'include', // Cookie-based auth (apiFetch already handles this)
         });
-        
+
         if (resData && resData.data) {
           this.quotation = resData.data;
         } else {
           console.error('Invalid data structure received:', resData);
-          throw new Error('Struktur data tidak valid diterima dari API getQuotationDetails.');
+          throw new Error('Struktur data tidak valid diterima dari API quotation detail.');
         }
       } catch (e: any) {
         console.error('Error in getQuotationDetails:', e);
@@ -661,15 +834,15 @@ export const useQuotationStore = defineStore('quotation', {
         const { $api } = useNuxtApp();
         
         try {
-            const resData = await apiFetch($api.getQuotationDetails(quotationId), {
+            const resData = await apiFetch(`${$api.quotation()}/${quotationId}`, {
                 headers: {
                     'Accept': 'application/json',
                 },
                 credentials: 'include', // Cookie-based auth (apiFetch already handles this)
             });
-            
+
             if (resData && resData.data) {
-                
+
                 // Panggil openModal dengan data lengkap
                 this.openModal(resData.data);
                 

@@ -19,19 +19,15 @@ export interface ProductCustomer {
 export interface Product {
   id: number
   sku: string
-  noInterchange: string
   name: string
   unitId: number
-  stockMin: number
   priceBuy: number
   priceSell: number
-  isService: boolean
+  isDevice: boolean
+  billingType: 'one_time' | 'recurring'
   categoryId: number
   image: string | File
-  kondisi: string
-  berat: number
   createdBy?: number | null
-  satuanItem?: string | null
   createdAt: string
   updatedAt: string
   category?: Category
@@ -40,6 +36,7 @@ export interface Product {
   productCustomer?: ProductCustomer
   stocks?: Stock[]
   imagePreview?: string
+  createdByUser?: { id: number; fullName: string; email: string }
 }
 
 interface ProductState {
@@ -82,17 +79,13 @@ export const useProductStore = defineStore('product', {
     form: {
       name: '',
       sku: '',
-      noInterchange: '',
       unitId: undefined,
-      stockMin: 0,
       priceBuy: 0,
       priceSell: 0,
-      isService: false,
+      isDevice: false,
+      billingType: 'one_time' as 'one_time' | 'recurring',
       image: '',
       categoryId: undefined,
-      kondisi: 'baru',
-      berat: 0,
-      satuanItem: '',
     },
     isEditMode: false,
     showModal: false,
@@ -258,11 +251,11 @@ export const useProductStore = defineStore('product', {
           const formData = new FormData();
           Object.keys(this.form).forEach(key => {
             const value = this.form[key as keyof typeof this.form];
-             if (key === 'isService') {
+             if (key === 'isDevice') {
                 formData.append(key, value ? 'true' : 'false');
             } else if (key === 'image' && value instanceof File) {
                 formData.append(key, value);
-            } else if (key !== 'image') {
+            } else if (key !== 'image' && key !== 'imagePreview') {
                 // Kirim semua field termasuk yang null/undefined, tapi konversi null/undefined ke string kosong
                 const stringValue = value === null || value === undefined ? '' : String(value);
                 formData.append(key, stringValue);
@@ -412,7 +405,6 @@ export const useProductStore = defineStore('product', {
         if (product) {
             this.form = { 
               ...product,
-              stockMin: product.stockMin ? Math.round(product.stockMin) : 0,
             };
             
             // Set image preview jika ada
@@ -426,18 +418,14 @@ export const useProductStore = defineStore('product', {
             this.form = {
                 name: '',
                 sku: '',
-                noInterchange: '',
                 unitId: undefined,
-                stockMin: 0,
                 priceBuy: 0,
                 priceSell: 0,
-                isService: false,
+                isDevice: false,
+                billingType: 'one_time',
                 image: '',
                 imagePreview: '',
                 categoryId: undefined,
-                kondisi: 'baru',
-                berat: 0,
-                satuanItem: '',
             };
         }
         this.showModal = true;
@@ -449,18 +437,14 @@ export const useProductStore = defineStore('product', {
         this.form = {
             name: '',
             sku: '',
-            noInterchange: '',
             unitId: undefined,
-            stockMin: 0,
             priceBuy: 0,
             priceSell: 0,
-            isService: false,
+            isDevice: false,
+            billingType: 'one_time',
             image: '',
             imagePreview: '',
             categoryId: undefined,
-            kondisi: 'baru',
-            berat: 0,
-            satuanItem: '',
         };
         this.validationErrors = [];
     },

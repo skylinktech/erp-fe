@@ -2,47 +2,20 @@ import { defineStore } from 'pinia'
 import { useNuxtApp } from '#app'
 import Swal from 'sweetalert2'
 
-export interface Service {
+export interface ServicePlan {
   id: number
   name: string
-  code: string
-  period: number
-  servicePlanId: number
-  price: number
-  description: string
-  createdBy: number
-  updatedBy: number
-  deletedBy?: number | null
-  deletedAt?: string | null
+  description: string | null
   createdAt: string
   updatedAt: string
-  servicePlan?: {
-    id: number
-    name: string
-  }
-  createdByUser?: {
-    id: number
-    fullName: string
-    email: string
-  }
-  updatedByUser?: {
-    id: number
-    fullName: string
-    email: string
-  }
-  deletedByUser?: {
-    id: number
-    fullName: string
-    email: string
-  }
 }
 
-interface ServiceState {
-  services: Service[]
+interface ServicePlanState {
+  servicePlans: ServicePlan[]
   loading: boolean
   error: any
   totalRecords: number
-  totalServices: number
+  totalServicePlans: number
   params: {
     first: number
     rows: number
@@ -50,19 +23,19 @@ interface ServiceState {
     sortOrder: number | null
     search: string
   }
-  form: Partial<Service>
+  form: Partial<ServicePlan>
   isEditMode: boolean
   showModal: boolean
   validationErrors: any[]
 }
 
-export const useServiceStore = defineStore('service', {
-  state: (): ServiceState => ({
-    services: [],
+export const useServicePlanStore = defineStore('servicePlan', {
+  state: (): ServicePlanState => ({
+    servicePlans: [],
     loading: true,
     error: null,
     totalRecords: 0,
-    totalServices: 0,
+    totalServicePlans: 0,
     params: {
       first: 0,
       rows: 10,
@@ -72,10 +45,6 @@ export const useServiceStore = defineStore('service', {
     },
     form: {
       name: '',
-      code: '',
-      period: 0,
-      servicePlanId: null as number | null,
-      price: 0,
       description: '',
     },
     isEditMode: false,
@@ -83,7 +52,7 @@ export const useServiceStore = defineStore('service', {
     validationErrors: [],
   }),
   actions: {
-    async fetchServices(suppressError = false) {
+    async fetchServicePlans(suppressError = false) {
       const toast = useToast()
       this.loading = true
       this.error = null
@@ -97,24 +66,24 @@ export const useServiceStore = defineStore('service', {
           search: this.params.search || '',
         })
 
-        const response = await fetch(`${$api.service()}?${params.toString()}`, {
+        const response = await fetch(`${$api.servicePlan()}?${params.toString()}`, {
           headers: {
             'Content-Type': 'application/json',
             Accept: 'application/json',
           },
-          credentials: 'include', // Cookie-based auth
+          credentials: 'include',
         })
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({
-            message: 'Gagal memuat data service dengan status: ' + response.status,
+            message: 'Gagal memuat data service plan dengan status: ' + response.status,
           }))
-          throw new Error(errorData.message || 'Gagal memuat data service')
+          throw new Error(errorData.message || 'Gagal memuat data service plan')
         }
 
         const result = await response.json()
 
-        this.services = result.data
+        this.servicePlans = result.data
         this.totalRecords = result.meta.total
       } catch (e: any) {
         this.error = e.message
@@ -122,7 +91,7 @@ export const useServiceStore = defineStore('service', {
         if (!suppressError) {
           toast.error({
             title: 'Error',
-            message: `Tidak dapat memuat data service: ${e.message}`,
+            message: `Tidak dapat memuat data service plan: ${e.message}`,
             color: 'red',
             position: 'topRight',
           })
@@ -132,7 +101,7 @@ export const useServiceStore = defineStore('service', {
       }
     },
 
-    async saveService() {
+    async saveServicePlan() {
       const toast = useToast()
       this.loading = true
       this.validationErrors = []
@@ -147,11 +116,11 @@ export const useServiceStore = defineStore('service', {
           }
         })
 
-        let url = $api.service()
+        let url = $api.servicePlan()
         let method = 'POST'
 
         if (this.isEditMode && this.form.id) {
-          url = `${$api.service()}/${this.form.id}`
+          url = `${$api.servicePlan()}/${this.form.id}`
           formData.append('_method', 'PUT')
         }
 
@@ -161,7 +130,7 @@ export const useServiceStore = defineStore('service', {
             Accept: 'application/json',
           },
           body: formData,
-          credentials: 'include', // Cookie-based auth
+          credentials: 'include',
         })
 
         let result
@@ -196,15 +165,15 @@ export const useServiceStore = defineStore('service', {
             }
             return
           }
-          throw new Error(result.message || 'Gagal menyimpan data service')
+          throw new Error(result.message || 'Gagal menyimpan data service plan')
         }
 
         this.closeModal()
-        await this.fetchServices()
-        await this.fetchTotalServices()
+        await this.fetchServicePlans()
+        await this.fetchTotalServicePlans()
         toast.success({
           title: 'Success',
-          message: `Service berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
+          message: `Service plan berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
           color: 'green',
           position: 'topRight',
         })
@@ -222,13 +191,13 @@ export const useServiceStore = defineStore('service', {
       }
     },
 
-    async deleteService(id: number) {
+    async deleteServicePlan(id: number) {
       const toast = useToast()
       const { $api } = useNuxtApp()
 
       const result = await Swal.fire({
         title: 'Apakah Anda yakin?',
-        text: 'Data service yang dihapus tidak dapat dikembalikan!',
+        text: 'Data service plan yang dihapus tidak dapat dikembalikan!',
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#3085d6',
@@ -243,32 +212,32 @@ export const useServiceStore = defineStore('service', {
 
       this.loading = true
       try {
-        const response = await fetch($api.service() + `/${id}`, {
+        const response = await fetch($api.servicePlan() + `/${id}`, {
           method: 'DELETE',
           headers: {
             Accept: 'application/json',
           },
-          credentials: 'include', // Cookie-based auth
+          credentials: 'include',
         })
 
         if (!response.ok) {
           const errorData = await response.json()
-          throw new Error(errorData.message || 'Gagal menghapus service')
+          throw new Error(errorData.message || 'Gagal menghapus service plan')
         }
 
-        await this.fetchServices()
-        await this.fetchTotalServices()
+        await this.fetchServicePlans()
+        await this.fetchTotalServicePlans()
         toast.success({
           title: 'Success',
-          message: 'Service berhasil dihapus.',
+          message: 'Service plan berhasil dihapus.',
           color: 'green',
           position: 'topRight',
         })
       } catch (error: any) {
-        console.error('Gagal menghapus service:', error)
+        console.error('Gagal menghapus service plan:', error)
         toast.error({
           title: 'Error',
-          message: error.message || 'Gagal menghapus service',
+          message: error.message || 'Gagal menghapus service plan',
           color: 'red',
           position: 'topRight',
         })
@@ -277,26 +246,16 @@ export const useServiceStore = defineStore('service', {
       }
     },
 
-    openModal(service: Service | null = null) {
-      this.isEditMode = !!service
+    openModal(servicePlan: ServicePlan | null = null) {
+      this.isEditMode = !!servicePlan
       this.validationErrors = []
-      if (service) {
+      if (servicePlan) {
         this.form = {
-          id: service.id,
-          name: service.name,
-          code: service.code ?? '',
-          period: service.period,
-          servicePlanId: service.servicePlanId ?? service.servicePlan?.id ?? null,
-          price: service.price ?? 0,
-          description: service.description ?? '',
+          ...servicePlan,
         }
       } else {
         this.form = {
           name: '',
-          code: '',
-          period: 0,
-          servicePlanId: null,
-          price: 0,
           description: '',
         }
       }
@@ -308,10 +267,6 @@ export const useServiceStore = defineStore('service', {
       this.isEditMode = false
       this.form = {
         name: '',
-        code: '',
-        period: 0,
-        servicePlanId: null,
-        price: 0,
         description: '',
       }
       this.validationErrors = []
@@ -320,51 +275,51 @@ export const useServiceStore = defineStore('service', {
     setPagination(event: any) {
       this.params.first = event.first
       this.params.rows = event.rows
-      this.fetchServices()
+      this.fetchServicePlans()
     },
 
     setSort(event: any) {
       this.params.sortField = event.sortField
       this.params.sortOrder = event.sortOrder
-      this.fetchServices()
+      this.fetchServicePlans()
     },
 
     setSearch(value: string) {
       this.params.search = value
       this.params.first = 0
-      this.fetchServices()
+      this.fetchServicePlans()
     },
 
-    async fetchTotalServices() {
+    async fetchTotalServicePlans() {
       const toast = useToast()
       const { $api } = useNuxtApp()
       try {
-        const response = await fetch(`${$api.service()}/totalServices`, {
+        const response = await fetch(`${$api.servicePlan()}/totalServicePlans`, {
           headers: {
             'Content-Type': 'application/json',
             Accept: 'application/json',
           },
-          credentials: 'include', // Cookie-based auth
+          credentials: 'include',
         })
 
         if (!response.ok) {
-          throw new Error('Gagal memuat total service')
+          throw new Error('Gagal memuat total service plan')
         }
 
         const result = await response.json()
-        this.totalServices = result.total
+        this.totalServicePlans = result.total
       } catch (error: any) {
-        console.error('Error fetching total services:', error)
+        console.error('Error fetching total service plans:', error)
         toast.error({
           title: 'Error',
-          message: error.message || 'Gagal memuat total service',
+          message: error.message || 'Gagal memuat total service plan',
           color: 'red',
           position: 'topRight',
         })
       }
     },
 
-    async fetchServicesForExport() {
+    async fetchServicePlansForExport() {
       const toast = useToast()
       const { $api } = useNuxtApp()
       try {
@@ -372,19 +327,19 @@ export const useServiceStore = defineStore('service', {
           search: this.params.search || '',
         })
 
-        const response = await fetch(`${$api.serviceExportExcel()}?${params.toString()}`, {
+        const response = await fetch(`${$api.servicePlanExportExcel()}?${params.toString()}`, {
           headers: {
             'Content-Type': 'application/json',
             Accept: 'application/json',
           },
-          credentials: 'include', // Cookie-based auth
+          credentials: 'include',
         })
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({
-            message: 'Gagal memuat data service untuk export dengan status: ' + response.status,
+            message: 'Gagal memuat data service plan untuk export dengan status: ' + response.status,
           }))
-          throw new Error(errorData.message || 'Gagal memuat data service untuk export')
+          throw new Error(errorData.message || 'Gagal memuat data service plan untuk export')
         }
 
         const result = await response.json()
@@ -393,10 +348,10 @@ export const useServiceStore = defineStore('service', {
           nmPerusahaan: result.nmPerusahaan || '',
         }
       } catch (error: any) {
-        console.error('Error fetching services for export:', error)
+        console.error('Error fetching service plans for export:', error)
         toast.error({
           title: 'Error',
-          message: error.message || 'Gagal memuat data service untuk export',
+          message: error.message || 'Gagal memuat data service plan untuk export',
           color: 'red',
           position: 'topRight',
         })

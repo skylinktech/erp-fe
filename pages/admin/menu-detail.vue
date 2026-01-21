@@ -97,6 +97,17 @@
                                                 <span>{{ slotProps.data.menuGroup?.name || '-' }}</span>
                                             </template>
                                         </Column>
+                                        <Column field="is_referenceable" header="Referenceable" :sortable="true">
+                                            <template #body="slotProps">
+                                                <span v-if="slotProps.data.is_referenceable || slotProps.data.isReferenceable" class="badge rounded-pill bg-label-primary">Ya</span>
+                                                <span v-else class="badge rounded-pill bg-label-danger">Tidak</span>
+                                            </template>
+                                        </Column>
+                                        <Column field="reference_code" header="Reference Code" :sortable="true">
+                                            <template #body="slotProps">
+                                                <span>{{ slotProps.data.reference_code || slotProps.data.referenceCode || '-' }}</span>
+                                            </template>
+                                        </Column>
                                         <Column header="Actions" :exportable="false" style="min-width:8rem">
                                             <template #body="slotProps">
                                                 <div class="d-inline-block">
@@ -183,7 +194,7 @@
                                     />   
                                 </div>
                             </div>
-                            <div class="col-md-12">
+                            <div class="col-md-6">
                                 <div class="form-floating form-floating-outline">
                                     <CustomSelect2 v-model="form.menuGroupId" :options="menuGroups"
                                         :get-option-label="option => option.name"
@@ -192,6 +203,32 @@
                                         class="select-menu-group"
                                     />   
                                     <p v-if="menuGroups.length === 0" class="small text-muted">Memuat data menu group....</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6" v-if="isReferenceable">
+                                <div class="form-floating form-floating-outline">
+                                    <input 
+                                        type="text" 
+                                        class="form-control"
+                                        v-model="referenceCode" 
+                                        placeholder="Masukkan reference code"
+                                    >
+                                    <label>Reference Code</label>
+                                </div>
+                            </div>
+                            <div class="row mt-5">
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch mb-3">
+                                        <input 
+                                            class="form-check-input" 
+                                            type="checkbox" 
+                                            id="isReferenceable"
+                                            v-model="isReferenceable"
+                                        >
+                                        <label class="form-check-label" for="isReferenceable">
+                                            Is Referenceable
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -245,6 +282,31 @@ const statusOptions = ref([
 
 const modalTitle = computed(() => isEditMode.value ? 'Edit Menu Detail' : 'Tambah Menu Detail');
 const modalDescription = computed(() => isEditMode.value ? 'Ubah detail menu.' : 'Isi untuk menambah menu detail baru.');
+
+// Computed properties untuk handle isReferenceable dan referenceCode
+const isReferenceable = computed({
+    get() {
+        if (!form.value) return false;
+        return form.value.isReferenceable || form.value['is_referenceable'] || false;
+    },
+    set(value) {
+        if (form.value) {
+            form.value.isReferenceable = value;
+        }
+    }
+});
+
+const referenceCode = computed({
+    get() {
+        if (!form.value) return '';
+        return form.value.referenceCode || form.value['reference_code'] || '';
+    },
+    set(value) {
+        if (form.value) {
+            form.value.referenceCode = value;
+        }
+    }
+});
 
 let modalInstance = null;
 onMounted(() => {

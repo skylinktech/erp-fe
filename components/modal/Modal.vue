@@ -1,6 +1,6 @@
 <template>
     <div class="modal fade" :id="id" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-dialog" :class="dialogClass || 'modal-lg'" role="document">
             <div class="modal-content">
                 <div class="modal-body">
                     <div class="row">
@@ -43,6 +43,10 @@ const props = defineProps({
   validationErrorsFromParent: {
     type: Array,
     default: () => []
+  },
+  dialogClass: {
+    type: String,
+    default: 'modal-lg'
   }
 });
 

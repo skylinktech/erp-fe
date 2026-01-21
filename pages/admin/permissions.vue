@@ -131,43 +131,69 @@
                                         v-model:selection="selectedPermissions"
                                         >
                                         <Column selectionMode="multiple" headerStyle="width: 3rem" :exportable="false"></Column>
-                                        <Column field="id" header="#" :sortable="true" style="width: 50px;"></Column> 
-                                            <Column field="name" header="Nama Permission" :sortable="true"></Column>
-                                            
-                                            <Column field="menuGroups" header="Menu Group" :sortable="true">
-                                                <template #body="slotProps">
-                                                    <span v-if="Array.isArray(slotProps.data.menuGroups) && slotProps.data.menuGroups.length > 0">
-                                                        {{ slotProps.data.menuGroups.map(g => g.name).join(', ') }}
+                                        <Column field="name" header="Nama Permission" :sortable="true"></Column>
+                                        
+                                        <Column field="menuGroups" header="Menu Group" :sortable="true">
+                                            <template #body="slotProps">
+                                                <span v-if="Array.isArray(slotProps.data.menuGroups) && slotProps.data.menuGroups.length > 0">
+                                                    {{ slotProps.data.menuGroups.map(g => g.name).join(', ') }}
+                                                </span>
+                                                <span v-else>-</span>
+                                            </template>
+                                        </Column>
+                                        <Column field="menuDetails" header="Menu Details" :sortable="true">
+                                            <template #body="slotProps">
+                                                <span v-if="Array.isArray(slotProps.data.menuDetails) && slotProps.data.menuDetails.length > 0">
+                                                    {{ slotProps.data.menuDetails.map(d => d.name).join(', ') }}
+                                                </span>
+                                                <span v-else>-</span>
+                                            </template>
+                                        </Column>
+                                        <Column field="assignedRoles" header="Assigned To">
+                                            <template #body="slotProps">
+                                                <template v-if="Array.isArray(slotProps.data.assignedRoles) && slotProps.data.assignedRoles.length > 0">
+                                                    <span v-for="r in slotProps.data.assignedRoles" :key="r.id" 
+                                                        :class="r.name === 'danger' ? 'badge bg-label-danger' : r.name === 'warning' ? 'badge bg-label-warning' : r.name === 'success' ? 'badge bg-label-success' : r.name === 'info' ? 'badge bg-label-info' : r.name === 'primary' ? 'badge bg-label-primary' : r.name === 'secondary' ? 'badge bg-label-secondary' : r.name === 'light' ? 'badge bg-label-light' : r.name === 'dark' ? 'badge bg-label-dark' : 'badge bg-label-primary'"
+                                                        style="margin-right: 5px;">
+                                                        {{ r.name }}
                                                     </span>
-                                                    <span v-else>-</span>
                                                 </template>
-                                            </Column>
-                                            <Column field="menuDetails" header="Menu Details" :sortable="true">
-                                                <template #body="slotProps">
-                                                    <span v-if="Array.isArray(slotProps.data.menuDetails) && slotProps.data.menuDetails.length > 0">
-                                                        {{ slotProps.data.menuDetails.map(d => d.name).join(', ') }}
-                                                    </span>
-                                                    <span v-else>-</span>
-                                                </template>
-                                            </Column>
-                                            <Column field="assignedRoles" header="Assigned To">
-                                                <template #body="slotProps">
-                                                    <template v-if="Array.isArray(slotProps.data.assignedRoles) && slotProps.data.assignedRoles.length > 0">
-                                                        <span v-for="r in slotProps.data.assignedRoles" :key="r.id" 
-                                                            
-                                                            style="margin-right: 5px;">
-                                                            {{ r.name }}
-                                                        </span>
-                                                    </template>
-                                                    <span v-else>-</span>
-                                                </template>
-                                            </Column>
-                                            <Column header="Actions" :exportable="false" style="min-width:8rem">
-                                                <template #body="slotProps">
-                                                    <button @click="openEditPermissionModal(slotProps.data)" class="btn btn-sm btn-icon btn-text-secondary rounded-pill btn-icon me-2"><i class="ri-edit-box-line"></i></button>
-                                                    <button @click="deletePermission(slotProps.data.id)" class="btn btn-sm btn-icon btn-text-secondary rounded-pill btn-icon"><i class="ri-delete-bin-7-line"></i></button>
-                                                </template>
-                                            </Column>
+                                                <span v-else>-</span>
+                                            </template>
+                                        </Column>
+                                        <Column header="Actions" :exportable="false" style="min-width:8rem">
+                                            <template #body="slotProps">
+                                                <div class="d-inline-block">
+                                                <a
+                                                    href="javascript:;"
+                                                    class="btn btn-sm btn-text-secondary rounded-pill btn-icon dropdown-toggle hide-arrow"
+                                                    data-bs-toggle="dropdown"
+                                                >
+                                                    <i class="ri-more-2-fill"></i>
+                                                </a>
+                                                <ul class="dropdown-menu">
+                                                    <li>
+                                                    <a
+                                                        class="dropdown-item"
+                                                        href="javascript:void(0)"
+                                                        @click="openEditPermissionModal(slotProps.data)"
+                                                    >
+                                                        <i class="ri-edit-box-line me-2"></i> Edit
+                                                    </a>
+                                                    </li>
+                                                    <li>
+                                                    <a
+                                                        class="dropdown-item text-danger"
+                                                        href="javascript:void(0)"
+                                                        @click="deletePermission(slotProps.data.id)"
+                                                    >
+                                                        <i class="ri-delete-bin-7-line me-2"></i> Hapus
+                                                    </a>
+                                                    </li>
+                                                </ul>
+                                                </div>
+                                            </template>
+                                        </Column>
                                     </MyDataTable>
                                     </div>
                                 </div>

@@ -87,8 +87,35 @@
                                         </Column>
                                         <Column header="Actions" :exportable="false" style="min-width:8rem">
                                             <template #body="slotProps">
-                                                <button @click="menuGroupStore.openModal(slotProps.data)" class="btn btn-sm btn-icon btn-text-secondary rounded-pill btn-icon me-2"><i class="ri-edit-box-line ri-20px"></i></button>
-                                                <button @click="menuGroupStore.deleteMenuGroup(slotProps.data.id)" class="btn btn-sm btn-icon btn-text-secondary rounded-pill btn-icon"><i class="ri-delete-bin-7-line ri-20px"></i></button>
+                                                <div class="d-inline-block">
+                                                <a
+                                                    href="javascript:;"
+                                                    class="btn btn-sm btn-text-secondary rounded-pill btn-icon dropdown-toggle hide-arrow"
+                                                    data-bs-toggle="dropdown"
+                                                >
+                                                    <i class="ri-more-2-fill"></i>
+                                                </a>
+                                                <ul class="dropdown-menu">
+                                                    <li>
+                                                    <a
+                                                        class="dropdown-item"
+                                                        href="javascript:void(0)"
+                                                        @click="menuGroupStore.openModal(slotProps.data)"
+                                                    >
+                                                        <i class="ri-edit-box-line me-2"></i> Edit
+                                                    </a>
+                                                    </li>
+                                                    <li>
+                                                    <a
+                                                        class="dropdown-item text-danger"
+                                                        href="javascript:void(0)"
+                                                        @click="menuGroupStore.deleteMenuGroup(slotProps.data.id)"
+                                                    >
+                                                        <i class="ri-delete-bin-7-line me-2"></i> Hapus
+                                                    </a>
+                                                    </li>
+                                                </ul>
+                                                </div>
                                             </template>
                                         </Column>
                                 </MyDataTable>
@@ -223,12 +250,14 @@ const modalDescription = computed(() => isEditMode.value ? 'Ubah detail menu gro
 const jenisMenuOptions = [
     { label: 'Purchasing', value: 1 },
     { label: 'HRD', value: 2 },
-    { label: 'Accounting', value: 3 },
+    { label: 'Finance', value: 3 },
     { label: 'Inventory', value: 4 },
     { label: 'Sales', value: 5 },
     { label: 'Company', value: 6 },
-    { label: 'Reports', value: 7 },
-    { label: 'Admin', value: 8 },
+    { label: 'System', value: 7 },
+    { label: 'Service Management', value: 8 },
+    { label: 'Order Processing', value: 9 },
+    { label: 'Admin', value: 10 },
 ];
 
 let modalInstance = null
@@ -286,7 +315,7 @@ const getStatusBadge = (jenisMenu) => {
         case 2:
             return { text: 'HRD', class: 'badge rounded-pill bg-label-secondary' };
         case 3:
-            return { text: 'Accounting', class: 'badge rounded-pill bg-label-warning text-dark' };
+            return { text: 'Finance', class: 'badge rounded-pill bg-label-warning text-dark' };
         case 4:
             return { text: 'Inventory', class: 'badge rounded-pill bg-label-info' };
         case 5:
@@ -294,8 +323,12 @@ const getStatusBadge = (jenisMenu) => {
         case 6:
             return { text: 'Company', class: 'badge rounded-pill bg-label-info' };
         case 7:
-            return { text: 'Reports', class: 'badge rounded-pill bg-label-danger' };
+            return { text: 'System', class: 'badge rounded-pill bg-label-danger' };
         case 8:
+            return { text: 'Service Management', class: 'badge rounded-pill bg-label-dark' };
+        case 9:
+            return { text: 'Order Processing', class: 'badge rounded-pill bg-label-dark' };
+        case 10:
             return { text: 'Admin', class: 'badge rounded-pill bg-label-dark' };
         default:
             return { text: '-', class: 'badge rounded-pill bg-label-light' };

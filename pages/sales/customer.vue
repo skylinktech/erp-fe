@@ -206,6 +206,11 @@
                                 </Column>
                                 <Column field="name" header="Nama Customer" :sortable="true"></Column>
                                 <Column field="code" header="Kode Customer" :sortable="true"></Column>
+                                <Column field="type" header="Tipe" :sortable="true">
+                                    <template #body="slotProps">
+                                        {{ getTypeLabel(slotProps.data.type) }}
+                                    </template>
+                                </Column>
                                 <Column field="address" header="Alamat Customer" :sortable="true"></Column>
                                 <Column field="npwp" header="NPWP Customer" :sortable="true"></Column>
                                 <Column field="email" header="Email Customer" :sortable="true"></Column>
@@ -321,6 +326,20 @@
                                     placeholder="Masukkan npwp customer"
                                     >
                                     <label>NPWP Customer</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating form-floating-outline">
+                                    <CustomSelect2
+                                        v-model="form.type"
+                                        :options="customerTypeOptions"
+                                        :get-option-label="option => option.label"
+                                        :reduce="option => option.value"
+                                        searchable
+                                        clearable
+                                        placeholder="-- Pilih Tipe Customer --"
+                                    />
+                                    <label>Tipe Customer</label>
                                 </div>
                             </div>
                             <div class="col-md-12">
@@ -447,6 +466,17 @@ const { permissions } = storeToRefs(permissionStore)
 const globalFilterValue = ref('')
 const rowsPerPageOptionsArray = ref([10, 25, 50, 100]);
 
+const customerTypeOptions = [
+  { label: 'Prospect', value: 'prospect' },
+  { label: 'Regular', value: 'regular' },
+  { label: 'VIP', value: 'vip' }
+];
+
+const getTypeLabel = (type) => {
+  const opt = customerTypeOptions.find(o => o.value === type);
+  return opt ? opt.label : type || '-';
+};
+
 // Table controls data
 const tableControls = ref({
   rows: 10,
@@ -561,8 +591,6 @@ definePageMeta({
 </script>
 
 <style scoped>
-<style scoped>
-
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .card-body {

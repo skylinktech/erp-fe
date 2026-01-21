@@ -89,9 +89,34 @@
                                         <Column field="name" header="Nama Role" :sortable="true"></Column>
                                         <Column header="Actions" :exportable="false" style="min-width:8rem">
                                             <template #body="slotProps">
-                                                <div class="d-flex align-items-center">
-                                                    <button @click="rolesStore.openModal(slotProps.data)" class="btn btn-sm btn-icon btn-text-secondary rounded-pill btn-icon me-2"><i class="ri-edit-box-line ri-20px"></i></button>
-                                                    <button @click="rolesStore.deleteRole(slotProps.data.id)" class="btn btn-sm btn-icon btn-text-secondary rounded-pill btn-icon"><i class="ri-delete-bin-7-line ri-20px"></i></button>
+                                                <div class="d-inline-block">
+                                                <a
+                                                    href="javascript:;"
+                                                    class="btn btn-sm btn-text-secondary rounded-pill btn-icon dropdown-toggle hide-arrow"
+                                                    data-bs-toggle="dropdown"
+                                                >
+                                                    <i class="ri-more-2-fill"></i>
+                                                </a>
+                                                <ul class="dropdown-menu">
+                                                    <li>
+                                                    <a
+                                                        class="dropdown-item"
+                                                        href="javascript:void(0)"
+                                                        @click="rolesStore.openModal(slotProps.data)"
+                                                    >
+                                                        <i class="ri-edit-box-line me-2"></i> Edit
+                                                    </a>
+                                                    </li>
+                                                    <li>
+                                                    <a
+                                                        class="dropdown-item text-danger"
+                                                        href="javascript:void(0)"
+                                                        @click="rolesStore.deleteRole(slotProps.data.id)"
+                                                    >
+                                                        <i class="ri-delete-bin-7-line me-2"></i> Hapus
+                                                    </a>
+                                                    </li>
+                                                </ul>
                                                 </div>
                                             </template>
                                         </Column>

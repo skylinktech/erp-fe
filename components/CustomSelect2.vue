@@ -308,11 +308,6 @@ const filteredOptions = computed(() => {
 const toggleDropdown = (event) => {
   if (props.disabled) return
   
-  // Prevent toggle if clicking on clear button or arrow
-  if (event.target.closest('.select2-clear-btn') || event.target.closest('.select2-selection__arrow')) {
-    return
-  }
-  
   if (isOpen.value) {
     closeDropdown()
   } else {
@@ -669,7 +664,7 @@ export default {
   top: 100%;
   left: 0;
   right: 0;
-  z-index: 1050;
+  z-index: 9999;
   margin-top: 4px;
   background-color: #fff;
   border: 1px solid #d1d5db;

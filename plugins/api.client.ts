@@ -142,6 +142,11 @@ export default defineNuxtPlugin(() => {
     accountsByCategory: (category: string) => `${apiBase}/accounting/accounts/category/${category}`,
     accountsSummary: () => `${apiBase}/accounting/accounts/summary`,
 
+    // Cost Centers
+    costCenters: () => `${apiBase}/accounting/cost-centers`,
+    costCentersTotal: () => `${apiBase}/accounting/cost-centers/total`,
+    costCentersExportExcel: () => `${apiBase}/accounting/cost-centers/export-excel`,
+
     // Taxes
     taxes: () => `${apiBase}/accounting/taxes`,
     taxesStore: () => `${apiBase}/accounting/taxes`,
@@ -198,9 +203,33 @@ export default defineNuxtPlugin(() => {
     product: () => `${apiBase}/product`,
     productExportExcel: () => `${apiBase}/product/export-excel`,
 
+    // DID (Delivery, Installation, dll)
+    did: () => `${apiBase}/did`,
+    totalDids: () => `${apiBase}/did/totalDids`,
+    exportExcelDids: () => `${apiBase}/did/export-excel`,
+
     // Service
     service: () => `${apiBase}/service`,
     serviceExportExcel: () => `${apiBase}/service/export-excel`,
+
+    // Service Plan
+    servicePlan: () => `${apiBase}/service-plan`,
+    servicePlanExportExcel: () => `${apiBase}/service-plan/export-excel`,
+
+    // Site
+    sites: () => `${apiBase}/company/site`,
+    sitesTotal: () => `${apiBase}/company/site/totalSites`,
+    sitesExportExcel: () => `${apiBase}/company/site/export-excel`,
+
+    // Site Invest
+    siteInvest: () => `${apiBase}/site-invest`,
+    siteInvestTotal: () => `${apiBase}/site-invest/totalSiteInvests`,
+    siteInvestExportExcel: () => `${apiBase}/site-invest/export-excel`,
+
+    // Budget
+    budgets: () => `${apiBase}/accounting/budgets`,
+    budgetStatistics: () => `${apiBase}/accounting/budgets/statistics`,
+    budgetExportExcel: () => `${apiBase}/accounting/budgets/export-excel`,
 
     // Import
     import: () => `${apiBase}/import`,
@@ -262,7 +291,25 @@ export default defineNuxtPlugin(() => {
     quotation: () => `${apiBase}/quotation`,
     approveQuotation: (id: number | string) => `${apiBase}/quotation/approveQuotation/${id}`,
     rejectQuotation: (id: number | string) => `${apiBase}/quotation/rejectQuotation/${id}`,
+    submitQuotation: (id: number | string) => `${apiBase}/quotation/submitQuotation/${id}`,
     getQuotationDetails: (id: number | string) => `${apiBase}/quotation/getQuotationDetails/${id}`,
+
+    // IRO (Installation Request Order)
+    iro: () => `${apiBase}/iro`,
+    iroStatistics: () => `${apiBase}/iro/statistics`,
+    approveIro: (id: string) => `${apiBase}/iro/approveIro/${id}`,
+    rejectIro: (id: string) => `${apiBase}/iro/rejectIro/${id}`,
+    submitIro: (id: string) => `${apiBase}/iro/submitIro/${id}`,
+
+    // Business Schemes (untuk dropdown Site Investment)
+    businessSchemes: () => `${apiBase}/business-schemes`,
+
+    // Site Investment
+    siteInvestment: () => `${apiBase}/site-investment`,
+    countSiteInvestByStatus: () => `${apiBase}/site-investment/countByStatus`,
+    approveSiteInvestment: (id: string) => `${apiBase}/site-investment/approveSiteInvestment/${id}`,
+    rejectSiteInvestment: (id: string) => `${apiBase}/site-investment/rejectSiteInvestment/${id}`,
+    submitSiteInvestment: (id: string) => `${apiBase}/site-investment/submitSiteInvestment/${id}`,
 
     // Data Access - untuk akses data tanpa permission menu
     dataPerusahaan: () => `${apiBase}/data/perusahaan`,

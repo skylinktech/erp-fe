@@ -2,88 +2,64 @@ import { defineStore } from 'pinia'
 import { useNuxtApp } from '#app'
 import Swal from 'sweetalert2'
 
-export interface Service {
-  id: number
-  name: string
-  code: string
-  period: number
-  servicePlanId: number
-  price: number
-  description: string
-  createdBy: number
-  updatedBy: number
-  deletedBy?: number | null
-  deletedAt?: string | null
-  createdAt: string
-  updatedAt: string
-  servicePlan?: {
-    id: number
-    name: string
-  }
-  createdByUser?: {
-    id: number
-    fullName: string
-    email: string
-  }
-  updatedByUser?: {
-    id: number
-    fullName: string
-    email: string
-  }
-  deletedByUser?: {
-    id: number
-    fullName: string
-    email: string
-  }
+export interface Did {
+  id        : number
+  code      : string
+  name      : string
+  price     : number | null
+  category  : 'delivery' | 'installation' | 'survey' | 'dismantle'
+  unitId    : number
+  unit     ?: { id: number; name: string; symbol?: string } | null
+  createdAt?: string
+  updatedAt?: string
 }
 
-interface ServiceState {
-  services: Service[]
-  loading: boolean
-  error: any
+interface DidState {
+  dids        : Did[]
+  loading     : boolean
+  error       : any
   totalRecords: number
-  totalServices: number
-  params: {
-    first: number
-    rows: number
+  totalDids   : number
+  params      : {
+    first    : number
+    rows     : number
     sortField: string | null
     sortOrder: number | null
-    search: string
+    search   : string
   }
-  form: Partial<Service>
-  isEditMode: boolean
-  showModal: boolean
+  form            : Partial<Did>
+  isEditMode      : boolean
+  showModal       : boolean
   validationErrors: any[]
 }
 
-export const useServiceStore = defineStore('service', {
-  state: (): ServiceState => ({
-    services: [],
+export const useDidStore = defineStore('did', {
+  state: (): DidState => ({
+    dids: [],
     loading: true,
     error: null,
     totalRecords: 0,
-    totalServices: 0,
+    totalDids: 0,
     params: {
       first: 0,
       rows: 10,
-      sortField: 'id',
+      sortField: 'code',
       sortOrder: 1,
       search: '',
     },
     form: {
-      name: '',
       code: '',
-      period: 0,
-      servicePlanId: null as number | null,
+      name: '',
       price: 0,
-      description: '',
+      category: 'delivery',
+      unitId: null as number | null,
     },
     isEditMode: false,
     showModal: false,
     validationErrors: [],
   }),
   actions: {
-    async fetchServices(suppressError = false) {
+    async fetchDids(suppressError = false) {
       const toast = useToast()
       this.loading = true
       this.error = null
@@ -92,37 +68,35 @@ export const useServiceStore = defineStore('service', {
         const params = new URLSearchParams({
           page: Math.floor(this.params.first / this.params.rows + 1).toString(),
           rows: Math.floor(this.params.rows).toString(),
-          sortField: this.params.sortField || 'id',
+          sortField: this.params.sortField || 'code',
           sortOrder: this.params.sortOrder === -1 ? 'desc' : 'asc',
           search: this.params.search || '',
         })
 
-        const response = await fetch(`${$api.service()}?${params.toString()}`, {
+        const response = await fetch(`${$api.did()}?${params.toString()}`, {
           headers: {
             'Content-Type': 'application/json',
             Accept: 'application/json',
           },
-          credentials: 'include', // Cookie-based auth
+          credentials: 'include',
         })
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({
-            message: 'Gagal memuat data service dengan status: ' + response.status,
+            message: 'Gagal memuat data DID dengan status: ' + response.status,
           }))
-          throw new Error(errorData.message || 'Gagal memuat data service')
+          throw new Error(errorData.message || 'Gagal memuat data DID')
         }
 
         const result = await response.json()
-
-        this.services = result.data
-        this.totalRecords = result.meta.total
+        this.dids = result.data ?? []
+        this.totalRecords = result.meta?.total ?? 0
       } catch (e: any) {
         this.error = e.message
-
         if (!suppressError) {
           toast.error({
             title: 'Error',
-            message: `Tidak dapat memuat data service: ${e.message}`,
+            message: `Tidak dapat memuat data DID: ${e.message}`,
             color: 'red',
             position: 'topRight',
           })
@@ -132,42 +106,40 @@ export const useServiceStore = defineStore('service', {
       }
     },
 
-    async saveService() {
+    async saveDid() {
       const toast = useToast()
       this.loading = true
       this.validationErrors = []
       const { $api } = useNuxtApp()
 
       try {
-        const formData = new FormData()
-        Object.keys(this.form).forEach((key) => {
-          const value = this.form[key as keyof typeof this.form]
-          if (value !== null && value !== undefined) {
-            formData.append(key, String(value))
-          }
-        })
-
-        let url = $api.service()
-        let method = 'POST'
-
-        if (this.isEditMode && this.form.id) {
-          url = `${$api.service()}/${this.form.id}`
-          formData.append('_method', 'PUT')
+        const body = {
+          code: this.form.code,
+          name: this.form.name,
+          price: this.form.price != null ? Number(this.form.price) || 0 : null,
+          category: this.form.category || 'delivery',
+          unitId: this.form.unitId,
         }
 
+        const url = this.isEditMode && this.form.id
+          ? `${$api.did()}/${this.form.id}`
+          : $api.did()
+        const method = this.isEditMode ? 'PUT' : 'POST'
+
         const response = await fetch(url, {
-          method: 'POST',
+          method,
           headers: {
+            'Content-Type': 'application/json',
             Accept: 'application/json',
           },
-          body: formData,
-          credentials: 'include', // Cookie-based auth
+          body: JSON.stringify(body),
+          credentials: 'include',
         })
 
         let result
         try {
           result = await response.json()
-        } catch (parseError) {
+        } catch {
           toast.error({
             title: 'Error',
             message: 'Server response tidak valid',
@@ -178,13 +150,11 @@ export const useServiceStore = defineStore('service', {
 
         if (!response.ok) {
           if (response.status === 422 && result.errors) {
-            const errors = result.errors as unknown
+            const errors = result.errors
             if (Array.isArray(errors)) {
-              this.validationErrors = errors as any[]
+              this.validationErrors = errors
             } else if (errors && typeof errors === 'object') {
-              this.validationErrors = Object.entries(
-                errors as Record<string, string | string[]>
-              )
+              this.validationErrors = Object.entries(errors as Record<string, string | string[]>)
                 .flatMap(([field, messages]) => {
                   const messageList = Array.isArray(messages) ? messages : [messages]
                   return messageList
@@ -196,15 +166,15 @@ export const useServiceStore = defineStore('service', {
             }
             return
           }
-          throw new Error(result.message || 'Gagal menyimpan data service')
+          throw new Error(result.message || 'Gagal menyimpan data DID')
         }
 
         this.closeModal()
-        await this.fetchServices()
-        await this.fetchTotalServices()
+        await this.fetchDids()
+        await this.fetchTotalDids()
         toast.success({
           title: 'Success',
-          message: `Service berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
+          message: `DID berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
           color: 'green',
           position: 'topRight',
         })
@@ -222,13 +192,13 @@ export const useServiceStore = defineStore('service', {
       }
     },
 
-    async deleteService(id: number) {
+    async deleteDid(id: number) {
       const toast = useToast()
       const { $api } = useNuxtApp()
 
       const result = await Swal.fire({
         title: 'Apakah Anda yakin?',
-        text: 'Data service yang dihapus tidak dapat dikembalikan!',
+        text: 'Data DID yang dihapus tidak dapat dikembalikan!',
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#3085d6',
@@ -237,38 +207,34 @@ export const useServiceStore = defineStore('service', {
         cancelButtonText: 'Batal',
       })
 
-      if (!result.isConfirmed) {
-        return
-      }
+      if (!result.isConfirmed) return
 
       this.loading = true
       try {
-        const response = await fetch($api.service() + `/${id}`, {
+        const response = await fetch(`${$api.did()}/${id}`, {
           method: 'DELETE',
-          headers: {
-            Accept: 'application/json',
-          },
-          credentials: 'include', // Cookie-based auth
+          headers: { Accept: 'application/json' },
+          credentials: 'include',
         })
 
         if (!response.ok) {
           const errorData = await response.json()
-          throw new Error(errorData.message || 'Gagal menghapus service')
+          throw new Error(errorData.message || 'Gagal menghapus DID')
         }
 
-        await this.fetchServices()
-        await this.fetchTotalServices()
+        await this.fetchDids()
+        await this.fetchTotalDids()
         toast.success({
           title: 'Success',
-          message: 'Service berhasil dihapus.',
+          message: 'DID berhasil dihapus.',
           color: 'green',
           position: 'topRight',
         })
       } catch (error: any) {
-        console.error('Gagal menghapus service:', error)
+        console.error('Gagal menghapus DID:', error)
         toast.error({
           title: 'Error',
-          message: error.message || 'Gagal menghapus service',
+          message: error.message || 'Gagal menghapus DID',
           color: 'red',
           position: 'topRight',
         })
@@ -277,27 +243,25 @@ export const useServiceStore = defineStore('service', {
       }
     },
 
-    openModal(service: Service | null = null) {
-      this.isEditMode = !!service
+    openModal(did: Did | null = null) {
+      this.isEditMode = !!did
       this.validationErrors = []
-      if (service) {
+      if (did) {
         this.form = {
-          id: service.id,
-          name: service.name,
-          code: service.code ?? '',
-          period: service.period,
-          servicePlanId: service.servicePlanId ?? service.servicePlan?.id ?? null,
-          price: service.price ?? 0,
-          description: service.description ?? '',
+          id: did.id,
+          code: did.code,
+          name: did.name,
+          price: did.price ?? 0,
+          category: did.category ?? 'delivery',
+          unitId: did.unitId ?? did.unit?.id ?? null,
         }
       } else {
         this.form = {
-          name: '',
           code: '',
-          period: 0,
-          servicePlanId: null,
+          name: '',
           price: 0,
-          description: '',
+          category: 'delivery',
+          unitId: null as number | null,
         }
       }
       this.showModal = true
@@ -307,12 +271,11 @@ export const useServiceStore = defineStore('service', {
       this.showModal = false
       this.isEditMode = false
       this.form = {
-        name: '',
         code: '',
-        period: 0,
-        servicePlanId: null,
+        name: '',
         price: 0,
-        description: '',
+        category: 'delivery',
+        unitId: null as number | null,
       }
       this.validationErrors = []
     },
@@ -320,85 +283,80 @@ export const useServiceStore = defineStore('service', {
     setPagination(event: any) {
       this.params.first = event.first
       this.params.rows = event.rows
-      this.fetchServices()
+      this.fetchDids()
     },
 
     setSort(event: any) {
       this.params.sortField = event.sortField
       this.params.sortOrder = event.sortOrder
-      this.fetchServices()
+      this.fetchDids()
     },
 
     setSearch(value: string) {
       this.params.search = value
       this.params.first = 0
-      this.fetchServices()
+      this.fetchDids()
     },
 
-    async fetchTotalServices() {
+    async fetchTotalDids() {
       const toast = useToast()
       const { $api } = useNuxtApp()
       try {
-        const response = await fetch(`${$api.service()}/totalServices`, {
+        const response = await fetch($api.totalDids(), {
           headers: {
             'Content-Type': 'application/json',
             Accept: 'application/json',
           },
-          credentials: 'include', // Cookie-based auth
+          credentials: 'include',
         })
 
-        if (!response.ok) {
-          throw new Error('Gagal memuat total service')
-        }
+        if (!response.ok) throw new Error('Gagal memuat total DID')
 
         const result = await response.json()
-        this.totalServices = result.total
+        this.totalDids = result.total ?? 0
       } catch (error: any) {
-        console.error('Error fetching total services:', error)
+        console.error('Error fetching total DID:', error)
         toast.error({
           title: 'Error',
-          message: error.message || 'Gagal memuat total service',
+          message: error.message || 'Gagal memuat total DID',
           color: 'red',
-          position: 'topRight',
         })
       }
     },
 
-    async fetchServicesForExport() {
+    async fetchDidsForExport() {
       const toast = useToast()
       const { $api } = useNuxtApp()
       try {
         const params = new URLSearchParams({
           search: this.params.search || '',
         })
-
-        const response = await fetch(`${$api.serviceExportExcel()}?${params.toString()}`, {
+        const response = await fetch(`${$api.exportExcelDids()}?${params.toString()}`, {
           headers: {
             'Content-Type': 'application/json',
             Accept: 'application/json',
           },
-          credentials: 'include', // Cookie-based auth
+          credentials: 'include',
         })
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({
-            message: 'Gagal memuat data service untuk export dengan status: ' + response.status,
+            message: 'Gagal memuat data DID untuk export',
           }))
-          throw new Error(errorData.message || 'Gagal memuat data service untuk export')
+          throw new Error(errorData.message || 'Gagal memuat data DID untuk export')
         }
 
         const result = await response.json()
         return {
-          data: result.data || [],
-          nmPerusahaan: result.nmPerusahaan || '',
+          data: result.data ?? [],
+          nmPerusahaan: result.nmPerusahaan ?? '',
         }
       } catch (error: any) {
-        console.error('Error fetching services for export:', error)
+        console.error('Error fetching DID for export:', error)
         toast.error({
           title: 'Error',
-          message: error.message || 'Gagal memuat data service untuk export',
+          message: error.message || 'Gagal memuat data DID untuk export',
           color: 'red',
-          position: 'topRight',
         })
         throw error
       }

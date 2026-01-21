@@ -15,6 +15,7 @@ export interface Customer {
   email: string
   phone: string
   npwp: string
+  type?: 'prospect' | 'regular' | 'vip'
   logo: string | File
   customerProducts?: CustomerProduct[]
 }
@@ -59,6 +60,7 @@ export const useCustomerStore = defineStore('customer', {
       email: '',
       phone: '',
       npwp: '',
+      type: '' as '' | 'prospect' | 'regular' | 'vip',
       logo: '',
       customerProducts: []
     },
@@ -135,11 +137,17 @@ export const useCustomerStore = defineStore('customer', {
         const formData = new FormData()
         
         // Hanya kirim field yang diperlukan untuk backend
-        const fieldsToSend = ['name', 'code', 'address', 'email', 'phone', 'npwp'];
+        const fieldsToSend = ['name', 'code', 'address', 'email', 'phone', 'npwp', 'type'];
         fieldsToSend.forEach(key => {
             const value = this.form[key as keyof typeof this.form];
             if (value !== null && value !== undefined) {
-                formData.append(key, String(value));
+                if (key === 'type') {
+                    if (['prospect', 'regular', 'vip'].includes(String(value))) {
+                        formData.append(key, String(value));
+                    }
+                } else {
+                    formData.append(key, String(value));
+                }
             }
         });
         
@@ -324,6 +332,7 @@ export const useCustomerStore = defineStore('customer', {
                 const data = result.data;
                 this.form = { 
                     ...data,
+                    type: data.type || '',
                     customerProducts: data.customerProducts && data.customerProducts.length > 0 ? data.customerProducts: [{ productId: null, priceSell: 0 }]
                 };
             } catch (error: any) {
@@ -346,6 +355,7 @@ export const useCustomerStore = defineStore('customer', {
                 email: '',
                 phone: '',
                 npwp: '',
+                type: '',
                 logo: '',
                 customerProducts: [{ productId: null, priceSell: 0 }]
             };
@@ -363,6 +373,7 @@ export const useCustomerStore = defineStore('customer', {
             email: '',
             phone: '',
             npwp: '',
+            type: '',
             logo: '',
             customerProducts: [{ productId: null, priceSell: 0 }]
         };

@@ -909,13 +909,36 @@
 
     const handleLogout = async () => {
         try {
-            // Bersihkan data lokal terlebih dahulu
-            userStore.clearUser()
-            document.documentElement.className = ''
-
-            // Cookie-based auth: logout dari server akan otomatis clear cookies
+            // Logout dari SSO terlebih dahulu (agar token SSO di-revoke)
+            const ssoService = useSsoService()
             try {
-                // Logout dari server backend (akan clear cookie)
+                // Ambil token SSO dari cookie untuk logout
+                const ssoToken = document.cookie
+                    .split('; ')
+                    .find(row => row.startsWith('sso_token='))
+                    ?.split('=')[1];
+                
+                if (ssoToken) {
+                    // Gunakan method logout dari useSsoService
+                    await ssoService.logout(ssoToken);
+                    console.log('SSO logout berhasil');
+                } else {
+                    // Jika tidak ada token di cookie, coba logout langsung ke endpoint
+                    await fetch(`${useRuntimeConfig().public.ssoUrl}/api/oauth/logout`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        credentials: 'include' // Kirim cookies SSO
+                    });
+                    console.log('SSO logout via cookie berhasil');
+                }
+            } catch (ssoError) {
+                console.warn('SSO logout gagal:', ssoError)
+            }
+            
+            // Logout dari server backend ERP (akan clear cookie)
+            try {
                 const response = await fetch($api.logout(), {
                     method: 'POST',
                     headers: {
@@ -926,26 +949,20 @@
 
                 // Cek status response
                 if (!response.ok) {
-                    console.warn('Logout dari server gagal:', response.status);
+                    console.warn('Logout dari server ERP gagal:', response.status);
                 }
             } catch (serverError) {
-                console.warn('Gagal menghubungi server untuk logout:', serverError.message);
+                console.warn('Gagal menghubungi server ERP untuk logout:', serverError.message);
             }
             
-            // Logout dari SSO (server SSO akan clear cookie-nya juga)
-            const ssoService = useSsoService()
-            try {
-                // SSO logout juga akan clear cookie di SSO server
-                await fetch(`${useRuntimeConfig().public.authBase}/api/oauth/logout`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    credentials: 'include'
-                });
-            } catch (ssoError) {
-                console.warn('SSO logout gagal:', ssoError)
-            }
+            // Bersihkan data lokal setelah logout dari server
+            userStore.clearUser()
+            document.documentElement.className = ''
+            
+            // Clear semua cookies yang mungkin tersimpan
+            document.cookie.split(";").forEach((c) => { 
+                document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+            });
         } catch (error) {
             console.warn('Error saat logout:', error.message);
         } finally {
