@@ -13,63 +13,137 @@
 
             <!-- Content -->
             <div v-else class="container-xxl flex-grow-1 container-p-y">
-                <h4 class="mb-1">List Site Investment</h4>
+                <h4 class="mb-1">Site Investment</h4>
                 <p class="mb-6">List site investment yang terdaftar di sistem</p>
 
-                <!-- Stats Cards -->
+                <!-- Statistics Cards -->
                 <div class="row g-6 mb-6">
-                    <CardBox
-                        v-if="stats.total !== undefined"
-                        title="Total Site Investment"
-                        :total="(stats.total !== undefined ? stats.total + ' Site Investment' : 'Memuat...')"
-                        :column-class="cardBoxColumnClass"
-                    />
-                    <CardBox
-                        v-if="stats.draft !== undefined"
-                        title="Total Draft"
-                        :total="(stats.draft !== undefined ? stats.draft + ' Draft' : 'Memuat...')"
-                        :column-class="cardBoxColumnClass"
-                    />
-                    <CardBox
-                        v-if="stats.pending !== undefined"
-                        title="Total Pending"
-                        :total="(stats.pending !== undefined ? stats.pending + ' Pending' : 'Memuat...')"
-                        :column-class="cardBoxColumnClass"
-                    />
-                    <CardBox
-                        v-if="stats.approved !== undefined"
-                        title="Total Approved"
-                        :total="(stats.approved !== undefined ? stats.approved + ' Approved' : 'Memuat...')"
-                        :column-class="cardBoxColumnClass"
-                    />
-                    <CardBox
-                        v-if="stats.rejected !== undefined"
-                        title="Total Rejected"
-                        :total="(stats.rejected !== undefined ? stats.rejected + ' Rejected' : 'Memuat...')"
-                        :column-class="cardBoxColumnClass"
-                    />
-                    <CardBox
-                        v-if="stats.expired !== undefined"
-                        title="Total Expired"
-                        :total="(stats.expired !== undefined ? stats.expired + ' Expired' : 'Memuat...')"
-                        :column-class="cardBoxColumnClass"
-                    />
-                    <CardBox
-                        v-if="userHasRole('superadmin') || userHasPermission('create_site_investment')"
-                        :isAddButtonCard="true"
-                        image-src="/img/illustrations/add-new-role-illustration.png"
-                        image-alt="Tambah Site Investment"
-                        button-text="Tambah Site Investment"
-                        modal-target="#SiteInvestmentModal"
-                        @button-click="siteInvestStore.openModal(null)"
-                        :column-class="cardBoxColumnClass"
-                    />
+                    <div class="col-xl-3 col-lg-6 col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <p class="mb-0">Total Site Investment</p>
+                                    <div class="avatar">
+                                        <span class="avatar-initial rounded bg-label-primary">
+                                            <i class="ri-building-line"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="account-heading">
+                                        <h5 class="mb-1">{{ stats.total || 0 }}</h5>
+                                        <span class="text-muted">Site Investment terdaftar</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-lg-6 col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <p class="mb-0">Draft</p>
+                                    <div class="avatar">
+                                        <span class="avatar-initial rounded bg-label-secondary">
+                                            <i class="ri-draft-line"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="account-heading">
+                                        <h5 class="mb-1">{{ stats.draft || 0 }}</h5>
+                                        <span class="text-muted">Draft</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-lg-6 col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <p class="mb-0">Pending</p>
+                                    <div class="avatar">
+                                        <span class="avatar-initial rounded bg-label-warning">
+                                            <i class="ri-time-line"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="account-heading">
+                                        <h5 class="mb-1">{{ stats.pending || 0 }}</h5>
+                                        <span class="text-muted">Pending</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-lg-6 col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <p class="mb-0">Approved</p>
+                                    <div class="avatar">
+                                        <span class="avatar-initial rounded bg-label-success">
+                                            <i class="ri-checkbox-circle-line"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="account-heading">
+                                        <h5 class="mb-1">{{ stats.approved || 0 }}</h5>
+                                        <span class="text-muted">Approved</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-lg-6 col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <p class="mb-0">Rejected</p>
+                                    <div class="avatar">
+                                        <span class="avatar-initial rounded bg-label-danger">
+                                            <i class="ri-close-circle-line"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="account-heading">
+                                        <h5 class="mb-1">{{ stats.rejected || 0 }}</h5>
+                                        <span class="text-muted">Rejected</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-lg-6 col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <p class="mb-0">Expired</p>
+                                    <div class="avatar">
+                                        <span class="avatar-initial rounded bg-label-secondary">
+                                            <i class="ri-pass-expired-line"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="account-heading">
+                                        <h5 class="mb-1">{{ stats.expired || 0 }}</h5>
+                                        <span class="text-muted">Expired</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Filters -->
                 <div class="row g-6">
                     <div class="col-12">
-                        <h4 class="mt-6 mb-1">Total & Filter Site Investment</h4>
+                        <h4 class="mt-6 mb-1">Filter Site Investment</h4>
                         <p class="mb-0">Temukan semua site investment perusahaan Anda</p>
                     </div>
                     <div class="col-12">
@@ -141,15 +215,38 @@
                     <!-- Table -->
                     <div class="col-12">
                         <div class="card">
-                            <div class="card-header">
-                                <TableControls
-                                    v-model="tableControls"
-                                    :rows-per-page-options="rowsPerPageOptionsArray"
-                                    search-placeholder="Cari Site Investment..."
-                                    @rows-change="handleRowsChange"
-                                    @search="handleSearch"
-                                    @export="exportData"
-                                />
+                            <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+                                <div class="d-flex align-items-center me-3 mb-2 mb-md-0">
+                                    <span class="me-2">Baris:</span>
+                                    <Dropdown
+                                        v-model="tableControls.rows"
+                                        :options="rowsPerPageOptionsArray"
+                                        @change="handleRowsChange"
+                                        placeholder="Jumlah"
+                                        style="width: 8rem;"
+                                    />
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <button
+                                        v-if="userHasRole('superadmin') || userHasPermission('create_site_investment')"
+                                        @click="siteInvestStore.openModal(null)"
+                                        class="btn btn-primary"
+                                    >
+                                        <i class="ri-add-line me-1"></i>
+                                        Tambah Site Investment
+                                    </button>
+                                    <button @click="exportData('csv')" class="btn btn-outline-secondary" :disabled="loading">
+                                        <i class="ri-download-line me-1"></i>
+                                        Export
+                                    </button>
+                                    <span class="p-input-icon-left">
+                                        <InputText
+                                            v-model="globalFilterValue"
+                                            placeholder="Cari Site Investment..."
+                                            class="w-full md:w-20rem"
+                                        />
+                                    </span>
+                                </div>
                             </div>
                             <div class="card-datatable table-responsive py-3 px-3">
                                 <MyDataTable
@@ -647,7 +744,7 @@
                                                 <label class="form-label text-muted">Sumber Budget</label>
                                                 <CustomSelect2
                                                     v-model="item.budgetSourceId"
-                                                    :options="budgets || []"
+                                                    :options="approvedBudgets || []"
                                                     :get-option-label="b => (b && `${b.budgetCode || b.budget_code || ''} - ${b.budgetName || b.budget_name || ''}`) || '—'"
                                                     :reduce="b => (b && b.id) ?? null"
                                                     placeholder="Pilih Budget"
@@ -708,10 +805,10 @@ import { useBudgetStore } from '~/stores/budget'
 import { usePermissions } from '~/composables/usePermissions'
 import { useImageUrl } from '~/composables/useImageUrl'
 import Modal from '~/components/modal/Modal.vue'
-import CardBox from '~/components/cards/Cards.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
-import TableControls from '~/components/table/TableControls.vue'
 import Column from 'primevue/column'
+import Dropdown from 'primevue/dropdown'
+import InputText from 'primevue/inputtext'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
 import { useDebounceFn } from '@vueuse/core'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
@@ -739,6 +836,11 @@ const { services } = storeToRefs(serviceStore)
 const { user } = storeToRefs(userStore)
 const { permissions } = storeToRefs(permissionStore)
 const { budgets } = storeToRefs(budgetStore)
+
+// Filter budgets untuk tab budget - hanya tampilkan yang status approved
+const approvedBudgets = computed(() => {
+    return (budgets.value || []).filter(b => b.status === 'approved')
+})
 
 const myDataTableRef = ref(null)
 const filters = ref({
@@ -861,10 +963,6 @@ function onSiteChange(siteId) {
         form.value.long = s.longitude != null ? String(s.longitude) : ''
     }
 }
-
-const cardBoxColumnClass = computed(() => {
-    return stats.value.total !== undefined ? 'col-6' : 'col-xl-4 col-lg-6 col-md-6'
-})
 
 const rowsPerPageOptionsArray = ref([10, 25, 50, 100])
 const modalTitle = computed(() => isEditMode.value ? 'Edit Site Investment' : 'Tambah Site Investment')
@@ -1003,9 +1101,11 @@ watch(showModal, async (newValue) => {
     }
 })
 
-watch(globalFilterValue, useDebounceFn((newValue) => {
-    filters.value.search = newValue
-}, 500))
+const debouncedSearch = useDebounceFn(() => {
+    siteInvestStore.setSearch(globalFilterValue.value)
+}, 500)
+
+watch(globalFilterValue, debouncedSearch)
 
 watch(filters, (newFilters) => {
     const { page, rows, ...restFilters } = newFilters

@@ -1,50 +1,106 @@
 <template>
   <div class="content-wrapper">
     <div class="container-xxl flex-grow-1 container-p-y">
-      <h4 class="mb-1">List IRO (Internal Request Order)</h4>
+      <h4 class="mb-1">IRO (Internal Request Order)</h4>
       <p class="mb-6">Daftar IRO yang terdaftar di sistem</p>
 
+      <!-- Statistics Cards -->
       <div class="row g-6 mb-6">
-        <div class="col-xl-4 col-lg-6 col-md-6">
+        <div class="col-xl-3 col-lg-6 col-md-6">
           <div class="card">
             <div class="card-body">
               <div class="d-flex justify-content-between align-items-center mb-4">
-                <h5 class="mb-1">Total IRO</h5>
-                <span class="badge bg-label-primary rounded-pill">Total</span>
+                <p class="mb-0">Total IRO</p>
+                <div class="avatar">
+                  <span class="avatar-initial rounded bg-label-primary">
+                    <i class="ri-file-list-3-line"></i>
+                  </span>
+                </div>
               </div>
-              <div class="d-flex align-items-center">
-                <h1 class="mb-0 display-4">{{ statistics?.totalIros || 0 }}</h1>
-                <i class="ri-file-list-3-line ri-24px text-primary ms-2"></i>
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="account-heading">
+                  <h5 class="mb-1">{{ statistics?.totalIros || 0 }}</h5>
+                  <span class="text-muted">IRO terdaftar</span>
+                </div>
               </div>
-              <p class="mb-0 mt-2">Total semua IRO dalam sistem</p>
             </div>
           </div>
         </div>
-        <div class="col-xl-4 col-lg-6 col-md-6">
+        <div class="col-xl-3 col-lg-6 col-md-6">
           <div class="card">
             <div class="card-body">
               <div class="d-flex justify-content-between align-items-center mb-4">
-                <h5 class="mb-1">IRO Approved</h5>
-                <span class="badge bg-label-success rounded-pill">Approved</span>
+                <p class="mb-0">Draft</p>
+                <div class="avatar">
+                  <span class="avatar-initial rounded bg-label-secondary">
+                    <i class="ri-draft-line"></i>
+                  </span>
+                </div>
               </div>
-              <div class="d-flex align-items-center">
-                <h1 class="mb-0 display-4">{{ statistics?.approvedIros || 0 }}</h1>
-                <i class="ri-check-line ri-24px text-success ms-2"></i>
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="account-heading">
+                  <h5 class="mb-1">{{ statistics?.draftIros || 0 }}</h5>
+                  <span class="text-muted">Draft</span>
+                </div>
               </div>
-              <p class="mb-0 mt-2">Total IRO yang sudah disetujui</p>
             </div>
           </div>
         </div>
-        <div class="col-xl-4 col-lg-6 col-md-6">
-          <div class="card h-100">
-            <div class="row h-100">
-              <div class="col-sm-5 d-flex align-items-end justify-content-center">
-                <img src="/img/illustrations/add-new-role-illustration.png" class="img-fluid" alt="" width="70">
+        <div class="col-xl-3 col-lg-6 col-md-6">
+          <div class="card">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-4">
+                <p class="mb-0">Pending</p>
+                <div class="avatar">
+                  <span class="avatar-initial rounded bg-label-warning">
+                    <i class="ri-time-line"></i>
+                  </span>
+                </div>
               </div>
-              <div class="col-sm-7">
-                <div class="card-body text-sm-end text-center ps-sm-0">
-                  <button v-if="userHasRole('superadmin') || userHasPermission('create_quotation')" @click="iroStore.openModal()" class="btn btn-primary mb-2 text-wrap">Tambah IRO</button>
-                  <p class="mb-0 mt-1">Buat IRO baru</p>
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="account-heading">
+                  <h5 class="mb-1">{{ statistics?.pendingIros || 0 }}</h5>
+                  <span class="text-muted">Pending</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-xl-3 col-lg-6 col-md-6">
+          <div class="card">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-4">
+                <p class="mb-0">Approved</p>
+                <div class="avatar">
+                  <span class="avatar-initial rounded bg-label-success">
+                    <i class="ri-checkbox-circle-line"></i>
+                  </span>
+                </div>
+              </div>
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="account-heading">
+                  <h5 class="mb-1">{{ statistics?.approvedIros || 0 }}</h5>
+                  <span class="text-muted">Approved</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-xl-3 col-lg-6 col-md-6">
+          <div class="card">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-4">
+                <p class="mb-0">Rejected</p>
+                <div class="avatar">
+                  <span class="avatar-initial rounded bg-label-danger">
+                    <i class="ri-close-circle-line"></i>
+                  </span>
+                </div>
+              </div>
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="account-heading">
+                  <h5 class="mb-1">{{ statistics?.rejectedIros || 0 }}</h5>
+                  <span class="text-muted">Rejected</span>
                 </div>
               </div>
             </div>
@@ -54,8 +110,8 @@
 
       <div class="row g-6">
         <div class="col-12">
-          <h4 class="mt-6 mb-1">Daftar IRO</h4>
-          <p class="mb-0">Kelola IRO (Installation Request Order) berdasarkan Quotation yang disetujui.</p>
+          <h4 class="mt-6 mb-1">Filter IRO</h4>
+          <p class="mb-0">Filter IRO berdasarkan Customer dan Status.</p>
         </div>
         <div class="col-12">
           <div class="card">
@@ -73,14 +129,34 @@
         </div>
         <div class="col-12">
           <div class="card">
-            <div class="card-header">
-              <TableControls
-                v-model="tableControls"
-                :rows-per-page-options="rowsPerPageOptionsArray"
-                search-placeholder="Cari IRO..."
-                @rows-change="handleRowsChange"
-                @search="handleSearch"
-              />
+            <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+              <div class="d-flex align-items-center me-3 mb-2 mb-md-0">
+                <span class="me-2">Baris:</span>
+                <Dropdown
+                  v-model="tableControls.rows"
+                  :options="rowsPerPageOptionsArray"
+                  @change="handleRowsChange"
+                  placeholder="Jumlah"
+                  style="width: 8rem;"
+                />
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <button
+                  v-if="userHasRole('superadmin') || userHasPermission('create_quotation')"
+                  @click="iroStore.openModal()"
+                  class="btn btn-primary"
+                >
+                  <i class="ri-add-line me-1"></i>
+                  Tambah Data
+                </button>
+                <span class="p-input-icon-left">
+                  <InputText
+                    v-model="globalFilterValue"
+                    placeholder="Cari IRO..."
+                    class="w-full md:w-20rem"
+                  />
+                </span>
+              </div>
             </div>
             <div class="card-datatable table-responsive py-3 px-3">
               <MyDataTable
@@ -170,7 +246,7 @@
               <div class="col-12">
                 <div class="alert alert-info py-2 mb-0">
                   <i class="ri-information-line me-2"></i>
-                  <strong>1 baris = 1 tipe</strong> (hanya product_id, atau service_id+service_plan_id, atau did_id yang terisi). <strong>PRODUCT</strong> &amp; <strong>SERVICE</strong> dari Quotation; <strong>DID</strong> dari Site Investment.
+                  Hanya Quotation yang telah approved yang dapat dipilih.
                 </div>
               </div>
               <div class="col-md-6">
@@ -222,10 +298,11 @@ import { useCustomerStore } from '~/stores/customer'
 import { usePermissions } from '~/composables/usePermissions'
 import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
-import TableControls from '~/components/table/TableControls.vue'
 import IroExpandedRow from '~/components/table/IroExpandedRow.vue'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
 import Column from 'primevue/column'
+import Dropdown from 'primevue/dropdown'
+import InputText from 'primevue/inputtext'
 import { useDebounceFn } from '@vueuse/core'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 
@@ -243,6 +320,7 @@ const quotationsApproved = ref([])
 const expandedRows = ref({})
 const tableControls = ref({ rows: 10, search: '' })
 const filters = ref({ search: '', customerId: null, status: null })
+const globalFilterValue = ref('')
 const rowsPerPageOptionsArray = ref([10, 25, 50, 100])
 
 const statusOptions = [
@@ -257,7 +335,7 @@ const termsOptions = [
   { label: 'Down Payment', value: 'down_payment' },
 ]
 
-const modalTitle = computed(() => (isEditMode.value ? 'Edit IRO' : 'Tambah IRO'))
+const modalTitle = computed(() => (isEditMode.value ? 'Edit IRO' : 'Tambah Data'))
 const modalDescription = computed(() => (isEditMode.value ? 'Ubah data IRO di bawah ini.' : 'Isi form untuk menambahkan IRO baru.'))
 
 const countProduct = computed(() => (form.value?.iroDetails || []).filter((d) => String(d.itemType || '').toUpperCase() === 'PRODUCT').length)
@@ -363,13 +441,24 @@ function getStatusBadge(status) {
 }
 
 const onPage = (e) => { if (e) iroStore.setPagination(e) }
-const handleRowsChange = (v) => { params.value.rows = Number(v) || 10; params.value.first = 0; iroStore.fetchIros() }
-const handleSearch = (v) => { params.value.first = 0; iroStore.setSearch(v) }
+const handleRowsChange = (v) => { 
+  const rowsValue = Number(v) || 10
+  params.value.rows = rowsValue
+  params.value.first = 0
+  iroStore.fetchIros()
+}
+const handleSearch = (v) => { 
+  globalFilterValue.value = v
+  params.value.first = 0
+  iroStore.fetchIros()
+}
 const onSort = (e) => { if (e) iroStore.setSort(e) }
 const onRowToggle = (e) => { expandedRows.value = e.data }
 
-const debouncedSearch = useDebounceFn(() => iroStore.setSearch(tableControls.value?.search ?? ''), 500)
-watch(() => tableControls.value?.search, (v) => { if (v !== undefined) debouncedSearch() })
+const debouncedSearch = useDebounceFn(() => {
+  iroStore.setSearch(globalFilterValue.value)
+}, 500)
+watch(globalFilterValue, debouncedSearch)
 watch(filters, (f) => { iroStore.setFilters({ customerId: f.customerId, status: f.status, search: f.search }) }, { deep: true })
 
 let modalInstance = null
@@ -382,6 +471,7 @@ onMounted(() => {
   fetchQuotationsApproved()
   setListTitle('IRO', iros.value?.length ?? 0)
   tableControls.value.rows = Number(params.value.rows) || 10
+  globalFilterValue.value = params.value.search || ''
   const el = document.getElementById('IroModal')
   if (el) modalInstance = typeof bootstrap !== 'undefined' ? new bootstrap.Modal(el) : null
     const editId = Array.isArray(route.query?.edit) ? route.query.edit[0] : route.query?.edit

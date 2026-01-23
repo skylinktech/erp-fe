@@ -7,53 +7,83 @@
             <p class="mb-6">
             List quotation yang terdaftar di sistem
             </p>
-            <!-- quotation cards -->
+            <!-- Statistics Cards -->
             <div class="row g-6 mb-6">
-                <!-- Static cards for display, can be made dynamic later -->
-                <div class="col-xl-4 col-lg-6 col-md-6">
+                <div class="col-xl-3 col-lg-6 col-md-6">
                     <div class="card">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-4">
-                                <h5 class="mb-1">Total Quotations</h5>
-                                <span class="badge bg-label-primary rounded-pill">Total</span>
-                            </div>
-                            <div class="d-flex align-items-center">
-                                <h1 class="mb-0 display-4">{{ statistics?.totalQuotations || 0 }}</h1>
-                                <i class="ri-file-text-line ri-24px text-primary ms-2"></i>
-                            </div>
-                            <p class="mb-0 mt-2">Total semua quotation dalam sistem</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-4 col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <h5 class="mb-1">Quotations Approved</h5>
-                                <span class="badge bg-label-success rounded-pill">Approved</span>
-                            </div>
-                            <div class="d-flex align-items-center">
-                                <h1 class="mb-0 display-4">{{ statistics?.approvedQuotations || 0 }}</h1>
-                                <i class="ri-check-line ri-24px text-success ms-2"></i>
-                            </div>
-                            <p class="mb-0 mt-2">Total quotation yang sudah disetujui</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-4 col-lg-6 col-md-6">
-                    <div class="card h-100">
-                        <div class="row h-100">
-                            <div class="col-sm-5">
-                                <div class="d-flex align-items-end h-100 justify-content-center">
-                                    <img src="/img/illustrations/add-new-role-illustration.png" class="img-fluid" alt="Image" width="70">
+                                <p class="mb-0">Total Quotations</p>
+                                <div class="avatar">
+                                    <span class="avatar-initial rounded bg-label-primary">
+                                        <i class="ri-file-text-line"></i>
+                                    </span>
                                 </div>
                             </div>
-                            <div class="col-sm-7">
-                                <div class="card-body text-sm-end text-center ps-sm-0">
-                                    <button v-if="userHasRole('superadmin') || userHasPermission('create_purchase_order')" @click="quotationStore.openModal()" class="btn btn-primary mb-2 text-wrap add-new-role">
-                                        Tambah Quotation
-                                    </button>
-                                    <p class="mb-0 mt-1">Buat Quotation baru</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="account-heading">
+                                    <h5 class="mb-1">{{ statistics?.totalQuotations || 0 }}</h5>
+                                    <span class="text-muted">Quotation terdaftar</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <p class="mb-0">Approved</p>
+                                <div class="avatar">
+                                    <span class="avatar-initial rounded bg-label-success">
+                                        <i class="ri-checkbox-circle-line"></i>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="account-heading">
+                                    <h5 class="mb-1">{{ statistics?.approvedQuotations || 0 }}</h5>
+                                    <span class="text-muted">Approved</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <p class="mb-0">Pending</p>
+                                <div class="avatar">
+                                    <span class="avatar-initial rounded bg-label-warning">
+                                        <i class="ri-time-line"></i>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="account-heading">
+                                    <h5 class="mb-1">{{ statistics?.pendingQuotations || 0 }}</h5>
+                                    <span class="text-muted">Pending</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <p class="mb-0">Rejected</p>
+                                <div class="avatar">
+                                    <span class="avatar-initial rounded bg-label-danger">
+                                        <i class="ri-close-circle-line"></i>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="account-heading">
+                                    <h5 class="mb-1">{{ statistics?.rejectedQuotations || 0 }}</h5>
+                                    <span class="text-muted">Rejected</span>
                                 </div>
                             </div>
                         </div>
@@ -63,8 +93,8 @@
 
             <div class="row g-6">
                 <div class="col-12">
-                    <h4 class="mt-6 mb-1">Total Quotation</h4>
-                    <p class="mb-0">Find all of your company's administrator accounts and their associate Quotation.</p>
+                    <h4 class="mt-6 mb-1">Filter Quotation</h4>
+                    <p class="mb-0">Temukan semua quotation perusahaan Anda</p>
                 </div>
                 <div class="col-12">
                     <div class="card">
@@ -83,15 +113,42 @@
                 <div class="col-12">
                     <!-- quotation Table -->
                     <div class="card">
-                        <div class="card-header">
-                            <TableControls
-                                v-model="tableControls"
-                                :rows-per-page-options="rowsPerPageOptionsArray"
-                                search-placeholder="Cari Quotation..."
-                                @rows-change="handleRowsChange"
-                                @search="handleSearch"
-                                @export="exportData"
-                            />
+                        <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+                            <div class="d-flex align-items-center me-3 mb-2 mb-md-0">
+                                <span class="me-2">Baris:</span>
+                                <Dropdown
+                                    v-model="tableControls.rows"
+                                    :options="rowsPerPageOptionsArray"
+                                    @change="handleRowsChange"
+                                    placeholder="Jumlah"
+                                    style="width: 8rem;"
+                                />
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <button
+                                    v-if="userHasRole('superadmin') || userHasPermission('create_purchase_order')"
+                                    @click="quotationStore.openModal()"
+                                    class="btn btn-primary"
+                                >
+                                    <i class="ri-add-line me-1"></i>
+                                    Tambah Quotation
+                                </button>
+                                <button @click="exportData('excel')" class="btn btn-outline-secondary" :disabled="loading">
+                                    <i class="ri-download-line me-1"></i>
+                                    Export Excel
+                                </button>
+                                <button @click="exportData('pdf')" class="btn btn-outline-secondary" :disabled="loading">
+                                    <i class="ri-file-pdf-line me-1"></i>
+                                    Export PDF
+                                </button>
+                                <span class="p-input-icon-left">
+                                    <InputText
+                                        v-model="globalFilterValue"
+                                        placeholder="Cari Quotation..."
+                                        class="w-full md:w-20rem"
+                                    />
+                                </span>
+                            </div>
                         </div>
                         <div class="card-datatable table-responsive py-3 px-3">
                             <MyDataTable 
@@ -548,7 +605,6 @@
   import { usePermissions } from '~/composables/usePermissions'
 import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
-import TableControls from '~/components/table/TableControls.vue'
 import QuotationExpandedRow from '~/components/table/QuotationExpandedRow.vue'
 import vSelect from 'vue-select'
 import CustomSelect2 from '~/components/CustomSelect2.vue'

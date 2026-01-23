@@ -301,6 +301,14 @@ export default defineNuxtPlugin(() => {
     rejectIro: (id: string) => `${apiBase}/iro/rejectIro/${id}`,
     submitIro: (id: string) => `${apiBase}/iro/submitIro/${id}`,
 
+    // Legal-Tech Review
+    leTechReview: () => `${apiBase}/le-tech-review`,
+    leTechReviewShow: (id: number | string) => `${apiBase}/le-tech-review/${id}`,
+    leTechReviewStatistics: () => `${apiBase}/le-tech-review/statistics`,
+    submitLeTechReview: (id: number | string) => `${apiBase}/le-tech-review/submitLeTechReview/${id}`,
+    approveLeTechReview: (id: number | string) => `${apiBase}/le-tech-review/approveLeTechReview/${id}`,
+    rejectLeTechReview: (id: number | string) => `${apiBase}/le-tech-review/rejectLeTechReview/${id}`,
+
     // Business Schemes (untuk dropdown Site Investment)
     businessSchemes: () => `${apiBase}/business-schemes`,
 
@@ -310,6 +318,18 @@ export default defineNuxtPlugin(() => {
     approveSiteInvestment: (id: string) => `${apiBase}/site-investment/approveSiteInvestment/${id}`,
     rejectSiteInvestment: (id: string) => `${apiBase}/site-investment/rejectSiteInvestment/${id}`,
     submitSiteInvestment: (id: string) => `${apiBase}/site-investment/submitSiteInvestment/${id}`,
+
+    // Subscription
+    subscription: () => `${apiBase}/subscription`,
+    subscriptionStatistics: () => `${apiBase}/subscription/statistics`,
+    approveSubscription: (id: string) => `${apiBase}/subscription/approveSubscription/${id}`,
+    rejectSubscription: (id: string) => `${apiBase}/subscription/rejectSubscription/${id}`,
+    submitSubscription: (id: string) => `${apiBase}/subscription/submitSubscription/${id}`,
+
+    // PKS
+    pks: () => `${apiBase}/pks`,
+    pksStatistics: () => `${apiBase}/pks/statistics`,
+    submitPks: (id: string) => `${apiBase}/pks/submitPks/${id}`,
 
     // Data Access - untuk akses data tanpa permission menu
     dataPerusahaan: () => `${apiBase}/data/perusahaan`,
