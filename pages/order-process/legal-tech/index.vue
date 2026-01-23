@@ -214,15 +214,15 @@
                 </Column>
                 <Column field="iro.noIro" header="No. IRO" :sortable="true" class="text-nowrap">
                   <template #body="slotProps">
-                    {{ slotProps.data.iro?.noIro || slotProps.data.iro?.no_iro || '-' }}
+                    <a @click="navigateTo(`/order-process/iro/detail/${slotProps.data.iro.id}`)" class="text-primary text-nowrap" style="cursor:pointer;text-decoration:underline" :title="'View detail'">{{ slotProps.data.iro?.noIro || slotProps.data.iro?.no_iro || '-' }}</a>
                   </template>
                 </Column>
                 <Column field="quotation.noQuotation" header="No. Quotation" :sortable="true" class="text-nowrap">
                   <template #body="slotProps">
-                    {{ slotProps.data.quotation?.noQuotation || slotProps.data.quotation?.no_quotation || '-' }}
+                    <a @click="navigateTo(`/sales/quotation/detail/${slotProps.data.quotation.id}`)" class="text-primary text-nowrap" style="cursor:pointer;text-decoration:underline" :title="'View detail'">{{ slotProps.data.quotation?.noQuotation || slotProps.data.quotation?.no_quotation || '-' }}</a>
                   </template>
                 </Column>
-                <Column field="quotation.customer.name" header="Customer" :sortable="true">
+                <Column field="quotation.customer.name" header="Customer" :sortable="true" class="text-nowrap">
                   <template #body="slotProps">{{ slotProps.data.quotation?.customer?.name || '-' }}</template>
                 </Column>
                 <Column field="status" header="Status" :sortable="true">

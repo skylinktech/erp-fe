@@ -185,12 +185,18 @@
                     <a @click="navigateTo(`/order-process/iro/detail/${slotProps.data.id}`)" class="text-primary" style="cursor:pointer;text-decoration:underline" :title="'View detail'">{{ slotProps.data.noIro || slotProps.data.no_iro }}</a>
                   </template>
                 </Column>
-                <Column field="customer.name" header="Customer" :sortable="true" />
+                <Column field="customer.name" header="Customer" :sortable="true" class="text-nowrap">
+                  <template #body="slotProps">{{ slotProps.data.customer?.name || '-' }}</template>
+                </Column>
                 <Column field="quotation.noQuotation" header="Quotation" :sortable="true">
-                  <template #body="slotProps">{{ slotProps.data.quotation?.noQuotation || '-' }}</template>
+                  <template #body="slotProps">
+                    <a @click="navigateTo(`/sales/quotation/detail/${slotProps.data.quotation.id}`)" class="text-primary text-nowrap" style="cursor:pointer;text-decoration:underline" :title="'View detail'">{{ slotProps.data.quotation?.noQuotation || slotProps.data.quotation?.no_quotation || '-' }}</a>
+                  </template>
                 </Column>
                 <Column field="siteInvest.siNumber" header="SI" :sortable="true">
-                  <template #body="slotProps">{{ slotProps.data.siteInvest?.siNumber || '-' }}</template>
+                  <template #body="slotProps">
+                    <a @click="navigateTo(`/sales/site-investment/detail/${slotProps.data.siteInvest.id}`)" class="text-primary text-nowrap" style="cursor:pointer;text-decoration:underline" :title="'View detail'">{{ slotProps.data.siteInvest?.siNumber || slotProps.data.siteInvest?.si_number || '-' }}</a>
+                  </template>
                 </Column>
                 <Column field="status" header="Status" :sortable="true">
                   <template #body="slotProps">

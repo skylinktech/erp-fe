@@ -162,12 +162,16 @@
                     <a @click="navigateTo(`/order-process/subscription/detail/${slotProps.data.id}`)" class="text-primary" style="cursor:pointer;text-decoration:underline" :title="'View detail'">{{ slotProps.data.noSubscription || slotProps.data.no_subscription }}</a>
                   </template>
                 </Column>
-                <Column field="customer.name" header="Customer" :sortable="true" />
+                <Column field="customer.name" header="Customer" :sortable="true" class="text-nowrap" />
                 <Column field="quotation.noQuotation" header="Quotation" :sortable="true">
-                  <template #body="slotProps">{{ slotProps.data.quotation?.noQuotation || slotProps.data.quotation?.no_quotation || '-' }}</template>
+                  <template #body="slotProps">
+                    <a @click="navigateTo(`/sales/quotation/detail/${slotProps.data.quotation.id}`)" class="text-primary text-nowrap" style="cursor:pointer;text-decoration:underline" :title="'View detail'">{{ slotProps.data.quotation?.noQuotation || slotProps.data.quotation?.no_quotation || '-' }}</a>
+                  </template>
                 </Column>
                 <Column field="iro.noIro" header="IRO" :sortable="true">
-                  <template #body="slotProps">{{ slotProps.data.iro?.noIro || slotProps.data.iro?.no_iro || '-' }}</template>
+                  <template #body="slotProps">
+                    <a @click="navigateTo(`/order-process/iro/detail/${slotProps.data.iro.id}`)" class="text-primary text-nowrap" style="cursor:pointer;text-decoration:underline" :title="'View detail'">{{ slotProps.data.iro?.noIro || slotProps.data.iro?.no_iro || '-' }}</a>
+                  </template>
                 </Column>
                 <Column field="status" header="Status" :sortable="true">
                   <template #body="slotProps">
@@ -340,21 +344,28 @@
                   <!-- Installation Addresses -->
                   <div class="col-12">
                     <div v-for="(installation, index) in form.subscriptionInstallations" :key="index" class="repeater-item mb-4">
+                      <div class="repeater-title d-flex align-items-center justify-content-between mb-3">
+                        <h6 class="mb-0 fw-semibold text-dark">
+                          <i class="ri-map-pin-line me-2 text-primary"></i>
+                          Installation Address {{ form.subscriptionInstallations.length > 1 ? `#${index + 1}` : '' }}
+                        </h6>
+                      </div>
+                      <hr class="repeater-hr mt-0 mb-3" />
                       <div class="row g-3">
-                        <div class="col-md-10">
-                          <label class="form-label text-muted">Installation Address {{ form.subscriptionInstallations.length > 1 ? `#${index + 1}` : '' }}</label>
+                        <div class="col-12">
+                          <label class="form-label text-muted">Alamat Instalasi</label>
                           <textarea v-model="installation.installAddress" class="form-control" rows="3" placeholder="Full address for installation..."></textarea>
                         </div>
-                        <div class="col-md-2 d-flex align-items-end">
-                          <button v-if="form.subscriptionInstallations.length > 1" type="button" class="btn btn-outline-danger w-100" @click.prevent="subscriptionStore.removeInstallation(index)">
+                        <div class="col-12 d-flex justify-content-end" v-if="form.subscriptionInstallations.length > 1">
+                          <button type="button" class="btn btn-outline-danger" @click.prevent="subscriptionStore.removeInstallation(index)">
                             <i class="ri-delete-bin-line me-1"></i> Hapus
                           </button>
                         </div>
                       </div>
-                      <hr class="my-4" v-if="index < form.subscriptionInstallations.length - 1">
                     </div>
+                    <hr class="section-hr my-4" />
                     <div class="mt-4">
-                      <button type="button" class="btn btn-primary" @click.prevent="subscriptionStore.addInstallation()">
+                      <button type="button" class="btn btn-primary btn-sm w-100" @click.prevent="subscriptionStore.addInstallation()">
                         <i class="ri-add-line me-1"></i> Tambah Alamat Instalasi
                       </button>
                     </div>
@@ -363,6 +374,13 @@
                   <!-- Billing Contact -->
                   <div class="col-12">
                     <div v-for="(contact, index) in billingContacts" :key="`billing-${index}`" class="repeater-item mb-4">
+                      <div class="repeater-title d-flex align-items-center justify-content-between mb-3">
+                        <h6 class="mb-0 fw-semibold text-dark">
+                          <i class="ri-user-line me-2 text-primary"></i>
+                          Billing Contact {{ billingContacts.length > 1 ? `#${index + 1}` : '' }}
+                        </h6>
+                      </div>
+                      <hr class="repeater-hr mt-0 mb-3" />
                       <div class="row g-3">
                         <div class="col-md-6">
                           <label class="form-label text-muted">Name</label>
@@ -386,10 +404,10 @@
                           </button>
                         </div>
                       </div>
-                      <hr class="my-4" v-if="index < billingContacts.length - 1">
                     </div>
+                    <hr class="section-hr my-4" />
                     <div class="mt-4">
-                      <button type="button" class="btn btn-primary" @click.prevent="addBillingContact()">
+                      <button type="button" class="btn btn-primary btn-sm w-100" @click.prevent="addBillingContact()">
                         <i class="ri-add-line me-1"></i> Tambah Billing Contact
                       </button>
                     </div>
@@ -398,6 +416,13 @@
                   <!-- Technical Contact -->
                   <div class="col-12">
                     <div v-for="(contact, index) in technicalContacts" :key="`technical-${index}`" class="repeater-item mb-4">
+                      <div class="repeater-title d-flex align-items-center justify-content-between mb-3">
+                        <h6 class="mb-0 fw-semibold text-dark">
+                          <i class="ri-user-settings-line me-2 text-primary"></i>
+                          Technical Contact {{ technicalContacts.length > 1 ? `#${index + 1}` : '' }}
+                        </h6>
+                      </div>
+                      <hr class="repeater-hr mt-0 mb-3" />
                       <div class="row g-3">
                         <div class="col-md-6">
                           <label class="form-label text-muted">Name</label>
@@ -421,10 +446,10 @@
                           </button>
                         </div>
                       </div>
-                      <hr class="my-4" v-if="index < technicalContacts.length - 1">
                     </div>
+                    <hr class="section-hr my-4" />
                     <div class="mt-4">
-                      <button type="button" class="btn btn-primary" @click.prevent="addTechnicalContact()">
+                      <button type="button" class="btn btn-primary btn-sm w-100" @click.prevent="addTechnicalContact()">
                         <i class="ri-add-line me-1"></i> Tambah Technical Contact
                       </button>
                     </div>
@@ -821,6 +846,13 @@ watch(showModal, (v) => {
       if (!form.value.subscriptionInstallations || form.value.subscriptionInstallations.length === 0) {
         subscriptionStore.addInstallation()
       }
+
+      // Default: selalu tampilkan minimal 1 Billing Contact & 1 Technical Contact
+      if (!form.value.subscriptionContacts) form.value.subscriptionContacts = []
+      const hasBilling = form.value.subscriptionContacts.some((c) => (c?.contactType ?? c?.contact_type) === 'billing')
+      const hasTechnical = form.value.subscriptionContacts.some((c) => (c?.contactType ?? c?.contact_type) === 'technical')
+      if (!hasBilling) addBillingContact()
+      if (!hasTechnical) addTechnicalContact()
     })
   } else {
     modalInstance?.hide()
@@ -849,5 +881,21 @@ definePageMeta({
 </script>
 
 <style scoped>
-.repeater-item { background: #f8f9fa; border-radius: 12px; padding: 16px; border: 1px solid #e9ecef; }
+.repeater-item {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #e9ecef;
+  transition: all 0.2s ease-in-out;
+}
+
+.repeater-hr {
+  border-top: 2px solid #e9ecef;
+  opacity: 1;
+}
+
+.section-hr {
+  border-top: 2px dashed #e9ecef;
+  opacity: 1;
+}
 </style>
