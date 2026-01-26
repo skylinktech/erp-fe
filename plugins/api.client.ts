@@ -331,6 +331,30 @@ export default defineNuxtPlugin(() => {
     pksStatistics: () => `${apiBase}/pks/statistics`,
     submitPks: (id: string) => `${apiBase}/pks/submitPks/${id}`,
 
+    // MGRF (Material Goods Request Form)
+    mgrf: () => `${apiBase}/mgrf`,
+    countMgrfByStatus: () => `${apiBase}/mgrf/countByStatus`,
+    approveMgrf: (id: string) => `${apiBase}/mgrf/approveMgrf/${id}`,
+    rejectMgrf: (id: string) => `${apiBase}/mgrf/rejectMgrf/${id}`,
+    submitMgrf: (id: string) => `${apiBase}/mgrf/submitMgrf/${id}`,
+
+    // Purchase Request
+    purchaseRequest: () => `${apiBase}/purchase-request`,
+    countPurchaseRequestByStatus: () => `${apiBase}/purchase-request/countByStatus`,
+    approvePurchaseRequest: (id: string) => `${apiBase}/purchase-request/approvePurchaseRequest/${id}`,
+    rejectPurchaseRequest: (id: string) => `${apiBase}/purchase-request/rejectPurchaseRequest/${id}`,
+    submitPurchaseRequest: (id: string) => `${apiBase}/purchase-request/submitPurchaseRequest/${id}`,
+
+    // Customer Verification
+    customerVerif: () => `${apiBase}/customer-verif`,
+    customerVerifShow: (id: number | string) => `${apiBase}/customer-verif/${id}`,
+    customerVerifCountByStatus: () => `${apiBase}/customer-verif/countByStatus`,
+    customerVerifApprovedIros: () => `${apiBase}/customer-verif/approved-iros`,
+    customerVerifIroCustomer: (iroId: string) => `${apiBase}/customer-verif/iro/${iroId}/customer`,
+    submitCustomerVerif: (id: number | string) => `${apiBase}/customer-verif/submitCustomerVerif/${id}`,
+    verifyCustomerVerif: (id: number | string) => `${apiBase}/customer-verif/verifyCustomerVerif/${id}`,
+    unverifyCustomerVerif: (id: number | string) => `${apiBase}/customer-verif/unverifyCustomerVerif/${id}`,
+
     // Data Access - untuk akses data tanpa permission menu
     dataPerusahaan: () => `${apiBase}/data/perusahaan`,
     dataCabang: () => `${apiBase}/data/cabang`,
