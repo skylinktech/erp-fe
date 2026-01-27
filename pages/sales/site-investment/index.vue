@@ -344,7 +344,7 @@
                                                             <i class="ri-edit-box-line me-2"></i> Edit
                                                         </a>
                                                     </li>
-                                                    <li v-if="(userHasRole('superadmin') || userHasPermission('delete_site_investment')) && slotProps.data.status === 'draft'">
+                                                    <li v-if="(userHasRole('superadmin') || userHasPermission('delete_site_investment'))">
                                                         <a class="dropdown-item text-danger" href="javascript:void(0)" @click="siteInvestStore.deleteSiteInvest(slotProps.data.id)">
                                                             <i class="ri-delete-bin-7-line me-2"></i> Hapus
                                                         </a>
@@ -581,7 +581,18 @@
                                 <div class="tab-pane fade" id="form-tabs-materials" role="tabpanel">
                                     <div v-for="(item, index) in form.siteInvestMaterials" :key="index" class="repeater-item mb-4">
                                         <div class="row g-3">
-                                            <div class="col-md-4">
+                                            <div class="col-md-3">
+                                                <CustomSelect2
+                                                    v-model="item.warehouseId"
+                                                    :options="warehouses"
+                                                    :get-option-label="w => `${w.code} - ${w.name}`"
+                                                    :reduce="w => w.id"
+                                                    placeholder="Pilih Gudang"
+                                                    searchable
+                                                    clearable
+                                                />
+                                            </div>
+                                            <div class="col-md-3">
                                                 <CustomSelect2
                                                     v-model="item.productId"
                                                     :options="products"
@@ -593,13 +604,16 @@
                                                     @update:modelValue="onProductChange(index)"
                                                 />
                                             </div>
-                                            <div class="col-md-2">
+                                            <div class="col-md-1">
                                                 <div class="form-floating form-floating-outline">
-                                                    <input type="number" v-model.number="item.quantity" @input="calculateMaterialSubtotal(index)" class="form-control" placeholder="Qty" min="1">
+                                                    <input type="number" v-model.number="item.quantity" @input="calculateMaterialSubtotal(index)" class="form-control" :class="{ 'is-invalid': getStockValidationError(index) }" placeholder="Qty" min="1">
                                                     <label>Qty</label>
+                                                    <div v-if="getStockValidationError(index)" class="invalid-feedback">
+                                                        {{ getStockValidationError(index) }}
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div class="col-md-3">
+                                            <div class="col-md-2">
                                                 <div class="form-floating form-floating-outline">
                                                     <input type="text" :value="formatRupiah(item.price)" class="form-control" placeholder="Harga" readonly>
                                                     <label>Harga Satuan</label>
@@ -686,46 +700,86 @@
 
                                 <!-- Tab DIDs -->
                                 <div class="tab-pane fade" id="form-tabs-dids" role="tabpanel">
+                                    <!-- Dropdown DID di atas (col-12, di luar repeater) -->
+                                    <div class="row g-3 mb-4">
+                                        <div class="col-12">
+                                            <label class="form-label text-muted mb-2">DID <span class="text-danger">*</span></label>
+                                            <CustomSelect2
+                                                v-model="selectedDidId"
+                                                :options="dids"
+                                                :get-option-label="d => `${d.code} - ${d.name || ''}`"
+                                                :reduce="d => d.id"
+                                                placeholder="Pilih DID"
+                                                searchable
+                                                clearable
+                                                @update:modelValue="onDidChange"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <!-- Repeater items untuk services dari DID yang dipilih -->
                                     <div v-for="(item, index) in form.siteInvestDids" :key="index" class="repeater-item mb-4">
                                         <div class="row g-3">
                                             <div class="col-md-4">
+                                                <label class="form-label text-muted mb-2">Service Plan</label>
                                                 <CustomSelect2
-                                                    v-model="item.didId"
-                                                    :options="dids"
-                                                    :get-option-label="d => `${d.code} - ${d.name || ''} (${d.category || ''})`"
-                                                    :reduce="d => d.id"
-                                                    placeholder="Pilih DID"
+                                                    v-model="item.servicePlanId"
+                                                    :options="getDidServicePlans(selectedDidId)"
+                                                    :get-option-label="sp => sp?.name || ''"
+                                                    :reduce="sp => sp?.id || null"
+                                                    placeholder="Service Plan"
                                                     searchable
                                                     clearable
-                                                    @update:modelValue="onDidChange(index)"
+                                                    :disabled="!selectedDidId"
                                                 />
                                             </div>
-                                            <div class="col-md-2">
-                                                <div class="form-floating form-floating-outline">
-                                                    <input type="text" :value="getDidUnitLabel(item)" class="form-control bg-light" placeholder="Unit" readonly>
-                                                    <label>Unit</label>
-                                                </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label text-muted mb-2">Category</label>
+                                                <CustomSelect2
+                                                    v-model="item.category"
+                                                    :options="categoryOptions"
+                                                    :get-option-label="opt => opt.label"
+                                                    :reduce="opt => opt.value"
+                                                    placeholder="Category"
+                                                    searchable
+                                                    clearable
+                                                />
                                             </div>
-                                            <div class="col-md-2">
-                                                <div class="form-floating form-floating-outline">
-                                                    <input type="number" v-model.number="item.quantity" class="form-control" placeholder="Qty" min="1">
-                                                    <label>Quantity</label>
-                                                </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label text-muted mb-2">Unit</label>
+                                                <CustomSelect2
+                                                    v-model="item.unitId"
+                                                    :options="units"
+                                                    :get-option-label="u => u.symbol || u.name"
+                                                    :reduce="u => u.id"
+                                                    placeholder="Unit"
+                                                    searchable
+                                                    clearable
+                                                />
                                             </div>
-                                            <div class="col-md-2">
-                                                <div class="form-floating form-floating-outline">
-                                                    <input type="text" :value="formatRupiah(item.price)" class="form-control" placeholder="Harga">
-                                                    <label>Harga</label>
-                                                </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label text-muted mb-2">Quantity</label>
+                                                <input type="number" v-model.number="item.quantity" @input="calculateDidSubtotal(index)" class="form-control" placeholder="Qty" min="1">
                                             </div>
-                                            <div class="col-md-2 d-flex align-items-center">
-                                                <button @click.prevent="siteInvestStore.removeDidItem(index)" class="btn btn-outline-danger w-100">Hapus</button>
+                                            <div class="col-md-4">
+                                                <label class="form-label text-muted mb-2">Harga</label>
+                                                <input type="text" :value="formatRupiah(item.price)" @input="updateDidPriceFromInput(index, $event)" class="form-control" placeholder="Harga">
                                             </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label text-muted mb-2">Subtotal</label>
+                                                <input type="text" :value="formatRupiah((item.quantity || 1) * (item.price || 0))" class="form-control bg-light" placeholder="Subtotal" readonly>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-1 offset-md-11 mt-3 mb-2">
+                                            <button @click.prevent="siteInvestStore.removeDidItem(index)" class="btn btn-outline-danger w-100">Hapus</button>
                                         </div>
                                         <hr class="my-4">
                                     </div>
-                                    <div class="mt-4">
-                                        <button @click.prevent="siteInvestStore.addDidItem()" class="btn btn-primary">Tambah DID</button>
+                                    <div v-if="!selectedDidId || form.siteInvestDids.length === 0" class="text-center text-muted py-4">
+                                        <p>Pilih DID terlebih dahulu untuk menampilkan services</p>
+                                    </div>
+                                    <div v-if="selectedDidId" class="mt-4">
+                                        <button @click.prevent="addDidServiceItem()" class="btn btn-primary">Tambah Service</button>
                                     </div>
                                     <div class="d-flex justify-content-end mt-4">
                                         <span class="fw-bold fs-5">Subtotal DID: {{ formatRupiah(didSubtotal) }}</span>
@@ -801,6 +855,7 @@ import { useProductStore } from '~/stores/product'
 import { useServiceStore } from '~/stores/service'
 import { useUserStore } from '~/stores/user'
 import { usePermissionsStore } from '~/stores/permissions'
+import { useWarehouseStore } from '~/stores/warehouse'
 import { useBudgetStore } from '~/stores/budget'
 import { usePermissions } from '~/composables/usePermissions'
 import { useImageUrl } from '~/composables/useImageUrl'
@@ -821,6 +876,7 @@ const isInitialLoading = ref(true)
 const siteInvestStore = useSiteInvestStore()
 const customerStore = useCustomerStore()
 const productStore = useProductStore()
+const warehouseStore = useWarehouseStore()
 const serviceStore = useServiceStore()
 const userStore = useUserStore()
 const permissionStore = usePermissionsStore()
@@ -832,6 +888,7 @@ const { getAttachmentUrl, isImageFile } = useImageUrl()
 const { siteInvests, loading, totalRecords, params, form, isEditMode, showModal, validationErrors, stats } = storeToRefs(siteInvestStore)
 const { customers } = storeToRefs(customerStore)
 const { products } = storeToRefs(productStore)
+const { warehouses } = storeToRefs(warehouseStore)
 const { services } = storeToRefs(serviceStore)
 const { user } = storeToRefs(userStore)
 const { permissions } = storeToRefs(permissionStore)
@@ -863,6 +920,7 @@ const dids = ref([])
 const usersForBudget = ref([])
 const sites = ref([])
 const businessSchemes = ref([])
+const selectedDidId = ref(null)
 
 const fetchBudgetsAndUsers = async () => {
     const prevRows = budgetStore.params.rows
@@ -903,7 +961,7 @@ const fetchUnitsAndDids = async () => {
                 headers: { 'Accept': 'application/json' },
                 credentials: 'include'
             }),
-            fetch(`${$api.did()}?page=1&rows=500`, {
+            fetch(`${$api.did()}?page=1&rows=500&includeServices=true`, {
                 headers: { 'Accept': 'application/json' },
                 credentials: 'include'
             })
@@ -982,6 +1040,13 @@ const priorityOptions = ref([
     { label: 'High', value: 'high' },
 ])
 
+const categoryOptions = ref([
+    { label: 'Delivery', value: 'delivery' },
+    { label: 'Installation', value: 'installation' },
+    { label: 'Survey', value: 'survey' },
+    { label: 'Dismantle', value: 'dismantle' },
+])
+
 const materialSubtotal = computed(() => {
     if (!form.value || !form.value.siteInvestMaterials) return 0
     return form.value.siteInvestMaterials.reduce((sum, item) => sum + (item.subtotal || 0), 0)
@@ -994,7 +1059,11 @@ const serviceSubtotal = computed(() => {
 
 const didSubtotal = computed(() => {
     if (!form.value || !form.value.siteInvestDids) return 0
-    return form.value.siteInvestDids.reduce((sum, item) => sum + (item.price || 0) * (item.quantity ?? 1), 0)
+    return form.value.siteInvestDids.reduce((sum, item) => {
+        const quantity = Number(item.quantity) || 1
+        const price = Number(item.price) || 0
+        return sum + (quantity * price)
+    }, 0)
 })
 
 const totalInvestment = computed(() => {
@@ -1030,6 +1099,7 @@ const { isLoading: isDataLoading, error: dataError } = usePageData({
         () => productStore.fetchProducts(),
         () => serviceStore.fetchServices(),
         () => customerStore.fetchCustomers(),
+        () => warehouseStore.fetchWarehouses(),
         () => permissionStore.fetchPermissions(),
         () => userStore.loadUser(),
         () => fetchUnitsAndDids(),
@@ -1090,9 +1160,42 @@ watch(showModal, async (newValue) => {
             if (form.value?.businessScheme && form.value?.businessSchemeId && !businessSchemes.value.find(b => b.id === form.value.businessSchemeId)) {
                 businessSchemes.value = [{ ...form.value.businessScheme, id: form.value.businessSchemeId }, ...businessSchemes.value]
             }
+            // Set selectedDidId dari form.siteInvestDids jika ada (edit mode)
+            if (form.value?.siteInvestDids && form.value.siteInvestDids.length > 0) {
+                const firstDidId = form.value.siteInvestDids[0]?.didId
+                if (firstDidId) {
+                    selectedDidId.value = firstDidId
+                    // Fetch services untuk DID yang dipilih jika belum ada (hanya untuk preload, tidak overwrite existing items)
+                    const selectedDid = dids.value.find(d => d.id === firstDidId)
+                    if (selectedDid && (!selectedDid.services || selectedDid.services.length === 0)) {
+                        // Fetch services untuk preload, tapi jangan overwrite existing items
+                        const { $api } = useNuxtApp()
+                        fetch(`${$api.did()}/${selectedDid.id}`, {
+                            headers: { 'Accept': 'application/json' },
+                            credentials: 'include'
+                        }).then(response => {
+                            if (response.ok) {
+                                return response.json()
+                            }
+                        }).then(result => {
+                            if (result) {
+                                const didData = result.data || result
+                                if (didData && didData.services) {
+                                    selectedDid.services = didData.services
+                                }
+                            }
+                        }).catch(error => {
+                            console.error('Error fetching DID details:', error)
+                        })
+                    }
+                }
+            } else {
+                selectedDidId.value = null
+            }
         })
     } else {
         modalInstance?.hide()
+        selectedDidId.value = null
         if (route.query.edit) {
             const q = { ...route.query }
             delete q.edit
@@ -1111,6 +1214,16 @@ watch(filters, (newFilters) => {
     const { page, rows, ...restFilters } = newFilters
     siteInvestStore.setFilters(restFilters)
 }, { deep: true })
+
+// Filter daftar produk berdasarkan customer yang dipilih (relasi product_customer)
+watch(
+    () => form.value?.customerId,
+    (newCustomerId) => {
+        productStore.params.customerId = newCustomerId || null
+        // Ambil ulang daftar produk, tanpa notifikasi error (preload)
+        productStore.fetchProducts(true)
+    }
+)
 
 const onPage = (event) => {
     if (event) {
@@ -1221,20 +1334,76 @@ const handleSubmit = () => {
     siteInvestStore.saveSiteInvest()
 }
 
-const onProductChange = (index) => {
+const onProductChange = async (index) => {
     const item = form.value.siteInvestMaterials[index]
     const selectedProduct = products.value.find(p => p.id === item.productId)
     if (selectedProduct) {
         item.price = Number(selectedProduct.priceSell) || 0
         calculateMaterialSubtotal(index)
+        
+        // Validasi stock saat product dipilih
+        await validateStockQuantity(index)
     }
 }
 
-const calculateMaterialSubtotal = (index) => {
+const calculateMaterialSubtotal = async (index) => {
     const item = form.value.siteInvestMaterials[index]
     const quantity = Number(item.quantity) || 0
     const price = Number(item.price) || 0
     item.subtotal = quantity * price
+    
+    // Validasi stock saat quantity berubah
+    if (item.productId) {
+        await validateStockQuantity(index)
+    }
+}
+
+// Fungsi untuk validasi stock quantity
+const validateStockQuantity = async (index) => {
+    const item = form.value.siteInvestMaterials[index]
+    if (!item.productId || !item.quantity) return
+    
+    const selectedProduct = products.value.find(p => p.id === item.productId)
+    if (!selectedProduct) return
+    
+    // Jika gudang belum dipilih, tidak bisa validasi per-gudang
+    if (!item.warehouseId) return
+
+    // Ambil stok hanya di gudang yang dipilih
+    const stocksForWarehouse = (selectedProduct.stocks || []).filter(
+        (stock) => Number(stock.warehouseId) === Number(item.warehouseId)
+    )
+
+    const totalStock = stocksForWarehouse.reduce(
+        (sum, stock) => sum + (Number(stock.quantity) || 0),
+        0
+    ) || 0
+
+    // Jika tidak ada stok sama sekali di gudang ini, tampilkan alert khusus
+    if (stocksForWarehouse.length === 0 || totalStock <= 0) {
+        const toast = useToast()
+        toast.error({
+            title: 'Produk tidak tersedia',
+            message: 'Product yang dipilih tidak tersedia di gudang ini',
+            color: 'red',
+            position: 'topRight',
+            layout: 2,
+        })
+        return
+    }
+
+    const requestedQuantity = Number(item.quantity) || 0
+    
+    if (requestedQuantity > totalStock) {
+        const toast = useToast()
+        toast.warning({
+            title: 'Peringatan Stock',
+            message: `Stock pada product ID ${item.productId} tidak mencukupi. Stock tersedia: ${totalStock}, Quantity diminta: ${requestedQuantity}`,
+            color: 'orange',
+            position: 'topRight',
+            layout: 2,
+        })
+    }
 }
 
 const onServiceChange = (index) => {
@@ -1254,18 +1423,128 @@ const calculateServiceSubtotal = (index) => {
 }
 
 function getDidUnitLabel(item) {
-    if (!item?.didId) return '—'
-    const d = (dids.value || []).find(x => x.id === item.didId)
-    const u = d?.unit || item?.did?.unit
-    return (u?.name || u?.symbol) || '—'
+    if (!item?.unitId) return '—'
+    const u = (units.value || []).find(x => x.id === item.unitId)
+    return (u?.symbol || u?.name) || '—'
 }
 
-const onDidChange = (index) => {
-    const item = form.value.siteInvestDids[index]
-    const selectedDid = dids.value.find(d => d.id === item.didId)
+const getDidServicePlans = (didId) => {
+    if (!didId) return []
+    const selectedDid = dids.value.find(d => d.id === didId)
+    if (!selectedDid || !selectedDid.services) return []
+    
+    // Get unique service plans from DID services
+    const servicePlanMap = new Map()
+    selectedDid.services.forEach(service => {
+        if (service.servicePlan && !servicePlanMap.has(service.servicePlan.id)) {
+            servicePlanMap.set(service.servicePlan.id, service.servicePlan)
+        }
+    })
+    return Array.from(servicePlanMap.values())
+}
+
+const onDidChange = async () => {
+    if (!selectedDidId.value) {
+        // Clear all DID items if DID is cleared
+        form.value.siteInvestDids = []
+        return
+    }
+    
+    const selectedDid = dids.value.find(d => d.id === selectedDidId.value)
+    
     if (selectedDid) {
-        item.price = Number(selectedDid.price) || 0
-        item.isPriceOverridden = false
+        // Fetch full DID data with services if not already loaded
+        if (!selectedDid.services || selectedDid.services.length === 0) {
+            const { $api } = useNuxtApp()
+            try {
+                const response = await fetch(`${$api.did()}/${selectedDid.id}`, {
+                    headers: { 'Accept': 'application/json' },
+                    credentials: 'include'
+                })
+                if (response.ok) {
+                    const result = await response.json()
+                    // Response can be either { data: did } or did directly
+                    const didData = result.data || result
+                    if (didData && didData.services) {
+                        selectedDid.services = didData.services
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching DID details:', error)
+            }
+        }
+        
+        // Clear existing items and populate with services from selected DID
+        form.value.siteInvestDids = []
+        
+        if (selectedDid.services && selectedDid.services.length > 0) {
+            // Create items for each service from DID
+            selectedDid.services.forEach(service => {
+                form.value.siteInvestDids.push({
+                    didId: selectedDid.id,
+                    servicePlanId: service.servicePlanId || null,
+                    category: service.category || null,
+                    unitId: null, // Unit will need to be set manually or from service plan
+                    quantity: Number(service.quantity) || 1,
+                    price: Number(service.price) || 0,
+                    isPriceOverridden: false,
+                })
+            })
+        } else {
+            // If no services, create one empty item
+            form.value.siteInvestDids.push({
+                didId: selectedDid.id,
+                servicePlanId: null,
+                category: null,
+                unitId: null,
+                quantity: 1,
+                price: Number(selectedDid.total) || 0,
+                isPriceOverridden: false,
+            })
+        }
+    }
+}
+
+// Watch selectedDidId to ensure all items have the same didId
+watch(selectedDidId, (newDidId) => {
+    if (form.value.siteInvestDids) {
+        form.value.siteInvestDids.forEach(item => {
+            item.didId = newDidId
+        })
+    }
+})
+
+const addDidServiceItem = () => {
+    if (!form.value.siteInvestDids) {
+        form.value.siteInvestDids = []
+    }
+    form.value.siteInvestDids.push({
+        didId: selectedDidId.value,
+        servicePlanId: null,
+        category: null,
+        unitId: null,
+        quantity: 1,
+        price: 0,
+        isPriceOverridden: false,
+    })
+}
+
+const calculateDidSubtotal = (index) => {
+    const item = form.value.siteInvestDids[index]
+    // Subtotal is calculated in template, this is just for triggering reactivity
+}
+
+const parseRupiahToNumber = (rupiahString) => {
+    if (!rupiahString) return 0
+    return Number(String(rupiahString).replace(/[Rp\s.]/g, '').replace(',', '.')) || 0
+}
+
+const updateDidPriceFromInput = (index, event) => {
+    const numericValue = parseRupiahToNumber(event.target?.value || '')
+    if (form.value.siteInvestDids && form.value.siteInvestDids[index]) {
+        form.value.siteInvestDids[index].price = Math.round(numericValue)
+        form.value.siteInvestDids[index].isPriceOverridden = true
+        calculateDidSubtotal(index)
     }
 }
 
@@ -1287,6 +1566,36 @@ const getPriorityBadge = (priority) => {
         case 'high': return { text: 'High', class: 'badge rounded-pill bg-label-danger' }
         default: return { text: '-', class: 'badge rounded-pill bg-label-light' }
     }
+}
+
+// Fungsi untuk mendapatkan error message validasi stock
+const getStockValidationError = (index) => {
+    const item = form.value.siteInvestMaterials[index]
+    if (!item.productId || !item.quantity || !item.warehouseId) return null
+    
+    const selectedProduct = products.value.find(p => p.id === item.productId)
+    if (!selectedProduct) return null
+    
+    const stocksForWarehouse = (selectedProduct.stocks || []).filter(
+        (stock) => Number(stock.warehouseId) === Number(item.warehouseId)
+    )
+
+    const totalStock = stocksForWarehouse.reduce(
+        (sum, stock) => sum + (Number(stock.quantity) || 0),
+        0
+    ) || 0
+
+    if (stocksForWarehouse.length === 0 || totalStock <= 0) {
+        return 'Product yang dipilih tidak tersedia di gudang ini'
+    }
+
+    const requestedQuantity = Number(item.quantity) || 0
+    
+    if (requestedQuantity > totalStock) {
+        return `Stock tidak mencukupi. Tersedia: ${totalStock}`
+    }
+    
+    return null
 }
 
 const clearDateFilters = () => {

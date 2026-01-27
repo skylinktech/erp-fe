@@ -202,6 +202,7 @@
                         <tr>
                           <th>Produk</th>
                           <th class="text-center">Qty</th>
+                          <th class="text-center">Gudang</th>
                           <th class="text-end">Harga Satuan</th>
                           <th class="text-end">Subtotal</th>
                         </tr>
@@ -210,6 +211,7 @@
                         <tr v-for="(m, i) in (siteInvest.siteInvestMaterials || [])" :key="m.id || i">
                           <td>{{ m.product?.name || m.product?.sku || '—' }}</td>
                           <td class="text-center">{{ m.quantity ?? 0 }}</td>
+                          <td class="text-center">{{ m.warehouse?.name || '—' }}</td>
                           <td class="text-end">{{ formatRupiah(m.price) }}</td>
                           <td class="text-end fw-medium">{{ formatRupiah(m.subtotal) }}</td>
                         </tr>

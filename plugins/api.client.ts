@@ -86,6 +86,23 @@ export default defineNuxtPlugin(() => {
     purchaseInvoiceShow: (id: number | string) => `${apiBase}/purchase-invoice/${id}`,
     purchaseInvoiceStatistics: () => `${apiBase}/purchase-invoice/statistics`,
     
+    // Purchase Request
+    purchaseRequest: () => `${apiBase}/purchase-request`,
+    countPurchaseRequestByStatus: () => `${apiBase}/purchase-request/countByStatus`,
+    approvePurchaseRequest: (id: number | string) => `${apiBase}/purchase-request/${id}/approvePurchaseRequest`,
+    rejectPurchaseRequest: (id: number | string) => `${apiBase}/purchase-request/${id}/rejectPurchaseRequest`,
+    submitPurchaseRequest: (id: number | string) => `${apiBase}/purchase-request/${id}/submitPurchaseRequest`,
+    
+    // ARF (Asset Request Form)
+    arf: () => `${apiBase}/arf`,
+    countArfByStatus: () => `${apiBase}/arf/countByStatus`,
+    submitArf: (id: number | string) => `${apiBase}/arf/${id}/submitArf`,
+    approveArf: (id: number | string) => `${apiBase}/arf/${id}/approveArf`,
+    rejectArf: (id: number | string) => `${apiBase}/arf/${id}/rejectArf`,
+    disburseArf: (id: number | string) => `${apiBase}/arf/${id}/disburseArf`,
+    settleArf: (id: number | string) => `${apiBase}/arf/${id}/settleArf`,
+    cancelArf: (id: number | string) => `${apiBase}/arf/${id}/cancelArf`,
+    
     // Purchase Order Item
     purchaseOrderItemUpdateStatusPartial: (id: number | string) => `${apiBase}/purchase-order-item/updateStatusPartial/${id}`,
     receiveAllPurchaseOrderItems: (id: number | string) => `${apiBase}/purchase-order/receiveAllItems/${id}`,
@@ -276,6 +293,12 @@ export default defineNuxtPlugin(() => {
     // Unit
     unit: () => `${apiBase}/unit`,
 
+    // Province
+    province: () => `${apiBase}/province`,
+
+    // Regency
+    regency: () => `${apiBase}/regency`,
+
     // Customer
     customer          : () => `${apiBase}/customer`,
     getCustomerDetails: (id: number | string) => `${apiBase}/customer/getCustomerDetails/${id}`,
@@ -330,20 +353,6 @@ export default defineNuxtPlugin(() => {
     pks: () => `${apiBase}/pks`,
     pksStatistics: () => `${apiBase}/pks/statistics`,
     submitPks: (id: string) => `${apiBase}/pks/submitPks/${id}`,
-
-    // MGRF (Material Goods Request Form)
-    mgrf: () => `${apiBase}/mgrf`,
-    countMgrfByStatus: () => `${apiBase}/mgrf/countByStatus`,
-    approveMgrf: (id: string) => `${apiBase}/mgrf/approveMgrf/${id}`,
-    rejectMgrf: (id: string) => `${apiBase}/mgrf/rejectMgrf/${id}`,
-    submitMgrf: (id: string) => `${apiBase}/mgrf/submitMgrf/${id}`,
-
-    // Purchase Request
-    purchaseRequest: () => `${apiBase}/purchase-request`,
-    countPurchaseRequestByStatus: () => `${apiBase}/purchase-request/countByStatus`,
-    approvePurchaseRequest: (id: string) => `${apiBase}/purchase-request/approvePurchaseRequest/${id}`,
-    rejectPurchaseRequest: (id: string) => `${apiBase}/purchase-request/rejectPurchaseRequest/${id}`,
-    submitPurchaseRequest: (id: string) => `${apiBase}/purchase-request/submitPurchaseRequest/${id}`,
 
     // Customer Verification
     customerVerif: () => `${apiBase}/customer-verif`,

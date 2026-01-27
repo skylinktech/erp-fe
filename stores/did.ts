@@ -2,14 +2,27 @@ import { defineStore } from 'pinia'
 import { useNuxtApp } from '#app'
 import Swal from 'sweetalert2'
 
+export interface DidService {
+  id?: number
+  servicePlanId: number
+  category: 'delivery' | 'installation' | 'survey' | 'dismantle'
+  quantity: number
+  price: number
+  subtotal: number
+  servicePlan?: { id: number; name: string; description?: string } | null
+}
+
 export interface Did {
   id        : number
   code      : string
   name      : string
-  price     : number | null
-  category  : 'delivery' | 'installation' | 'survey' | 'dismantle'
-  unitId    : number
-  unit     ?: { id: number; name: string; symbol?: string } | null
+  sla       : string | null
+  total     : number
+  provinceId: number
+  province ?: { id: number; name: string; code?: string } | null
+  regencyId : number
+  regency  ?: { id: number; name: string; code?: string } | null
+  services ?: DidService[]
   createdAt?: string
   updatedAt?: string
 }
@@ -27,7 +40,7 @@ interface DidState {
     sortOrder: number | null
     search   : string
   }
-  form            : Partial<Did>
+  form            : Partial<Did> & { services?: DidService[] }
   isEditMode      : boolean
   showModal       : boolean
   validationErrors: any[]
@@ -50,9 +63,11 @@ export const useDidStore = defineStore('did', {
     form: {
       code: '',
       name: '',
-      price: 0,
-      category: 'delivery',
-      unitId: null as number | null,
+      sla: '',
+      total: 0,
+      provinceId: null as number | null,
+      regencyId: null as number | null,
+      services: [] as DidService[],
     },
     isEditMode: false,
     showModal: false,
@@ -91,6 +106,11 @@ export const useDidStore = defineStore('did', {
         const result = await response.json()
         this.dids = result.data ?? []
         this.totalRecords = result.meta?.total ?? 0
+        
+        // Jika tidak ada search/filter, update totalDids juga
+        if (!this.params.search) {
+          this.totalDids = this.totalRecords
+        }
       } catch (e: any) {
         this.error = e.message
         if (!suppressError) {
@@ -113,12 +133,23 @@ export const useDidStore = defineStore('did', {
       const { $api } = useNuxtApp()
 
       try {
+        // Calculate subtotal for each service and total
+        const services = (this.form.services || []).map((s) => {
+          const subtotal = (s.quantity || 0) * (s.price || 0)
+          return {
+            ...s,
+            subtotal: subtotal,
+          }
+        })
+        const total = services.reduce((sum, s) => sum + (s.subtotal || 0), 0)
+
         const body = {
           code: this.form.code,
           name: this.form.name,
-          price: this.form.price != null ? Number(this.form.price) || 0 : null,
-          category: this.form.category || 'delivery',
-          unitId: this.form.unitId,
+          sla: this.form.sla || null,
+          provinceId: this.form.provinceId,
+          regencyId: this.form.regencyId,
+          services: services,
         }
 
         const url = this.isEditMode && this.form.id
@@ -251,18 +282,31 @@ export const useDidStore = defineStore('did', {
           id: did.id,
           code: did.code,
           name: did.name,
-          price: did.price ?? 0,
-          category: did.category ?? 'delivery',
-          unitId: did.unitId ?? did.unit?.id ?? null,
+          sla: did.sla || '',
+          total: did.total || 0,
+          provinceId: did.provinceId ?? did.province?.id ?? null,
+          regencyId: did.regencyId ?? did.regency?.id ?? null,
+          services: did.services?.map((s) => ({
+            id: s.id,
+            servicePlanId: s.servicePlanId,
+            category: s.category,
+            quantity: s.quantity || 0,
+            price: s.price || 0,
+            subtotal: s.subtotal || 0,
+          })) || [],
         }
       } else {
         this.form = {
           code: '',
           name: '',
-          price: 0,
-          category: 'delivery',
-          unitId: null as number | null,
+          sla: '',
+          total: 0,
+          provinceId: null as number | null,
+          regencyId: null as number | null,
+          services: [],
         }
+        // Default tampilkan 1 form service
+        this.addServiceItem()
       }
       this.showModal = true
     },
@@ -273,9 +317,11 @@ export const useDidStore = defineStore('did', {
       this.form = {
         code: '',
         name: '',
-        price: 0,
-        category: 'delivery',
-        unitId: null as number | null,
+        sla: '',
+        total: 0,
+        provinceId: null as number | null,
+        regencyId: null as number | null,
+        services: [],
       }
       this.validationErrors = []
     },
@@ -310,17 +356,30 @@ export const useDidStore = defineStore('did', {
           credentials: 'include',
         })
 
-        if (!response.ok) throw new Error('Gagal memuat total DID')
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
+          throw new Error(errorData.message || 'Gagal memuat total DID')
+        }
 
         const result = await response.json()
-        this.totalDids = result.total ?? 0
+        const total = result.total ?? 0
+        
+        // Pastikan total adalah number yang valid
+        this.totalDids = typeof total === 'number' ? total : Number(total) || 0
+        
+        // Jika total masih 0 tapi ada data di dids, gunakan totalRecords sebagai fallback
+        if (this.totalDids === 0 && this.dids.length > 0) {
+          this.totalDids = this.totalRecords || this.dids.length
+        }
       } catch (error: any) {
         console.error('Error fetching total DID:', error)
-        toast.error({
-          title: 'Error',
-          message: error.message || 'Gagal memuat total DID',
-          color: 'red',
-        })
+        // Jangan tampilkan toast error untuk menghindari spam, tapi log saja
+        // Gunakan totalRecords sebagai fallback jika tersedia
+        if (this.totalRecords > 0) {
+          this.totalDids = this.totalRecords
+        } else if (this.dids.length > 0) {
+          this.totalDids = this.dids.length
+        }
       }
     },
 
@@ -359,6 +418,25 @@ export const useDidStore = defineStore('did', {
           color: 'red',
         })
         throw error
+      }
+    },
+
+    addServiceItem() {
+      if (!this.form.services) {
+        this.form.services = []
+      }
+      this.form.services.push({
+        servicePlanId: null as any,
+        category: 'delivery',
+        quantity: 1,
+        price: 0,
+        subtotal: 0,
+      } as DidService)
+    },
+
+    removeServiceItem(index: number) {
+      if (this.form.services && this.form.services.length > index) {
+        this.form.services.splice(index, 1)
       }
     },
   },

@@ -103,7 +103,7 @@
                             <div class="input-group">
                               <InputText
                                 v-model="tableControls.search"
-                                placeholder="Cari berdasarkan kode, nama atau kategori..."
+                                placeholder="Cari berdasarkan kode, nama, SLA, provinsi atau kabupaten..."
                                 class="w-full md:w-20rem"
                                 @input="(e) => handleSearch(e.target?.value || '')"
                               />
@@ -127,7 +127,7 @@
                           <div class="mb-3">
                             <InputText
                               v-model="tableControls.search"
-                              placeholder="Cari berdasarkan kode, nama atau kategori..."
+                              placeholder="Cari berdasarkan kode, nama, SLA, provinsi atau kabupaten..."
                               class="w-100"
                               style="height: 38px; border-radius: 6px"
                               @input="(e) => handleSearch(e.target?.value || '')"
@@ -158,16 +158,19 @@
                     :loading="loading"
                     :totalRecords="totalRecords"
                     :first="params.first"
+                    :expandedRows="expandedRows"
                     :lazy="true"
                     :sort-field="params.sortField"
                     :sort-order="params.sortOrder"
                     sort-mode="single"
                     @page="onPage($event)"
                     @sort="onSort($event)"
+                    @row-toggle="onRowToggle($event)"
                     responsive-layout="scroll"
                     paginator-template="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink"
                     current-page-report-template="Menampilkan {first} sampai {last} dari {totalRecords} data"
                   >
+                    <Column :expander="true" headerStyle="width: 3rem" />
                     <Column header="#" :sortable="false">
                       <template #body="slotProps">
                         {{ params.first + slotProps.index + 1 }}
@@ -175,19 +178,24 @@
                     </Column>
                     <Column field="code" header="Kode" :sortable="true" class="text-nowrap" />
                     <Column field="name" header="Nama" :sortable="true" />
-                    <Column field="price" header="Harga" :sortable="true" class="text-nowrap">
+                    <Column field="sla" header="SLA" :sortable="true" class="text-nowrap">
                       <template #body="slotProps">
-                        {{ formatRupiah(slotProps.data.price) }}
+                        {{ slotProps.data.sla || '-' }}
                       </template>
                     </Column>
-                    <Column field="category" header="Kategori" :sortable="true" class="text-nowrap">
+                    <Column field="province.name" header="Provinsi" :sortable="false" class="text-nowrap">
                       <template #body="slotProps">
-                        {{ labelCategory(slotProps.data.category) }}
+                        {{ slotProps.data.province?.name || '-' }}
                       </template>
                     </Column>
-                    <Column field="unit.name" header="Unit" :sortable="false" class="text-nowrap">
+                    <Column field="regency.name" header="Kabupaten/Kota" :sortable="false" class="text-nowrap">
                       <template #body="slotProps">
-                        {{ slotProps.data.unit?.name || '-' }}
+                        {{ slotProps.data.regency?.name || '-' }}
+                      </template>
+                    </Column>
+                    <Column field="total" header="Total" :sortable="true" class="text-nowrap">
+                      <template #body="slotProps">
+                        {{ formatRupiah(slotProps.data.total || 0) }}
                       </template>
                     </Column>
                     <Column field="createdAt" header="Tanggal Dibuat" :sortable="true" class="text-nowrap">
@@ -220,6 +228,10 @@
                         </div>
                       </template>
                     </Column>
+                    <!-- Expansion Template -->
+                    <template #expansion="slotProps">
+                      <DidExpandedRow :did="slotProps.data" />
+                    </template>
                   </MyDataTable>
                 </div>
               </div>
@@ -236,77 +248,180 @@
       >
         <template #default>
           <form @submit.prevent="didStore.saveDid()">
-            <div class="row g-4">
-              <div class="col-md-12">
-                <label class="form-label">Kode <span class="text-danger">*</span></label>
-                <input
-                  v-model="form.code"
-                  type="text"
-                  class="form-control"
-                  placeholder="Contoh: DEL-001"
-                  maxlength="50"
-                  @input="form.code = ($event.target?.value || '').toUpperCase()"
-                  required
-                />
-                <div v-if="hasFieldError('code')" class="invalid-feedback d-block">
-                  {{ getFieldError('code') }}
+            <div class="row">
+              <div class="col">
+                <ul class="nav nav-tabs" role="tablist">
+                  <li class="nav-item">
+                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#did-tabs-info" role="tab" aria-selected="true" type="button">
+                      <span class="ri-information-line ri-20px d-sm-none"></span>
+                      <span class="d-none d-sm-block">Informasi</span>
+                    </button>
+                  </li>
+                  <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#did-tabs-services" role="tab" aria-selected="false" type="button">
+                      <span class="ri-service-line ri-20px d-sm-none"></span>
+                      <span class="d-none d-sm-block">Services</span>
+                    </button>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="tab-content pt-6">
+              <!-- Tab Info -->
+              <div class="tab-pane fade active show" id="did-tabs-info" role="tabpanel">
+                <div class="row g-4">
+                  <div class="col-md-6">
+                    <label class="form-label">Kode <span class="text-danger">*</span></label>
+                    <input
+                      v-model="form.code"
+                      type="text"
+                      class="form-control"
+                      placeholder="Contoh: DID-001"
+                      maxlength="50"
+                      @input="form.code = ($event.target?.value || '').toUpperCase()"
+                      required
+                    />
+                    <div v-if="hasFieldError('code')" class="invalid-feedback d-block">
+                      {{ getFieldError('code') }}
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Nama <span class="text-danger">*</span></label>
+                    <input
+                      v-model="form.name"
+                      type="text"
+                      class="form-control"
+                      placeholder="Masukkan nama DID"
+                      required
+                    />
+                    <div v-if="hasFieldError('name')" class="invalid-feedback d-block">
+                      {{ getFieldError('name') }}
+                    </div>
+                  </div>
+                  <div class="col-md-12">
+                    <label class="form-label">SLA</label>
+                    <input
+                      v-model="form.sla"
+                      type="text"
+                      class="form-control"
+                      placeholder="Masukkan SLA (contoh: 24 jam)"
+                    />
+                    <div v-if="hasFieldError('sla')" class="invalid-feedback d-block">
+                      {{ getFieldError('sla') }}
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Provinsi <span class="text-danger">*</span></label>
+                    <CustomSelect2
+                      v-model="form.provinceId"
+                      :options="provinceOptions"
+                      :get-option-label="(opt) => opt?.name ?? ''"
+                      :reduce="(opt) => (opt != null ? opt.id : null)"
+                      placeholder="Pilih provinsi"
+                      :searchable="true"
+                      :clearable="false"
+                      :is-invalid="hasFieldError('provinceId')"
+                      @update:modelValue="onProvinceChange"
+                    />
+                    <div v-if="hasFieldError('provinceId')" class="invalid-feedback d-block">
+                      {{ getFieldError('provinceId') }}
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Kabupaten/Kota <span class="text-danger">*</span></label>
+                    <CustomSelect2
+                      v-model="form.regencyId"
+                      :options="filteredRegencies"
+                      :get-option-label="(opt) => opt?.name ?? ''"
+                      :reduce="(opt) => (opt != null ? opt.id : null)"
+                      placeholder="Pilih kabupaten/kota"
+                      :searchable="true"
+                      :clearable="false"
+                      :is-invalid="hasFieldError('regencyId')"
+                      :disabled="!form.provinceId"
+                    />
+                    <div v-if="hasFieldError('regencyId')" class="invalid-feedback d-block">
+                      {{ getFieldError('regencyId') }}
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div class="col-md-6">
-                <label class="form-label">Nama <span class="text-danger">*</span></label>
-                <input
-                  v-model="form.name"
-                  type="text"
-                  class="form-control"
-                  placeholder="Masukkan nama DID"
-                  required
-                />
-                <div v-if="hasFieldError('name')" class="invalid-feedback d-block">
-                  {{ getFieldError('name') }}
+
+              <!-- Tab Services -->
+              <div class="tab-pane fade" id="did-tabs-services" role="tabpanel">
+                <div v-for="(item, index) in form.services" :key="index" class="repeater-item mb-4">
+                  <div class="row g-3">
+                    <div class="col-md-4">
+                      <CustomSelect2
+                        v-model="item.servicePlanId"
+                        :options="servicePlanOptions"
+                        :get-option-label="(sp) => sp?.name ?? ''"
+                        :reduce="(sp) => (sp != null ? sp.id : null)"
+                        placeholder="Pilih Service Plan"
+                        :searchable="true"
+                        :clearable="false"
+                        :is-invalid="hasFieldError(`services.${index}.servicePlanId`)"
+                        @update:modelValue="onServicePlanChange(index)"
+                      />
+                      <div v-if="hasFieldError(`services.${index}.servicePlanId`)" class="invalid-feedback d-block">
+                        {{ getFieldError(`services.${index}.servicePlanId`) }}
+                      </div>
+                    </div>
+                    <div class="col-md-2">
+                      <CustomSelect2
+                        v-model="item.category"
+                        :options="categoryOptions"
+                        :get-option-label="(opt) => opt.label"
+                        :reduce="(opt) => opt.value"
+                        placeholder="Kategori"
+                        :searchable="false"
+                        :clearable="false"
+                        @update:modelValue="calculateServiceSubtotal(index)"
+                      />
+                      <div v-if="hasFieldError(`services.${index}.category`)" class="invalid-feedback d-block">
+                        {{ getFieldError(`services.${index}.category`) }}
+                      </div>
+                    </div>
+                    <div class="col-md-2">
+                      <div class="form-floating form-floating-outline">
+                        <input type="number" v-model.number="item.quantity" @input="calculateServiceSubtotal(index)" class="form-control" placeholder="Qty" min="1">
+                        <label>Qty</label>
+                      </div>
+                      <div v-if="hasFieldError(`services.${index}.quantity`)" class="invalid-feedback d-block">
+                        {{ getFieldError(`services.${index}.quantity`) }}
+                      </div>
+                    </div>
+                    <div class="col-md-2">
+                      <div class="form-floating form-floating-outline">
+                        <input type="text" :value="formatRupiah(item.price)" @input="updateServicePriceFromInput(index, $event)" class="form-control" placeholder="Harga">
+                        <label>Harga</label>
+                      </div>
+                      <div v-if="hasFieldError(`services.${index}.price`)" class="invalid-feedback d-block">
+                        {{ getFieldError(`services.${index}.price`) }}
+                      </div>
+                    </div>
+                    <div class="col-md-2">
+                      <div class="form-floating form-floating-outline">
+                        <input type="text" :value="formatRupiah(item.subtotal)" class="form-control" placeholder="Subtotal" readonly>
+                        <label>Subtotal</label>
+                      </div>
+                    </div>
+                    <div class="col-md-12 d-flex justify-content-end">
+                      <button @click.prevent="didStore.removeServiceItem(index)" class="btn btn-outline-danger">Hapus</button>
+                    </div>
+                  </div>
+                  <hr class="my-4">
                 </div>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Kategori <span class="text-danger">*</span></label>
-                <select v-model="form.category" class="form-select" required>
-                  <option value="delivery">Delivery</option>
-                  <option value="installation">Installation</option>
-                  <option value="survey">Survey</option>
-                  <option value="dismantle">Dismantle</option>
-                </select>
-                <div v-if="hasFieldError('category')" class="invalid-feedback d-block">
-                  {{ getFieldError('category') }}
+                <div class="mt-4">
+                  <button @click.prevent="didStore.addServiceItem()" class="btn btn-primary">Tambah Service</button>
                 </div>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Harga</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  :value="formatRupiah(form.price)"
-                  @input="updatePriceFromInput"
-                  placeholder="0"
-                />
-                <div v-if="hasFieldError('price')" class="invalid-feedback d-block">
-                  {{ getFieldError('price') }}
-                </div>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Unit <span class="text-danger">*</span></label>
-                <CustomSelect2
-                  v-model="form.unitId"
-                  :options="unitOptions"
-                  :get-option-label="(opt) => opt?.name ?? ''"
-                  :reduce="(opt) => (opt != null ? opt.id : null)"
-                  placeholder="Pilih unit"
-                  :searchable="true"
-                  :clearable="false"
-                  :is-invalid="hasFieldError('unitId')"
-                />
-                <div v-if="hasFieldError('unitId')" class="invalid-feedback d-block">
-                  {{ getFieldError('unitId') }}
+                <div class="d-flex justify-content-end mt-4">
+                  <span class="fw-bold fs-5">Subtotal Service: {{ formatRupiah(serviceSubtotal) }}</span>
                 </div>
               </div>
             </div>
+
             <div class="modal-footer mt-6">
               <button type="button" class="btn btn-outline-secondary" @click="didStore.closeModal()">
                 Tutup
@@ -332,6 +447,7 @@ import { useUserStore } from '~/stores/user'
 import { usePermissionsStore } from '~/stores/permissions'
 import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
+import DidExpandedRow from '~/components/table/DidExpandedRow.vue'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
 import Dropdown from 'primevue/dropdown'
 import InputText from 'primevue/inputtext'
@@ -354,6 +470,7 @@ const { dids, loading, totalRecords, totalDids, params, form, isEditMode, showMo
 
 const globalFilterValue = ref('')
 const rowsPerPageOptionsArray = ref([10, 25, 50, 100])
+const expandedRows = ref({})
 
 const tableControls = ref({
   rows: 10,
@@ -367,31 +484,117 @@ const modalDescription = computed(() =>
     : 'Silakan isi form di bawah ini untuk menambahkan DID baru.'
 )
 
-const unitOptions = ref([])
+const provinceOptions = ref([])
+const regencyOptions = ref([])
+const servicePlanOptions = ref([])
 
-async function fetchUnitOptions() {
+const categoryOptions = [
+  { label: 'Delivery', value: 'delivery' },
+  { label: 'Installation', value: 'installation' },
+  { label: 'Survey', value: 'survey' },
+  { label: 'Dismantle', value: 'dismantle' },
+]
+
+async function fetchProvinceOptions() {
   const { $api } = useNuxtApp()
   try {
-    const res = await fetch(`${$api.unit()}?page=1&rows=500`, {
+    const res = await fetch(`${$api.province()}?page=1&rows=500`, {
       credentials: 'include',
       headers: { Accept: 'application/json' },
     })
+    
+    if (!res.ok) {
+      console.error('Failed to fetch provinces:', res.status, res.statusText)
+      provinceOptions.value = []
+      return
+    }
+    
     const json = await res.json()
-    unitOptions.value = json.data || []
+    // Handle pagination response format (data is array) or direct array
+    if (Array.isArray(json)) {
+      provinceOptions.value = json
+    } else if (json.data && Array.isArray(json.data)) {
+      provinceOptions.value = json.data
+    } else {
+      provinceOptions.value = []
+    }
+    
+    if (provinceOptions.value.length === 0) {
+      console.warn('No provinces found in response:', json)
+    } else {
+      console.log(`Loaded ${provinceOptions.value.length} provinces`)
+    }
   } catch (e) {
-    unitOptions.value = []
+    console.error('Error fetching provinces:', e)
+    provinceOptions.value = []
   }
 }
 
-const CATEGORY_LABELS = {
-  delivery: 'Delivery',
-  installation: 'Installation',
-  survey: 'Survey',
-  dismantle: 'Dismantle',
+async function fetchRegencyOptions() {
+  const { $api } = useNuxtApp()
+  try {
+    const res = await fetch(`${$api.regency()}?page=1&rows=1000`, {
+      credentials: 'include',
+      headers: { Accept: 'application/json' },
+    })
+    
+    if (!res.ok) {
+      console.error('Failed to fetch regencies:', res.status, res.statusText)
+      regencyOptions.value = []
+      return
+    }
+    
+    const json = await res.json()
+    // Handle pagination response format (data is array) or direct array
+    if (Array.isArray(json)) {
+      regencyOptions.value = json
+    } else if (json.data && Array.isArray(json.data)) {
+      regencyOptions.value = json.data
+    } else {
+      regencyOptions.value = []
+    }
+  } catch (e) {
+    console.error('Error fetching regencies:', e)
+    regencyOptions.value = []
+  }
 }
 
-function labelCategory(value) {
-  return CATEGORY_LABELS[value] || value || '-'
+async function fetchServicePlanOptions() {
+  const { $api } = useNuxtApp()
+  try {
+    const res = await fetch(`${$api.servicePlan()}?page=1&rows=500`, {
+      credentials: 'include',
+      headers: { Accept: 'application/json' },
+    })
+    
+    if (!res.ok) {
+      console.error('Failed to fetch service plans:', res.status, res.statusText)
+      servicePlanOptions.value = []
+      return
+    }
+    
+    const json = await res.json()
+    // Handle pagination response format (data is array) or direct array
+    if (Array.isArray(json)) {
+      servicePlanOptions.value = json
+    } else if (json.data && Array.isArray(json.data)) {
+      servicePlanOptions.value = json.data
+    } else {
+      servicePlanOptions.value = []
+    }
+  } catch (e) {
+    console.error('Error fetching service plans:', e)
+    servicePlanOptions.value = []
+  }
+}
+
+const filteredRegencies = computed(() => {
+  if (!form.value.provinceId) return []
+  return regencyOptions.value.filter((r) => r.provinceId === form.value.provinceId)
+})
+
+const onProvinceChange = () => {
+  form.value.regencyId = null
 }
 
 const parseRupiahToNumber = (rupiahString) => {
@@ -399,10 +602,51 @@ const parseRupiahToNumber = (rupiahString) => {
   return Number(String(rupiahString).replace(/[Rp\s.]/g, '').replace(',', '.')) || 0
 }
 
-const updatePriceFromInput = (event) => {
+const updateServicePriceFromInput = (index, event) => {
   const numericValue = parseRupiahToNumber(event.target?.value || '')
-  didStore.form.price = Math.round(numericValue)
+  if (form.value.services && form.value.services[index]) {
+    form.value.services[index].price = Math.round(numericValue)
+    calculateServiceSubtotal(index)
+  }
 }
+
+const getUniqueCategories = (services) => {
+  if (!services || !Array.isArray(services)) return []
+  const categories = services.map(s => s.category).filter(Boolean)
+  return [...new Set(categories)]
+}
+
+const onServicePlanChange = (index) => {
+  // Optional: Update price from service plan if needed
+  calculateServiceSubtotal(index)
+}
+
+const calculateServiceSubtotal = (index) => {
+  if (form.value.services && form.value.services[index]) {
+    const item = form.value.services[index]
+    const quantity = item.quantity || 0
+    const price = item.price || 0
+    item.subtotal = quantity * price
+  }
+}
+
+const serviceSubtotal = computed(() => {
+  if (!form.value.services || form.value.services.length === 0) return 0
+  return form.value.services.reduce((sum, item) => {
+    return sum + (item.subtotal || 0)
+  }, 0)
+})
+
+const calculatedTotal = computed(() => {
+  return serviceSubtotal.value
+})
+
+// Watch calculatedTotal to update form.total
+watch(calculatedTotal, (newTotal) => {
+  if (form.value) {
+    form.value.total = newTotal
+  }
+})
 
 const formatDate = (dateString) => {
   if (!dateString) return '-'
@@ -421,7 +665,9 @@ onMounted(() => {
 
   didStore.fetchDids()
   didStore.fetchTotalDids()
-  fetchUnitOptions()
+  fetchProvinceOptions()
+  fetchRegencyOptions()
+  fetchServicePlanOptions()
   permissionStore.fetchPermissions()
   userStore.loadUser()
 
@@ -432,9 +678,19 @@ onMounted(() => {
   setListTitle('DID', dids.value.length)
 })
 
-watch(showModal, (newValue) => {
+watch(showModal, async (newValue) => {
   if (newValue) {
     modalInstance?.show()
+    // Ensure options are loaded when modal opens
+    if (provinceOptions.value.length === 0) {
+      await fetchProvinceOptions()
+    }
+    if (regencyOptions.value.length === 0) {
+      await fetchRegencyOptions()
+    }
+    if (servicePlanOptions.value.length === 0) {
+      await fetchServicePlanOptions()
+    }
   } else {
     modalInstance?.hide()
   }
@@ -477,6 +733,9 @@ watch(globalFilterValue, debouncedSearch)
 
 const onPage = (event) => didStore.setPagination(event)
 const onSort = (event) => didStore.setSort(event)
+const onRowToggle = (e) => {
+  expandedRows.value = e.data
+}
 
 const exportData = async (format) => {
   const toast = useToast()

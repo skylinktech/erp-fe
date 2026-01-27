@@ -53,6 +53,7 @@ interface ProductState {
     sortOrder: number | null
     search: string
     warehouseId?: number | null
+    customerId?: number | null
   }
   form: Partial<Product>
   isEditMode: boolean
@@ -75,6 +76,7 @@ export const useProductStore = defineStore('product', {
       sortOrder: 1,
       search: '',
       warehouseId: null,
+      customerId: null,
     },
     form: {
       name: '',
@@ -105,6 +107,11 @@ export const useProductStore = defineStore('product', {
             sortOrder: this.params.sortOrder === -1 ? 'desc' : 'asc',
             search: this.params.search || '',
         });
+
+        // Filter produk berdasarkan customer (relasi product_customer)
+        if (this.params.customerId) {
+          params.append('customerId', this.params.customerId.toString());
+        }
 
         if (this.params.warehouseId) {
           params.append('warehouseId', this.params.warehouseId.toString());
@@ -165,6 +172,7 @@ export const useProductStore = defineStore('product', {
           sortField: 'name', // Urutkan berdasarkan nama untuk kemudahan pencarian
           sortOrder: 'asc',
           search: '', // Tanpa filter search
+          includeStocks: 'true', // Include stocks untuk validasi stock
         });
 
         const response = await fetch(`${$api.product()}?${params.toString()}`, {

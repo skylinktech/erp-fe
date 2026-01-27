@@ -13,6 +13,7 @@ interface SiteInvestMaterial {
   id?: string
   siteInvestId?: string
   productId: number
+  warehouseId?: number | null
   quantity: number
   price: number
   subtotal: number
@@ -35,6 +36,10 @@ interface SiteInvestDid {
   id?: string
   siteInvestId?: string
   didId: number
+  servicePlanId?: number | null
+  category?: 'delivery' | 'installation' | 'survey' | 'dismantle' | null
+  unitId?: number | null
+  quantity: number
   price: number
   isPriceOverridden: boolean
   did?: any
@@ -304,10 +309,25 @@ export const useSiteInvestStore = defineStore('siteInvest', {
         delete dataToAppend.attachment
         delete dataToAppend.attachmentPreview
 
+        // Field yang nullable - selalu kirim (termasuk null/undefined)
+        // Untuk FormData, kita kirim string kosong untuk null, dan backend akan menanganinya
+        const nullableFields = ['customerId', 'siteId', 'businessSchemeId', 'lat', 'long', 'notes']
+        
         Object.keys(dataToAppend).forEach(key => {
           const value = dataToAppend[key]
-          if (value !== null && value !== undefined) {
-            formData.append(key, value)
+          // Untuk field nullable, selalu kirim
+          if (nullableFields.includes(key)) {
+            if (value === null || value === undefined || value === '') {
+              // Kirim string kosong untuk null/undefined, backend akan mengkonversi ke null
+              formData.append(key, '')
+            } else {
+              formData.append(key, String(value))
+            }
+          } else {
+            // Untuk field lain, hanya kirim jika tidak null/undefined
+            if (value !== null && value !== undefined && value !== '') {
+              formData.append(key, value)
+            }
           }
         })
 
@@ -487,6 +507,22 @@ export const useSiteInvestStore = defineStore('siteInvest', {
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({ message: 'Gagal mengapprove site investment' }))
+          
+          // Handle error stock tidak mencukupi
+          if (response.status === 400 && errorData.errors && Array.isArray(errorData.errors)) {
+            const errorMessages = errorData.errors.join('\n')
+            const toast = useToast()
+            toast.error({
+              title: 'Stock Tidak Mencukupi',
+              message: errorMessages,
+              color: 'red',
+              position: 'topRight',
+              layout: 2,
+              duration: 5000,
+            })
+            throw new Error(errorMessages)
+          }
+          
           throw new Error(errorData.message || 'Gagal mengapprove site investment')
         }
 
@@ -503,14 +539,17 @@ export const useSiteInvestStore = defineStore('siteInvest', {
         return true
       } catch (error: any) {
         console.error('Error approving site investment:', error)
-        const toast = useToast()
-        toast.error({
-          title: 'Error',
-          message: error.message || 'Gagal mengapprove site investment.',
-          color: 'red',
-          position: 'topRight',
-          layout: 2,
-        })
+        // Jangan tampilkan toast lagi jika sudah ditampilkan di atas
+        if (!error.message || !error.message.includes('Stock')) {
+          const toast = useToast()
+          toast.error({
+            title: 'Error',
+            message: error.message || 'Gagal mengapprove site investment.',
+            color: 'red',
+            position: 'topRight',
+            layout: 2,
+          })
+        }
         return false
       } finally {
         this.loading = false
@@ -697,6 +736,9 @@ export const useSiteInvestStore = defineStore('siteInvest', {
           formData.siteInvestDids.forEach((d: any) => {
             d.quantity = nm(d.quantity) || 1
             d.price = nm(d.price) || 0
+            d.servicePlanId = d.servicePlanId || null
+            d.category = d.category || null
+            d.unitId = d.unitId || null
           })
         }
 
@@ -784,6 +826,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
       }
       this.form.siteInvestMaterials.push({
         productId: null,
+        warehouseId: null,
         quantity: 1,
         price: 0,
         subtotal: 0,
@@ -815,8 +858,15 @@ export const useSiteInvestStore = defineStore('siteInvest', {
       if (!this.form.siteInvestDids) {
         this.form.siteInvestDids = []
       }
+      // Get didId from first item if exists, or use null
+      const didId = this.form.siteInvestDids.length > 0 
+        ? this.form.siteInvestDids[0].didId 
+        : null
       this.form.siteInvestDids.push({
-        didId: null,
+        didId: didId,
+        servicePlanId: null,
+        category: null,
+        unitId: null,
         quantity: 1,
         price: 0,
         isPriceOverridden: false,
