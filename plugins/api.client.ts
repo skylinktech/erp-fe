@@ -341,6 +341,7 @@ export default defineNuxtPlugin(() => {
     approveSiteInvestment: (id: string) => `${apiBase}/site-investment/approveSiteInvestment/${id}`,
     rejectSiteInvestment: (id: string) => `${apiBase}/site-investment/rejectSiteInvestment/${id}`,
     submitSiteInvestment: (id: string) => `${apiBase}/site-investment/submitSiteInvestment/${id}`,
+    cancelSiteInvestment: (id: string) => `${apiBase}/site-investment/cancelSiteInvestment/${id}`,
 
     // Subscription
     subscription: () => `${apiBase}/subscription`,
@@ -348,6 +349,13 @@ export default defineNuxtPlugin(() => {
     approveSubscription: (id: string) => `${apiBase}/subscription/approveSubscription/${id}`,
     rejectSubscription: (id: string) => `${apiBase}/subscription/rejectSubscription/${id}`,
     submitSubscription: (id: string) => `${apiBase}/subscription/submitSubscription/${id}`,
+
+    // Sales Pipeline
+    salesPipelineStage: () => `${apiBase}/sales-pipeline-stage`,
+    salesOpportunity: () => `${apiBase}/sales-opportunity`,
+    salesOpportunityForecast: () => `${apiBase}/sales-opportunity/forecast`,
+    salesOpportunityMoveStage: (id: number | string) => `${apiBase}/sales-opportunity/${id}/move-stage`,
+    salesOpportunityAddActivity: (id: number | string) => `${apiBase}/sales-opportunity/${id}/add-activity`,
 
     // PKS
     pks: () => `${apiBase}/pks`,

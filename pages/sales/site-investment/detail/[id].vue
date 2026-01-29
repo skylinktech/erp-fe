@@ -51,6 +51,9 @@
                   <a class="dropdown-item" href="javascript:void(0)" @click="onReject">
                     <i class="ri-close-line me-2"></i> Reject
                   </a>
+                  <a class="dropdown-item" href="javascript:void(0)" @click="onCancel">
+                    <i class="ri-close-circle-line me-2"></i> Cancel
+                  </a>
                   <a class="dropdown-item" href="javascript:void(0)" @click="navigateTo('/sales/site-investment?edit=' + siteInvest.id)">
                     <i class="ri-edit-box-line me-2"></i> Edit
                   </a>
@@ -441,6 +444,7 @@ function getStatusBadge (status: string) {
     case 'approved': return { text: 'Approved', class: 'badge rounded-pill bg-label-success' }
     case 'rejected': return { text: 'Rejected', class: 'badge rounded-pill bg-label-danger' }
     case 'expired': return { text: 'Expired', class: 'badge rounded-pill bg-label-dark' }
+    case 'cancelled': return { text: 'Cancelled', class: 'badge rounded-pill bg-label-secondary' }
     default: return { text: '-', class: 'badge rounded-pill bg-label-light' }
   }
 }
@@ -490,6 +494,11 @@ async function onReject () {
 }
 
 async function onSubmit () {
+async function onCancel () {
+  if (!siteInvest.value) return
+  await siteInvestStore.cancelSiteInvest(siteInvest.value.id)
+  refreshAfterAction()
+}
   if (!siteInvest.value) return
   await siteInvestStore.submitSiteInvest(siteInvest.value.id)
   refreshAfterAction()

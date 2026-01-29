@@ -334,6 +334,11 @@
                                                             <i class="ri-check-line me-2"></i> Approve
                                                         </a>
                                                     </li>
+                                                    <li v-if="(userHasRole('superadmin') || userHasPermission('approve_site_investment')) && slotProps.data.status !== 'cancelled'">
+                                                        <a class="dropdown-item" href="javascript:void(0)" @click="siteInvestStore.cancelSiteInvest(slotProps.data.id)">
+                                                            <i class="ri-close-circle-line me-2"></i> Cancel
+                                                        </a>
+                                                    </li>
                                                     <li v-if="(userHasRole('superadmin') || userHasPermission('reject_site_investment')) && slotProps.data.status === 'pending'">
                                                         <a class="dropdown-item" href="javascript:void(0)" @click="siteInvestStore.rejectSiteInvest(slotProps.data.id)">
                                                             <i class="ri-close-line me-2"></i> Reject
@@ -1032,6 +1037,7 @@ const statusOptions = ref([
     { label: 'Approved', value: 'approved' },
     { label: 'Rejected', value: 'rejected' },
     { label: 'Expired', value: 'expired' },
+    { label: 'Cancelled', value: 'cancelled' },
 ])
 
 const priorityOptions = ref([
@@ -1554,6 +1560,7 @@ const getStatusBadge = (status) => {
         case 'pending': return { text: 'Pending', class: 'badge rounded-pill bg-label-warning' }
         case 'approved': return { text: 'Approved', class: 'badge rounded-pill bg-label-success' }
         case 'rejected': return { text: 'Rejected', class: 'badge rounded-pill bg-label-danger' }
+        case 'cancelled': return { text: 'Cancelled', class: 'badge rounded-pill bg-label-dark' }
         case 'expired': return { text: 'Expired', class: 'badge rounded-pill bg-label-dark' }
         default: return { text: '-', class: 'badge rounded-pill bg-label-light' }
     }

@@ -1,6 +1,33 @@
 <template>
-  <div class="container-xxl flex-grow-1 container-p-y">
-    <div class="row g-6">
+  <div class="container-xxl flex-grow-1 container-py-0">
+    <!-- Tabs: All & Sales Pipeline -->
+    <ul class="nav nav-tabs nav-tabs-custom mb-4">
+      <li class="nav-item">
+        <button
+          class="nav-link"
+          :class="{ active: activeDashboardTab === 'all' }"
+          type="button"
+          @click="activeDashboardTab = 'all'"
+        >
+          <i class="ri-dashboard-line me-1"></i>
+          All
+        </button>
+      </li>
+      <li class="nav-item" v-if="canViewSalesPipelineTab">
+        <button
+          class="nav-link"
+          :class="{ active: activeDashboardTab === 'salesPipeline' }"
+          type="button"
+          @click="activeDashboardTab = 'salesPipeline'"
+        >
+          <i class="ri-diamond-line me-1"></i>
+          Sales
+        </button>
+      </li>
+    </ul>
+
+    <!-- Tab: All (existing dashboard content) -->
+    <div v-show="activeDashboardTab === 'all'" class="row g-6 mt-2">
       <div class="col-md-12 col-xxl-8">
         <div class="card">
           <div class="d-flex align-items-end row">
@@ -599,6 +626,12 @@
         </div>
       </div>
     </div>
+
+    <!-- Tab: Sales Pipeline -->
+    <div v-if="canViewSalesPipelineTab" v-show="activeDashboardTab === 'salesPipeline'">
+      <DashboardSalesPipelineTab />
+    </div>
+
   </div>
 </template>
 
@@ -627,8 +660,10 @@
   } from 'pinia'
   import {
     ref,
+    computed,
     onMounted,
-    onUnmounted
+    onUnmounted,
+    watch,
   } from 'vue'
   import {
     useDynamicTitle
@@ -636,9 +671,7 @@
   import {
     usePermissions 
   } from '~/composables/usePermissions'
-
-  // Untuk debugging Chart component
-  import { onMounted as onMountedVue } from 'vue'
+  import DashboardSalesPipelineTab from '~/components/dashboard/sales/PipelineTab.vue'
 
 definePageMeta({
   layout: 'default',
@@ -666,10 +699,14 @@ definePageMeta({
   const topProductsStore = useTopProductsStore()
   const { userHasRole } = usePermissions()
 
+  const activeDashboardTab = ref('all')
+  const canViewSalesPipelineTab = computed(() => userHasRole('superadmin') || userHasRole('sales_manager'))
+
   const {
     chartData,
     chartOptions
   } = storeToRefs(dashboardStore)
+
 
   // Functions
   const refreshActiveUsers = async () => {
@@ -899,5 +936,30 @@ definePageMeta({
     .fp-growth-chart-container canvas {
       max-height: 270px !important;
     }
+  }
+
+  /* Dashboard Tabs */
+  .nav-tabs-custom {
+    border-bottom: 1px solid #e9ecef;
+  }
+
+  .nav-tabs-custom .nav-link {
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: #6b7280;
+    padding: 10px 16px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+
+  .nav-tabs-custom .nav-link:hover {
+    color: #696cff;
+    border-bottom-color: #e9ecef;
+  }
+
+  .nav-tabs-custom .nav-link.active {
+    color: #696cff;
+    border-bottom-color: #696cff;
+    background-color: transparent;
   }
 </style>

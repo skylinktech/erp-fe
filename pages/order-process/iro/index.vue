@@ -203,6 +203,11 @@
                     <span :class="getStatusBadge(slotProps.data.status).class">{{ getStatusBadge(slotProps.data.status).text }}</span>
                   </template>
                 </Column>
+                <Column field="jenisIro" header="Jenis IRO" :sortable="true">
+                  <template #body="slotProps">
+                    <span :class="getJenisIroBadge(slotProps.data.jenisIro).class">{{ getJenisIroBadge(slotProps.data.jenisIro).text }}</span>
+                  </template>
+                </Column>
                 <Column field="grandTotal" header="Grand Total" :sortable="true" class="text-nowrap">
                   <template #body="slotProps">{{ formatRupiah(slotProps.data.grandTotal) }}</template>
                 </Column>
@@ -259,9 +264,13 @@
                 <label class="form-label text-muted">Quotation (approved)</label>
                 <CustomSelect2 v-model="form.quotationId" :options="quotationsApproved" :get-option-label="o => o ? (o.noQuotation || '') + ' - ' + (o.customer?.name || '') : ''" :reduce="o => o?.id" searchable clearable placeholder="Pilih Quotation" @update:modelValue="onQuotationChange" />
               </div>
-              <div class="col-md-6">
+              <div class="col-md-3">
                 <label class="form-label text-muted">Site Investment</label>
                 <CustomSelect2 v-model="form.siteInvestId" :options="siteInvests" :get-option-label="o => o ? (o.siNumber || '') + ' - ' + (o.name || '') : ''" :reduce="o => o?.id" searchable clearable placeholder="Pilih Site Investment" @update:modelValue="onSiteInvestChange" />
+              </div>
+              <div class="col-md-3">
+                <label class="form-label text-muted">Jenis IRO</label>
+                <CustomSelect2 v-model="form.jenisIro" :options="jenisIroOptions" :get-option-label="o => o.label" :reduce="o => o.value" searchable clearable placeholder="Pilih Jenis IRO" />
               </div>
               <div class="col-md-6">
                 <label class="form-label text-muted">Customer</label>
@@ -339,6 +348,10 @@ const termsOptions = [
   { label: 'Postpaid', value: 'postpaid' },
   { label: 'Prepaid', value: 'prepaid' },
   { label: 'Down Payment', value: 'down_payment' },
+]
+const jenisIroOptions = [
+  { label: 'CAPEX', value: 'capex' },
+  { label: 'OPEX', value: 'opex' },
 ]
 
 const modalTitle = computed(() => (isEditMode.value ? 'Edit IRO' : 'Tambah Data'))
@@ -435,6 +448,14 @@ async function onSiteInvestChange(siteInvestId) {
   } catch (e) { console.error('fetch site_invest for DID on change', e) }
 }
 
+function getJenisIroBadge(jenisIro) {
+  if (!jenisIro) return { text: '-', class: 'badge rounded-pill bg-label-light' }
+  switch (jenisIro) {
+    case 'capex': return { text: 'CAPEX', class: 'badge rounded-pill bg-label-primary' }
+    case 'opex': return { text: 'OPEX', class: 'badge rounded-pill bg-label-success' }
+    default: return { text: jenisIro, class: 'badge rounded-pill bg-label-light' }
+  }
+}
 function getStatusBadge(status) {
   if (!status) return { text: '-', class: 'badge rounded-pill bg-label-light' }
   switch (status) {

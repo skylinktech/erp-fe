@@ -131,7 +131,7 @@ import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 // Props
 const props = defineProps({
   modelValue: {
-    type: [String, Number, Object, Array],
+    type: [String, Number, Object, Array, Boolean],
     default: null
   },
   options: {

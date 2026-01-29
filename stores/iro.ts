@@ -30,6 +30,7 @@ export interface Iro {
   didSubtotal: number
   grandTotal: number
   status: string
+  jenisIro?: string
   createdBy: number | null
   approvedBy: number | null
   rejectedBy: number | null
@@ -67,6 +68,7 @@ interface IroState {
     customerId: number | null
     termsOfPayment: string
     status: string
+    jenisIro: string
     iroDetails: IroDetailForm[]
   }
   isEditMode: boolean
@@ -146,6 +148,7 @@ export const useIroStore = defineStore('iro', {
       customerId: null,
       termsOfPayment: 'postpaid',
       status: 'draft',
+      jenisIro: 'capex',
       iroDetails: [],
     },
     isEditMode: false,
@@ -269,6 +272,7 @@ export const useIroStore = defineStore('iro', {
         quotationId: this.form.quotationId,
         customerId: this.form.customerId,
         termsOfPayment: this.form.termsOfPayment || 'postpaid',
+        jenisIro: this.form.jenisIro || 'capex',
         createdBy: this.isEditMode ? undefined : (userStore.user?.id ?? null),
         iroDetails: validDetails.map((d) => sanitizeDetailForPayload(d, d.itemType)),
       }
@@ -384,6 +388,7 @@ export const useIroStore = defineStore('iro', {
           customerId: raw.customerId ?? raw.customer_id ?? raw.customer?.id ?? null,
           termsOfPayment: raw.termsOfPayment ?? raw.terms_of_payment ?? 'postpaid',
           status: raw.status ?? 'draft',
+          jenisIro: raw.jenisIro ?? raw.jenis_iro ?? 'capex',
           iroDetails: (raw.iroDetails ?? raw.iro_details ?? []).map((d: any) => {
             const t = String(d.itemType ?? d.item_type ?? 'SERVICE').toUpperCase()
             const o: IroDetailForm = {
@@ -414,6 +419,7 @@ export const useIroStore = defineStore('iro', {
           customerId: null,
           termsOfPayment: 'postpaid',
           status: 'draft',
+          jenisIro: 'capex',
           iroDetails: [],
         }
       }
@@ -514,6 +520,7 @@ export const useIroStore = defineStore('iro', {
         customerId: null,
         termsOfPayment: 'postpaid',
         status: 'draft',
+        jenisIro: 'capex',
         iroDetails: [],
       }
       this.validationErrors = []

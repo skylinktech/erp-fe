@@ -61,6 +61,7 @@ interface Stats {
   approved: number | undefined
   rejected: number | undefined
   expired: number | undefined
+  cancelled: number | undefined
 }
 
 export interface SiteInvest {
@@ -84,7 +85,7 @@ export interface SiteInvest {
   total: number
   grandTotal: number
   overBudget: boolean
-  status: 'draft' | 'pending' | 'approved' | 'rejected' | 'expired'
+  status: 'draft' | 'pending' | 'approved' | 'rejected' | 'expired' | 'cancelled'
   siteId?: number | null
   site?: { id: number; code?: string; name?: string; address?: string | null; latitude?: number | null; longitude?: number | null }
   businessSchemeId?: number | null
@@ -96,6 +97,8 @@ export interface SiteInvest {
   approvedAt: string | null
   rejectedBy: number | null
   rejectedAt: string | null
+  cancelledBy: number | null
+  cancelledAt: string | null
   customer?: Customer
   createdByUser?: User
   approvedByUser?: User
@@ -149,6 +152,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
       approved: 0,
       rejected: 0,
       expired: 0,
+        cancelled: 0,
     },
     params: {
       first: 0,
@@ -550,6 +554,53 @@ export const useSiteInvestStore = defineStore('siteInvest', {
             layout: 2,
           })
         }
+        return false
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async cancelSiteInvest(siteInvestId: string) {
+      this.loading = true
+      this.error = null
+      const { $api } = useNuxtApp()
+      try {
+        const response = await fetch($api.cancelSiteInvestment(siteInvestId), {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          credentials: 'include',
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ message: 'Gagal membatalkan site investment' }))
+          throw new Error(errorData.message || 'Gagal membatalkan site investment')
+        }
+
+        await this.fetchSiteInvests()
+        await this.fetchStats()
+        const toast = useToast()
+        toast.success({
+          title: 'Success',
+          message: 'Site Investment berhasil dibatalkan.',
+          color: 'green',
+          position: 'topRight',
+          layout: 2,
+        })
+
+        return true
+      } catch (error: any) {
+        console.error('Error cancelling site investment:', error)
+        const toast = useToast()
+        toast.error({
+          title: 'Error',
+          message: error.message || 'Gagal membatalkan site investment.',
+          color: 'red',
+          position: 'topRight',
+          layout: 2,
+        })
         return false
       } finally {
         this.loading = false

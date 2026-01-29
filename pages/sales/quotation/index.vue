@@ -1065,11 +1065,19 @@ const filters = ref({
     e.target.value = '';
   }
 
-  const onSiteInvestChange = (siteInvestId) => {
+  const onSiteInvestChange = async (siteInvestId) => {
     if (!form.value) return;
     if (!siteInvestId) {
       form.value.customerId = null;
       form.value.siteId = null;
+      form.value.costCenterId = null;
+      // Reset products dan services jika Site Investment dihapus
+      if (!isEditMode.value) {
+        form.value.quotationItems = [];
+        form.value.quotationServices = [];
+        quotationStore.addItem();
+        quotationStore.addServiceItem();
+      }
       return;
     }
     const si = siteInvests.value.find(s => s.id === siteInvestId);
@@ -1077,7 +1085,163 @@ const filters = ref({
       const cid = si.customerId ?? si.customer_id;
       const sid = si.siteId ?? si.site_id;
       if (cid != null) form.value.customerId = cid;
-      if (sid != null) form.value.siteId = sid;
+      if (sid != null) {
+        form.value.siteId = sid;
+        // Auto-fill Cost Center berdasarkan relasi Site -> CostCenter
+        const relatedSite = sites.value.find(s => (s.id ?? s.siteId ?? s.site_id) === sid);
+        if (relatedSite) {
+          const ccId = relatedSite.costCenterId ?? relatedSite.cost_center_id;
+          if (ccId != null) {
+            form.value.costCenterId = ccId;
+          }
+        }
+      }
+      
+      // ✅ NEW: Autofill products dan services dari Site Investment (hanya untuk create mode)
+      if (!isEditMode.value) {
+        try {
+          const { $api } = useNuxtApp();
+          const toast = useToast();
+          
+          // Ambil detail Site Investment dengan materials dan services
+          const response = await fetch(`${$api.siteInvestment()}/${siteInvestId}`, {
+            headers: {
+              'Accept': 'application/json',
+            },
+            credentials: 'include',
+          });
+          
+          if (!response.ok) {
+            throw new Error('Gagal mengambil data Site Investment');
+          }
+          
+          const result = await response.json();
+          const siteInvestData = result.data;
+          
+          if (siteInvestData) {
+            // Tunggu customer products ter-load dulu jika ada customerId
+            if (cid) {
+              await quotationStore.fetchProductsForCustomer(cid);
+              // Tunggu sebentar agar customerProducts sudah ter-load
+              await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            
+            // Autofill Products dari siteInvestMaterials
+            if (siteInvestData.siteInvestMaterials && siteInvestData.siteInvestMaterials.length > 0) {
+              const validMaterials = siteInvestData.siteInvestMaterials.filter((material) => {
+                const product = material.product || {};
+                const productId = product.id || material.productId;
+                // Hanya include produk yang ada di customerProducts (jika customer sudah dipilih)
+                if (cid && quotationStore.customerProducts.length > 0) {
+                  return quotationStore.customerProducts.some((cp) => cp.id === productId);
+                }
+                // Jika belum ada customer atau customerProducts belum ter-load, include semua
+                return true;
+              });
+              
+              if (validMaterials.length > 0) {
+                form.value.quotationItems = validMaterials.map((material) => {
+                  const product = material.product || {};
+                  const productId = product.id || material.productId;
+                  // Gunakan priceSell dari customerProduct jika ada, jika tidak gunakan price dari material
+                  let price = Number(material.price) || 0;
+                  if (cid && quotationStore.customerProducts.length > 0) {
+                    const customerProduct = quotationStore.customerProducts.find((cp) => cp.id === productId);
+                    if (customerProduct && customerProduct.priceSell) {
+                      price = Number(customerProduct.priceSell) || price;
+                    }
+                  } else {
+                    // Fallback ke priceSell dari product jika tidak ada customerProduct
+                    price = Number(product.priceSell) || price;
+                  }
+                  const quantity = Number(material.quantity) || 1;
+                  
+                  return {
+                    productId: productId,
+                    quantity: quantity,
+                    price: price,
+                    subtotal: quantity * price,
+                    description: material.description || '',
+                  };
+                });
+              } else {
+                // Jika tidak ada material yang valid untuk customer, reset ke satu item kosong
+                form.value.quotationItems = [];
+                quotationStore.addItem();
+              }
+              
+              // Jika tidak ada item setelah filter, tambahkan satu item kosong
+              if (form.value.quotationItems.length === 0) {
+                quotationStore.addItem();
+              }
+            } else {
+              // Jika tidak ada materials, reset ke satu item kosong
+              form.value.quotationItems = [];
+              quotationStore.addItem();
+            }
+            
+            // Autofill Services dari siteInvestServices
+            if (siteInvestData.siteInvestServices && siteInvestData.siteInvestServices.length > 0) {
+              form.value.quotationServices = siteInvestData.siteInvestServices.map((service) => {
+                const svc = service.service || {};
+                const unit = service.unit || {};
+                const serviceId = svc.id || service.serviceId;
+                const unitId = unit.id || service.unitId;
+                const price = Number(service.price) || Number(svc.price) || 0;
+                const quantity = Number(service.quantity) || 1;
+                
+                return {
+                  unitId: unitId,
+                  serviceId: serviceId,
+                  quantity: quantity,
+                  price: price,
+                  subtotal: quantity * price,
+                };
+              });
+              
+              // Jika tidak ada service, tambahkan satu item kosong
+              if (form.value.quotationServices.length === 0) {
+                quotationStore.addServiceItem();
+              }
+            } else {
+              // Jika tidak ada services, reset ke satu item kosong
+              form.value.quotationServices = [];
+              quotationStore.addServiceItem();
+            }
+            
+            const productCount = form.value.quotationItems.filter((item) => item.productId).length;
+            const serviceCount = form.value.quotationServices.filter((item) => item.serviceId).length;
+            
+            if (productCount > 0 || serviceCount > 0) {
+              toast.success({
+                title: 'Berhasil',
+                message: `Berhasil autofill ${productCount} produk dan ${serviceCount} service dari Site Investment.`,
+                color: 'green',
+                position: 'topRight',
+                layout: 2,
+              });
+            } else {
+              toast.warning({
+                title: 'Peringatan',
+                message: 'Site Investment tidak memiliki produk atau service yang valid untuk customer yang dipilih.',
+                color: 'orange',
+                position: 'topRight',
+                layout: 2,
+              });
+            }
+          }
+        } catch (error) {
+          console.error('Error autofill dari Site Investment:', error);
+          const toast = useToast();
+          toast.error({
+            title: 'Error',
+            message: 'Gagal mengambil data Site Investment untuk autofill',
+            color: 'red',
+            position: 'topRight',
+            layout: 2,
+          });
+        }
+      }
     }
   };
 
