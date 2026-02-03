@@ -33,6 +33,7 @@ const ENTITY_TYPES = [
   { value: 'quotation', label: 'Quotation' },
   { value: 'purchase_order', label: 'Purchase Order' },
   { value: 'sales_order', label: 'Sales Order' },
+  { value: 'site_investment', label: 'Site Investment' },
   { value: 'price_adjustment_request', label: 'Price Adjustment Request' },
   { value: 'mgrf', label: 'MGRF' },
   { value: 'sales_return', label: 'Sales Return' },

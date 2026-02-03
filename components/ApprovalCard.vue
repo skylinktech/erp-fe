@@ -48,7 +48,7 @@ interface ApprovalLog {
   action: string
   remarks?: string
   user?: { fullName?: string; full_name?: string; email?: string }
-  workflow?: { steps?: Array<{ step_order?: number; stepOrder?: number; step_name?: string; stepName?: string; jabatan?: { nm_jabatan?: string; nmJabatan?: string } }> }
+  workflow?: { steps?: Array<{ step_order?: number; stepOrder?: number; step_name?: string; stepName?: string; jabatan?: { nm_jabatan?: string; nmJabatan?: string }; role?: { name?: string } }> }
   createdAt?: string
 }
 
@@ -59,12 +59,14 @@ const props = defineProps<{
   approvalLogs?: ApprovalLog[]
 }>()
 
-/** Jabatan dari step workflow (bukan jabatan user) — sesuai konfigurasi approval_workflow_steps */
+/** Label "Approved by X": prioritas Jabatan → Role → step_name → fullName user */
 function getStepJabatanLabel(log: ApprovalLog) {
   const steps = log.workflow?.steps || []
   const step = steps.find((s) => (s.step_order ?? s.stepOrder) === log.stepOrder)
-  const nm = step?.jabatan?.nm_jabatan ?? step?.jabatan?.nmJabatan ?? ''
-  if (nm) return nm
+  const jabatan = step?.jabatan?.nm_jabatan ?? step?.jabatan?.nmJabatan ?? ''
+  if (jabatan) return jabatan
+  const role = step?.role?.name ?? ''
+  if (role) return role
   const stepName = step?.step_name ?? step?.stepName ?? ''
   if (stepName) return stepName
   return log.user?.fullName ?? log.user?.full_name ?? log.user?.email ?? '—'

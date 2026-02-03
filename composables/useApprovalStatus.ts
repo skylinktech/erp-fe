@@ -1,16 +1,20 @@
-/** Composable untuk status approval (Approved by X / Rejected by X) menggunakan jabatan dari step workflow */
+/** Composable untuk status approval (Approved by X / Rejected by X): Jabatan → Role → fullName */
 
 export function useApprovalStatus() {
-  /** Jabatan dari step workflow (approval_workflow_steps) — dari log terakhir approved/rejected */
+  /** Label untuk "Approved by X" / "Rejected by X": prioritas Jabatan → Role → step_name → fullName user */
   function getApprovalStepJabatan(row: any, action: 'approved' | 'rejected') {
     const logs = row?.approvalLogs || []
     const last = logs.filter((l: any) => l.action === action).pop()
     if (!last) return ''
     const steps = last.workflow?.steps || []
     const step = steps.find((s: any) => (s.step_order ?? s.stepOrder) === last.stepOrder)
-    const nm = step?.jabatan?.nm_jabatan ?? step?.jabatan?.nmJabatan ?? ''
-    if (nm) return nm
-    return step?.step_name ?? step?.stepName ?? ''
+    const jabatan = step?.jabatan?.nm_jabatan ?? step?.jabatan?.nmJabatan ?? ''
+    if (jabatan) return jabatan
+    const role = step?.role?.name ?? ''
+    if (role) return role
+    const stepName = step?.step_name ?? step?.stepName ?? ''
+    if (stepName) return stepName
+    return last?.user?.fullName ?? last?.user?.full_name ?? last?.user?.email ?? ''
   }
 
   /** Badge untuk status dengan "Approved by [jabatan]" / "Rejected by [jabatan]" */
