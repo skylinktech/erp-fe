@@ -189,15 +189,15 @@
                                     <Column field="customer.name" header="Customer" :sortable="true"></Column>
                                     <Column field="status" header="Status" :sortable="true">
                                         <template #body="slotProps">
-                                            <span :class="getStatusBadge(slotProps.data.status).class">
-                                                {{ getStatusBadge(slotProps.data.status).text }}
+                                            <span :class="getStatusBadge(slotProps.data).class">
+                                                {{ getStatusBadge(slotProps.data).text }}
                                             </span>
                                         </template>
                                     </Column>
                                     <Column field="approvedByUser.fullName" header="Approved By" :sortable="true" class="text-nowrap">
                                         <template #body="slotProps">
                                             <span>
-                                                {{ slotProps.data.approvedByUser?.fullName || '-' }}
+                                                {{ getApprovalStepJabatan(slotProps.data, 'approved') || slotProps.data.approvedByUser?.fullName || '-' }}
                                             </span>
                                         </template>
                                     </Column>
@@ -1951,17 +1951,14 @@ const filters = ref({
       navigateTo(`/sales/quotation/detail/${quotationId}`);
   };
 
-  const getStatusBadge = (status) => {
-      if (!status) return { text: '-', class: 'badge rounded-pill bg-label-light' };
-      switch (status) {
-          case 'draft': return { text: 'Draft', class: 'badge rounded-pill bg-label-secondary' };
-          case 'pending': return { text: 'Pending', class: 'badge rounded-pill bg-label-warning' };
-          case 'approved': return { text: 'Approved', class: 'badge rounded-pill bg-label-success' };
-          case 'rejected': return { text: 'Rejected', class: 'badge rounded-pill bg-label-danger' };
-          case 'expired': return { text: 'Expired', class: 'badge rounded-pill bg-label-dark' };
-          default: return { text: status, class: 'badge rounded-pill bg-label-light' };
-      }
-  };
+  const { getStatusBadge: _getStatusBadge, getApprovalStepJabatan } = useApprovalStatus();
+  const getStatusBadge = (row) => _getStatusBadge(row, {
+      draft: { text: 'Draft', class: 'badge rounded-pill bg-label-secondary' },
+      pending: { text: 'Pending', class: 'badge rounded-pill bg-label-warning' },
+      approved: { text: 'Approved', class: 'badge rounded-pill bg-label-success' },
+      rejected: { text: 'Rejected', class: 'badge rounded-pill bg-label-danger' },
+      expired: { text: 'Expired', class: 'badge rounded-pill bg-label-dark' },
+  });
 
 // Fungsi export PDF khusus untuk Quotation
 const exportQuotationPDF = (dataToExport) => {

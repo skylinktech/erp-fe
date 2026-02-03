@@ -227,7 +227,7 @@
                 </Column>
                 <Column field="status" header="Status" :sortable="true">
                   <template #body="slotProps">
-                    <span :class="getStatusBadge(slotProps.data.status).class">{{ getStatusBadge(slotProps.data.status).text }}</span>
+                    <span :class="getStatusBadge(slotProps.data).class">{{ getStatusBadge(slotProps.data).text }}</span>
                   </template>
                 </Column>
                 <Column field="createdByUser.full_name" header="Dibuat Oleh" :sortable="true" class="text-nowrap">
@@ -360,6 +360,7 @@ import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useLegalTechStore } from '~/stores/legal-tech'
 import { usePermissions } from '~/composables/usePermissions'
+import { useApprovalStatus } from '~/composables/useApprovalStatus'
 import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import LeTechReviewExpandedRow from '~/components/table/LeTechReviewExpandedRow.vue'
@@ -374,6 +375,7 @@ import { useImageUrl } from '~/composables/useImageUrl'
 const { setListTitle } = useDynamicTitle()
 const ltStore = useLegalTechStore()
 const { userHasPermission, userHasRole } = usePermissions()
+const { getStatusBadge } = useApprovalStatus()
 const { getAttachmentUrl } = useImageUrl()
 
 const { reviews, loading, totalRecords, params, form, isEditMode, isViewMode, showModal, validationErrors, statistics } = storeToRefs(ltStore)
@@ -411,17 +413,6 @@ const modalDescription = computed(() => {
   if (isViewMode.value) return 'Lihat detail Legal-Tech Review di bawah ini (read-only).'
   return isEditMode.value ? 'Ubah data review di bawah ini.' : 'Isi form untuk menambah Legal-Tech Review baru.'
 })
-
-function getStatusBadge(status) {
-  if (!status) return { text: '-', class: 'badge rounded-pill bg-label-light' }
-  switch (status) {
-    case 'draft': return { text: 'Draft', class: 'badge rounded-pill bg-label-secondary' }
-    case 'pending': return { text: 'Pending', class: 'badge rounded-pill bg-label-warning' }
-    case 'approved': return { text: 'Approved', class: 'badge rounded-pill bg-label-success' }
-    case 'rejected': return { text: 'Rejected', class: 'badge rounded-pill bg-label-danger' }
-    default: return { text: status, class: 'badge rounded-pill bg-label-light' }
-  }
-}
 
 const onPage = (e) => { if (e) ltStore.setPagination(e) }
 const handleRowsChange = (v) => { 

@@ -28,6 +28,24 @@ interface Stats {
   rejected: number | undefined
 }
 
+export interface ApprovalLogEntry {
+  id: number
+  stepOrder: number
+  action: 'approved' | 'rejected'
+  remarks?: string | null
+  user?: { fullName?: string; full_name?: string; email?: string }
+  workflow?: {
+    steps?: Array<{
+      step_order?: number
+      stepOrder?: number
+      step_name?: string
+      stepName?: string
+      jabatan?: { nm_jabatan?: string; nmJabatan?: string }
+    }>
+  }
+  createdAt?: string
+}
+
 export interface Mgrf {
   id: string
   iroId: number
@@ -44,6 +62,9 @@ export interface Mgrf {
   rejectedAt?: string | null
   createdAt: string
   updatedAt: string
+  currentApprovalStep?: number | null
+  currentApprovers?: Array<{ userId: number; fullName?: string; email?: string; source?: string }>
+  approvalLogs?: ApprovalLogEntry[]
   iro?: { id: number; noIro?: string }
   createdByUser?: any
   approvedByUser?: any

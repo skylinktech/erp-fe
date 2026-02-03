@@ -237,8 +237,8 @@
                     </Column>
                     <Column field="status" header="Status" :sortable="true">
                       <template #body="slotProps">
-                        <span class="badge" :class="getStatusBadgeClass(slotProps.data.status)">
-                          {{ getStatusLabel(slotProps.data.status) }}
+                        <span class="badge" :class="getStatusBadge(slotProps.data).class">
+                          {{ getStatusBadge(slotProps.data).text }}
                         </span>
                       </template>
                     </Column>
@@ -320,8 +320,8 @@
           </div>
           <div class="col-md-6">
             <h6>Status</h6>
-            <span class="badge" :class="getStatusBadgeClass(selectedRequest.status)">
-              {{ getStatusLabel(selectedRequest.status) }}
+            <span class="badge" :class="getStatusBadge(selectedRequest).class">
+              {{ getStatusBadge(selectedRequest).text }}
             </span>
           </div>
           <div class="col-md-6">
@@ -334,7 +334,16 @@
           </div>
           <div v-if="selectedRequest.approvedByUser" class="col-12">
             <h6>Approved By</h6>
-            <p>{{ selectedRequest.approvedByUser.fullName }} ({{ formatDate(selectedRequest.approvedAt) }})</p>
+            <p>{{ getApprovalStepJabatan(selectedRequest, 'approved') || selectedRequest.approvedByUser.fullName }} ({{ formatDate(selectedRequest.approvedAt) }})</p>
+          </div>
+          <div v-if="selectedRequest.approvalLogs?.length" class="col-12">
+            <h6>Riwayat Approval</h6>
+            <ul class="mb-0 ps-3">
+              <li v-for="log in selectedRequest.approvalLogs" :key="log.id">
+                {{ log.action === 'approved' ? 'Approved' : 'Rejected' }} by {{ getStepJabatanLabel(log) }} — {{ getStepLabel(log) }}
+                <div v-if="log.remarks" class="text-muted small">Catatan: {{ log.remarks }}</div>
+              </li>
+            </ul>
           </div>
           <div v-if="selectedRequest.rejectedByUser" class="col-12">
             <h6>Rejected By</h6>
@@ -435,24 +444,20 @@ const formatDate = (dateString) => {
   })
 }
 
-const getStatusLabel = (status) => {
-  const labels = {
-    draft: 'Draft',
-    pending: 'Pending',
-    approved: 'Approved',
-    rejected: 'Rejected',
-  }
-  return labels[status] || status
+const { getStatusBadge, getApprovalStepJabatan } = useApprovalStatus()
+
+function getStepJabatanLabel (log) {
+  const steps = log?.workflow?.steps || []
+  const step = steps.find((s) => (s.step_order ?? s.stepOrder) === log.stepOrder)
+  const nm = step?.jabatan?.nm_jabatan ?? step?.jabatan?.nmJabatan ?? ''
+  if (nm) return nm
+  return step?.step_name ?? step?.stepName ?? log.user?.fullName ?? log.user?.full_name ?? '—'
 }
 
-const getStatusBadgeClass = (status) => {
-  const classes = {
-    draft: 'bg-secondary',
-    pending: 'bg-warning',
-    approved: 'bg-success',
-    rejected: 'bg-danger',
-  }
-  return classes[status] || 'bg-secondary'
+function getStepLabel (log) {
+  const steps = log?.workflow?.steps || []
+  const step = steps.find((s) => (s.step_order ?? s.stepOrder) === log.stepOrder)
+  return step?.step_name ?? step?.stepName ?? `Step ${log.stepOrder}`
 }
 
 // Table event handlers

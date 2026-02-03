@@ -59,6 +59,17 @@ export interface SalesReturn {
   deliveredByUser? : User
   salesReturnItems?: SalesReturnItem[]
   salesOrder?      : SalesOrder
+  currentApprovalStep?: number | null
+  currentApprovers?: Array<{ userId: number; fullName?: string; email?: string; source?: string }>
+  approvalLogs?: Array<{
+    id: number
+    stepOrder: number
+    action: 'approved' | 'rejected'
+    remarks?: string | null
+    user?: { fullName?: string; full_name?: string; email?: string }
+    workflow?: { steps?: Array<{ step_order?: number; stepOrder?: number; step_name?: string; stepName?: string; jabatan?: { nm_jabatan?: string; nmJabatan?: string } }> }
+    createdAt?: string
+  }>
 }
 
 interface SalesReturnState {

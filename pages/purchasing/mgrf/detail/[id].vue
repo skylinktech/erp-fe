@@ -32,7 +32,7 @@
                 <h4 class="mb-0 fw-semibold">{{ mgrf.noMgrf || 'MGRF' }}</h4>
                 <small class="text-muted">{{ formatDateTime(mgrf.createdAt) }}</small>
               </div>
-              <span :class="getStatusBadge(mgrf.status).class" class="badge">{{ getStatusBadge(mgrf.status).text }}</span>
+              <span :class="getStatusBadge(mgrf).class" class="badge">{{ getStatusBadge(mgrf).text }}</span>
             </div>
             <div class="d-flex flex-wrap gap-2">
               <div class="btn-group" role="group">
@@ -97,8 +97,8 @@
                     <div class="col-md-6">
                       <label class="form-label text-muted medium">Status</label>
                       <p class="mb-0">
-                        <span :class="getStatusBadge(mgrf.status).class" class="badge">
-                          {{ getStatusBadge(mgrf.status).text }}
+                        <span :class="getStatusBadge(mgrf).class" class="badge">
+                          {{ getStatusBadge(mgrf).text }}
                         </span>
                       </p>
                     </div>
@@ -223,6 +223,14 @@
                 </div>
               </div>
 
+              <!-- Approval Card -->
+              <ApprovalCard
+                :status-text="getStatusText(mgrf)"
+                :current-step="mgrf.currentApprovalStep ?? null"
+                :current-approvers="mgrf.currentApprovers ?? []"
+                :approval-logs="mgrf.approvalLogs ?? []"
+              />
+
               <!-- Informasi User -->
               <div class="card mb-4 shadow-sm border-0">
                 <div class="card-header border-0 bg-transparent px-5 py-4">
@@ -237,14 +245,14 @@
                     <p class="mb-0 fw-medium">{{ mgrf.createdByUser.fullName || mgrf.createdByUser.full_name || mgrf.createdByUser.email || '—' }}</p>
                     <small class="text-muted">{{ formatDateTime(mgrf.createdAt) }}</small>
                   </div>
-                  <div class="mb-3" v-if="mgrf.approvedByUser">
+                  <div class="mb-3" v-if="mgrf.approvedByUser || (mgrf.status === 'approved' && getApprovalStepJabatan(mgrf, 'approved'))">
                     <label class="form-label text-muted mb-1">Disetujui Oleh</label>
-                    <p class="mb-0 fw-medium">{{ mgrf.approvedByUser.fullName || mgrf.approvedByUser.full_name || '—' }}</p>
+                    <p class="mb-0 fw-medium">{{ getApprovalStepJabatan(mgrf, 'approved') || mgrf.approvedByUser?.fullName || mgrf.approvedByUser?.full_name || '—' }}</p>
                     <small class="text-muted" v-if="mgrf.approvedAt">{{ formatDateTime(mgrf.approvedAt) }}</small>
                   </div>
-                  <div class="mb-0" v-if="mgrf.rejectedByUser">
+                  <div class="mb-0" v-if="mgrf.rejectedByUser || (mgrf.status === 'rejected' && getApprovalStepJabatan(mgrf, 'rejected'))">
                     <label class="form-label text-muted mb-1">Ditolak Oleh</label>
-                    <p class="mb-0 fw-medium">{{ mgrf.rejectedByUser.fullName || mgrf.rejectedByUser.full_name || '—' }}</p>
+                    <p class="mb-0 fw-medium">{{ getApprovalStepJabatan(mgrf, 'rejected') || mgrf.rejectedByUser?.fullName || mgrf.rejectedByUser?.full_name || '—' }}</p>
                     <small class="text-muted" v-if="mgrf.rejectedAt">{{ formatDateTime(mgrf.rejectedAt) }}</small>
                   </div>
                 </div>
@@ -264,11 +272,14 @@ import { storeToRefs } from 'pinia'
 import { useMgrfStore } from '~/stores/mgrf'
 import { usePermissions } from '~/composables/usePermissions'
 import { useImageUrl } from '~/composables/useImageUrl'
+import { useApprovalStatus } from '~/composables/useApprovalStatus'
+import ApprovalCard from '~/components/ApprovalCard.vue'
 
 const route = useRoute()
 const mgrfStore = useMgrfStore()
 const { userHasPermission, userHasRole } = usePermissions()
 const { getAttachmentUrl, getFileIcon, isImageFile } = useImageUrl()
+const { getStatusBadge, getStatusText, getApprovalStepJabatan } = useApprovalStatus()
 const formatRupiah = useFormatRupiah()
 
 const { mgrf, loading, error } = storeToRefs(mgrfStore)
@@ -283,16 +294,6 @@ function formatDate (v: string | null | undefined) {
 function formatDateTime (v: string | null | undefined) {
   if (!v) return '—'
   return new Date(v).toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-}
-
-function getStatusBadge (status: string) {
-  switch (status) {
-    case 'draft': return { text: 'Draft', class: 'badge rounded-pill bg-label-secondary' }
-    case 'pending': return { text: 'Pending', class: 'badge rounded-pill bg-label-warning' }
-    case 'approved': return { text: 'Approved', class: 'badge rounded-pill bg-label-success' }
-    case 'rejected': return { text: 'Rejected', class: 'badge rounded-pill bg-label-danger' }
-    default: return { text: '-', class: 'badge rounded-pill bg-label-light' }
-  }
 }
 
 const totalAmount = computed(() => {

@@ -54,6 +54,10 @@ export interface PurchaseOrder {
   approvedAt         : string | null
   receivedAt         : string | null
   rejectedAt         : string | null
+  currentApprovalStep?: number | null
+  submittedAt?       : string | null
+  approvalLogs?      : Array<{ id: number; stepOrder: number; action: string; remarks?: string; user?: { fullName?: string }; createdAt?: string }>
+  currentApprovers?  : Array<{ userId: number; fullName?: string; email?: string; source?: string }>
   vendor?            : Vendor
   perusahaan?        : Perusahaan
   cabang?            : Cabang
@@ -443,7 +447,34 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
         }
       },
     
-    async approvePurchaseOrder(purchaseOrderId: string) {
+    async submitPurchaseOrder(purchaseOrderId: string) {
+      const toast = useToast();
+      this.loading = true;
+      this.error = null;
+      const { $api } = useNuxtApp();
+      try {
+          const response = await fetch($api.submitPurchaseOrder(purchaseOrderId), {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({}),
+          });
+          if (!response.ok) {
+              const errorData = await response.json().catch(() => ({ message: 'Gagal submit purchase order' }));
+              throw new Error(errorData.message || 'Gagal submit purchase order');
+          }
+          await this.fetchPurchaseOrders();
+          toast.success({ title: 'Success', message: 'Purchase Order berhasil di-submit.', color: 'green', position: 'topRight' });
+          return true;
+      } catch (error: any) {
+          toast.error({ title: 'Error', message: error.message || 'Gagal submit purchase order.', color: 'red', position: 'topRight' });
+          return false;
+      } finally {
+          this.loading = false;
+      }
+    },
+
+    async approvePurchaseOrder(purchaseOrderId: string, remarks?: string) {
       const toast     = useToast();
       this.loading = true;
       this.error = null;
@@ -455,7 +486,8 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
                   'Content-Type' : 'application/json',
                   'Accept'       : 'application/json',
               },
-              credentials: 'include', // Cookie-based auth
+              credentials: 'include',
+              body: JSON.stringify({ remarks: remarks ?? undefined }),
           });
 
           if (!response.ok) {
@@ -485,7 +517,7 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
       }
     },
 
-    async rejectPurchaseOrder(purchaseOrderId: string) {
+    async rejectPurchaseOrder(purchaseOrderId: string, remarks?: string) {
       const toast     = useToast();
       this.loading = true;
       this.error = null;
@@ -497,7 +529,8 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
                   'Content-Type' : 'application/json',
                   'Accept'       : 'application/json',
               },
-              credentials: 'include', // Cookie-based auth
+              credentials: 'include',
+              body: JSON.stringify({ remarks: remarks ?? undefined }),
           });
 
           if (!response.ok) {

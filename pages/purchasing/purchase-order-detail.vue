@@ -43,8 +43,8 @@
                                 <div class="d-flex align-items-center gap-3 mb-6">
                                     <h5 class="mb-0">Purchase Number : {{ purchaseOrder.noPo }}</h5>
                                     <!-- ✅ STATUS BADGE -->
-                                    <span :class="getStatusBadgeClass(purchaseOrder.status)">
-                                        {{ getStatusText(purchaseOrder.status) }}
+                                    <span :class="getStatusBadge(purchaseOrder).class">
+                                        {{ getStatusText(purchaseOrder) }}
                                     </span>
                                 </div>
                                 <div class="mb-1">
@@ -220,6 +220,13 @@
 
                 <!-- Invoice Actions -->
                 <div class="col-xl-3 col-md-4 col-12 invoice-actions">
+                    <ApprovalCard
+                        v-if="purchaseOrder"
+                        :status-text="getStatusText(purchaseOrder)"
+                        :current-step="purchaseOrder.currentApprovalStep"
+                        :current-approvers="purchaseOrder.currentApprovers"
+                        :approval-logs="purchaseOrder.approvalLogs"
+                    />
                     <div class="card">
                     <div class="card-body">
                         <button
@@ -757,28 +764,8 @@ const updateReceivedQty = async (item) => {
 }
 
 // ✅ FUNCTION untuk mendapatkan status badge class
-const getStatusBadgeClass = (status) => {
-    switch (status) {
-        case 'draft': return 'badge bg-secondary'
-        case 'approved': return 'badge bg-primary'
-        case 'partial': return 'badge bg-warning'
-        case 'received': return 'badge bg-success'
-        case 'rejected': return 'badge bg-danger'
-        default: return 'badge bg-light'
-    }
-}
-
-// ✅ FUNCTION untuk mendapatkan status text
-const getStatusText = (status) => {
-    switch (status) {
-        case 'draft': return 'DRAFT'
-        case 'approved': return 'APPROVED'
-        case 'partial': return 'PARTIAL'
-        case 'received': return 'RECEIVED'
-        case 'rejected': return 'REJECTED'
-        default: return 'UNKNOWN'
-    }
-}
+// ✅ FUNCTION untuk status (dengan "Approved by X" / "Rejected by X")
+const { getStatusBadge, getStatusText } = useApprovalStatus()
 
 // ✅ FUNCTION untuk check status semua items
 const checkAllItemsStatus = () => {

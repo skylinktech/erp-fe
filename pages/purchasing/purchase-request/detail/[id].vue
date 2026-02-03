@@ -32,7 +32,7 @@
                 <h4 class="mb-0 fw-semibold">{{ purchaseRequest.noPr || 'Purchase Request' }}</h4>
                 <small class="text-muted">{{ formatDateTime(purchaseRequest.createdAt) }}</small>
               </div>
-              <span :class="getStatusBadge(purchaseRequest.status).class" class="badge">{{ getStatusBadge(purchaseRequest.status).text }}</span>
+              <span :class="getStatusBadge(purchaseRequest).class" class="badge">{{ getStatusBadge(purchaseRequest).text }}</span>
             </div>
             <div class="d-flex flex-wrap gap-2">
               <div class="btn-group" role="group">
@@ -97,8 +97,8 @@
                     <div class="col-md-6">
                       <label class="form-label text-muted medium">Status</label>
                       <p class="mb-0">
-                        <span :class="getStatusBadge(purchaseRequest.status).class" class="badge">
-                          {{ getStatusBadge(purchaseRequest.status).text }}
+                        <span :class="getStatusBadge(purchaseRequest).class" class="badge">
+                          {{ getStatusBadge(purchaseRequest).text }}
                         </span>
                       </p>
                     </div>
@@ -183,6 +183,14 @@
 
             <!-- Sidebar: Ringkasan + Meta -->
             <div class="col-xl-4 col-12">
+              <!-- Approval Card -->
+              <ApprovalCard
+                :status-text="getStatusText(purchaseRequest)"
+                :current-step="purchaseRequest.currentApprovalStep ?? null"
+                :current-approvers="purchaseRequest.currentApprovers ?? []"
+                :approval-logs="purchaseRequest.approvalLogs ?? []"
+              />
+
               <!-- Ringkasan Total -->
               <div class="card mb-4 shadow-sm border-0 purchase-request-detail-summary">
                 <div class="card-header border-0 bg-transparent px-5 py-4">
@@ -265,14 +273,14 @@
                     <p class="mb-0 fw-medium">{{ purchaseRequest.createdByUser.fullName || purchaseRequest.createdByUser.full_name || purchaseRequest.createdByUser.email || '—' }}</p>
                     <small class="text-muted">{{ formatDateTime(purchaseRequest.createdAt) }}</small>
                   </div>
-                  <div class="mb-3" v-if="purchaseRequest.approvedByUser">
+                  <div class="mb-3" v-if="purchaseRequest.approvedByUser || (purchaseRequest.status === 'approved' && getApprovalStepJabatan(purchaseRequest, 'approved'))">
                     <label class="form-label text-muted mb-1">Disetujui Oleh</label>
-                    <p class="mb-0 fw-medium">{{ purchaseRequest.approvedByUser.fullName || purchaseRequest.approvedByUser.full_name || '—' }}</p>
+                    <p class="mb-0 fw-medium">{{ getApprovalStepJabatan(purchaseRequest, 'approved') || purchaseRequest.approvedByUser?.fullName || purchaseRequest.approvedByUser?.full_name || '—' }}</p>
                     <small class="text-muted" v-if="purchaseRequest.approvedAt">{{ formatDateTime(purchaseRequest.approvedAt) }}</small>
                   </div>
-                  <div class="mb-3" v-if="purchaseRequest.rejectedByUser">
+                  <div class="mb-3" v-if="purchaseRequest.rejectedByUser || (purchaseRequest.status === 'rejected' && getApprovalStepJabatan(purchaseRequest, 'rejected'))">
                     <label class="form-label text-muted mb-1">Ditolak Oleh</label>
-                    <p class="mb-0 fw-medium">{{ purchaseRequest.rejectedByUser.fullName || purchaseRequest.rejectedByUser.full_name || '—' }}</p>
+                    <p class="mb-0 fw-medium">{{ getApprovalStepJabatan(purchaseRequest, 'rejected') || purchaseRequest.rejectedByUser?.fullName || purchaseRequest.rejectedByUser?.full_name || '—' }}</p>
                     <small class="text-muted" v-if="purchaseRequest.rejectedAt">{{ formatDateTime(purchaseRequest.rejectedAt) }}</small>
                   </div>
                   <div class="mb-0" v-if="purchaseRequest.receivedByUser">
@@ -297,11 +305,14 @@ import { storeToRefs } from 'pinia'
 import { usePurchaseRequestStore } from '~/stores/purchase-request'
 import { usePermissions } from '~/composables/usePermissions'
 import { useImageUrl } from '~/composables/useImageUrl'
+import { useApprovalStatus } from '~/composables/useApprovalStatus'
+import ApprovalCard from '~/components/ApprovalCard.vue'
 
 const route = useRoute()
 const purchaseRequestStore = usePurchaseRequestStore()
 const { userHasPermission, userHasRole } = usePermissions()
 const { getAttachmentUrl, getFileIcon, isImageFile } = useImageUrl()
+const { getStatusBadge, getStatusText, getApprovalStepJabatan } = useApprovalStatus()
 const formatRupiah = useFormatRupiah()
 
 const { purchaseRequest, loading, error } = storeToRefs(purchaseRequestStore)
@@ -316,17 +327,6 @@ function formatDate (v: string | null | undefined) {
 function formatDateTime (v: string | null | undefined) {
   if (!v) return '—'
   return new Date(v).toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-}
-
-function getStatusBadge (status: string) {
-  switch (status) {
-    case 'draft': return { text: 'Draft', class: 'badge rounded-pill bg-label-secondary' }
-    case 'pending': return { text: 'Pending', class: 'badge rounded-pill bg-label-warning' }
-    case 'approved': return { text: 'Approved', class: 'badge rounded-pill bg-label-success' }
-    case 'rejected': return { text: 'Rejected', class: 'badge rounded-pill bg-label-danger' }
-    case 'received': return { text: 'Received', class: 'badge rounded-pill bg-label-info' }
-    default: return { text: '-', class: 'badge rounded-pill bg-label-light' }
-  }
 }
 
 const totalAmount = computed(() => {

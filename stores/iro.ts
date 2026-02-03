@@ -20,6 +20,26 @@ export interface IroDetailForm {
   did?: { id: number; code: string; name: string; price?: number }
 }
 
+export interface ApprovalLogEntry {
+  id: number
+  entityType?: string
+  entityId?: string
+  stepOrder: number
+  action: 'approved' | 'rejected'
+  remarks?: string | null
+  createdAt?: string
+  user?: { id: number; full_name?: string; fullName?: string; email?: string }
+  workflow?: { steps?: Array<{ step_order?: number; stepOrder?: number; step_name?: string; stepName?: string }> }
+  workflow?: { id: number; name?: string }
+}
+
+export interface ApproverInfo {
+  userId: number
+  fullName?: string
+  email?: string
+  source?: 'role' | 'jabatan' | 'user'
+}
+
 export interface Iro {
   id: string
   noIro: string
@@ -35,6 +55,10 @@ export interface Iro {
   createdBy: number | null
   approvedBy: number | null
   rejectedBy: number | null
+  currentApprovalStep?: number | null
+  submittedAt?: string | null
+  approvedAt?: string | null
+  rejectedAt?: string | null
   createdAt: string
   updatedAt: string
   customer?: { id: number; name: string; code?: string; email?: string; phone?: string }
@@ -44,6 +68,8 @@ export interface Iro {
   createdByUser?: { id: number; full_name?: string; fullName?: string; email?: string }
   approvedByUser?: { id: number; full_name?: string; fullName?: string }
   rejectedByUser?: { id: number; full_name?: string; fullName?: string }
+  approvalLogs?: ApprovalLogEntry[]
+  currentApprovers?: ApproverInfo[]
 }
 
 interface IroState {
@@ -329,12 +355,17 @@ export const useIroStore = defineStore('iro', {
       }
     },
 
-    async approveIro(id: string) {
+    async approveIro(id: string, remarks?: string) {
       const toast = useToast()
       this.loading = true
       const { $api } = useNuxtApp()
       try {
-        const res = await fetch($api.approveIro(id), { method: 'PATCH', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, credentials: 'include' })
+        const res = await fetch($api.approveIro(id), {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ remarks: remarks || undefined }),
+        })
         if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message || 'Gagal approve IRO')
         await this.fetchIros()
         await this.fetchStatistics()
@@ -348,12 +379,17 @@ export const useIroStore = defineStore('iro', {
       }
     },
 
-    async rejectIro(id: string) {
+    async rejectIro(id: string, remarks?: string) {
       const toast = useToast()
       this.loading = true
       const { $api } = useNuxtApp()
       try {
-        const res = await fetch($api.rejectIro(id), { method: 'PATCH', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, credentials: 'include' })
+        const res = await fetch($api.rejectIro(id), {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ remarks: remarks || undefined }),
+        })
         if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message || 'Gagal reject IRO')
         await this.fetchIros()
         await this.fetchStatistics()
@@ -367,11 +403,16 @@ export const useIroStore = defineStore('iro', {
       }
     },
 
-    async submitIro(id: string) {
+    async submitIro(id: string, remarks?: string) {
       const toast = useToast()
       const { $api } = useNuxtApp()
       try {
-        const res = await fetch($api.submitIro(id), { method: 'PATCH', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, credentials: 'include' })
+        const res = await fetch($api.submitIro(id), {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ remarks: remarks || undefined }),
+        })
         if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message || 'Gagal submit IRO')
         await this.fetchIros()
         await this.fetchStatistics()

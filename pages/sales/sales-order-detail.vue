@@ -30,6 +30,15 @@
                         Item tersebut tidak dapat diubah statusnya. Silakan periksa stok gudang terlebih dahulu.
                     </div>
                 </div>
+
+                <ApprovalCard
+                    v-if="salesOrder"
+                    class="mb-4"
+                    :status-text="getStatusText(salesOrder)"
+                    :current-step="salesOrder.currentApprovalStep"
+                    :current-approvers="salesOrder.currentApprovers"
+                    :approval-logs="salesOrder.approvalLogs"
+                />
                 
                 <div class="row invoice-preview">
                 <!-- Invoice -->
@@ -55,7 +64,7 @@
                                     <h6 class="mb-0">Sales Number : {{ salesOrder.noSo || '-' }}</h6>
                                     <!-- ✅ STATUS BADGE -->
                                     <span >
-                                        {{ getStatusText(salesOrder.status || 'draft') }}
+                                        {{ getStatusText(salesOrder) }}
                                     </span>
                                 </div>
                                 <div class="d-flex align-items-center gap-3 mb-6">
@@ -735,17 +744,8 @@ const getStatusBadgeClass = (status) => {
     }
 }
 
-// ✅ FUNCTION untuk mendapatkan status text
-const getStatusText = (status) => {
-    switch (status) {
-        case 'draft': return 'DRAFT'
-        case 'approved': return 'APPROVED'
-        case 'partial': return 'PARTIAL'
-        case 'delivered': return 'DELIVERED'
-        case 'rejected': return 'REJECTED'
-        default: return 'UNKNOWN'
-    }
-}
+// ✅ FUNCTION untuk mendapatkan status text (dengan "Approved by X" / "Rejected by X")
+const { getStatusText } = useApprovalStatus()
 
 async function refreshSalesOrderDetails() {
     const soIdToFetch = Array.isArray(soId) ? soId[0] : soId;

@@ -32,7 +32,7 @@
                 <h4 class="mb-0 fw-semibold">{{ arf.noArf || 'ARF' }}</h4>
                 <small class="text-muted">{{ formatDateTime(arf.createdAt) }}</small>
               </div>
-              <span :class="getStatusBadge(arf.status).class" class="badge">{{ getStatusBadge(arf.status).text }}</span>
+              <span :class="getStatusBadge(arf).class" class="badge">{{ getStatusBadge(arf).text }}</span>
             </div>
             <div class="d-flex flex-wrap gap-2">
               <div class="btn-group" role="group">
@@ -118,8 +118,8 @@
                     <div class="col-md-6">
                       <label class="form-label text-muted medium">Status</label>
                       <p class="mb-0">
-                        <span :class="getStatusBadge(arf.status).class" class="badge">
-                          {{ getStatusBadge(arf.status).text }}
+                        <span :class="getStatusBadge(arf).class" class="badge">
+                          {{ getStatusBadge(arf).text }}
                         </span>
                       </p>
                     </div>
@@ -188,6 +188,14 @@
 
             <!-- Sidebar: Ringkasan + Meta -->
             <div class="col-xl-4 col-12">
+              <!-- Approval Card -->
+              <ApprovalCard
+                :status-text="getStatusText(arf)"
+                :current-step="arf.currentApprovalStep ?? null"
+                :current-approvers="arf.currentApprovers ?? []"
+                :approval-logs="arf.approvalLogs ?? []"
+              />
+
               <!-- Ringkasan Total -->
               <div class="card mb-4 shadow-sm border-0 arf-detail-summary">
                 <div class="card-header border-0 bg-transparent px-5 py-4">
@@ -274,14 +282,14 @@
                     <p class="mb-0 fw-medium">{{ arf.requestor.fullName || arf.requestor.full_name || arf.requestor.email || '—' }}</p>
                     <small class="text-muted">{{ formatDateTime(arf.createdAt) }}</small>
                   </div>
-                  <div class="mb-3" v-if="arf.approvedByUser">
+                  <div class="mb-3" v-if="arf.approvedByUser || (arf.status === 'approved' && getApprovalStepJabatan(arf, 'approved'))">
                     <label class="form-label text-muted mb-1">Disetujui Oleh</label>
-                    <p class="mb-0 fw-medium">{{ arf.approvedByUser.fullName || arf.approvedByUser.full_name || '—' }}</p>
+                    <p class="mb-0 fw-medium">{{ getApprovalStepJabatan(arf, 'approved') || arf.approvedByUser?.fullName || arf.approvedByUser?.full_name || '—' }}</p>
                     <small class="text-muted" v-if="arf.approvedAt">{{ formatDateTime(arf.approvedAt) }}</small>
                   </div>
-                  <div class="mb-3" v-if="arf.rejectedByUser">
+                  <div class="mb-3" v-if="arf.rejectedByUser || (arf.status === 'rejected' && getApprovalStepJabatan(arf, 'rejected'))">
                     <label class="form-label text-muted mb-1">Ditolak Oleh</label>
-                    <p class="mb-0 fw-medium">{{ arf.rejectedByUser.fullName || arf.rejectedByUser.full_name || '—' }}</p>
+                    <p class="mb-0 fw-medium">{{ getApprovalStepJabatan(arf, 'rejected') || arf.rejectedByUser?.fullName || arf.rejectedByUser?.full_name || '—' }}</p>
                     <small class="text-muted" v-if="arf.rejectedAt">{{ formatDateTime(arf.rejectedAt) }}</small>
                   </div>
                   <div class="mb-3" v-if="arf.disbursedByUser">
@@ -314,11 +322,14 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useArfStore } from '~/stores/arf'
+import { useApprovalStatus } from '~/composables/useApprovalStatus'
+import ApprovalCard from '~/components/ApprovalCard.vue'
 import { usePermissions } from '~/composables/usePermissions'
 
 const route = useRoute()
 const arfStore = useArfStore()
 const { userHasPermission, userHasRole } = usePermissions()
+const { getStatusBadge, getStatusText, getApprovalStepJabatan } = useApprovalStatus()
 const formatRupiah = useFormatRupiah()
 
 const { arf, loading, error } = storeToRefs(arfStore)
@@ -333,19 +344,6 @@ function formatDate (v: string | null | undefined) {
 function formatDateTime (v: string | null | undefined) {
   if (!v) return '—'
   return new Date(v).toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-}
-
-function getStatusBadge (status: string) {
-  switch (status) {
-    case 'draft': return { text: 'Draft', class: 'badge rounded-pill bg-label-secondary' }
-    case 'submitted': return { text: 'Submitted', class: 'badge rounded-pill bg-label-warning' }
-    case 'approved': return { text: 'Approved', class: 'badge rounded-pill bg-label-success' }
-    case 'rejected': return { text: 'Rejected', class: 'badge rounded-pill bg-label-danger' }
-    case 'disbursed': return { text: 'Disbursed', class: 'badge rounded-pill bg-label-info' }
-    case 'settled': return { text: 'Settled', class: 'badge rounded-pill bg-label-primary' }
-    case 'cancelled': return { text: 'Cancelled', class: 'badge rounded-pill bg-label-dark' }
-    default: return { text: '-', class: 'badge rounded-pill bg-label-light' }
-  }
 }
 
 const totalAmount = computed(() => {

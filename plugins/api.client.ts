@@ -60,6 +60,14 @@ export default defineNuxtPlugin(() => {
     menuGroupsAll: () => `${apiBase}/menu-groups-all`,
     menuDetails: () => `${apiBase}/menu-details`,
 
+    // Approval Workflows (Admin)
+    approvalWorkflows     : () => `${apiBase}/approval-workflows`,
+    approvalWorkflowShow  : (id: number | string) => `${apiBase}/approval-workflows/${id}`,
+    approvalWorkflowSteps : (id: number | string) => `${apiBase}/approval-workflows/${id}/steps`,
+    approvalWorkflowStepsStore: () => `${apiBase}/approval-workflow-steps`,
+    approvalWorkflowStepsUpdate: (id: number | string) => `${apiBase}/approval-workflow-steps/${id}`,
+    approvalWorkflowStepsDelete: (id: number | string) => `${apiBase}/approval-workflow-steps/${id}`,
+
     // Jabatan, Perusahaan, Cabang, Divisi, Departemen, Cuti, Pegawai
     jabatan              : () => `${apiBase}/jabatan`,
     countPegawaiByJabatan: () => `${apiBase}/jabatan/countPegawaiByJabatan`,
@@ -72,9 +80,11 @@ export default defineNuxtPlugin(() => {
     pegawaiUpdate        : (id: number | string) => `${apiBase}/pegawai/update/${id}`,
     pegawaiDelete        : (id: number | string) => `${apiBase}/pegawai/delete/${id}`,
     pegawaiCountByStatus : () => `${apiBase}/pegawai/countByStatus`,
+    pegawaiAvailableUsers: () => `${apiBase}/pegawai/available-users`,
 
     // Purchase Order
     purchaseOrder          : () => `${apiBase}/purchase-order`,
+    submitPurchaseOrder    : (id: number | string) => `${apiBase}/purchase-order/submitPurchaseOrder/${id}`,
     approvePurchaseOrder   : (id: number | string) => `${apiBase}/purchase-order/approvePurchaseOrder/${id}`,
     rejectPurchaseOrder    : (id: number | string) => `${apiBase}/purchase-order/rejectPurchaseOrder/${id}`,
     purchaseOrderUpdate    : (id: number | string) => `${apiBase}/purchase-order/update/${id}`,
@@ -187,6 +197,7 @@ export default defineNuxtPlugin(() => {
     salesOrderStatistics   : () => `${apiBase}/sales-order/statistics`,
     salesOrderSalesByCustomer: () => `${apiBase}/sales-order/salesByCustomer`,
     salesOrderTopProducts  : () => `${apiBase}/sales-order/topProducts`,
+    submitSalesOrder       : (id: number | string) => `${apiBase}/sales-order/submitSalesOrder/${id}`,
     approveSalesOrder      : (id: number | string) => `${apiBase}/sales-order/approveSalesOrder/${id}`,
     rejectSalesOrder       : (id: number | string) => `${apiBase}/sales-order/rejectSalesOrder/${id}`,
     salesOrderUpdate       : (id: number | string) => `${apiBase}/sales-order/update/${id}`,

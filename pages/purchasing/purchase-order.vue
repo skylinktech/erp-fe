@@ -158,8 +158,8 @@
                                     </Column>
                                     <Column field="status" header="Status" :sortable="true">
                                         <template #body="slotProps">
-                                            <span :class="getStatusBadge(slotProps.data.status).class">
-                                                {{ getStatusBadge(slotProps.data.status).text }}
+                                            <span :class="getStatusBadge(slotProps.data).class">
+                                                {{ getStatusBadge(slotProps.data).text }}
                                             </span>
                                         </template>
                                     </Column>
@@ -173,7 +173,7 @@
                                     <Column field="approvedByUser.fullName" header="Approved By" :sortable="true">
                                         <template #body="slotProps">
                                             <span>
-                                                {{ slotProps.data.approvedByUser?.fullName || '-' }}
+                                                {{ getApprovalStepJabatan(slotProps.data, 'approved') || slotProps.data.approvedByUser?.fullName || '-' }}
                                             </span>
                                         </template>
                                     </Column>
@@ -224,13 +224,18 @@
                                                 <a href="javascript:;" class="btn btn-sm btn-text-secondary rounded-pill btn-icon dropdown-toggle hide-arrow" data-bs-toggle="dropdown"><i class="ri-more-2-fill"></i>
                                                 </a>
                                                 <ul class="dropdown-menu">
+                                                    <li v-if="(userHasPermission('approve_purchase_order') || userHasPermission('edit_purchase_order')) && slotProps.data.status == 'draft'">
+                                                        <a class="dropdown-item" href="javascript:void(0)" @click="purchaseOrderStore.submitPurchaseOrder(slotProps.data.id)">
+                                                            <i class="ri-send-plane-line me-2"></i> Submit
+                                                        </a>
+                                                    </li>
                                                     <li v-if="userHasPermission('approve_purchase_order') && slotProps.data.status == 'draft'">
-                                                        <a class="dropdown-item" href="javascript:void(0)" @click="purchaseOrderStore.approvePurchaseOrder(slotProps.data.id)">
+                                                        <a class="dropdown-item" href="javascript:void(0)" @click="handleApprovePO(slotProps.data.id)">
                                                             <i class="ri-check-line me-2"></i> Approve
                                                         </a>
                                                     </li>
                                                     <li v-if="userHasRole('superadmin') || (userHasPermission('reject_purchase_order') && slotProps.data.status == 'draft')">
-                                                        <a class="dropdown-item" href="javascript:void(0)" @click="purchaseOrderStore.rejectPurchaseOrder(slotProps.data.id)">
+                                                        <a class="dropdown-item" href="javascript:void(0)" @click="handleRejectPO(slotProps.data.id)">
                                                             <i class="ri-close-line me-2"></i> Reject
                                                         </a>
                                                     </li>
@@ -1155,18 +1160,43 @@ const viewPurchaseOrderDetails = (purchaseOrderId) => {
     router.push({ path: `/purchasing/purchase-order-detail`, query: { id: purchaseOrderId } });
 };
 
-const getStatusBadge = (status) => {
-    if (!status) return { text: '-', class: 'badge rounded-pill bg-label-light' };
-    
-    switch (status) {
-        case 'draft': return { text: 'Draft', class: 'badge rounded-pill bg-label-secondary' };
-        case 'approved': return { text: 'Approved', class: 'badge rounded-pill bg-label-primary' };
-        case 'received': return { text: 'Received', class: 'badge rounded-pill bg-label-success' };
-        case 'rejected': return { text: 'Rejected', class: 'badge rounded-pill bg-label-danger' };
-        case 'partial': return { text: 'Partial', class: 'badge rounded-pill bg-label-warning' };
-        default: return { text: '-', class: 'badge rounded-pill bg-label-light' };
-    }
-};
+async function handleApprovePO (id) {
+  const result = await Swal.fire({
+    title: 'Approve Purchase Order',
+    input: 'textarea',
+    inputLabel: 'Catatan (optional)',
+    inputPlaceholder: 'Tulis catatan approval jika diperlukan...',
+    showCancelButton: true,
+    confirmButtonText: 'Approve',
+    cancelButtonText: 'Batal',
+  })
+  if (!result.isConfirmed) return
+  await purchaseOrderStore.approvePurchaseOrder(id, result.value || '')
+}
+
+async function handleRejectPO (id) {
+  const result = await Swal.fire({
+    title: 'Reject Purchase Order',
+    input: 'textarea',
+    inputLabel: 'Alasan reject (wajib)',
+    inputPlaceholder: 'Tulis alasan reject...',
+    inputValidator: (value) => (!value ? 'Alasan reject wajib diisi' : undefined),
+    showCancelButton: true,
+    confirmButtonText: 'Reject',
+    cancelButtonText: 'Batal',
+  })
+  if (!result.isConfirmed) return
+  await purchaseOrderStore.rejectPurchaseOrder(id, result.value || '')
+}
+
+const { getStatusBadge: _getStatusBadge, getApprovalStepJabatan } = useApprovalStatus();
+const getStatusBadge = (row) => _getStatusBadge(row, {
+    draft: { text: 'Draft', class: 'badge rounded-pill bg-label-secondary' },
+    approved: { text: 'Approved', class: 'badge rounded-pill bg-label-primary' },
+    received: { text: 'Received', class: 'badge rounded-pill bg-label-success' },
+    rejected: { text: 'Rejected', class: 'badge rounded-pill bg-label-danger' },
+    partial: { text: 'Partial', class: 'badge rounded-pill bg-label-warning' },
+});
 
 const getPoTypeBadge = (poType) => {
     if (!poType) return { text: '-', class: 'badge rounded-pill bg-label-light' };

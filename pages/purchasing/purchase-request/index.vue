@@ -300,8 +300,8 @@
                                     </Column>
                                     <Column field="status" header="Status" :sortable="true">
                                         <template #body="slotProps">
-                                            <span :class="getStatusBadge(slotProps.data.status).class">
-                                                {{ getStatusBadge(slotProps.data.status).text }}
+                                            <span :class="getStatusBadge(slotProps.data).class">
+                                                {{ getStatusBadge(slotProps.data).text }}
                                             </span>
                                         </template>
                                     </Column>
@@ -563,6 +563,7 @@ import { useWarehouseStore } from '~/stores/warehouse'
 import { usePermissionsStore } from '~/stores/permissions'
 import { usePermissions } from '~/composables/usePermissions'
 import { useImageUrl } from '~/composables/useImageUrl'
+import { useApprovalStatus } from '~/composables/useApprovalStatus'
 import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import Column from 'primevue/column'
@@ -585,6 +586,7 @@ const permissionStore = usePermissionsStore()
 const formatRupiah = useFormatRupiah()
 const { userHasPermission, userHasRole } = usePermissions()
 const { getAttachmentUrl, isImageFile } = useImageUrl()
+const { getStatusBadge } = useApprovalStatus()
 
 const { purchaseRequests, loading, totalRecords, params, form, isEditMode, showModal, validationErrors, stats, enableAdditional } = storeToRefs(purchaseRequestStore)
 const { products } = storeToRefs(productStore)
@@ -950,17 +952,6 @@ const calculateSubtotal = (index) => {
     const quantity = Number(item.quantity) || 0
     const price = Number(item.price) || 0
     item.subtotal = quantity * price
-}
-
-const getStatusBadge = (status) => {
-    switch (status) {
-        case 'draft': return { text: 'Draft', class: 'badge rounded-pill bg-label-secondary' }
-        case 'pending': return { text: 'Pending', class: 'badge rounded-pill bg-label-warning' }
-        case 'approved': return { text: 'Approved', class: 'badge rounded-pill bg-label-success' }
-        case 'rejected': return { text: 'Rejected', class: 'badge rounded-pill bg-label-danger' }
-        case 'received': return { text: 'Received', class: 'badge rounded-pill bg-label-info' }
-        default: return { text: '-', class: 'badge rounded-pill bg-label-light' }
-    }
 }
 
 const clearFilters = () => {

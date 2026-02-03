@@ -32,7 +32,7 @@
                 <h4 class="mb-0 fw-semibold">{{ review.noLr || review.no_lr || 'Legal-Tech Review' }}</h4>
                 <small class="text-muted">{{ formatDateTime(review.createdAt) }}</small>
               </div>
-              <span :class="getStatusBadge(review.status).class" class="badge">{{ getStatusBadge(review.status).text }}</span>
+              <span :class="getStatusBadge(review).class" class="badge">{{ getStatusBadge(review).text }}</span>
             </div>
             <div class="d-flex flex-wrap gap-2">
               <!-- Proceed to Subscriptions Button -->
@@ -105,7 +105,7 @@
                     <div class="col-md-6">
                       <label class="form-label text-muted medium">Status</label>
                       <p class="mb-0">
-                        <span :class="getStatusBadge(review.status).class" class="badge">{{ getStatusBadge(review.status).text }}</span>
+                        <span :class="getStatusBadge(review).class" class="badge">{{ getStatusBadge(review).text }}</span>
                       </p>
                     </div>
                     <div class="col-12" v-if="review.notes">
@@ -226,17 +226,17 @@
                     <label class="form-label text-muted mb-1">Tanggal Dibuat</label>
                     <p class="mb-0 fw-medium">{{ formatDateTime(review.createdAt) }}</p>
                   </div>
-                  <div v-if="review.approvedByUser" class="mb-3">
+                  <div v-if="review.approvedByUser || (review.status === 'approved' && getApprovalStepJabatan(review, 'approved'))" class="mb-3">
                     <label class="form-label text-muted mb-1">Disetujui Oleh</label>
-                    <p class="mb-0 fw-medium">{{ review.approvedByUser?.full_name || review.approvedByUser?.fullName || '—' }}</p>
+                    <p class="mb-0 fw-medium">{{ getApprovalStepJabatan(review, 'approved') || review.approvedByUser?.full_name || review.approvedByUser?.fullName || '—' }}</p>
                   </div>
                   <div v-if="review.approvedAt" class="mb-3">
                     <label class="form-label text-muted mb-1">Tanggal Disetujui</label>
                     <p class="mb-0 fw-medium">{{ formatDateTime(review.approvedAt) }}</p>
                   </div>
-                  <div v-if="review.rejectedByUser" class="mb-3">
+                  <div v-if="review.rejectedByUser || (review.status === 'rejected' && getApprovalStepJabatan(review, 'rejected'))" class="mb-3">
                     <label class="form-label text-muted mb-1">Ditolak Oleh</label>
-                    <p class="mb-0 fw-medium">{{ review.rejectedByUser?.full_name || review.rejectedByUser?.fullName || '—' }}</p>
+                    <p class="mb-0 fw-medium">{{ getApprovalStepJabatan(review, 'rejected') || review.rejectedByUser?.full_name || review.rejectedByUser?.fullName || '—' }}</p>
                   </div>
                   <div v-if="review.rejectedAt" class="mb-0">
                     <label class="form-label text-muted mb-1">Tanggal Ditolak</label>
@@ -244,6 +244,14 @@
                   </div>
                 </div>
               </div>
+
+              <!-- Approval Card -->
+              <ApprovalCard
+                :status-text="getStatusText(review)"
+                :current-step="review.currentApprovalStep ?? null"
+                :current-approvers="review.currentApprovers ?? []"
+                :approval-logs="review.approvalLogs ?? []"
+              />
 
               <!-- Customer Information -->
               <div v-if="review.quotation?.customer" class="card mb-4 shadow-sm border-0">
@@ -299,6 +307,8 @@ import { useLegalTechStore } from '~/stores/legal-tech'
 import { useSubscriptionStore } from '~/stores/subscription'
 import { usePermissions } from '~/composables/usePermissions'
 import { useImageUrl } from '~/composables/useImageUrl'
+import { useApprovalStatus } from '~/composables/useApprovalStatus'
+import ApprovalCard from '~/components/ApprovalCard.vue'
 import SubscriptionFormModal from '~/components/modal/SubscriptionFormModal.vue'
 
 const route = useRoute()
@@ -306,6 +316,7 @@ const ltStore = useLegalTechStore()
 const subscriptionStore = useSubscriptionStore()
 const { userHasPermission, userHasRole } = usePermissions()
 const { getAttachmentUrl, getFileIcon, isImageFile } = useImageUrl()
+const { getStatusBadge, getStatusText, getApprovalStepJabatan } = useApprovalStatus()
 
 const { reviews, loading, error } = storeToRefs(ltStore)
 
@@ -343,17 +354,6 @@ function formatDate(v) {
 function formatDateTime(v) {
   if (!v) return '—'
   return new Date(v).toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-}
-
-function getStatusBadge(status) {
-  if (!status) return { text: '-', class: 'badge rounded-pill bg-label-light' }
-  switch (status) {
-    case 'draft': return { text: 'Draft', class: 'badge rounded-pill bg-label-secondary' }
-    case 'pending': return { text: 'Pending', class: 'badge rounded-pill bg-label-warning' }
-    case 'approved': return { text: 'Approved', class: 'badge rounded-pill bg-label-success' }
-    case 'rejected': return { text: 'Rejected', class: 'badge rounded-pill bg-label-danger' }
-    default: return { text: status, class: 'badge rounded-pill bg-label-light' }
-  }
 }
 
 async function load() {

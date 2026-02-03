@@ -81,6 +81,10 @@ export interface Quotation {
   rejectedBy         : number | null
   approvedAt         : string | null
   rejectedAt         : string | null
+  currentApprovalStep? : number | null
+  submittedAt?       : string | null
+  approvalLogs?      : Array<{ id: number; stepOrder: number; action: string; remarks?: string; user?: { fullName?: string }; createdAt?: string }>
+  currentApprovers?  : Array<{ userId: number; fullName?: string; email?: string; source?: string }>
   customer?          : Customer
   siteInvest?        : { id: string; siNumber?: string; name?: string }
   site?              : { id: number; code?: string; name?: string }
@@ -528,7 +532,7 @@ export const useQuotationStore = defineStore('quotation', {
         }
       },
     
-    async approveQuotation(quotationId: string) {
+    async approveQuotation(quotationId: string, remarks?: string) {
       const toast     = useToast();
       this.loading = true;
       this.error = null;
@@ -540,7 +544,8 @@ export const useQuotationStore = defineStore('quotation', {
                   'Content-Type' : 'application/json',
                   'Accept'       : 'application/json',
               },
-              credentials: 'include', // Cookie-based auth
+              credentials: 'include',
+              body: JSON.stringify({ remarks: remarks ?? undefined }),
           });
 
           if (!response.ok) {
@@ -573,7 +578,7 @@ export const useQuotationStore = defineStore('quotation', {
       }
     },
 
-    async rejectQuotation(quotationId: string) {
+    async rejectQuotation(quotationId: string, remarks?: string) {
       const toast     = useToast();
       this.loading = true;
       this.error = null;
@@ -585,7 +590,8 @@ export const useQuotationStore = defineStore('quotation', {
                   'Content-Type' : 'application/json',
                   'Accept'       : 'application/json',
               },
-              credentials: 'include', // Cookie-based auth
+              credentials: 'include',
+              body: JSON.stringify({ remarks: remarks ?? undefined, reason: remarks ?? undefined }),
           });
 
           if (!response.ok) {

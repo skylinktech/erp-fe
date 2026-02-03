@@ -32,19 +32,19 @@
                 <h4 class="mb-0 fw-semibold">{{ quotation.noQuotation || '—' }}</h4>
                 <small class="text-muted">{{ formatDateTime(quotation.createdAt) }}</small>
               </div>
-              <span :class="getStatusBadge(quotation.status).class" class="badge">{{ getStatusBadge(quotation.status).text }}</span>
+              <span :class="getStatusBadge(quotation).class" class="badge">{{ getStatusBadge(quotation).text }}</span>
             </div>
             <div class="d-flex flex-wrap gap-2">
               <div class="btn-group" role="group">
                 <button id="btnGroupDrop1" type="button" class="btn btn-outline-secondary dropdown-toggle btn-sm" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="d-none d-sm-block">Actions</span></button>
                 <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
-                  <a v-if="(userHasRole('superadmin') || userHasPermission('edit_purchase_order')) && quotation.status === 'draft'" class="dropdown-item" href="javascript:void(0)" @click="onSubmit">
+                  <a v-if="(userHasRole('superadmin') || userHasPermission('create_quotation') || userHasPermission('approve_quotation')) && quotation.status === 'draft'" class="dropdown-item" href="javascript:void(0)" @click="onSubmit">
                     <i class="ri-send-plane-line me-2"></i> Submit Quotation
                   </a>
-                  <a v-if="quotation.status === 'draft' || quotation.status === 'pending'" class="dropdown-item" href="javascript:void(0)" @click="onApprove">
+                  <a v-if="canApprove" class="dropdown-item" href="javascript:void(0)" @click="onApprove">
                     <i class="ri-check-line me-2"></i> Approve
                   </a>
-                  <a v-if="quotation.status === 'draft' || quotation.status === 'pending'" class="dropdown-item" href="javascript:void(0)" @click="onReject">
+                  <a v-if="canApprove" class="dropdown-item" href="javascript:void(0)" @click="onReject">
                     <i class="ri-close-line me-2"></i> Reject
                   </a>
                   <a class="dropdown-item" href="javascript:void(0)" @click="navigateTo('/sales/quotation?edit=' + quotation.id)">
@@ -330,6 +330,13 @@
                 </div>
               </div>
 
+              <ApprovalCard
+                :status-text="getStatusText(quotation)"
+                :current-step="quotation.currentApprovalStep"
+                :current-approvers="quotation.currentApprovers"
+                :approval-logs="quotation.approvalLogs"
+              />
+
               <!-- Informasi Customer -->
               <div class="card mb-4 shadow-sm border-0">
                 <div class="card-header border-0 bg-transparent px-5 py-4">
@@ -376,6 +383,8 @@ import { storeToRefs } from 'pinia'
 import { useQuotationStore } from '~/stores/quotation'
 import { useImageUrl } from '~/composables/useImageUrl'
 import { usePermissions } from '~/composables/usePermissions'
+import { useUserStore } from '~/stores/user'
+import Swal from 'sweetalert2'
 
 const route = useRoute()
 const quotationStore = useQuotationStore()
@@ -384,9 +393,17 @@ const { userHasPermission, userHasRole } = usePermissions()
 const formatRupiah = useFormatRupiah()
 
 const { quotation, loading, error } = storeToRefs(quotationStore)
+const userStore = useUserStore()
 const submitting = ref(false)
 
 const id = computed(() => String(route.params.id || ''))
+const currentUserId = computed(() => userStore.user?.id ?? null)
+const canApprove = computed(() => {
+  if (!quotation.value || quotation.value.status !== 'pending') return false
+  const approvers = quotation.value.currentApprovers || []
+  if (!currentUserId.value) return false
+  return approvers.length === 0 || approvers.some((a) => a.userId === currentUserId.value)
+})
 
 function formatDate (v: string | Date | null | undefined) {
   if (!v) return '—'
@@ -398,16 +415,7 @@ function formatDateTime (v: string | null | undefined) {
   return new Date(v).toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
-function getStatusBadge (status: string) {
-  switch (status) {
-    case 'draft': return { text: 'Draft', class: 'badge rounded-pill bg-label-secondary' }
-    case 'pending': return { text: 'Pending', class: 'badge rounded-pill bg-label-warning' }
-    case 'approved': return { text: 'Approved', class: 'badge rounded-pill bg-label-success' }
-    case 'rejected': return { text: 'Rejected', class: 'badge rounded-pill bg-label-danger' }
-    case 'expired': return { text: 'Expired', class: 'badge rounded-pill bg-label-dark' }
-    default: return { text: status || '—', class: 'badge rounded-pill bg-label-light' }
-  }
-}
+const { getStatusBadge, getStatusText } = useApprovalStatus()
 
 const mrcPeriod = computed(() => Number(quotation.value?.minimumPeriod) || 12)
 
@@ -527,13 +535,34 @@ async function onSubmit () {
 
 async function onApprove () {
   if (!quotation.value) return
-  const ok = await quotationStore.approveQuotation(quotation.value.id)
+  const result = await Swal.fire({
+    title: 'Approve Quotation',
+    input: 'textarea',
+    inputLabel: 'Catatan (optional)',
+    inputPlaceholder: 'Tulis catatan approval jika diperlukan...',
+    showCancelButton: true,
+    confirmButtonText: 'Approve',
+    cancelButtonText: 'Batal',
+  })
+  if (!result.isConfirmed) return
+  const ok = await quotationStore.approveQuotation(quotation.value.id, result.value || '')
   if (ok) refreshAfterAction()
 }
 
 async function onReject () {
   if (!quotation.value) return
-  const ok = await quotationStore.rejectQuotation(quotation.value.id)
+  const result = await Swal.fire({
+    title: 'Reject Quotation',
+    input: 'textarea',
+    inputLabel: 'Alasan reject (wajib)',
+    inputPlaceholder: 'Tulis alasan reject...',
+    inputValidator: (value) => (!value ? 'Alasan reject wajib diisi' : undefined),
+    showCancelButton: true,
+    confirmButtonText: 'Reject',
+    cancelButtonText: 'Batal',
+  })
+  if (!result.isConfirmed) return
+  const ok = await quotationStore.rejectQuotation(quotation.value.id, result.value || '')
   if (ok) refreshAfterAction()
 }
 

@@ -960,9 +960,17 @@
             document.documentElement.className = ''
             
             // Clear semua cookies yang mungkin tersimpan
-            document.cookie.split(";").forEach((c) => { 
-                document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
-            });
+            // Collect cookie names first to avoid modifying document.cookie while iterating
+            const cookieStrings = document.cookie.split(";")
+            const cookieNames = cookieStrings
+                .map((c) => {
+                    const eqPos = c.indexOf("=")
+                    return eqPos >= 0 ? c.substring(0, eqPos).trim() : c.trim()
+                })
+                .filter(Boolean)
+            cookieNames.forEach((name) => {
+                document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`
+            })
         } catch (error) {
             console.warn('Error saat logout:', error.message);
         } finally {

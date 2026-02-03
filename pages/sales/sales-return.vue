@@ -159,8 +159,8 @@
                                     <Column field="customer.name" header="Nama Customer" :sortable="true"></Column>
                                     <Column field="status" header="Status" :sortable="true">
                                         <template #body="slotProps">
-                                            <span >
-                                                {{ getStatusBadge(slotProps.data.status).text }}
+                                            <span :class="getStatusBadge(slotProps.data).class">
+                                                {{ getStatusBadge(slotProps.data).text }}
                                             </span>
                                         </template>
                                     </Column>
@@ -174,7 +174,7 @@
                                     <Column field="approvedByUser.fullName" header="Approved By" :sortable="true">
                                         <template #body="slotProps">
                                             <span>
-                                                {{ slotProps.data.approvedByUser?.fullName || '-' }}
+                                                {{ getApprovalStepJabatan(slotProps.data, 'approved') || slotProps.data.approvedByUser?.fullName || '-' }}
                                             </span>
                                         </template>
                                     </Column>
@@ -396,6 +396,7 @@ import 'vue-select/dist/vue-select.css'
 import { useDebounceFn } from '@vueuse/core'
 import { useRouter } from 'vue-router'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
+import { useApprovalStatus } from '~/composables/useApprovalStatus'
 
 // Composables
 const { setListTitle, setFormTitle } = useDynamicTitle()
@@ -415,6 +416,7 @@ const productStore          = useProductStore()
 const userStore             = useUserStore()
 const formatRupiah          = useFormatRupiah()
 const { userHasPermission, userHasRole } = usePermissions();
+const { getStatusBadge, getApprovalStepJabatan } = useApprovalStatus()
 const permissionStore       = usePermissionsStore()
 
 const { salesReturns, salesOrders, loading, totalRecords, params, form, isEditMode, showModal, validationErrors, allAvailableProducts } = storeToRefs(salesReturnStore)
@@ -684,15 +686,6 @@ const onProductChange = (index) => {
     const item = form.value.salesReturnItems[index];
     item.price = Number(selectedProduct.priceSell) || 0;
   }
-};
-
-const getStatusBadge = (status) => {
-    switch (status) {
-        case 'draft': return { text: 'Draft', class: 'badge rounded-pill bg-label-secondary' };
-        case 'approved': return { text: 'Approved', class: 'badge rounded-pill bg-label-primary' };
-        case 'rejected': return { text: 'Rejected', class: 'badge rounded-pill bg-label-danger' };
-        case 'returned': return { text: 'Returned', class: 'badge rounded-pill bg-label-info' };
-    }
 };
 
 const getPaymentMethodBadge = (paymentMethod) => {

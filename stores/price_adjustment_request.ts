@@ -60,6 +60,26 @@ export interface PriceAdjustmentRequest {
     fullName: string
     email: string
   }
+  currentApprovalStep?: number | null
+  submittedAt?: string | null
+  currentApprovers?: Array<{ userId: number; fullName?: string; email?: string; source?: string }>
+  approvalLogs?: Array<{
+    id: number
+    stepOrder: number
+    action: 'approved' | 'rejected'
+    remarks?: string | null
+    user?: { id: number; fullName?: string; full_name?: string; email?: string }
+    workflow?: {
+      steps?: Array<{
+        step_order?: number
+        stepOrder?: number
+        step_name?: string
+        stepName?: string
+        jabatan?: { nm_jabatan?: string; nmJabatan?: string }
+      }>
+    }
+    createdAt?: string
+  }>
 }
 
 interface PriceAdjustmentRequestState {

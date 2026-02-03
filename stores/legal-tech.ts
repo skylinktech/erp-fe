@@ -21,6 +21,16 @@ export interface LeTechReviewForm {
   existingAttachments?: string[] | null
 }
 
+export interface ApprovalLogEntry {
+  id: number
+  stepOrder: number
+  action: 'approved' | 'rejected'
+  remarks?: string | null
+  user?: { fullName?: string; full_name?: string; email?: string }
+  workflow?: { steps?: Array<{ step_order?: number; stepOrder?: number; step_name?: string; stepName?: string; jabatan?: { nm_jabatan?: string; nmJabatan?: string } }> }
+  createdAt?: string
+}
+
 export interface LeTechReview {
   id: number
   iroId: string | null
@@ -42,6 +52,9 @@ export interface LeTechReview {
   rejectedAt: string | null
   createdAt: string
   updatedAt: string
+  currentApprovalStep?: number | null
+  currentApprovers?: Array<{ userId: number; fullName?: string; email?: string; source?: string }>
+  approvalLogs?: ApprovalLogEntry[]
   quotation?: { id: string; noQuotation?: string; customerId?: number; customer?: { id: number; name?: string } }
   createdByUser?: { id: number; full_name?: string; fullName?: string }
   approvedByUser?: { id: number; full_name?: string; fullName?: string }

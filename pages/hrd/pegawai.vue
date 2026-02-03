@@ -310,6 +310,50 @@
                             <!-- Tab Account Details -->
                             <div class="tab-pane fade" id="form-tabs-perusahaan" role="tabpanel">
                                 <div class="row g-6">
+                                    <div class="col-12">
+                                        <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center gap-2">
+                                            <div class="form-check form-switch mb-0">
+                                                <input
+                                                    class="form-check-input"
+                                                    type="checkbox"
+                                                    id="assign-user-account"
+                                                    :checked="assignUserAccount"
+                                                    @change="onAssignUserToggle($event.target.checked)"
+                                                />
+                                                <label class="form-check-label" for="assign-user-account">Assign User Account</label>
+                                            </div>
+                                            <small class="text-muted">Hubungkan pegawai dengan akun login yang sudah ada.</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6" v-if="assignUserAccount">
+                                        <div class="form-floating form-floating-outline">
+                                            <CustomSelect2
+                                                :model-value="form.user_id"
+                                                :options="availableUsers"
+                                                :loading="availableUsersLoading"
+                                                :get-option-label="userOptionLabel"
+                                                :reduce="option => option.id"
+                                                placeholder="-- Pilih User --"
+                                                clearable
+                                                id="user-account-select"
+                                                class="user-account-select"
+                                                @update:modelValue="onUserSelected"
+                                                @search="handleUserSearch"
+                                            >
+                                                <template #option="{ option }">
+                                                    <div class="d-flex flex-column">
+                                                        <span class="fw-bold">{{ option.fullName }}</span>
+                                                        <small class="text-muted">{{ option.email || option.username }}</small>
+                                                    </div>
+                                                </template>
+                                                <template #selection="{ option }">
+                                                    <span>{{ option ? userOptionLabel(option) : '' }}</span>
+                                                </template>
+                                            </CustomSelect2>
+                                            <label for="user-account-select">Akun User</label>
+                                        </div>
+                                        <small class="text-muted d-block mt-1">Hanya user aktif tanpa pegawai yang dapat dipilih.</small>
+                                    </div>
                                     <div class="col-md-6">
                                         <div class="form-floating form-floating-outline">
                                             <input type="text" id="full_name" class="form-control" placeholder="Full Name" v-model="form.full_name" />
@@ -321,6 +365,7 @@
                                             <input type="text" id="username" class="form-control" placeholder="Username" v-model="form.username" readonly />
                                             <label for="username">Username (Auto-generated)</label>
                                         </div>
+                                        <small class="text-muted d-block mt-1">Username mengikuti akun user yang ditautkan atau otomatis dari nama pegawai.</small>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="input-group input-group-merge">
@@ -332,10 +377,12 @@
                                                     v-model="form.email"
                                                     placeholder="email"
                                                     aria-label="email"
-                                                    :readonly="isEditMode" />
+                                                    :readonly="true"
+                                                    :disabled="!assignUserAccount" />
                                                 <label for="formtabs-email">Email</label>
                                             </div>
                                         </div>
+                                        <small class="text-muted d-block mt-1">Email mengikuti akun user yang ditautkan.</small>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-floating form-floating-outline">
@@ -531,7 +578,7 @@ const permissionStore = usePermissionsStore()
 const userStore = useUserStore()
 const { userHasPermission, userHasRole } = usePermissions();
 
-const { pegawais, loading, totalRecords, params, form, isEditMode, showModal, validationErrors, stats } = storeToRefs(pegawaiStore)
+const { pegawais, loading, totalRecords, params, form, isEditMode, showModal, validationErrors, stats, assignUserAccount, availableUsers, availableUsersLoading } = storeToRefs(pegawaiStore)
 const { perusahaans }   = storeToRefs(perusahaanStore)
 const { cabangs }       = storeToRefs(cabangStore)  
 const { divisis }        = storeToRefs(divisiStore)
@@ -576,11 +623,34 @@ const debouncedSearch = useDebounceFn(() => {
     pegawaiStore.setSearch(globalFilterValue.value)
 }, 500)
 
+const debouncedAvailableUserSearch = useDebounceFn((term) => {
+    if (!assignUserAccount.value) return
+    pegawaiStore.fetchAvailableUsers(term, form.value.user_id || null)
+}, 400)
+
+const onAssignUserToggle = async (checked) => {
+    await pegawaiStore.setAssignUserAccount(checked)
+}
+
+const onUserSelected = (userId) => {
+    pegawaiStore.handleUserAssignment(userId)
+}
+
+const handleUserSearch = (term) => {
+    debouncedAvailableUserSearch(term)
+}
+
+const userOptionLabel = (option) => {
+    if (!option) return ''
+    const details = option.email || option.username || ''
+    return details ? `${option.fullName} • ${details}` : option.fullName
+}
+
 watch(globalFilterValue, debouncedSearch);
 
 // Watcher untuk mengupdate username secara otomatis
 watch(() => form.value.nm_pegawai, (newName) => {
-    if (newName && !isEditMode.value) {
+    if (newName && !isEditMode.value && !assignUserAccount.value) {
         // Generate username dari nama depan
         const firstName = newName.trim().split(' ')[0]
         const username = firstName.toLowerCase()

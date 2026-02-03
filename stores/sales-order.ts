@@ -78,6 +78,10 @@ export interface SalesOrder {
   rejectedBy      : number | null
   approvedAt      : string | null
   deliveredAt     : string | null
+  currentApprovalStep?: number | null
+  submittedAt?    : string | null
+  approvalLogs?   : Array<{ id: number; stepOrder: number; action: string; remarks?: string; user?: { fullName?: string }; createdAt?: string }>
+  currentApprovers?: Array<{ userId: number; fullName?: string; email?: string; source?: string }>
   rejectedAt      : string | null
   customer?       : Customer
   perusahaan?     : Perusahaan
@@ -573,7 +577,35 @@ export const useSalesOrderStore = defineStore('salesOrder', {
       }
     },
     
-    async approveSalesOrder(salesOrderId: string) {
+    async submitSalesOrder(salesOrderId: string) {
+      this.loading = true;
+      this.error = null;
+      const { $api } = useNuxtApp();
+      try {
+          const response = await fetch($api.submitSalesOrder(salesOrderId), {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({}),
+          });
+          if (!response.ok) {
+              const errorData = await response.json().catch(() => ({ message: 'Gagal submit sales order' }));
+              throw new Error(errorData.message || 'Gagal submit sales order');
+          }
+          await this.fetchSalesOrders();
+          const toast = useToast();
+          toast.success({ title: 'Success', message: 'Sales Order berhasil di-submit.', color: 'green', position: 'topRight', layout: 2 });
+          return true;
+      } catch (error: any) {
+          const toast = useToast();
+          toast.error({ title: 'Error', message: error.message || 'Gagal submit sales order.', color: 'red', position: 'topRight', layout: 2 });
+          return false;
+      } finally {
+          this.loading = false;
+      }
+    },
+
+    async approveSalesOrder(salesOrderId: string, remarks?: string) {
       this.loading = true;
       this.error = null;
       const { $api } = useNuxtApp();
@@ -584,7 +616,8 @@ export const useSalesOrderStore = defineStore('salesOrder', {
                   'Content-Type' : 'application/json',
                   'Accept'       : 'application/json',
               },
-              credentials: 'include', // Cookie-based auth
+              credentials: 'include',
+              body: JSON.stringify({ remarks: remarks ?? undefined }),
           });
 
           if (!response.ok) {
@@ -619,7 +652,7 @@ export const useSalesOrderStore = defineStore('salesOrder', {
       }
     },
 
-    async rejectSalesOrder(salesOrderId: string) {
+    async rejectSalesOrder(salesOrderId: string, remarks?: string) {
       this.loading = true;
       this.error = null;
       const { $api } = useNuxtApp();
@@ -630,7 +663,8 @@ export const useSalesOrderStore = defineStore('salesOrder', {
                   'Content-Type' : 'application/json',
                   'Accept'       : 'application/json',
               },
-              credentials: 'include', // Cookie-based auth
+              credentials: 'include',
+              body: JSON.stringify({ remarks: remarks ?? undefined }),
           });
 
           if (!response.ok) {

@@ -3,6 +3,13 @@ import { useNuxtApp } from '#app'
 import { useDepartemenStore } from '~/stores/departemen'
 import { useImageUrl } from '~/composables/useImageUrl'
 
+interface AvailableUserOption {
+    id: number
+    fullName: string
+    email: string
+    username: string
+}
+
 export interface Pegawai {
     id: number
     name: string
@@ -20,6 +27,9 @@ interface PegawaiState {
     showModal: boolean
     validationErrors: any[]
     initialHistory: any
+    availableUsers: AvailableUserOption[]
+    availableUsersLoading: boolean
+    assignUserAccount: boolean
 }
 
 export const usePegawaiStore = defineStore('pegawai', {
@@ -50,6 +60,9 @@ export const usePegawaiStore = defineStore('pegawai', {
             cabangId: null,
             departemenId: null,
         },
+        availableUsers: [],
+        availableUsersLoading: false,
+        assignUserAccount: false,
     }),
     actions: {
         async fetchPegawais() {
@@ -129,6 +142,16 @@ export const usePegawaiStore = defineStore('pegawai', {
             this.validationErrors = [];
             const { $api } = useNuxtApp()
 
+            if (this.assignUserAccount && !this.form.user_id) {
+                this.loading = false
+                toast.error({
+                    title: 'Error',
+                    message: 'Silakan pilih akun user terlebih dahulu.',
+                    color: 'red'
+                });
+                return;
+            }
+
             const formData = new FormData();
             for (const key in this.form) {
                 if (key === 'avatarPreview') continue;
@@ -141,6 +164,10 @@ export const usePegawaiStore = defineStore('pegawai', {
                         formData.append(key, value === null ? '' : value);
                     }
                 }
+            }
+
+            if (!this.assignUserAccount && this.isEditMode) {
+                formData.append('unassign_user_account', '1')
             }
             
             try {
@@ -253,6 +280,83 @@ export const usePegawaiStore = defineStore('pegawai', {
             }
         },
 
+        async fetchAvailableUsers(search = '', includeUserId: number | null = null) {
+            const toast = useToast();
+            const { $api } = useNuxtApp()
+            this.availableUsersLoading = true
+
+            try {
+                const params = new URLSearchParams()
+                if (search) {
+                    params.append('search', search)
+                }
+                if (includeUserId) {
+                    params.append('includeUserId', includeUserId.toString())
+                }
+
+                const urlParams = params.toString()
+                const response = await fetch(`${$api.pegawaiAvailableUsers()}${urlParams ? `?${urlParams}` : ''}`, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                })
+
+                if (!response.ok) {
+                    throw new Error('Tidak dapat memuat daftar user')
+                }
+
+                const data = await response.json()
+                this.availableUsers = Array.isArray(data) ? data : []
+            } catch (error: any) {
+                this.availableUsers = []
+                toast.error({
+                    title: 'Error',
+                    message: error.message || 'Gagal memuat data user',
+                    color: 'red'
+                });
+            } finally {
+                this.availableUsersLoading = false
+            }
+        },
+
+        async setAssignUserAccount(value: boolean) {
+            this.assignUserAccount = value
+
+            if (!value) {
+                this.handleUserAssignment(null)
+                return
+            }
+
+            if (this.availableUsers.length === 0) {
+                await this.fetchAvailableUsers('', this.form.user_id || null)
+            }
+        },
+
+        handleUserAssignment(userId: number | null) {
+            if (userId === null || userId === undefined) {
+                this.form.user_id = null
+                this.form.email = ''
+                if (!this.isEditMode && this.form.nm_pegawai) {
+                    const firstName = this.form.nm_pegawai.trim().split(' ')[0] || ''
+                    const generatedUsername = firstName.toLowerCase()
+                        .replace(/[^a-z0-9]/g, '')
+                        .replace(/\s+/g, '')
+                    this.form.username = generatedUsername
+                } else if (!this.form.nm_pegawai) {
+                    this.form.username = ''
+                }
+                return
+            }
+
+            this.form.user_id = userId
+            const selectedUser = this.availableUsers.find((user) => user.id === userId)
+            if (selectedUser) {
+                this.form.email = selectedUser.email
+                this.form.username = selectedUser.username
+            }
+        },
+
         async openModal(pegawaiData: any | null = null) {
             this.isEditMode = !!pegawaiData;
             this.validationErrors = [];
@@ -265,6 +369,9 @@ export const usePegawaiStore = defineStore('pegawai', {
                 this.form.tgl_keluar_pegawai = pegawaiData.tgl_keluar_pegawai ? pegawaiData.tgl_keluar_pegawai.substring(0, 10) : null;
                 this.form.full_name = pegawaiData.nm_pegawai;
                 this.form.username = pegawaiData.username || '';
+                this.form.email = pegawaiData.email || '';
+                this.form.user_id = pegawaiData.user_id || null;
+                this.assignUserAccount = !!pegawaiData.user_id;
                 
                 if (pegawaiData.history) {
                     this.form.jabatan_id = pegawaiData.history.jabatan?.id_jabatan ?? pegawaiData.history.jabatan?.id ?? null;
@@ -302,15 +409,25 @@ export const usePegawaiStore = defineStore('pegawai', {
                 }
                  this.form.avatar = null;
 
+                if (this.assignUserAccount) {
+                    await this.fetchAvailableUsers('', this.form.user_id || null)
+                    if (this.form.user_id) {
+                        this.handleUserAssignment(this.form.user_id)
+                    }
+                } else {
+                    this.availableUsers = []
+                }
             } else {
                 this.form = {
                     nm_pegawai: '', email: '', username: '', full_name: '', tgl_lahir_pegawai: '', tmp_lahir_pegawai: '',
                     no_tlp_pegawai: '', alamat_pegawai: '', pendidikan_pegawai: null, status_pegawai: 1,
                     no_ktp_pegawai: '', nik_pegawai: '', npwp_pegawai: '', jenis_kelamin_pegawai: null,
                     tgl_masuk_pegawai: '', tgl_keluar_pegawai: null, istri_suami_pegawai: '', anak_1: '', anak_2: '',
-                    user_id: '', jabatan_id: null, perusahaan_id: null, cabang_id: null, divisi_id: null,
+                    user_id: null, jabatan_id: null, perusahaan_id: null, cabang_id: null, divisi_id: null,
                     departemen_id: null, gaji_pegawai: 0, tunjangan_pegawai: 0, avatar: null, avatarPreview: '',
                 };
+                this.assignUserAccount = false
+                this.availableUsers = []
             }
             this.showModal = true;
         },
@@ -323,11 +440,13 @@ export const usePegawaiStore = defineStore('pegawai', {
                 no_tlp_pegawai: '', alamat_pegawai: '', pendidikan_pegawai: null, status_pegawai: 1,
                 no_ktp_pegawai: '', nik_pegawai: '', npwp_pegawai: '', jenis_kelamin_pegawai: null,
                 tgl_masuk_pegawai: '', tgl_keluar_pegawai: null, istri_suami_pegawai: '', anak_1: '', anak_2: '',
-                user_id: '', jabatan_id: null, perusahaan_id: null, cabang_id: null, divisi_id: null,
+                user_id: null, jabatan_id: null, perusahaan_id: null, cabang_id: null, divisi_id: null,
                 departemen_id: null, gaji_pegawai: 0, tunjangan_pegawai: 0, avatar: null, avatarPreview: '',
             };
             this.validationErrors = [];
             this.initialHistory = { cabangId: null, departemenId: null };
+            this.assignUserAccount = false
+            this.availableUsers = []
         },
 
         setPagination(event: any) {

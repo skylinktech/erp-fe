@@ -667,7 +667,8 @@ const reminderQuotations = computed(() => {
       const diffMs = validDate.getTime() - today.getTime()
       const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24))
 
-      if (diffDays < 0 || validDate > endDate) return null
+      // Include only quotations expiring between today and the reminder window
+      if (diffDays < 0 || diffDays > reminderWindowDays) return null
 
       return {
         id: q.id,

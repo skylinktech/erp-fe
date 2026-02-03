@@ -31,6 +31,16 @@ interface Stats {
   cancelled: number | undefined
 }
 
+export interface ApprovalLogEntry {
+  id: number
+  stepOrder: number
+  action: 'approved' | 'rejected'
+  remarks?: string | null
+  user?: { fullName?: string; full_name?: string; email?: string }
+  workflow?: { steps?: Array<{ step_order?: number; stepOrder?: number; step_name?: string; stepName?: string; jabatan?: { nm_jabatan?: string; nmJabatan?: string } }> }
+  createdAt?: string
+}
+
 export interface Arf {
   id: string
   noArf: string
@@ -56,8 +66,10 @@ export interface Arf {
   cancelledAt?: string | null
   createdAt: string
   updatedAt: string
+  currentApprovalStep?: number | null
+  currentApprovers?: Array<{ userId: number; fullName?: string; email?: string; source?: string }>
+  approvalLogs?: ApprovalLogEntry[]
   site?: { id: number; name?: string }
-  purchaseRequest?: { id: number; name?: string }
   costCenter?: { id: number; name?: string }
   purchaseRequest?: { id: string; noPr?: string }
   requestor?: any

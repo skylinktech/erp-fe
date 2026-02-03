@@ -142,7 +142,7 @@
               </div>
               <div class="d-flex align-items-center gap-2">
                 <button
-                  v-if="userHasRole('superadmin') || userHasPermission('create_quotation')"
+                  v-if="userHasRole('superadmin') || userHasPermission('create_iro')"
                   @click="iroStore.openModal()"
                   class="btn btn-primary"
                 >
@@ -200,7 +200,7 @@
                 </Column>
                 <Column field="status" header="Status" :sortable="true">
                   <template #body="slotProps">
-                    <span :class="getStatusBadge(slotProps.data.status).class">{{ getStatusBadge(slotProps.data.status).text }}</span>
+                    <span :class="getStatusBadge(slotProps.data).class">{{ getStatusBadge(slotProps.data).text }}</span>
                   </template>
                 </Column>
                 <Column field="jenisIro" header="Jenis IRO" :sortable="true">
@@ -536,16 +536,7 @@ function getDetailLabel(d) {
   return '-'
 }
 
-function getStatusBadge(status) {
-  if (!status) return { text: '-', class: 'badge rounded-pill bg-label-light' }
-  switch (status) {
-    case 'draft': return { text: 'Draft', class: 'badge rounded-pill bg-label-secondary' }
-    case 'pending': return { text: 'Pending', class: 'badge rounded-pill bg-label-warning' }
-    case 'approved': return { text: 'Approved', class: 'badge rounded-pill bg-label-success' }
-    case 'rejected': return { text: 'Rejected', class: 'badge rounded-pill bg-label-danger' }
-    default: return { text: status, class: 'badge rounded-pill bg-label-light' }
-  }
-}
+const { getStatusBadge } = useApprovalStatus()
 
 const onPage = (e) => { if (e) iroStore.setPagination(e) }
 const handleRowsChange = (v) => { 

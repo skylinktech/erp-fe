@@ -24,15 +24,15 @@
                 <h4 class="mb-0 fw-semibold">{{ iro.noIro || (iro as any).no_iro || '—' }}</h4>
                 <small class="text-muted">{{ formatDateTime(iro.createdAt) }}</small>
               </div>
-              <span :class="getStatusBadge(iro.status).class" class="badge">{{ getStatusBadge(iro.status).text }}</span>
+              <span :class="getStatusBadge(iro).class" class="badge">{{ getStatusBadge(iro).text }}</span>
             </div>
-            <div class="d-flex gap-2">
+          <div class="d-flex gap-2">
               <div class="btn-group">
                 <button type="button" class="btn btn-outline-secondary dropdown-toggle btn-sm" data-bs-toggle="dropdown">Actions</button>
                 <div class="dropdown-menu">
                   <a v-if="iro.status === 'draft'" class="dropdown-item" href="javascript:void(0)" @click="onSubmit"><i class="ri-send-plane-line me-2"></i> Submit IRO</a>
-                  <a v-if="iro.status === 'pending'" class="dropdown-item" href="javascript:void(0)" @click="onApprove"><i class="ri-check-line me-2"></i> Approve</a>
-                  <a v-if="iro.status === 'pending'" class="dropdown-item" href="javascript:void(0)" @click="onReject"><i class="ri-close-line me-2"></i> Reject</a>
+                <a v-if="canApprove" class="dropdown-item" href="javascript:void(0)" @click="onApprove"><i class="ri-check-line me-2"></i> Approve</a>
+                <a v-if="canReject" class="dropdown-item" href="javascript:void(0)" @click="onReject"><i class="ri-close-line me-2"></i> Reject</a>
                   <a v-if="iro.status === 'draft'" class="dropdown-item" href="javascript:void(0)" @click="navigateTo('/order-process/iro?edit=' + iro.id)"><i class="ri-edit-box-line me-2"></i> Edit</a>
                   <a class="dropdown-item text-danger" href="javascript:void(0)" @click="onDelete" v-if="iro.status === 'draft'"><i class="ri-delete-bin-7-line me-2"></i> Hapus</a>
                 </div>
@@ -140,6 +140,43 @@
                   <div class="d-flex justify-content-between py-1"><span class="text-muted fw-bold">Grand Total</span><span class="fw-bold fs-5 text-primary">{{ formatRupiah(iro.grandTotal ?? 0) }}</span></div>
                 </div>
               </div>
+
+              <div class="card mb-4 shadow-sm border-0">
+                <div class="card-header border-0 bg-transparent px-5 py-4">
+                  <h5 class="card-title mb-0">Approval</h5>
+                </div>
+                <div class="card-body px-5 pt-3 pb-4">
+                  <div class="mb-3">
+                    <div class="text-muted">Status</div>
+                    <div class="fw-semibold">{{ getStatusBadge(iro).text }}</div>
+                  </div>
+
+                  <div class="mb-3">
+                    <div class="text-muted">Step Saat Ini</div>
+                    <div class="fw-semibold">{{ iro.currentApprovalStep ?? '—' }}</div>
+                  </div>
+
+                  <div v-if="(iro.currentApprovers?.length || 0) > 0" class="mb-3">
+                    <div class="text-muted">Approver Saat Ini</div>
+                    <ul class="mb-0 ps-3">
+                      <li v-for="ap in iro.currentApprovers" :key="ap.userId">
+                        {{ ap.fullName || ap.email || ap.userId }}
+                        <small v-if="ap.source" class="text-muted">({{ ap.source }})</small>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div v-if="(iro.approvalLogs?.length || 0) > 0">
+                    <div class="text-muted">Riwayat Approval</div>
+                    <ul class="mb-0 ps-3">
+                      <li v-for="log in iro.approvalLogs" :key="log.id">
+                        {{ log.action === 'approved' ? 'Approved' : 'Rejected' }} by {{ getStepJabatanLabel(log) }} — {{ getStepLabel(log) }}
+                        <div v-if="log.remarks" class="text-muted small">Catatan: {{ log.remarks }}</div>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </template>
@@ -153,12 +190,25 @@
 import { computed, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useIroStore } from '~/stores/iro'
+import { useUserStore } from '~/stores/user'
+import Swal from 'sweetalert2'
 
 const route = useRoute()
 const iroStore = useIroStore()
+const userStore = useUserStore()
 const formatRupiah = useFormatRupiah()
 const { iro, loading, error } = storeToRefs(iroStore)
 const id = computed(() => String(route.params.id || ''))
+const currentUserId = computed(() => userStore.user?.id ?? null)
+
+const canApprove = computed(() => {
+  if (!iro.value || iro.value.status !== 'pending') return false
+  const approvers = iro.value.currentApprovers || []
+  if (!currentUserId.value) return false
+  return approvers.length === 0 || approvers.some((a) => a.userId === currentUserId.value)
+})
+
+const canReject = computed(() => canApprove.value)
 
 const detailsByType = computed(() => {
   const list = iro.value?.iroDetails ?? []
@@ -181,14 +231,24 @@ function formatDateTime (v: string | null | undefined) {
   return new Date(v).toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
-function getStatusBadge (s: string) {
-  switch (s) {
-    case 'draft': return { text: 'Draft', class: 'badge rounded-pill bg-label-secondary' }
-    case 'pending': return { text: 'Pending', class: 'badge rounded-pill bg-label-warning' }
-    case 'approved': return { text: 'Approved', class: 'badge rounded-pill bg-label-success' }
-    case 'rejected': return { text: 'Rejected', class: 'badge rounded-pill bg-label-danger' }
-    default: return { text: s || '—', class: 'badge rounded-pill bg-label-light' }
-  }
+const { getStatusBadge } = useApprovalStatus()
+
+/** Jabatan dari step workflow (approval_workflow_steps.jabatan) — bukan jabatan user */
+function getStepJabatanLabel (log: { stepOrder: number; workflow?: { steps?: Array<{ step_order?: number; stepOrder?: number; step_name?: string; stepName?: string; jabatan?: { nm_jabatan?: string; nmJabatan?: string } }> }; user?: { fullName?: string; full_name?: string; email?: string } }) {
+  const steps = log.workflow?.steps || []
+  const step = steps.find((s) => (s.step_order ?? s.stepOrder) === log.stepOrder)
+  const nm = step?.jabatan?.nm_jabatan ?? step?.jabatan?.nmJabatan ?? ''
+  if (nm) return nm
+  const stepName = step?.step_name ?? step?.stepName ?? ''
+  if (stepName) return stepName
+  return log.user?.fullName ?? log.user?.full_name ?? log.user?.email ?? '—'
+}
+
+function getStepLabel (log: { stepOrder: number; workflow?: { steps?: Array<{ step_order?: number; stepOrder?: number; step_name?: string; stepName?: string }> } }) {
+  const steps = log.workflow?.steps || []
+  const step = steps.find((s) => (s.step_order ?? s.stepOrder) === log.stepOrder)
+  const stepName = step?.step_name ?? step?.stepName
+  return stepName || `Step ${log.stepOrder}`
 }
 
 async function load () {
@@ -206,13 +266,34 @@ async function onSubmit () {
 
 async function onApprove () {
   if (!iro.value) return
-  const ok = await iroStore.approveIro(iro.value.id)
+  const result = await Swal.fire({
+    title: 'Approve IRO',
+    input: 'textarea',
+    inputLabel: 'Catatan (optional)',
+    inputPlaceholder: 'Tulis catatan approval jika diperlukan...',
+    showCancelButton: true,
+    confirmButtonText: 'Approve',
+    cancelButtonText: 'Batal',
+  })
+  if (!result.isConfirmed) return
+  const ok = await iroStore.approveIro(iro.value.id, result.value || '')
   if (ok) refresh()
 }
 
 async function onReject () {
   if (!iro.value) return
-  const ok = await iroStore.rejectIro(iro.value.id)
+  const result = await Swal.fire({
+    title: 'Reject IRO',
+    input: 'textarea',
+    inputLabel: 'Alasan reject (wajib)',
+    inputPlaceholder: 'Tulis alasan reject...',
+    inputValidator: (value) => (!value ? 'Alasan reject wajib diisi' : undefined),
+    showCancelButton: true,
+    confirmButtonText: 'Reject',
+    cancelButtonText: 'Batal',
+  })
+  if (!result.isConfirmed) return
+  const ok = await iroStore.rejectIro(iro.value.id, result.value || '')
   if (ok) refresh()
 }
 

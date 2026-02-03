@@ -383,8 +383,8 @@
 
                   <Column field="status" header="Status" :sortable="true">
                     <template #body="slotProps">
-                      <span :class="getStatusBadge(slotProps.data.status).class">
-                        {{ getStatusBadge(slotProps.data.status).text }}
+                      <span :class="getStatusBadge(slotProps.data).class">
+                        {{ getStatusBadge(slotProps.data).text }}
                       </span>
                     </template>
                   </Column>
@@ -802,6 +802,7 @@ import { useProductStore } from '~/stores/product'
 import { useWarehouseStore } from '~/stores/warehouse'
 import { usePermissionsStore } from '~/stores/permissions'
 import { usePermissions } from '~/composables/usePermissions'
+import { useApprovalStatus } from '~/composables/useApprovalStatus'
 import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import Column from 'primevue/column'
@@ -822,6 +823,7 @@ const warehouseStore = useWarehouseStore()
 const permissionStore = usePermissionsStore()
 const formatRupiah = useFormatRupiah()
 const { userHasPermission, userHasRole } = usePermissions()
+const { getStatusBadge } = useApprovalStatus()
 
 const { arfs, loading, totalRecords, params, form, isEditMode, showModal, validationErrors, stats, enableAdditional } = storeToRefs(arfStore)
 const { products } = storeToRefs(productStore)
@@ -1183,19 +1185,6 @@ const calculateSubtotal = (index) => {
   const quantity = Number(item.quantity) || 0
   const price = Number(item.price) || 0
   item.subtotal = quantity * price
-}
-
-const getStatusBadge = (status) => {
-  switch (status) {
-    case 'draft': return { text: 'Draft', class: 'badge rounded-pill bg-label-secondary' }
-    case 'submitted': return { text: 'Submitted', class: 'badge rounded-pill bg-label-info' }
-    case 'approved': return { text: 'Approved', class: 'badge rounded-pill bg-label-success' }
-    case 'rejected': return { text: 'Rejected', class: 'badge rounded-pill bg-label-danger' }
-    case 'disbursed': return { text: 'Disbursed', class: 'badge rounded-pill bg-label-warning' }
-    case 'settled': return { text: 'Settled', class: 'badge rounded-pill bg-label-success' }
-    case 'cancelled': return { text: 'Cancelled', class: 'badge rounded-pill bg-label-secondary' }
-    default: return { text: '-', class: 'badge rounded-pill bg-label-light' }
-  }
 }
 
 const clearFilters = () => {
