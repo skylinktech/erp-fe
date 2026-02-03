@@ -6,9 +6,6 @@ export interface DidService {
   id?: number
   servicePlanId: number
   category: 'delivery' | 'installation' | 'survey' | 'dismantle'
-  quantity: number
-  price: number
-  subtotal: number
   servicePlan?: { id: number; name: string; description?: string } | null
 }
 
@@ -17,7 +14,6 @@ export interface Did {
   code      : string
   name      : string
   sla       : string | null
-  total     : number
   provinceId: number
   province ?: { id: number; name: string; code?: string } | null
   regencyId : number
@@ -64,7 +60,6 @@ export const useDidStore = defineStore('did', {
       code: '',
       name: '',
       sla: '',
-      total: 0,
       provinceId: null as number | null,
       regencyId: null as number | null,
       services: [] as DidService[],
@@ -133,23 +128,13 @@ export const useDidStore = defineStore('did', {
       const { $api } = useNuxtApp()
 
       try {
-        // Calculate subtotal for each service and total
-        const services = (this.form.services || []).map((s) => {
-          const subtotal = (s.quantity || 0) * (s.price || 0)
-          return {
-            ...s,
-            subtotal: subtotal,
-          }
-        })
-        const total = services.reduce((sum, s) => sum + (s.subtotal || 0), 0)
-
         const body = {
           code: this.form.code,
           name: this.form.name,
           sla: this.form.sla || null,
           provinceId: this.form.provinceId,
           regencyId: this.form.regencyId,
-          services: services,
+          services: this.form.services || [],
         }
 
         const url = this.isEditMode && this.form.id
@@ -283,16 +268,12 @@ export const useDidStore = defineStore('did', {
           code: did.code,
           name: did.name,
           sla: did.sla || '',
-          total: did.total || 0,
           provinceId: did.provinceId ?? did.province?.id ?? null,
           regencyId: did.regencyId ?? did.regency?.id ?? null,
           services: did.services?.map((s) => ({
             id: s.id,
             servicePlanId: s.servicePlanId,
             category: s.category,
-            quantity: s.quantity || 0,
-            price: s.price || 0,
-            subtotal: s.subtotal || 0,
           })) || [],
         }
       } else {
@@ -300,7 +281,6 @@ export const useDidStore = defineStore('did', {
           code: '',
           name: '',
           sla: '',
-          total: 0,
           provinceId: null as number | null,
           regencyId: null as number | null,
           services: [],
@@ -318,7 +298,6 @@ export const useDidStore = defineStore('did', {
         code: '',
         name: '',
         sla: '',
-        total: 0,
         provinceId: null as number | null,
         regencyId: null as number | null,
         services: [],
@@ -428,9 +407,6 @@ export const useDidStore = defineStore('did', {
       this.form.services.push({
         servicePlanId: null as any,
         category: 'delivery',
-        quantity: 1,
-        price: 0,
-        subtotal: 0,
       } as DidService)
     },
 

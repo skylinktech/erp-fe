@@ -205,16 +205,14 @@
                         <tr>
                           <th>Produk</th>
                           <th class="text-center">Qty</th>
-                          <th class="text-center">Gudang</th>
                           <th class="text-end">Harga Satuan</th>
                           <th class="text-end">Subtotal</th>
                         </tr>
                       </thead>
                       <tbody>
                         <tr v-for="(m, i) in (siteInvest.siteInvestMaterials || [])" :key="m.id || i">
-                          <td>{{ m.product?.name || m.product?.sku || '—' }}</td>
+                          <td>{{ m.priceListLine?.product?.name || m.priceListLine?.product?.sku || '—' }}</td>
                           <td class="text-center">{{ m.quantity ?? 0 }}</td>
-                          <td class="text-center">{{ m.warehouse?.name || '—' }}</td>
                           <td class="text-end">{{ formatRupiah(m.price) }}</td>
                           <td class="text-end fw-medium">{{ formatRupiah(m.subtotal) }}</td>
                         </tr>
@@ -243,7 +241,6 @@
                       <thead>
                         <tr>
                           <th>Service</th>
-                          <th>Unit</th>
                           <th class="text-center">Qty</th>
                           <th class="text-end">Harga</th>
                           <th class="text-end">Subtotal</th>
@@ -251,15 +248,14 @@
                       </thead>
                       <tbody>
                         <tr v-for="(s, i) in (siteInvest.siteInvestServices || [])" :key="s.id || i">
-                          <td>{{ s.service?.name || '—' }}</td>
-                          <td>{{ s.unit?.symbol || s.unit?.name || '—' }}</td>
+                          <td>{{ s.priceListLine?.service?.name || '—' }}</td>
                           <td class="text-center">{{ s.quantity ?? 0 }}</td>
-                          <td class="text-end">{{ formatRupiah(s.price) }}</td>
-                          <td class="text-end fw-medium">{{ formatRupiah(s.subtotal) }}</td>
+                          <td class="text-end">{{ formatRupiah(getServiceEffectivePrice(s)) }}</td>
+                          <td class="text-end fw-medium">{{ formatRupiah(getServiceEffectiveSubtotal(s)) }}</td>
                         </tr>
                       </tbody>
                     </table>
-                    <p class="mb-0 text-end fw-semibold mt-3">Subtotal Service: {{ formatRupiah(siteInvest.serviceSubtotal) }}</p>
+                    <p class="mb-0 text-end fw-semibold mt-3">Subtotal Service: {{ formatRupiah(serviceSubtotalDisplay) }}</p>
                   </div>
                 </div>
               </div>
@@ -289,10 +285,10 @@
                       </thead>
                       <tbody>
                         <tr v-for="(d, i) in (siteInvest.siteInvestDids || [])" :key="d.id || i">
-                          <td>{{ d.did?.code || d.did?.name || '—' }}</td>
+                          <td>{{ d.priceListLine?.did?.code || d.priceListLine?.did?.name || '—' }}</td>
                           <td class="text-center">{{ d.quantity ?? 1 }}</td>
                           <td class="text-end">{{ formatRupiah(d.price) }}</td>
-                          <td class="text-end fw-medium">{{ formatRupiah((d.price || 0) * (d.quantity ?? 1)) }}</td>
+                          <td class="text-end fw-medium">{{ formatRupiah(d.subtotal) }}</td>
                         </tr>
                       </tbody>
                     </table>
@@ -343,7 +339,7 @@
                 <div class="card-body px-5 pt-4 pb-4">
                   <div class="d-flex justify-content-between py-1">
                     <label class="form-label text-muted medium mb-0">Managed Service</label>
-                    <p class="mb-0 fw-medium">{{ formatRupiah(siteInvest.serviceSubtotal) }}</p>
+                    <p class="mb-0 fw-medium">{{ formatRupiah(serviceSubtotalDisplay) }}</p>
                   </div>
                   <div class="d-flex justify-content-between py-1">
                     <label class="form-label text-muted medium mb-0">Material</label>
@@ -467,6 +463,30 @@ function getBusinessSchemeBadgeClass (businessSchemeId: number | null | undefine
     default: return 'bg-label-light'
   }
 }
+
+/** Harga efektif service = price + terminal_kit_count + quota_priority + new_service_line + additional_data (support snake_case dari API) */
+function getServiceEffectivePrice (s: any): number {
+  if (!s) return 0
+  const price = Number(s.price) || 0
+  const tk = Number(s.terminalKitCount ?? s.terminal_kit_count) || 0
+  const qp = Number(s.quotaPriority ?? s.quota_priority) || 0
+  const nsl = Number(s.newServiceLine ?? s.new_service_line) || 0
+  const ad = Number(s.additionalData ?? s.additional_data) || 0
+  return price + tk + qp + nsl + ad
+}
+
+/** Subtotal efektif service = quantity * harga efektif */
+function getServiceEffectiveSubtotal (s: any): number {
+  if (!s) return 0
+  const qty = Number(s.quantity) || 1
+  return qty * getServiceEffectivePrice(s)
+}
+
+/** Total subtotal service untuk tampilan (jumlah dari subtotal efektif tiap item) */
+const serviceSubtotalDisplay = computed(() => {
+  const list = siteInvest.value?.siteInvestServices ?? []
+  return list.reduce((sum, s) => sum + getServiceEffectiveSubtotal(s), 0)
+})
 
 async function load () {
   if (!id.value) return

@@ -282,8 +282,51 @@
               </div>
               <div v-if="(form.iroDetails || []).length > 0" class="col-12 pt-2">
                 <hr class="my-2" />
+                <h6 class="text-secondary mb-2">
+                  <i class="ri-file-list-line me-2"></i>
+                  Detail Item ({{ (form.iroDetails || []).length }})
+                </h6>
+                <div class="table-responsive mb-3">
+                  <table class="table table-sm table-bordered">
+                    <thead class="table-light">
+                      <tr>
+                        <th style="width: 2.5rem"></th>
+                        <th>Tipe</th>
+                        <th>Item</th>
+                        <th class="text-center">Min. Period</th>
+                        <th class="text-end">Qty</th>
+                        <th class="text-end">Harga</th>
+                        <th class="text-end">Subtotal</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="(d, idx) in (form.iroDetails || [])" :key="idx" class="align-middle">
+                        <td class="pe-0">
+                          <button type="button" class="btn btn-sm btn-text-danger rounded-pill btn-icon" title="Hapus" @click="iroStore.removeDetail(idx)">
+                            <i class="ri-delete-bin-7-line"></i>
+                          </button>
+                        </td>
+                        <td>
+                          <span :class="getDetailTypeBadge(d.itemType).class">{{ getDetailTypeBadge(d.itemType).text }}</span>
+                        </td>
+                        <td>{{ getDetailLabel(d) }}</td>
+                        <td class="text-center">
+                          <template v-if="(d.itemType || '').toUpperCase() === 'SERVICE'">
+                            <select v-model="d.minimumPeriod" class="form-select form-select-sm" style="width: 5rem;" @change="onServiceMinimumPeriodChange(d)">
+                              <option v-for="opt in minimumPeriodOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+                            </select>
+                          </template>
+                          <span v-else class="text-muted">—</span>
+                        </td>
+                        <td class="text-end">{{ Number(d.quantity) || 0 }}</td>
+                        <td class="text-end">{{ formatRupiah(d.price) }}</td>
+                        <td class="text-end fw-semibold">{{ formatRupiah(d.subtotal) }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
                 <p class="text-muted small mb-2">
-                  {{ countProduct }} product, {{ countService }} service, {{ countDid }} DID (autofill)
+                  {{ countProduct }} product, {{ countService }} service, {{ countDid }} DID (autofill dari Quotation / Site Investment)
                 </p>
                 <div class="d-flex justify-content-end gap-4 flex-wrap">
                   <span class="fw-bold">Material: {{ formatRupiah(computedMaterial) }}</span>
@@ -353,6 +396,21 @@ const jenisIroOptions = [
   { label: 'CAPEX', value: 'capex' },
   { label: 'OPEX', value: 'opex' },
 ]
+const minimumPeriodOptions = [
+  { label: '12 bln', value: '12' },
+  { label: '24 bln', value: '24' },
+  { label: '36 bln', value: '36' },
+  { label: '48 bln', value: '48' },
+  { label: '60 bln', value: '60' },
+]
+
+function onServiceMinimumPeriodChange(d) {
+  if (String(d?.itemType || '').toUpperCase() !== 'SERVICE') return
+  const qty = Number(d.quantity) || 1
+  const pr = Number(d.price) || 0
+  const period = Number(d.minimumPeriod) || 12
+  d.subtotal = qty * pr * period
+}
 
 const modalTitle = computed(() => (isEditMode.value ? 'Edit IRO' : 'Tambah Data'))
 const modalDescription = computed(() => (isEditMode.value ? 'Ubah data IRO di bawah ini.' : 'Isi form untuk menambahkan IRO baru.'))
@@ -456,6 +514,28 @@ function getJenisIroBadge(jenisIro) {
     default: return { text: jenisIro, class: 'badge rounded-pill bg-label-light' }
   }
 }
+
+function getDetailTypeBadge(itemType) {
+  const t = String(itemType || '').toUpperCase()
+  if (t === 'PRODUCT') return { text: 'Product', class: 'badge bg-label-info' }
+  if (t === 'SERVICE') return { text: 'Service', class: 'badge bg-label-primary' }
+  if (t === 'DID') return { text: 'DID', class: 'badge bg-label-success' }
+  return { text: t || '-', class: 'badge bg-label-secondary' }
+}
+
+function getDetailLabel(d) {
+  if (!d) return '-'
+  const t = String(d.itemType || '').toUpperCase()
+  if (t === 'PRODUCT') return d.product?.name || d.product?.sku || '-'
+  if (t === 'SERVICE') {
+    const s = d.service?.name || d.service?.code || ''
+    const p = d.servicePlan?.name || ''
+    return p ? `${s} - ${p}` : s || '-'
+  }
+  if (t === 'DID') return d.did?.code || d.did?.name || '-'
+  return '-'
+}
+
 function getStatusBadge(status) {
   if (!status) return { text: '-', class: 'badge rounded-pill bg-label-light' }
   switch (status) {

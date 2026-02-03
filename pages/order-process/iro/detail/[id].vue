@@ -1,7 +1,7 @@
 <template>
   <div class="page-wrapper">
     <div class="content-wrapper">
-      <div class="container-xxl flex-grow-1 container pt-12">
+      <div class="container-xxl flex-grow-1 container p-y">
         <div v-if="loading" class="d-flex justify-content-center align-items-center" style="min-height: 400px;">
           <div class="text-center">
             <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;"></div>
@@ -64,12 +64,13 @@
                 <div class="card-body px-5 pt-4 pb-5">
                   <div class="table-responsive">
                     <table class="table table-sm table-hover">
-                      <thead><tr><th>#</th><th>Service</th><th>Service Plan</th><th>Qty</th><th>Harga</th><th>Subtotal</th></tr></thead>
+                      <thead><tr><th>#</th><th>Service</th><th>Service Plan</th><th class="text-center">Min. Period</th><th>Qty</th><th>Harga</th><th>Subtotal</th></tr></thead>
                       <tbody>
                         <tr v-for="(d, i) in detailsByType.service" :key="d.id || 's-' + i">
                           <td>{{ i + 1 }}</td>
                           <td>{{ d.service?.name || d.service?.code || '-' }}</td>
                           <td>{{ d.servicePlan?.name || '-' }}</td>
+                          <td class="text-center">{{ d.minimumPeriod ?? d.minimum_period ?? '12' }} bln</td>
                           <td>{{ Number(d.quantity) || 0 }}</td>
                           <td>{{ formatRupiah(d.price) }}</td>
                           <td class="fw-bold">{{ formatRupiah(d.subtotal) }}</td>

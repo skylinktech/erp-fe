@@ -582,45 +582,51 @@
                                     </div>
                                 </div>
 
-                                <!-- Tab Materials -->
+                                <!-- Tab Materials (from price_list_lines priceableType=product) -->
                                 <div class="tab-pane fade" id="form-tabs-materials" role="tabpanel">
                                     <div v-for="(item, index) in form.siteInvestMaterials" :key="index" class="repeater-item mb-4">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <span class="text-muted fw-medium">Item #{{ index + 1 }}</span>
+                                            <button class="btn btn-sm btn-outline-danger" @click.prevent="siteInvestStore.removeMaterialItem(index)" type="button" title="Hapus item">
+                                                <i class="ri-delete-bin-line me-1"></i> Hapus
+                                            </button>
+                                        </div>
                                         <div class="row g-3">
-                                            <div class="col-md-3">
-                                                <CustomSelect2
-                                                    v-model="item.warehouseId"
-                                                    :options="warehouses"
-                                                    :get-option-label="w => `${w.code} - ${w.name}`"
-                                                    :reduce="w => w.id"
-                                                    placeholder="Pilih Gudang"
-                                                    searchable
-                                                    clearable
-                                                />
+                                            <div class="col-md-12 form-check mb-2 pl-3">
+                                                <input class="form-check-input" type="checkbox" v-model="item.isPriceOverridden" :id="'customPriceMaterial' + index">
+                                                <label class="form-check-label" :for="'customPriceMaterial' + index">
+                                                    Custom Price
+                                                </label>
                                             </div>
-                                            <div class="col-md-3">
+                                            <div class="col-md-6">
                                                 <CustomSelect2
-                                                    v-model="item.productId"
-                                                    :options="products"
-                                                    :get-option-label="p => `${p.name} (${p.sku})`"
-                                                    :reduce="p => p.id"
-                                                    placeholder="Pilih Product"
+                                                    v-model="item.priceListLineId"
+                                                    :options="priceListLinesProduct"
+                                                    :get-option-label="line => line ? (line.price_list?.name || (line.product ? `${line.product.name} (${line.product.sku || ''})` : `Line #${line.id}`)) : '—'"
+                                                    :reduce="line => line ? line.id : null"
+                                                    placeholder="Pilih Product (dari Price List)"
                                                     searchable
                                                     clearable
-                                                    @update:modelValue="onProductChange(index)"
+                                                    @update:modelValue="onMaterialLineChange(index, $event)"
                                                 />
                                             </div>
                                             <div class="col-md-1">
                                                 <div class="form-floating form-floating-outline">
-                                                    <input type="number" v-model.number="item.quantity" @input="calculateMaterialSubtotal(index)" class="form-control" :class="{ 'is-invalid': getStockValidationError(index) }" placeholder="Qty" min="1">
+                                                    <input type="number" v-model.number="item.quantity" @input="calculateMaterialSubtotal(index)" class="form-control" placeholder="Qty" min="0.01" step="0.01">
                                                     <label>Qty</label>
-                                                    <div v-if="getStockValidationError(index)" class="invalid-feedback">
-                                                        {{ getStockValidationError(index) }}
-                                                    </div>
                                                 </div>
                                             </div>
                                             <div class="col-md-2">
                                                 <div class="form-floating form-floating-outline">
-                                                    <input type="text" :value="formatRupiah(item.price)" class="form-control" placeholder="Harga" readonly>
+                                                    <input 
+                                                        type="text" 
+                                                        :value="formatRupiah(item.price)" 
+                                                        @input="updateMaterialPriceFromInput(index, $event)"
+                                                        class="form-control" 
+                                                        placeholder="Harga"
+                                                        :readonly="!item.isPriceOverridden"
+                                                        :class="{ 'bg-light': !item.isPriceOverridden }"
+                                                    >
                                                     <label>Harga Satuan</label>
                                                 </div>
                                             </div>
@@ -630,8 +636,16 @@
                                                     <label>Subtotal</label>
                                                 </div>
                                             </div>
-                                            <div class="col-md-12 d-flex justify-content-end">
-                                                <button @click.prevent="siteInvestStore.removeMaterialItem(index)" class="btn btn-outline-danger">Hapus</button>
+                                            <div class="col-md-12" v-if="item.isPriceOverridden">
+                                                <div class="form-floating form-floating-outline">
+                                                    <textarea 
+                                                        v-model="item.priceReason" 
+                                                        class="form-control" 
+                                                        placeholder="Alasan custom price"
+                                                        rows="2"
+                                                    ></textarea>
+                                                    <label>Alasan Custom Price <span class="text-danger">*</span></label>
+                                                </div>
                                             </div>
                                         </div>
                                         <hr class="my-4">
@@ -644,53 +658,97 @@
                                     </div>
                                 </div>
 
-                                <!-- Tab Services -->
+                                <!-- Tab Services (from price_list_lines priceableType=service) -->
                                 <div class="tab-pane fade" id="form-tabs-services" role="tabpanel">
                                     <div v-for="(item, index) in form.siteInvestServices" :key="index" class="repeater-item mb-4">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <span class="text-muted fw-medium">Item #{{ index + 1 }}</span>
+                                            <button class="btn btn-sm btn-outline-danger" @click.prevent="siteInvestStore.removeServiceItem(index)" type="button" title="Hapus item">
+                                                <i class="ri-delete-bin-line me-1"></i> Hapus
+                                            </button>
+                                        </div>
                                         <div class="row g-3">
-                                            <div class="col-md-4">
+                                            <div class="col-md-12 form-check mb-2 pl-3">
+                                                <input class="form-check-input" type="checkbox" v-model="item.isPriceOverridden" :id="'customPriceService' + index">
+                                                <label class="form-check-label" :for="'customPriceService' + index">
+                                                    Custom Price
+                                                </label>
+                                            </div>
+                                            <div class="col-md-6">
                                                 <CustomSelect2
-                                                    v-model="item.serviceId"
-                                                    :options="services"
-                                                    :get-option-label="s => s.name"
-                                                    :reduce="s => s.id"
-                                                    placeholder="Pilih Service"
+                                                    v-model="item.priceListLineId"
+                                                    :options="priceListLinesService"
+                                                    :get-option-label="line => line ? (line.price_list?.name || (line.service ? line.service.name : `Line #${line.id}`)) : '—'"
+                                                    :reduce="line => line ? line.id : null"
+                                                    placeholder="Pilih Service (dari Price List)"
                                                     searchable
                                                     clearable
-                                                    @update:modelValue="onServiceChange(index)"
+                                                    @update:modelValue="onServiceLineChange(index, $event)"
                                                 />
                                             </div>
-                                            <div class="col-md-2">
-                                                <CustomSelect2
-                                                    v-model="item.unitId"
-                                                    :options="units"
-                                                    :get-option-label="u => u.symbol"
-                                                    :reduce="u => u.id"
-                                                    placeholder="Unit"
-                                                    searchable
-                                                    clearable
-                                                />
-                                            </div>
-                                            <div class="col-md-2">
+                                            <div class="col-md-1">
                                                 <div class="form-floating form-floating-outline">
-                                                    <input type="number" v-model.number="item.quantity" @input="calculateServiceSubtotal(index)" class="form-control" placeholder="Qty" min="1">
+                                                    <input type="number" v-model.number="item.quantity" @input="calculateServiceSubtotal(index)" class="form-control" placeholder="Qty" min="0.01" step="0.01">
                                                     <label>Qty</label>
                                                 </div>
                                             </div>
                                             <div class="col-md-2">
                                                 <div class="form-floating form-floating-outline">
-                                                    <input type="text" :value="formatRupiah(item.price)" class="form-control" placeholder="Harga" readonly>
-                                                    <label>Harga</label>
+                                                    <input 
+                                                        type="text" 
+                                                        :value="formatRupiah(item.price)" 
+                                                        @input="updateServicePriceFromInput(index, $event)"
+                                                        class="form-control" 
+                                                        placeholder="Harga Satuan"
+                                                        :readonly="!item.isPriceOverridden"
+                                                        :class="{ 'bg-light': !item.isPriceOverridden }"
+                                                    >
+                                                    <label>Harga Satuan</label>
                                                 </div>
                                             </div>
-                                            <div class="col-md-2">
+                                            <!-- Field dari price list line (service): terminal_kit, quota_priority, new_service_line, additional_data -->
+                                            <div class="col-6 col-md-3">
+                                                <div class="form-floating form-floating-outline">
+                                                    <input type="text" :value="(item.terminalKitCount ?? serviceLineField(getServiceLineForItem(index), 'terminal_kit_count')) ?? '—'" class="form-control bg-light" readonly placeholder="Terminal Kit">
+                                                    <label>Terminal Kit</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row g-3 mt-3">
+                                            <div class="col-6 col-md-3">
+                                                <div class="form-floating form-floating-outline">
+                                                    <input type="text" :value="(item.quotaPriority ?? serviceLineField(getServiceLineForItem(index), 'quota_priority')) != null ? formatRupiah(item.quotaPriority ?? serviceLineField(getServiceLineForItem(index), 'quota_priority')) : '—'" class="form-control bg-light" readonly placeholder="Quota Priority">
+                                                    <label>Quota Priority</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-6 col-md-3">
+                                                <div class="form-floating form-floating-outline">
+                                                    <input type="text" :value="(item.newServiceLine ?? serviceLineField(getServiceLineForItem(index), 'new_service_line')) != null ? formatRupiah(item.newServiceLine ?? serviceLineField(getServiceLineForItem(index), 'new_service_line')) : '—'" class="form-control bg-light" readonly placeholder="New Service Line">
+                                                    <label>New Service Line</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-6 col-md-3">
+                                                <div class="form-floating form-floating-outline">
+                                                    <input type="text" :value="(item.additionalData ?? serviceLineField(getServiceLineForItem(index), 'additional_data')) != null ? formatRupiah(item.additionalData ?? serviceLineField(getServiceLineForItem(index), 'additional_data')) : '—'" class="form-control bg-light" readonly placeholder="Additional Data">
+                                                    <label>Additional Data</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
                                                 <div class="form-floating form-floating-outline">
                                                     <input type="text" :value="formatRupiah(item.subtotal)" class="form-control" placeholder="Subtotal" readonly>
                                                     <label>Subtotal</label>
                                                 </div>
                                             </div>
-                                            <div class="col-md-12 d-flex justify-content-end">
-                                                <button @click.prevent="siteInvestStore.removeServiceItem(index)" class="btn btn-outline-danger">Hapus</button>
+                                            <div class="col-md-12" v-if="item.isPriceOverridden">
+                                                <div class="form-floating form-floating-outline">
+                                                    <textarea 
+                                                        v-model="item.priceReason" 
+                                                        class="form-control" 
+                                                        placeholder="Alasan custom price"
+                                                        rows="2"
+                                                    ></textarea>
+                                                    <label>Alasan Custom Price <span class="text-danger">*</span></label>
+                                                </div>
                                             </div>
                                         </div>
                                         <hr class="my-4">
@@ -703,88 +761,76 @@
                                     </div>
                                 </div>
 
-                                <!-- Tab DIDs -->
+                                <!-- Tab DIDs (from price_list_lines priceableType=did) -->
                                 <div class="tab-pane fade" id="form-tabs-dids" role="tabpanel">
-                                    <!-- Dropdown DID di atas (col-12, di luar repeater) -->
-                                    <div class="row g-3 mb-4">
-                                        <div class="col-12">
-                                            <label class="form-label text-muted mb-2">DID <span class="text-danger">*</span></label>
-                                            <CustomSelect2
-                                                v-model="selectedDidId"
-                                                :options="dids"
-                                                :get-option-label="d => `${d.code} - ${d.name || ''}`"
-                                                :reduce="d => d.id"
-                                                placeholder="Pilih DID"
-                                                searchable
-                                                clearable
-                                                @update:modelValue="onDidChange"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <!-- Repeater items untuk services dari DID yang dipilih -->
                                     <div v-for="(item, index) in form.siteInvestDids" :key="index" class="repeater-item mb-4">
-                                        <div class="row g-3">
-                                            <div class="col-md-4">
-                                                <label class="form-label text-muted mb-2">Service Plan</label>
-                                                <CustomSelect2
-                                                    v-model="item.servicePlanId"
-                                                    :options="getDidServicePlans(selectedDidId)"
-                                                    :get-option-label="sp => sp?.name || ''"
-                                                    :reduce="sp => sp?.id || null"
-                                                    placeholder="Service Plan"
-                                                    searchable
-                                                    clearable
-                                                    :disabled="!selectedDidId"
-                                                />
-                                            </div>
-                                            <div class="col-md-4">
-                                                <label class="form-label text-muted mb-2">Category</label>
-                                                <CustomSelect2
-                                                    v-model="item.category"
-                                                    :options="categoryOptions"
-                                                    :get-option-label="opt => opt.label"
-                                                    :reduce="opt => opt.value"
-                                                    placeholder="Category"
-                                                    searchable
-                                                    clearable
-                                                />
-                                            </div>
-                                            <div class="col-md-4">
-                                                <label class="form-label text-muted mb-2">Unit</label>
-                                                <CustomSelect2
-                                                    v-model="item.unitId"
-                                                    :options="units"
-                                                    :get-option-label="u => u.symbol || u.name"
-                                                    :reduce="u => u.id"
-                                                    placeholder="Unit"
-                                                    searchable
-                                                    clearable
-                                                />
-                                            </div>
-                                            <div class="col-md-4">
-                                                <label class="form-label text-muted mb-2">Quantity</label>
-                                                <input type="number" v-model.number="item.quantity" @input="calculateDidSubtotal(index)" class="form-control" placeholder="Qty" min="1">
-                                            </div>
-                                            <div class="col-md-4">
-                                                <label class="form-label text-muted mb-2">Harga</label>
-                                                <input type="text" :value="formatRupiah(item.price)" @input="updateDidPriceFromInput(index, $event)" class="form-control" placeholder="Harga">
-                                            </div>
-                                            <div class="col-md-4">
-                                                <label class="form-label text-muted mb-2">Subtotal</label>
-                                                <input type="text" :value="formatRupiah((item.quantity || 1) * (item.price || 0))" class="form-control bg-light" placeholder="Subtotal" readonly>
-                                            </div>
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <span class="text-muted fw-medium">Item #{{ index + 1 }}</span>
+                                            <button class="btn btn-sm btn-outline-danger" @click.prevent="siteInvestStore.removeDidItem(index)" type="button" title="Hapus item">
+                                                <i class="ri-delete-bin-line me-1"></i> Hapus
+                                            </button>
                                         </div>
-                                        <div class="col-md-1 offset-md-11 mt-3 mb-2">
-                                            <button @click.prevent="siteInvestStore.removeDidItem(index)" class="btn btn-outline-danger w-100">Hapus</button>
+                                        <div class="row g-3">
+                                            <div class="col-md-12 form-check mb-2 pl-3">
+                                                <input class="form-check-input" type="checkbox" v-model="item.isPriceOverridden" :id="'customPriceDid' + index">
+                                                <label class="form-check-label" :for="'customPriceDid' + index">
+                                                    Custom Price
+                                                </label>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <CustomSelect2
+                                                    v-model="item.priceListLineId"
+                                                    :options="priceListLinesDid"
+                                                    :get-option-label="line => line ? (line.price_list?.name || (line.did ? `${line.did.code} - ${line.did.name || ''}` : `Line #${line.id}`)) : '—'"
+                                                    :reduce="line => line ? line.id : null"
+                                                    placeholder="Pilih DID (dari Price List)"
+                                                    searchable
+                                                    clearable
+                                                    @update:modelValue="onDidLineChange(index, $event)"
+                                                />
+                                            </div>
+                                            <div class="col-md-2">
+                                                <div class="form-floating form-floating-outline">
+                                                    <input type="number" v-model.number="item.quantity" @input="calculateDidSubtotal(index)" class="form-control" placeholder="Qty" min="1">
+                                                    <label>Qty</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-floating form-floating-outline">
+                                                    <input 
+                                                        type="text" 
+                                                        :value="formatRupiah(item.price)" 
+                                                        @input="updateDidPriceFromInput(index, $event)" 
+                                                        class="form-control" 
+                                                        placeholder="Harga"
+                                                        :readonly="!item.isPriceOverridden"
+                                                        :class="{ 'bg-light': !item.isPriceOverridden }"
+                                                    >
+                                                    <label>Harga</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-floating form-floating-outline">
+                                                    <input type="text" :value="formatRupiah(item.subtotal || (item.quantity || 1) * (item.price || 0))" class="form-control" placeholder="Subtotal" readonly>
+                                                    <label>Subtotal</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-12" v-if="item.isPriceOverridden">
+                                                <div class="form-floating form-floating-outline">
+                                                    <textarea 
+                                                        v-model="item.priceReason" 
+                                                        class="form-control" 
+                                                        placeholder="Alasan custom price"
+                                                        rows="2"
+                                                    ></textarea>
+                                                    <label>Alasan Custom Price <span class="text-danger">*</span></label>
+                                                </div>
+                                            </div>
                                         </div>
                                         <hr class="my-4">
                                     </div>
-                                    <div v-if="!selectedDidId || form.siteInvestDids.length === 0" class="text-center text-muted py-4">
-                                        <p>Pilih DID terlebih dahulu untuk menampilkan services</p>
-                                    </div>
-                                    <div v-if="selectedDidId" class="mt-4">
-                                        <button @click.prevent="addDidServiceItem()" class="btn btn-primary">Tambah Service</button>
+                                    <div class="mt-4">
+                                        <button @click.prevent="siteInvestStore.addDidItem()" class="btn btn-primary">Tambah DID</button>
                                     </div>
                                     <div class="d-flex justify-content-end mt-4">
                                         <span class="fw-bold fs-5">Subtotal DID: {{ formatRupiah(didSubtotal) }}</span>
@@ -798,8 +844,14 @@
                                         <strong>Info:</strong> Pilih sumber budget dan penanggung jawab (budget holder) untuk masing-masing alokasi.
                                     </div>
                                     <div v-for="(item, index) in (form.siteInvestBudgets || [])" :key="index" class="repeater-item mb-4">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <span class="text-muted fw-medium">Item #{{ index + 1 }}</span>
+                                            <button class="btn btn-sm btn-outline-danger" @click.prevent="removeBudgetItem(index)" type="button" title="Hapus item">
+                                                <i class="ri-delete-bin-line me-1"></i> Hapus
+                                            </button>
+                                        </div>
                                         <div class="row g-3">
-                                            <div class="col-md-5">
+                                            <div class="col-md-6">
                                                 <label class="form-label text-muted">Sumber Budget</label>
                                                 <CustomSelect2
                                                     v-model="item.budgetSourceId"
@@ -811,7 +863,7 @@
                                                     clearable
                                                 />
                                             </div>
-                                            <div class="col-md-5">
+                                            <div class="col-md-6">
                                                 <label class="form-label text-muted">Budget Holder (Penanggung Jawab)</label>
                                                 <CustomSelect2
                                                     v-model="item.budgetHolderId"
@@ -822,9 +874,6 @@
                                                     searchable
                                                     clearable
                                                 />
-                                            </div>
-                                            <div class="col-md-2 d-flex align-items-end">
-                                                <button @click.prevent="removeBudgetItem(index)" class="btn btn-outline-danger w-100">Hapus</button>
                                             </div>
                                         </div>
                                         <hr class="my-4">
@@ -856,11 +905,8 @@ import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useSiteInvestStore } from '~/stores/site-invest'
 import { useCustomerStore } from '~/stores/customer'
-import { useProductStore } from '~/stores/product'
-import { useServiceStore } from '~/stores/service'
 import { useUserStore } from '~/stores/user'
 import { usePermissionsStore } from '~/stores/permissions'
-import { useWarehouseStore } from '~/stores/warehouse'
 import { useBudgetStore } from '~/stores/budget'
 import { usePermissions } from '~/composables/usePermissions'
 import { useImageUrl } from '~/composables/useImageUrl'
@@ -880,9 +926,6 @@ const router = useRouter()
 const isInitialLoading = ref(true)
 const siteInvestStore = useSiteInvestStore()
 const customerStore = useCustomerStore()
-const productStore = useProductStore()
-const warehouseStore = useWarehouseStore()
-const serviceStore = useServiceStore()
 const userStore = useUserStore()
 const permissionStore = usePermissionsStore()
 const budgetStore = useBudgetStore()
@@ -892,12 +935,14 @@ const { getAttachmentUrl, isImageFile } = useImageUrl()
 
 const { siteInvests, loading, totalRecords, params, form, isEditMode, showModal, validationErrors, stats } = storeToRefs(siteInvestStore)
 const { customers } = storeToRefs(customerStore)
-const { products } = storeToRefs(productStore)
-const { warehouses } = storeToRefs(warehouseStore)
-const { services } = storeToRefs(serviceStore)
 const { user } = storeToRefs(userStore)
 const { permissions } = storeToRefs(permissionStore)
 const { budgets } = storeToRefs(budgetStore)
+
+// Price list lines for modal tabs (from API site-investment/price-list-lines)
+const priceListLinesProduct = ref([])
+const priceListLinesService = ref([])
+const priceListLinesDid = ref([])
 
 // Filter budgets untuk tab budget - hanya tampilkan yang status approved
 const approvedBudgets = computed(() => {
@@ -920,12 +965,9 @@ const tableControls = ref({
     search: ''
 })
 
-const units = ref([])
-const dids = ref([])
 const usersForBudget = ref([])
 const sites = ref([])
 const businessSchemes = ref([])
-const selectedDidId = ref(null)
 
 const fetchBudgetsAndUsers = async () => {
     const prevRows = budgetStore.params.rows
@@ -958,32 +1000,39 @@ function removeBudgetItem(index) {
     f.siteInvestBudgets.splice(index, 1)
 }
 
-const fetchUnitsAndDids = async () => {
-    const { $api } = useNuxtApp()
+const fetchPriceListLinesForModal = async () => {
     try {
-        const [unitsRes, didsRes] = await Promise.all([
-            fetch($api.unit(), {
-                headers: { 'Accept': 'application/json' },
-                credentials: 'include'
-            }),
-            fetch(`${$api.did()}?page=1&rows=500&includeServices=true`, {
-                headers: { 'Accept': 'application/json' },
-                credentials: 'include'
-            })
+        const [productLines, serviceLines, didLines] = await Promise.all([
+            siteInvestStore.fetchPriceListLines('product'),
+            siteInvestStore.fetchPriceListLines('service'),
+            siteInvestStore.fetchPriceListLines('did'),
         ])
-
-        if (unitsRes.ok) {
-            const unitsData = await unitsRes.json()
-            units.value = unitsData.data || []
-        }
-
-        if (didsRes.ok) {
-            const didsData = await didsRes.json()
-            dids.value = didsData.data || []
-        }
+        priceListLinesProduct.value = productLines
+        priceListLinesService.value = serviceLines
+        priceListLinesDid.value = didLines
+        recalcServiceItemsFromLines()
     } catch (error) {
-        console.error('Error fetching units and dids:', error)
+        console.error('Error fetching price list lines for site investment:', error)
     }
+}
+
+/** Hitung ulang price, subtotal, dan 4 field komponen tiap service item dari price list line (untuk edit / setelah lines dimuat) */
+const recalcServiceItemsFromLines = () => {
+    const items = form.value?.siteInvestServices ?? []
+    const lines = priceListLinesService.value
+    items.forEach((item) => {
+        if (!item.priceListLineId) return
+        const line = lines.find(l => l.id === item.priceListLineId)
+        if (!line) return
+        const effectivePrice = getServiceLineEffectivePrice(line)
+        item.price = effectivePrice
+        item.quantity = Number(item.quantity) || 1
+        item.subtotal = item.quantity * item.price
+        item.terminalKitCount = serviceLineField(line, 'terminal_kit_count') != null ? Number(serviceLineField(line, 'terminal_kit_count')) : null
+        item.quotaPriority = serviceLineField(line, 'quota_priority') != null ? Number(serviceLineField(line, 'quota_priority')) : null
+        item.newServiceLine = serviceLineField(line, 'new_service_line') != null ? Number(serviceLineField(line, 'new_service_line')) : null
+        item.additionalData = serviceLineField(line, 'additional_data') != null ? Number(serviceLineField(line, 'additional_data')) : null
+    })
 }
 
 const fetchSitesForSelect = async () => {
@@ -1102,13 +1151,9 @@ const grandTotal = computed(() => {
 const { isLoading: isDataLoading, error: dataError } = usePageData({
     pageName: 'Site Investment',
     loaders: [
-        () => productStore.fetchProducts(),
-        () => serviceStore.fetchServices(),
         () => customerStore.fetchCustomers(),
-        () => warehouseStore.fetchWarehouses(),
         () => permissionStore.fetchPermissions(),
         () => userStore.loadUser(),
-        () => fetchUnitsAndDids(),
         () => fetchSitesForSelect(),
         () => fetchBusinessSchemesForSelect(),
         () => fetchBudgetsAndUsers(),
@@ -1152,56 +1197,22 @@ watch(() => globalFilterValue.value, (newValue) => {
 
 watch(showModal, async (newValue) => {
     if (newValue) {
+        await fetchPriceListLinesForModal()
         nextTick(() => {
             const modalElement = document.getElementById('SiteInvestmentModal')
             if (modalElement && !modalInstance) {
                 modalInstance = new bootstrap.Modal(modalElement)
             }
             modalInstance?.show()
-            // Saat edit, pastikan site terpilih ada di daftar opsi (jika dari preload dan tidak di 500 teratas)
             if (form.value?.site && form.value?.siteId && !sites.value.find(s => s.id === form.value.siteId)) {
                 sites.value = [{ ...form.value.site, id: form.value.siteId }, ...sites.value]
             }
-            // Saat edit, pastikan business scheme terpilih ada di daftar opsi
             if (form.value?.businessScheme && form.value?.businessSchemeId && !businessSchemes.value.find(b => b.id === form.value.businessSchemeId)) {
                 businessSchemes.value = [{ ...form.value.businessScheme, id: form.value.businessSchemeId }, ...businessSchemes.value]
-            }
-            // Set selectedDidId dari form.siteInvestDids jika ada (edit mode)
-            if (form.value?.siteInvestDids && form.value.siteInvestDids.length > 0) {
-                const firstDidId = form.value.siteInvestDids[0]?.didId
-                if (firstDidId) {
-                    selectedDidId.value = firstDidId
-                    // Fetch services untuk DID yang dipilih jika belum ada (hanya untuk preload, tidak overwrite existing items)
-                    const selectedDid = dids.value.find(d => d.id === firstDidId)
-                    if (selectedDid && (!selectedDid.services || selectedDid.services.length === 0)) {
-                        // Fetch services untuk preload, tapi jangan overwrite existing items
-                        const { $api } = useNuxtApp()
-                        fetch(`${$api.did()}/${selectedDid.id}`, {
-                            headers: { 'Accept': 'application/json' },
-                            credentials: 'include'
-                        }).then(response => {
-                            if (response.ok) {
-                                return response.json()
-                            }
-                        }).then(result => {
-                            if (result) {
-                                const didData = result.data || result
-                                if (didData && didData.services) {
-                                    selectedDid.services = didData.services
-                                }
-                            }
-                        }).catch(error => {
-                            console.error('Error fetching DID details:', error)
-                        })
-                    }
-                }
-            } else {
-                selectedDidId.value = null
             }
         })
     } else {
         modalInstance?.hide()
-        selectedDidId.value = null
         if (route.query.edit) {
             const q = { ...route.query }
             delete q.edit
@@ -1221,15 +1232,6 @@ watch(filters, (newFilters) => {
     siteInvestStore.setFilters(restFilters)
 }, { deep: true })
 
-// Filter daftar produk berdasarkan customer yang dipilih (relasi product_customer)
-watch(
-    () => form.value?.customerId,
-    (newCustomerId) => {
-        productStore.params.customerId = newCustomerId || null
-        // Ambil ulang daftar produk, tanpa notifikasi error (preload)
-        productStore.fetchProducts(true)
-    }
-)
 
 const onPage = (event) => {
     if (event) {
@@ -1340,204 +1342,93 @@ const handleSubmit = () => {
     siteInvestStore.saveSiteInvest()
 }
 
-const onProductChange = async (index) => {
+const onMaterialLineChange = (index, lineId) => {
+    const line = priceListLinesProduct.value.find(l => l.id === lineId)
+    if (!line || !form.value?.siteInvestMaterials?.[index]) return
     const item = form.value.siteInvestMaterials[index]
-    const selectedProduct = products.value.find(p => p.id === item.productId)
-    if (selectedProduct) {
-        item.price = Number(selectedProduct.priceSell) || 0
-        calculateMaterialSubtotal(index)
-        
-        // Validasi stock saat product dipilih
-        await validateStockQuantity(index)
-    }
+    item.price = Number(line.price) || 0
+    item.quantity = Number(line.quantity) || 1
+    item.isPriceOverridden = false
+    item.subtotal = item.quantity * item.price
 }
 
-const calculateMaterialSubtotal = async (index) => {
-    const item = form.value.siteInvestMaterials[index]
+const calculateMaterialSubtotal = (index) => {
+    const item = form.value?.siteInvestMaterials?.[index]
+    if (!item) return
     const quantity = Number(item.quantity) || 0
     const price = Number(item.price) || 0
     item.subtotal = quantity * price
-    
-    // Validasi stock saat quantity berubah
-    if (item.productId) {
-        await validateStockQuantity(index)
-    }
 }
 
-// Fungsi untuk validasi stock quantity
-const validateStockQuantity = async (index) => {
-    const item = form.value.siteInvestMaterials[index]
-    if (!item.productId || !item.quantity) return
-    
-    const selectedProduct = products.value.find(p => p.id === item.productId)
-    if (!selectedProduct) return
-    
-    // Jika gudang belum dipilih, tidak bisa validasi per-gudang
-    if (!item.warehouseId) return
-
-    // Ambil stok hanya di gudang yang dipilih
-    const stocksForWarehouse = (selectedProduct.stocks || []).filter(
-        (stock) => Number(stock.warehouseId) === Number(item.warehouseId)
-    )
-
-    const totalStock = stocksForWarehouse.reduce(
-        (sum, stock) => sum + (Number(stock.quantity) || 0),
-        0
-    ) || 0
-
-    // Jika tidak ada stok sama sekali di gudang ini, tampilkan alert khusus
-    if (stocksForWarehouse.length === 0 || totalStock <= 0) {
-        const toast = useToast()
-        toast.error({
-            title: 'Produk tidak tersedia',
-            message: 'Product yang dipilih tidak tersedia di gudang ini',
-            color: 'red',
-            position: 'topRight',
-            layout: 2,
-        })
-        return
-    }
-
-    const requestedQuantity = Number(item.quantity) || 0
-    
-    if (requestedQuantity > totalStock) {
-        const toast = useToast()
-        toast.warning({
-            title: 'Peringatan Stock',
-            message: `Stock pada product ID ${item.productId} tidak mencukupi. Stock tersedia: ${totalStock}, Quantity diminta: ${requestedQuantity}`,
-            color: 'orange',
-            position: 'topRight',
-            layout: 2,
-        })
-    }
-}
-
-const onServiceChange = (index) => {
+const onServiceLineChange = (index, lineId) => {
+    const line = priceListLinesService.value.find(l => l.id === lineId)
+    if (!line || !form.value?.siteInvestServices?.[index]) return
     const item = form.value.siteInvestServices[index]
-    const selectedService = services.value.find(s => s.id === item.serviceId)
-    if (selectedService) {
-        item.price = Number(selectedService.price) || 0
-        calculateServiceSubtotal(index)
-    }
+    item.price = getServiceLineEffectivePrice(line)
+    item.quantity = Number(line.quantity) || 1
+    item.isPriceOverridden = false
+    item.subtotal = item.quantity * item.price
+    item.terminalKitCount = serviceLineField(line, 'terminal_kit_count') != null ? Number(serviceLineField(line, 'terminal_kit_count')) : null
+    item.quotaPriority = serviceLineField(line, 'quota_priority') != null ? Number(serviceLineField(line, 'quota_priority')) : null
+    item.newServiceLine = serviceLineField(line, 'new_service_line') != null ? Number(serviceLineField(line, 'new_service_line')) : null
+    item.additionalData = serviceLineField(line, 'additional_data') != null ? Number(serviceLineField(line, 'additional_data')) : null
+}
+
+/** Mengambil price list line (service) yang dipilih untuk item di index tertentu */
+const getServiceLineForItem = (index) => {
+    const item = form.value?.siteInvestServices?.[index]
+    if (!item?.priceListLineId) return null
+    return priceListLinesService.value.find(l => l.id === item.priceListLineId) ?? null
+}
+
+/** Nilai field dari price list line (support snake_case & camelCase dari API) */
+const serviceLineField = (line, snakeKey) => {
+    if (!line) return null
+    const camelKey = snakeKey.replace(/_([a-z])/g, (_, c) => c.toUpperCase())
+    return line[snakeKey] ?? line[camelKey] ?? null
+}
+
+/** Nilai field harga dari price list line, diformat Rupiah */
+const serviceLinePriceField = (line, snakeKey) => {
+    const val = serviceLineField(line, snakeKey)
+    return val != null ? formatRupiah(val) : '—'
+}
+
+/** Harga efektif per service = price + terminal_kit_count + quota_priority + new_service_line + additional_data */
+const getServiceLineEffectivePrice = (line) => {
+    if (!line) return 0
+    const base = Number(line.price) || 0
+    const terminalKit = Number(serviceLineField(line, 'terminal_kit_count')) || 0
+    const quotaPriority = Number(serviceLineField(line, 'quota_priority')) || 0
+    const newServiceLine = Number(serviceLineField(line, 'new_service_line')) || 0
+    const additionalData = Number(serviceLineField(line, 'additional_data')) || 0
+    return base + terminalKit + quotaPriority + newServiceLine + additionalData
 }
 
 const calculateServiceSubtotal = (index) => {
-    const item = form.value.siteInvestServices[index]
+    const item = form.value?.siteInvestServices?.[index]
+    if (!item) return
     const quantity = Number(item.quantity) || 0
     const price = Number(item.price) || 0
     item.subtotal = quantity * price
 }
 
-function getDidUnitLabel(item) {
-    if (!item?.unitId) return '—'
-    const u = (units.value || []).find(x => x.id === item.unitId)
-    return (u?.symbol || u?.name) || '—'
-}
-
-const getDidServicePlans = (didId) => {
-    if (!didId) return []
-    const selectedDid = dids.value.find(d => d.id === didId)
-    if (!selectedDid || !selectedDid.services) return []
-    
-    // Get unique service plans from DID services
-    const servicePlanMap = new Map()
-    selectedDid.services.forEach(service => {
-        if (service.servicePlan && !servicePlanMap.has(service.servicePlan.id)) {
-            servicePlanMap.set(service.servicePlan.id, service.servicePlan)
-        }
-    })
-    return Array.from(servicePlanMap.values())
-}
-
-const onDidChange = async () => {
-    if (!selectedDidId.value) {
-        // Clear all DID items if DID is cleared
-        form.value.siteInvestDids = []
-        return
-    }
-    
-    const selectedDid = dids.value.find(d => d.id === selectedDidId.value)
-    
-    if (selectedDid) {
-        // Fetch full DID data with services if not already loaded
-        if (!selectedDid.services || selectedDid.services.length === 0) {
-            const { $api } = useNuxtApp()
-            try {
-                const response = await fetch(`${$api.did()}/${selectedDid.id}`, {
-                    headers: { 'Accept': 'application/json' },
-                    credentials: 'include'
-                })
-                if (response.ok) {
-                    const result = await response.json()
-                    // Response can be either { data: did } or did directly
-                    const didData = result.data || result
-                    if (didData && didData.services) {
-                        selectedDid.services = didData.services
-                    }
-                }
-            } catch (error) {
-                console.error('Error fetching DID details:', error)
-            }
-        }
-        
-        // Clear existing items and populate with services from selected DID
-        form.value.siteInvestDids = []
-        
-        if (selectedDid.services && selectedDid.services.length > 0) {
-            // Create items for each service from DID
-            selectedDid.services.forEach(service => {
-                form.value.siteInvestDids.push({
-                    didId: selectedDid.id,
-                    servicePlanId: service.servicePlanId || null,
-                    category: service.category || null,
-                    unitId: null, // Unit will need to be set manually or from service plan
-                    quantity: Number(service.quantity) || 1,
-                    price: Number(service.price) || 0,
-                    isPriceOverridden: false,
-                })
-            })
-        } else {
-            // If no services, create one empty item
-            form.value.siteInvestDids.push({
-                didId: selectedDid.id,
-                servicePlanId: null,
-                category: null,
-                unitId: null,
-                quantity: 1,
-                price: Number(selectedDid.total) || 0,
-                isPriceOverridden: false,
-            })
-        }
-    }
-}
-
-// Watch selectedDidId to ensure all items have the same didId
-watch(selectedDidId, (newDidId) => {
-    if (form.value.siteInvestDids) {
-        form.value.siteInvestDids.forEach(item => {
-            item.didId = newDidId
-        })
-    }
-})
-
-const addDidServiceItem = () => {
-    if (!form.value.siteInvestDids) {
-        form.value.siteInvestDids = []
-    }
-    form.value.siteInvestDids.push({
-        didId: selectedDidId.value,
-        servicePlanId: null,
-        category: null,
-        unitId: null,
-        quantity: 1,
-        price: 0,
-        isPriceOverridden: false,
-    })
+const onDidLineChange = (index, lineId) => {
+    const line = priceListLinesDid.value.find(l => l.id === lineId)
+    if (!line || !form.value?.siteInvestDids?.[index]) return
+    const item = form.value.siteInvestDids[index]
+    item.price = Number(line.price) || 0
+    item.quantity = Number(line.quantity) || 1
+    item.isPriceOverridden = false
+    item.subtotal = item.quantity * item.price
 }
 
 const calculateDidSubtotal = (index) => {
-    const item = form.value.siteInvestDids[index]
-    // Subtotal is calculated in template, this is just for triggering reactivity
+    const item = form.value?.siteInvestDids?.[index]
+    if (!item) return
+    const q = Number(item.quantity) || 1
+    const p = Number(item.price) || 0
+    item.subtotal = q * p
 }
 
 const parseRupiahToNumber = (rupiahString) => {
@@ -1545,11 +1436,26 @@ const parseRupiahToNumber = (rupiahString) => {
     return Number(String(rupiahString).replace(/[Rp\s.]/g, '').replace(',', '.')) || 0
 }
 
+const updateMaterialPriceFromInput = (index, event) => {
+    const numericValue = parseRupiahToNumber(event.target?.value || '')
+    if (form.value.siteInvestMaterials && form.value.siteInvestMaterials[index]) {
+        form.value.siteInvestMaterials[index].price = Math.round(numericValue)
+        calculateMaterialSubtotal(index)
+    }
+}
+
+const updateServicePriceFromInput = (index, event) => {
+    const numericValue = parseRupiahToNumber(event.target?.value || '')
+    if (form.value.siteInvestServices && form.value.siteInvestServices[index]) {
+        form.value.siteInvestServices[index].price = Math.round(numericValue)
+        calculateServiceSubtotal(index)
+    }
+}
+
 const updateDidPriceFromInput = (index, event) => {
     const numericValue = parseRupiahToNumber(event.target?.value || '')
     if (form.value.siteInvestDids && form.value.siteInvestDids[index]) {
         form.value.siteInvestDids[index].price = Math.round(numericValue)
-        form.value.siteInvestDids[index].isPriceOverridden = true
         calculateDidSubtotal(index)
     }
 }
@@ -1573,36 +1479,6 @@ const getPriorityBadge = (priority) => {
         case 'high': return { text: 'High', class: 'badge rounded-pill bg-label-danger' }
         default: return { text: '-', class: 'badge rounded-pill bg-label-light' }
     }
-}
-
-// Fungsi untuk mendapatkan error message validasi stock
-const getStockValidationError = (index) => {
-    const item = form.value.siteInvestMaterials[index]
-    if (!item.productId || !item.quantity || !item.warehouseId) return null
-    
-    const selectedProduct = products.value.find(p => p.id === item.productId)
-    if (!selectedProduct) return null
-    
-    const stocksForWarehouse = (selectedProduct.stocks || []).filter(
-        (stock) => Number(stock.warehouseId) === Number(item.warehouseId)
-    )
-
-    const totalStock = stocksForWarehouse.reduce(
-        (sum, stock) => sum + (Number(stock.quantity) || 0),
-        0
-    ) || 0
-
-    if (stocksForWarehouse.length === 0 || totalStock <= 0) {
-        return 'Product yang dipilih tidak tersedia di gudang ini'
-    }
-
-    const requestedQuantity = Number(item.quantity) || 0
-    
-    if (requestedQuantity > totalStock) {
-        return `Stock tidak mencukupi. Tersedia: ${totalStock}`
-    }
-    
-    return null
 }
 
 const clearDateFilters = () => {

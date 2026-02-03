@@ -7,25 +7,15 @@ import type { Unit } from './unit'
 import type { Stock } from './stocks'
 import { useImageUrl } from '~/composables/useImageUrl'
 
-export interface ProductCustomer {
-  id: number
-  productId: number
-  customerId: number
-  priceSell: number
-  createdAt: string
-  updatedAt: string
-}
-
 export interface Product {
   id: number
   sku: string
   name: string
   unitId: number
-  priceBuy: number
-  priceSell: number
   isDevice: boolean
   billingType: 'one_time' | 'recurring'
   categoryId: number
+  productType?: string | null
   image: string | File
   createdBy?: number | null
   createdAt: string
@@ -33,7 +23,6 @@ export interface Product {
   category?: Category
   unit?: Unit
   customer?: Customer
-  productCustomer?: ProductCustomer
   stocks?: Stock[]
   imagePreview?: string
   createdByUser?: { id: number; fullName: string; email: string }
@@ -82,10 +71,9 @@ export const useProductStore = defineStore('product', {
       name: '',
       sku: '',
       unitId: undefined,
-      priceBuy: 0,
-      priceSell: 0,
       isDevice: false,
       billingType: 'one_time' as 'one_time' | 'recurring',
+      productType: null as string | null,
       image: '',
       categoryId: undefined,
     },
@@ -108,10 +96,6 @@ export const useProductStore = defineStore('product', {
             search: this.params.search || '',
         });
 
-        // Filter produk berdasarkan customer (relasi product_customer)
-        if (this.params.customerId) {
-          params.append('customerId', this.params.customerId.toString());
-        }
 
         if (this.params.warehouseId) {
           params.append('warehouseId', this.params.warehouseId.toString());
@@ -427,10 +411,9 @@ export const useProductStore = defineStore('product', {
                 name: '',
                 sku: '',
                 unitId: undefined,
-                priceBuy: 0,
-                priceSell: 0,
                 isDevice: false,
                 billingType: 'one_time',
+                productType: null,
                 image: '',
                 imagePreview: '',
                 categoryId: undefined,
@@ -440,21 +423,20 @@ export const useProductStore = defineStore('product', {
     },
 
     closeModal() {
-        this.showModal = false;
-        this.isEditMode = false;
+        this.showModal = false
+        this.isEditMode = false
         this.form = {
             name: '',
             sku: '',
             unitId: undefined,
-            priceBuy: 0,
-            priceSell: 0,
             isDevice: false,
             billingType: 'one_time',
+            productType: null,
             image: '',
             imagePreview: '',
             categoryId: undefined,
-        };
-        this.validationErrors = [];
+        }
+        this.validationErrors = []
     },
 
     setPagination(event: any) {

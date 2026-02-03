@@ -1,78 +1,239 @@
+:root {
+    --pos-primary: #666cff;
+    --pos-primary-hover: #5c61e6;
+    --pos-primary-light: #e7e7ff;
+    /* Warna aksen POS (mengikuti primary) */
+    --pos-sidebar-green: var(--pos-primary);
+    --pos-sidebar-green-hover: var(--pos-primary-hover);
+}
+
 body {
-    font-family: "Inter", sans-serif;
-    background-color: white;
+    font-family: "Poppins", "Inter", sans-serif;
+    background-color: #fff;
 }
 
-.navbar-custom {
-    background-color: #666cff;
-    height: 160px;
-    padding: 1rem 4rem 4rem 4rem;
+/* ========== POS Page Layout (sidebar + main + bill) ========== */
+.pos-page {
+    display: flex;
+    flex: 1;
+    width: 100%;
+    min-width: 0;
+    min-height: 100vh;
+    background: #fff;
 }
 
-.navbar-custom .navbar-brand,
-.navbar-custom .form-control::placeholder,
-.navbar-custom .btn,
-.navbar-custom i {
-    color: white;
+.pos-content {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem 2rem;
+    overflow: auto;
 }
 
-.navbar-custom .form-control {
-    background-color: #8b90fc;
-    border: none;
-    color: white;
-    padding-left: 2.5rem;
-}
-
-.navbar-custom .form-control:focus {
-    box-shadow: none;
-    border-color: #1e90ff;
-    color: white;
-    background-color: #8b90fc;
-}
-
-.navbar-custom .form-control::placeholder {
-    color: white;
-}
-
-.navbar-custom .btn-primary {
-    background-color: #1e90ff;
-    border: none;
-}
-
-.navbar-custom .btn-primary:hover {
-    background-color: #1a78e6;
-}
-
-.navbar-custom .icon-btn {
-    background-color: #8b90fc;
-    border-radius: 50%;
-    width: 36px;
-    height: 36px;
+.pos-header {
     display: flex;
     align-items: center;
-    justify-content: center;
-    color: white;
-    border: none;
-    position: relative;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
 }
 
-.navbar-custom .icon-btn .notification-dot {
+.pos-search-wrap {
+    position: relative;
+    flex: 1;
+    max-width: 320px;
+}
+
+.pos-search-icon {
     position: absolute;
-    top: 4px;
-    right: 4px;
-    width: 8px;
-    height: 8px;
-    background-color: #22c55e;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+    font-size: 0.875rem;
+    pointer-events: none;
+}
+
+.pos-search {
+    width: 100%;
+    padding: 0.625rem 1rem 0.625rem 2.5rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    font-size: 0.9375rem;
+    background: #fff;
+    color: #1e293b;
+}
+
+.pos-search:focus {
+    outline: none;
+    border-color: var(--pos-primary);
+    box-shadow: 0 0 0 2px rgba(102, 108, 255, 0.2);
+}
+
+.pos-header-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.pos-user-greeting {
+    font-weight: 500;
+    color: #1e293b;
+    font-size: 0.9375rem;
+}
+
+.pos-date {
+    font-size: 0.8125rem;
+    color: #64748b;
+}
+
+.pos-icon-btn {
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
-    border: 2px solid #2e2c4b;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    color: #64748b;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
 }
 
-.container {
-    position: relative;
-    bottom: 50px;
-    z-index: 1000;
+.pos-icon-btn:hover {
+    background: var(--pos-primary-light);
+    color: var(--pos-primary);
 }
 
+.pos-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--pos-primary-light);
+    border: 1px solid rgba(102, 108, 255, 0.3);
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.pos-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.pos-avatar-initial {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--pos-primary);
+}
+
+.pos-main-inner {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Alignment presisi: Categories, Product List, Card Product satu garis kiri */
+.pos-content-aligned,
+.pos-content-aligned .pos-product-list-section,
+.pos-categories-wrap {
+    margin-left: 0;
+    padding-left: 0;
+    padding-right: 0;
+}
+
+/* ========== Categories (text only, no icons) ========== */
+.pos-categories-wrap {
+    margin-bottom: 1.5rem;
+}
+
+.pos-categories-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 0;
+    padding-right: 0;
+}
+
+/* Product List section: title dan grid sejajar kiri */
+.pos-product-list-section {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin-left: 0;
+    padding-left: 0;
+}
+
+.pos-product-list-section .pos-categories-title {
+    margin-bottom: 0.75rem;
+    margin-left: 0;
+    padding-left: 0;
+}
+
+.pos-category-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.pos-category-btn {
+    padding: 0.625rem 1.25rem;
+    border-radius: 0.5rem;
+    border: 1.5px solid #e5e7eb;
+    background: #fff;
+    color: #64748b;
+    font-weight: 600;
+    font-size: 0.9375rem;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, color 0.2s;
+    white-space: nowrap;
+}
+
+.pos-category-btn:hover {
+    border-color: var(--pos-primary);
+    color: var(--pos-primary);
+    background: var(--pos-primary-light);
+}
+
+.pos-category-btn.active {
+    background: var(--pos-primary);
+    border-color: var(--pos-primary);
+    color: #fff;
+}
+
+.pos-select-menu {
+    margin-bottom: 1rem;
+}
+
+.pos-select-menu-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.pos-showing-items {
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+.pos-form-card .pos-card-header {
+    background: var(--pos-primary);
+    color: #fff;
+    border-radius: 1rem 1rem 0 0;
+    padding: 1rem 1.25rem;
+}
+
+/* Legacy category (kept for compatibility) */
 .category-nav {
     gap: 1.5rem;
 }
@@ -81,7 +242,7 @@ body {
     border-radius: 1rem;
     border: 1.5px solid #e5e7eb;
     background-color: white;
-    color: #8b90fc;
+    color: var(--pos-primary);
     font-weight: 600;
     width: 112px;
     padding: 1rem 0.75rem;
@@ -90,17 +251,9 @@ body {
 }
 
 .category-btn.active {
-    border-color: #1e90ff;
-    color: #1e90ff;
-    box-shadow: 0 0 5px rgba(30, 144, 255, 0.5);
-}
-
-.category-btn img {
-    border-radius: 100px;
-    margin-bottom: 0.5rem;
-    width: 48px;
-    height: 48px;
-    object-fit: contain;
+    border-color: var(--pos-primary);
+    color: var(--pos-primary);
+    box-shadow: 0 0 5px rgba(102, 108, 255, 0.4);
 }
 
 .category-subtext {
@@ -114,6 +267,259 @@ body {
     overflow-x: hidden;
 }
 
+/* Grid: 2 card per baris, sejajar dengan Product List */
+.pos-product-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    width: 100%;
+    max-width: 100%;
+    padding: 0;
+}
+
+@media (max-width: 767px) {
+    .pos-product-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.pos-product-card-wrap {
+    min-width: 0;
+}
+
+/* ========== POS Product Card (sesuai gambar: header, options, amount, Add To Cart) ========== */
+.pos-product-card {
+    background: #fff;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    border: 1px solid #e5e7eb;
+    padding: 0.875rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+    transition: box-shadow 0.2s;
+    min-height: 260px;
+}
+
+.pos-product-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.pos-product-card.is-unavailable {
+    opacity: 0.75;
+    pointer-events: none;
+}
+
+.pos-product-card.is-unavailable .pos-product-card-price,
+.pos-product-card.is-unavailable .pos-option-btn.active,
+.pos-product-card.is-unavailable .pos-amount-btn.plus,
+.pos-product-card.is-unavailable .pos-add-to-cart-btn {
+    color: #9ca3af !important;
+    background: #f3f4f6 !important;
+    border-color: #e5e7eb !important;
+}
+
+.pos-product-card-header {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+}
+
+.pos-product-card-thumb {
+    flex-shrink: 0;
+    width: 72px;
+    height: 72px;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    background: #f3f4f6;
+}
+
+.pos-product-card-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.pos-product-card-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.pos-product-card-name {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0 0 0.2rem 0;
+    line-height: 1.3;
+    word-wrap: break-word;
+}
+
+.pos-product-card-availability {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin: 0 0 0.2rem 0;
+}
+
+.pos-product-card-price {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--pos-primary);
+    margin: 0;
+}
+
+.pos-product-card-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.pos-option-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.pos-option-label {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: #374151;
+    min-width: 4.5rem;
+}
+
+.pos-option-btns {
+    display: flex;
+    gap: 0.375rem;
+}
+
+.pos-option-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1.5px solid #e5e7eb;
+    background: #fff;
+    color: #64748b;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, color 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pos-option-btn:hover:not(:disabled) {
+    border-color: var(--pos-primary);
+    color: var(--pos-primary);
+}
+
+.pos-option-btn.active {
+    border-color: var(--pos-primary);
+    background: var(--pos-primary-light);
+    color: var(--pos-primary);
+}
+
+.pos-option-btn:disabled {
+    background: #f9fafb;
+    color: #d1d5db;
+    border-color: #e5e7eb;
+    cursor: not-allowed;
+}
+
+.pos-product-card-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.pos-amount-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.pos-amount-row .pos-option-label {
+    min-width: 4.5rem;
+}
+
+.pos-amount-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.pos-amount-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1.5px solid #e5e7eb;
+    background: #f9fafb;
+    color: #64748b;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transition: border-color 0.2s, background 0.2s, color 0.2s;
+}
+
+.pos-amount-btn:hover:not(:disabled) {
+    border-color: #cbd5e1;
+    background: #f1f5f9;
+}
+
+.pos-amount-btn.plus {
+    background: var(--pos-primary);
+    border-color: var(--pos-primary);
+    color: #fff;
+}
+
+.pos-amount-btn.plus:hover:not(:disabled) {
+    background: var(--pos-primary-hover);
+    border-color: var(--pos-primary-hover);
+}
+
+.pos-amount-btn:disabled {
+    background: #f3f4f6;
+    color: #d1d5db;
+    border-color: #e5e7eb;
+    cursor: not-allowed;
+}
+
+.pos-amount-value {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #1e293b;
+    min-width: 1.5rem;
+    text-align: center;
+}
+
+.pos-add-to-cart-btn {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    border: none;
+    background: var(--pos-primary);
+    color: #fff;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.pos-add-to-cart-btn:hover:not(:disabled) {
+    background: var(--pos-primary-hover);
+}
+
+.pos-add-to-cart-btn:disabled {
+    background: #f3f4f6;
+    color: #9ca3af;
+    cursor: not-allowed;
+}
+
+/* Legacy card (keep for compatibility) */
 .card-custom {
     border-radius: 1rem;
     box-shadow: 0 1px 4px rgb(0 0 0 / 0.1);
@@ -168,7 +574,7 @@ body {
 
 .card-custom h6 {
     font-weight: 600;
-    color: #8b90fc;
+    color: var(--pos-primary);
     font-size: 1rem;
     margin-bottom: 0.25rem;
     word-wrap: break-word;
@@ -188,18 +594,150 @@ body {
 
 .card-custom .price {
     font-weight: 600;
-    color: #16a34a;
+    color: var(--pos-primary);
     font-size: 1rem;
 }
 
-.order-card {
+/* ========== Bill Details (tanpa card, flat seperti gambar) ========== */
+.pos-bill-aside {
+    width: 380px;
+    min-width: 380px;
+    padding: 1.25rem 1.5rem;
+    border-left: 1px solid #e5e7eb;
+    background: #fff;
+    overflow-y: auto;
+}
+
+.pos-bill-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    max-width: 100%;
+}
+
+.pos-bill-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.pos-bill-header h2 {
+    font-weight: 600;
+    font-size: 1.125rem;
+    color: #1e293b;
+    margin: 0;
+}
+
+.pos-bill-number {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--pos-primary);
+}
+
+.pos-btn-clear {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--pos-primary);
+    background: var(--pos-primary-light);
+    border: none;
+    border-radius: 0.375rem;
+    padding: 0.25rem 0.5rem;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+
+.pos-btn-clear:hover {
+    background: var(--pos-primary);
+    color: #fff;
+}
+
+.pos-customer-name-wrap {
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.pos-customer-label {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: #64748b;
+    margin-bottom: 0.25rem;
+}
+
+.pos-customer-value {
+    font-size: 0.9375rem;
+    color: #1e293b;
+    font-weight: 500;
+}
+
+.pos-select-table-wrap {
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.pos-select-table-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+}
+
+.pos-select-table-btn {
+    width: 100%;
+    padding: 0.625rem 1rem;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 0.5rem;
+    background: #fff;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: #64748b;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+}
+
+.pos-select-table-btn:hover {
+    border-color: var(--pos-primary);
+    color: var(--pos-primary);
+}
+
+.pos-payment-btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.pos-process-btn {
+    background: var(--pos-primary) !important;
+    font-size: 1rem !important;
+    padding: 0.875rem 1rem !important;
+    border-radius: 0.5rem !important;
+}
+
+.pos-process-btn:hover:not(:disabled) {
+    background: var(--pos-primary-hover) !important;
+}
+
+/* Bill area tidak pakai card - .order-card dipakai di halaman lain jika perlu */
+.order-card:not(.pos-bill-inner) {
     border-radius: 1rem;
     padding: 1.5rem;
     background-color: white;
-    box-shadow: 0 1px 6px rgb(0 0 0 / 0.1);
-    max-width: 420px;
-    position: sticky;
-    top: 1.5rem;
+    box-shadow: 0 1px 6px rgb(0 0 0 / 0.08);
+    max-width: 100%;
+    border: 1px solid #e5e7eb;
+}
+
+.pos-bill-aside .order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
 }
 
 .order-header {
@@ -298,7 +836,7 @@ body {
 .order-list .quantity-controls span {
     font-weight: 600;
     font-size: 0.875rem;
-    color: #8b90fc;
+    color: var(--pos-primary);
     -webkit-user-select: none;
     user-select: none;
     min-width: 20px;
@@ -314,9 +852,10 @@ body {
     text-align: left;
 }
 
-.order-summary {
-    background-color: #10b981;
-    border-radius: 1rem;
+.order-summary,
+.pos-order-summary {
+    background-color: var(--pos-primary);
+    border-radius: 0.75rem;
     padding: 1rem;
     color: white;
     font-size: 0.875rem;
@@ -335,6 +874,12 @@ body {
     font-weight: 700;
     font-size: 1.25rem;
     margin-top: 0.5rem;
+}
+
+.pos-bill-aside .payment-methods {
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #f1f5f9;
 }
 
 .payment-methods {
@@ -373,14 +918,20 @@ body {
     font-size: 1.25rem;
 }
 
+.pos-bill-aside .payment-btn.active {
+    border-color: var(--pos-primary);
+    color: var(--pos-primary);
+    background-color: var(--pos-primary-light);
+}
+
 .payment-btn.active {
-    border-color: #1e90ff;
-    color: #1e90ff;
-    background-color: white;
+    border-color: var(--pos-primary);
+    color: var(--pos-primary);
+    background-color: var(--pos-primary-light);
 }
 
 .btn-print {
-    background-color: #1e90ff;
+    background-color: var(--pos-primary);
     color: white;
     font-weight: 600;
     border-radius: 0.5rem;
@@ -390,11 +941,11 @@ body {
     cursor: pointer;
     -webkit-user-select: none;
     user-select: none;
-    transition: background-color 0.3s ease;
+    transition: background-color 0.2s ease;
 }
 
-.btn-print:hover {
-    background-color: #1a78e6;
+.btn-print:hover:not(:disabled) {
+    background-color: var(--pos-primary-hover);
 }
 
 .v-select-style .vs__dropdown-toggle {
@@ -404,14 +955,21 @@ body {
 }
 
 @media (max-width: 991.98px) {
-    main {
+    .pos-page {
         flex-direction: column;
+    }
+
+    .pos-bill-aside {
+        width: 100%;
+        min-width: 0;
+        border-left: none;
+        border-top: 1px solid #e5e7eb;
     }
 
     .order-card {
         max-width: 100%;
         position: static;
-        margin-top: 2rem;
+        margin-top: 0;
     }
 }
 

@@ -8,11 +8,16 @@ export interface User {
   id: number
   username: string
   fullName: string
+  /** API may return snake_case */
+  full_name?: string
   email: string
   isActive: boolean
   roles: Role[]
   createdAt: string
   updatedAt: string
+  avatar?: string
+  avatarUrl?: string
+  avatar_url?: string
 }
 
 interface Stats {

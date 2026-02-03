@@ -229,9 +229,26 @@ export default defineNuxtPlugin(() => {
     service: () => `${apiBase}/service`,
     serviceExportExcel: () => `${apiBase}/service/export-excel`,
 
+    // Service Type (Business, Personal - untuk filter & dropdown Service Plan)
+    serviceType: () => `${apiBase}/service-type`,
+
     // Service Plan
     servicePlan: () => `${apiBase}/service-plan`,
     servicePlanExportExcel: () => `${apiBase}/service-plan/export-excel`,
+
+    // Price List
+    priceList: () => `${apiBase}/price-list`,
+    priceListShow: (id: number | string) => `${apiBase}/price-list/${id}`,
+    getProductPrice: () => `${apiBase}/site-investment/product-price`,
+    getServicePrice: () => `${apiBase}/site-investment/service-price`,
+    getDidPrice: () => `${apiBase}/site-investment/did-price`,
+
+    // Price Adjustment Requests
+    priceAdjustmentRequests: () => `${apiBase}/price-adjustment-requests`,
+    priceAdjustmentStatistics: () => `${apiBase}/price-adjustment-requests/statistics`,
+    priceAdjustmentSubmit: (id: number | string) => `${apiBase}/price-adjustment-requests/${id}/submit`,
+    priceAdjustmentApprove: (id: number | string) => `${apiBase}/price-adjustment-requests/${id}/approve`,
+    priceAdjustmentReject: (id: number | string) => `${apiBase}/price-adjustment-requests/${id}/reject`,
 
     // Site
     sites: () => `${apiBase}/company/site`,
@@ -258,6 +275,11 @@ export default defineNuxtPlugin(() => {
     stockOut               : () => `${apiBase}/stock-out`,
     stockOutExport         : () => `${apiBase}/stock-out/export`,
     stockOutNotifications  : () => `${apiBase}/stock-out/notifications`,
+    
+    // Notifications (UI)
+    notifications: () => `${apiBase}/notifications`,
+    notificationMarkAsRead: (id: number | string) => `${apiBase}/notifications/${id}/read`,
+    notificationMarkAllRead: () => `${apiBase}/notifications/mark-all-read`,
     
     // Purchase Order Notifications
     purchaseOrderNotifications: () => `${apiBase}/purchase-order/notifications`,
@@ -319,6 +341,7 @@ export default defineNuxtPlugin(() => {
 
     // IRO (Installation Request Order)
     iro: () => `${apiBase}/iro`,
+    getIroDetails: (id: string) => `${apiBase}/iro/getIroDetails/${id}`,
     iroStatistics: () => `${apiBase}/iro/statistics`,
     approveIro: (id: string) => `${apiBase}/iro/approveIro/${id}`,
     rejectIro: (id: string) => `${apiBase}/iro/rejectIro/${id}`,
@@ -337,6 +360,7 @@ export default defineNuxtPlugin(() => {
 
     // Site Investment
     siteInvestment: () => `${apiBase}/site-investment`,
+    siteInvestmentPriceListLines: (priceableType: string) => `${apiBase}/site-investment/price-list-lines?priceableType=${priceableType}`,
     countSiteInvestByStatus: () => `${apiBase}/site-investment/countByStatus`,
     approveSiteInvestment: (id: string) => `${apiBase}/site-investment/approveSiteInvestment/${id}`,
     rejectSiteInvestment: (id: string) => `${apiBase}/site-investment/rejectSiteInvestment/${id}`,

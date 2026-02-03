@@ -10,6 +10,7 @@ export interface IroDetailForm {
   productId: number | null
   didId: number | null
   itemType: 'PRODUCT' | 'SERVICE' | 'DID'
+  minimumPeriod?: string
   quantity: number
   price: number
   subtotal: number
@@ -113,15 +114,21 @@ function validateDetailsByItemType(details: IroDetailForm[]): string | null {
 
 function sanitizeDetailForPayload(d: IroDetailForm, itemType: string): Record<string, any> {
   const t = String(itemType || d.itemType || '').toUpperCase()
+  const qty = Number(d.quantity) || 1
+  const pr = Number(d.price) || 0
+  const minPeriod = String(d.minimumPeriod ?? '12')
+  const periodNum = Number(minPeriod) || 12
+  const subtotal = t === 'SERVICE' ? qty * pr * periodNum : Number(d.subtotal) || qty * pr
   return {
     serviceId: t === 'SERVICE' ? (d.serviceId ?? null) : null,
     servicePlanId: t === 'SERVICE' ? (d.servicePlanId ?? null) : null,
     productId: t === 'PRODUCT' ? (d.productId ?? null) : null,
     didId: t === 'DID' ? (d.didId ?? null) : null,
     itemType: t || d.itemType,
-    quantity: Number(d.quantity) || 1,
-    price: Number(d.price) || 0,
-    subtotal: Number(d.subtotal) || 0,
+    minimumPeriod: minPeriod,
+    quantity: qty,
+    price: pr,
+    subtotal,
   }
 }
 
@@ -205,7 +212,7 @@ export const useIroStore = defineStore('iro', {
       this.error = null
       const { $api } = useNuxtApp()
       try {
-        const data = await apiFetch(`${$api.iro()}/${id}`, { headers: { Accept: 'application/json' }, credentials: 'include' })
+        const data = await apiFetch($api.getIroDetails(id), { headers: { Accept: 'application/json' }, credentials: 'include' })
         if (data?.data) this.iro = data.data
         else throw new Error('Struktur data tidak valid')
       } catch (e: any) {
@@ -221,7 +228,7 @@ export const useIroStore = defineStore('iro', {
       this.error = null
       const { $api } = useNuxtApp()
       try {
-        const data = await apiFetch(`${$api.iro()}/${id}`, { headers: { Accept: 'application/json' }, credentials: 'include' })
+        const data = await apiFetch($api.getIroDetails(id), { headers: { Accept: 'application/json' }, credentials: 'include' })
         if (data?.data) this.openModal(data.data)
         else throw new Error('Data tidak valid')
       } catch (e: any) {
@@ -391,15 +398,21 @@ export const useIroStore = defineStore('iro', {
           jenisIro: raw.jenisIro ?? raw.jenis_iro ?? 'capex',
           iroDetails: (raw.iroDetails ?? raw.iro_details ?? []).map((d: any) => {
             const t = String(d.itemType ?? d.item_type ?? 'SERVICE').toUpperCase()
+            const qty = Number(d.quantity) || 1
+            const pr = Number(d.price) || 0
+            const minPeriod = String(d.minimumPeriod ?? d.minimum_period ?? '12')
+            const periodNum = Number(minPeriod) || 12
+            const subtotal = t === 'SERVICE' ? qty * pr * periodNum : Number(d.subtotal) || qty * pr
             const o: IroDetailForm = {
               serviceId: d.serviceId ?? d.service_id ?? d.service?.id ?? null,
               servicePlanId: d.servicePlanId ?? d.service_plan_id ?? d.servicePlan?.id ?? d.service?.servicePlan?.id ?? null,
               productId: d.productId ?? d.product_id ?? d.product?.id ?? null,
               didId: d.didId ?? d.did_id ?? d.did?.id ?? null,
               itemType: t as 'PRODUCT' | 'SERVICE' | 'DID',
-              quantity: Number(d.quantity) || 1,
-              price: Number(d.price) || 0,
-              subtotal: Number(d.subtotal) || 0,
+              minimumPeriod: minPeriod,
+              quantity: qty,
+              price: pr,
+              subtotal,
               service: d.service,
               servicePlan: d.servicePlan ?? d.service_plan,
               product: d.product,
@@ -427,8 +440,27 @@ export const useIroStore = defineStore('iro', {
     },
 
     /**
-     * Isi form.iroDetails: 1 baris = 1 tipe. PRODUCT dari quotation_items; SERVICE dari quotation_services; DID dari siteInvestDids.
-     * Masing-masing hanya isi kolom yang sesuai (yang lain null).
+     * Resolve didId from item that has priceListLine (quotation_dids / site_invest_dids).
+     * Backend returns priceListLine with did (after loadPriceable) or priceableType + priceableId.
+     */
+    resolveDidIdFromItem(item: any): number | null {
+      if (!item) return null
+      const direct = item.didId ?? item.did_id ?? item.did?.id ?? null
+      if (direct != null && direct !== 0) return direct
+      const pl = item.priceListLine ?? item.price_list_line
+      if (!pl) return null
+      const fromDid = pl.did?.id ?? pl.did_id ?? null
+      if (fromDid != null && fromDid !== 0) return fromDid
+      if (String(pl.priceableType ?? pl.priceable_type ?? '').toLowerCase() === 'did') {
+        const pid = pl.priceableId ?? pl.priceable_id ?? null
+        if (pid != null && pid !== 0) return pid
+      }
+      return null
+    },
+
+    /**
+     * Isi form.iroDetails: 1 baris = 1 tipe. PRODUCT dari quotation_items; SERVICE dari quotation_services;
+     * DID: prioritas quotation.quotationDids (jika ada), else siteInvestDids. didId dari priceListLine.did.id atau priceableId.
      */
     setIroDetailsFromQuotation(quotation: any, siteInvestDids: any[] | null) {
       const details: IroDetailForm[] = []
@@ -449,54 +481,106 @@ export const useIroStore = defineStore('iro', {
             quantity: Number(it.quantity) || 1,
             price: Number(it.price) || 0,
             subtotal: Number(it.subtotal) || (Number(it.quantity) || 1) * (Number(it.price) || 0),
+            product: it.product,
           })
         }
 
+        const minPeriod = quotation.minimumPeriod ?? quotation.minimum_period ?? '12'
+        const periodNum = Number(minPeriod) || 12
         for (const s of svcs) {
           const serviceId = s.serviceId ?? s.service_id ?? s.service?.id ?? null
           const servicePlanId = s.servicePlanId ?? s.service_plan_id ?? s.service?.servicePlanId ?? s.service?.service_plan_id ?? s.service?.servicePlan?.id ?? null
           if (!serviceId || !servicePlanId) continue
+          const qty = Number(s.quantity) || 1
+          const pr = Number(s.price) || 0
           details.push({
             serviceId,
             servicePlanId,
             productId: null,
             didId: null,
             itemType: 'SERVICE',
-            quantity: Number(s.quantity) || 1,
-            price: Number(s.price) || 0,
-            subtotal: Number(s.subtotal) || (Number(s.quantity) || 1) * (Number(s.price) || 0),
+            minimumPeriod: minPeriod,
+            quantity: qty,
+            price: pr,
+            subtotal: qty * pr * periodNum,
+            service: s.service,
+            servicePlan: s.servicePlan ?? s.service_plan ?? s.service?.servicePlan,
           })
         }
-      }
 
-      for (const sid of siteInvestDids || []) {
-        const didId = sid.didId ?? sid.did_id ?? sid.did?.id ?? null
-        if (!didId) continue
-        const qty = Number(sid.quantity) || 1
-        const pr = Number(sid.price) || 0
-        details.push({
-          serviceId: null,
-          servicePlanId: null,
-          productId: null,
-          didId,
-          itemType: 'DID',
-          quantity: qty,
-          price: pr,
-          subtotal: Number(sid.subtotal) || qty * pr,
-        })
+        const quotationDids = quotation.quotationDids ?? quotation.quotation_dids ?? []
+        if (quotationDids.length > 0) {
+          for (const qd of quotationDids) {
+            const didId = this.resolveDidIdFromItem(qd)
+            if (didId == null || didId === 0) continue
+            const qty = Number(qd.quantity) ?? Number(qd.priceListLine?.quantity) ?? 1
+            const pr = Number(qd.price) ?? Number(qd.priceListLine?.price) ?? 0
+            const pl = qd.priceListLine ?? qd.price_list_line
+            details.push({
+              serviceId: null,
+              servicePlanId: null,
+              productId: null,
+              didId,
+              itemType: 'DID',
+              quantity: qty,
+              price: pr,
+              subtotal: Number(qd.subtotal) || qty * pr,
+              did: pl?.did ? { id: pl.did.id, code: pl.did.code, name: pl.did.name } : undefined,
+            })
+          }
+        } else {
+          for (const sid of siteInvestDids || []) {
+            const didId = this.resolveDidIdFromItem(sid)
+            if (didId == null || didId === 0) continue
+            const qty = Number(sid.quantity) || 1
+            const pr = Number(sid.price) || 0
+            const pl = sid.priceListLine ?? sid.price_list_line
+            details.push({
+              serviceId: null,
+              servicePlanId: null,
+              productId: null,
+              didId,
+              itemType: 'DID',
+              quantity: qty,
+              price: pr,
+              subtotal: Number(sid.subtotal) || qty * pr,
+              did: pl?.did ? { id: pl.did.id, code: pl.did.code, name: pl.did.name } : undefined,
+            })
+          }
+        }
+      } else {
+        for (const sid of siteInvestDids || []) {
+          const didId = this.resolveDidIdFromItem(sid)
+          if (didId == null || didId === 0) continue
+          const qty = Number(sid.quantity) || 1
+          const pr = Number(sid.price) || 0
+          const pl = sid.priceListLine ?? sid.price_list_line
+          details.push({
+            serviceId: null,
+            servicePlanId: null,
+            productId: null,
+            didId,
+            itemType: 'DID',
+            quantity: qty,
+            price: pr,
+            subtotal: Number(sid.subtotal) || qty * pr,
+            did: pl?.did ? { id: pl.did.id, code: pl.did.code, name: pl.did.name } : undefined,
+          })
+        }
       }
 
       this.form.iroDetails = details
     },
 
-    /** Ganti baris DID: hapus yang lama, tambah dari siteInvestDids. */
+    /** Ganti baris DID: hapus yang lama, tambah dari siteInvestDids. didId dari priceListLine.did atau priceableId. */
     applyDidRows(siteInvestDids: any[] | null) {
       this.form.iroDetails = this.form.iroDetails.filter((d) => String(d.itemType || '').toUpperCase() !== 'DID')
       for (const sid of siteInvestDids || []) {
-        const didId = sid.didId ?? sid.did_id ?? sid.did?.id ?? null
-        if (!didId) continue
+        const didId = this.resolveDidIdFromItem(sid)
+        if (didId == null || didId === 0) continue
         const qty = Number(sid.quantity) || 1
         const pr = Number(sid.price) || 0
+        const pl = sid.priceListLine ?? sid.price_list_line
         this.form.iroDetails.push({
           serviceId: null,
           servicePlanId: null,
@@ -506,6 +590,7 @@ export const useIroStore = defineStore('iro', {
           quantity: qty,
           price: pr,
           subtotal: Number(sid.subtotal) || qty * pr,
+          did: pl?.did ? { id: pl.did.id, code: pl.did.code, name: pl.did.name } : undefined,
         })
       }
     },
@@ -527,7 +612,7 @@ export const useIroStore = defineStore('iro', {
     },
 
     addDetail() {
-      this.form.iroDetails.push({ serviceId: null, servicePlanId: null, productId: null, didId: null, itemType: 'SERVICE', quantity: 1, price: 0, subtotal: 0 })
+      this.form.iroDetails.push({ serviceId: null, servicePlanId: null, productId: null, didId: null, itemType: 'SERVICE', minimumPeriod: '12', quantity: 1, price: 0, subtotal: 0 })
     },
 
     removeDetail(index: number) {

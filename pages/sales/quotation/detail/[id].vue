@@ -266,8 +266,10 @@
                           </thead>
                           <tbody>
                             <tr v-for="(m, i) in mrcItems" :key="m.id || 'mrc-' + i">
-                              <td class="fw-medium">{{ m.product?.name || m.product?.sku || '—' }}</td>
-                              <td class="text-muted">{{ m.description || '—' }}</td>
+                              <td class="fw-medium">
+                                {{ (m.product?.name || m.product?.sku) || (m.service?.name || m.service?.code) || '—' }}
+                              </td>
+                              <td class="text-muted">{{ m.description || m.service?.description || '—' }}</td>
                               <td class="text-end">{{ formatRupiah(mrcMonthly(m)) }}</td>
                               <td>{{ mrcPeriod }} months</td>
                               <td class="text-end fw-medium">{{ formatRupiah(mrcTotal(m)) }}</td>
@@ -450,8 +452,26 @@ const otcItems = computed(() => {
 })
 
 const mrcItems = computed(() => {
-  const list = quotation.value?.quotationItems || []
-  return list.filter((i: any) => getBillingType(i) === 'recurring')
+  const productList = quotation.value?.quotationItems || []
+  const serviceList = quotation.value?.quotationServices || []
+  const productRecurring = productList.filter((i: any) => {
+    const bt = getBillingType(i)
+    return bt === 'recurring'
+  })
+  const serviceRecurring = serviceList.filter((s: any) => {
+    const bt = (s?.billingType ?? s?.billing_type ?? s?.service?.billing_type ?? s?.service?.billingType ?? '') + ''
+    return bt.toLowerCase() === 'recurring'
+  })
+  // Normalize service entries to match item shape for rendering
+  const normalizedServices = serviceRecurring.map((s: any) => ({
+    id: s.id,
+    service: s.service,
+    quantity: s.quantity,
+    price: s.price,
+    subtotal: s.subtotal,
+    description: s.description ?? s.service?.description ?? null,
+  }))
+  return [...productRecurring, ...normalizedServices]
 })
 
 function otcAmount (m: any): number {

@@ -459,7 +459,7 @@
                     </div>
                   </div>
                   <div class="kanban-card-footer">
-                    <div class="d-flex align-items-center gap-2">
+                    <div class="d-flex align-items-center flex-wrap gap-2">
                       <span
                         v-if="opportunity.quotations && opportunity.quotations.length > 0"
                         class="badge bg-label-info"
@@ -948,10 +948,12 @@ onMounted(async () => {
 
 .kanban-column {
   flex: 0 0 320px;
+  align-self: flex-start;
   background: #f8f9fa;
   border-radius: 8px;
   display: flex;
   flex-direction: column;
+  min-height: 280px;
   max-height: calc(100vh - 360px);
 }
 
@@ -973,9 +975,11 @@ onMounted(async () => {
 }
 
 .kanban-column-body {
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 300px;
   overflow-y: auto;
   padding: 12px;
+  padding-bottom: 8px;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -1059,8 +1063,9 @@ onMounted(async () => {
 
 .kanban-card-footer {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
   margin-top: 8px;
   padding-top: 8px;
   border-top: 1px solid #f3f4f6;

@@ -193,11 +193,6 @@
                         {{ slotProps.data.regency?.name || '-' }}
                       </template>
                     </Column>
-                    <Column field="total" header="Total" :sortable="true" class="text-nowrap">
-                      <template #body="slotProps">
-                        {{ formatRupiah(slotProps.data.total || 0) }}
-                      </template>
-                    </Column>
                     <Column field="createdAt" header="Tanggal Dibuat" :sortable="true" class="text-nowrap">
                       <template #body="slotProps">
                         {{ formatDate(slotProps.data.createdAt) }}
@@ -352,7 +347,7 @@
               <div class="tab-pane fade" id="did-tabs-services" role="tabpanel">
                 <div v-for="(item, index) in form.services" :key="index" class="repeater-item mb-4">
                   <div class="row g-3">
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                       <CustomSelect2
                         v-model="item.servicePlanId"
                         :options="servicePlanOptions"
@@ -368,7 +363,7 @@
                         {{ getFieldError(`services.${index}.servicePlanId`) }}
                       </div>
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-md-4">
                       <CustomSelect2
                         v-model="item.category"
                         :options="categoryOptions"
@@ -377,37 +372,12 @@
                         placeholder="Kategori"
                         :searchable="false"
                         :clearable="false"
-                        @update:modelValue="calculateServiceSubtotal(index)"
                       />
                       <div v-if="hasFieldError(`services.${index}.category`)" class="invalid-feedback d-block">
                         {{ getFieldError(`services.${index}.category`) }}
                       </div>
                     </div>
-                    <div class="col-md-2">
-                      <div class="form-floating form-floating-outline">
-                        <input type="number" v-model.number="item.quantity" @input="calculateServiceSubtotal(index)" class="form-control" placeholder="Qty" min="1">
-                        <label>Qty</label>
-                      </div>
-                      <div v-if="hasFieldError(`services.${index}.quantity`)" class="invalid-feedback d-block">
-                        {{ getFieldError(`services.${index}.quantity`) }}
-                      </div>
-                    </div>
-                    <div class="col-md-2">
-                      <div class="form-floating form-floating-outline">
-                        <input type="text" :value="formatRupiah(item.price)" @input="updateServicePriceFromInput(index, $event)" class="form-control" placeholder="Harga">
-                        <label>Harga</label>
-                      </div>
-                      <div v-if="hasFieldError(`services.${index}.price`)" class="invalid-feedback d-block">
-                        {{ getFieldError(`services.${index}.price`) }}
-                      </div>
-                    </div>
-                    <div class="col-md-2">
-                      <div class="form-floating form-floating-outline">
-                        <input type="text" :value="formatRupiah(item.subtotal)" class="form-control" placeholder="Subtotal" readonly>
-                        <label>Subtotal</label>
-                      </div>
-                    </div>
-                    <div class="col-md-12 d-flex justify-content-end">
+                    <div class="col-md-2 d-flex justify-content-end">
                       <button @click.prevent="didStore.removeServiceItem(index)" class="btn btn-outline-danger">Hapus</button>
                     </div>
                   </div>
@@ -415,9 +385,6 @@
                 </div>
                 <div class="mt-4">
                   <button @click.prevent="didStore.addServiceItem()" class="btn btn-primary">Tambah Service</button>
-                </div>
-                <div class="d-flex justify-content-end mt-4">
-                  <span class="fw-bold fs-5">Subtotal Service: {{ formatRupiah(serviceSubtotal) }}</span>
                 </div>
               </div>
             </div>
@@ -602,51 +569,11 @@ const parseRupiahToNumber = (rupiahString) => {
   return Number(String(rupiahString).replace(/[Rp\s.]/g, '').replace(',', '.')) || 0
 }
 
-const updateServicePriceFromInput = (index, event) => {
-  const numericValue = parseRupiahToNumber(event.target?.value || '')
-  if (form.value.services && form.value.services[index]) {
-    form.value.services[index].price = Math.round(numericValue)
-    calculateServiceSubtotal(index)
-  }
-}
-
 const getUniqueCategories = (services) => {
   if (!services || !Array.isArray(services)) return []
   const categories = services.map(s => s.category).filter(Boolean)
   return [...new Set(categories)]
 }
-
-const onServicePlanChange = (index) => {
-  // Optional: Update price from service plan if needed
-  calculateServiceSubtotal(index)
-}
-
-const calculateServiceSubtotal = (index) => {
-  if (form.value.services && form.value.services[index]) {
-    const item = form.value.services[index]
-    const quantity = item.quantity || 0
-    const price = item.price || 0
-    item.subtotal = quantity * price
-  }
-}
-
-const serviceSubtotal = computed(() => {
-  if (!form.value.services || form.value.services.length === 0) return 0
-  return form.value.services.reduce((sum, item) => {
-    return sum + (item.subtotal || 0)
-  }, 0)
-})
-
-const calculatedTotal = computed(() => {
-  return serviceSubtotal.value
-})
-
-// Watch calculatedTotal to update form.total
-watch(calculatedTotal, (newTotal) => {
-  if (form.value) {
-    form.value.total = newTotal
-  }
-})
 
 const formatDate = (dateString) => {
   if (!dateString) return '-'

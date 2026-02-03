@@ -195,9 +195,9 @@
                                             {{ slotProps.data.servicePlan?.name || '-' }}
                                         </template>
                                     </Column>
-                                    <Column field="price" header="Harga" :sortable="true" class="text-nowrap">
+                                    <Column field="servicePlan.serviceType.name" header="Tipe Service" :sortable="false" class="text-nowrap">
                                         <template #body="slotProps">
-                                            {{ formatRupiah(slotProps.data.price) }}
+                                            {{ slotProps.data.servicePlan?.serviceType?.name || '-' }}
                                         </template>
                                     </Column>
                                     <Column field="description" header="Deskripsi" :sortable="true">
@@ -319,19 +319,25 @@
                                     {{ getFieldError('servicePlanId') }}
                                 </div>
                             </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Service Line Type</label>
+                                <select class="form-select" v-model="form.serviceLineType">
+                                    <option :value="null">— Pilih —</option>
+                                    <option value="leased">Leased</option>
+                                    <option value="add_quota">Add Quota</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Quota Label</label>
+                                <input type="text" class="form-control" v-model="form.quotaLabel" placeholder="e.g. Priority 50 GB" />
+                            </div>
                             <div class="col-md-6">
-                                <label class="form-label">Harga</label>
-                                <input
-                                    type="text"
-                                    class="form-control"
-                                    :value="formatRupiah(form.price)"
-                                    @input="updatePriceFromInput"
-                                    placeholder="0"
-                                    id="price"
-                                >
-                                <div v-if="hasFieldError('price')" class="invalid-feedback d-block">
-                                    {{ getFieldError('price') }}
-                                </div>
+                                <label class="form-label">Billing Type</label>
+                                <select class="form-select" v-model="form.billingType">
+                                    <option :value="null">— Pilih —</option>
+                                    <option value="one_time">One Time</option>
+                                    <option value="recurring">Recurring</option>
+                                </select>
                             </div>
                             <div class="col-md-12">
                                 <label class="form-label">Deskripsi</label>
@@ -428,10 +434,6 @@ const parseRupiahToNumber = (rupiahString) => {
   return Number(String(rupiahString).replace(/[Rp\s.]/g, '').replace(',', '.')) || 0
 }
 
-const updatePriceFromInput = (event) => {
-  const numericValue = parseRupiahToNumber(event.target.value)
-  serviceStore.form.price = Math.round(numericValue)
-}
 
 // Format date helper
 const formatDate = (dateString) => {

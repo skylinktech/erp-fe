@@ -219,14 +219,9 @@
                                     </Column>
                                     <Column field="sku" header="No. Product" :sortable="true"></Column>
                                     <Column field="name" header="Nama Product" :sortable="true"></Column>
-                                    <Column field="priceBuy" header="Harga Beli" :sortable="true" v-if="userHasPermission('show_product') || userHasRole('superadmin') || userHasRole('admin')">
+                                    <Column field="productType" header="Jenis / Type KIT" :sortable="true">
                                         <template #body="slotProps">
-                                            {{ slotProps.data.priceBuy ? formatRupiah(slotProps.data.priceBuy) : '-' }}
-                                        </template>
-                                    </Column>
-                                    <Column field="priceSell" header="Harga Jual" :sortable="true">
-                                        <template #body="slotProps">
-                                            {{ slotProps.data.priceSell ? formatRupiah(slotProps.data.priceSell) : '-' }}
+                                            {{ slotProps.data.productType || '-' }}
                                         </template>
                                     </Column>
                                     <Column field="isDevice" header="Device" :sortable="true">
@@ -319,27 +314,7 @@
                                     {{ getFieldError('name') }}
                                 </div>
                             </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Harga Beli</label>
-                                <input 
-                                    type="text" 
-                                    class="form-control" 
-                                    v-model="formattedPriceBuy" 
-                                    placeholder="Masukkan harga beli"
-                                    id="priceBuy"
-                                >
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Harga Jual</label>
-                                <input 
-                                    type="text" 
-                                    class="form-control" 
-                                    v-model="formattedPriceSell" 
-                                    placeholder="Masukkan harga jual"
-                                    id="priceSell"
-                                >
-                            </div>
-                            <div class="col-md-3">
+                            <div class="col-md-6">
                                 <label class="form-label">Satuan</label>
                                 <CustomSelect2 v-model="form.unitId" :options="units"
                                     :get-option-label="option => option.name"
@@ -358,6 +333,16 @@
                                     class="kategori"
                                     id="categoryId"
                                 />  
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Jenis / Type KIT</label>
+                                <input 
+                                    type="text" 
+                                    class="form-control"
+                                    v-model="form.productType" 
+                                    placeholder="e.g. Flat Standard-V4, Standard Actuated-V3"
+                                    id="productType"
+                                >
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Tipe Tagihan</label>
@@ -470,23 +455,6 @@ const tableControls = ref({
 const modalTitle = computed(() => isEditMode.value ? 'Edit Product' : 'Tambah Product');
 const modalDescription = computed(() => isEditMode.value ? 'Silakan ubah data product di bawah ini.' : 'Silakan isi form di bawah ini untuk menambahkan product baru.');
 
-const formattedPriceBuy = computed({
-    get() {
-        return form.value.priceBuy ? formatRupiah(form.value.priceBuy) : '';
-    },
-    set(value) {
-        form.value.priceBuy = value.replace(/[^0-9]/g, '');
-    }
-});
-
-const formattedPriceSell = computed({
-    get() {
-        return form.value.priceSell ? formatRupiah(form.value.priceSell) : '';
-    },
-    set(value) {
-        form.value.priceSell = value.replace(/[^0-9]/g, '');
-    }
-});
 
 const billingTypeOptions = [
     { label: 'One Time', value: 'one_time' },

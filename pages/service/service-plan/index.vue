@@ -103,15 +103,27 @@
                                                                 <li><a class="dropdown-item" href="javascript:void(0)" @click="exportData('pdf')">PDF</a></li>
                                                             </ul>
                                                         </div>
-                                                        <div class="input-group">
-                                                            <span class="p-input-icon-left">
-                                                                <InputText
-                                                                    v-model="tableControls.search"
-                                                                    placeholder="Cari berdasarkan nama atau deskripsi..."
-                                                                    class="w-full md:w-20rem"
-                                                                    @input="(e) => handleSearch(e.target.value)"
-                                                                />
-                                                            </span>
+                                                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                                                            <Dropdown
+                                                                v-model="tableControls.serviceTypeId"
+                                                                :options="serviceTypeOptions"
+                                                                optionLabel="label"
+                                                                optionValue="value"
+                                                                placeholder="Semua Tipe"
+                                                                class="w-10rem"
+                                                                :showClear="true"
+                                                                @change="handleServiceTypeChange"
+                                                            />
+                                                            <div class="input-group">
+                                                                <span class="p-input-icon-left">
+                                                                    <InputText
+                                                                        v-model="tableControls.search"
+                                                                        placeholder="Cari berdasarkan nama atau deskripsi..."
+                                                                        class="w-full md:w-20rem"
+                                                                        @input="(e) => handleSearch(e.target.value)"
+                                                                    />
+                                                                </span>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -179,12 +191,33 @@
                                             {{ params.first + slotProps.index + 1 }}
                                         </template>
                                     </Column>
+                                    <Column field="serviceType" header="Service Type" :sortable="false">
+                                        <template #body="slotProps">
+                                            <span v-if="slotProps.data.serviceType" class="badge bg-label-primary">{{ slotProps.data.serviceType.name }}</span>
+                                            <span v-else class="text-muted">—</span>
+                                        </template>
+                                    </Column>
                                     <Column field="name" header="Nama" :sortable="true"></Column>
                                     <Column field="description" header="Deskripsi" :sortable="true">
                                         <template #body="slotProps">
                                             <span :title="slotProps.data.description">
                                                 {{ slotProps.data.description ? (slotProps.data.description.length > 50 ? slotProps.data.description.substring(0, 50) + '...' : slotProps.data.description) : '-' }}
                                             </span>
+                                        </template>
+                                    </Column>
+                                    <Column field="planFunction" header="Fungsi" :sortable="false">
+                                        <template #body="slotProps">
+                                            {{ slotProps.data.planFunction || '-' }}
+                                        </template>
+                                    </Column>
+                                    <Column field="quota" header="Quota" :sortable="false">
+                                        <template #body="slotProps">
+                                            {{ slotProps.data.quota || '-' }}
+                                        </template>
+                                    </Column>
+                                    <Column field="contractMonth" header="Kontrak (bln)" :sortable="false">
+                                        <template #body="slotProps">
+                                            {{ slotProps.data.contractMonth != null ? slotProps.data.contractMonth : '-' }}
                                         </template>
                                     </Column>
                                     <Column field="createdAt" header="Tanggal Dibuat" :sortable="true" class="text-nowrap">
@@ -234,7 +267,17 @@
                 <template #default>
                     <form @submit.prevent="servicePlanStore.saveServicePlan()">
                         <div class="row g-4">
-                            <div class="col-md-12">
+                            <!-- Service Type -->
+                            <div class="col-md-6">
+                                <label class="form-label">Service Type</label>
+                                <select class="form-select" v-model="form.serviceTypeId">
+                                    <option :value="null">— Pilih Service Type —</option>
+                                    <option v-for="t in servicePlanStore.serviceTypes" :key="t.id" :value="t.id">{{ t.name }}</option>
+                                </select>
+                                <div v-if="hasFieldError('serviceTypeId')" class="invalid-feedback d-block">{{ getFieldError('serviceTypeId') }}</div>
+                            </div>
+                            <!-- Basic -->
+                            <div class="col-md-6">
                                 <label class="form-label">Nama Service Plan <span class="text-danger">*</span></label>
                                 <input 
                                     type="text" 
@@ -249,14 +292,89 @@
                                     {{ getFieldError('name') }}
                                 </div>
                             </div>
+                            <!-- Atribut Plan -->
+                            <div class="col-md-6">
+                                <label class="form-label">Fungsi</label>
+                                <input type="text" class="form-control" v-model="form.planFunction" placeholder="Fungsi plan" id="planFunction">
+                                <div v-if="hasFieldError('planFunction')" class="invalid-feedback d-block">{{ getFieldError('planFunction') }}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Quota</label>
+                                <input type="text" class="form-control" v-model="form.quota" placeholder="Quota" id="quota">
+                                <div v-if="hasFieldError('quota')" class="invalid-feedback d-block">{{ getFieldError('quota') }}</div>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Tipe Quota</label>
+                                <input type="text" class="form-control" v-model="form.typeQuota" placeholder="Tipe quota" id="typeQuota">
+                                <div v-if="hasFieldError('typeQuota')" class="invalid-feedback d-block">{{ getFieldError('typeQuota') }}</div>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Kontrak (bulan)</label>
+                                <input type="number" class="form-control" v-model.number="form.contractMonth" placeholder="Bulan" id="contractMonth" min="0" step="1">
+                                <div v-if="hasFieldError('contractMonth')" class="invalid-feedback d-block">{{ getFieldError('contractMonth') }}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">FUP</label>
+                                <input type="text" class="form-control" v-model="form.fup" placeholder="FUP" id="fup">
+                                <div v-if="hasFieldError('fup')" class="invalid-feedback d-block">{{ getFieldError('fup') }}</div>
+                            </div>
+                            <!-- Fitur (checkbox) -->
+                            <div class="col-12">
+                                <label class="form-label d-block">Fitur</label>
+                                <span class="text-muted">Pilih fitur yang akan ditambahkan ke service plan</span>
+                                <div class="row mt-3">
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" v-model="form.hasSla" id="hasSla">
+                                            <label class="form-check-label" for="hasSla">SLA</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" v-model="form.hasTopup" id="hasTopup">
+                                            <label class="form-check-label" for="hasTopup">Top Up</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" v-model="form.hasAutoTopup" id="hasAutoTopup">
+                                            <label class="form-check-label" for="hasAutoTopup">Auto Top Up</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" v-model="form.hasIpPublic" id="hasIpPublic">
+                                            <label class="form-check-label" for="hasIpPublic">IP Public</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" v-model="form.hasApi" id="hasApi">
+                                            <label class="form-check-label" for="hasApi">API</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" v-model="form.hasDashboard" id="hasDashboard">
+                                            <label class="form-check-label" for="hasDashboard">Dashboard</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" v-model="form.hasMonthlyReport" id="hasMonthlyReport">
+                                            <label class="form-check-label" for="hasMonthlyReport">Laporan Bulanan</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="col-md-12">
+                                <label class="form-label">Info Pembayaran</label>
+                                <textarea class="form-control" v-model="form.paymentInfo" placeholder="Info pembayaran" id="paymentInfo" rows="2"></textarea>
+                                <div v-if="hasFieldError('paymentInfo')" class="invalid-feedback d-block">{{ getFieldError('paymentInfo') }}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Info Registrasi</label>
+                                <textarea class="form-control" v-model="form.registrationInfo" placeholder="Info registrasi" id="registrationInfo" rows="2"></textarea>
+                                <div v-if="hasFieldError('registrationInfo')" class="invalid-feedback d-block">{{ getFieldError('registrationInfo') }}</div>
+                            </div>
+                            <div class="col-md-6">
                                 <label class="form-label">Deskripsi</label>
                                 <textarea 
                                     class="form-control" 
                                     v-model="form.description" 
                                     placeholder="Masukkan deskripsi service plan"
                                     id="description"
-                                    rows="3"
+                                    rows="2"
                                 ></textarea>
                                 <div v-if="hasFieldError('description')" class="invalid-feedback d-block">
                                     {{ getFieldError('description') }}
@@ -308,9 +426,18 @@ const { servicePlans, loading, totalRecords, totalServicePlans, params, form, is
 const globalFilterValue = ref('')
 const rowsPerPageOptionsArray = ref([10, 25, 50, 100]);
 
+const serviceTypeOptions = computed(() => {
+  const types = servicePlanStore.serviceTypes || []
+  return [
+    { label: 'Semua Tipe', value: '' },
+    ...types.map((t) => ({ label: t.name, value: String(t.id) })),
+  ]
+})
+
 const tableControls = ref({
     rows: 10,
     search: '',
+    serviceTypeId: '',
 });
 
 const modalTitle = computed(() => isEditMode.value ? 'Edit Service Plan' : 'Tambah Service Plan');
@@ -327,10 +454,16 @@ const formatDate = (dateString) => {
 };
 
 let modalInstance = null
+const handleServiceTypeChange = () => {
+  servicePlanStore.setServiceTypeId(tableControls.value.serviceTypeId ?? '')
+}
+
 onMounted(() => {
     tableControls.value.rows = Number(params.value.rows) || 10;
     tableControls.value.search = globalFilterValue.value;
-    
+    tableControls.value.serviceTypeId = params.value.serviceTypeId ?? '';
+
+    servicePlanStore.fetchServiceTypes()
     servicePlanStore.fetchServicePlans();
     servicePlanStore.fetchTotalServicePlans();
     permissionStore.fetchPermissions()
@@ -371,6 +504,13 @@ watch(() => params.value.search, (newValue) => {
     if (newValue !== globalFilterValue.value) {
         globalFilterValue.value = newValue;
         tableControls.value.search = newValue;
+    }
+});
+
+watch(() => params.value.serviceTypeId, (newValue) => {
+    const v = newValue ?? ''
+    if (tableControls.value.serviceTypeId !== v) {
+        tableControls.value.serviceTypeId = v
     }
 });
 

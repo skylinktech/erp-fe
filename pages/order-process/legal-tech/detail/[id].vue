@@ -35,6 +35,15 @@
               <span :class="getStatusBadge(review.status).class" class="badge">{{ getStatusBadge(review.status).text }}</span>
             </div>
             <div class="d-flex flex-wrap gap-2">
+              <!-- Proceed to Subscriptions Button -->
+              <button
+                v-if="review.status === 'approved' && (userHasRole('superadmin') || userHasPermission('create_subscription'))"
+                @click="openSubscriptionModal"
+                class="btn btn-success btn-sm"
+              >
+                <i class="ri-file-list-3-line me-1"></i>
+                Proceed to Subscription
+              </button>
               <div class="btn-group" role="group">
                 <button id="btnGroupDrop1" type="button" class="btn btn-outline-secondary dropdown-toggle btn-sm" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="d-none d-sm-block">Actions</span></button>
                 <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
@@ -46,6 +55,9 @@
                   </a>
                   <a v-if="review.status === 'pending' && (userHasRole('superadmin') || userHasPermission('reject_legal-technical_review'))" class="dropdown-item" href="javascript:void(0)" @click="onReject">
                     <i class="ri-close-line me-2"></i> Reject
+                  </a>
+                  <a v-if="review.status === 'approved' && (userHasRole('superadmin') || userHasPermission('create_subscription'))" class="dropdown-item" href="javascript:void(0)" @click="openSubscriptionModal">
+                    <i class="ri-file-list-3-line me-2"></i> Proceed to Subscription
                   </a>
                   <a v-if="review.status === 'draft' && (userHasRole('superadmin') || userHasPermission('edit_legal-technical_review'))" class="dropdown-item" href="javascript:void(0)" @click="navigateTo('/order-process/legal-tech?edit=' + review.id)">
                     <i class="ri-edit-box-line me-2"></i> Edit
@@ -266,6 +278,17 @@
       </div>
     </div>
     <div class="content-backdrop fade"></div>
+
+    <!-- Subscription Form Modal (Reusable) -->
+    <SubscriptionFormModal
+      modal-id="LeTechSubscriptionModal"
+      :prefilled-quotation-id="review?.quotation?.id || review?.quotationId"
+      :prefilled-le-tech-review-id="review?.id"
+      :prefilled-le-tech-review-no="review?.noLr || review?.no_lr"
+      :prefilled-iro-id="review?.iroId || review?.iro_id || review?.iro?.id"
+      @saved="onSubscriptionSaved"
+      @close="onSubscriptionModalClose"
+    />
   </div>
 </template>
 
@@ -273,11 +296,14 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useLegalTechStore } from '~/stores/legal-tech'
+import { useSubscriptionStore } from '~/stores/subscription'
 import { usePermissions } from '~/composables/usePermissions'
 import { useImageUrl } from '~/composables/useImageUrl'
+import SubscriptionFormModal from '~/components/modal/SubscriptionFormModal.vue'
 
 const route = useRoute()
 const ltStore = useLegalTechStore()
+const subscriptionStore = useSubscriptionStore()
 const { userHasPermission, userHasRole } = usePermissions()
 const { getAttachmentUrl, getFileIcon, isImageFile } = useImageUrl()
 
@@ -332,13 +358,44 @@ function getStatusBadge(status) {
 
 async function load() {
   if (!id.value) return
+  
+  // Pastikan list sudah ter-load terlebih dahulu jika kosong
+  if (reviews.value.length === 0) {
+    try {
+      await ltStore.fetchLeTechReviews(true)
+    } catch (e) {
+      console.error('Failed to fetch list:', e)
+    }
+  }
+  
   try {
-    // Selalu fetch detail lengkap untuk memastikan data customer lengkap
+    // Coba fetch detail lengkap
     await ltStore.getLeTechReviewDetails(id.value)
   } catch (e) {
     console.error('Detail load error:', e)
-    // Fallback ke list jika detail gagal
-    await ltStore.fetchLeTechReviews(true)
+    
+    // Cek apakah data ada di list
+    const foundReview = reviews.value.find(r => String(r.id) === id.value)
+    if (!foundReview) {
+      // Jika tidak ada, coba fetch list sekali lagi
+      try {
+        await ltStore.fetchLeTechReviews(true)
+        const retryFound = reviews.value.find(r => String(r.id) === id.value)
+        if (!retryFound) {
+          // Jika masih tidak ada, tampilkan error
+          const toast = useToast()
+          toast.error({ 
+            title: 'Error', 
+            message: 'Legal-Tech Review tidak ditemukan', 
+            color: 'red', 
+            position: 'topRight', 
+            layout: 2 
+          })
+        }
+      } catch (listError) {
+        console.error('Failed to fetch list on retry:', listError)
+      }
+    }
   }
 }
 
@@ -368,6 +425,23 @@ function handleDelete() {
   if (!review.value) return
   ltStore.deleteLeTechReview(review.value.id)
   navigateTo('/order-process/legal-tech')
+}
+
+// Subscription modal functions
+function openSubscriptionModal() {
+  if (!review.value) return
+  subscriptionStore.openModalFromLeTechReview(review.value)
+}
+
+function onSubscriptionSaved() {
+  const toast = useToast()
+  toast.success({ title: 'Sukses', message: 'Subscription berhasil dibuat dari Legal-Tech Review', color: 'green', position: 'topRight', layout: 2 })
+  // Optionally navigate to subscription list
+  navigateTo('/order-process/subscription')
+}
+
+function onSubscriptionModalClose() {
+  // Modal closed, nothing special needed
 }
 
 onMounted(() => load())

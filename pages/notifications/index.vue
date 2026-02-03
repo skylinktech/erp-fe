@@ -29,6 +29,16 @@
             </div>
           </div>
           <div class="card-body">
+            <!-- Tabs -->
+            <ul class="nav nav-tabs mb-3">
+              <li class="nav-item">
+                <a class="nav-link" :class="{active: activeTab === 'need'}" href="#" @click.prevent="activeTab = 'need'">Perlu Approval</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" :class="{active: activeTab === 'approved'}" href="#" @click.prevent="activeTab = 'approved'">Sudah Approved</a>
+              </li>
+            </ul>
+            
             <!-- Loading State -->
             <div v-if="loading" class="text-center py-4">
               <div class="spinner-border text-dark" role="status">
@@ -54,80 +64,54 @@
 
             <!-- Notifications List -->
             <div v-else class="list-group list-group-flush">
-              <div 
-                v-for="notification in notificationsStore.notifications" 
-                :key="notification.id"
-                class="list-group-item list-group-item-action py-3 px-3"
-                
-                @click="handleNotificationClick(notification)"
-                style="cursor: pointer;"
-              >
-                <div class="d-flex justify-content-between align-items-start">
-                  <div class="flex-grow-1">
-                    <div class="d-flex align-items-center mb-2">
-                      <span 
-                        class="badge me-2"
-                        
-                      >
-                        {{ getTypeText(notification.type) }}
-                      </span>
-                      <span
-                        
-                      >
-                        {{ getStatusText(notification.status) }}
-                      </span>
-                      <span 
-                        v-if="!notificationsStore.readNotifications.has(notification.id)"
-                        class="badge bg-dark ms-2"
-                      >
-                        Baru
-                      </span>
-                    </div>
-                    
-                    <h6 class="mb-1">
-                      {{ getNotificationTitle(notification) }}
-                    </h6>
-                    
-                    <div class="text-muted small">
-                      <div class="d-flex flex-wrap gap-3">
-                        <span>
-                          <i class="ri-calendar-line me-1"></i>
-                          {{ formatDate(notification.createdAt) }}
-                        </span>
-                        <span>
-                          <i class="ri-user-line me-1"></i>
-                          {{ notification.createdByName || 'Unknown' }}
-                        </span>
-                        <span v-if="notification.type === 'stock_in' || notification.type === 'stock_out'">
-                          <i class="ri-building-line me-1"></i>
-                          {{ notification.warehouseName || 'Unknown Warehouse' }}
-                        </span>
-                        <span v-else-if="notification.type === 'purchase_order'">
-                          <i class="ri-store-2-line me-1"></i>
-                          {{ notification.vendorName || 'Unknown Vendor' }}
-                        </span>
-                        <span v-else-if="notification.type === 'sales_order'">
-                          <i class="ri-user-line me-1"></i>
-                          {{ notification.customerName || 'Unknown Customer' }}
-                        </span>
+              <div v-if="activeTab === 'need'">
+                <div v-if="needApprovalNotifications.length === 0" class="text-center py-3 text-muted">Tidak ada notifikasi perlu approval</div>
+                <div v-for="item in needApprovalNotifications" :key="`need-${item.id}`" class="list-group-item list-group-item-action py-3 px-3" @click="handleRecipientClick(item)" style="cursor:pointer;">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                      <div class="d-flex align-items-center mb-2">
+                        <span class="badge bg-primary me-2">{{ getTypeText(item.type) }}</span>
+                        <span>{{ getStatusText(item.status) }}</span>
+                        <span v-if="!item.isRead" class="badge bg-dark ms-2">Baru</span>
+                      </div>
+                      <h6 class="mb-1 text-dark">{{ item.title }}</h6>
+                      <div class="text-muted small">
+                        <div class="d-flex flex-wrap gap-3">
+                          <span><i class="ri-calendar-line me-1"></i>{{ formatDate(item.createdAt) }}</span>
+                          <span><i class="ri-user-line me-1"></i>{{ item.createdByName || 'Unknown' }}</span>
+                        </div>
                       </div>
                     </div>
+                    <div class="flex-shrink-0">
+                      <button v-if="!item.isRead" @click.stop="markRecipientAsRead(item)" class="btn btn-sm btn-outline-dark" title="Tandai sebagai dibaca"><i class="ri-check-line"></i></button>
+                      <i v-else class="ri-check-line text-success" title="Sudah dibaca"></i>
+                    </div>
                   </div>
-                  
-                  <div class="flex-shrink-0">
-                    <button 
-                      v-if="!notificationsStore.readNotifications.has(notification.id)"
-                      @click.stop="markAsRead(notification.id)"
-                      class="btn btn-sm btn-outline-dark"
-                      title="Tandai sebagai dibaca"
-                    >
-                      <i class="ri-check-line"></i>
-                    </button>
-                    <i 
-                      v-else
-                      class="ri-check-line text-success"
-                      title="Sudah dibaca"
-                    ></i>
+                </div>
+              </div>
+
+              <div v-if="activeTab === 'approved'">
+                <div v-if="approvedNotifications.length === 0" class="text-center py-3 text-muted">Tidak ada notifikasi approved</div>
+                <div v-for="item in approvedNotifications" :key="`app-${item.id}`" class="list-group-item list-group-item-action py-3 px-3" @click="handleRecipientClick(item)" style="cursor:pointer;">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                      <div class="d-flex align-items-center mb-2">
+                        <span class="badge bg-primary me-2">{{ getTypeText(item.type) }}</span>
+                        <span>{{ getStatusText(item.status) }}</span>
+                        <span v-if="!item.isRead" class="badge bg-dark ms-2">Baru</span>
+                      </div>
+                      <h6 class="mb-1 text-dark">{{ item.title }}</h6>
+                      <div class="text-muted small">
+                        <div class="d-flex flex-wrap gap-3">
+                          <span><i class="ri-calendar-line me-1"></i>{{ formatDate(item.createdAt) }}</span>
+                          <span><i class="ri-user-line me-1"></i>{{ item.createdByName || 'Unknown' }}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="flex-shrink-0">
+                      <button v-if="!item.isRead" @click.stop="markRecipientAsRead(item)" class="btn btn-sm btn-outline-dark" title="Tandai sebagai dibaca"><i class="ri-check-line"></i></button>
+                      <i v-else class="ri-check-line text-success" title="Sudah dibaca"></i>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -173,14 +157,155 @@ const { notifications, unreadCount } = storeToRefs(notificationsStore)
 const refreshNotifications = async () => {
   loading.value = true
   error.value = null
-  
   try {
-    await notificationsStore.fetchNotifications()
+    // refresh both tabs
+    await Promise.all([fetchNeedApproval(), fetchApproved()])
   } catch (err) {
     error.value = 'Gagal memuat notifikasi'
     console.error('Error refreshing notifications:', err)
   } finally {
     loading.value = false
+  }
+}
+
+// Local tab data
+const activeTab = ref('need')
+const needApprovalNotifications = ref<any[]>([])
+const approvedNotifications = ref<any[]>([])
+
+const mapRecipientToItem = (r: any) => {
+  const n = r.notification || {}
+  const payload = n.payload || {}
+
+  const createdByName =
+    payload.requestedByUser?.fullName ||
+    payload.requested_by_user?.full_name ||
+    payload.createdByUser?.fullName ||
+    payload.created_by_user?.full_name ||
+    payload.createdByName ||
+    payload.createdBy ||
+    payload.requestedBy ||
+    ''
+
+  const makeTitle = () => {
+    const t = n.type || payload.type || ''
+    switch (t) {
+      case 'site_investment':
+        return `Site Investment ${payload.siNumber || payload.si_number || payload.id || ''}`.trim()
+      case 'quotation':
+        return `Quotation ${payload.noQuotation || payload.no_quotation || payload.id || ''}`.trim()
+      case 'le_tech_review':
+        return `Legal-Tech Review ${payload.noLr || payload.no_lr || payload.id || ''}`.trim()
+      case 'subscription':
+        return `Subscription ${payload.noSubscription || payload.no_subscription || payload.id || ''}`.trim()
+      case 'pks':
+        return `PKS ${payload.noPks || payload.no_pks || payload.id || ''}`.trim()
+      case 'iro':
+        return `IRO ${payload.noIro || payload.no_iro || payload.id || ''}`.trim()
+      case 'price_adjustment':
+        return `Price Adjustment ${payload.id || ''}`.trim()
+      default:
+        return (payload.title || payload.description || payload.note || `${t || 'Notifikasi'} ${payload.id || ''}`).trim()
+    }
+  }
+
+  return {
+    id: r.id,
+    isRead: !!r.is_read,
+    type: n.type || payload.type,
+    status: n.event || payload.status || '',
+    createdAt: n.created_at || n.createdAt || r.created_at || r.createdAt,
+    createdByName,
+    title: makeTitle(),
+    raw: r,
+  }
+}
+
+const fetchNeedApproval = async () => {
+  try {
+    const { $api } = useNuxtApp()
+    const res = await fetch(`${$api.notifications()}?event=submitted&rows=50`, { credentials: 'include' })
+    if (!res.ok) throw new Error('Failed to fetch')
+    const json = await res.json()
+    const list = Array.isArray(json.data) ? json.data : []
+    needApprovalNotifications.value = list.map(mapRecipientToItem)
+    // resolve any numeric user ids to names
+    await resolveMissingUserNames(needApprovalNotifications.value)
+  } catch (e) {
+    console.error('Error fetching need approval notifications:', e)
+  }
+}
+
+const fetchApproved = async () => {
+  try {
+    const { $api } = useNuxtApp()
+    const res = await fetch(`${$api.notifications()}?event=approved&rows=50`, { credentials: 'include' })
+    if (!res.ok) throw new Error('Failed to fetch')
+    const json = await res.json()
+    const list = Array.isArray(json.data) ? json.data : []
+    approvedNotifications.value = list.map(mapRecipientToItem)
+    await resolveMissingUserNames(approvedNotifications.value)
+  } catch (e) {
+    console.error('Error fetching approved notifications:', e)
+  }
+}
+
+// Resolve missing user names for items where createdByName is numeric or empty
+const resolveMissingUserNames = async (items: any[]) => {
+  try {
+    const { $api } = useNuxtApp()
+    const idsToFetch = new Set<number>()
+    items.forEach((it) => {
+      const name = it.createdByName
+      if (!name || /^\d+$/.test(String(name))) {
+        const payload = it.raw?.notification?.payload || {}
+        const uid = payload.createdBy || payload.requestedBy || payload.created_by || payload.requested_by || null
+        if (uid && Number(uid)) idsToFetch.add(Number(uid))
+      }
+    })
+    if (idsToFetch.size === 0) return
+    await Promise.all(Array.from(idsToFetch).map(async (uid) => {
+      try {
+        const res = await fetch(`${$api.users()}/${uid}`, { credentials: 'include' })
+        if (!res.ok) return
+        const json = await res.json()
+        const user = json?.data ?? json
+        const full = user?.fullName || user?.full_name || user?.username || user?.name || String(uid)
+        // assign back to items that reference this uid
+        items.forEach((it) => {
+          const payload = it.raw?.notification?.payload || {}
+          const uid2 = payload.createdBy || payload.requestedBy || payload.created_by || payload.requested_by || null
+          if (Number(uid2) === uid) it.createdByName = full
+        })
+      } catch {}
+    }))
+  } catch (e) {
+    console.error('Error resolving user names for notifications:', e)
+  }
+}
+
+const markRecipientAsRead = async (item: any) => {
+  try {
+    // call store action which will call backend if id numeric
+    await notificationsStore.markAsRead(String(item.id))
+    // update local lists
+    item.isRead = true
+  } catch (e) {
+    console.error('Error marking recipient as read:', e)
+  }
+}
+
+const handleRecipientClick = async (item: any) => {
+  // mark read and navigate if needed
+  if (!item.isRead) await markRecipientAsRead(item)
+  // basic navigation heuristics
+  const t = item.type
+  if (t === 'purchase_order') navigateTo('/purchasing/purchase-order')
+  else if (t === 'sales_order') navigateTo('/sales/sales-order')
+  else if (t === 'price_adjustment') {
+    // go to price adjustment detail if payload contains id
+    const payload = item.raw.notification?.payload || {}
+    if (payload.id) navigateTo(`/price-adjustment/${payload.id}`)
   }
 }
 
@@ -239,6 +364,18 @@ const getTypeBadgeClass = (type: string) => {
       return 'bg-primary'
     case 'sales_order':
       return 'bg-success'
+    case 'site_investment':
+      return 'bg-primary'
+    case 'quotation':
+      return 'bg-info'
+    case 'le_tech_review':
+      return 'bg-secondary'
+    case 'subscription':
+      return 'bg-success'
+    case 'pks':
+      return 'bg-dark'
+    case 'iro':
+      return 'bg-warning'
     default:
       return 'bg-secondary'
   }
@@ -252,8 +389,22 @@ const getTypeText = (type: string) => {
       return 'Stock Out'
     case 'purchase_order':
       return 'Purchase Order'
+    case 'price_adjustment':
+      return 'Price Adjustment'
     case 'sales_order':
       return 'Sales Order'
+    case 'site_investment':
+      return 'Site Investment'
+    case 'quotation':
+      return 'Quotation'
+    case 'le_tech_review':
+      return 'Legal-Tech'
+    case 'subscription':
+      return 'Subscription'
+    case 'pks':
+      return 'PKS'
+    case 'iro':
+      return 'IRO'
     default:
       return 'Unknown'
   }
@@ -267,6 +418,8 @@ const getNotificationTitle = (notification: any) => {
       return `Stock Out untuk ${notification.noSo} dengan quantity ${notification.quantity} belum di posting`
     case 'purchase_order':
       return `Purchase Order ${notification.noPo} memerlukan approval`
+    case 'price_adjustment':
+      return `Price Adjustment (${notification.description || ''}) status: ${notification.status}`
     case 'sales_order':
       return `Sales Order ${notification.noSo} memerlukan approval`
     default:

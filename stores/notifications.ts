@@ -258,6 +258,64 @@ export const useNotificationsStore = defineStore('notifications', {
           })
         }
 
+        // Fetch NotificationRecipient entries for price_adjustment (so we have recipient ids)
+        try {
+          const paRes = await fetch(`${$api.notifications()}?types=price_adjustment&rows=10`, {
+            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+            credentials: 'include'
+          })
+          if (paRes.ok) {
+            const paData = await paRes.json()
+            const paList = Array.isArray(paData.data) ? paData.data : paData
+            paList.forEach((rec: any) => {
+              const n = rec.notification || {}
+              const payload = n.payload || {}
+              orderNotifications.push({
+                id: String(rec.id),
+                type: n.type || 'price_adjustment',
+                status: n.event || payload.status || '',
+                createdAt: n.created_at || payload.createdAt || rec.created_at,
+                createdBy: payload.requestedBy || payload.requested_by || '',
+                createdByName: payload.requestedByUser?.fullName || payload.requested_by_user?.full_name || payload.createdByName || 'Sales',
+                customerName: payload.customer?.name || payload.customerName || '',
+                total: payload.proposedPrice || payload.total || 0,
+                description: `Price request ${payload.id || n.id} ${payload.product?.name || payload.service?.name || payload.did?.code || ''}`,
+              })
+            })
+          }
+        } catch (e) {
+          console.error('Error fetching price adjustment notifications:', e)
+        }
+        
+        // Fetch quotation notifications as well
+        try {
+          const qRes = await fetch(`${$api.notifications()}?types=quotation&rows=10`, {
+            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+            credentials: 'include'
+          })
+          if (qRes.ok) {
+            const qData = await qRes.json()
+            const qList = Array.isArray(qData.data) ? qData.data : qData
+            qList.forEach((rec: any) => {
+              const n = rec.notification || {}
+              const payload = n.payload || {}
+              orderNotifications.push({
+                id: String(rec.id),
+                type: n.type || 'quotation',
+                status: n.event || payload.status || '',
+                createdAt: n.created_at || payload.createdAt || rec.created_at,
+                createdBy: payload.createdBy || payload.requestedBy || '',
+                createdByName: payload.createdByUser?.fullName || payload.requestedByUser?.fullName || 'Sales',
+                customerName: payload.customer?.name || '',
+                total: payload.total || payload.grandTotal || 0,
+                description: payload.noQuotation ? `Quotation ${payload.noQuotation}` : (payload.description || '')
+              })
+            })
+          }
+        } catch (e) {
+          console.error('Error fetching quotation notifications:', e)
+        }
+
         // Combine all notifications
         const allNotifications: Notification[] = [...stockNotifications, ...orderNotifications]
         
@@ -279,6 +337,101 @@ export const useNotificationsStore = defineStore('notifications', {
         
         this.lastChecked = new Date()
 
+        // Initialize SSE stream for realtime notifications
+        try {
+          const { $api } = useNuxtApp()
+          // Only open one EventSource per client
+          // Initialize WebSocket (socket.io) connection for realtime notifications
+          if (typeof window !== 'undefined' && !(window as any).__notifications_socket_opened) {
+            try {
+              // use socket.io-client via dynamic import (avoid require in ESM/browser)
+              const socketModule = await import('socket.io-client')
+              const io = (socketModule && (socketModule.io || socketModule.default || socketModule)) as any
+              const config = useRuntimeConfig?.() || {}
+              const publicConfig = config.public || {}
+              const socketPort = publicConfig.socketPort || null
+              const socketUrl = socketPort ? `${window.location.protocol}//${window.location.hostname}:${socketPort}` : window.location.origin
+              const socket = io(socketUrl, { withCredentials: true })
+
+              socket.on('connect', () => {
+                // authenticate by sending userId so server can join user room
+                const userStore = useUserStore()
+                const uid = userStore?.user?.id
+                socket.emit('authenticate', { userId: uid })
+              })
+
+              socket.on('price_adjustment', (payload: any) => {
+                try {
+                  const p = payload.data || payload
+                  const n = {
+                    id: `pa-${p.id}`,
+                    type: 'price_adjustment',
+                    status: p.status,
+                    createdAt: p.createdAt || p.created_at,
+                    createdBy: p.requestedBy || p.requested_by,
+                    createdByName: p.requestedByUser?.fullName || p.requested_by_user?.full_name || 'Sales',
+                    customerName: p.customer?.name || '',
+                    total: p.proposedPrice || 0,
+                    description: (payload.event || '') + ' - ' + (p.product?.name || p.service?.name || p.did?.code || '')
+                  }
+                  this.orderNotifications.unshift(n as any)
+                  this.notifications.unshift(n as any)
+                  this.unreadCount = this.notifications.filter(notification => !this.readNotifications.has(notification.id)).length
+                  // optional: show toast (use global composable)
+                  try {
+                    const toast = useToast()
+                    if (toast?.info) {
+                      toast.info({ title: 'Notifikasi', message: `Price request ${payload.event}` })
+                    }
+                  } catch {}
+                } catch (e) {
+                  console.error('WS payload handle error', e)
+                }
+              })
+
+              // Realtime listener for quotation notifications
+              socket.on('quotation', (payload: any) => {
+                try {
+                  const p = payload.data || payload
+                  const n = {
+                    id: `q-${p.id}`,
+                    type: 'quotation',
+                    status: payload.event || p.status,
+                    createdAt: p.createdAt || p.created_at,
+                    createdBy: p.createdBy || p.created_by,
+                    createdByName: p.createdByUser?.fullName || p.created_by_user?.full_name || 'Sales',
+                    customerName: p.customer?.name || '',
+                    total: p.total || p.grandTotal || 0,
+                    description: (payload.event || '') + ' - ' + (p.noQuotation || p.description || '')
+                  }
+                  this.orderNotifications.unshift(n as any)
+                  this.notifications.unshift(n as any)
+                  this.unreadCount = this.notifications.filter(notification => !this.readNotifications.has(notification.id)).length
+                  try {
+                    const toast = useToast()
+                    if (toast?.info) {
+                      toast.info({ title: 'Notifikasi', message: `Quotation ${payload.event}` })
+                    }
+                  } catch {}
+                } catch (e) {
+                  console.error('WS payload handle error (quotation)', e)
+                }
+              })
+
+              socket.on('disconnect', () => {
+                console.warn('Notification socket disconnected')
+              })
+
+              ;(window as any).__notifications_socket_opened = true
+              ;(window as any).__notifications_socket = socket
+            } catch (e) {
+              console.error('Failed to init socket.io client for notifications', e)
+            }
+          }
+        } catch (e) {
+          console.error('Failed to initialize SSE for notifications:', e)
+        }
+
       } catch (error) {
         console.error('Error fetching notifications:', error)
         this.error = error
@@ -290,24 +443,55 @@ export const useNotificationsStore = defineStore('notifications', {
     },
 
     async markAsRead(notificationId: string) {
-      this.readNotifications.add(notificationId)
-      this.saveReadNotifications()
-      
-      // Recalculate unread count
-      this.unreadCount = this.notifications.filter(notification => 
-        !this.readNotifications.has(notification.id)
-      ).length
+      try {
+        const { $api } = useNuxtApp()
+        // If notificationId is prefixed (e.g. pa-123), backend expects recipient id for DB.
+        // We'll attempt to call API only when id is numeric (recipient id). For frontend-only ids, just mark locally.
+        if (/^\d+$/.test(String(notificationId))) {
+          const res = await fetch(`${$api.notificationMarkAsRead(notificationId)}`, {
+            method: 'PATCH',
+            credentials: 'include',
+          })
+          if (!res.ok) {
+            console.warn('Failed to mark notification as read on server', res.status)
+          }
+        }
+
+        this.readNotifications.add(notificationId)
+        this.saveReadNotifications()
+
+        // Recalculate unread count
+        this.unreadCount = this.notifications.filter(notification =>
+          !this.readNotifications.has(notification.id)
+        ).length
+      } catch (e) {
+        console.error('Error in markAsRead action:', e)
+      }
     },
 
     async markAllAsRead() {
-      // Mark all current notifications as read
-      this.notifications.forEach(notification => {
-        this.readNotifications.add(notification.id)
-      })
-      this.saveReadNotifications()
-      
-      // Set unread count to 0
-      this.unreadCount = 0
+      try {
+        const { $api } = useNuxtApp()
+        // Call backend to mark recipients as read for current user
+        const res = await fetch(`${$api.notificationMarkAllRead()}`, {
+          method: 'PATCH',
+          credentials: 'include',
+        })
+        if (!res.ok) {
+          console.warn('Failed to mark all notifications as read on server', res.status)
+        }
+
+        // Mark locally as well
+        this.notifications.forEach(notification => {
+          this.readNotifications.add(notification.id)
+        })
+        this.saveReadNotifications()
+
+        // Set unread count to 0
+        this.unreadCount = 0
+      } catch (e) {
+        console.error('Error in markAllAsRead action:', e)
+      }
     },
 
     clearNotifications() {

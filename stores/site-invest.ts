@@ -6,43 +6,62 @@ import { useUserStore } from '~/stores/user'
 import { useImageUrl } from '~/composables/useImageUrl'
 import type { Customer } from './customer'
 import type { User } from './userManagement'
-import type { Product } from './product'
-import type { Service } from './service'
+
+/** Price list line option (from API site-investment/price-list-lines) */
+export interface SiteInvestPriceListLineOption {
+  id: number
+  price_list_id: number
+  priceable_type: 'product' | 'service' | 'did'
+  priceable_id: number
+  price: number
+  quantity: number
+  billing_type?: string
+  billing_cycle?: string | null
+  price_list?: { id: number; name: string }
+  product?: { id: number; name: string; sku?: string }
+  service?: { id: number; name: string; code?: string }
+  did?: { id: number; code: string; name?: string }
+  terminal_kit_count?: number | null
+  quota_priority?: number | null
+  new_service_line?: number | null
+  additional_data?: number | null
+}
 
 interface SiteInvestMaterial {
   id?: string
   siteInvestId?: string
-  productId: number
-  warehouseId?: number | null
+  priceListLineId: number
   quantity: number
   price: number
   subtotal: number
-  product?: Product
+  isPriceOverridden?: boolean
+  priceListLine?: SiteInvestPriceListLineOption
 }
 
 interface SiteInvestService {
   id?: string
   siteInvestId?: string
-  unitId: number
-  serviceId: number
+  priceListLineId: number
   quantity: number
   price: number
   subtotal: number
-  service?: Service
-  unit?: any
+  isPriceOverridden?: boolean
+  terminalKitCount?: number | null
+  quotaPriority?: number | null
+  newServiceLine?: number | null
+  additionalData?: number | null
+  priceListLine?: SiteInvestPriceListLineOption
 }
 
 interface SiteInvestDid {
   id?: string
   siteInvestId?: string
-  didId: number
-  servicePlanId?: number | null
-  category?: 'delivery' | 'installation' | 'survey' | 'dismantle' | null
-  unitId?: number | null
+  priceListLineId: number
   quantity: number
   price: number
+  subtotal: number
   isPriceOverridden: boolean
-  did?: any
+  priceListLine?: SiteInvestPriceListLineOption
 }
 
 interface SiteInvestBudget {
@@ -339,34 +358,37 @@ export const useSiteInvestStore = defineStore('siteInvest', {
           formData.append('createdBy', userStore.user.id.toString())
         }
 
+        const materialKeys = ['priceListLineId', 'quantity', 'price', 'subtotal', 'isPriceOverridden']
         this.form.siteInvestMaterials.forEach((item: any, i: number) => {
-          if (item.productId && item.quantity > 0) {
-            Object.keys(item).forEach(itemKey => {
+          if (item.priceListLineId && item.quantity > 0) {
+            materialKeys.forEach(itemKey => {
               const value = item[itemKey]
               if (value !== null && value !== undefined) {
-                formData.append(`siteInvestMaterials[${i}][${itemKey}]`, value)
+                formData.append(`siteInvestMaterials[${i}][${itemKey}]`, String(value))
               }
             })
           }
         })
 
+        const serviceKeys = ['priceListLineId', 'quantity', 'price', 'subtotal', 'isPriceOverridden', 'terminalKitCount', 'quotaPriority', 'newServiceLine', 'additionalData']
         this.form.siteInvestServices.forEach((item: any, i: number) => {
-          if (item.serviceId && item.quantity > 0) {
-            Object.keys(item).forEach(itemKey => {
+          if (item.priceListLineId && item.quantity > 0) {
+            serviceKeys.forEach(itemKey => {
               const value = item[itemKey]
               if (value !== null && value !== undefined) {
-                formData.append(`siteInvestServices[${i}][${itemKey}]`, value)
+                formData.append(`siteInvestServices[${i}][${itemKey}]`, String(value))
               }
             })
           }
         })
 
+        const didKeys = ['priceListLineId', 'quantity', 'price', 'subtotal', 'isPriceOverridden']
         this.form.siteInvestDids.forEach((item: any, i: number) => {
-          if (item.didId) {
-            Object.keys(item).forEach(itemKey => {
+          if (item.priceListLineId) {
+            didKeys.forEach(itemKey => {
               const value = item[itemKey]
               if (value !== null && value !== undefined) {
-                formData.append(`siteInvestDids[${i}][${itemKey}]`, value)
+                formData.append(`siteInvestDids[${i}][${itemKey}]`, String(value))
               }
             })
           }
@@ -763,33 +785,43 @@ export const useSiteInvestStore = defineStore('siteInvest', {
 
         formData.contingencyPercent = Number(formData.contingencyPercent) || 0
 
-        // Normalisasi item agar subtotal/price/quantity siap dipakai computed ringkasan (Total Investasi, Contingency, Grand Total)
+        // Normalisasi item: pastikan priceListLineId dan subtotal/isPriceOverridden
         const nm = (v: any) => (v !== null && v !== undefined && v !== '') ? Number(v) : 0
         if (Array.isArray(formData.siteInvestMaterials)) {
           formData.siteInvestMaterials.forEach((m: any) => {
+            m.priceListLineId = m.priceListLineId ?? m.price_list_line_id ?? 0
             const q = nm(m.quantity) || 1
             const p = nm(m.price) || 0
             m.quantity = q
             m.price = p
             m.subtotal = nm(m.subtotal) || q * p
+            m.isPriceOverridden = m.isPriceOverridden ?? m.is_price_overridden ?? false
           })
         }
         if (Array.isArray(formData.siteInvestServices)) {
           formData.siteInvestServices.forEach((s: any) => {
+            s.priceListLineId = s.priceListLineId ?? s.price_list_line_id ?? 0
             const q = nm(s.quantity) || 1
             const p = nm(s.price) || 0
             s.quantity = q
             s.price = p
             s.subtotal = nm(s.subtotal) || q * p
+            s.isPriceOverridden = s.isPriceOverridden ?? s.is_price_overridden ?? false
+            s.terminalKitCount = s.terminalKitCount ?? s.terminal_kit_count ?? null
+            s.quotaPriority = s.quotaPriority ?? s.quota_priority ?? null
+            s.newServiceLine = s.newServiceLine ?? s.new_service_line ?? null
+            s.additionalData = s.additionalData ?? s.additional_data ?? null
           })
         }
         if (Array.isArray(formData.siteInvestDids)) {
           formData.siteInvestDids.forEach((d: any) => {
-            d.quantity = nm(d.quantity) || 1
-            d.price = nm(d.price) || 0
-            d.servicePlanId = d.servicePlanId || null
-            d.category = d.category || null
-            d.unitId = d.unitId || null
+            d.priceListLineId = d.priceListLineId ?? d.price_list_line_id ?? 0
+            const q = nm(d.quantity) || 1
+            const p = nm(d.price) || 0
+            d.quantity = q
+            d.price = p
+            d.subtotal = nm(d.subtotal) || q * p
+            d.isPriceOverridden = d.isPriceOverridden ?? d.is_price_overridden ?? false
           })
         }
 
@@ -876,11 +908,11 @@ export const useSiteInvestStore = defineStore('siteInvest', {
         this.form.siteInvestMaterials = []
       }
       this.form.siteInvestMaterials.push({
-        productId: null,
-        warehouseId: null,
+        priceListLineId: 0,
         quantity: 1,
         price: 0,
         subtotal: 0,
+        isPriceOverridden: false,
       })
     },
 
@@ -893,11 +925,15 @@ export const useSiteInvestStore = defineStore('siteInvest', {
         this.form.siteInvestServices = []
       }
       this.form.siteInvestServices.push({
-        unitId: null,
-        serviceId: null,
+        priceListLineId: 0,
         quantity: 1,
         price: 0,
         subtotal: 0,
+        isPriceOverridden: false,
+        terminalKitCount: null,
+        quotaPriority: null,
+        newServiceLine: null,
+        additionalData: null,
       })
     },
 
@@ -909,23 +945,30 @@ export const useSiteInvestStore = defineStore('siteInvest', {
       if (!this.form.siteInvestDids) {
         this.form.siteInvestDids = []
       }
-      // Get didId from first item if exists, or use null
-      const didId = this.form.siteInvestDids.length > 0 
-        ? this.form.siteInvestDids[0].didId 
-        : null
       this.form.siteInvestDids.push({
-        didId: didId,
-        servicePlanId: null,
-        category: null,
-        unitId: null,
+        priceListLineId: 0,
         quantity: 1,
         price: 0,
+        subtotal: 0,
         isPriceOverridden: false,
       })
     },
 
     removeDidItem(index: number) {
       this.form.siteInvestDids.splice(index, 1)
+    },
+
+    async fetchPriceListLines(priceableType: 'product' | 'service' | 'did') {
+      const { $api } = useNuxtApp()
+      const url = $api.siteInvestmentPriceListLines(priceableType)
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: { Accept: 'application/json' },
+        credentials: 'include',
+      })
+      if (!response.ok) return []
+      const data = await response.json()
+      return Array.isArray(data) ? data : []
     },
 
     setPagination(event: any) {

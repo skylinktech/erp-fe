@@ -1,7 +1,7 @@
 <template>
   <div class="page-wrapper">
     <div class="content-wrapper">
-      <div class="container-xxl flex-grow-1 container pt-12">
+      <div class="container-xxl flex-grow-1 container p-y">
         <!-- Loading -->
         <div v-if="loading" class="d-flex justify-content-center align-items-center" style="min-height: 400px;">
           <div class="text-center">
@@ -343,7 +343,7 @@
                   <hr class="my-2" />
                   <div class="d-flex justify-content-between py-1">
                     <label class="form-label text-muted medium mb-0">Grand Total</label>
-                    <p class="mb-0 fw-medium fs-5 text-primary">{{ formatRupiah(totalMrc + totalOtc) }}</p>
+                    <p class="mb-0 fw-medium fs-5 text-primary">{{ formatRupiah(grandTotal) }}</p>
                   </div>
                 </div>
               </div>
@@ -440,17 +440,39 @@ const technicalContacts = computed(() => {
   )
 })
 
-// Total MRC and OTC
+// Total MRC and OTC - align with Quotation (source of truth)
+// Use quotation.serviceSubtotal / productSubtotal when available for exact match
+const contractPeriod = computed(() => Number(subscription.value?.contractPeriod) || 12)
+
 const totalMrc = computed(() => {
-  return (subscription.value?.subscriptionServices || []).reduce((sum: number, s: any) => {
-    return sum + (Number(s.mrcAmount || s.mrc_amount) || 0)
+  const q = subscription.value?.quotation
+  const fromQuo = q?.serviceSubtotal ?? q?.service_subtotal
+  if (fromQuo != null && fromQuo !== '') return Number(fromQuo)
+  const services = subscription.value?.subscriptionServices || []
+  const period = contractPeriod.value
+  return services.reduce((sum: number, s: any) => {
+    const mrcMonthly = Number(s.mrcAmount || s.mrc_amount) || 0
+    const qty = Number(s.quantity) || 1
+    return sum + mrcMonthly * qty * period
   }, 0)
 })
 
 const totalOtc = computed(() => {
+  const q = subscription.value?.quotation
+  const fromQuo = q?.productSubtotal ?? q?.product_subtotal
+  if (fromQuo != null && fromQuo !== '') return Number(fromQuo)
   return (subscription.value?.subscriptionServices || []).reduce((sum: number, s: any) => {
     return sum + (Number(s.otcAmount || s.otc_amount) || 0)
   }, 0)
+})
+
+// Grand Total: prefer quotation.grandTotal (source of truth)
+const grandTotal = computed(() => {
+  const q = subscription.value?.quotation
+  if (q && (q.grandTotal != null || q.grand_total != null)) {
+    return Number(q.grandTotal ?? q.grand_total) || 0
+  }
+  return totalMrc.value + totalOtc.value
 })
 
 const subscriptionAttachments = computed(() => {

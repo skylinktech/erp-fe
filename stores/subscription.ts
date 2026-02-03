@@ -99,6 +99,7 @@ interface SubscriptionState {
     attachments?: File[] | null
     attachmentPreviews?: string[] | null
     existingAttachments?: string[] | null
+    leTechReviewId?: number | null
   }
   isEditMode: boolean
   showModal: boolean
@@ -117,7 +118,7 @@ export const useSubscriptionStore = defineStore('subscription', {
   state: (): SubscriptionState => ({
     subscriptions: [],
     subscription: null,
-    loading: true,
+    loading: false,
     error: null,
     totalRecords: 0,
     params: {
@@ -147,6 +148,7 @@ export const useSubscriptionStore = defineStore('subscription', {
       attachments: null,
       attachmentPreviews: null,
       existingAttachments: null,
+      leTechReviewId: null,
     },
     isEditMode: false,
     showModal: false,
@@ -229,6 +231,7 @@ export const useSubscriptionStore = defineStore('subscription', {
     },
 
     async saveSubscription() {
+      console.log('saveSubscription: START')
       const toast = useToast()
       this.loading = true
       this.validationErrors = []
@@ -238,19 +241,20 @@ export const useSubscriptionStore = defineStore('subscription', {
       if (!this.form.quotationId || !this.form.customerId) {
         this.loading = false
         toast.error({ title: 'Validasi', message: 'Quotation dan Customer wajib diisi', color: 'red', position: 'topRight', layout: 2 })
-        return
+        return false
       }
 
       if (!this.form.contractPeriod || this.form.contractPeriod <= 0) {
         this.loading = false
         toast.error({ title: 'Validasi', message: 'Contract Period harus lebih dari 0', color: 'red', position: 'topRight', layout: 2 })
-        return
+        return false
       }
 
       if (this.form.subscriptionServices.length === 0) {
         this.loading = false
-        toast.error({ title: 'Validasi', message: 'Minimal 1 service harus diisi', color: 'red', position: 'topRight', layout: 2 })
-        return
+        console.error('Validation failed: subscriptionServices is empty', this.form)
+        toast.error({ title: 'Validasi', message: 'Minimal 1 service harus diisi. Pastikan Quotation sudah memiliki services.', color: 'red', position: 'topRight', layout: 2 })
+        return false
       }
 
       // Validasi planName untuk setiap service
@@ -263,7 +267,7 @@ export const useSubscriptionStore = defineStore('subscription', {
           } else {
             this.loading = false
             toast.error({ title: 'Validasi', message: `Plan Name untuk service ${i + 1} wajib diisi`, color: 'red', position: 'topRight', layout: 2 })
-            return
+            return false
           }
         }
       }
@@ -271,7 +275,7 @@ export const useSubscriptionStore = defineStore('subscription', {
       if (this.form.subscriptionInstallations.length === 0) {
         this.loading = false
         toast.error({ title: 'Validasi', message: 'Minimal 1 installation address harus diisi', color: 'red', position: 'topRight', layout: 2 })
-        return
+        return false
       }
 
       const hasFiles = this.form.attachments && this.form.attachments.length > 0
@@ -326,25 +330,41 @@ export const useSubscriptionStore = defineStore('subscription', {
       const url = this.isEditMode && this.form.id ? `${$api.subscription()}/${this.form.id}` : $api.subscription()
 
       try {
+        console.log('saveSubscription: Sending request to', url)
         const res = await fetch(url, {
           method: 'POST',
           headers: { Accept: 'application/json' },
           credentials: 'include',
           body: formData,
         })
+        
+        console.log('saveSubscription: Got response', res.status, res.statusText)
+        const responseData = await res.json().catch(() => ({}))
+        console.log('saveSubscription: Response data', responseData)
+        
         if (!res.ok) {
-          const ed = await res.json().catch(() => ({}))
-          this.validationErrors = ed.errors || []
-          toast.error({ title: 'Error', message: ed.message || (this.isEditMode ? 'Gagal memperbarui Subscription' : 'Gagal menyimpan Subscription'), color: 'red', position: 'topRight', layout: 2 })
-          return
+          console.error('Subscription save error:', responseData)
+          this.validationErrors = responseData.errors || []
+          const errorMessage = responseData.message || (this.isEditMode ? 'Gagal memperbarui Subscription' : 'Gagal menyimpan Subscription')
+          toast.error({ title: 'Error', message: errorMessage, color: 'red', position: 'topRight', layout: 2 })
+          console.log('saveSubscription: Returning false (not ok)')
+          this.loading = false
+          return false
         }
+        
+        console.log('saveSubscription: Success, closing modal and refreshing data')
         this.closeModal()
         await this.fetchSubscriptions()
         await this.fetchStatistics()
         toast.success({ title: 'Sukses', message: `Subscription berhasil ${this.isEditMode ? 'diperbarui' : 'dibuat'}`, color: 'green', position: 'topRight', layout: 2 })
+        console.log('saveSubscription: Returning true')
+        return true
       } catch (e: any) {
+        console.error('saveSubscription: Caught error', e)
         toast.error({ title: 'Error', message: e.message || 'Operasi gagal', color: 'red', position: 'topRight', layout: 2 })
+        return false
       } finally {
+        console.log('saveSubscription: Finally block, setting loading to false')
         this.loading = false
       }
     },
@@ -384,9 +404,44 @@ export const useSubscriptionStore = defineStore('subscription', {
       }
     },
 
+    // Open modal with prefilled data from Legal Tech Review
+    openModalFromLeTechReview(leTechReview: any) {
+      console.log('openModalFromLeTechReview called with:', leTechReview)
+      this.isEditMode = false
+      this.validationErrors = []
+      this.loading = false // Ensure loading is reset when opening modal
+      
+      // Reset form with default values
+      this.form = {
+        id: null,
+        iroId: leTechReview.iroId ?? leTechReview.iro_id ?? leTechReview.iro?.id ?? null,
+        quotationId: leTechReview.quotationId ?? leTechReview.quotation_id ?? leTechReview.quotation?.id ?? null,
+        customerId: leTechReview.quotation?.customerId ?? leTechReview.quotation?.customer_id ?? leTechReview.quotation?.customer?.id ?? null,
+        customerName: leTechReview.quotation?.customer?.name ?? leTechReview.quotation?.customerName ?? '',
+        contractPeriod: 12,
+        targetActiveDate: null,
+        contractStartDate: null,
+        contractEndDate: null,
+        paymentMethod: '',
+        termOfPayment: '',
+        subscriptionServices: [],
+        subscriptionInstallations: [],
+        subscriptionContacts: [],
+        attachments: null,
+        attachmentPreviews: null,
+        existingAttachments: null,
+      }
+      
+      // Store the leTechReviewId for reference
+      ;(this.form as any).leTechReviewId = leTechReview.id
+      
+      this.showModal = true
+    },
+
     openModal(data: Subscription | null = null) {
       this.isEditMode = !!data
       this.validationErrors = []
+      this.loading = false // Ensure loading is reset when opening modal
       if (data) {
         const raw = data as any
         this.form = {
@@ -463,6 +518,7 @@ export const useSubscriptionStore = defineStore('subscription', {
           attachments: null,
           attachmentPreviews: null,
           existingAttachments: null,
+          leTechReviewId: null,
         }
       }
       this.showModal = true
@@ -495,6 +551,7 @@ export const useSubscriptionStore = defineStore('subscription', {
         attachments: null,
         attachmentPreviews: null,
         existingAttachments: null,
+        leTechReviewId: null,
       }
       this.validationErrors = []
     },

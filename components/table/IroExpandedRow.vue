@@ -14,6 +14,7 @@
               <th>Service</th>
               <th>Service Plan</th>
               <th>Product / DID</th>
+              <th class="text-center">Min. Period</th>
               <th>Qty</th>
               <th>Harga</th>
               <th>Subtotal</th>
@@ -30,6 +31,7 @@
                 <template v-else-if="d.itemType === 'DID'">{{ d.did?.code || d.did?.name || '-' }}</template>
                 <template v-else>-</template>
               </td>
+              <td class="text-center">{{ d.itemType === 'SERVICE' ? (d.minimumPeriod ?? d.minimum_period ?? '12') + ' bln' : '—' }}</td>
               <td>{{ Number(d.quantity) || 0 }}</td>
               <td>{{ formatRupiah(d.price) }}</td>
               <td class="fw-bold">{{ formatRupiah(d.subtotal) }}</td>
@@ -37,15 +39,15 @@
           </tbody>
           <tfoot class="table-light">
             <tr>
-              <td colspan="5" class="text-end">Material (PRODUCT)</td>
+              <td colspan="6" class="text-end">Material (PRODUCT)</td>
               <td colspan="3" class="text-end fw-bold">{{ formatRupiah(iro.materialSubtotal ?? 0) }}</td>
             </tr>
             <tr>
-              <td colspan="5" class="text-end">DID</td>
+              <td colspan="6" class="text-end">DID</td>
               <td colspan="3" class="text-end fw-bold">{{ formatRupiah(iro.didSubtotal ?? 0) }}</td>
             </tr>
             <tr>
-              <td colspan="5" class="text-end">Grand Total</td>
+              <td colspan="6" class="text-end">Grand Total</td>
               <td colspan="3" class="text-end fw-bold text-primary">{{ formatRupiah(iro.grandTotal ?? 0) }}</td>
             </tr>
           </tfoot>

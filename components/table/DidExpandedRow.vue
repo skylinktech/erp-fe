@@ -11,9 +11,6 @@
             <tr>
               <th>Service Plan</th>
               <th>Kategori</th>
-              <th>Quantity</th>
-              <th>Harga</th>
-              <th>Subtotal</th>
             </tr>
           </thead>
           <tbody>
@@ -27,17 +24,8 @@
                   {{ getCategoryLabel(service.category) }}
                 </span>
               </td>
-              <td>{{ service.quantity || 0 }}</td>
-              <td>{{ formatRupiah(service.price || 0) }}</td>
-              <td>{{ formatRupiah(service.subtotal || 0) }}</td>
             </tr>
           </tbody>
-          <tfoot>
-            <tr>
-              <td colspan="4" class="text-end fw-bold">Total:</td>
-              <td class="fw-bold">{{ formatRupiah(did.total || 0) }}</td>
-            </tr>
-          </tfoot>
         </table>
       </div>
     </div>
@@ -53,8 +41,6 @@
 </template>
 
 <script setup>
-import { useFormatRupiah } from '~/composables/formatRupiah'
-
 // Props
 const props = defineProps({
   did: {
@@ -62,9 +48,6 @@ const props = defineProps({
     required: true
   }
 })
-
-// Composables
-const formatRupiah = useFormatRupiah()
 
 // Methods
 const getCategoryBadgeClass = (category) => {

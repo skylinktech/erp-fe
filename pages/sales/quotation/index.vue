@@ -319,6 +319,12 @@
                                             <span class="d-none d-sm-block">Services</span>
                                         </button>
                                     </li>
+                                    <li class="nav-item">
+                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#form-tabs-did" role="tab" aria-selected="false" type="button">
+                                            <span class="ri-truck-line ri-20px d-sm-none"></span>
+                                            <span class="d-none d-sm-block">DID (Delivery/Installation)</span>
+                                        </button>
+                                    </li>
                                 </ul>
                             </div>
                         </div>
@@ -366,11 +372,11 @@
                                     </div>
                                     <div class="col-md-3">
                                         <label class="form-label text-muted">Minimum Period (bulan)</label>
-                                        <CustomSelect2 v-model="form.minimumPeriod" :options="minimumPeriodOptions" :get-option-label="o => o.label" :reduce="o => o.value" searchable clearable placeholder="Pilih" />
+                                        <CustomSelect2 v-model="form.minimumPeriod" :options="minimumPeriodOptions" :get-option-label="o => o.label" :reduce="o => o.value" searchable clearable placeholder="Pilih" @update:modelValue="onPeriodChange" />
                                     </div>
                                     <div class="col-md-3">
                                         <label class="form-label text-muted">DP (%)</label>
-                                        <input type="number" v-model.number="form.dpPercent" class="form-control" placeholder="DP (%)">
+                                        <input type="number" v-model.number="form.dpPercent" class="form-control" placeholder="DP (%)" :disabled="form.termsOfPayment !== 'down_payment'">
                                     </div>
                                     <div class="col-md-3">
                                         <label class="form-label text-muted">Discount (%)</label>
@@ -391,6 +397,8 @@
                                         <textarea v-model="form.description" class="form-control" placeholder="Deskripsi"></textarea>
                                     </div>
                                     <div class="col-md-6">
+                                        <h6 class="mb-3">Add-ons</h6>
+                                        <p class="text-muted mb-4">Pilih layanan tambahan yang akan ditambahkan ke quotation</p>
                                         <div class="form-check form-check-inline mt-4">
                                             <input type="checkbox" v-model="form.slaGuarantee" class="form-check-input" id="slaGuarantee">
                                             <label class="form-check-label" for="slaGuarantee">SLA Guarantee</label>
@@ -413,6 +421,12 @@
                                     </ul>
                                 </div>
                                 <div v-for="(item, index) in form.quotationItems" :key="index" class="repeater-item mb-4">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <span class="text-muted fw-medium">Item #{{ index + 1 }}</span>
+                                        <button class="btn btn-sm btn-outline-danger" @click.prevent="quotationStore.removeItem(index)" type="button" title="Hapus item">
+                                            <i class="ri-delete-bin-line me-1"></i> Hapus
+                                        </button>
+                                    </div>
                                     <div class="row g-3">
                                         <div class="col-md-4">
                                             <CustomSelect2 v-model="item.productId" :options="filteredCustomerProducts" 
@@ -484,26 +498,41 @@
                                                  <label>Jumlah</label>
                                              </div>
                                          </div>
-                                         <div class="col-md-3">
-                                             <div class="form-floating form-floating-outline">
-                                                 <input type="text" :value="formatRupiah(item.price)" class="form-control" placeholder="Harga" readonly>
-                                                 <label>Harga</label>
-                                             </div>
-                                         </div>
+                                        <div class="col-md-3">
+                                            <div class="border rounded p-3 bg-light bg-opacity-50">
+                                                <div class="form-check mb-3">
+                                                    <input class="form-check-input" type="checkbox" v-model="item.isPriceOverridden" :id="'customPriceItem' + index">
+                                                    <label class="form-check-label" :for="'customPriceItem' + index">Custom Price</label>
+                                                </div>
+                                                <label class="form-label text-muted small mb-1">Harga</label>
+                                                <input
+                                                    type="text"
+                                                    :value="formatRupiah(item.price)"
+                                                    @input="updateItemPriceFromInput(index, $event)"
+                                                    class="form-control"
+                                                    placeholder="Harga"
+                                                    :readonly="!item.isPriceOverridden"
+                                                    :class="{ 'bg-light': !item.isPriceOverridden }"
+                                                >
+                                            </div>
+                                        </div>
                                          <div class="col-md-3">
                                              <div class="form-floating form-floating-outline">
                                                  <input type="text" :value="formatRupiah(item.subtotal)" class="form-control" placeholder="Subtotal" readonly>
                                                  <label>Subtotal</label>
                                              </div>
                                          </div>
-                                         <div class="col-md-9">
+                                         <div class="col-12">
                                               <div class="form-floating form-floating-outline">
                                                  <input type="text" v-model="item.description" class="form-control" placeholder="Deskripsi item">
                                                  <label>Deskripsi</label>
                                              </div>
-                                         </div>
-                                         <div class="col-md-3 d-flex align-items-center">
-                                             <button @click.prevent="quotationStore.removeItem(index)" class="btn btn-outline-danger w-100">Hapus</button>
+                                             <div v-if="item.isPriceOverridden" class="mt-2">
+                                               <div class="form-floating form-floating-outline">
+                                                 <textarea v-model="item.priceReason" class="form-control" placeholder="Alasan custom price" rows="2"></textarea>
+                                                 <label>Alasan Custom Price <span class="text-danger">*</span></label>
+                                               </div>
+                                             </div>
                                          </div>
                                      </div>
                                      <hr class="my-4">
@@ -529,8 +558,14 @@
                                      <strong>Services:</strong> Pilih service, unit, dan quantity. Harga diisi otomatis dari master service.
                                  </div>
                                  <div v-for="(item, idx) in form.quotationServices" :key="'svc-'+idx" class="repeater-item mb-4">
+                                     <div class="d-flex justify-content-between align-items-center mb-3">
+                                         <span class="text-muted fw-medium">Item #{{ idx + 1 }}</span>
+                                         <button class="btn btn-sm btn-outline-danger" @click.prevent="quotationStore.removeServiceItem(idx)" type="button" title="Hapus item">
+                                             <i class="ri-delete-bin-line me-1"></i> Hapus
+                                         </button>
+                                     </div>
                                      <div class="row g-3">
-                                         <div class="col-md-4">
+                                         <div class="col-md-3">
                                              <label class="form-label text-muted">Service</label>
                                              <CustomSelect2 v-model="item.serviceId" :options="services" :get-option-label="s => s?.name ?? ''" :reduce="s => s?.id" searchable clearable placeholder="Pilih Service" @update:modelValue="onServiceChange(idx)" />
                                          </div>
@@ -539,19 +574,54 @@
                                              <CustomSelect2 v-model="item.unitId" :options="units" :get-option-label="u => u ? (u.symbol || u.name || '') : ''" :reduce="u => u?.id" searchable clearable placeholder="Unit" />
                                          </div>
                                          <div class="col-md-2">
-                                            <label class="form-label text-muted">Unit</label>
-                                            <input type="number" v-model.number="item.quantity" @input="calculateServiceSubtotal(idx)" class="form-control" placeholder="Qty" min="1">
+                                            <label class="form-label text-muted">Jumlah</label>
+                                            <input type="number" v-model.number="item.quantity" @input="calculateServiceSubtotal(idx)" class="form-control" placeholder="Qty" min="1" disabled>
                                          </div>
-                                         <div class="col-md-2">
-                                            <label class="form-label text-muted">Harga</label>
-                                            <input type="text" :value="formatRupiah(item.price)" class="form-control" placeholder="Harga" readonly>
-                                         </div>
+                                         <div class="col-md-3">
+                                           <div class="border rounded p-3 bg-light bg-opacity-50">
+                                             <div class="form-check mb-3">
+                                               <input class="form-check-input" type="checkbox" v-model="item.isPriceOverridden" :id="'customPriceSvc' + idx">
+                                               <label class="form-check-label" :for="'customPriceSvc' + idx">Custom Price</label>
+                                             </div>
+                                             <label class="form-label text-muted small mb-1">Harga</label>
+                                             <input
+                                               type="text"
+                                               :value="formatRupiah(item.price)"
+                                               @input="updateServicePriceFromInput(idx, $event)"
+                                               class="form-control"
+                                               placeholder="Harga"
+                                               :readonly="!item.isPriceOverridden"
+                                               :class="{ 'bg-light': !item.isPriceOverridden }"
+                                             >
+                                           </div>
+                                        </div>
                                          <div class="col-md-2">
                                             <label class="form-label text-muted">Subtotal</label>
                                             <input type="text" :value="formatRupiah(item.subtotal)" class="form-control" placeholder="Subtotal" readonly>
                                          </div>
-                                         <div class="col-12 d-flex justify-content-end">
-                                             <button @click.prevent="quotationStore.removeServiceItem(idx)" class="btn btn-outline-danger">Hapus</button>
+                                         <!-- Field komponen service: terminal_kit_count, quota_priority, new_service_line, additional_data -->
+                                         <div class="col-12 mt-2"><hr class="my-2"><small class="text-muted">Komponen Harga Service</small></div>
+                                         <div class="col-md-3">
+                                            <label class="form-label text-muted">Terminal Kit</label>
+                                            <input type="text" :value="(item.terminalKitCount ?? item.terminal_kit_count) != null ? (item.terminalKitCount ?? item.terminal_kit_count) : '—'" class="form-control bg-light" readonly placeholder="Terminal Kit">
+                                         </div>
+                                         <div class="col-md-3">
+                                            <label class="form-label text-muted">Quota Priority</label>
+                                            <input type="text" :value="(item.quotaPriority ?? item.quota_priority) != null ? formatRupiah(item.quotaPriority ?? item.quota_priority) : '—'" class="form-control bg-light" readonly placeholder="Quota Priority">
+                                         </div>
+                                         <div class="col-md-3">
+                                            <label class="form-label text-muted">New Service Line</label>
+                                            <input type="text" :value="(item.newServiceLine ?? item.new_service_line) != null ? formatRupiah(item.newServiceLine ?? item.new_service_line) : '—'" class="form-control bg-light" readonly placeholder="New Service Line">
+                                         </div>
+                                         <div class="col-md-3">
+                                            <label class="form-label text-muted">Additional Data</label>
+                                            <input type="text" :value="(item.additionalData ?? item.additional_data) != null ? formatRupiah(item.additionalData ?? item.additional_data) : '—'" class="form-control bg-light" readonly placeholder="Additional Data">
+                                         </div>
+                                         <div v-if="item.isPriceOverridden" class="col-12 mt-2">
+                                           <div class="form-floating form-floating-outline">
+                                             <textarea v-model="item.priceReason" class="form-control" placeholder="Alasan custom price" rows="2"></textarea>
+                                             <label>Alasan Custom Price <span class="text-danger">*</span></label>
+                                           </div>
                                          </div>
                                      </div>
                                      <hr class="my-4">
@@ -566,12 +636,100 @@
                                      <span class="fw-bold fs-5">Grand Total: {{ formatRupiah(grandTotal) }}</span>
                                  </div>
                              </div>
+                             <div class="tab-pane fade" id="form-tabs-did" role="tabpanel">
+                                 <div v-if="form.useDidFromSiteInvest === null" class="mb-4">
+                                     <p class="fw-medium mb-3">Do you want to use DID from Site Investment?</p>
+                                     <div class="d-flex gap-3">
+                                         <button type="button" class="btn btn-primary" :disabled="!form.siteInvestId" @click="onDidSourceChoice(true)" title="Load DIDs from selected Site Investment">
+                                             Yes
+                                         </button>
+                                         <button type="button" class="btn btn-outline-secondary" @click="onDidSourceChoice(false)">
+                                             No
+                                         </button>
+                                     </div>
+                                     <p v-if="!form.siteInvestId" class="text-muted small mt-2 mb-0">Select a Site Investment first to use DIDs from it.</p>
+                                 </div>
+                                 <template v-else>
+                                 <div v-if="form.useDidFromSiteInvest === true" class="alert alert-secondary mb-4">
+                                     <strong>DID (Delivery/Installation):</strong> Data dari Site Investment. Bisa diedit quantity, harga, dan custom price.
+                                 </div>
+                                 <div v-else class="alert alert-secondary mb-4">
+                                     <strong>DID (Delivery/Installation):</strong> Custom price. Isi quantity dan harga per item.
+                                 </div>
+                                 <div v-for="(item, idx) in form.quotationDids" :key="'did-'+idx" class="repeater-item mb-4">
+                                     <div class="d-flex justify-content-between align-items-center mb-3">
+                                         <span class="text-muted fw-medium">Item #{{ idx + 1 }}</span>
+                                         <button class="btn btn-sm btn-outline-danger" @click.prevent="quotationStore.removeDidItem(idx)" type="button" title="Hapus item">
+                                             <i class="ri-delete-bin-line me-1"></i> Hapus
+                                         </button>
+                                     </div>
+                                     <div class="row g-3">
+                                         <div class="col-md-4">
+                                             <label class="form-label text-muted">Item (Price List Line)</label>
+                                             <template v-if="form.useDidFromSiteInvest === false">
+                                                 <CustomSelect2
+                                                     v-model="item.priceListLineId"
+                                                     :options="priceListLinesDid"
+                                                     :get-option-label="line => line ? (line.price_list?.name || (line.did ? `${line.did.code} - ${line.did.name || ''}` : `Line #${line.id}`)) : '—'"
+                                                     :reduce="line => line ? line.id : null"
+                                                     placeholder="Pilih DID (dari Price List)"
+                                                     searchable
+                                                     clearable
+                                                     @update:modelValue="onQuotationDidLineChange(idx, $event)"
+                                                 />
+                                             </template>
+                                             <template v-else>
+                                                 <input type="text" :value="getDidLineLabel(item)" class="form-control bg-light" readonly placeholder="—">
+                                                 <input type="hidden" v-model="item.priceListLineId" />
+                                             </template>
+                                         </div>
+                                         <div class="col-md-2">
+                                             <label class="form-label text-muted">Qty</label>
+                                             <input type="number" v-model.number="item.quantity" @input="onDidQuantityChange(idx)" class="form-control" placeholder="Qty" min="1">
+                                         </div>
+                                         <div class="col-md-3">
+                                             <div class="border rounded p-3 bg-light bg-opacity-50">
+                                                 <div class="form-check mb-3">
+                                                     <input class="form-check-input" type="checkbox" v-model="item.isPriceOverridden" :id="'customPriceDid'+idx">
+                                                     <label class="form-check-label" :for="'customPriceDid'+idx">Custom Price</label>
+                                                 </div>
+                                                 <label class="form-label text-muted small mb-1">Harga</label>
+                                                 <input
+                                                     type="text"
+                                                     :value="formatRupiah(item.price)"
+                                                     @input="updateDidPriceFromInput(idx, $event)"
+                                                     class="form-control"
+                                                     placeholder="Harga"
+                                                     :readonly="!item.isPriceOverridden"
+                                                     :class="{ 'bg-light': !item.isPriceOverridden }"
+                                                 >
+                                             </div>
+                                         </div>
+                                         <div class="col-md-2">
+                                             <label class="form-label text-muted">Subtotal</label>
+                                             <input type="text" :value="formatRupiah(item.subtotal)" class="form-control bg-light" readonly placeholder="Subtotal">
+                                         </div>
+                                     </div>
+                                     <hr class="my-4">
+                                 </div>
+                                 <div class="mt-4">
+                                    <button @click.prevent="quotationStore.addDidItem(form.useDidFromSiteInvest === false)" class="btn btn-outline-primary">Tambah DID</button>
+                                 </div>
+                                 <div class="d-flex justify-content-end mt-4">
+                                     <span class="fw-bold fs-5">Subtotal DID: {{ formatRupiah(didsSubtotal) }}</span>
+                                 </div>
+                                 <div class="d-flex justify-content-end mt-2">
+                                     <span class="fw-bold fs-5">Grand Total: {{ formatRupiah(grandTotal) }}</span>
+                                 </div>
+                                 </template>
+                             </div>
                          </div>
                          <!-- Ringkasan: service_subtotal, product_subtotal, grand_total -->
                          <div class="border-top mt-4 pt-4 px-4">
                              <h6 class="text-muted mb-3">Ringkasan</h6>
                              <div class="d-flex justify-content-between py-1"><span class="text-muted">Product Subtotal</span><span class="fw-medium">{{ formatRupiah(itemsSubtotal) }}</span></div>
                              <div class="d-flex justify-content-between py-1"><span class="text-muted">Service Subtotal</span><span class="fw-medium">{{ formatRupiah(serviceSubtotal) }}</span></div>
+                             <div class="d-flex justify-content-between py-1"><span class="text-muted">DID Subtotal</span><span class="fw-medium">{{ formatRupiah(didsSubtotal) }}</span></div>
                              <div class="d-flex justify-content-between py-1"><span class="text-muted">Subtotal</span><span>{{ formatRupiah(formSubtotal) }}</span></div>
                              <div class="d-flex justify-content-between py-1"><span class="text-muted">Discount ({{ form.discountPercent ?? 0 }}%)</span><span>{{ formatRupiah(formDiscountAmount) }}</span></div>
                              <div class="d-flex justify-content-between py-1"><span class="text-muted">Setelah Diskon</span><span>{{ formatRupiah(formAfterDiscount) }}</span></div>
@@ -645,6 +803,7 @@ import InputText from 'primevue/inputtext'
   const sites = ref([])
   const costCenters = ref([])
   const units = ref([])
+  const priceListLinesDid = ref([])
 
 // State
 const globalFilterValue = ref('');
@@ -670,21 +829,147 @@ const filters = ref({
       return description;
   });
 
-  const itemsSubtotal = computed(() => {
-    if (!form.value?.quotationItems) return 0;
-    return (form.value.quotationItems || []).reduce((s, i) => s + (Number(i.subtotal) || (Number(i.quantity) || 0) * (Number(i.price) || 0)), 0);
+  const currentPeriod = ref(12);
+  const summaryRefreshKey = ref(0);
+
+  const onPeriodChange = (newVal) => {
+    currentPeriod.value = Number(newVal) || 12;
+    summaryRefreshKey.value += 1;
+  };
+
+  watch(() => form.value?.minimumPeriod, (newVal) => {
+    currentPeriod.value = Number(newVal) || 12;
+    summaryRefreshKey.value += 1;
+  }, { immediate: true });
+
+  watch(showModal, async (visible) => {
+    if (visible) {
+      await nextTick();
+      // Ensure all service items have billingType when modal opens
+      await ensureServiceBillingTypes();
+      summaryRefreshKey.value += 1;
+    }
   });
 
-  const serviceSubtotal = computed(() => {
-    if (!form.value?.quotationServices) return 0;
-    return (form.value.quotationServices || []).reduce((s, i) => s + (Number(i.subtotal) || 0), 0);
+  watch(() => [form.value?.siteInvestId, form.value?.customerId], () => {
+    nextTick(() => { summaryRefreshKey.value += 1; });
   });
 
-  const formSubtotal = computed(() => itemsSubtotal.value + serviceSubtotal.value);
-  const formDiscountAmount = computed(() => formSubtotal.value * (Number(form.value?.discountPercent) || 0) / 100);
-  const formAfterDiscount = computed(() => formSubtotal.value - formDiscountAmount.value);
-  const formTaxAmount = computed(() => formAfterDiscount.value * (Number(form.value?.taxPercent) || 0) / 100);
-  const grandTotal = computed(() => formAfterDiscount.value + formTaxAmount.value);
+  watch(customerProducts, () => {
+    if (showModal.value) nextTick(() => { summaryRefreshKey.value += 1; });
+  }, { deep: true });
+
+  watch(() => [form.value?.quotationItems?.length, form.value?.quotationServices?.length, form.value?.quotationItems, form.value?.quotationServices], () => {
+    summaryRefreshKey.value += 1;
+  }, { deep: true });
+
+  function refreshModalSummary () {
+    nextTick(() => { summaryRefreshKey.value += 1; });
+  }
+
+  async function ensureServiceBillingTypes () {
+    if (!form.value?.quotationServices) return;
+    const { $api } = useNuxtApp();
+    const serviceItems = form.value.quotationServices;
+    
+    for (let i = 0; i < serviceItems.length; i++) {
+      const item = serviceItems[i];
+      if (!item.serviceId) continue;
+      
+      // Skip if billingType already exists and is not default
+      const currentBt = (item?.billingType ?? item?.billing_type ?? '').toLowerCase();
+      if (currentBt && currentBt !== 'one_time') continue;
+      
+      // Fetch billingType from API
+      const svc = services.value?.find(s => s.id === item.serviceId);
+      const servicePlanId = item.servicePlanId ?? svc?.servicePlanId ?? svc?.service_plan_id ?? null;
+      
+      if (!servicePlanId) continue;
+      
+      try {
+        const params = new URLSearchParams({
+          serviceId: String(item.serviceId),
+          servicePlanId: String(servicePlanId),
+          type: 'site_investment'
+        });
+        const res = await fetch(`${$api.getServicePrice()}?${params.toString()}`, {
+          credentials: 'include', headers: { Accept: 'application/json' },
+        });
+        if (res.ok) {
+          const json = await res.json();
+          const priceData = json?.data ?? json;
+          const billingType = (priceData?.billing_type ?? priceData?.billingType ?? 'one_time') + '';
+          item.billingType = billingType;
+          item.billing_type = billingType;
+          // Also update price if needed
+          if (!item.price || item.price === 0) {
+            const price = Number(priceData?.price_sell ?? priceData?.price) || 0;
+            item.price = price;
+            const qty = Number(item.quantity) || 0;
+            item.subtotal = qty * price;
+          }
+        }
+      } catch (e) {
+        console.error('Error fetching service billing type:', e);
+      }
+    }
+  }
+
+  function getModalSummary () {
+    summaryRefreshKey.value;
+    const period = currentPeriod.value;
+    const f = quotationStore.form;
+    const items = f?.quotationItems || [];
+    const services = f?.quotationServices || [];
+    const dids = f?.quotationDids || [];
+    const products = customerProducts.value || [];
+    let productSub = 0;
+    for (const i of items) {
+      const qty = Number(i.quantity) || 0;
+      const pr = Number(i.price) || 0;
+      const bt = (i?.product?.billingType ?? i?.product?.billing_type ?? products.find((p) => p.id === i.productId)?.billingType ?? products.find((p) => p.id === i.productId)?.billing_type ?? 'one_time') + '';
+      const isRecurring = bt.toLowerCase() === 'recurring';
+      productSub += isRecurring ? qty * pr * period : qty * pr;
+    }
+    let serviceSub = 0;
+    for (const i of services) {
+      const qty = Number(i.quantity) || 0;
+      const base = Number(i.price) || 0;
+      const tk = Number(i?.terminalKitCount ?? i?.terminal_kit_count) || 0;
+      const qp = Number(i?.quotaPriority ?? i?.quota_priority) || 0;
+      const nsl = Number(i?.newServiceLine ?? i?.new_service_line) || 0;
+      const ad = Number(i?.additionalData ?? i?.additional_data) || 0;
+      const effectivePrice = base + tk + qp + nsl + ad;
+      const bt = (i?.billingType ?? i?.billing_type ?? 'one_time') + '';
+      const isRecurring = bt.toLowerCase() === 'recurring';
+      serviceSub += isRecurring ? qty * effectivePrice * period : qty * effectivePrice;
+    }
+    let didSub = 0;
+    for (const d of dids) {
+      const qty = Number(d.quantity) || 0;
+      const pr = Number(d.price) || 0;
+      didSub += qty * pr;
+    }
+    const sub = productSub + serviceSub + didSub;
+    const discountPct = Number(f?.discountPercent) || 0;
+    const taxPct = Number(f?.taxPercent) || 0;
+    const discount = sub * (discountPct / 100);
+    const afterDiscount = sub - discount;
+    const tax = afterDiscount * (taxPct / 100);
+    const total = afterDiscount + tax;
+    return { productSubtotal: productSub, serviceSubtotal: serviceSub, didSubtotal: didSub, subtotal: sub, discount, afterDiscount, tax, grandTotal: total };
+  }
+
+  const modalSummary = computed(() => getModalSummary());
+
+  const itemsSubtotal = computed(() => modalSummary.value.productSubtotal);
+  const serviceSubtotal = computed(() => modalSummary.value.serviceSubtotal);
+  const didsSubtotal = computed(() => modalSummary.value.didSubtotal ?? 0);
+  const formSubtotal = computed(() => modalSummary.value.subtotal);
+  const formDiscountAmount = computed(() => modalSummary.value.discount);
+  const formAfterDiscount = computed(() => modalSummary.value.afterDiscount);
+  const formTaxAmount = computed(() => modalSummary.value.tax);
+  const grandTotal = computed(() => modalSummary.value.grandTotal);
 
   const statusOptions = ref([
       { label: 'Draft', value: 'draft' },
@@ -736,6 +1021,18 @@ const filters = ref({
       if (r.ok) { const j = await r.json(); units.value = j.data || j || []; }
     } catch (e) { console.error('fetchUnits', e); }
   };
+
+  const fetchPriceListLinesDid = async () => {
+    const { $api } = useNuxtApp();
+    try {
+      const r = await fetch($api.siteInvestmentPriceListLines('did'), { headers: { 'Accept': 'application/json' }, credentials: 'include' });
+      if (r.ok) { const j = await r.json(); priceListLinesDid.value = Array.isArray(j) ? j : (j.data || j || []); }
+    } catch (e) { console.error('fetchPriceListLinesDid', e); }
+  };
+
+  watch(showModal, (v) => {
+    if (v) fetchPriceListLinesDid();
+  });
 
   let modalInstance = null;
   onMounted(() => {
@@ -1071,10 +1368,12 @@ const filters = ref({
       form.value.customerId = null;
       form.value.siteId = null;
       form.value.costCenterId = null;
-      // Reset products dan services jika Site Investment dihapus
+      // Reset products, services, dan DIDs jika Site Investment dihapus
       if (!isEditMode.value) {
         form.value.quotationItems = [];
         form.value.quotationServices = [];
+        form.value.quotationDids = [];
+        form.value.useDidFromSiteInvest = null;
         quotationStore.addItem();
         quotationStore.addServiceItem();
       }
@@ -1126,35 +1425,100 @@ const filters = ref({
               await new Promise(resolve => setTimeout(resolve, 500));
             }
             
-            // Autofill Products dari siteInvestMaterials
+            // Autofill Products dari siteInvestMaterials (setelah refactor: product ada di priceListLine.product)
             if (siteInvestData.siteInvestMaterials && siteInvestData.siteInvestMaterials.length > 0) {
-              const validMaterials = siteInvestData.siteInvestMaterials.filter((material) => {
-                const product = material.product || {};
-                const productId = product.id || material.productId;
-                // Hanya include produk yang ada di customerProducts (jika customer sudah dipilih)
-                if (cid && quotationStore.customerProducts.length > 0) {
-                  return quotationStore.customerProducts.some((cp) => cp.id === productId);
+              // Tambahkan products dari Site Investment ke customerProducts agar bisa dipilih di dropdown
+              siteInvestData.siteInvestMaterials.forEach((material) => {
+                const product = material.priceListLine?.product || material.product || {};
+                const productId = product.id ?? material.priceListLine?.priceable_id ?? material.productId;
+                if (productId && !quotationStore.customerProducts.some((cp) => cp.id === productId)) {
+                  quotationStore.customerProducts.push({
+                    id: productId,
+                    sku: product.sku || product.SKU || '',
+                    name: product.name || '',
+                    noInterchange: product.noInterchange || product.no_interchange || '',
+                    unit: product.unit || undefined,
+                    priceSell: product.priceSell || product.price_sell || material.price || 0,
+                  });
                 }
-                // Jika belum ada customer atau customerProducts belum ter-load, include semua
-                return true;
               });
               
+              const validMaterials = siteInvestData.siteInvestMaterials;
+              
               if (validMaterials.length > 0) {
-                form.value.quotationItems = validMaterials.map((material) => {
-                  const product = material.product || {};
-                  const productId = product.id || material.productId;
-                  // Gunakan priceSell dari customerProduct jika ada, jika tidak gunakan price dari material
-                  let price = Number(material.price) || 0;
-                  if (cid && quotationStore.customerProducts.length > 0) {
-                    const customerProduct = quotationStore.customerProducts.find((cp) => cp.id === productId);
-                    if (customerProduct && customerProduct.priceSell) {
-                      price = Number(customerProduct.priceSell) || price;
-                    }
-                  } else {
-                    // Fallback ke priceSell dari product jika tidak ada customerProduct
-                    price = Number(product.priceSell) || price;
-                  }
+                // ✅ PERBAIKAN: Fetch price dan billing_type untuk semua produk dari price list
+                const productPromises = validMaterials.map(async (material) => {
+                  const product = material.priceListLine?.product || material.product || {};
+                  const productId = product.id ?? material.priceListLine?.priceable_id ?? material.productId;
                   const quantity = Number(material.quantity) || 1;
+                  
+                  // Fetch price dan billing_type dari price list untuk site_investment (skip jika productId tidak ada)
+                  let price = Number(material.price) || 0;
+                  let billingType = 'one_time';
+                  
+                  try {
+                    if (!productId) {
+                      return {
+                        productId: null,
+                        quantity,
+                        price,
+                        subtotal: quantity * price,
+                        description: material.description || '',
+                        billingType,
+                        billing_type: billingType,
+                      };
+                    }
+                    const params = new URLSearchParams({
+                      productId: String(productId),
+                      type: 'site_investment'
+                    });
+                    const res = await fetch(`${$api.getProductPrice()}?${params.toString()}`, {
+                      credentials: 'include', 
+                      headers: { Accept: 'application/json' },
+                    });
+                    
+                    if (res.ok) {
+                      const priceData = await res.json();
+                      const fetchedPrice = Number(priceData.price_sell) || 0;
+                      const fetchedBillingType = (priceData.billing_type ?? priceData.billingType ?? 'one_time') + '';
+                      
+                      if (fetchedPrice > 0) {
+                        price = fetchedPrice;
+                      } else {
+                        // Fallback ke price dari material atau customerProduct
+                        if (cid && quotationStore.customerProducts.length > 0) {
+                          const customerProduct = quotationStore.customerProducts.find((cp) => cp.id === productId);
+                          if (customerProduct && customerProduct.priceSell) {
+                            price = Number(customerProduct.priceSell) || price;
+                          }
+                        } else {
+                          price = Number(product.priceSell) || price;
+                        }
+                      }
+                      billingType = fetchedBillingType;
+                    } else {
+                      // Fallback ke price dari material atau customerProduct
+                      if (cid && quotationStore.customerProducts.length > 0) {
+                        const customerProduct = quotationStore.customerProducts.find((cp) => cp.id === productId);
+                        if (customerProduct && customerProduct.priceSell) {
+                          price = Number(customerProduct.priceSell) || price;
+                        }
+                      } else {
+                        price = Number(product.priceSell) || price;
+                      }
+                    }
+                  } catch (e) {
+                    console.error('Error fetching product price for autofill:', e);
+                    // Fallback ke price dari material atau customerProduct
+                    if (cid && quotationStore.customerProducts.length > 0) {
+                      const customerProduct = quotationStore.customerProducts.find((cp) => cp.id === productId);
+                      if (customerProduct && customerProduct.priceSell) {
+                        price = Number(customerProduct.priceSell) || price;
+                      }
+                    } else {
+                      price = Number(product.priceSell) || price;
+                    }
+                  }
                   
                   return {
                     productId: productId,
@@ -1162,8 +1526,19 @@ const filters = ref({
                     price: price,
                     subtotal: quantity * price,
                     description: material.description || '',
+                    billingType: billingType,
+                    billing_type: billingType,
+                    product: {
+                      ...product,
+                      billingType: billingType,
+                      billing_type: billingType,
+                    }
                   };
                 });
+                
+                // Tunggu semua fetch selesai; buang item yang productId-nya tidak ada (material tanpa product)
+                const resolved = await Promise.all(productPromises);
+                form.value.quotationItems = resolved.filter((item) => item.productId != null);
               } else {
                 // Jika tidak ada material yang valid untuk customer, reset ke satu item kosong
                 form.value.quotationItems = [];
@@ -1180,42 +1555,112 @@ const filters = ref({
               quotationStore.addItem();
             }
             
-            // Autofill Services dari siteInvestServices
+            // Autofill Services dari siteInvestServices (setelah refactor: service ada di priceListLine.service)
             if (siteInvestData.siteInvestServices && siteInvestData.siteInvestServices.length > 0) {
-              form.value.quotationServices = siteInvestData.siteInvestServices.map((service) => {
-                const svc = service.service || {};
+              // Tambahkan service dari SI ke opsi dropdown agar bisa ditampilkan (support snake_case & camelCase dari API)
+              siteInvestData.siteInvestServices.forEach((service) => {
+                const svc = service.priceListLine?.service || service.service || {};
+                const serviceId = svc.id ?? service.priceListLine?.priceable_id ?? service.priceListLine?.priceableId ?? service.serviceId;
+                if (serviceId && !serviceStore.services.some((s) => (s.id ?? s) === serviceId)) {
+                  serviceStore.services.push({
+                    id: serviceId,
+                    name: svc.name || '',
+                    code: svc.code || '',
+                    period: 0,
+                    servicePlanId: svc.servicePlanId ?? svc.service_plan_id ?? 0,
+                    description: '',
+                    createdBy: 0,
+                    updatedAt: '',
+                    createdAt: '',
+                  });
+                }
+              });
+
+              const servicePromises = siteInvestData.siteInvestServices.map(async (service) => {
+                const svc = service.priceListLine?.service || service.service || {};
                 const unit = service.unit || {};
-                const serviceId = svc.id || service.serviceId;
+                const serviceId = svc.id ?? service.priceListLine?.priceable_id ?? service.priceListLine?.priceableId ?? service.serviceId;
                 const unitId = unit.id || service.unitId;
-                const price = Number(service.price) || Number(svc.price) || 0;
                 const quantity = Number(service.quantity) || 1;
+                const servicePlanId = svc.servicePlanId ?? svc.service_plan_id ?? service.servicePlanId ?? service.service_plan_id ?? null;
                 
+                let price = Number(service.price) || Number(svc.price) || 0;
+                let billingType = (service.priceListLine?.billing_type ?? service.billing_type ?? 'one_time') + '';
+                
+                try {
+                  if (serviceId && servicePlanId) {
+                    const params = new URLSearchParams({
+                      serviceId: String(serviceId),
+                      servicePlanId: String(servicePlanId),
+                      type: 'site_investment'
+                    });
+                    const res = await fetch(`${$api.getServicePrice()}?${params.toString()}`, {
+                      credentials: 'include', 
+                      headers: { Accept: 'application/json' },
+                    });
+                    
+                    if (res.ok) {
+                      const json = await res.json();
+                      const priceData = json?.data ?? json;
+                      const fetchedPrice = Number(priceData?.price_sell ?? priceData?.price) || 0;
+                      const fetchedBillingType = (priceData?.billing_type ?? priceData?.billingType ?? 'one_time') + '';
+                      
+                      if (fetchedPrice > 0) {
+                        price = fetchedPrice;
+                      }
+                      billingType = fetchedBillingType;
+                    }
+                  }
+                } catch (e) {
+                  console.error('Error fetching service price for autofill:', e);
+                }
+
+                const terminalKitCount = service.terminalKitCount ?? service.terminal_kit_count;
+                const quotaPriority = service.quotaPriority ?? service.quota_priority;
+                const newServiceLine = service.newServiceLine ?? service.new_service_line;
+                const additionalData = service.additionalData ?? service.additional_data;
+
                 return {
                   unitId: unitId,
                   serviceId: serviceId,
+                  servicePlanId: servicePlanId,
                   quantity: quantity,
                   price: price,
                   subtotal: quantity * price,
+                  billingType: billingType,
+                  billing_type: billingType,
+                  terminalKitCount: terminalKitCount != null ? Number(terminalKitCount) : null,
+                  quotaPriority: quotaPriority != null ? Number(quotaPriority) : null,
+                  newServiceLine: newServiceLine != null ? Number(newServiceLine) : null,
+                  additionalData: additionalData != null ? Number(additionalData) : null,
                 };
               });
               
-              // Jika tidak ada service, tambahkan satu item kosong
+              // Tunggu semua fetch selesai; buang item yang serviceId-nya tidak ada
+              const resolvedServices = await Promise.all(servicePromises);
+              form.value.quotationServices = resolvedServices.filter((item) => item.serviceId != null);
+              form.value.quotationServices.forEach((_, idx) => calculateServiceSubtotal(idx));
+              
               if (form.value.quotationServices.length === 0) {
                 quotationStore.addServiceItem();
               }
             } else {
-              // Jika tidak ada services, reset ke satu item kosong
               form.value.quotationServices = [];
               quotationStore.addServiceItem();
             }
+
+            // DIDs tidak di-autofill; user memilih di tab DID: "Do you want to use DID from Site Investment?"
             
             const productCount = form.value.quotationItems.filter((item) => item.productId).length;
             const serviceCount = form.value.quotationServices.filter((item) => item.serviceId).length;
             
             if (productCount > 0 || serviceCount > 0) {
+              const parts = [];
+              if (productCount > 0) parts.push(`${productCount} produk`);
+              if (serviceCount > 0) parts.push(`${serviceCount} service`);
               toast.success({
                 title: 'Berhasil',
-                message: `Berhasil autofill ${productCount} produk dan ${serviceCount} service dari Site Investment.`,
+                message: `Berhasil autofill ${parts.join(', ')} dari Site Investment. Pilih opsi DID di tab DID (Delivery/Installation).`,
                 color: 'green',
                 position: 'topRight',
                 layout: 2,
@@ -1248,30 +1693,132 @@ const filters = ref({
   const onProductChange = (index) => {
     if (!form.value || !form.value.quotationItems) return;
     const selectedProductId = form.value.quotationItems[index].productId;
-    const selectedProduct = customerProducts.value.find(p => p.id === selectedProductId);
-    if (selectedProduct) {
-      const item = form.value.quotationItems[index];
-      item.price = Number(selectedProduct.priceSell) || 0;
+    const item = form.value.quotationItems[index];
+    if (!selectedProductId) {
+      item.price = 0;
+      item.isPriceOverridden = false;
+      item.priceReason = '';
       calculateSubtotal(index);
+      refreshModalSummary();
+      return;
     }
+    const { $api } = useNuxtApp();
+    // Fetch price from backend price list
+    (async () => {
+      try {
+        const params = new URLSearchParams({
+          productId: String(selectedProductId),
+          type: 'site_investment'
+        });
+        const res = await fetch(`${$api.getProductPrice()}?${params.toString()}`, {
+          credentials: 'include', headers: { Accept: 'application/json' },
+        });
+        if (res.ok) {
+          const priceData = await res.json();
+          item.price = Number(priceData.price_sell) || 0;
+          // ✅ PERBAIKAN: Set billing_type dari price list
+          const billingType = (priceData?.billing_type ?? priceData?.billingType ?? 'one_time') + '';
+          item.billingType = billingType;
+          item.billing_type = billingType;
+          if (!item.product) item.product = {};
+          item.product.billingType = billingType;
+          item.product.billing_type = billingType;
+          item.isPriceOverridden = false;
+          item.priceReason = '';
+        } else {
+          // fallback to customer product price if available
+          const sel = customerProducts.value.find(p => p.id === selectedProductId);
+          item.price = sel ? Number(sel.priceSell) || 0 : 0;
+          item.isPriceOverridden = item.price === 0;
+        }
+      } catch (e) {
+        console.error('Error fetching product price:', e);
+        const sel = customerProducts.value.find(p => p.id === selectedProductId);
+        item.price = sel ? Number(sel.priceSell) || 0 : 0;
+        item.isPriceOverridden = item.price === 0;
+      } finally {
+        calculateSubtotal(index);
+        refreshModalSummary();
+      }
+    })();
   };
 
   const onServiceChange = (index) => {
     if (!form.value?.quotationServices || !services.value) return;
     const item = form.value.quotationServices[index];
     const svc = services.value.find(s => s.id === item.serviceId);
-    if (svc) {
-      item.price = Number(svc.price) || 0;
+    if (!svc) {
+      item.price = 0;
+      item.isPriceOverridden = false;
+      item.priceReason = '';
       calculateServiceSubtotal(index);
+      refreshModalSummary();
+      return;
     }
+    const servicePlanId = svc.servicePlanId || svc.service_plan_id || null;
+    // Simpan servicePlanId ke item secara tersembunyi agar bisa disimpan ke DB,
+    // namun jangan tampilkan inputnya di UI.
+    item.servicePlanId = servicePlanId;
+    const { $api } = useNuxtApp();
+    (async () => {
+      try {
+        if (!servicePlanId) {
+          // Jika tidak ada servicePlanId, fallback ke harga dasar service
+          item.price = Number(svc.price) || 0;
+          item.isPriceOverridden = item.price === 0;
+          calculateServiceSubtotal(index);
+          refreshModalSummary();
+          return;
+        }
+        const params = new URLSearchParams({
+          serviceId: String(item.serviceId),
+          servicePlanId: String(servicePlanId),
+          type: 'site_investment'
+        });
+        const res = await fetch(`${$api.getServicePrice()}?${params.toString()}`, {
+          credentials: 'include', headers: { Accept: 'application/json' },
+        });
+        if (res.ok) {
+          const json = await res.json();
+          const priceData = json?.data ?? json;
+          const price = Number(priceData?.price_sell ?? priceData?.price) || 0;
+          const billingType = (priceData?.billing_type ?? priceData?.billingType ?? 'one_time') + '';
+          item.price = price;
+          item.billingType = billingType;
+          item.billing_type = billingType;
+          item.isPriceOverridden = false;
+          item.priceReason = '';
+        } else {
+          item.price = 0;
+          item.isPriceOverridden = true;
+        }
+      } catch (e) {
+        console.error('Error fetching service price:', e);
+        item.price = 0;
+        item.isPriceOverridden = true;
+      } finally {
+        calculateServiceSubtotal(index);
+        refreshModalSummary();
+      }
+    })();
+  };
+
+  /** Harga efektif per service = price + terminal_kit_count + quota_priority + new_service_line + additional_data */
+  const getServiceEffectivePrice = (item) => {
+    const base = Number(item?.price) || 0;
+    const tk = Number(item?.terminalKitCount ?? item?.terminal_kit_count) || 0;
+    const qp = Number(item?.quotaPriority ?? item?.quota_priority) || 0;
+    const nsl = Number(item?.newServiceLine ?? item?.new_service_line) || 0;
+    const ad = Number(item?.additionalData ?? item?.additional_data) || 0;
+    return base + tk + qp + nsl + ad;
   };
 
   const calculateServiceSubtotal = (index) => {
     if (!form.value?.quotationServices) return;
     const item = form.value.quotationServices[index];
     const q = Number(item.quantity) || 0;
-    const p = Number(item.price) || 0;
-    item.subtotal = q * p;
+    const effectivePrice = getServiceEffectivePrice(item);
+    item.subtotal = q * effectivePrice;
   };
 
   // ✅ IMPROVED: Computed property untuk filtered customer products tanpa limit
@@ -1313,6 +1860,89 @@ const filters = ref({
     item.subtotal = quantity * price;
     
   };
+
+  const parseRupiahToNumber = (rupiahString) => {
+    if (!rupiahString) return 0
+    return Number(String(rupiahString).replace(/[Rp\s.]/g, '').replace(',', '.')) || 0
+  }
+
+  const updateItemPriceFromInput = (index, event) => {
+    const numericValue = parseRupiahToNumber(event.target?.value || '')
+    if (form.value.quotationItems && form.value.quotationItems[index]) {
+      form.value.quotationItems[index].price = Math.round(numericValue)
+      calculateSubtotal(index)
+    }
+  }
+
+  const updateServicePriceFromInput = (index, event) => {
+    const numericValue = parseRupiahToNumber(event.target?.value || '')
+    if (form.value.quotationServices && form.value.quotationServices[index]) {
+      form.value.quotationServices[index].price = Math.round(numericValue)
+      calculateServiceSubtotal(index)
+    }
+  }
+
+  const getDidLineLabel = (item) => {
+    if (!item) return '—'
+    const pl = item.priceListLine || item.price_list_line
+    if (!pl) return item.priceListLineId ? `Line #${item.priceListLineId}` : 'Custom'
+    const name = pl.price_list?.name || pl.priceList?.name
+    const did = pl.did
+    const code = did ? (did.code ?? did.name) : (pl.product?.name || pl.service?.name)
+    if (code || name) return [name, code].filter(Boolean).join(' - ')
+    return `Line #${pl.id ?? item.priceListLineId}`
+  }
+
+  const onDidQuantityChange = (idx) => {
+    if (!form.value?.quotationDids?.[idx]) return
+    const item = form.value.quotationDids[idx]
+    const q = Number(item.quantity) || 1
+    const p = Number(item.price) || 0
+    item.subtotal = q * p
+  }
+
+  const updateDidPriceFromInput = (idx, event) => {
+    const numericValue = parseRupiahToNumber(event.target?.value || '')
+    if (form.value?.quotationDids?.[idx]) {
+      form.value.quotationDids[idx].price = Math.round(numericValue)
+      onDidQuantityChange(idx)
+    }
+  }
+
+  const onQuotationDidLineChange = (idx, lineId) => {
+    const line = priceListLinesDid.value.find((l) => l.id === lineId);
+    if (!line || !form.value?.quotationDids?.[idx]) return;
+    const item = form.value.quotationDids[idx];
+    item.price = Number(line.price) || 0;
+    item.quantity = Number(line.quantity) || 1;
+    item.priceListLine = line;
+    item.subtotal = (Number(item.quantity) || 1) * (Number(item.price) || 0);
+  };
+
+  const onDidSourceChoice = async (useFromSiteInvest) => {
+    quotationStore.setUseDidFromSiteInvest(useFromSiteInvest)
+    if (useFromSiteInvest && form.value?.siteInvestId) {
+      const toast = useToast()
+      try {
+        const { $api } = useNuxtApp()
+        const response = await fetch(`${$api.siteInvestment()}/${form.value.siteInvestId}`, {
+          headers: { Accept: 'application/json' },
+          credentials: 'include',
+        })
+        if (!response.ok) throw new Error('Failed to load Site Investment')
+        const result = await response.json()
+        const siteInvestData = result.data
+        if (siteInvestData?.siteInvestDids?.length) {
+          quotationStore.setQuotationDidsFromSiteInvest(siteInvestData.siteInvestDids)
+        } else {
+          quotationStore.setQuotationDidsFromSiteInvest([])
+        }
+      } catch (e) {
+        console.error('onDidSourceChoice', e)
+        toast.error({ title: 'Error', message: 'Failed to load DIDs from Site Investment.', position: 'topRight', layout: 2 })
+      }
+    }
+  }
 
   const viewQuotationDetails = (quotationId) => {
       if (!quotationId) {

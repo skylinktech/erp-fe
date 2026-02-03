@@ -8,8 +8,10 @@ export interface Service {
   code: string
   period: number
   servicePlanId: number
-  price: number
   description: string
+  serviceLineType?: string | null
+  quotaLabel?: string | null
+  billingType?: 'one_time' | 'recurring' | null
   createdBy: number
   updatedBy: number
   deletedBy?: number | null
@@ -75,8 +77,10 @@ export const useServiceStore = defineStore('service', {
       code: '',
       period: 0,
       servicePlanId: null as number | null,
-      price: 0,
       description: '',
+      serviceLineType: null as string | null,
+      quotaLabel: null as string | null,
+      billingType: null as 'one_time' | 'recurring' | null,
     },
     isEditMode: false,
     showModal: false,
@@ -287,8 +291,10 @@ export const useServiceStore = defineStore('service', {
           code: service.code ?? '',
           period: service.period,
           servicePlanId: service.servicePlanId ?? service.servicePlan?.id ?? null,
-          price: service.price ?? 0,
           description: service.description ?? '',
+          serviceLineType: service.serviceLineType ?? null,
+          quotaLabel: service.quotaLabel ?? null,
+          billingType: service.billingType ?? null,
         }
       } else {
         this.form = {
@@ -296,8 +302,10 @@ export const useServiceStore = defineStore('service', {
           code: '',
           period: 0,
           servicePlanId: null,
-          price: 0,
           description: '',
+          serviceLineType: null,
+          quotaLabel: null,
+          billingType: null,
         }
       }
       this.showModal = true
@@ -311,8 +319,10 @@ export const useServiceStore = defineStore('service', {
         code: '',
         period: 0,
         servicePlanId: null,
-        price: 0,
         description: '',
+        serviceLineType: null,
+        quotaLabel: null,
+        billingType: null,
       }
       this.validationErrors = []
     },

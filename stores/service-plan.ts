@@ -2,16 +2,40 @@ import { defineStore } from 'pinia'
 import { useNuxtApp } from '#app'
 import Swal from 'sweetalert2'
 
-export interface ServicePlan {
+export interface ServiceType {
   id: number
   name: string
   description: string | null
+  sortOrder: number
+}
+
+export interface ServicePlan {
+  id: number
+  serviceTypeId?: number | null
+  serviceType?: ServiceType | null
+  name: string
+  description: string | null
+  planFunction?: string | null
+  quota?: string | null
+  typeQuota?: string | null
+  contractMonth?: number | null
+  fup?: string | null
+  hasIpPublic?: boolean
+  hasSla?: boolean
+  hasTopup?: boolean
+  hasAutoTopup?: boolean
+  hasApi?: boolean
+  hasDashboard?: boolean
+  hasMonthlyReport?: boolean
+  paymentInfo?: string | null
+  registrationInfo?: string | null
   createdAt: string
   updatedAt: string
 }
 
 interface ServicePlanState {
   servicePlans: ServicePlan[]
+  serviceTypes: ServiceType[]
   loading: boolean
   error: any
   totalRecords: number
@@ -22,6 +46,7 @@ interface ServicePlanState {
     sortField: string | null
     sortOrder: number | null
     search: string
+    serviceTypeId: string
   }
   form: Partial<ServicePlan>
   isEditMode: boolean
@@ -32,6 +57,7 @@ interface ServicePlanState {
 export const useServicePlanStore = defineStore('servicePlan', {
   state: (): ServicePlanState => ({
     servicePlans: [],
+    serviceTypes: [],
     loading: true,
     error: null,
     totalRecords: 0,
@@ -42,10 +68,26 @@ export const useServicePlanStore = defineStore('servicePlan', {
       sortField: 'id',
       sortOrder: 1,
       search: '',
+      serviceTypeId: '',
     },
     form: {
+      serviceTypeId: null as number | null,
       name: '',
       description: '',
+      planFunction: '',
+      quota: '',
+      typeQuota: '',
+      contractMonth: null as number | null,
+      fup: '',
+      hasIpPublic: false,
+      hasSla: false,
+      hasTopup: false,
+      hasAutoTopup: false,
+      hasApi: false,
+      hasDashboard: false,
+      hasMonthlyReport: false,
+      paymentInfo: '',
+      registrationInfo: '',
     },
     isEditMode: false,
     showModal: false,
@@ -65,6 +107,9 @@ export const useServicePlanStore = defineStore('servicePlan', {
           sortOrder: this.params.sortOrder === -1 ? 'desc' : 'asc',
           search: this.params.search || '',
         })
+        if (this.params.serviceTypeId) {
+          params.set('service_type_id', this.params.serviceTypeId)
+        }
 
         const response = await fetch(`${$api.servicePlan()}?${params.toString()}`, {
           headers: {
@@ -252,11 +297,41 @@ export const useServicePlanStore = defineStore('servicePlan', {
       if (servicePlan) {
         this.form = {
           ...servicePlan,
+          serviceTypeId: servicePlan.serviceTypeId ?? null,
+          planFunction: servicePlan.planFunction ?? '',
+          quota: servicePlan.quota ?? '',
+          typeQuota: servicePlan.typeQuota ?? '',
+          contractMonth: servicePlan.contractMonth ?? null,
+          fup: servicePlan.fup ?? '',
+          hasIpPublic: servicePlan.hasIpPublic ?? false,
+          hasSla: servicePlan.hasSla ?? false,
+          hasTopup: servicePlan.hasTopup ?? false,
+          hasAutoTopup: servicePlan.hasAutoTopup ?? false,
+          hasApi: servicePlan.hasApi ?? false,
+          hasDashboard: servicePlan.hasDashboard ?? false,
+          hasMonthlyReport: servicePlan.hasMonthlyReport ?? false,
+          paymentInfo: servicePlan.paymentInfo ?? '',
+          registrationInfo: servicePlan.registrationInfo ?? '',
         }
       } else {
         this.form = {
+          serviceTypeId: null,
           name: '',
           description: '',
+          planFunction: '',
+          quota: '',
+          typeQuota: '',
+          contractMonth: null,
+          fup: '',
+          hasIpPublic: false,
+          hasSla: false,
+          hasTopup: false,
+          hasAutoTopup: false,
+          hasApi: false,
+          hasDashboard: false,
+          hasMonthlyReport: false,
+          paymentInfo: '',
+          registrationInfo: '',
         }
       }
       this.showModal = true
@@ -266,8 +341,23 @@ export const useServicePlanStore = defineStore('servicePlan', {
       this.showModal = false
       this.isEditMode = false
       this.form = {
+        serviceTypeId: null,
         name: '',
         description: '',
+        planFunction: '',
+        quota: '',
+        typeQuota: '',
+        contractMonth: null,
+        fup: '',
+        hasIpPublic: false,
+        hasSla: false,
+        hasTopup: false,
+        hasAutoTopup: false,
+        hasApi: false,
+        hasDashboard: false,
+        hasMonthlyReport: false,
+        paymentInfo: '',
+        registrationInfo: '',
       }
       this.validationErrors = []
     },
@@ -288,6 +378,27 @@ export const useServicePlanStore = defineStore('servicePlan', {
       this.params.search = value
       this.params.first = 0
       this.fetchServicePlans()
+    },
+
+    setServiceTypeId(value: string) {
+      this.params.serviceTypeId = value
+      this.params.first = 0
+      this.fetchServicePlans()
+    },
+
+    async fetchServiceTypes() {
+      const { $api } = useNuxtApp()
+      try {
+        const res = await fetch($api.serviceType(), {
+          headers: { Accept: 'application/json' },
+          credentials: 'include',
+        })
+        if (!res.ok) return
+        const data = await res.json()
+        this.serviceTypes = Array.isArray(data) ? data : []
+      } catch {
+        this.serviceTypes = []
+      }
     },
 
     async fetchTotalServicePlans() {

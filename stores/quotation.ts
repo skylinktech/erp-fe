@@ -32,6 +32,21 @@ export interface QuotationServiceItem {
   subtotal: number
   service?: { id: number; name: string; code?: string; price?: number }
   unit?: { id: number; symbol?: string; name?: string }
+  terminalKitCount?: number | null
+  quotaPriority?: number | null
+  newServiceLine?: number | null
+  additionalData?: number | null
+}
+
+export interface QuotationDidItem {
+  id?: string
+  quotationId?: string
+  priceListLineId?: number | null
+  quantity?: number | null
+  price?: number | null
+  subtotal?: number | null
+  isPriceOverridden?: boolean | null
+  priceListLine?: { id: number; price?: number; quantity?: number; priceList?: { name?: string }; product?: { name?: string }; service?: { name?: string }; did?: { name?: string; code?: string } }
 }
 
 export interface Quotation {
@@ -74,6 +89,7 @@ export interface Quotation {
   approvedByUser?    : User
   quotationItems?    : QuotationItem[]
   quotationServices? : QuotationServiceItem[]
+  quotationDids?     : QuotationDidItem[]
 }
 
 interface QuotationState {
@@ -144,7 +160,8 @@ export const useQuotationStore = defineStore('quotation', {
         description: '',
         status: 'draft',
         quotationItems: [],
-        quotationServices: []
+        quotationServices: [],
+        quotationDids: [],
     },
     isEditMode      : false,
     showModal       : false,
@@ -232,6 +249,7 @@ export const useQuotationStore = defineStore('quotation', {
             const dataToAppend = { ...this.form };
             delete dataToAppend.quotationItems;
             delete dataToAppend.quotationServices;
+            delete dataToAppend.quotationDids;
             delete dataToAppend.customer;
             delete dataToAppend.siteInvest;
             delete dataToAppend.site;
@@ -247,11 +265,14 @@ export const useQuotationStore = defineStore('quotation', {
                 delete dataToAppend.noQuotation;
             }
 
-            // Validasi: minimal 1 item produk ATAU 1 service
+            // Validasi: minimal 1 item produk ATAU 1 service ATAU 1 DID (DID: from SI = priceListLineId+quantity, custom = quantity+price)
             const hasItems = (this.form.quotationItems || []).some((i: any) => i.productId && i.quantity > 0);
             const hasServices = (this.form.quotationServices || []).some((s: any) => s.serviceId && s.quantity > 0);
-            if (!hasItems && !hasServices) {
-                throw new Error('Minimal harus ada 1 item produk atau 1 service');
+            const hasDids = (this.form.quotationDids || []).some((d: any) =>
+                (d.priceListLineId && (Number(d.quantity) || 0) > 0) || (!d.priceListLineId && (Number(d.quantity) || 0) > 0 && (d.price != null || Number(d.price) >= 0))
+            );
+            if (!hasItems && !hasServices && !hasDids) {
+                throw new Error('Minimal harus ada 1 item produk, service, atau DID');
             }
 
             if (!dataToAppend.siteInvestId) {
@@ -307,9 +328,21 @@ export const useQuotationStore = defineStore('quotation', {
             const validServices = (this.form.quotationServices || []).filter((s: any) => 
                 s.serviceId && s.unitId && s.quantity > 0 && s.price != null
             );
-            
-            if (validItems.length === 0 && validServices.length === 0) {
-                throw new Error('Minimal harus ada 1 item produk atau 1 service yang valid');
+            const validDids = (this.form.quotationDids || []).filter((d: any) => {
+                const qty = Number(d.quantity) || 0;
+                const price = d.price != null ? Number(d.price) : null;
+                if (d.priceListLineId && qty > 0 && (price != null || d.subtotal != null)) return true;
+                if (!d.priceListLineId && qty > 0 && (price != null || Number(d.subtotal) >= 0)) return true;
+                return false;
+            });
+
+            const servicesMissingUnit = (this.form.quotationServices || []).filter((s: any) => s.serviceId && (s.unitId == null || s.unitId === ''));
+            if (servicesMissingUnit.length > 0) {
+                throw new Error('Unit harus dipilih untuk setiap item di tab Services.');
+            }
+
+            if (validItems.length === 0 && validServices.length === 0 && validDids.length === 0) {
+                throw new Error('Minimal harus ada 1 item produk, service, atau DID yang valid');
             }
 
             if (validItems.length > 0) {
@@ -322,21 +355,49 @@ export const useQuotationStore = defineStore('quotation', {
             }
 
             validItems.forEach((item: any, i: number) => {
-                Object.keys(item).forEach(itemKey => {
-                    const value = item[itemKey];
-                    if (value !== null && value !== undefined) {
-                       formData.append(`quotationItems[${i}][${itemKey}]`, value);
-                    }
-                });
+                let pid = item.productId;
+                try {
+                  if (pid && typeof pid === 'object') pid = (pid as any).id ?? (pid as any).productId ?? (pid as any)[0] ?? null;
+                  else if (pid && typeof pid === 'string' && pid.trim().startsWith('{')) {
+                    const parsed = JSON.parse(pid);
+                    pid = parsed.id ?? parsed.productId ?? null;
+                  }
+                } catch (_e) {}
+                formData.append(`quotationItems[${i}][productId]`, String((Number(pid) || pid) ?? ''));
+                formData.append(`quotationItems[${i}][quantity]`, String(item.quantity));
+                formData.append(`quotationItems[${i}][price]`, String(item.price));
+                formData.append(`quotationItems[${i}][subtotal]`, String(item.subtotal ?? (Number(item.quantity) || 0) * (Number(item.price) || 0)));
+                if (item.description !== undefined && item.description !== null) {
+                  formData.append(`quotationItems[${i}][description]`, String(item.description));
+                }
             });
 
             validServices.forEach((s: any, i: number) => {
                 const sub = Number(s.subtotal) || (Number(s.quantity) || 0) * (Number(s.price) || 0);
-                formData.append(`quotationServices[${i}][unitId]`, s.unitId);
-                formData.append(`quotationServices[${i}][serviceId]`, s.serviceId);
-                formData.append(`quotationServices[${i}][quantity]`, s.quantity);
-                formData.append(`quotationServices[${i}][price]`, s.price);
+                formData.append(`quotationServices[${i}][unitId]`, String(s.unitId));
+                formData.append(`quotationServices[${i}][serviceId]`, String(s.serviceId));
+                if (s.servicePlanId !== undefined && s.servicePlanId !== null && s.servicePlanId !== '') {
+                  formData.append(`quotationServices[${i}][servicePlanId]`, String(s.servicePlanId));
+                }
+                formData.append(`quotationServices[${i}][quantity]`, String(s.quantity));
+                formData.append(`quotationServices[${i}][price]`, String(s.price));
                 formData.append(`quotationServices[${i}][subtotal]`, String(sub));
+                if (s.terminalKitCount != null && s.terminalKitCount !== '') formData.append(`quotationServices[${i}][terminalKitCount]`, String(s.terminalKitCount));
+                if (s.quotaPriority != null && s.quotaPriority !== '') formData.append(`quotationServices[${i}][quotaPriority]`, String(s.quotaPriority));
+                if (s.newServiceLine != null && s.newServiceLine !== '') formData.append(`quotationServices[${i}][newServiceLine]`, String(s.newServiceLine));
+                if (s.additionalData != null && s.additionalData !== '') formData.append(`quotationServices[${i}][additionalData]`, String(s.additionalData));
+            });
+
+            validDids.forEach((d: any, i: number) => {
+                const pllId = d.priceListLineId != null && d.priceListLineId !== '' ? Number(d.priceListLineId) : null;
+                const qty = d.quantity != null && d.quantity !== '' ? Number(d.quantity) : null;
+                const price = d.price != null && d.price !== '' ? Number(d.price) : null;
+                const sub = d.subtotal != null && d.subtotal !== '' ? Number(d.subtotal) : (qty != null && price != null ? qty * price : null);
+                formData.append(`quotationDids[${i}][priceListLineId]`, pllId != null ? String(pllId) : '');
+                formData.append(`quotationDids[${i}][quantity]`, qty != null ? String(qty) : '');
+                formData.append(`quotationDids[${i}][price]`, price != null ? String(price) : '');
+                formData.append(`quotationDids[${i}][subtotal]`, sub != null ? String(sub) : '');
+                formData.append(`quotationDids[${i}][isPriceOverridden]`, d.isPriceOverridden ? '1' : '0');
             });
 
             const method = 'POST';
@@ -621,6 +682,7 @@ export const useQuotationStore = defineStore('quotation', {
                 costCenterId: raw.costCenterId ?? raw.cost_center_id ?? costCenter?.id,
                 quotationItems: raw.quotationItems ?? raw.quotation_items ?? [],
                 quotationServices: raw.quotationServices ?? raw.quotation_services ?? [],
+                quotationDids: raw.quotationDids ?? raw.quotation_dids ?? [],
                 siteInvest,
                 site,
                 costCenter,
@@ -635,6 +697,7 @@ export const useQuotationStore = defineStore('quotation', {
             delete formData.cost_center_id;
             delete formData.quotation_items;
             delete formData.quotation_services;
+            delete formData.quotation_dids;
             delete formData.site_invest;
             delete formData.cost_center;
 
@@ -646,15 +709,46 @@ export const useQuotationStore = defineStore('quotation', {
                 price: Number(i.price) || 0,
                 subtotal: Number(i.subtotal) || (Number(i.quantity) || 0) * (Number(i.price) || 0),
                 description: i.description ?? null,
+                isPriceOverridden: i.isPriceOverridden ?? false,
+                priceReason: i.priceReason ?? '',
             }));
-            // Normalisasi tiap quotationServices: serviceId, unitId
-            formData.quotationServices = (formData.quotationServices || []).map((s: any) => ({
-                ...s,
-                serviceId: s.serviceId ?? s.service_id,
-                unitId: s.unitId ?? s.unit_id,
-                quantity: Number(s.quantity) || 0,
-                price: Number(s.price) || 0,
-                subtotal: Number(s.subtotal) || (Number(s.quantity) || 0) * (Number(s.price) || 0),
+            // Normalisasi tiap quotationServices: serviceId, unitId, billingType (dari price_list_lines)
+            formData.quotationServices = (formData.quotationServices || []).map((s: any) => {
+                // ✅ PERBAIKAN: Gunakan billing_type dari backend jika ada, default ke 'one_time'
+                const bt = (s.billingType ?? s.billing_type ?? 'one_time') + '';
+                const qty = Number(s.quantity) || 0;
+                const price = Number(s.price) || 0;
+                const tk = s.terminalKitCount ?? (s.terminal_kit_count != null ? Number(s.terminal_kit_count) : null);
+                const qp = s.quotaPriority ?? (s.quota_priority != null ? Number(s.quota_priority) : null);
+                const nsl = s.newServiceLine ?? (s.new_service_line != null ? Number(s.new_service_line) : null);
+                const ad = s.additionalData ?? (s.additional_data != null ? Number(s.additional_data) : null);
+                const effectivePrice = price + (tk != null ? Number(tk) : 0) + (qp != null ? Number(qp) : 0) + (nsl != null ? Number(nsl) : 0) + (ad != null ? Number(ad) : 0);
+                const subtotal = qty * effectivePrice;
+                return {
+                    ...s,
+                    serviceId: s.serviceId ?? s.service_id,
+                    unitId: s.unitId ?? s.unit_id,
+                    quantity: qty,
+                    price,
+                    subtotal,
+                    isPriceOverridden: s.isPriceOverridden ?? false,
+                    priceReason: s.priceReason ?? '',
+                    billingType: bt,
+                    billing_type: bt,
+                    terminalKitCount: tk != null ? Number(tk) : null,
+                    quotaPriority: qp != null ? Number(qp) : null,
+                    newServiceLine: nsl != null ? Number(nsl) : null,
+                    additionalData: ad != null ? Number(ad) : null,
+                };
+            });
+            // Normalisasi quotationDids (semua field opsional)
+            formData.quotationDids = (formData.quotationDids || []).map((d: any) => ({
+                ...d,
+                priceListLineId: d.priceListLineId ?? d.price_list_line_id ?? null,
+                quantity: d.quantity != null && d.quantity !== '' ? Number(d.quantity) : null,
+                price: d.price != null && d.price !== '' ? Number(d.price) : null,
+                subtotal: d.subtotal != null && d.subtotal !== '' ? Number(d.subtotal) : null,
+                isPriceOverridden: d.isPriceOverridden ?? d.is_price_overridden ?? false,
             }));
 
             const formatDate = (dateStr: string | null) => dateStr ? new Date(dateStr).toISOString().split('T')[0] : null;
@@ -674,6 +768,13 @@ export const useQuotationStore = defineStore('quotation', {
             if (!this.form.quotationServices || this.form.quotationServices.length === 0) {
                 this.form.quotationServices = [];
                 this.addServiceItem();
+            }
+            if (!this.form.quotationDids || this.form.quotationDids.length === 0) {
+                this.form.quotationDids = [];
+            }
+            this.form.useDidFromSiteInvest = (this.form.quotationDids.length > 0 && this.form.quotationDids.every((d: any) => d.priceListLineId)) ? true : (this.form.quotationDids.length > 0 ? false : null);
+            if (this.form.quotationDids.length === 0 && this.form.useDidFromSiteInvest === false) {
+                this.addDidItem(true);
             }
             this.form.attachment = null;
             if (quotationData.attachment) {
@@ -705,6 +806,8 @@ export const useQuotationStore = defineStore('quotation', {
                 status: 'draft',
                 quotationItems: [],
                 quotationServices: [],
+                quotationDids: [],
+                useDidFromSiteInvest: null,
             };
             this.addItem();
             this.addServiceItem();
@@ -737,6 +840,8 @@ export const useQuotationStore = defineStore('quotation', {
             status: 'draft',
             quotationItems: [],
             quotationServices: [],
+            quotationDids: [],
+            useDidFromSiteInvest: null,
         };
         this.validationErrors = [];
     },
@@ -745,6 +850,8 @@ export const useQuotationStore = defineStore('quotation', {
         this.form.quotationItems.push({
             productId: null, quantity: 1, price: 0,
             description: '', subtotal: 0,
+            isPriceOverridden: false,
+            priceReason: '',
         });
     },
 
@@ -757,14 +864,69 @@ export const useQuotationStore = defineStore('quotation', {
         this.form.quotationServices.push({
             unitId: null,
             serviceId: null,
+            servicePlanId: null,
             quantity: 1,
             price: 0,
             subtotal: 0,
+            isPriceOverridden: false,
+            priceReason: '',
+            terminalKitCount: null,
+            quotaPriority: null,
+            newServiceLine: null,
+            additionalData: null,
         });
     },
 
     removeServiceItem(index: number) {
         this.form.quotationServices.splice(index, 1);
+    },
+
+    addDidItem(useCustom = false) {
+        this.form.quotationDids = this.form.quotationDids || [];
+        this.form.quotationDids.push({
+            priceListLineId: null,
+            quantity: 1,
+            price: 0,
+            subtotal: 0,
+            isPriceOverridden: useCustom,
+        });
+    },
+
+    setUseDidFromSiteInvest(value: boolean) {
+        this.form.useDidFromSiteInvest = value;
+        if (value === false) {
+            this.form.quotationDids = [{
+                priceListLineId: null,
+                quantity: 1,
+                price: 0,
+                subtotal: 0,
+                isPriceOverridden: true,
+            }];
+        }
+    },
+
+    setQuotationDidsFromSiteInvest(dids: any[]) {
+        this.form.quotationDids = (dids || []).map((d: any) => {
+            const pllId = d.priceListLineId ?? d.price_list_line_id ?? d.priceListLine?.id ?? d.price_list_line?.id;
+            const qty = Number(d.quantity) || 1;
+            const price = Number(d.price) || 0;
+            const sub = Number(d.subtotal) || qty * price;
+            return {
+                priceListLineId: pllId != null ? Number(pllId) : null,
+                quantity: qty,
+                price,
+                subtotal: sub,
+                isPriceOverridden: !!(d.isPriceOverridden ?? d.is_price_overridden),
+                priceListLine: d.priceListLine ?? d.price_list_line,
+            };
+        });
+        if (this.form.quotationDids.length === 0) {
+            this.addDidItem(false);
+        }
+    },
+
+    removeDidItem(index: number) {
+        this.form.quotationDids.splice(index, 1);
     },
 
     setPagination(event: any) {

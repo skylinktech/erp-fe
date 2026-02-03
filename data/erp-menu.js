@@ -98,6 +98,13 @@ export const erpMenuItems = [
 
   // Sales Module
   {
+    name: "POS",
+    path: "/sales/pos",
+    icon: "ri-shopping-basket-line",
+    category: "Sales",
+    type: "main"
+  },
+  {
     name: "Penjualan",
     path: "/sales/penjualan",
     icon: "ri-shopping-cart-line",

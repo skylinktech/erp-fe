@@ -231,23 +231,27 @@
                         </div>
                       </div>
                       <div class="kanban-card-footer">
-                        <div class="d-flex align-items-center gap-2">
-                          <span
-                            v-if="opportunity.quotations && opportunity.quotations.length > 0"
-                            class="badge bg-label-info"
-                          >
-                            <i class="ri-file-list-3-line me-1"></i>
-                            {{ opportunity.quotations.length }} Quotation
-                          </span>
-                          <span
-                            v-if="opportunity.subscriptions && opportunity.subscriptions.length > 0"
-                            class="badge bg-label-success"
-                          >
-                            <i class="ri-file-paper-2-line me-1"></i>
-                            {{ opportunity.subscriptions.length }} Subscription
-                          </span>
+                        <div class="row">
+                          <div class="col-12 d-flex align-items-center gap-3">
+                            <span
+                              v-if="opportunity.quotations && opportunity.quotations.length > 0"
+                              class="badge bg-label-info"
+                            >
+                              <i class="ri-file-list-3-line me-1"></i>
+                              {{ opportunity.quotations.length }} Quotation
+                            </span>
+                            <span
+                              v-if="opportunity.subscriptions && opportunity.subscriptions.length > 0"
+                              class="badge bg-label-success"
+                            >
+                              <i class="ri-file-paper-2-line me-1"></i>
+                              {{ opportunity.subscriptions.length }} Subscription
+                            </span>
+                          </div>
+                          <div class="col-12 mt-2 d-flex justify-content-end">
+                            <small class="text-muted text-nowrap">{{ formatRelativeTime(opportunity.createdAt || opportunity.created_at) }}</small>
+                          </div>
                         </div>
-                        <small class="text-muted">{{ formatRelativeTime(opportunity.createdAt || opportunity.created_at) }}</small>
                       </div>
                     </div>
                   </div>
@@ -843,7 +847,7 @@ definePageMeta({
   border-radius: 8px;
   display: flex;
   flex-direction: column;
-  max-height: calc(100vh - 400px);
+  max-height: calc(200vh - 1000px);
 }
 
 .kanban-column.is-closing {
@@ -875,9 +879,11 @@ definePageMeta({
 }
 
 .kanban-column-body {
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
   padding: 12px;
+  padding-bottom: 90px;
   display: flex;
   flex-direction: column;
   gap: 12px;

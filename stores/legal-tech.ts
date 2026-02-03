@@ -157,17 +157,45 @@ export const useLegalTechStore = defineStore('legal-tech', {
       try {
         const idNum = Number(reviewId)
         if (isNaN(idNum)) {
+          // Coba cari di list yang sudah ada
+          const existingReview = this.reviews.find(rev => String(rev.id) === String(reviewId))
+          if (existingReview) {
+            this.loading = false
+            return existingReview
+          }
           throw new Error('ID tidak valid')
         }
-        const r = await fetch($api.leTechReviewShow(idNum), { headers: { Accept: 'application/json' }, credentials: 'include' })
-        const j = await r.json().catch(() => ({}))
+        
+        const r = await fetch($api.leTechReviewShow(idNum), { 
+          headers: { Accept: 'application/json' }, 
+          credentials: 'include' 
+        })
+        
         if (!r.ok) {
-          throw new Error(j.message || 'Gagal mengambil detail')
+          // Jika 404 atau error lain, coba ambil dari list yang sudah ada
+          const existingReview = this.reviews.find(rev => rev.id === idNum)
+          if (existingReview) {
+            this.loading = false
+            return existingReview
+          }
+          
+          const j = await r.json().catch(() => ({ message: 'Legal-Tech Review tidak ditemukan' }))
+          throw new Error(j.message || 'Legal-Tech Review tidak ditemukan')
         }
+        
+        const j = await r.json().catch(() => ({}))
         const d = j.data || j
+        
         if (!d || !d.id) {
+          // Coba cari di list sebagai fallback
+          const existingReview = this.reviews.find(rev => rev.id === idNum)
+          if (existingReview) {
+            this.loading = false
+            return existingReview
+          }
           throw new Error('Data tidak valid')
         }
+        
         // Update review di list jika ada
         const idx = this.reviews.findIndex(r => r.id === d.id)
         if (idx >= 0) {
@@ -178,7 +206,13 @@ export const useLegalTechStore = defineStore('legal-tech', {
         return d
       } catch (e: any) {
         this.error = e
-        throw new Error(e.message || 'Gagal mengambil detail Legal-Tech Review')
+        // Jangan throw error jika data ada di list
+        const existingReview = this.reviews.find(rev => String(rev.id) === String(reviewId))
+        if (existingReview) {
+          console.warn('Using existing review from list due to fetch error:', e.message)
+          return existingReview
+        }
+        throw e
       } finally {
         this.loading = false
       }
