@@ -1,6 +1,7 @@
 <template>
-    <div class="page-wrapper">
-        <div class="content-wrapper">
+    <div class="price-list-page-root">
+        <div class="page-wrapper">
+            <div class="content-wrapper">
             <!-- Content -->
             <div v-if="loading" class="text-center py-8">
                 <ProgressSpinner 
@@ -194,6 +195,11 @@
                                                 {{ slotProps.data.validTo ? formatDate(slotProps.data.validTo) : 'Tidak terbatas' }}
                                             </template>
                                         </Column>
+                                        <Column field="total" header="Total" :sortable="true">
+                                            <template #body="slotProps">
+                                                {{ formatRupiah(slotProps.data.total ?? 0) }}
+                                            </template>
+                                        </Column>
                                         <Column field="createdAt" header="Dibuat" :sortable="true">
                                             <template #body="slotProps">
                                                 {{ formatDate(slotProps.data.createdAt) }}
@@ -329,14 +335,15 @@
                                         <div v-for="(line, index) in form.lines" :key="index" class="repeater-item mb-4">
                                             <div class="d-flex justify-content-between align-items-center mb-3">
                                                 <span class="text-muted fw-medium">Item #{{ index + 1 }}</span>
+                                                <span v-if="line.priceableType === 'did' && line.categoryDid" class="badge bg-primary">{{ getCategoryDidLabel(line.categoryDid) }}</span>
                                                 <button class="btn btn-sm btn-outline-danger" @click="priceListStore.removeLine(index)" type="button" title="Hapus item">
                                                     <i class="ri-delete-bin-line me-1"></i> Hapus
                                                 </button>
                                             </div>
 
-                                            <!-- Baris 1: Tipe, Item, Jenis Harga (grid 3-6-3) -->
-                                            <div class="row g-3 align-items-end mb-3">
-                                                <div class="col-12 col-sm-4 col-md-3">
+                                            <!-- Baris 1: Tipe, Item, Jenis Harga (lebar dinamis) -->
+                                            <div class="form-fields-dynamic mb-3">
+                                                <div class="form-field-item">
                                                     <label class="form-label mb-1">Tipe</label>
                                                     <select 
                                                         class="form-select" 
@@ -348,7 +355,7 @@
                                                         <option value="did">DID</option>
                                                     </select>
                                                 </div>
-                                                <div class="col-12 col-sm-4 col-md-6">
+                                                <div class="form-field-item form-field-item-grow">
                                                     <label class="form-label mb-1">{{ getPriceableLabel(line.priceableType) }}</label>
                                                     <CustomSelect2
                                                         v-model="form.lines[index].priceableId"
@@ -358,9 +365,10 @@
                                                         placeholder="Pilih item"
                                                         searchable
                                                         clearable
+                                                        @update:modelValue="onPriceableIdChange(index)"
                                                     />
                                                 </div>
-                                                <div class="col-12 col-sm-4 col-md-3">
+                                                <div class="form-field-item">
                                                     <label class="form-label mb-1">Jenis Harga</label>
                                                     <select class="form-select" v-model="form.lines[index].priceType">
                                                         <option v-for="opt in priceTypeOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
@@ -368,9 +376,9 @@
                                                 </div>
                                             </div>
 
-                                            <!-- Baris 2: Billing (full width default), Cycle (muncul jika recurring) -->
-                                            <div class="row g-3 align-items-end mb-3">
-                                                <div class="col-12" :class="line.billingType === 'recurring' ? 'col-md-6' : 'col-md-12'">
+                                            <!-- Baris 2: Billing, Cycle (muncul jika recurring) -->
+                                            <div class="form-fields-dynamic mb-3">
+                                                <div :class="line.billingType === 'recurring' ? 'form-field-item' : 'form-field-item form-field-item-full'">
                                                     <label class="form-label mb-1">Billing</label>
                                                     <select 
                                                         class="form-select" 
@@ -381,7 +389,7 @@
                                                         <option value="recurring">Recurring</option>
                                                     </select>
                                                 </div>
-                                                <div class="col-12 col-md-6" v-if="line.billingType === 'recurring'">
+                                                <div v-if="line.billingType === 'recurring'" class="form-field-item">
                                                     <label class="form-label mb-1">Cycle</label>
                                                     <select class="form-select" v-model="form.lines[index].billingCycle">
                                                         <option value="monthly">Monthly</option>
@@ -392,9 +400,9 @@
                                                 </div>
                                             </div>
 
-                                            <!-- Baris 3: Qty, Harga, Subtotal (grid 4-4-4, sama lebar) -->
-                                            <div class="row g-3 align-items-end mb-3">
-                                                <div class="col-6 col-md-3">
+                                            <!-- Baris 3: Qty, Harga Modal, Harga Jual + DID (jika ada) + Subtotal (satu baris, isi merata) -->
+                                            <div class="form-fields-dynamic mb-3">
+                                                <div class="form-field-item">
                                                     <label class="form-label mb-1">Qty</label>
                                                     <input 
                                                         type="number" 
@@ -404,8 +412,18 @@
                                                         @input="updateLineSubtotal(index)" 
                                                     />
                                                 </div>
-                                                <div class="col-6 col-md-3">
-                                                    <label class="form-label mb-1">Harga</label>
+                                                <div class="form-field-item">
+                                                    <label class="form-label mb-1">Harga Modal</label>
+                                                    <input
+                                                        type="text"
+                                                        class="form-control"
+                                                        :value="line.priceBuy != null ? formatRupiah(line.priceBuy) : ''"
+                                                        @input="(e) => handlePriceBuyInput(index, e.target.value)"
+                                                        placeholder="0"
+                                                    />
+                                                </div>
+                                                <div class="form-field-item">
+                                                    <label class="form-label mb-1">Harga Jual</label>
                                                     <input
                                                         type="text"
                                                         class="form-control"
@@ -414,7 +432,25 @@
                                                         :disabled="line.priceableType === 'service'"
                                                         placeholder="0"
                                                     />
-                                                </div><div class="col-6 col-md-3">
+                                                </div>
+                                                <!-- DID: hanya tampilkan Kategori (read-only). del/ins/dis diisi otomatis dari Harga Jual -->
+                                                <div v-if="line.priceableType === 'did' && line.categoryDid" class="form-field-item form-field-item-same">
+                                                    <label class="form-label mb-1">Kategori</label>
+                                                    <div class="form-control form-control-category">{{ getCategoryDidLabel(line.categoryDid) }}</div>
+                                                </div>
+                                                <div class="form-field-item form-field-item-subtotal">
+                                                    <label class="form-label mb-1">Subtotal</label>
+                                                    <input
+                                                        type="text"
+                                                        class="form-control bg-light"
+                                                        :value="formatRupiah(line.subtotal)"
+                                                        readonly
+                                                    />
+                                                </div>
+                                            </div>
+                                            <!-- Service-only: Terminal Kit, Quota Priority, New Service Line, Additional Data (satu baris, isi merata) -->
+                                            <div v-if="line.priceableType !== 'did'" class="form-fields-dynamic mb-3">
+                                                <div class="form-field-item">
                                                     <label class="form-label mb-1">Terminal Kit Count</label>
                                                     <input 
                                                         type="text"
@@ -425,7 +461,7 @@
                                                         placeholder="0"
                                                     />
                                                 </div>
-                                                <div class="col-6 col-md-3">
+                                                <div class="form-field-item">
                                                     <label class="form-label mb-1">Quota Priority</label>
                                                     <input 
                                                         type="text"
@@ -436,11 +472,7 @@
                                                         placeholder="0"
                                                     />
                                                 </div>
-                                            </div>
-
-                                            <!-- Baris 4: Terminal Kit, Quota Priority, New Service Line, Additional Data (grid 3-3-3-3) -->
-                                            <div class="row g-3 align-items-end">
-                                                <div class="col-6 col-md-3">
+                                                <div class="form-field-item">
                                                     <label class="form-label mb-1">New Service Line</label>
                                                     <input 
                                                         type="text"
@@ -451,7 +483,7 @@
                                                         placeholder="0"
                                                     />
                                                 </div>
-                                                <div class="col-6 col-md-3">
+                                                <div class="form-field-item">
                                                     <label class="form-label mb-1">Additional Data</label>
                                                     <input 
                                                         type="text"
@@ -460,15 +492,6 @@
                                                         @input="(e) => handleAdditionalDataInput(index, e.target.value)"
                                                         :disabled="line.priceableType === 'product'"
                                                         placeholder="0"
-                                                    />
-                                                </div>
-                                                <div class="col-12 col-md-6">
-                                                    <label class="form-label mb-1">Subtotal</label>
-                                                    <input
-                                                        type="text"
-                                                        class="form-control bg-light"
-                                                        :value="formatRupiah(line.subtotal)"
-                                                        readonly
                                                     />
                                                 </div>
                                             </div>
@@ -493,8 +516,9 @@
                     </form>
                 </template>
             </Modal>
+            </div>
+            <div class="content-backdrop fade"></div>
         </div>
-        <div class="content-backdrop fade"></div>
 </template>
 
 <script setup>
@@ -608,6 +632,30 @@ async function fetchDidOptions() {
     }
 }
 
+/** Ensure a DID (with services) is in didOptions so category price fields can show. Fetches by id so we always have services; replaces existing entry if present so changing DID gets correct service count. */
+async function ensureDidInOptions(didId) {
+    if (!didId) return
+    const { $api } = useNuxtApp()
+    try {
+        const res = await fetch(`${$api.did()}/${didId}`, {
+            credentials: 'include',
+            headers: { Accept: 'application/json' },
+        })
+        const did = await res.json()
+        if (!did || !did.id) return
+        const idx = didOptions.value.findIndex((d) => d.id === didId)
+        if (idx >= 0) {
+            const next = [...didOptions.value]
+            next[idx] = did
+            didOptions.value = next
+        } else {
+            didOptions.value = [...didOptions.value, did]
+        }
+    } catch (e) {
+        // ignore
+    }
+}
+
 // Helper functions
 function getTypeBadgeClass(type) {
     if (type === 'site_investment') return 'bg-primary'
@@ -649,9 +697,108 @@ function getPriceableOptionLabel(type, option) {
     return option.name || ''
 }
 
+/** DID service categories that have a price field: delivery -> del_price, installation -> ins_price, dismantle -> dis_price */
+const DID_PRICE_CATEGORIES = ['delivery', 'installation', 'dismantle'];
+
+function getSelectedDid(line) {
+    if (line.priceableType !== 'did' || !line.priceableId) return null
+    return didOptions.value.find((d) => d.id === line.priceableId) || null
+}
+
+/** Returns unique categories from DID's did_services that have a price field (delivery, installation, dismantle). Normalizes casing so API "Delivery" matches "delivery". Falls back to saved categoryDid when editing. */
+function getDidServiceCategories(line) {
+    const did = getSelectedDid(line)
+    if (did && Array.isArray(did.services) && did.services.length > 0) {
+        const raw = did.services.map((s) => (s.category || s.category_did || '').toString().toLowerCase()).filter(Boolean)
+        const categories = [...new Set(raw)]
+        return DID_PRICE_CATEGORIES.filter((c) => categories.includes(c))
+    }
+    if (line.categoryDid && typeof line.categoryDid === 'string') {
+        const saved = line.categoryDid.split(',').map((c) => c.trim().toLowerCase()).filter(Boolean)
+        return DID_PRICE_CATEGORIES.filter((c) => saved.includes(c))
+    }
+    return []
+}
+
+function getCategoryDidLabel(category) {
+    if (!category) return '—'
+    const c = (typeof category === 'string' ? category.split(',')[0] : '').trim().toLowerCase()
+    if (c === 'delivery') return 'Delivery'
+    if (c === 'installation') return 'Installation'
+    if (c === 'dismantle') return 'Dismantle'
+    return c || '—'
+}
+
+function getDidPriceLabel(category) {
+    if (category === 'delivery') return 'Harga Delivery'
+    if (category === 'installation') return 'Harga Installation'
+    if (category === 'dismantle') return 'Harga Dismantle'
+    return category
+}
+
+function getDidPriceValue(line, category) {
+    const c = (typeof category === 'string' ? category.split(',')[0] : '').trim().toLowerCase()
+    if (c === 'delivery') return line.delPrice != null ? formatRupiah(line.delPrice) : ''
+    if (c === 'installation') return line.insPrice != null ? formatRupiah(line.insPrice) : ''
+    if (c === 'dismantle') return line.disPrice != null ? formatRupiah(line.disPrice) : ''
+    return ''
+}
+
+function handleDidPriceInput(index, category, value) {
+    const num = parseRupiahToNumber(value)
+    const line = form.value.lines[index]
+    if (category === 'delivery') line.delPrice = num === 0 ? null : num
+    if (category === 'installation') line.insPrice = num === 0 ? null : num
+    if (category === 'dismantle') line.disPrice = num === 0 ? null : num
+    updateLineSubtotal(index)
+}
+
+async function onPriceableIdChange(index) {
+    const line = form.value.lines[index]
+    if (line.priceableType !== 'did') return
+    await nextTick()
+    const current = form.value.lines[index]
+    if (!current.priceableId) return
+    await ensureDidInOptions(current.priceableId)
+    const cats = getDidServiceCategories(current)
+    if (cats.length === 0) {
+        current.categoryDid = null
+        current.delPrice = null
+        current.insPrice = null
+        current.disPrice = null
+        updateLineSubtotal(index)
+        return
+    }
+    if (cats.length === 1) {
+        current.categoryDid = cats[0]
+        current.delPrice = cats[0] === 'delivery' ? (current.delPrice ?? 0) : null
+        current.insPrice = cats[0] === 'installation' ? (current.insPrice ?? 0) : null
+        current.disPrice = cats[0] === 'dismantle' ? (current.disPrice ?? 0) : null
+        updateLineSubtotal(index)
+        return
+    }
+    // DID has multiple services: replace this 1 line with N lines (1 per category).
+    // Only the first new line keeps the existing id so removal/deletion works correctly.
+    const base = { ...current }
+    const newLines = cats.map((cat, i) => {
+        const row = {
+            ...base,
+            id: i === 0 ? base.id : undefined,
+            categoryDid: cat,
+            delPrice: cat === 'delivery' ? (base.delPrice ?? 0) : null,
+            insPrice: cat === 'installation' ? (base.insPrice ?? 0) : null,
+            disPrice: cat === 'dismantle' ? (base.disPrice ?? 0) : null,
+        }
+        return row
+    })
+    form.value.lines.splice(index, 1, ...newLines)
+    newLines.forEach((_, i) => updateLineSubtotal(index + i))
+}
+
 function handlePriceableTypeChange(index) {
     const line = form.value.lines[index]
     line.priceableId = null
+    line.categoryDid = null
     if (line.priceableType === 'product') {
       line.billingType = 'one_time'
       line.billingCycle = null
@@ -678,17 +825,41 @@ const parseRupiahToNumber = (rupiahString) => {
 }
 
 function handlePriceInput(index, value) {
-    form.value.lines[index].price = parseRupiahToNumber(value)
+    const line = form.value.lines[index]
+    line.price = parseRupiahToNumber(value)
+    if (line.priceableType === 'did' && line.categoryDid) {
+        const c = (typeof line.categoryDid === 'string' ? line.categoryDid.split(',')[0] : '').trim().toLowerCase()
+        if (c === 'delivery') line.delPrice = line.price
+        if (c === 'installation') line.insPrice = line.price
+        if (c === 'dismantle') line.disPrice = line.price
+    }
     updateLineSubtotal(index)
 }
 
+function handlePriceBuyInput(index, value) {
+    const num = parseRupiahToNumber(value)
+    form.value.lines[index].priceBuy = num === 0 ? null : num
+}
+
 function handleTerminalKitCountInput(index, value) {
-    form.value.lines[index].terminalKitCount = parseRupiahToNumber(value)
+    const line = form.value.lines[index]
+    line.terminalKitCount = parseRupiahToNumber(value)
+    if (line.priceableType === 'service') {
+        const tac = Number(line.terminalKitCount) || 0
+        const qp = Number(line.quotaPriority) || 0
+        line.newServiceLine = tac + qp
+    }
     updateLineSubtotal(index)
 }
 
 function handleQuotaPriorityInput(index, value) {
-    form.value.lines[index].quotaPriority = parseRupiahToNumber(value)
+    const line = form.value.lines[index]
+    line.quotaPriority = parseRupiahToNumber(value)
+    if (line.priceableType === 'service') {
+        const tac = Number(line.terminalKitCount) || 0
+        const qp = Number(line.quotaPriority) || 0
+        line.newServiceLine = tac + qp
+    }
     updateLineSubtotal(index)
 }
 
@@ -781,9 +952,16 @@ async function editPriceList(priceList) {
 
 // Modal instance
 let modalInstance = null
-watch(showModal, (newValue) => {
+watch(showModal, async (newValue) => {
     if (newValue) {
         activeTab.value = isEditMode.value ? 'info' : 'lines'
+        if (isEditMode.value && form.value.lines?.length) {
+            for (const line of form.value.lines) {
+                if (line.priceableType === 'did' && line.priceableId) {
+                    await ensureDidInOptions(line.priceableId)
+                }
+            }
+        }
         nextTick(() => {
             const modalElement = document.getElementById('PriceListModal')
             if (modalElement) {
@@ -817,6 +995,52 @@ onMounted(async () => {
     border-radius: 12px;
     padding: 20px;
     border: 1px solid #e9ecef;
+}
+
+/* Flex dinamis: field mengisi baris merata, tidak ada kolom kosong */
+.form-fields-dynamic {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1rem;
+    align-items: flex-end;
+}
+
+.form-field-item {
+    flex: 1 1 120px;
+    min-width: 120px;
+    max-width: 100%;
+}
+
+.form-field-item-grow {
+    flex: 2 1 180px;
+    min-width: 160px;
+}
+
+.form-field-item-full {
+    flex: 1 1 100%;
+    min-width: 100%;
+}
+
+/* Subtotal: isi sisa ruang di baris agar tidak ada ruang kosong */
+.form-field-item-subtotal {
+    flex: 1 1 140px;
+    min-width: 140px;
+}
+
+/* Kategori DID: lebar sama dengan field lain */
+.form-field-item-same {
+    flex: 1 1 120px;
+    min-width: 120px;
+}
+
+/* Kategori DID: tinggi sama dengan input lain (match Bootstrap .form-control) */
+.form-control-category {
+    width: 100%;
+    box-sizing: border-box;
+    height: calc(1.5em + 0.75rem + 2px);
+    min-height: 48px;
+    padding: 0.375rem 0.75rem;
+    line-height: 1.5;
 }
 
 .table-controls-custom {

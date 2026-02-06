@@ -371,10 +371,6 @@
                                         <CustomSelect2 v-model="form.termsOfPayment" :options="termsOfPaymentOptions" :get-option-label="o => o.label" :reduce="o => o.value" searchable clearable placeholder="Pilih" />
                                     </div>
                                     <div class="col-md-3">
-                                        <label class="form-label text-muted">Minimum Period (bulan)</label>
-                                        <CustomSelect2 v-model="form.minimumPeriod" :options="minimumPeriodOptions" :get-option-label="o => o.label" :reduce="o => o.value" searchable clearable placeholder="Pilih" @update:modelValue="onPeriodChange" />
-                                    </div>
-                                    <div class="col-md-3">
                                         <label class="form-label text-muted">DP (%)</label>
                                         <input type="number" v-model.number="form.dpPercent" class="form-control" placeholder="DP (%)" :disabled="form.termsOfPayment !== 'down_payment'">
                                     </div>
@@ -394,7 +390,7 @@
                                     </div>
                                     <div class="col-md-12">
                                         <label class="form-label text-muted">Deskripsi</label>
-                                        <textarea v-model="form.description" class="form-control" placeholder="Deskripsi"></textarea>
+                                        <Editor v-model="form.description" editor-style="min-height: 200px" class="quotation-description-editor" placeholder="Deskripsi / Term and Conditions (akan tampil di cetak quotation)..." />
                                     </div>
                                     <div class="col-md-6">
                                         <h6 class="mb-3">Add-ons</h6>
@@ -567,7 +563,7 @@
                                      <div class="row g-3">
                                          <div class="col-md-3">
                                              <label class="form-label text-muted">Service</label>
-                                             <CustomSelect2 v-model="item.serviceId" :options="services" :get-option-label="s => s?.name ?? ''" :reduce="s => s?.id" searchable clearable placeholder="Pilih Service" @update:modelValue="onServiceChange(idx)" />
+                                             <CustomSelect2 v-model="item.serviceId" :options="serviceOptions" :get-option-label="s => s?.name ?? ''" :reduce="s => s?.id" searchable clearable placeholder="Pilih Service" @update:modelValue="onServiceChange(idx)" />
                                          </div>
                                          <div class="col-md-2">
                                              <label class="form-label text-muted">Unit</label>
@@ -829,18 +825,7 @@ const filters = ref({
       return description;
   });
 
-  const currentPeriod = ref(12);
   const summaryRefreshKey = ref(0);
-
-  const onPeriodChange = (newVal) => {
-    currentPeriod.value = Number(newVal) || 12;
-    summaryRefreshKey.value += 1;
-  };
-
-  watch(() => form.value?.minimumPeriod, (newVal) => {
-    currentPeriod.value = Number(newVal) || 12;
-    summaryRefreshKey.value += 1;
-  }, { immediate: true });
 
   watch(showModal, async (visible) => {
     if (visible) {
@@ -881,7 +866,8 @@ const filters = ref({
       if (currentBt && currentBt !== 'one_time') continue;
       
       // Fetch billingType from API
-      const svc = services.value?.find(s => s.id === item.serviceId);
+      const opts = serviceOptions.value || [];
+      const svc = opts.find(s => (s.id ?? s) == item.serviceId);
       const servicePlanId = item.servicePlanId ?? svc?.servicePlanId ?? svc?.service_plan_id ?? null;
       
       if (!servicePlanId) continue;
@@ -917,32 +903,39 @@ const filters = ref({
 
   function getModalSummary () {
     summaryRefreshKey.value;
-    const period = currentPeriod.value;
     const f = quotationStore.form;
     const items = f?.quotationItems || [];
     const services = f?.quotationServices || [];
     const dids = f?.quotationDids || [];
-    const products = customerProducts.value || [];
     let productSub = 0;
     for (const i of items) {
-      const qty = Number(i.quantity) || 0;
-      const pr = Number(i.price) || 0;
-      const bt = (i?.product?.billingType ?? i?.product?.billing_type ?? products.find((p) => p.id === i.productId)?.billingType ?? products.find((p) => p.id === i.productId)?.billing_type ?? 'one_time') + '';
-      const isRecurring = bt.toLowerCase() === 'recurring';
-      productSub += isRecurring ? qty * pr * period : qty * pr;
+      const sub = Number(i.subtotal);
+      if (!Number.isNaN(sub)) {
+        productSub += sub;
+      } else {
+        const qty = Number(i.quantity) || 0;
+        const pr = Number(i.price) || 0;
+        productSub += qty * pr;
+      }
     }
     let serviceSub = 0;
     for (const i of services) {
-      const qty = Number(i.quantity) || 0;
-      const base = Number(i.price) || 0;
-      const tk = Number(i?.terminalKitCount ?? i?.terminal_kit_count) || 0;
-      const qp = Number(i?.quotaPriority ?? i?.quota_priority) || 0;
-      const nsl = Number(i?.newServiceLine ?? i?.new_service_line) || 0;
-      const ad = Number(i?.additionalData ?? i?.additional_data) || 0;
-      const effectivePrice = base + tk + qp + nsl + ad;
-      const bt = (i?.billingType ?? i?.billing_type ?? 'one_time') + '';
-      const isRecurring = bt.toLowerCase() === 'recurring';
-      serviceSub += isRecurring ? qty * effectivePrice * period : qty * effectivePrice;
+      const sub = Number(i.subtotal);
+      if (!Number.isNaN(sub) && sub >= 0) {
+        serviceSub += sub;
+      } else {
+        const qty = Number(i.quantity) || 0;
+        const price = Number(i.price) || 0;
+        if (i.isPriceOverridden) {
+          const tk = Number(i?.terminalKitCount ?? i?.terminal_kit_count) || 0;
+          const qp = Number(i?.quotaPriority ?? i?.quota_priority) || 0;
+          const nsl = Number(i?.newServiceLine ?? i?.new_service_line) || 0;
+          const ad = Number(i?.additionalData ?? i?.additional_data) || 0;
+          serviceSub += qty * (price + tk + qp + nsl + ad);
+        } else {
+          serviceSub += qty * price;
+        }
+      }
     }
     let didSub = 0;
     for (const d of dids) {
@@ -983,14 +976,6 @@ const filters = ref({
       { label: 'Postpaid', value: 'postpaid' },
       { label: 'Prepaid', value: 'prepaid' },
       { label: 'Down Payment', value: 'down_payment' },
-  ]);
-
-  const minimumPeriodOptions = ref([
-      { label: '12', value: '12' },
-      { label: '24', value: '24' },
-      { label: '36', value: '36' },
-      { label: '48', value: '48' },
-      { label: '60', value: '60' },
   ]);
 
   const fetchSiteInvests = async () => {
@@ -1161,13 +1146,12 @@ const filters = ref({
           if (form.value && form.value.quotationItems && isEditMode.value && newProducts.length > 0) {
               form.value.quotationItems.forEach((item, index) => {
                   if (item.productId) {
-                      const selectedProduct = newProducts.find(p => p.id === item.productId);
+                      const selectedProduct = newProducts.find(p => (p.id ?? p) == item.productId);
                       if (selectedProduct) {
-                          const oldPrice = item.price;
-                          item.price = Number(selectedProduct.priceSell) || 0;
+                          item.price = Number(selectedProduct.priceSell) ?? item.price;
                           calculateSubtotal(index);
-                      } else {
-                          // Jika produk tidak ditemukan di customerProducts, reset item
+                      } else if (!item.product) {
+                          // Reset hanya jika produk tidak ada di customerProducts dan tidak ada relasi product dari API
                           item.productId = null;
                           item.price = 0;
                           item.subtotal = 0;
@@ -1446,98 +1430,28 @@ const filters = ref({
               const validMaterials = siteInvestData.siteInvestMaterials;
               
               if (validMaterials.length > 0) {
-                // ✅ PERBAIKAN: Fetch price dan billing_type untuk semua produk dari price list
-                const productPromises = validMaterials.map(async (material) => {
+                // Nominal dari SI: pakai price & subtotal langsung, tidak hitung ulang (selaras dengan halaman SI)
+                const resolved = validMaterials.map((material) => {
                   const product = material.priceListLine?.product || material.product || {};
                   const productId = product.id ?? material.priceListLine?.priceable_id ?? material.productId;
                   const quantity = Number(material.quantity) || 1;
-                  
-                  // Fetch price dan billing_type dari price list untuk site_investment (skip jika productId tidak ada)
-                  let price = Number(material.price) || 0;
-                  let billingType = 'one_time';
-                  
-                  try {
-                    if (!productId) {
-                      return {
-                        productId: null,
-                        quantity,
-                        price,
-                        subtotal: quantity * price,
-                        description: material.description || '',
-                        billingType,
-                        billing_type: billingType,
-                      };
-                    }
-                    const params = new URLSearchParams({
-                      productId: String(productId),
-                      type: 'site_investment'
-                    });
-                    const res = await fetch(`${$api.getProductPrice()}?${params.toString()}`, {
-                      credentials: 'include', 
-                      headers: { Accept: 'application/json' },
-                    });
-                    
-                    if (res.ok) {
-                      const priceData = await res.json();
-                      const fetchedPrice = Number(priceData.price_sell) || 0;
-                      const fetchedBillingType = (priceData.billing_type ?? priceData.billingType ?? 'one_time') + '';
-                      
-                      if (fetchedPrice > 0) {
-                        price = fetchedPrice;
-                      } else {
-                        // Fallback ke price dari material atau customerProduct
-                        if (cid && quotationStore.customerProducts.length > 0) {
-                          const customerProduct = quotationStore.customerProducts.find((cp) => cp.id === productId);
-                          if (customerProduct && customerProduct.priceSell) {
-                            price = Number(customerProduct.priceSell) || price;
-                          }
-                        } else {
-                          price = Number(product.priceSell) || price;
-                        }
-                      }
-                      billingType = fetchedBillingType;
-                    } else {
-                      // Fallback ke price dari material atau customerProduct
-                      if (cid && quotationStore.customerProducts.length > 0) {
-                        const customerProduct = quotationStore.customerProducts.find((cp) => cp.id === productId);
-                        if (customerProduct && customerProduct.priceSell) {
-                          price = Number(customerProduct.priceSell) || price;
-                        }
-                      } else {
-                        price = Number(product.priceSell) || price;
-                      }
-                    }
-                  } catch (e) {
-                    console.error('Error fetching product price for autofill:', e);
-                    // Fallback ke price dari material atau customerProduct
-                    if (cid && quotationStore.customerProducts.length > 0) {
-                      const customerProduct = quotationStore.customerProducts.find((cp) => cp.id === productId);
-                      if (customerProduct && customerProduct.priceSell) {
-                        price = Number(customerProduct.priceSell) || price;
-                      }
-                    } else {
-                      price = Number(product.priceSell) || price;
-                    }
-                  }
-                  
+                  const price = Number(material.price) ?? Number(product.priceSell) ?? 0;
+                  const subtotal = Number(material.subtotal) ?? (quantity * price);
+                  const billingType = 'one_time';
+
                   return {
                     productId: productId,
                     quantity: quantity,
                     price: price,
-                    subtotal: quantity * price,
+                    subtotal: subtotal,
+                    isPriceOverridden: false,
+                    priceReason: '',
                     description: material.description || '',
                     billingType: billingType,
                     billing_type: billingType,
-                    product: {
-                      ...product,
-                      billingType: billingType,
-                      billing_type: billingType,
-                    }
+                    product: { ...product, billingType: billingType, billing_type: billingType },
                   };
                 });
-                
-                // Tunggu semua fetch selesai; buang item yang productId-nya tidak ada (material tanpa product)
-                const resolved = await Promise.all(productPromises);
                 form.value.quotationItems = resolved.filter((item) => item.productId != null);
               } else {
                 // Jika tidak ada material yang valid untuk customer, reset ke satu item kosong
@@ -1576,44 +1490,17 @@ const filters = ref({
                 }
               });
 
-              const servicePromises = siteInvestData.siteInvestServices.map(async (service) => {
+              // Nominal dari SI: pakai price & subtotal langsung, tidak hitung ulang (selaras dengan halaman SI)
+              const resolvedServices = siteInvestData.siteInvestServices.map((service) => {
                 const svc = service.priceListLine?.service || service.service || {};
                 const unit = service.unit || {};
                 const serviceId = svc.id ?? service.priceListLine?.priceable_id ?? service.priceListLine?.priceableId ?? service.serviceId;
                 const unitId = unit.id || service.unitId;
                 const quantity = Number(service.quantity) || 1;
                 const servicePlanId = svc.servicePlanId ?? svc.service_plan_id ?? service.servicePlanId ?? service.service_plan_id ?? null;
-                
-                let price = Number(service.price) || Number(svc.price) || 0;
-                let billingType = (service.priceListLine?.billing_type ?? service.billing_type ?? 'one_time') + '';
-                
-                try {
-                  if (serviceId && servicePlanId) {
-                    const params = new URLSearchParams({
-                      serviceId: String(serviceId),
-                      servicePlanId: String(servicePlanId),
-                      type: 'site_investment'
-                    });
-                    const res = await fetch(`${$api.getServicePrice()}?${params.toString()}`, {
-                      credentials: 'include', 
-                      headers: { Accept: 'application/json' },
-                    });
-                    
-                    if (res.ok) {
-                      const json = await res.json();
-                      const priceData = json?.data ?? json;
-                      const fetchedPrice = Number(priceData?.price_sell ?? priceData?.price) || 0;
-                      const fetchedBillingType = (priceData?.billing_type ?? priceData?.billingType ?? 'one_time') + '';
-                      
-                      if (fetchedPrice > 0) {
-                        price = fetchedPrice;
-                      }
-                      billingType = fetchedBillingType;
-                    }
-                  }
-                } catch (e) {
-                  console.error('Error fetching service price for autofill:', e);
-                }
+                const price = Number(service.price) ?? Number(svc.price) ?? 0;
+                const subtotal = Number(service.subtotal) ?? (quantity * price);
+                const billingType = (service.priceListLine?.billing_type ?? service.billing_type ?? 'one_time') + '';
 
                 const terminalKitCount = service.terminalKitCount ?? service.terminal_kit_count;
                 const quotaPriority = service.quotaPriority ?? service.quota_priority;
@@ -1626,7 +1513,9 @@ const filters = ref({
                   servicePlanId: servicePlanId,
                   quantity: quantity,
                   price: price,
-                  subtotal: quantity * price,
+                  subtotal: subtotal,
+                  isPriceOverridden: false,
+                  priceReason: '',
                   billingType: billingType,
                   billing_type: billingType,
                   terminalKitCount: terminalKitCount != null ? Number(terminalKitCount) : null,
@@ -1635,11 +1524,7 @@ const filters = ref({
                   additionalData: additionalData != null ? Number(additionalData) : null,
                 };
               });
-              
-              // Tunggu semua fetch selesai; buang item yang serviceId-nya tidak ada
-              const resolvedServices = await Promise.all(servicePromises);
               form.value.quotationServices = resolvedServices.filter((item) => item.serviceId != null);
-              form.value.quotationServices.forEach((_, idx) => calculateServiceSubtotal(idx));
               
               if (form.value.quotationServices.length === 0) {
                 quotationStore.addServiceItem();
@@ -1744,9 +1629,10 @@ const filters = ref({
   };
 
   const onServiceChange = (index) => {
-    if (!form.value?.quotationServices || !services.value) return;
+    if (!form.value?.quotationServices) return;
     const item = form.value.quotationServices[index];
-    const svc = services.value.find(s => s.id === item.serviceId);
+    const opts = serviceOptions.value || [];
+    const svc = opts.find(s => (s.id ?? s) == item.serviceId);
     if (!svc) {
       item.price = 0;
       item.isPriceOverridden = false;
@@ -1817,24 +1703,53 @@ const filters = ref({
     if (!form.value?.quotationServices) return;
     const item = form.value.quotationServices[index];
     const q = Number(item.quantity) || 0;
-    const effectivePrice = getServiceEffectivePrice(item);
-    item.subtotal = q * effectivePrice;
+    if (item.isPriceOverridden) {
+      const effectivePrice = getServiceEffectivePrice(item);
+      item.subtotal = q * effectivePrice;
+    } else {
+      // Tanpa Custom Price: pakai harga tersimpan saja (qty × price), tidak hitung ulang dari komponen
+      const price = Number(item.price) || 0;
+      item.subtotal = q * price;
+    }
   };
 
-  // ✅ IMPROVED: Computed property untuk filtered customer products tanpa limit
+  // ✅ Opsi produk: gabungan customerProducts + produk dari quotation items (agar dropdown terisi saat edit)
   const filteredCustomerProducts = computed(() => {
-    if (!customerProducts.value || !Array.isArray(customerProducts.value)) {
-      return [];
-    }
-    
-    // Tambahkan displayName untuk pencarian yang lebih baik
-    return customerProducts.value.map(product => {
-      const displayName = `${product.sku || ''} | ${product.name || ''}${product.noInterchange ? ' | ' + product.noInterchange : ''}`
-      return {
-        ...product,
-        displayName
-      }
+    const list = customerProducts.value || [];
+    const base = list.map(product => {
+      const displayName = `${product.sku || ''} | ${product.name || ''}${product.noInterchange ? ' | ' + product.noInterchange : ''}`;
+      return { ...product, displayName };
     });
+    const idsInBase = new Set(base.map(p => p.id));
+    const fromForm = (form.value?.quotationItems || [])
+      .filter(item => (item.productId != null || item.product?.id != null) && (item.product || item.productId))
+      .map(item => {
+        const p = item.product || { id: item.productId, name: 'Product #' + item.productId, sku: '' };
+        const id = p.id ?? item.productId;
+        if (idsInBase.has(id)) return null;
+        idsInBase.add(id);
+        const displayName = `${p.sku || ''} | ${p.name || ''}${p.noInterchange ? ' | ' + p.noInterchange : ''}`;
+        return { ...p, id, displayName };
+      })
+      .filter(Boolean);
+    return [...fromForm, ...base];
+  });
+
+  // ✅ Opsi service: gabungan services dari store + service dari quotation items (agar dropdown terisi saat edit)
+  const serviceOptions = computed(() => {
+    const list = services.value || [];
+    const idsInBase = new Set(list.map(s => s.id));
+    const fromForm = (form.value?.quotationServices || [])
+      .filter(item => (item.serviceId != null || item.service?.id != null) && (item.service || item.serviceId))
+      .map(item => {
+        const svc = item.service || { id: item.serviceId, name: 'Service #' + item.serviceId };
+        const id = svc.id ?? item.serviceId;
+        if (idsInBase.has(id)) return null;
+        idsInBase.add(id);
+        return { ...svc, id };
+      })
+      .filter(Boolean);
+    return [...fromForm, ...list];
   });
 
   const onQuantityChange = (index) => {
@@ -1849,16 +1764,12 @@ const filters = ref({
 
   const calculateSubtotal = (index) => {
     if (!form.value || !form.value.quotationItems) return;
-    
     const item = form.value.quotationItems[index];
     if (!item) return;
-    
+    if (!item.isPriceOverridden) return; // nominal dari SI, tidak hitung ulang
     const quantity = Number(item.quantity) || 0;
     const price = Number(item.price) || 0;
-    const oldSubtotal = item.subtotal;
-    
     item.subtotal = quantity * price;
-    
   };
 
   const parseRupiahToNumber = (rupiahString) => {

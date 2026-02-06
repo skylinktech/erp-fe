@@ -34,6 +34,7 @@
                 <a v-if="canApprove" class="dropdown-item" href="javascript:void(0)" @click="onApprove"><i class="ri-check-line me-2"></i> Approve</a>
                 <a v-if="canReject" class="dropdown-item" href="javascript:void(0)" @click="onReject"><i class="ri-close-line me-2"></i> Reject</a>
                   <a v-if="iro.status === 'draft'" class="dropdown-item" href="javascript:void(0)" @click="navigateTo('/order-process/iro?edit=' + iro.id)"><i class="ri-edit-box-line me-2"></i> Edit</a>
+                  <a class="dropdown-item" href="javascript:void(0)" @click="navigateTo({ path: '/order-process/cetak-iro', query: { id: iro.id } })"><i class="ri-printer-line me-2"></i> Cetak IRO</a>
                   <a class="dropdown-item text-danger" href="javascript:void(0)" @click="onDelete" v-if="iro.status === 'draft'"><i class="ri-delete-bin-7-line me-2"></i> Hapus</a>
                 </div>
               </div>
@@ -53,6 +54,20 @@
                     <div class="col-md-6"><label class="form-label text-muted">Site Investment</label><p class="mb-0"><NuxtLink v-if="iro.siteInvest?.id" :to="'/sales/site-investment/detail/' + iro.siteInvest.id" class="text-primary">{{ iro.siteInvest?.siNumber || iro.siteInvest?.name || '—' }}</NuxtLink><span v-else>{{ iro.siteInvest?.siNumber || '—' }}</span></p></div>
                     <div class="col-md-6"><label class="form-label text-muted">Terms of Payment</label><p class="mb-0">{{ iro.termsOfPayment || '—' }}</p></div>
                     <div class="col-md-6"><label class="form-label text-muted">Dibuat oleh</label><p class="mb-0">{{ iro.createdByUser?.fullName || iro.createdByUser?.full_name || '—' }}</p></div>
+                    <div v-if="iro.up" class="col-12"><label class="form-label text-muted">Untuk Perhatian (UP)</label><p class="mb-0">{{ iro.up }}</p></div>
+                    <div class="col-12 mt-2">
+                      <label class="form-label text-muted d-block">Lampiran</label>
+                      <div class="d-flex flex-wrap gap-3">
+                        <span class="badge" :class="(iro.si ?? (iro as any).si) ? 'bg-label-success' : 'bg-label-secondary'">SI: {{ (iro.si ?? (iro as any).si) ? 'Ya' : 'Tidak' }}</span>
+                        <span class="badge" :class="(iro.subsForm ?? (iro as any).subs_form) ? 'bg-label-success' : 'bg-label-secondary'">Subs Form: {{ (iro.subsForm ?? (iro as any).subs_form) ? 'Ya' : 'Tidak' }}</span>
+                        <span class="badge" :class="(iro.pks ?? (iro as any).pks) ? 'bg-label-success' : 'bg-label-secondary'">PKS: {{ (iro.pks ?? (iro as any).pks) ? 'Ya' : 'Tidak' }}</span>
+                        <span class="badge" :class="(iro.others ?? (iro as any).others) ? 'bg-label-success' : 'bg-label-secondary'">Others: {{ (iro.others ?? (iro as any).others) ? 'Ya' : 'Tidak' }}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div v-if="iro.description" class="col-12 mt-3">
+                    <label class="form-label text-muted">Deskripsi</label>
+                    <div class="iro-description-content prose mb-0 text-break" v-html="iro.description"></div>
                   </div>
                 </div>
               </div>
@@ -308,3 +323,10 @@ watch(id, () => load())
 
 definePageMeta({ layout: 'default', middleware: ['auth', 'check-permission'] })
 </script>
+
+<style scoped>
+.iro-description-content.prose p { margin-bottom: 0.5em; }
+.iro-description-content.prose ul,
+.iro-description-content.prose ol { padding-left: 1.25rem; margin-bottom: 0.5em; }
+.iro-description-content.prose li { margin-bottom: 0.25em; }
+</style>

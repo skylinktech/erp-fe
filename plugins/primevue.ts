@@ -5,6 +5,7 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Dropdown from 'primevue/dropdown';
 import InputText from 'primevue/inputtext';
+import Editor from 'primevue/editor';
 import ProgressSpinner from 'primevue/progressspinner';
 import Aura from '@primeuix/themes/aura';
 import 'primeicons/primeicons.css';
@@ -27,6 +28,7 @@ export default defineNuxtPlugin((nuxtApp) => {
   nuxtApp.vueApp.component('Dropdown', Dropdown);
   nuxtApp.vueApp.component('FilterMatchMode', FilterMatchMode);
   nuxtApp.vueApp.component('InputText', InputText);
+  nuxtApp.vueApp.component('Editor', Editor);
   nuxtApp.vueApp.component('Chart', Chart);
   nuxtApp.vueApp.component('ProgressSpinner', ProgressSpinner);
   

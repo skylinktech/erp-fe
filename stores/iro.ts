@@ -52,6 +52,12 @@ export interface Iro {
   grandTotal: number
   status: string
   jenisIro?: string
+  description?: string | null
+  up?: string | null
+  si?: boolean
+  subsForm?: boolean
+  pks?: boolean
+  others?: boolean
   createdBy: number | null
   approvedBy: number | null
   rejectedBy: number | null
@@ -96,6 +102,12 @@ interface IroState {
     termsOfPayment: string
     status: string
     jenisIro: string
+    description: string
+    up: string
+    si: boolean
+    subsForm: boolean
+    pks: boolean
+    others: boolean
     iroDetails: IroDetailForm[]
   }
   isEditMode: boolean
@@ -143,8 +155,7 @@ function sanitizeDetailForPayload(d: IroDetailForm, itemType: string): Record<st
   const qty = Number(d.quantity) || 1
   const pr = Number(d.price) || 0
   const minPeriod = String(d.minimumPeriod ?? '12')
-  const periodNum = Number(minPeriod) || 12
-  const subtotal = t === 'SERVICE' ? qty * pr * periodNum : Number(d.subtotal) || qty * pr
+  const subtotal = Number(d.subtotal) || 0
   return {
     serviceId: t === 'SERVICE' ? (d.serviceId ?? null) : null,
     servicePlanId: t === 'SERVICE' ? (d.servicePlanId ?? null) : null,
@@ -182,6 +193,12 @@ export const useIroStore = defineStore('iro', {
       termsOfPayment: 'postpaid',
       status: 'draft',
       jenisIro: 'capex',
+      description: '',
+      up: '',
+      si: false,
+      subsForm: false,
+      pks: false,
+      others: false,
       iroDetails: [],
     },
     isEditMode: false,
@@ -306,6 +323,12 @@ export const useIroStore = defineStore('iro', {
         customerId: this.form.customerId,
         termsOfPayment: this.form.termsOfPayment || 'postpaid',
         jenisIro: this.form.jenisIro || 'capex',
+        description: this.form.description || null,
+        up: this.form.up || null,
+        si: this.form.si,
+        subsForm: this.form.subsForm,
+        pks: this.form.pks,
+        others: this.form.others,
         createdBy: this.isEditMode ? undefined : (userStore.user?.id ?? null),
         iroDetails: validDetails.map((d) => sanitizeDetailForPayload(d, d.itemType)),
       }
@@ -437,13 +460,18 @@ export const useIroStore = defineStore('iro', {
           termsOfPayment: raw.termsOfPayment ?? raw.terms_of_payment ?? 'postpaid',
           status: raw.status ?? 'draft',
           jenisIro: raw.jenisIro ?? raw.jenis_iro ?? 'capex',
+          description: raw.description ?? '',
+          up: raw.up ?? '',
+          si: !!raw.si,
+          subsForm: !!(raw.subsForm ?? raw.subs_form),
+          pks: !!raw.pks,
+          others: !!raw.others,
           iroDetails: (raw.iroDetails ?? raw.iro_details ?? []).map((d: any) => {
             const t = String(d.itemType ?? d.item_type ?? 'SERVICE').toUpperCase()
             const qty = Number(d.quantity) || 1
             const pr = Number(d.price) || 0
             const minPeriod = String(d.minimumPeriod ?? d.minimum_period ?? '12')
-            const periodNum = Number(minPeriod) || 12
-            const subtotal = t === 'SERVICE' ? qty * pr * periodNum : Number(d.subtotal) || qty * pr
+            const subtotal = Number(d.subtotal) ?? 0
             const o: IroDetailForm = {
               serviceId: d.serviceId ?? d.service_id ?? d.service?.id ?? null,
               servicePlanId: d.servicePlanId ?? d.service_plan_id ?? d.servicePlan?.id ?? d.service?.servicePlan?.id ?? null,
@@ -474,6 +502,12 @@ export const useIroStore = defineStore('iro', {
           termsOfPayment: 'postpaid',
           status: 'draft',
           jenisIro: 'capex',
+          description: '',
+          up: '',
+          si: false,
+          subsForm: false,
+          pks: false,
+          others: false,
           iroDetails: [],
         }
       }
@@ -501,7 +535,7 @@ export const useIroStore = defineStore('iro', {
 
     /**
      * Isi form.iroDetails: 1 baris = 1 tipe. PRODUCT dari quotation_items; SERVICE dari quotation_services;
-     * DID: prioritas quotation.quotationDids (jika ada), else siteInvestDids. didId dari priceListLine.did.id atau priceableId.
+     * DID hanya dari quotation.quotationDids — jika quotation tidak punya DID, tidak ada baris DID (tidak fallback ke Site Investment).
      */
     setIroDetailsFromQuotation(quotation: any, siteInvestDids: any[] | null) {
       const details: IroDetailForm[] = []
@@ -534,6 +568,7 @@ export const useIroStore = defineStore('iro', {
           if (!serviceId || !servicePlanId) continue
           const qty = Number(s.quantity) || 1
           const pr = Number(s.price) || 0
+          const subtotalFromQuotation = Number(s.subtotal) || 0
           details.push({
             serviceId,
             servicePlanId,
@@ -543,51 +578,30 @@ export const useIroStore = defineStore('iro', {
             minimumPeriod: minPeriod,
             quantity: qty,
             price: pr,
-            subtotal: qty * pr * periodNum,
+            subtotal: subtotalFromQuotation > 0 ? subtotalFromQuotation : qty * pr * periodNum,
             service: s.service,
             servicePlan: s.servicePlan ?? s.service_plan ?? s.service?.servicePlan,
           })
         }
 
         const quotationDids = quotation.quotationDids ?? quotation.quotation_dids ?? []
-        if (quotationDids.length > 0) {
-          for (const qd of quotationDids) {
-            const didId = this.resolveDidIdFromItem(qd)
-            if (didId == null || didId === 0) continue
-            const qty = Number(qd.quantity) ?? Number(qd.priceListLine?.quantity) ?? 1
-            const pr = Number(qd.price) ?? Number(qd.priceListLine?.price) ?? 0
-            const pl = qd.priceListLine ?? qd.price_list_line
-            details.push({
-              serviceId: null,
-              servicePlanId: null,
-              productId: null,
-              didId,
-              itemType: 'DID',
-              quantity: qty,
-              price: pr,
-              subtotal: Number(qd.subtotal) || qty * pr,
-              did: pl?.did ? { id: pl.did.id, code: pl.did.code, name: pl.did.name } : undefined,
-            })
-          }
-        } else {
-          for (const sid of siteInvestDids || []) {
-            const didId = this.resolveDidIdFromItem(sid)
-            if (didId == null || didId === 0) continue
-            const qty = Number(sid.quantity) || 1
-            const pr = Number(sid.price) || 0
-            const pl = sid.priceListLine ?? sid.price_list_line
-            details.push({
-              serviceId: null,
-              servicePlanId: null,
-              productId: null,
-              didId,
-              itemType: 'DID',
-              quantity: qty,
-              price: pr,
-              subtotal: Number(sid.subtotal) || qty * pr,
-              did: pl?.did ? { id: pl.did.id, code: pl.did.code, name: pl.did.name } : undefined,
-            })
-          }
+        for (const qd of quotationDids) {
+          const didId = this.resolveDidIdFromItem(qd)
+          if (didId == null || didId === 0) continue
+          const qty = Number(qd.quantity) ?? Number(qd.priceListLine?.quantity) ?? 1
+          const pr = Number(qd.price) ?? Number(qd.priceListLine?.price) ?? 0
+          const pl = qd.priceListLine ?? qd.price_list_line
+          details.push({
+            serviceId: null,
+            servicePlanId: null,
+            productId: null,
+            didId,
+            itemType: 'DID',
+            quantity: qty,
+            price: pr,
+            subtotal: Number(qd.subtotal) || qty * pr,
+            did: pl?.did ? { id: pl.did.id, code: pl.did.code, name: pl.did.name } : undefined,
+          })
         }
       } else {
         for (const sid of siteInvestDids || []) {
@@ -647,6 +661,12 @@ export const useIroStore = defineStore('iro', {
         termsOfPayment: 'postpaid',
         status: 'draft',
         jenisIro: 'capex',
+        description: '',
+        up: '',
+        si: false,
+        subsForm: false,
+        pks: false,
+        others: false,
         iroDetails: [],
       }
       this.validationErrors = []

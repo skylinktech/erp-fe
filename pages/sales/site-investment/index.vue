@@ -294,8 +294,8 @@
                                     </Column>
                                     <Column field="status" header="Status" :sortable="true">
                                         <template #body="slotProps">
-                                            <span :class="getStatusBadge(slotProps.data.status).class">
-                                                {{ getStatusBadge(slotProps.data.status).text }}
+                                            <span :class="getStatusBadge(slotProps.data).class">
+                                                {{ getStatusBadge(slotProps.data).text }}
                                             </span>
                                         </template>
                                     </Column>
@@ -454,6 +454,20 @@
                                                 searchable
                                                 clearable
                                             />
+                                        </div>
+                                        <div class="col-md-12">
+                                            <label class="form-label text-muted">Isi dari Price List</label>
+                                            <CustomSelect2
+                                                v-model="selectedPriceListId"
+                                                :options="priceListOptions"
+                                                :get-option-label="pl => pl ? (pl.name || '') + (pl.type ? ` (${pl.type})` : '') : '—'"
+                                                :reduce="pl => pl ? pl.id : null"
+                                                placeholder="Pilih Price List untuk mengisi Material, Service, DID"
+                                                searchable
+                                                clearable
+                                                @update:modelValue="onPriceListSelect"
+                                            />
+                                            <small class="text-muted">Pilih untuk mengisi tab Material/Product, Services, dan DID secara otomatis.</small>
                                         </div>
                                         <div class="col-md-6">
                                             <div class="form-floating form-floating-outline">
@@ -763,9 +777,23 @@
 
                                 <!-- Tab DIDs (from price_list_lines priceableType=did) -->
                                 <div class="tab-pane fade" id="form-tabs-dids" role="tabpanel">
+                                    <div class="mb-4">
+                                        <label class="form-label text-muted">Pilih Price List</label>
+                                        <CustomSelect2
+                                            v-model="selectedDidPriceListId"
+                                            :options="priceListOptionsDid"
+                                            :get-option-label="pl => pl ? pl.name : '—'"
+                                            :reduce="pl => pl ? pl.id : null"
+                                            placeholder="Pilih Price List (DID)"
+                                            searchable
+                                            clearable
+                                            @update:modelValue="onDidPriceListSelect"
+                                        />
+                                    </div>
                                     <div v-for="(item, index) in form.siteInvestDids" :key="index" class="repeater-item mb-4">
                                         <div class="d-flex justify-content-between align-items-center mb-3">
                                             <span class="text-muted fw-medium">Item #{{ index + 1 }}</span>
+                                            <span v-if="getDidLineForItem(index)" class="badge bg-primary">{{ getDidLineLabel(item) }}</span>
                                             <button class="btn btn-sm btn-outline-danger" @click.prevent="siteInvestStore.removeDidItem(index)" type="button" title="Hapus item">
                                                 <i class="ri-delete-bin-line me-1"></i> Hapus
                                             </button>
@@ -778,16 +806,7 @@
                                                 </label>
                                             </div>
                                             <div class="col-md-4">
-                                                <CustomSelect2
-                                                    v-model="item.priceListLineId"
-                                                    :options="priceListLinesDid"
-                                                    :get-option-label="line => line ? (line.price_list?.name || (line.did ? `${line.did.code} - ${line.did.name || ''}` : `Line #${line.id}`)) : '—'"
-                                                    :reduce="line => line ? line.id : null"
-                                                    placeholder="Pilih DID (dari Price List)"
-                                                    searchable
-                                                    clearable
-                                                    @update:modelValue="onDidLineChange(index, $event)"
-                                                />
+                                                <div class="form-control bg-light form-floating-outline">{{ getDidLineLabel(item) || '—' }}</div>
                                             </div>
                                             <div class="col-md-2">
                                                 <div class="form-floating form-floating-outline">
@@ -909,6 +928,7 @@ import { useUserStore } from '~/stores/user'
 import { usePermissionsStore } from '~/stores/permissions'
 import { useBudgetStore } from '~/stores/budget'
 import { usePermissions } from '~/composables/usePermissions'
+import { useApprovalStatus } from '~/composables/useApprovalStatus'
 import { useImageUrl } from '~/composables/useImageUrl'
 import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
@@ -931,6 +951,7 @@ const permissionStore = usePermissionsStore()
 const budgetStore = useBudgetStore()
 const formatRupiah = useFormatRupiah()
 const { userHasPermission, userHasRole } = usePermissions()
+const { getStatusBadge } = useApprovalStatus()
 const { getAttachmentUrl, isImageFile } = useImageUrl()
 
 const { siteInvests, loading, totalRecords, params, form, isEditMode, showModal, validationErrors, stats } = storeToRefs(siteInvestStore)
@@ -943,6 +964,28 @@ const { budgets } = storeToRefs(budgetStore)
 const priceListLinesProduct = ref([])
 const priceListLinesService = ref([])
 const priceListLinesDid = ref([])
+
+// Dropdown "Isi dari Price List" (untuk autofill Materials, Services, DID)
+const selectedPriceListId = ref(null)
+const priceListOptions = ref([])
+
+// Tab DID: pilih satu Price List (unik), lalu repeater diisi semua baris DID dari price list itu
+const selectedDidPriceListId = ref(null)
+/** Opsi dropdown DID = price list yang punya baris priceable_type=did (satu nama per price list) */
+const priceListOptionsDid = computed(() => {
+    const lines = priceListLinesDid.value || []
+    const seen = new Set()
+    const options = []
+    for (const line of lines) {
+        const plId = line.price_list_id ?? line.priceList?.id ?? line.price_list?.id
+        if (plId != null && !seen.has(plId)) {
+            seen.add(plId)
+            const name = line.price_list?.name ?? line.priceList?.name ?? `Price List #${plId}`
+            options.push({ id: plId, name })
+        }
+    }
+    return options
+})
 
 // Filter budgets untuk tab budget - hanya tampilkan yang status approved
 const approvedBudgets = computed(() => {
@@ -1000,6 +1043,25 @@ function removeBudgetItem(index) {
     f.siteInvestBudgets.splice(index, 1)
 }
 
+const fetchPriceListsForSelect = async () => {
+    const { $api } = useNuxtApp()
+    try {
+        const res = await fetch(`${$api.priceList()}?page=1&rows=500&type=site_investment`, {
+            headers: { Accept: 'application/json' },
+            credentials: 'include',
+        })
+        if (res.ok) {
+            const j = await res.json()
+            priceListOptions.value = j.data || []
+        } else {
+            priceListOptions.value = []
+        }
+    } catch (e) {
+        console.error('Error fetching price lists for select:', e)
+        priceListOptions.value = []
+    }
+}
+
 const fetchPriceListLinesForModal = async () => {
     try {
         const [productLines, serviceLines, didLines] = await Promise.all([
@@ -1016,7 +1078,88 @@ const fetchPriceListLinesForModal = async () => {
     }
 }
 
-/** Hitung ulang price, subtotal, dan 4 field komponen tiap service item dari price list line (untuk edit / setelah lines dimuat) */
+function toNum(v) {
+    return (v !== null && v !== undefined && v !== '') ? Number(v) : 0
+}
+
+/** Saat user pilih Price List: fetch detail + lines, lalu isi tab Materials, Services, DID */
+async function onPriceListSelect(priceListId) {
+    if (!form.value || !priceListId) return
+    const { $api } = useNuxtApp()
+    try {
+        const res = await fetch(`${$api.priceListShow(priceListId)}?includeLines=true`, {
+            credentials: 'include',
+            headers: { Accept: 'application/json' },
+        })
+        if (!res.ok) return
+        const priceList = await res.json()
+        const lines = priceList.lines || []
+        const pt = (l) => l.priceableType ?? l.priceable_type
+
+        const productLines = lines.filter((l) => pt(l) === 'product')
+        form.value.siteInvestMaterials = productLines.map((l) => {
+            const q = toNum(l.quantity) || 1
+            const p = toNum(l.price) || 0
+            return {
+                priceListLineId: l.id,
+                quantity: q,
+                price: p,
+                subtotal: toNum(l.subtotal) || q * p,
+                isPriceOverridden: false,
+            }
+        })
+
+        const serviceLines = lines.filter((l) => pt(l) === 'service')
+        const svcField = (l, key) => l[key] ?? l[key.replace(/([A-Z])/g, '_$1').toLowerCase()]
+        form.value.siteInvestServices = serviceLines.map((l) => {
+            const q = toNum(l.quantity) || 1
+            const effectivePrice = getServiceLineEffectivePriceFromLine(l)
+            const p = effectivePrice
+            return {
+                priceListLineId: l.id,
+                quantity: q,
+                price: p,
+                subtotal: q * p,
+                isPriceOverridden: false,
+                terminalKitCount: svcField(l, 'terminalKitCount') != null ? Number(svcField(l, 'terminalKitCount')) : null,
+                quotaPriority: svcField(l, 'quotaPriority') != null ? Number(svcField(l, 'quotaPriority')) : null,
+                newServiceLine: svcField(l, 'newServiceLine') != null ? Number(svcField(l, 'newServiceLine')) : null,
+                additionalData: svcField(l, 'additionalData') != null ? Number(svcField(l, 'additionalData')) : null,
+            }
+        })
+
+        const didLines = lines.filter((l) => pt(l) === 'did')
+        form.value.siteInvestDids = didLines.map((l) => {
+            const q = toNum(l.quantity) || 1
+            const p = toNum(l.price) || 0
+            return {
+                priceListLineId: l.id,
+                quantity: q,
+                price: p,
+                subtotal: toNum(l.subtotal) || q * p,
+                isPriceOverridden: false,
+            }
+        })
+        selectedDidPriceListId.value = priceList.id
+
+        recalcServiceItemsFromLines()
+    } catch (e) {
+        console.error('Error filling from price list:', e)
+    }
+}
+
+/** Harga efektif service dari objek line (support camelCase/snake_case) */
+function getServiceLineEffectivePriceFromLine(line) {
+    if (!line) return 0
+    const base = toNum(line.price) || 0
+    const tk = toNum(line.terminalKitCount ?? line.terminal_kit_count) || 0
+    const qp = toNum(line.quotaPriority ?? line.quota_priority) || 0
+    const nsl = toNum(line.newServiceLine ?? line.new_service_line) || 0
+    const ad = toNum(line.additionalData ?? line.additional_data) || 0
+    return base + tk + qp + nsl + ad
+}
+
+/** Autofill price, subtotal, dan 4 field komponen tiap service item dari price list line (untuk edit / setelah lines dimuat). Harga satuan = base + New Service Line (selaras detail). Subtotal dari Price List. */
 const recalcServiceItemsFromLines = () => {
     const items = form.value?.siteInvestServices ?? []
     const lines = priceListLinesService.value
@@ -1024,10 +1167,10 @@ const recalcServiceItemsFromLines = () => {
         if (!item.priceListLineId) return
         const line = lines.find(l => l.id === item.priceListLineId)
         if (!line) return
-        const effectivePrice = getServiceLineEffectivePrice(line)
-        item.price = effectivePrice
-        item.quantity = Number(item.quantity) || 1
-        item.subtotal = item.quantity * item.price
+        const unitPrice = getServiceLineUnitPrice(line)
+        item.price = unitPrice
+        item.quantity = Number(item.quantity) || Number(line.quantity) || 1
+        item.subtotal = Number(line.subtotal) ?? (item.quantity * unitPrice)
         item.terminalKitCount = serviceLineField(line, 'terminal_kit_count') != null ? Number(serviceLineField(line, 'terminal_kit_count')) : null
         item.quotaPriority = serviceLineField(line, 'quota_priority') != null ? Number(serviceLineField(line, 'quota_priority')) : null
         item.newServiceLine = serviceLineField(line, 'new_service_line') != null ? Number(serviceLineField(line, 'new_service_line')) : null
@@ -1197,7 +1340,18 @@ watch(() => globalFilterValue.value, (newValue) => {
 
 watch(showModal, async (newValue) => {
     if (newValue) {
-        await fetchPriceListLinesForModal()
+        await Promise.all([fetchPriceListsForSelect(), fetchPriceListLinesForModal()])
+        if (!isEditMode.value) {
+            selectedPriceListId.value = null
+        }
+        if (isEditMode.value && form.value?.siteInvestDids?.length > 0) {
+            const first = form.value.siteInvestDids[0]
+            const lineId = first.priceListLineId
+            const line = priceListLinesDid.value.find((l) => l.id === lineId)
+            selectedDidPriceListId.value = line ? (line.price_list_id ?? line.price_list?.id ?? line.priceList?.id) : null
+        } else {
+            selectedDidPriceListId.value = null
+        }
         nextTick(() => {
             const modalElement = document.getElementById('SiteInvestmentModal')
             if (modalElement && !modalInstance) {
@@ -1360,14 +1514,23 @@ const calculateMaterialSubtotal = (index) => {
     item.subtotal = quantity * price
 }
 
+/** Harga satuan efektif dari price list (base price + New Service Line, selaras dengan perhitungan Price List & tampilan detail) */
+function getServiceLineUnitPrice(line) {
+    if (!line) return 0
+    const base = Number(line.price) || 0
+    const newServiceLine = Number(serviceLineField(line, 'new_service_line')) || 0
+    return base + newServiceLine
+}
+
 const onServiceLineChange = (index, lineId) => {
     const line = priceListLinesService.value.find(l => l.id === lineId)
     if (!line || !form.value?.siteInvestServices?.[index]) return
     const item = form.value.siteInvestServices[index]
-    item.price = getServiceLineEffectivePrice(line)
+    const unitPrice = getServiceLineUnitPrice(line)
+    item.price = unitPrice
     item.quantity = Number(line.quantity) || 1
     item.isPriceOverridden = false
-    item.subtotal = item.quantity * item.price
+    item.subtotal = Number(line.subtotal) ?? (item.quantity * unitPrice)
     item.terminalKitCount = serviceLineField(line, 'terminal_kit_count') != null ? Number(serviceLineField(line, 'terminal_kit_count')) : null
     item.quotaPriority = serviceLineField(line, 'quota_priority') != null ? Number(serviceLineField(line, 'quota_priority')) : null
     item.newServiceLine = serviceLineField(line, 'new_service_line') != null ? Number(serviceLineField(line, 'new_service_line')) : null
@@ -1405,12 +1568,50 @@ const getServiceLineEffectivePrice = (line) => {
     return base + terminalKit + quotaPriority + newServiceLine + additionalData
 }
 
-const calculateServiceSubtotal = (index) => {
-    const item = form.value?.siteInvestServices?.[index]
-    if (!item) return
-    const quantity = Number(item.quantity) || 0
-    const price = Number(item.price) || 0
-    item.subtotal = quantity * price
+/** Subtotal service tidak dihitung ulang di modal; hanya autofill dari Price List. */
+const calculateServiceSubtotal = (_index) => {
+    // No-op: subtotal service diisi dari Price List saja, tidak di-recalculate saat qty/harga berubah.
+}
+
+/** Saat user pilih satu Price List di tab DID: isi repeater dengan semua baris DID dari price list itu */
+function onDidPriceListSelect(priceListId) {
+    if (!form.value) return
+    if (priceListId == null || priceListId === '') {
+        form.value.siteInvestDids = []
+        return
+    }
+    const lines = (priceListLinesDid.value || []).filter(
+        (l) => (l.price_list_id ?? l.priceList?.id ?? l.price_list?.id) === priceListId
+    )
+    form.value.siteInvestDids = lines.map((line) => {
+        const q = Number(line.quantity) || 1
+        const p = Number(line.price) || 0
+        return {
+            priceListLineId: line.id,
+            quantity: q,
+            price: p,
+            subtotal: q * p,
+            isPriceOverridden: false,
+        }
+    })
+}
+
+/** Ambil price list line (DID) untuk item di index */
+function getDidLineForItem(index) {
+    const item = form.value?.siteInvestDids?.[index]
+    if (!item?.priceListLineId) return null
+    return priceListLinesDid.value.find((l) => l.id === item.priceListLineId) ?? null
+}
+
+/** Label tampilan untuk baris DID (DID code + name + kategori) */
+function getDidLineLabel(item) {
+    if (!item?.priceListLineId) return '—'
+    const line = priceListLinesDid.value.find((l) => l.id === item.priceListLineId)
+    if (!line) return '—'
+    const didPart = line.did ? `${line.did.code || ''} - ${line.did.name || ''}`.trim() || `Line #${line.id}` : `Line #${line.id}`
+    const cat = line.category_did ?? line.categoryDid
+    const catStr = cat ? ` (${String(cat).split(',')[0].trim()})` : ''
+    return didPart + catStr
 }
 
 const onDidLineChange = (index, lineId) => {
@@ -1457,18 +1658,6 @@ const updateDidPriceFromInput = (index, event) => {
     if (form.value.siteInvestDids && form.value.siteInvestDids[index]) {
         form.value.siteInvestDids[index].price = Math.round(numericValue)
         calculateDidSubtotal(index)
-    }
-}
-
-const getStatusBadge = (status) => {
-    switch (status) {
-        case 'draft': return { text: 'Draft', class: 'badge rounded-pill bg-label-secondary' }
-        case 'pending': return { text: 'Pending', class: 'badge rounded-pill bg-label-warning' }
-        case 'approved': return { text: 'Approved', class: 'badge rounded-pill bg-label-success' }
-        case 'rejected': return { text: 'Rejected', class: 'badge rounded-pill bg-label-danger' }
-        case 'cancelled': return { text: 'Cancelled', class: 'badge rounded-pill bg-label-dark' }
-        case 'expired': return { text: 'Expired', class: 'badge rounded-pill bg-label-dark' }
-        default: return { text: '-', class: 'badge rounded-pill bg-label-light' }
     }
 }
 

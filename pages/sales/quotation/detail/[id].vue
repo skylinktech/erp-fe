@@ -1,7 +1,7 @@
 <template>
   <div class="page-wrapper">
     <div class="content-wrapper">
-      <div class="container-xxl flex-grow-1 container pt-12">
+      <div class="container-xxl flex-grow-1 container p-y">
         <!-- Loading -->
         <div v-if="loading" class="d-flex justify-content-center align-items-center" style="min-height: 400px;">
           <div class="text-center">
@@ -50,7 +50,7 @@
                   <a class="dropdown-item" href="javascript:void(0)" @click="navigateTo('/sales/quotation?edit=' + quotation.id)">
                     <i class="ri-edit-box-line me-2"></i> Edit
                   </a>
-                  <a class="dropdown-item" href="javascript:void(0)" @click="onPrintQuotation">
+                  <a v-if="userHasRole('superadmin') || quotation.status === 'approved'" class="dropdown-item" href="javascript:void(0)" @click="onPrintQuotation">
                     <i class="ri-printer-line me-2"></i> Print Quotation
                   </a>
                   <a class="dropdown-item text-danger" href="javascript:void(0)" @click="handleDelete">
@@ -140,16 +140,12 @@
                       <p class="mb-0">{{ quotation.termsOfPayment || '—' }}</p>
                     </div>
                     <div class="col-md-6">
-                      <label class="form-label text-muted medium">Minimum Period</label>
-                      <p class="mb-0">{{ quotation.minimumPeriod ? quotation.minimumPeriod + ' bulan' : '—' }}</p>
-                    </div>
-                    <div class="col-md-6">
                       <label class="form-label text-muted medium">Dibuat oleh</label>
                       <p class="mb-0">{{ quotation.createdByUser?.fullName || quotation.createdByUser?.full_name || '—' }}</p>
                     </div>
                     <div class="col-12" v-if="quotation.description">
                       <label class="form-label text-muted medium">Deskripsi / Catatan</label>
-                      <p class="mb-0 text-break">{{ quotation.description }}</p>
+                      <div class="quotation-description-content prose mb-0 text-break" v-html="quotation.description"></div>
                     </div>
                     <div class="col-12" v-if="quotation.attachment">
                       <label class="form-label text-muted medium">Attachment</label>
@@ -167,41 +163,39 @@
                 </div>
               </div>
 
-              <!-- Service Details -->
-              <div class="card mb-4 shadow-sm border-0">
+              <!-- DID (Direct Inward Dialing) -->
+              <div v-if="didItems.length > 0" class="card mb-4 shadow-sm border-0">
                 <div class="card-header border-0 bg-transparent px-5 py-4">
                   <h5 class="card-title mb-0 d-flex align-items-center">
-                    <i class="ri-service-line me-2 text-primary"></i>
-                    Service Details
+                    <i class="ri-phone-line me-2 text-primary"></i>
+                    Delivery, Installation, Dismantle (DID)
                   </h5>
                 </div>
                 <hr class="mx-5 my-0" style="border-width: 2px;">
                 <div class="card-body px-5 pt-4 pb-5">
-                  <div class="row g-2">
-                    <div class="col-md-6">
-                      <label class="form-label text-muted medium">Service Type</label>
-                      <p class="mb-0 fw-medium">{{ primaryService?.service?.name || primaryService?.service?.code || '—' }}</p>
-                    </div>
-                    <div class="col-md-6">
-                      <label class="form-label text-muted medium">Service Plan</label>
-                      <p class="mb-0 fw-medium">{{ primaryService?.service?.servicePlan?.name || primaryService?.service?.description || '—' }}</p>
-                    </div>
-                    <div class="col-md-6">
-                      <label class="form-label text-muted medium">Quantity</label>
-                      <p class="mb-0">{{ primaryService ? (primaryService.quantity ?? 1) + ' unit' : '—' }}</p>
-                    </div>
-                    <div class="col-md-6">
-                      <label class="form-label text-muted medium">Service Period</label>
-                      <p class="mb-0">{{ quotation.minimumPeriod ? quotation.minimumPeriod + ' bulan' : '—' }}</p>
-                    </div>
-                    <div class="col-md-6">
-                      <label class="form-label text-muted medium">Installation Location</label>
-                      <p class="mb-0 fw-medium">{{ quotation.site?.name || quotation.site?.code || '—' }}</p>
-                    </div>
-                    <div class="col-md-6">
-                      <label class="form-label text-muted medium">Target RFS</label>
-                      <p class="mb-0">—</p>
-                    </div>
+                  <div class="table-responsive">
+                    <table class="table table-sm table-hover align-middle">
+                      <thead>
+                        <tr>
+                          <th>Item</th>
+                          <th class="text-center">Qty</th>
+                          <th class="text-end">Unit Price</th>
+                          <th class="text-end">Subtotal</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="(d, i) in didItems" :key="d.id || 'did-' + i">
+                          <td class="fw-medium">{{ getDidItemName(d) }}</td>
+                          <td class="text-center">{{ d.quantity ?? 0 }}</td>
+                          <td class="text-end">{{ formatRupiah(d.price) }}</td>
+                          <td class="text-end fw-medium">{{ formatRupiah(didSubtotalItem(d)) }}</td>
+                        </tr>
+                        <tr class="border-top">
+                          <td colspan="3" class="text-end fw-medium">Subtotal DID</td>
+                          <td class="text-end fw-medium">{{ formatRupiah(displayDidSubtotal) }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </div>
@@ -239,7 +233,7 @@
                               <td class="fw-medium">{{ m.product?.name || m.product?.sku || '—' }}</td>
                               <td class="text-muted">{{ m.description || '—' }}</td>
                               <td class="text-center">{{ m.quantity ?? 0 }}</td>
-                              <td class="text-end">{{ formatRupiah(m.price) }}</td>
+                              <td class="text-end">{{ formatRupiah(otcUnitPrice(m)) }}</td>
                               <td class="text-end fw-medium">{{ formatRupiah(otcAmount(m)) }}</td>
                             </tr>
                             <tr class="border-top">
@@ -259,9 +253,10 @@
                             <tr>
                               <th>Item</th>
                               <th>Description</th>
-                              <th class="text-end">Monthly</th>
-                              <th>Period</th>
-                              <th class="text-end">Total</th>
+                              <th class="text-center">Qty</th>
+                              <th>Unit</th>
+                              <th class="text-end">Unit Price</th>
+                              <th class="text-end">Subtotal</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -270,12 +265,13 @@
                                 {{ (m.product?.name || m.product?.sku) || (m.service?.name || m.service?.code) || '—' }}
                               </td>
                               <td class="text-muted">{{ m.description || m.service?.description || '—' }}</td>
-                              <td class="text-end">{{ formatRupiah(mrcMonthly(m)) }}</td>
-                              <td>{{ mrcPeriod }} months</td>
+                              <td class="text-center">{{ m.quantity ?? 0 }}</td>
+                              <td>{{ mrcItemUnitLabel(m) }}</td>
+                              <td class="text-end">{{ formatRupiah(mrcDisplayUnitPrice(m)) }}</td>
                               <td class="text-end fw-medium">{{ formatRupiah(mrcTotal(m)) }}</td>
                             </tr>
                             <tr class="border-top">
-                              <td colspan="4" class="text-end fw-medium">Subtotal MRC</td>
+                              <td colspan="5" class="text-end fw-medium">Subtotal MRC</td>
                               <td class="text-end fw-medium">{{ formatRupiah(subtotalMrc) }}</td>
                             </tr>
                           </tbody>
@@ -306,6 +302,10 @@
                     <label class="form-label text-muted medium mb-0">Product Subtotal</label>
                     <p class="mb-0 fw-medium">{{ formatRupiah(displayProductSubtotal) }}</p>
                   </div>
+                  <div v-if="displayDidSubtotal > 0" class="d-flex justify-content-between py-1">
+                    <label class="form-label text-muted medium mb-0">DID Subtotal</label>
+                    <p class="mb-0 fw-medium">{{ formatRupiah(displayDidSubtotal) }}</p>
+                  </div>
                   <div class="d-flex justify-content-between py-1">
                     <label class="form-label text-muted medium mb-0">Subtotal</label>
                     <p class="mb-0 fw-medium">{{ formatRupiah(computedSubtotal) }}</p>
@@ -325,16 +325,16 @@
                   <hr class="my-2" />
                   <div class="d-flex justify-content-between py-1">
                     <label class="form-label text-muted medium mb-0">Grand Total</label>
-                    <p class="mb-0 fw-medium fs-5 text-primary">{{ formatRupiah(quotation.grandTotal ?? quotation.total) }}</p>
+                    <p class="mb-0 fw-medium fs-5 text-primary">{{ formatRupiah(computedGrandTotal) }}</p>
                   </div>
                 </div>
               </div>
 
               <ApprovalCard
                 :status-text="getStatusText(quotation)"
-                :current-step="quotation.currentApprovalStep"
+                :current-step="quotation.nextApprovalStep ?? quotation.currentApprovalStep"
                 :current-approvers="quotation.currentApprovers"
-                :approval-logs="quotation.approvalLogs"
+                :approval-logs="quotation.approvalLogs || quotation.approval_logs || []"
               />
 
               <!-- Informasi Customer -->
@@ -417,36 +417,61 @@ function formatDateTime (v: string | null | undefined) {
 
 const { getStatusBadge, getStatusText } = useApprovalStatus()
 
-const mrcPeriod = computed(() => Number(quotation.value?.minimumPeriod) || 12)
-
-// Untuk fallback: OTC = qty*price; MRC (recurring) = (qty*price)*period
-const displayProductSubtotal = computed(() => {
-  const q = quotation.value
+// Nilai numerik dari API (camelCase / snake_case), tidak hitung ulang (selaras halaman SI/detail)
+function fromApiNum (q: any, ...keys: string[]): number {
   if (!q) return 0
-  if (q.productSubtotal != null && q.productSubtotal !== '') return Number(q.productSubtotal)
-  const period = mrcPeriod.value
-  return (q.quotationItems || []).reduce((s, i) => {
-    const bt = (i?.product?.billingType ?? i?.product?.billing_type ?? 'one_time') + ''
-    const qty = Number(i.quantity) || 0
-    const pr = Number(i.price) || 0
-    return s + (bt === 'recurring' ? qty * pr * period : qty * pr)
-  }, 0)
-})
+  for (const k of keys) {
+    const v = (q as any)[k]
+    if (v !== undefined && v !== null && v !== '') {
+      const n = Number(v)
+      if (!Number.isNaN(n)) return n
+    }
+  }
+  return 0
+}
 
-const displayServiceSubtotal = computed(() => {
-  const q = quotation.value
-  if (!q) return 0
-  if (q.serviceSubtotal != null && q.serviceSubtotal !== '') return Number(q.serviceSubtotal)
-  return (q.quotationServices || []).reduce((s, i) => s + (Number(i.quantity) || 0) * (Number(i.price) || 0), 0)
-})
+// Section subtotals: selalu dari API, tidak hitung ulang
+const displayProductSubtotal = computed(() => fromApiNum(quotation.value, 'productSubtotal', 'product_subtotal'))
+const displayServiceSubtotal = computed(() => fromApiNum(quotation.value, 'serviceSubtotal', 'service_subtotal'))
+const displayDidSubtotal = computed(() => fromApiNum(quotation.value, 'didSubtotal', 'did_subtotal'))
 
-const computedSubtotal = computed(() => displayProductSubtotal.value + displayServiceSubtotal.value)
+const didItems = computed(() => quotation.value?.quotationDids ?? quotation.value?.quotation_dids ?? [])
 
-// Service Details: service utama (pertama) dari quotationServices
-const primaryService = computed(() => {
-  const list = quotation.value?.quotationServices || []
-  return list[0] ?? null
-})
+function getDidItemName (d: any): string {
+  const pll = d.priceListLine ?? d.price_list_line
+  if (!pll) return 'DID'
+  const did = pll.did
+  if (did && (did.name || did.code)) return [did.name, did.code].filter(Boolean).join(' – ')
+  if (pll.priceableType === 'did' || pll.priceable_type === 'did') return 'DID #' + (pll.priceableId ?? pll.priceable_id ?? '')
+  return 'DID'
+}
+
+function didSubtotalItem (d: any): number {
+  const sub = d.subtotal != null ? Number(d.subtotal) : null
+  if (sub != null && !Number.isNaN(sub)) return sub
+  const qty = Number(d.quantity) || 0
+  const price = Number(d.price) || 0
+  return qty * price
+}
+
+const computedSubtotal = computed(() => displayProductSubtotal.value + displayServiceSubtotal.value + displayDidSubtotal.value)
+
+function getServiceItemName (s: any): string {
+  const svc = s.service ?? s
+  const name = svc?.name ?? svc?.code
+  if (name) return name
+  return 'Service #' + (s.serviceId ?? s.service_id ?? '—')
+}
+
+/** Harga efektif per unit (sama seperti modal): base price + Terminal Kit + Quota Priority + New Service Line + Additional Data */
+function getServiceEffectivePrice (s: any): number {
+  const base = Number(s?.price) || 0
+  const tk = Number(s?.terminalKitCount ?? s?.terminal_kit_count) || 0
+  const qp = Number(s?.quotaPriority ?? s?.quota_priority) || 0
+  const nsl = Number(s?.newServiceLine ?? s?.new_service_line) || 0
+  const ad = Number(s?.additionalData ?? s?.additional_data) || 0
+  return base + tk + qp + nsl + ad
+}
 
 // Billing type dari product (camelCase atau snake_case)
 function getBillingType (item: any): string {
@@ -455,13 +480,13 @@ function getBillingType (item: any): string {
 
 // Cost Breakdown: OTC (one_time) dan MRC (recurring) dari quotationItems
 const otcItems = computed(() => {
-  const list = quotation.value?.quotationItems || []
+  const list = quotation.value?.quotationItems ?? quotation.value?.quotation_items ?? []
   return list.filter((i: any) => getBillingType(i) !== 'recurring')
 })
 
 const mrcItems = computed(() => {
-  const productList = quotation.value?.quotationItems || []
-  const serviceList = quotation.value?.quotationServices || []
+  const productList = quotation.value?.quotationItems ?? quotation.value?.quotation_items ?? []
+  const serviceList = quotation.value?.quotationServices ?? quotation.value?.quotation_services ?? []
   const productRecurring = productList.filter((i: any) => {
     const bt = getBillingType(i)
     return bt === 'recurring'
@@ -470,28 +495,80 @@ const mrcItems = computed(() => {
     const bt = (s?.billingType ?? s?.billing_type ?? s?.service?.billing_type ?? s?.service?.billingType ?? '') + ''
     return bt.toLowerCase() === 'recurring'
   })
-  // Normalize service entries to match item shape for rendering
+  // Normalize service entries: include subtotal dari API agar Cost Breakdown akurat
   const normalizedServices = serviceRecurring.map((s: any) => ({
     id: s.id,
     service: s.service,
     quantity: s.quantity,
     price: s.price,
-    subtotal: s.subtotal,
+    subtotal: s.subtotal ?? (s as any).subtotal,
+    unit: s.unit,
+    unitId: s.unitId ?? s.unit_id,
+    serviceId: s.serviceId ?? s.service_id,
+    terminalKitCount: s.terminalKitCount ?? s.terminal_kit_count,
+    quotaPriority: s.quotaPriority ?? s.quota_priority,
+    newServiceLine: s.newServiceLine ?? s.new_service_line,
+    additionalData: s.additionalData ?? s.additional_data,
     description: s.description ?? s.service?.description ?? null,
   }))
   return [...productRecurring, ...normalizedServices]
 })
 
 function otcAmount (m: any): number {
+  const sub = m.subtotal ?? (m as any).subtotal
+  if (sub !== undefined && sub !== null && sub !== '') {
+    const n = Number(sub)
+    if (!Number.isNaN(n)) return n
+  }
   return (Number(m.quantity) || 0) * (Number(m.price) || 0)
 }
 
-function mrcMonthly (m: any): number {
-  return (Number(m.quantity) || 0) * (Number(m.price) || 0)
+/** Unit price untuk OTC: dari API (subtotal/qty) agar konsisten dengan Amount, else price */
+function otcUnitPrice (m: any): number {
+  const sub = m.subtotal ?? (m as any).subtotal
+  if (sub !== undefined && sub !== null && sub !== '') {
+    const n = Number(sub)
+    const qty = Number(m.quantity) || 1
+    if (!Number.isNaN(n) && qty > 0) return n / qty
+  }
+  return Number(m.price) || 0
+}
+
+function mrcUnitPrice (m: any): number {
+  if (m.service != null || m.serviceId != null) return getServiceEffectivePrice(m)
+  return Number(m.price) || 0
+}
+
+/** Unit price untuk MRC: dari API (subtotal/qty) agar konsisten dengan Ringkasan, else effective price */
+function mrcDisplayUnitPrice (m: any): number {
+  const sub = m.subtotal ?? (m as any).subtotal
+  if (sub !== undefined && sub !== null && sub !== '') {
+    const n = Number(sub)
+    const qty = Number(m.quantity) || 1
+    if (!Number.isNaN(n) && qty > 0) return n / qty
+  }
+  return mrcUnitPrice(m)
 }
 
 function mrcTotal (m: any): number {
-  return mrcMonthly(m) * mrcPeriod.value
+  const sub = m.subtotal ?? (m as any).subtotal
+  if (sub !== undefined && sub !== null && sub !== '') {
+    const n = Number(sub)
+    if (!Number.isNaN(n)) return n
+  }
+  const qty = Number(m.quantity) || 0
+  const unitPrice = mrcUnitPrice(m)
+  return qty * unitPrice
+}
+
+function mrcItemUnitLabel (m: any): string {
+  const u = m.unit ?? {}
+  const sym = u.symbol ?? u.name
+  if (sym) return String(sym)
+  const uid = m.unitId ?? m.unit_id
+  if (uid != null) return 'Unit #' + uid
+  if (m.product?.unit?.symbol ?? m.product?.unit?.name) return String(m.product.unit.symbol ?? m.product.unit.name)
+  return '—'
 }
 
 const subtotalOtc = computed(() => otcItems.value.reduce((s, i) => s + otcAmount(i), 0))
@@ -507,6 +584,12 @@ const computedAfterDiscount = computed(() => computedSubtotal.value - computedDi
 const computedTax = computed(() => {
   const pct = Number(quotation.value?.taxPercent) || 0
   return computedAfterDiscount.value * (pct / 100)
+})
+
+const computedGrandTotal = computed(() => {
+  const fromApi = fromApiNum(quotation.value, 'grandTotal', 'grand_total')
+  if (fromApi > 0) return fromApi
+  return computedAfterDiscount.value + computedTax.value
 })
 
 async function load () {
@@ -630,4 +713,9 @@ definePageMeta({
   font-weight: 600;
   user-select: none;
 }
+
+.quotation-description-content.prose p { margin-bottom: 0.5em; }
+.quotation-description-content.prose ul,
+.quotation-description-content.prose ol { padding-left: 1.25rem; margin-bottom: 0.5em; }
+.quotation-description-content.prose li { margin-bottom: 0.25em; }
 </style>

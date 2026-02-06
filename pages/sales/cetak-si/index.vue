@@ -9,7 +9,17 @@
     <div class="mt-3 text-muted">Memuat data...</div>
   </div>
   <div v-else-if="error" class="alert alert-danger m-6">{{ error.message }}</div>
-  <div v-else-if="siteInvest" class="p-6 cetak-si-doc">
+  <div v-else-if="siteInvest" class="p-2 cetak-si-doc cetak-si-doc-with-print position-relative">
+    <!-- Tombol Print: pojok kiri atas, disembunyikan saat cetak -->
+    <button
+      type="button"
+      class="btn btn-primary no-print cetak-si-print-btn"
+      aria-label="Print"
+      @click="onPrint"
+    >
+      <i class="ri-printer-line me-1"></i>
+      Print
+    </button>
     <!-- Header: Logo kiri, Judul kanan -->
     <div class="d-flex justify-content-between align-items-start mb-4 cetak-si-header">
       <div v-if="perusahaan" class="logo-section">
@@ -63,65 +73,65 @@
         </thead>
         <tbody>
           <!-- SERVICEPLAN [MRC] -->
-          <template v-if="siteInvest.siteInvestServices && siteInvest.siteInvestServices.length > 0">
+          <template v-if="siteInvestServicesList.length > 0">
             <tr class="fw-bold bg-light">
               <td colspan="7" class="text-start">SERVICEPLAN [MRC]</td>
             </tr>
-            <tr v-for="(item, index) in siteInvest.siteInvestServices" :key="'svc-' + (item.id || index)">
+            <tr v-for="(item, index) in siteInvestServicesList" :key="'svc-' + (item.id || index)">
               <td class="text-start">{{ item.priceListLine?.service?.name || item.priceListLine?.service?.code || '-' }}</td>
               <td class="text-center">1</td>
               <td class="text-center">{{ Number(item.quantity) }}</td>
-              <td class="text-center">1</td>
-              <td class="text-end">{{ formatRupiahNum(item.price || 0) }}</td>
-              <td class="text-end">{{ formatRupiahNum(item.subtotal || 0) }}</td>
-              <td class="text-end">-</td>
+              <td class="text-center">{{ Number(item.quantity) }}</td>
+              <td class="text-end">{{ formatRupiahNum(getServicePrice(item)) }}</td>
+              <td class="text-end">{{ formatRupiahNum(getServiceSubtotal(item)) }}</td>
+              <td class="text-end">{{ itemExpenseDisplay(item) }}</td>
             </tr>
             <tr class="fw-bold">
               <td colspan="5" class="text-end">TOTAL</td>
-              <td class="text-end">{{ formatRupiahNum(serviceSubtotal) }}</td>
-              <td class="text-end">-</td>
+              <td class="text-end">{{ formatRupiahNum(serviceSubtotalDisplay) }}</td>
+              <td class="text-end">{{ formatRupiahNum(serviceExpenseSubtotal) }}</td>
             </tr>
           </template>
 
           <!-- HARDWARE [OTC] -->
-          <template v-if="siteInvest.siteInvestMaterials && siteInvest.siteInvestMaterials.length > 0">
+          <template v-if="siteInvestMaterialsList.length > 0">
             <tr class="fw-bold bg-light">
               <td colspan="7" class="text-start">HARDWARE [OTC]</td>
             </tr>
-            <tr v-for="(item, index) in siteInvest.siteInvestMaterials" :key="'mat-' + (item.id || index)">
+            <tr v-for="(item, index) in siteInvestMaterialsList" :key="'mat-' + (item.id || index)">
               <td class="text-start">{{ item.priceListLine?.product?.name || item.priceListLine?.product?.sku || '-' }}</td>
               <td class="text-center">1</td>
               <td class="text-center">{{ Number(item.quantity) }}</td>
               <td class="text-center">1</td>
               <td class="text-end">{{ formatRupiahNum(item.price || 0) }}</td>
-              <td class="text-end">{{ formatRupiahNum(item.subtotal || 0) }}</td>
-              <td class="text-end">-</td>
+              <td class="text-end">{{ formatRupiahNum(getItemSubtotal(item)) }}</td>
+              <td class="text-end">{{ itemExpenseDisplay(item) }}</td>
             </tr>
             <tr class="fw-bold">
               <td colspan="5" class="text-end">TOTAL</td>
               <td class="text-end">{{ formatRupiahNum(materialSubtotal) }}</td>
-              <td class="text-end">-</td>
+              <td class="text-end">{{ formatRupiahNum(materialExpenseSubtotal) }}</td>
             </tr>
           </template>
 
           <!-- DID [MRC/OTC] -->
-          <template v-if="siteInvest.siteInvestDids && siteInvest.siteInvestDids.length > 0">
+          <template v-if="siteInvestDidsList.length > 0">
             <tr class="fw-bold bg-light">
               <td colspan="7" class="text-start">Delivery & Installation (OTC)</td>
             </tr>
-            <tr v-for="(item, index) in siteInvest.siteInvestDids" :key="'did-' + (item.id || index)">
+            <tr v-for="(item, index) in siteInvestDidsList" :key="'did-' + (item.id || index)">
               <td class="text-start">{{ item.priceListLine?.did?.name || item.priceListLine?.did?.code || '-' }}</td>
               <td class="text-center">1</td>
               <td class="text-center">{{ Number(item.quantity) }}</td>
               <td class="text-center">1</td>
               <td class="text-end">{{ formatRupiahNum(item.price || 0) }}</td>
-              <td class="text-end">{{ formatRupiahNum(item.subtotal || 0) }}</td>
-              <td class="text-end">-</td>
+              <td class="text-end">{{ formatRupiahNum(getItemSubtotal(item)) }}</td>
+              <td class="text-end">{{ itemExpenseDisplay(item) }}</td>
             </tr>
             <tr class="fw-bold">
               <td colspan="5" class="text-end">TOTAL</td>
               <td class="text-end">{{ formatRupiahNum(didSubtotal) }}</td>
-              <td class="text-end">-</td>
+              <td class="text-end">{{ formatRupiahNum(didExpenseSubtotal) }}</td>
             </tr>
           </template>
 
@@ -133,21 +143,30 @@
       </table>
     </div>
 
-    <!-- Summary: GRAND TOTAL, INCOME LESS EXPENSES, PCT MARGIN -->
+    <!-- Summary: GRAND TOTAL, INCOME LESS EXPENSES, PCT MARGIN (kolom sejajar dengan tabel utama: INCOME & EXPENSES) -->
     <div class="table-responsive mb-4">
       <table class="table table-bordered cetak-si-summary m-0" style="font-size: 12px;">
+        <colgroup>
+          <col>
+          <col style="width: 50px;">
+          <col style="width: 50px;">
+          <col style="width: 50px;">
+          <col style="width: 100px;">
+          <col style="width: 110px;">
+          <col style="width: 110px;">
+        </colgroup>
         <tbody>
-          <tr class="table-light fw-bold">
-            <td class="text-start" style="width: 50%;">GRAND TOTAL</td>
-            <td class="text-end" style="width: 25%;">{{ formatRupiahNum(grandTotalIncome) }}</td>
-            <td class="text-end" style="width: 25%;">{{ formatRupiahNum(grandTotalExpenses) }}</td>
+          <tr class="cetak-si-grand-total fw-bold">
+            <td colspan="5" class="text-start">GRAND TOTAL</td>
+            <td class="text-end">{{ formatRupiahNum(grandTotalIncome) }}</td>
+            <td class="text-end">{{ formatRupiahNum(grandTotalExpenses) }}</td>
           </tr>
           <tr>
-            <td class="text-start fw-medium">INCOME LESS EXPENSES</td>
+            <td colspan="5" class="text-start fw-medium">INCOME LESS EXPENSES</td>
             <td colspan="2" class="text-end">{{ formatRupiahNum(incomeLessExpenses) }}</td>
           </tr>
           <tr>
-            <td class="text-start fw-medium">PCT MARGIN</td>
+            <td colspan="5" class="text-start fw-medium">PCT MARGIN</td>
             <td colspan="2" class="text-end">{{ pctMarginDisplay }}</td>
           </tr>
         </tbody>
@@ -160,6 +179,20 @@
       <p class="text-center mb-0" style="font-size: 12px; line-height: 1.6; max-width: 720px; margin-left: auto; margin-right: auto;">
         Dokumen perhitungan Site Investment (SI) ini telah disusun berdasarkan data aktual dan asumsi keuangan yang berlaku pada saat penyusunan. Dokumen ini digunakan sebagai dasar evaluasi kelayakan serta pengambilan keputusan manajerial terkait pelaksanaan project.
       </p>
+
+      <!-- Tanda tangan digital: multi-signature atau legacy single QR -->
+      <div v-if="showSignatureSection" class="signature-section mt-4">
+        <MultiSignatureDisplay
+          document-type="site-investments"
+          :document-id="siteInvest.id"
+          title="Verifikasi Digital Dokumen"
+          :columns="4"
+          :qr-size="96"
+          :legacy-signature-token="siteInvest.signatureToken || undefined"
+          :legacy-signer-name="legacySignerName"
+          :legacy-signer-title="legacySignerTitle"
+        />
+      </div>
     </div>
   </div>
   <div v-else class="alert alert-danger m-6" role="alert">
@@ -178,6 +211,7 @@ import { storeToRefs } from 'pinia'
 import { useRoute } from 'vue-router'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import { useImageUrl } from '~/composables/useImageUrl'
+import MultiSignatureDisplay from '~/components/MultiSignatureDisplay.vue'
 
 const { setDetailTitle } = useDynamicTitle()
 const { getCompanyLogo, handleImageError } = useImageUrl()
@@ -200,6 +234,10 @@ function formatRupiahNum (val) {
   const n = typeof val === 'string' ? Number(val.replace(/[^0-9.-]/g, '')) : Number(val)
   if (Number.isNaN(n)) return '-'
   return new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0, minimumFractionDigits: 0 }).format(Math.round(n))
+}
+
+function onPrint () {
+  window.print()
 }
 
 function formatDate (val) {
@@ -226,8 +264,9 @@ function statusLabel (s, si) {
 }
 
 const firstServicePlanName = computed(() => {
-  const list = siteInvest.value?.siteInvestServices
-  if (!list || list.length === 0) return '-'
+  const si = siteInvest.value
+  const list = (si?.siteInvestServices ?? si?.site_invest_services) || []
+  if (list.length === 0) return '-'
   const first = list[0]
   return first?.priceListLine?.service?.name || first?.priceListLine?.service?.code || '-'
 })
@@ -236,39 +275,160 @@ const totalUnitDisplay = computed(() => {
   const si = siteInvest.value
   if (!si) return '1'
   let qty = 0
-  ;(si.siteInvestServices || []).forEach((i) => { qty += Number(i.quantity) || 0 })
-  ;(si.siteInvestMaterials || []).forEach((i) => { qty += Number(i.quantity) || 0 })
-  ;(si.siteInvestDids || []).forEach((i) => { qty += Number(i.quantity) || 0 })
+  const svc = (si.siteInvestServices ?? si.site_invest_services) || []
+  const mat = (si.siteInvestMaterials ?? si.site_invest_materials) || []
+  const did = (si.siteInvestDids ?? si.site_invest_dids) || []
+  svc.forEach((i) => { qty += Number(i.quantity) || 0 })
+  mat.forEach((i) => { qty += Number(i.quantity) || 0 })
+  did.forEach((i) => { qty += Number(i.quantity) || 0 })
   return qty > 0 ? String(qty) : '1'
 })
 
 const durationDisplay = computed(() => {
   const si = siteInvest.value
-  if (!si?.siteInvestServices?.length) return '1'
-  const first = si.siteInvestServices[0]?.priceListLine?.billingCycle
+  const list = (si?.siteInvestServices ?? si?.site_invest_services) || []
+  if (!list.length) return '1'
+  const first = list[0]?.priceListLine?.billingCycle
   if (first) return String(first)
   return '1'
 })
 
-const serviceSubtotal = computed(() => Number(siteInvest.value?.serviceSubtotal) || 0)
-const materialSubtotal = computed(() => Number(siteInvest.value?.materialSubtotal) || 0)
-const didSubtotal = computed(() => Number(siteInvest.value?.didSubtotal) || 0)
+/** Nilai numerik dari API dengan dukungan snake_case (selaras halaman detail) */
+function fromApiNum (si, ...keys) {
+  if (!si) return 0
+  for (const k of keys) {
+    const v = si[k]
+    if (v !== undefined && v !== null && v !== '') {
+      const n = Number(v)
+      if (!Number.isNaN(n)) return n
+    }
+  }
+  return 0
+}
+
+/** Subtotal section dari API; tidak hitung ulang */
+const serviceSubtotalDisplay = computed(() => {
+  const si = siteInvest.value
+  return fromApiNum(si, 'serviceSubtotal', 'service_subtotal')
+})
+const materialSubtotal = computed(() => {
+  const si = siteInvest.value
+  return fromApiNum(si, 'materialSubtotal', 'material_subtotal')
+})
+const didSubtotal = computed(() => {
+  const si = siteInvest.value
+  return fromApiNum(si, 'didSubtotal', 'did_subtotal')
+})
+
+/** Harga satuan service: murni dari API (tidak hitung ulang) */
+function getServicePrice (item) {
+  if (!item) return 0
+  const n = Number(item.price)
+  return Number.isNaN(n) ? 0 : n
+}
+
+/** Subtotal service per baris: murni dari API; fallback qty×price hanya jika subtotal tidak ada */
+function getServiceSubtotal (item) {
+  if (!item) return 0
+  const st = item.subtotal
+  if (st !== undefined && st !== null && st !== '') {
+    const n = Number(st)
+    if (!Number.isNaN(n)) return n
+  }
+  const qty = Number(item.quantity) || 1
+  const price = getServicePrice(item)
+  return qty * price
+}
+
+/** Subtotal per item material/DID: dari API (subtotal); fallback qty×price jika tidak ada */
+function getItemSubtotal (item) {
+  if (!item) return 0
+  const st = item.subtotal
+  if (st !== undefined && st !== null && st !== '') {
+    const n = Number(st)
+    if (!Number.isNaN(n)) return n
+  }
+  const qty = Number(item.quantity) || 1
+  const price = Number(item.price) || 0
+  return qty * price
+}
+
+/** Nilai expense: ambil langsung dari table (item.expense). Fallback hitung dari price_buy × quantity hanya untuk data lama yang belum punya expense. */
+function getItemExpense (item) {
+  if (!item) return null
+  if (item.expense != null && item.expense !== '') return Number(item.expense)
+  const pl = item.priceListLine ?? item.price_list_line
+  const unitCost = pl?.priceBuy ?? pl?.price_buy ?? null
+  if (unitCost == null) return null
+  const qty = Math.max(1, Number(item.quantity ?? item.qty ?? 1) || 1)
+  return Number(unitCost) * qty
+}
+
+function itemExpenseDisplay (item) {
+  const val = getItemExpense(item)
+  if (val == null) return '-'
+  return formatRupiahNum(val)
+}
+
+/** Daftar item dari API dengan dukungan snake_case (selaras halaman detail) */
+const siteInvestServicesList = computed(() => {
+  const si = siteInvest.value
+  return (si?.siteInvestServices ?? si?.site_invest_services) || []
+})
+const siteInvestMaterialsList = computed(() => {
+  const si = siteInvest.value
+  return (si?.siteInvestMaterials ?? si?.site_invest_materials) || []
+})
+const siteInvestDidsList = computed(() => {
+  const si = siteInvest.value
+  return (si?.siteInvestDids ?? si?.site_invest_dids) || []
+})
+
+const serviceExpenseSubtotal = computed(() => {
+  const list = siteInvestServicesList.value
+  return list.reduce((sum, item) => {
+    const e = getItemExpense(item)
+    return sum + (e != null ? e : 0)
+  }, 0)
+})
+
+const materialExpenseSubtotal = computed(() => {
+  const list = siteInvestMaterialsList.value
+  return list.reduce((sum, item) => {
+    const e = getItemExpense(item)
+    return sum + (e != null ? e : 0)
+  }, 0)
+})
+
+const didExpenseSubtotal = computed(() => {
+  const list = siteInvestDidsList.value
+  return list.reduce((sum, item) => {
+    const e = getItemExpense(item)
+    return sum + (e != null ? e : 0)
+  }, 0)
+})
 
 const hasAnyItems = computed(() => {
-  const si = siteInvest.value
-  const m = si?.siteInvestMaterials?.length || 0
-  const s = si?.siteInvestServices?.length || 0
-  const d = si?.siteInvestDids?.length || 0
+  const m = siteInvestMaterialsList.value.length
+  const s = siteInvestServicesList.value.length
+  const d = siteInvestDidsList.value.length
   return m + s + d > 0
 })
 
-const grandTotalIncome = computed(() => Number(siteInvest.value?.total) || 0)
-const grandTotalExpenses = computed(() => 0)
+// Grand total income = jumlah total INCOME yang ditampilkan per section (selaras dengan tabel)
+const grandTotalIncome = computed(() => {
+  const serviceIncome = serviceSubtotalDisplay.value
+  const matIncome = materialSubtotal.value
+  const didInc = didSubtotal.value
+  return serviceIncome + matIncome + didInc
+})
+// Grand total expenses = jumlah expense per section (price_buy × qty)
+const grandTotalExpenses = computed(() => serviceExpenseSubtotal.value + materialExpenseSubtotal.value + didExpenseSubtotal.value)
 
 const incomeLessExpenses = computed(() => {
   const income = grandTotalIncome.value
   const expenses = grandTotalExpenses.value
-  return Math.max(0, income - expenses)
+  return income - expenses
 })
 
 const pctMarginDisplay = computed(() => {
@@ -277,6 +437,22 @@ const pctMarginDisplay = computed(() => {
   const less = incomeLessExpenses.value
   const pct = Math.round((less / income) * 100)
   return pct + '%'
+})
+
+// Tampilkan section tanda tangan jika dokumen approved (multi-signature atau legacy single QR)
+const showSignatureSection = computed(() => {
+  return siteInvest.value?.status === 'approved'
+})
+
+// Untuk legacy single QR: nama dan jabatan/role penandatangan (dari approvedByUser)
+const legacySignerName = computed(() => {
+  return siteInvest.value?.approvedByUser?.fullName || null
+})
+const legacySignerTitle = computed(() => {
+  const user = siteInvest.value?.approvedByUser
+  if (!user) return null
+  const role = user.roles?.[0]?.name
+  return role || null
 })
 
 onMounted(async () => {
@@ -296,8 +472,23 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.cetak-si-print-btn {
+  position: fixed;
+  top: 12px;
+  right: 25px;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  color: #fff !important;
+}
+.cetak-si-print-btn:hover {
+  color: #adb5bd !important;
+}
+.cetak-si-print-btn i {
+  color: inherit !important;
+}
 .cetak-si-header {
   min-height: 60px;
+  margin-top: 40px;
 }
 .logo-section {
   flex-shrink: 0;
@@ -319,12 +510,18 @@ onMounted(async () => {
 }
 .cetak-si-table thead th {
   white-space: nowrap;
+  background-color: #4275f6;
 }
 .table-head-white {
   color: #fff;
 }
 .cetak-si-summary tbody td {
   vertical-align: middle;
+}
+/* Hanya baris GRAND TOTAL: background ungu dan font putih */
+.cetak-si-grand-total td {
+  background-color: #4275f6;
+  color: #fff !important;
 }
 </style>
 
@@ -335,7 +532,7 @@ onMounted(async () => {
     border: none !important;
     border-top: 1pt solid #000 !important;
     height: 0 !important;
-    margin: 1rem 0 !important;
+    margin: 0.4rem 0 !important;
     padding: 0 !important;
   }
   .no-print {
@@ -345,11 +542,34 @@ onMounted(async () => {
     display: none !important;
   }
   .cetak-si-doc {
+    padding: 0.5rem !important;
+    padding-top: 0.25rem !important;
     font-size: 12px;
+  }
+  /* Rapatkan margin antar section agar TTD digital muat di halaman pertama */
+  .cetak-si-doc .mb-4 {
+    margin-bottom: 0.5rem !important;
+  }
+  .cetak-si-footer {
+    margin-top: 0.75rem !important;
+    padding-top: 0.25rem !important;
+  }
+  .cetak-si-footer h2 {
+    margin-bottom: 0.35rem !important;
+    margin-top: 0 !important;
+    font-size: 14px !important;
+  }
+  .cetak-si-footer p {
+    margin-bottom: 0.2rem !important;
+    line-height: 1.45 !important;
+  }
+  .cetak-si-footer .signature-section {
+    margin-top: 0.4rem !important;
   }
   .cetak-si-header {
     display: flex !important;
     justify-content: space-between !important;
+    margin: 0 !important;
   }
   .cetak-si-logo {
     height: 60px !important;
@@ -371,11 +591,11 @@ onMounted(async () => {
   .cetak-si-table th,
   .cetak-si-summary td,
   .cetak-si-summary th {
-    border: 1pt solid #333 !important;
+    border: 1pt solid #4275f6 !important;
     padding: 6px 8px !important;
   }
   .table-dark.table-head-white th {
-    background-color: #2c3e50 !important;
+    background-color: #4275f6 !important;
     color: #fff !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
@@ -387,6 +607,12 @@ onMounted(async () => {
   }
   .table-light td {
     background-color: #f8f9fa !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .cetak-si-grand-total td {
+    background-color: #4275f6 !important;
+    color: #fff !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }

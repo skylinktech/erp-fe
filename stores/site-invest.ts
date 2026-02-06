@@ -98,6 +98,9 @@ export interface SiteInvest {
   estimatedCompletionDate: string
   serviceSubtotal: number
   materialSubtotal: number
+  signatureToken?: string | null
+  signedAt?: string | null
+  signedBy?: number | null
   didSubtotal: number
   contingencyPercent: number
   contingencyAmount: number
@@ -127,6 +130,17 @@ export interface SiteInvest {
   siteInvestBudgets?: SiteInvestBudget[]
   notes?: string | null
   attachment?: string | null
+  currentApprovalStep?: number | null
+  currentApprovers?: Array<{ userId: number; fullName?: string; email?: string; source?: string }>
+  approvalLogs?: Array<{
+    id: number
+    stepOrder: number
+    action: 'approved' | 'rejected'
+    remarks?: string | null
+    user?: { fullName?: string; full_name?: string; email?: string }
+    workflow?: { steps?: Array<{ step_order?: number; stepOrder?: number; step_name?: string; stepName?: string; jabatan?: { nm_jabatan?: string; nmJabatan?: string }; role?: { name?: string } }> }
+    createdAt?: string
+  }>
 }
 
 interface SiteInvestState {
@@ -359,10 +373,14 @@ export const useSiteInvestStore = defineStore('siteInvest', {
         }
 
         const materialKeys = ['priceListLineId', 'quantity', 'price', 'subtotal', 'isPriceOverridden']
-        this.form.siteInvestMaterials.forEach((item: any, i: number) => {
-          if (item.priceListLineId && item.quantity > 0) {
+        const materialKeysToSnake: Record<string, string> = { priceListLineId: 'price_list_line_id', quantity: 'quantity', price: 'price', subtotal: 'subtotal', isPriceOverridden: 'is_price_overridden' }
+        const materials = this.form.siteInvestMaterials ?? []
+        materials.forEach((item: any, i: number) => {
+          const plLineId = Number(item?.priceListLineId ?? item?.price_list_line_id ?? 0)
+          const qty = Number(item?.quantity ?? 0)
+          if (plLineId && qty > 0) {
             materialKeys.forEach(itemKey => {
-              const value = item[itemKey]
+              const value = item[itemKey] ?? item[materialKeysToSnake[itemKey]]
               if (value !== null && value !== undefined) {
                 formData.append(`siteInvestMaterials[${i}][${itemKey}]`, String(value))
               }
@@ -371,10 +389,14 @@ export const useSiteInvestStore = defineStore('siteInvest', {
         })
 
         const serviceKeys = ['priceListLineId', 'quantity', 'price', 'subtotal', 'isPriceOverridden', 'terminalKitCount', 'quotaPriority', 'newServiceLine', 'additionalData']
-        this.form.siteInvestServices.forEach((item: any, i: number) => {
-          if (item.priceListLineId && item.quantity > 0) {
+        const serviceKeysToSnake: Record<string, string> = { priceListLineId: 'price_list_line_id', quantity: 'quantity', price: 'price', subtotal: 'subtotal', isPriceOverridden: 'is_price_overridden', terminalKitCount: 'terminal_kit_count', quotaPriority: 'quota_priority', newServiceLine: 'new_service_line', additionalData: 'additional_data' }
+        const services = this.form.siteInvestServices ?? []
+        services.forEach((item: any, i: number) => {
+          const plLineId = Number(item?.priceListLineId ?? item?.price_list_line_id ?? 0)
+          const qty = Number(item?.quantity ?? 0)
+          if (plLineId && qty > 0) {
             serviceKeys.forEach(itemKey => {
-              const value = item[itemKey]
+              const value = item[itemKey] ?? item[serviceKeysToSnake[itemKey]]
               if (value !== null && value !== undefined) {
                 formData.append(`siteInvestServices[${i}][${itemKey}]`, String(value))
               }
@@ -383,10 +405,13 @@ export const useSiteInvestStore = defineStore('siteInvest', {
         })
 
         const didKeys = ['priceListLineId', 'quantity', 'price', 'subtotal', 'isPriceOverridden']
-        this.form.siteInvestDids.forEach((item: any, i: number) => {
-          if (item.priceListLineId) {
+        const didKeysToSnake: Record<string, string> = { priceListLineId: 'price_list_line_id', quantity: 'quantity', price: 'price', subtotal: 'subtotal', isPriceOverridden: 'is_price_overridden' }
+        const dids = this.form.siteInvestDids ?? []
+        dids.forEach((item: any, i: number) => {
+          const plLineId = Number(item?.priceListLineId ?? item?.price_list_line_id ?? 0)
+          if (plLineId) {
             didKeys.forEach(itemKey => {
-              const value = item[itemKey]
+              const value = item[itemKey] ?? item[didKeysToSnake[itemKey]]
               if (value !== null && value !== undefined) {
                 formData.append(`siteInvestDids[${i}][${itemKey}]`, String(value))
               }
@@ -784,6 +809,12 @@ export const useSiteInvestStore = defineStore('siteInvest', {
         })
 
         formData.contingencyPercent = Number(formData.contingencyPercent) || 0
+
+        // Pastikan array items pakai key camelCase (API bisa return snake_case)
+        formData.siteInvestMaterials = formData.siteInvestMaterials ?? formData.site_invest_materials ?? []
+        formData.siteInvestServices = formData.siteInvestServices ?? formData.site_invest_services ?? []
+        formData.siteInvestDids = formData.siteInvestDids ?? formData.site_invest_dids ?? []
+        formData.siteInvestBudgets = formData.siteInvestBudgets ?? formData.site_invest_budgets ?? []
 
         // Normalisasi item: pastikan priceListLineId dan subtotal/isPriceOverridden
         const nm = (v: any) => (v !== null && v !== undefined && v !== '') ? Number(v) : 0

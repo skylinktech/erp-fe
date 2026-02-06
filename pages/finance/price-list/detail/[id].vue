@@ -70,6 +70,10 @@
                       <p class="mb-0">{{ priceList.validTo ? formatDate(priceList.validTo) : 'Tidak terbatas' }}</p>
                     </div>
                     <div class="col-md-6">
+                      <label class="form-label text-muted medium">Total</label>
+                      <p class="mb-0 fw-medium">{{ formatRupiah(priceList.total ?? calculateTotal()) }}</p>
+                    </div>
+                    <div class="col-md-6">
                       <label class="form-label text-muted medium">Dibuat</label>
                       <p class="mb-0">{{ formatDate(priceList.createdAt) }}</p>
                     </div>
@@ -101,13 +105,18 @@
                           <th>Jenis Harga</th>
                           <th>Billing</th>
                           <th>Tipe Service</th>
+                          <th>Category DID</th>
                           <th class="text-center">Qty</th>
+                          <th class="text-end">Harga Beli</th>
                           <th class="text-end">Harga</th>
-                          <th class="text-end">Subtotal</th>
+                          <th class="text-end">Delivery</th>
+                          <th class="text-end">Installation</th>
+                          <th class="text-end">Dismantle</th>
                           <th class="text-end">Terminal Kit</th>
                           <th class="text-end">Quota Priority</th>
                           <th class="text-end">New Service Line</th>
                           <th class="text-end">Additional Data</th>
+                          <th class="text-end">Subtotal</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -131,18 +140,23 @@
                             </span>
                           </td>
                           <td class="text-muted">{{ line.service?.servicePlan?.serviceType?.name || '—' }}</td>
+                          <td class="text-muted">{{ line.categoryDid ? line.categoryDid.split(',').map(c => c.trim()).join(', ') : '—' }}</td>
                           <td class="text-center">{{ line.quantity || 0 }}</td>
+                          <td class="text-end text-muted">{{ line.priceBuy != null ? formatRupiah(line.priceBuy) : '—' }}</td>
                           <td class="text-end">{{ formatRupiah(line.price) }}</td>
-                          <td class="text-end fw-medium">{{ formatRupiah(line.subtotal) }}</td>
-                          <td class="text-end text-muted">{{ line.terminalKitCount != null ? line.terminalKitCount : '—' }}</td>
-                          <td class="text-end text-muted">{{ line.quotaPriority != null ? line.quotaPriority : '—' }}</td>
+                          <td class="text-end text-muted">{{ line.delPrice != null ? formatRupiah(line.delPrice) : '—' }}</td>
+                          <td class="text-end text-muted">{{ line.insPrice != null ? formatRupiah(line.insPrice) : '—' }}</td>
+                          <td class="text-end text-muted">{{ line.disPrice != null ? formatRupiah(line.disPrice) : '—' }}</td>
+                          <td class="text-end text-muted">{{ (line.terminalKit != null || line.terminalKitCount != null) ? formatRupiah(line.terminalKit ?? line.terminalKitCount) : '—' }}</td>
+                          <td class="text-end text-muted">{{ line.quotaPriority != null ? formatRupiah(line.quotaPriority) : '—' }}</td>
                           <td class="text-end text-muted">{{ line.newServiceLine != null ? formatRupiah(line.newServiceLine) : '—' }}</td>
                           <td class="text-end text-muted">{{ line.additionalData != null ? formatRupiah(line.additionalData) : '—' }}</td>
+                          <td class="text-end fw-medium">{{ formatRupiah(line.subtotal) }}</td>
                         </tr>
                       </tbody>
                       <tfoot>
                         <tr>
-                          <td colspan="10" class="text-end fw-bold">Total:</td>
+                          <td colspan="16" class="text-end fw-bold">Total:</td>
                           <td class="text-end fw-bold">{{ formatRupiah(calculateTotal()) }}</td>
                         </tr>
                       </tfoot>
@@ -180,7 +194,7 @@
                   <hr>
                   <div class="d-flex justify-content-between py-1">
                     <label class="form-label text-muted medium mb-0">Total Nilai</label>
-                    <p class="mb-0 fw-bold text-primary">{{ formatRupiah(calculateTotal()) }}</p>
+                    <p class="mb-0 fw-bold text-primary">{{ formatRupiah(priceList.total ?? calculateTotal()) }}</p>
                   </div>
                 </div>
               </div>
@@ -273,7 +287,11 @@ function getLineItemName(line) {
 
 function calculateTotal() {
   if (!priceList.value?.lines) return 0
-  return priceList.value.lines.reduce((sum, line) => sum + (line.subtotal || 0), 0)
+  return priceList.value.lines.reduce((sum, line) => {
+    const st = line.subtotal
+    const num = typeof st === 'string' ? Number(String(st).replace(/[^0-9.-]/g, '')) : Number(st)
+    return sum + (Number.isNaN(num) ? 0 : num)
+  }, 0)
 }
 
 function countByType(type) {

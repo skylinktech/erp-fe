@@ -17,6 +17,7 @@ export interface PriceListLine {
   priceableId: number
   priceType?: PriceType
   price: number
+  priceBuy?: number | null
   quantity: number
   subtotal: number
   billingType: 'one_time' | 'recurring'
@@ -25,6 +26,11 @@ export interface PriceListLine {
   quotaPriority?: number | null
   newServiceLine?: number | null
   additionalData?: number | null
+  delPrice?: number | null
+  insPrice?: number | null
+  disPrice?: number | null
+  /** Comma-separated DID service categories from did_services (e.g. "delivery,installation") */
+  categoryDid?: string | null
   // Polymorphic relations
   product?: {
     id: number
@@ -40,6 +46,7 @@ export interface PriceListLine {
     id: number
     code: string
     name: string
+    services?: { id: number; didId: number; servicePlanId: number; category: string }[]
   }
 }
 
@@ -50,6 +57,7 @@ export interface PriceList {
   isActive: boolean
   validFrom: string
   validTo?: string | null
+  total?: number
   createdAt: string
   updatedAt: string
   lines?: PriceListLine[]
@@ -174,12 +182,14 @@ export const usePriceListStore = defineStore('priceList', {
       const { $api } = useNuxtApp()
 
       try {
+        const total = this.form.lines.reduce((s, line) => s + (Number(line.subtotal) || 0), 0)
         const payload = {
           name: this.form.name,
           type: this.form.type,
           isActive: this.form.isActive,
           validFrom: this.form.validFrom,
           validTo: this.form.validTo,
+          total,
           lines: this.form.lines.map((line) => ({
             ...line,
             priceType: line.priceType || 'default',
@@ -293,16 +303,40 @@ export const usePriceListStore = defineStore('priceList', {
     openModal(priceList?: PriceList) {
       if (priceList) {
         this.isEditMode = true
-        this.form = {
-          ...priceList,
-          lines: (priceList.lines || []).map((l) => ({
+        const didCategories = ['delivery', 'installation', 'dismantle']
+        const expandedLines: PriceListLine[] = []
+        for (const l of priceList.lines || []) {
+          const base = {
             ...l,
             priceType: l.priceType || 'default',
+            priceBuy: l.priceBuy ?? null,
             terminalKitCount: l.terminalKitCount ?? null,
             quotaPriority: l.quotaPriority ?? null,
             newServiceLine: l.newServiceLine ?? null,
             additionalData: l.additionalData ?? null,
-          })),
+            delPrice: l.delPrice ?? null,
+            insPrice: l.insPrice ?? null,
+            disPrice: l.disPrice ?? null,
+            categoryDid: l.categoryDid ?? null,
+          }
+          if (l.priceableType === 'did' && l.categoryDid && String(l.categoryDid).includes(',')) {
+            const cats = String(l.categoryDid).split(',').map((c) => c.trim().toLowerCase()).filter((c) => didCategories.includes(c))
+            for (const cat of cats) {
+              expandedLines.push({
+                ...base,
+                categoryDid: cat,
+                delPrice: cat === 'delivery' ? (l.delPrice ?? null) : null,
+                insPrice: cat === 'installation' ? (l.insPrice ?? null) : null,
+                disPrice: cat === 'dismantle' ? (l.disPrice ?? null) : null,
+              })
+            }
+          } else {
+            expandedLines.push(base)
+          }
+        }
+        this.form = {
+          ...priceList,
+          lines: expandedLines,
         }
       } else {
         this.isEditMode = false
@@ -335,8 +369,21 @@ export const usePriceListStore = defineStore('priceList', {
       this.form.lines.push(line)
     },
 
+    /** Removes the line at index. For DID lines, removes all lines for the same DID (same priceableId) so the price list doesn't keep orphan DID rows. */
     removeLine(index: number) {
-      this.form.lines.splice(index, 1)
+      const line = this.form.lines[index]
+      if (line?.priceableType === 'did' && line?.priceableId != null) {
+        const didId = line.priceableId
+        const indicesToRemove = this.form.lines
+          .map((l, i) => (l.priceableType === 'did' && l.priceableId === didId ? i : -1))
+          .filter((i) => i >= 0)
+          .sort((a, b) => b - a)
+        for (const i of indicesToRemove) {
+          this.form.lines.splice(i, 1)
+        }
+      } else {
+        this.form.lines.splice(index, 1)
+      }
     },
     
     // Add empty line for inline editing in modal
@@ -346,6 +393,7 @@ export const usePriceListStore = defineStore('priceList', {
         priceableId: null as any,
         priceType: 'default',
         price: 0,
+        priceBuy: null,
         quantity: 1,
         subtotal: 0,
         billingType: 'one_time',
@@ -354,21 +402,26 @@ export const usePriceListStore = defineStore('priceList', {
         quotaPriority: null,
         newServiceLine: null,
         additionalData: null,
+        delPrice: null,
+        insPrice: null,
+        disPrice: null,
+        categoryDid: null,
       })
     },
 
-    // Update subtotal: for service = sum(all numeric fields) * quantity; otherwise price * quantity
+    // Update subtotal: untuk service = (price + newServiceLine) * qty + additionalData. Terminal Access Charge & Quota Priority adalah breakdown dari New Service Line (tidak dikalikan terpisah). Additional Data hanya tambahan harga (sekali).
     updateLineSubtotal(index: number) {
       const line = this.form.lines[index]
       if (!line) return
       const qty = line.quantity || 0
       if (line.priceableType === 'service') {
         const price = Number(line.price) || 0
-        const terminalKitCount = Number(line.terminalKitCount) || 0
-        const quotaPriority = Number(line.quotaPriority) || 0
         const newServiceLine = Number(line.newServiceLine) || 0
         const additionalData = Number(line.additionalData) || 0
-        line.subtotal = (price + terminalKitCount + quotaPriority + newServiceLine + additionalData) * qty
+        line.subtotal = (price + newServiceLine) * qty + additionalData
+      } else if (line.priceableType === 'did') {
+        const price = Number(line.price) || 0
+        line.subtotal = price * qty
       } else {
         line.subtotal = (Number(line.price) || 0) * qty
       }

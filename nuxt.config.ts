@@ -77,6 +77,7 @@ export default defineNuxtConfig({
   plugins: [
     '~/plugins/jquery.client.ts',
     '~/plugins/api.client.ts',
+    '~/plugins/quill.client.ts',
     '~/plugins/primevue.ts',
     '~/plugins/toast-config.client.ts',
     '~/plugins/session-toast.client.ts',

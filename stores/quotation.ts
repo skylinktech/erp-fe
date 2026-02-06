@@ -61,9 +61,9 @@ export interface Quotation {
   validUntil         : string
   status             : string
   termsOfPayment     : string
-  minimumPeriod      : string
   serviceSubtotal?   : number | string
   productSubtotal?   : number | string
+  didSubtotal?       : number | string
   total              : string | number
   grandTotal?        : number | string
   discountPercent    : number | string
@@ -153,7 +153,6 @@ export const useQuotationStore = defineStore('quotation', {
         date: new Date().toISOString().split('T')[0], 
         validUntil: new Date().toISOString().split('T')[0], 
         termsOfPayment: 'postpaid',
-        minimumPeriod: '12',
         discountPercent: 0, 
         taxPercent: 0, 
         dpPercent: 0,
@@ -301,11 +300,6 @@ export const useQuotationStore = defineStore('quotation', {
                 throw new Error('Status harus dipilih');
             }
 
-            // Validasi produk hanya jika ada item produk
-            if (hasItems && this.customerProducts.length === 0) {
-                throw new Error('Customer yang dipilih tidak memiliki produk. Silakan pilih customer lain, tambah produk untuk customer ini, atau gunakan tab Service.');
-            }
-
             Object.keys(dataToAppend).forEach(key => {
                 const value = dataToAppend[key];
                 if (value !== null && value !== undefined && value !== '') {
@@ -347,15 +341,6 @@ export const useQuotationStore = defineStore('quotation', {
 
             if (validItems.length === 0 && validServices.length === 0 && validDids.length === 0) {
                 throw new Error('Minimal harus ada 1 item produk, service, atau DID yang valid');
-            }
-
-            if (validItems.length > 0) {
-                const customerProductIds = this.customerProducts.map(p => p.id);
-                for (const item of validItems) {
-                    if (!customerProductIds.includes(item.productId)) {
-                        throw new Error(`Produk dengan ID ${item.productId} tidak dimiliki oleh customer yang dipilih`);
-                    }
-                }
             }
 
             validItems.forEach((item: any, i: number) => {
@@ -718,9 +703,8 @@ export const useQuotationStore = defineStore('quotation', {
                 isPriceOverridden: i.isPriceOverridden ?? false,
                 priceReason: i.priceReason ?? '',
             }));
-            // Normalisasi tiap quotationServices: serviceId, unitId, billingType (dari price_list_lines)
+            // Normalisasi tiap quotationServices: pertahankan subtotal dari API saat edit; jangan hitung ulang kecuali tidak ada
             formData.quotationServices = (formData.quotationServices || []).map((s: any) => {
-                // ✅ PERBAIKAN: Gunakan billing_type dari backend jika ada, default ke 'one_time'
                 const bt = (s.billingType ?? s.billing_type ?? 'one_time') + '';
                 const qty = Number(s.quantity) || 0;
                 const price = Number(s.price) || 0;
@@ -729,7 +713,10 @@ export const useQuotationStore = defineStore('quotation', {
                 const nsl = s.newServiceLine ?? (s.new_service_line != null ? Number(s.new_service_line) : null);
                 const ad = s.additionalData ?? (s.additional_data != null ? Number(s.additional_data) : null);
                 const effectivePrice = price + (tk != null ? Number(tk) : 0) + (qp != null ? Number(qp) : 0) + (nsl != null ? Number(nsl) : 0) + (ad != null ? Number(ad) : 0);
-                const subtotal = qty * effectivePrice;
+                const fromApiSubtotal = s.subtotal != null && s.subtotal !== '' ? Number(s.subtotal) : NaN;
+                const subtotal = !Number.isNaN(fromApiSubtotal) && fromApiSubtotal >= 0
+                    ? fromApiSubtotal
+                    : (qty * effectivePrice);
                 return {
                     ...s,
                     serviceId: s.serviceId ?? s.service_id,
@@ -737,8 +724,8 @@ export const useQuotationStore = defineStore('quotation', {
                     quantity: qty,
                     price,
                     subtotal,
-                    isPriceOverridden: s.isPriceOverridden ?? false,
-                    priceReason: s.priceReason ?? '',
+                    isPriceOverridden: s.isPriceOverridden ?? s.is_price_overridden ?? false,
+                    priceReason: s.priceReason ?? s.price_reason ?? '',
                     billingType: bt,
                     billing_type: bt,
                     terminalKitCount: tk != null ? Number(tk) : null,
@@ -800,7 +787,6 @@ export const useQuotationStore = defineStore('quotation', {
                 date: new Date().toISOString().split('T')[0], 
                 validUntil: new Date().toISOString().split('T')[0], 
                 termsOfPayment: 'postpaid',
-                minimumPeriod: '12',
                 discountPercent: 0, 
                 taxPercent: 0, 
                 dpPercent: 0,
@@ -834,7 +820,6 @@ export const useQuotationStore = defineStore('quotation', {
             date: new Date().toISOString().split('T')[0], 
             validUntil: new Date().toISOString().split('T')[0], 
             termsOfPayment: 'postpaid',
-            minimumPeriod: '12',
             discountPercent: 0, 
             taxPercent: 0, 
             dpPercent: 0,
@@ -965,15 +950,23 @@ export const useQuotationStore = defineStore('quotation', {
       this.loading = true;
       this.error = null;
       const { $api } = useNuxtApp();
-      // Pakai GET /api/quotation/:id (show) — preload sama, menghindari konflik path getQuotationDetails
-      const url = `${$api.quotation()}/${quotationId}`;
-      try {
-        const resData = await apiFetch(url, {
-          headers: {
-            'Accept': 'application/json',
-          },
-          credentials: 'include', // Cookie-based auth (apiFetch already handles this)
+      const tryUrl = (url: string) =>
+        apiFetch(url, {
+          headers: { Accept: 'application/json' },
+          credentials: 'include',
         });
+      try {
+        let resData: any = null;
+        try {
+          resData = await tryUrl($api.getQuotationDetails(quotationId));
+        } catch (e: any) {
+          const status = e?.response?.status ?? e?.statusCode ?? e?.status;
+          if (status === 404) {
+            resData = await tryUrl(`${$api.quotation()}/${quotationId}`);
+          } else {
+            throw e;
+          }
+        }
 
         if (resData && resData.data) {
           this.quotation = resData.data;

@@ -280,6 +280,36 @@
                 <label class="form-label text-muted">Terms of Payment</label>
                 <CustomSelect2 v-model="form.termsOfPayment" :options="termsOptions" :get-option-label="o => o.label" :reduce="o => o.value" searchable clearable placeholder="Pilih" />
               </div>
+              <div class="col-12">
+                <label class="form-label text-muted">Untuk Perhatian (UP)</label>
+                <input v-model="form.up" type="text" class="form-control" placeholder="Untuk perhatian..." />
+              </div>
+              <div class="col-12">
+                <label class="form-label d-block">Lampiran</label>
+                <small class="text-muted d-block mb-2">Pilih lampiran yang relevan dengan IRO.</small>
+                <div class="d-flex flex-wrap gap-4">
+                  <div class="form-check">
+                    <input v-model="form.si" type="checkbox" class="form-check-input" id="iro-check-si" />
+                    <label class="form-check-label" for="iro-check-si">SI</label>
+                  </div>
+                  <div class="form-check">
+                    <input v-model="form.subsForm" type="checkbox" class="form-check-input" id="iro-check-subs-form" />
+                    <label class="form-check-label" for="iro-check-subs-form">Subs Form</label>
+                  </div>
+                  <div class="form-check">
+                    <input v-model="form.pks" type="checkbox" class="form-check-input" id="iro-check-pks" />
+                    <label class="form-check-label" for="iro-check-pks">PKS</label>
+                  </div>
+                  <div class="form-check">
+                    <input v-model="form.others" type="checkbox" class="form-check-input" id="iro-check-others" />
+                    <label class="form-check-label" for="iro-check-others">Others</label>
+                  </div>
+                </div>
+              </div>
+              <div class="col-12">
+                <label class="form-label text-muted">Deskripsi</label>
+                <Editor v-model="form.description" editor-style="min-height: 200px" class="iro-description-editor" placeholder="Deskripsi IRO (opsional)..." />
+              </div>
               <div v-if="(form.iroDetails || []).length > 0" class="col-12 pt-2">
                 <hr class="my-2" />
                 <h6 class="text-secondary mb-2">
@@ -326,7 +356,7 @@
                   </table>
                 </div>
                 <p class="text-muted small mb-2">
-                  {{ countProduct }} product, {{ countService }} service, {{ countDid }} DID (autofill dari Quotation / Site Investment)
+                  {{ countProduct }} product, {{ countService }} service, {{ countDid }} DID (autofill dari Quotation yang dipilih)
                 </p>
                 <div class="d-flex justify-content-end gap-4 flex-wrap">
                   <span class="fw-bold">Material: {{ formatRupiah(computedMaterial) }}</span>
@@ -404,12 +434,8 @@ const minimumPeriodOptions = [
   { label: '60 bln', value: '60' },
 ]
 
-function onServiceMinimumPeriodChange(d) {
-  if (String(d?.itemType || '').toUpperCase() !== 'SERVICE') return
-  const qty = Number(d.quantity) || 1
-  const pr = Number(d.price) || 0
-  const period = Number(d.minimumPeriod) || 12
-  d.subtotal = qty * pr * period
+function onServiceMinimumPeriodChange(_d) {
+  // Nominal (price, subtotal) tampil apa adanya dari quotation — tidak menghitung ulang.
 }
 
 const modalTitle = computed(() => (isEditMode.value ? 'Edit IRO' : 'Tambah Data'))

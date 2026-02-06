@@ -1,20 +1,25 @@
 /** Composable untuk status approval (Approved by X / Rejected by X): Jabatan → Role → fullName */
 
 export function useApprovalStatus() {
-  /** Label untuk "Approved by X" / "Rejected by X": prioritas Jabatan → Role → step_name → fullName user */
+  /** Label untuk "Approved by X" / "Rejected by X": prioritas Jabatan → Role → step_name → fullName user; fallback approvedByUser/rejectedByUser jika tidak ada approvalLogs */
   function getApprovalStepJabatan(row: any, action: 'approved' | 'rejected') {
     const logs = row?.approvalLogs || []
     const last = logs.filter((l: any) => l.action === action).pop()
-    if (!last) return ''
-    const steps = last.workflow?.steps || []
-    const step = steps.find((s: any) => (s.step_order ?? s.stepOrder) === last.stepOrder)
-    const jabatan = step?.jabatan?.nm_jabatan ?? step?.jabatan?.nmJabatan ?? ''
-    if (jabatan) return jabatan
-    const role = step?.role?.name ?? ''
-    if (role) return role
-    const stepName = step?.step_name ?? step?.stepName ?? ''
-    if (stepName) return stepName
-    return last?.user?.fullName ?? last?.user?.full_name ?? last?.user?.email ?? ''
+    if (last) {
+      const steps = last.workflow?.steps || []
+      const step = steps.find((s: any) => (s.step_order ?? s.stepOrder) === last.stepOrder)
+      const jabatan = step?.jabatan?.nm_jabatan ?? step?.jabatan?.nmJabatan ?? ''
+      if (jabatan) return jabatan
+      const role = step?.role?.name ?? ''
+      if (role) return role
+      const stepName = step?.step_name ?? step?.stepName ?? ''
+      if (stepName) return stepName
+      const userName = last?.user?.fullName ?? last?.user?.full_name ?? last?.user?.email ?? ''
+      if (userName) return userName
+    }
+    if (action === 'approved') return row?.approvedByUser?.fullName ?? row?.approvedByUser?.full_name ?? ''
+    if (action === 'rejected') return row?.rejectedByUser?.fullName ?? row?.rejectedByUser?.full_name ?? ''
+    return ''
   }
 
   /** Badge untuk status dengan "Approved by [jabatan]" / "Rejected by [jabatan]" */

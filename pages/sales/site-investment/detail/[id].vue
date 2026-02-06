@@ -1,7 +1,7 @@
 <template>
   <div class="page-wrapper">
     <div class="content-wrapper">
-      <div class="container-xxl flex-grow-1 container pt-12">
+      <div class="container-xxl flex-grow-1 container p-y">
         <!-- Loading -->
         <div v-if="loading" class="d-flex justify-content-center align-items-center" style="min-height: 400px;">
           <div class="text-center">
@@ -32,7 +32,7 @@
                 <h4 class="mb-0 fw-semibold">{{ siteInvest.siNumber || siteInvest.name }}</h4>
                 <small class="text-muted">{{ formatDateTime(siteInvest.createdAt) }}</small>
               </div>
-              <span :class="getStatusBadge(siteInvest.status).class" class="badge">{{ getStatusBadge(siteInvest.status).text }}</span>
+              <span :class="getStatusBadge(siteInvest).class" class="badge">{{ getStatusBadge(siteInvest).text }}</span>
               <span :class="getPriorityBadge(siteInvest.priority).class" class="badge">{{ getPriorityBadge(siteInvest.priority).text }}</span>
               <span v-if="siteInvest.overBudget" class="badge bg-label-warning">
                 <i class="ri-alert-line me-1"></i> Over Budget
@@ -196,7 +196,7 @@
                   <span class="badge bg-label-primary">{{ (siteInvest.siteInvestMaterials || []).length }} item</span>
                 </div>
                 <div class="card-body px-5 pt-4 pb-4">
-                  <div v-if="!(siteInvest.siteInvestMaterials || []).length" class="text-muted text-center py-4">
+                  <div v-if="!((siteInvest.siteInvestMaterials ?? siteInvest.site_invest_materials) || []).length" class="text-muted text-center py-4">
                     Tidak ada material
                   </div>
                   <div v-else class="table-responsive">
@@ -210,7 +210,7 @@
                         </tr>
                       </thead>
                       <tbody>
-                        <tr v-for="(m, i) in (siteInvest.siteInvestMaterials || [])" :key="m.id || i">
+                        <tr v-for="(m, i) in ((siteInvest.siteInvestMaterials ?? siteInvest.site_invest_materials) || [])" :key="m.id || i">
                           <td>{{ m.priceListLine?.product?.name || m.priceListLine?.product?.sku || '—' }}</td>
                           <td class="text-center">{{ m.quantity ?? 0 }}</td>
                           <td class="text-end">{{ formatRupiah(m.price) }}</td>
@@ -218,7 +218,7 @@
                         </tr>
                       </tbody>
                     </table>
-                    <p class="mb-0 text-end fw-semibold mt-3">Subtotal Material: {{ formatRupiah(siteInvest.materialSubtotal) }}</p>
+                    <p class="mb-0 text-end fw-semibold mt-3">Subtotal Material: {{ formatRupiah(materialSubtotalFromApi) }}</p>
                   </div>
                 </div>
               </div>
@@ -230,10 +230,10 @@
                     <i class="ri-service-line me-2 text-primary"></i>
                     Managed Service
                   </h5>
-                  <span class="badge bg-label-primary">{{ (siteInvest.siteInvestServices || []).length }} item</span>
+                  <span class="badge bg-label-primary">{{ ((siteInvest.siteInvestServices ?? siteInvest.site_invest_services) || []).length }} item</span>
                 </div>
                 <div class="card-body px-5 pt-4 pb-4">
-                  <div v-if="!(siteInvest.siteInvestServices || []).length" class="text-muted text-center py-4">
+                  <div v-if="!((siteInvest.siteInvestServices ?? siteInvest.site_invest_services) || []).length" class="text-muted text-center py-4">
                     Tidak ada service
                   </div>
                   <div v-else class="table-responsive">
@@ -247,15 +247,15 @@
                         </tr>
                       </thead>
                       <tbody>
-                        <tr v-for="(s, i) in (siteInvest.siteInvestServices || [])" :key="s.id || i">
+                        <tr v-for="(s, i) in ((siteInvest.siteInvestServices ?? siteInvest.site_invest_services) || [])" :key="s.id || i">
                           <td>{{ s.priceListLine?.service?.name || '—' }}</td>
                           <td class="text-center">{{ s.quantity ?? 0 }}</td>
-                          <td class="text-end">{{ formatRupiah(getServiceEffectivePrice(s)) }}</td>
-                          <td class="text-end fw-medium">{{ formatRupiah(getServiceEffectiveSubtotal(s)) }}</td>
+                          <td class="text-end">{{ formatRupiah(getServicePrice(s)) }}</td>
+                          <td class="text-end fw-medium">{{ formatRupiah(getServiceSubtotal(s)) }}</td>
                         </tr>
                       </tbody>
                     </table>
-                    <p class="mb-0 text-end fw-semibold mt-3">Subtotal Service: {{ formatRupiah(serviceSubtotalDisplay) }}</p>
+                    <p class="mb-0 text-end fw-semibold mt-3">Subtotal Service: {{ formatRupiah(serviceSubtotalFromApi) }}</p>
                   </div>
                 </div>
               </div>
@@ -267,10 +267,10 @@
                     <i class="ri-truck-line me-2 text-primary"></i>
                     DID (Delivery / Installation)
                   </h5>
-                  <span class="badge bg-label-primary">{{ (siteInvest.siteInvestDids || []).length }} item</span>
+                  <span class="badge bg-label-primary">{{ ((siteInvest.siteInvestDids ?? siteInvest.site_invest_dids) || []).length }} item</span>
                 </div>
                 <div class="card-body px-5 pt-4 pb-4">
-                  <div v-if="!(siteInvest.siteInvestDids || []).length" class="text-muted text-center py-4">
+                  <div v-if="!((siteInvest.siteInvestDids ?? siteInvest.site_invest_dids) || []).length" class="text-muted text-center py-4">
                     Tidak ada DID
                   </div>
                   <div v-else class="table-responsive">
@@ -284,7 +284,7 @@
                         </tr>
                       </thead>
                       <tbody>
-                        <tr v-for="(d, i) in (siteInvest.siteInvestDids || [])" :key="d.id || i">
+                        <tr v-for="(d, i) in ((siteInvest.siteInvestDids ?? siteInvest.site_invest_dids) || [])" :key="d.id || i">
                           <td>{{ d.priceListLine?.did?.code || d.priceListLine?.did?.name || '—' }}</td>
                           <td class="text-center">{{ d.quantity ?? 1 }}</td>
                           <td class="text-end">{{ formatRupiah(d.price) }}</td>
@@ -292,7 +292,7 @@
                         </tr>
                       </tbody>
                     </table>
-                    <p class="mb-0 text-end fw-semibold mt-3">Subtotal DID: {{ formatRupiah(siteInvest.didSubtotal) }}</p>
+                    <p class="mb-0 text-end fw-semibold mt-3">Subtotal DID: {{ formatRupiah(didSubtotalFromApi) }}</p>
                   </div>
                 </div>
               </div>
@@ -339,29 +339,29 @@
                 <div class="card-body px-5 pt-4 pb-4">
                   <div class="d-flex justify-content-between py-1">
                     <label class="form-label text-muted medium mb-0">Managed Service</label>
-                    <p class="mb-0 fw-medium">{{ formatRupiah(serviceSubtotalDisplay) }}</p>
+                    <p class="mb-0 fw-medium">{{ formatRupiah(serviceSubtotalFromApi) }}</p>
                   </div>
                   <div class="d-flex justify-content-between py-1">
                     <label class="form-label text-muted medium mb-0">Material</label>
-                    <p class="mb-0 fw-medium">{{ formatRupiah(siteInvest.materialSubtotal) }}</p>
+                    <p class="mb-0 fw-medium">{{ formatRupiah(materialSubtotalFromApi) }}</p>
                   </div>
                   <div class="d-flex justify-content-between py-1">
                     <label class="form-label text-muted medium mb-0">DID</label>
-                    <p class="mb-0 fw-medium">{{ formatRupiah(siteInvest.didSubtotal) }}</p>
+                    <p class="mb-0 fw-medium">{{ formatRupiah(didSubtotalFromApi) }}</p>
                   </div>
                   <hr class="my-2" />
                   <div class="d-flex justify-content-between py-1">
                     <label class="form-label text-muted medium mb-0">Total Investasi</label>
-                    <p class="mb-0 fw-semibold">{{ formatRupiah(siteInvest.total) }}</p>
+                    <p class="mb-0 fw-semibold">{{ formatRupiah(totalFromApi) }}</p>
                   </div>
                   <div class="d-flex justify-content-between py-1">
-                    <label class="form-label text-muted medium mb-0">Contingency ({{ siteInvest.contingencyPercent || 0 }}%)</label>
-                    <p class="mb-0 fw-medium">{{ formatRupiah(siteInvest.contingencyAmount) }}</p>
+                    <label class="form-label text-muted medium mb-0">Contingency ({{ contingencyPercentFromApi || 0 }}%)</label>
+                    <p class="mb-0 fw-medium">{{ formatRupiah(contingencyAmountFromApi) }}</p>
                   </div>
                   <hr class="my-2" />
                   <div class="d-flex justify-content-between py-1">
                     <label class="form-label text-muted medium mb-0">Grand Total</label>
-                    <p class="mb-0 fw-medium fs-5 text-primary">{{ formatRupiah(siteInvest.grandTotal) }}</p>
+                    <p class="mb-0 fw-medium fs-5 text-primary">{{ formatRupiah(grandTotalFromApi) }}</p>
                   </div>
                 </div>
               </div>
@@ -397,6 +397,34 @@
                   </div>
                 </div>
               </div>
+
+              <!-- Informasi Approval -->
+              <div class="card mb-4 shadow-sm border-0">
+                <div class="card-header border-0 bg-transparent px-5 py-4">
+                  <h5 class="card-title mb-0 d-flex align-items-center">
+                    <i class="ri-checkbox-circle-line me-2 text-primary"></i>
+                    Informasi Approval
+                  </h5>
+                </div>
+                <div class="card-body px-5 pt-4 pb-4">
+                  <div class="mb-3">
+                    <label class="form-label text-muted mb-1">Status</label>
+                    <p class="mb-0">
+                      <span :class="getStatusBadge(siteInvest).class" class="badge">{{ getStatusBadge(siteInvest).text }}</span>
+                    </p>
+                  </div>
+                  <div v-if="siteInvest.status === 'approved' && (getApprovalStepJabatan(siteInvest, 'approved') || siteInvest.approvedByUser)" class="mb-3">
+                    <label class="form-label text-muted mb-1">Disetujui Oleh</label>
+                    <p class="mb-0 fw-medium">{{ getApprovalStepJabatan(siteInvest, 'approved') || siteInvest.approvedByUser?.fullName || siteInvest.approvedByUser?.full_name || '—' }}</p>
+                    <small v-if="siteInvest.approvedAt" class="text-muted">{{ formatDateTime(siteInvest.approvedAt) }}</small>
+                  </div>
+                  <div v-if="siteInvest.status === 'rejected' && (getApprovalStepJabatan(siteInvest, 'rejected') || siteInvest.rejectedByUser)" class="mb-0">
+                    <label class="form-label text-muted mb-1">Ditolak Oleh</label>
+                    <p class="mb-0 fw-medium">{{ getApprovalStepJabatan(siteInvest, 'rejected') || siteInvest.rejectedByUser?.fullName || siteInvest.rejectedByUser?.full_name || '—' }}</p>
+                    <small v-if="siteInvest.rejectedAt" class="text-muted">{{ formatDateTime(siteInvest.rejectedAt) }}</small>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </template>
@@ -412,11 +440,13 @@ import { storeToRefs } from 'pinia'
 import { useSiteInvestStore } from '~/stores/site-invest'
 import { usePermissions } from '~/composables/usePermissions'
 import { useImageUrl } from '~/composables/useImageUrl'
+import { useApprovalStatus } from '~/composables/useApprovalStatus'
 
 const route = useRoute()
 const siteInvestStore = useSiteInvestStore()
 const { userHasPermission, userHasRole } = usePermissions()
 const { getAttachmentUrl, getFileIcon, isImageFile } = useImageUrl()
+const { getStatusBadge, getApprovalStepJabatan } = useApprovalStatus()
 const formatRupiah = useFormatRupiah()
 
 const { siteInvest, loading, error } = storeToRefs(siteInvestStore)
@@ -431,18 +461,6 @@ function formatDate (v: string | null | undefined) {
 function formatDateTime (v: string | null | undefined) {
   if (!v) return '—'
   return new Date(v).toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-}
-
-function getStatusBadge (status: string) {
-  switch (status) {
-    case 'draft': return { text: 'Draft', class: 'badge rounded-pill bg-label-secondary' }
-    case 'pending': return { text: 'Pending', class: 'badge rounded-pill bg-label-warning' }
-    case 'approved': return { text: 'Approved', class: 'badge rounded-pill bg-label-success' }
-    case 'rejected': return { text: 'Rejected', class: 'badge rounded-pill bg-label-danger' }
-    case 'expired': return { text: 'Expired', class: 'badge rounded-pill bg-label-dark' }
-    case 'cancelled': return { text: 'Cancelled', class: 'badge rounded-pill bg-label-secondary' }
-    default: return { text: '-', class: 'badge rounded-pill bg-label-light' }
-  }
 }
 
 function getPriorityBadge (priority: string) {
@@ -464,29 +482,73 @@ function getBusinessSchemeBadgeClass (businessSchemeId: number | null | undefine
   }
 }
 
-/** Harga efektif service = price + terminal_kit_count + quota_priority + new_service_line + additional_data (support snake_case dari API) */
-function getServiceEffectivePrice (s: any): number {
+/** Harga satuan service: murni dari API (tidak hitung ulang) */
+function getServicePrice (s: any): number {
   if (!s) return 0
-  const price = Number(s.price) || 0
-  const tk = Number(s.terminalKitCount ?? s.terminal_kit_count) || 0
-  const qp = Number(s.quotaPriority ?? s.quota_priority) || 0
-  const nsl = Number(s.newServiceLine ?? s.new_service_line) || 0
-  const ad = Number(s.additionalData ?? s.additional_data) || 0
-  return price + tk + qp + nsl + ad
+  const p = s.price ?? (s as any).price
+  const n = Number(p)
+  return Number.isNaN(n) ? 0 : n
 }
 
-/** Subtotal efektif service = quantity * harga efektif */
-function getServiceEffectiveSubtotal (s: any): number {
+/** Subtotal service per baris: murni dari API; fallback qty×price hanya jika subtotal tidak ada */
+function getServiceSubtotal (s: any): number {
   if (!s) return 0
-  const qty = Number(s.quantity) || 1
-  return qty * getServiceEffectivePrice(s)
+  const st = s.subtotal ?? (s as any).subtotal
+  if (st !== undefined && st !== null && st !== '') {
+    const n = Number(st)
+    if (!Number.isNaN(n)) return n
+  }
+  const qty = Number(s.quantity ?? (s as any).quantity) || 1
+  const price = getServicePrice(s)
+  return qty * price
 }
 
-/** Total subtotal service untuk tampilan (jumlah dari subtotal efektif tiap item) */
-const serviceSubtotalDisplay = computed(() => {
-  const list = siteInvest.value?.siteInvestServices ?? []
-  return list.reduce((sum, s) => sum + getServiceEffectiveSubtotal(s), 0)
+/** Subtotal service: selalu dari API (service_subtotal / serviceSubtotal), tidak hitung ulang */
+const serviceSubtotalFromApi = computed(() => {
+  const si = siteInvest.value
+  if (!si) return 0
+  const v = (si as any).serviceSubtotal ?? (si as any).service_subtotal
+  if (v === undefined || v === null || v === '') return 0
+  const n = Number(v)
+  return Number.isNaN(n) ? 0 : n
 })
+
+/** Subtotal material: dari API (material_subtotal / materialSubtotal) */
+const materialSubtotalFromApi = computed(() => {
+  const si = siteInvest.value
+  if (!si) return 0
+  const v = (si as any).materialSubtotal ?? (si as any).material_subtotal
+  if (v === undefined || v === null || v === '') return 0
+  const n = Number(v)
+  return Number.isNaN(n) ? 0 : n
+})
+
+/** Subtotal DID: dari API (did_subtotal / didSubtotal) */
+const didSubtotalFromApi = computed(() => {
+  const si = siteInvest.value
+  if (!si) return 0
+  const v = (si as any).didSubtotal ?? (si as any).did_subtotal
+  if (v === undefined || v === null || v === '') return 0
+  const n = Number(v)
+  return Number.isNaN(n) ? 0 : n
+})
+
+function fromApiNum (si: any, ...keys: string[]): number {
+  if (!si) return 0
+  for (const k of keys) {
+    const v = (si as any)[k]
+    if (v !== undefined && v !== null && v !== '') {
+      const n = Number(v)
+      if (!Number.isNaN(n)) return n
+    }
+  }
+  return 0
+}
+
+const totalFromApi = computed(() => fromApiNum(siteInvest.value, 'total'))
+const contingencyAmountFromApi = computed(() => fromApiNum(siteInvest.value, 'contingencyAmount', 'contingency_amount'))
+const grandTotalFromApi = computed(() => fromApiNum(siteInvest.value, 'grandTotal', 'grand_total'))
+const contingencyPercentFromApi = computed(() => fromApiNum(siteInvest.value, 'contingencyPercent', 'contingency_percent'))
 
 async function load () {
   if (!id.value) return
