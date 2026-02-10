@@ -633,6 +633,7 @@
                                      <span class="fw-bold fs-5">Grand Total: {{ formatRupiah(grandTotal) }}</span>
                                  </div>
                              </div>
+                             <!-- Tab Content -->
                              <div class="tab-pane fade" id="form-tabs-did" role="tabpanel">
                                  <div v-if="form.useDidFromSiteInvest === null" class="mb-4">
                                      <p class="fw-medium mb-3">Do you want to use DID from Site Investment?</p>
