@@ -328,6 +328,7 @@
                                 </ul>
                             </div>
                         </div>
+                        <!-- Tab Content -->
                         <div class="tab-content pt-4">
                             <div class="tab-pane fade active show" id="form-tabs-info" role="tabpanel">
                                 <div class="row g-4">
