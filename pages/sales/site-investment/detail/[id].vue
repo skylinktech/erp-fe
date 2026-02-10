@@ -182,6 +182,18 @@
                         @error="(e) => (e.target.style.display = 'none')"
                       />
                     </div>
+                    <div class="col-12" v-if="(siteInvest.preparedBy || []).length">
+                      <label class="form-label text-muted medium">Prepared By</label>
+                      <p class="mb-0">
+                        <span
+                          v-for="(p, i) in (siteInvest.preparedBy || [])"
+                          :key="p.id_pegawai ?? p.idPegawai ?? i"
+                          class="badge bg-label-secondary me-1 mb-1"
+                        >
+                          {{ p.nm_pegawai || p.nmPegawai || '—' }}
+                        </span>
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>

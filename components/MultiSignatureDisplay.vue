@@ -27,14 +27,17 @@
         ></div>
       </div>
 
-      <!-- Signatures Grid (1 tanda tangan = di tengah) -->
-      <div class="row g-3" :class="{ 'justify-content-center': signatures.length === 1 }">
+      <!-- Signatures Grid; gap minimal antara Prepared by & Approved by -->
+      <div class="row signature-grid g-1" :class="{ 'justify-content-center': signatures.length === 1 }">
         <div 
           v-for="signature in signatures" 
           :key="signature.id"
           :class="signatures.length === 1 ? 'col-12 col-md-6 col-lg-4' : columnClass"
         >
           <div class="signature-card">
+            <!-- Judul di atas QR: Prepared by / Approved by -->
+            <div v-if="isPreparedBy(signature)" class="signature-card-label mb-2">Prepared by</div>
+            <div v-else class="signature-card-label mb-2">Approved by</div>
             <!-- QR Code -->
             <div class="qr-wrapper">
               <QRCodeGenerator
@@ -222,7 +225,14 @@ async function fetchSignatures() {
     const path = `${props.documentType}/${id}/signatures`
     const url = base.endsWith('/api') ? `${base}/${path}` : `${base}/api/${path}`
     const response = await $fetch(url, { credentials: 'include' })
-    signatures.value = response.signatures || []
+    const list = response.signatures || []
+    signatures.value = list.slice().sort((a, b) => {
+      const aPrepared = (a.role || '').toLowerCase() === 'prepared by'
+      const bPrepared = (b.role || '').toLowerCase() === 'prepared by'
+      if (aPrepared && !bPrepared) return -1
+      if (!aPrepared && bPrepared) return 1
+      return (a.order ?? 0) - (b.order ?? 0)
+    })
     requiredFromApi.value = response.required ?? null
     emit('signatures-loaded', signatures.value)
   } catch (error) {
@@ -269,9 +279,16 @@ function getRoleLabel(role) {
     'finance': 'Finance',
     'technical': 'Technical',
     'commercial': 'Commercial',
+    'prepared by': 'Prepared By',
   }
   const key = typeof role === 'string' ? role.toLowerCase() : role
   return roleLabels[key] || role
+}
+
+/** True jika signature ini role Prepared By */
+function isPreparedBy(signature) {
+  const role = signature?.role || signature?.signatureRole
+  return role && String(role).toLowerCase() === 'prepared by'
 }
 
 /** Nama yang ditampilkan: fullName user atau fallback */
@@ -315,10 +332,22 @@ watch(
   padding: 1rem 0;
 }
 
+.signature-grid {
+  --bs-gutter-x: 0.35rem;
+  --bs-gutter-y: 0.35rem;
+}
+
 .signature-card {
   background: #fff;
-  padding: 1rem;
+  padding: 0.5rem 0.75rem;
   text-align: center;
+}
+
+.signature-card-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  text-transform: none;
 }
 
 .cetak-si-signature {

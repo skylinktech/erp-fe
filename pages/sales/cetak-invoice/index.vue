@@ -252,8 +252,8 @@
               <td></td>
               <td>
                 <div class="ttd-container">
-                  <img class="ttd-image" src="/img/branding/Ttd Digital-2.png" alt="TTD Digital" style="height: 120px; object-fit: contain; display: block; margin: 0 auto;" />
-                  <img class="andara-image" src="/img/branding/andara.png" alt="Andara Logo" style="height: 40px; object-fit: contain; display: block; margin: -90px auto 0;" />
+                  <img class="ttd-image" :src="publicPath('/img/branding/Ttd Digital-2.png')" alt="TTD Digital" style="height: 120px; object-fit: contain; display: block; margin: 0 auto;" @error="(e) => handleImageError(e, '/img/branding/logo.png')" />
+                  <img class="andara-image" :src="publicPath('/img/branding/andara.png')" alt="Andara Logo" style="height: 40px; object-fit: contain; display: block; margin: -90px auto 0;" @error="(e) => handleImageError(e, '/img/branding/logo.png')" />
                 </div>
               </td>
             </tr>
@@ -312,6 +312,13 @@
   const { getCompanyLogo, handleImageError, debugImageUrl } = useImageUrl()
 
   const config = useRuntimeConfig();
+  const publicPath = (p) => {
+    if (!p) return p;
+    if (p.startsWith('http')) return p;
+    const base = (config?.app?.baseURL) || '/';
+    const joined = `${base.replace(/\/$/, '')}/${p.replace(/^\//, '')}`;
+    return joined;
+  };
   const salesInvoiceStore = useSalesInvoiceStore();
   const perusahaanStore = usePerusahaanStore();
   const route = useRoute();

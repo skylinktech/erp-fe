@@ -3,6 +3,7 @@ import { apiFetch } from '~/utils/apiFetch'
 import Swal from 'sweetalert2'
 import { useNuxtApp } from '#app'
 import { useUserStore } from '~/stores/user'
+import type { ApprovalLogEntry } from '~/types/approval'
 
 interface ArfItem {
   id?: string
@@ -29,16 +30,6 @@ interface Stats {
   disbursed: number | undefined
   settled: number | undefined
   cancelled: number | undefined
-}
-
-export interface ApprovalLogEntry {
-  id: number
-  stepOrder: number
-  action: 'approved' | 'rejected'
-  remarks?: string | null
-  user?: { fullName?: string; full_name?: string; email?: string }
-  workflow?: { steps?: Array<{ step_order?: number; stepOrder?: number; step_name?: string; stepName?: string; jabatan?: { nm_jabatan?: string; nmJabatan?: string } }> }
-  createdAt?: string
 }
 
 export interface Arf {

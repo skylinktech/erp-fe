@@ -366,7 +366,7 @@
                                         <label class="form-label text-muted">Berlaku Sampai</label>
                                         <input type="date" v-model="form.validUntil" class="form-control" >
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-md-3">
                                         <label class="form-label text-muted">Terms of Payment</label>
                                         <CustomSelect2 v-model="form.termsOfPayment" :options="termsOfPaymentOptions" :get-option-label="o => o.label" :reduce="o => o.value" searchable clearable placeholder="Pilih" />
                                     </div>
@@ -382,7 +382,7 @@
                                         <label class="form-label text-muted">Tax (%)</label>
                                         <input type="number" v-model.number="form.taxPercent" class="form-control" placeholder="Tax (%)">
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-md-12">
                                         <label class="form-label text-muted">Attachment (PDF, Excel, Word, Image)</label>
                                         <input type="file" @change="onFileChange" class="form-control" accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx,.csv">
                                         <small class="text-muted d-block mt-1">Maks. 2MB</small>
@@ -1611,16 +1611,16 @@ const filters = ref({
           item.isPriceOverridden = false;
           item.priceReason = '';
         } else {
-          // fallback to customer product price if available
+          // fallback to customer product price if available (jangan set Custom Price otomatis; user harus centang sendiri)
           const sel = customerProducts.value.find(p => p.id === selectedProductId);
           item.price = sel ? Number(sel.priceSell) || 0 : 0;
-          item.isPriceOverridden = item.price === 0;
+          item.isPriceOverridden = false;
         }
       } catch (e) {
         console.error('Error fetching product price:', e);
         const sel = customerProducts.value.find(p => p.id === selectedProductId);
         item.price = sel ? Number(sel.priceSell) || 0 : 0;
-        item.isPriceOverridden = item.price === 0;
+        item.isPriceOverridden = false;
       } finally {
         calculateSubtotal(index);
         refreshModalSummary();
@@ -1649,9 +1649,9 @@ const filters = ref({
     (async () => {
       try {
         if (!servicePlanId) {
-          // Jika tidak ada servicePlanId, fallback ke harga dasar service
+          // Jika tidak ada servicePlanId, fallback ke harga dasar service (jangan set Custom Price otomatis)
           item.price = Number(svc.price) || 0;
-          item.isPriceOverridden = item.price === 0;
+          item.isPriceOverridden = false;
           calculateServiceSubtotal(index);
           refreshModalSummary();
           return;
@@ -1676,12 +1676,12 @@ const filters = ref({
           item.priceReason = '';
         } else {
           item.price = 0;
-          item.isPriceOverridden = true;
+          item.isPriceOverridden = false;
         }
       } catch (e) {
         console.error('Error fetching service price:', e);
         item.price = 0;
-        item.isPriceOverridden = true;
+        item.isPriceOverridden = false;
       } finally {
         calculateServiceSubtotal(index);
         refreshModalSummary();

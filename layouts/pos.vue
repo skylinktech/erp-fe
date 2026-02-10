@@ -4,7 +4,7 @@
     <aside class="pos-sidebar">
       <div class="pos-sidebar-header">
         <NuxtLink to="/" class="pos-logo">
-          <img src="/public/img/branding/logo.png" alt="Logo" class="pos-logo-icon">
+          <img src="/img/branding/logo.png" alt="Logo" class="pos-logo-icon">
           <span class="pos-logo-text">Skylink</span>
         </NuxtLink>
       </div>

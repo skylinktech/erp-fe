@@ -3,6 +3,7 @@ import { apiFetch } from '~/utils/apiFetch'
 import Swal from 'sweetalert2'
 import { useNuxtApp } from '#app'
 import { useUserStore } from '~/stores/user'
+import type { ApprovalLogEntry } from '~/types/approval'
 
 export interface IroDetailForm {
   serviceId: number | null
@@ -18,19 +19,6 @@ export interface IroDetailForm {
   servicePlan?: { id: number; name: string }
   product?: { id: number; name: string; sku?: string; priceSell?: number }
   did?: { id: number; code: string; name: string; price?: number }
-}
-
-export interface ApprovalLogEntry {
-  id: number
-  entityType?: string
-  entityId?: string
-  stepOrder: number
-  action: 'approved' | 'rejected'
-  remarks?: string | null
-  createdAt?: string
-  user?: { id: number; full_name?: string; fullName?: string; email?: string }
-  workflow?: { steps?: Array<{ step_order?: number; stepOrder?: number; step_name?: string; stepName?: string }> }
-  workflow?: { id: number; name?: string }
 }
 
 export interface ApproverInfo {

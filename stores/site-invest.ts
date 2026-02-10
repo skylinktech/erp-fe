@@ -130,6 +130,7 @@ export interface SiteInvest {
   siteInvestBudgets?: SiteInvestBudget[]
   notes?: string | null
   attachment?: string | null
+  preparedBy?: Array<{ id_pegawai: number; nm_pegawai: string }>
   currentApprovalStep?: number | null
   currentApprovers?: Array<{ userId: number; fullName?: string; email?: string; source?: string }>
   approvalLogs?: Array<{
@@ -221,6 +222,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
       siteInvestServices: [],
       siteInvestDids: [],
       siteInvestBudgets: [],
+      preparedByIds: [] as number[],
     },
     isEditMode: false,
     showModal: false,
@@ -330,6 +332,27 @@ export const useSiteInvestStore = defineStore('siteInvest', {
       const userStore = useUserStore()
 
       try {
+        // Validasi: price list harus diisi untuk setiap baris yang punya quantity
+        const formMaterials = this.form.siteInvestMaterials ?? []
+        const formServices = this.form.siteInvestServices ?? []
+        const formDids = this.form.siteInvestDids ?? []
+        const plLineId = (item: any) => Number(item?.priceListLineId ?? item?.price_list_line_id ?? 0)
+        const qty = (item: any) => Number(item?.quantity ?? 0)
+        const missingMaterial = formMaterials.some((item: any) => qty(item) > 0 && plLineId(item) <= 0)
+        const missingService = formServices.some((item: any) => qty(item) > 0 && plLineId(item) <= 0)
+        const missingDid = formDids.some((item: any) => qty(item) > 0 && plLineId(item) <= 0)
+        if (missingMaterial || missingService || missingDid) {
+          this.loading = false
+          this.validationErrors = [{ priceListLineId: ['Price list harus diisi untuk setiap baris item'] }]
+          const toast = useToast()
+          toast.error({
+            title: 'Validasi',
+            message: 'Price list harus diisi untuk setiap baris Material, Service, atau DID.',
+            color: 'red',
+          })
+          return
+        }
+
         const formData = new FormData()
 
         const dataToAppend = { ...this.form }
@@ -345,6 +368,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
         delete dataToAppend.rejectedByUser
         delete dataToAppend.attachment
         delete dataToAppend.attachmentPreview
+        delete dataToAppend.preparedByIds
 
         // Field yang nullable - selalu kirim (termasuk null/undefined)
         // Untuk FormData, kita kirim string kosong untuk null, dan backend akan menanganinya
@@ -425,6 +449,15 @@ export const useSiteInvestStore = defineStore('siteInvest', {
             formData.append(`siteInvestBudgets[${i}][budgetHolderId]`, item.budgetHolderId)
           }
         })
+
+        const preparedByIds = this.form.preparedByIds ?? []
+        if (Array.isArray(preparedByIds)) {
+          preparedByIds.forEach((id: number, i: number) => {
+            if (id != null && Number(id) > 0) {
+              formData.append(`preparedBy[${i}]`, String(id))
+            }
+          })
+        }
 
         if (this.form.attachment instanceof File) {
           formData.append('attachment', this.form.attachment)
@@ -815,6 +848,10 @@ export const useSiteInvestStore = defineStore('siteInvest', {
         formData.siteInvestServices = formData.siteInvestServices ?? formData.site_invest_services ?? []
         formData.siteInvestDids = formData.siteInvestDids ?? formData.site_invest_dids ?? []
         formData.siteInvestBudgets = formData.siteInvestBudgets ?? formData.site_invest_budgets ?? []
+        const preparedByRaw = fullData.preparedBy ?? fullData.prepared_by ?? []
+        formData.preparedByIds = Array.isArray(preparedByRaw)
+          ? preparedByRaw.map((p: any) => p.id_pegawai ?? p.idPegawai ?? p).filter((id: any) => id != null && Number(id) > 0)
+          : []
 
         // Normalisasi item: pastikan priceListLineId dan subtotal/isPriceOverridden
         const nm = (v: any) => (v !== null && v !== undefined && v !== '') ? Number(v) : 0
@@ -928,6 +965,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
         siteInvestServices: [],
         siteInvestDids: [],
         siteInvestBudgets: [],
+        preparedByIds: [],
         notes: '',
         attachment: null,
         attachmentPreview: null,

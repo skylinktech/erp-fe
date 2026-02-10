@@ -439,9 +439,13 @@ const pctMarginDisplay = computed(() => {
   return pct + '%'
 })
 
-// Tampilkan section tanda tangan jika dokumen approved (multi-signature atau legacy single QR)
+// Tampilkan section tanda tangan jika dokumen approved atau ada prepared_by (TTD otomatis tanpa approval)
 const showSignatureSection = computed(() => {
-  return siteInvest.value?.status === 'approved'
+  const si = siteInvest.value
+  if (!si) return false
+  if (si.status === 'approved') return true
+  const preparedBy = si.preparedBy ?? si.prepared_by
+  return Array.isArray(preparedBy) && preparedBy.length > 0
 })
 
 // Untuk legacy single QR: nama dan jabatan/role penandatangan (dari approvedByUser)

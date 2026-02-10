@@ -356,6 +356,7 @@ export const useQuotationStore = defineStore('quotation', {
                 formData.append(`quotationItems[${i}][quantity]`, String(item.quantity));
                 formData.append(`quotationItems[${i}][price]`, String(item.price));
                 formData.append(`quotationItems[${i}][subtotal]`, String(item.subtotal ?? (Number(item.quantity) || 0) * (Number(item.price) || 0)));
+                formData.append(`quotationItems[${i}][isPriceOverridden]`, (item.isPriceOverridden === true || item.isPriceOverridden === 'true') ? 'true' : 'false');
                 if (item.description !== undefined && item.description !== null) {
                   formData.append(`quotationItems[${i}][description]`, String(item.description));
                 }
@@ -371,6 +372,7 @@ export const useQuotationStore = defineStore('quotation', {
                 formData.append(`quotationServices[${i}][quantity]`, String(s.quantity));
                 formData.append(`quotationServices[${i}][price]`, String(s.price));
                 formData.append(`quotationServices[${i}][subtotal]`, String(sub));
+                formData.append(`quotationServices[${i}][isPriceOverridden]`, (s.isPriceOverridden === true || s.isPriceOverridden === 'true') ? 'true' : 'false');
                 if (s.terminalKitCount != null && s.terminalKitCount !== '') formData.append(`quotationServices[${i}][terminalKitCount]`, String(s.terminalKitCount));
                 if (s.quotaPriority != null && s.quotaPriority !== '') formData.append(`quotationServices[${i}][quotaPriority]`, String(s.quotaPriority));
                 if (s.newServiceLine != null && s.newServiceLine !== '') formData.append(`quotationServices[${i}][newServiceLine]`, String(s.newServiceLine));

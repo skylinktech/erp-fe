@@ -93,7 +93,7 @@ export interface SalesOrder {
   salesOrderItems?: SalesOrderItem[]
 }
 
-export interface CustomerProduct extends Product {
+export interface SalesOrderCustomerProduct extends Product {
   priceSell: number;
 }
 
@@ -102,7 +102,7 @@ interface SalesOrderState {
   salesOrdersForSelect: SalesOrder[] // ✅ FIX: State terpisah untuk select dropdown agar tidak tertimpa
   salesOrder        : SalesOrder | null
   originalSalesOrder: SalesOrder | null
-  customerProducts  : CustomerProduct[]
+  customerProducts  : SalesOrderCustomerProduct[]
   loading           : boolean
   error             : any
   stats             : Stats

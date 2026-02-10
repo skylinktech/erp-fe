@@ -523,6 +523,19 @@
                                             </div>
                                         </div>
                                         <div class="col-md-6">
+                                            <CustomSelect2
+                                                v-model="form.preparedByIds"
+                                                :options="pegawaiOptions"
+                                                :get-option-label="p => p.nm_pegawai || p.nmPegawai || `Pegawai #${p.id_pegawai ?? p.idPegawai}`"
+                                                :reduce="p => (p && (p.id_pegawai ?? p.idPegawai)) ?? null"
+                                                placeholder="Prepared by (bisa lebih dari satu)"
+                                                searchable
+                                                clearable
+                                                multiple
+                                            />
+                                            <small class="text-muted">Pilih satu atau lebih pegawai yang menyiapkan Site Investment ini.</small>
+                                        </div>
+                                        <div class="col-md-12">
                                             <div class="form-floating form-floating-outline">
                                                 <input
                                                     type="file"
@@ -1011,6 +1024,7 @@ const tableControls = ref({
 const usersForBudget = ref([])
 const sites = ref([])
 const businessSchemes = ref([])
+const pegawaiOptions = ref([])
 
 const fetchBudgetsAndUsers = async () => {
     const prevRows = budgetStore.params.rows
@@ -1029,6 +1043,31 @@ const fetchBudgetsAndUsers = async () => {
         }
     } catch (e) {
         console.error('Error fetching users for budget holder:', e)
+    }
+}
+
+const fetchPegawaiForPreparedBy = async () => {
+    const { $api } = useNuxtApp()
+    try {
+        const r = await fetch(`${$api.pegawai()}?start=0&length=500`, {
+            headers: { 'Accept': 'application/json' },
+            credentials: 'include'
+        })
+        if (r.ok) {
+            const j = await r.json()
+            const data = j.data || []
+            pegawaiOptions.value = data.map(function (p) {
+                return {
+                    id_pegawai: p.id_pegawai ?? p.idPegawai ?? p.id,
+                    nm_pegawai: p.nm_pegawai ?? p.nmPegawai ?? p.nm_pegawai ?? ''
+                }
+            }).filter(function (p) { return p.id_pegawai != null })
+        } else {
+            pegawaiOptions.value = []
+        }
+    } catch (e) {
+        console.error('Error fetching pegawai for prepared by:', e)
+        pegawaiOptions.value = []
     }
 }
 
@@ -1340,7 +1379,7 @@ watch(() => globalFilterValue.value, (newValue) => {
 
 watch(showModal, async (newValue) => {
     if (newValue) {
-        await Promise.all([fetchPriceListsForSelect(), fetchPriceListLinesForModal()])
+        await Promise.all([fetchPriceListsForSelect(), fetchPriceListLinesForModal(), fetchPegawaiForPreparedBy()])
         if (!isEditMode.value) {
             selectedPriceListId.value = null
         }

@@ -6,7 +6,7 @@
           <div class="app-brand justify-content-center mt-5">
             <a href="/" class="app-brand-link gap-2">
               <span class="app-brand-logo demo">
-                <img src="/public/img/branding/logo.png" alt="" height="60" />
+                <img src="/img/branding/logo.png" alt="" height="60" />
               </span>
               <span class="app-brand-text demo text-heading fw-bold" style="font-size: 24px;">Skylink ERP</span>
             </a>
