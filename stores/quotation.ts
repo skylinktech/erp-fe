@@ -9,6 +9,17 @@ import type { Cabang } from './cabang'
 import type { Product } from './product'
 import type { Customer, CustomerProduct } from './customer'
 
+/** Template default untuk kolom description quotation baru (tetap bisa diedit user). Format HTML agar tampil benar di editor dan cetak. */
+export const DEFAULT_QUOTATION_DESCRIPTION = [
+  '1. Harga belum termasuk pajak.',
+  '2. Jangka kontrak minimum 1 tahun.',
+  '3. Layanan dukungan Network Operation Center (NOC) 24 x 7 dan didukung dengan dashboard monitoring untuk pelanggan.',
+  '4. Kecepatan internet akan turun menjadi 1 MBPS download dan 0.5 MBPS upload ketika kuota prioritas habis.',
+  '5. Penawaran harga diatas berlaku maksimal 7 hari dari penawaran harga yang dikeluarkan.',
+  '6. Siklus penagihan mengikuti waktu dari starlink yaitu per tanggal 1 - 30 disetiap bulannya.',
+  '7. Pembayaran dimuka sebelum perangkat dan layanan diterima.',
+].map((line) => `<p>${line}</p>`).join('')
+
 export interface QuotationItem {
   id             : string
   quotationId    : string
@@ -480,7 +491,7 @@ export const useQuotationStore = defineStore('quotation', {
   
         if (!result.isConfirmed) {
             this.loading = false;
-            return;
+            return false;
         }
   
         try {
@@ -506,6 +517,7 @@ export const useQuotationStore = defineStore('quotation', {
               position: 'topRight',
               layout  : 2,
             });
+            return true;
         } catch (error: any) {
             toast.error({
               title   : 'Error',
@@ -514,16 +526,33 @@ export const useQuotationStore = defineStore('quotation', {
               position: 'topRight',
               layout  : 2,
             });
+            return false;
         } finally {
             this.loading = false;
         }
       },
     
-    async approveQuotation(quotationId: string, remarks?: string) {
+    async approveQuotation(quotationId: string, remarks?: string, skipConfirm = false) {
       const toast     = useToast();
       this.loading = true;
       this.error = null;
       const { $api } = useNuxtApp();
+      if (!skipConfirm) {
+        const result = await Swal.fire({
+          title: 'Approve Quotation',
+          text: 'Apakah Anda yakin akan menyetujui quotation ini?',
+          icon: 'question',
+          showCancelButton: true,
+          confirmButtonColor: '#3085d6',
+          cancelButtonColor: '#6c757d',
+          confirmButtonText: 'Ya, Approve',
+          cancelButtonText: 'Batal',
+        });
+        if (!result.isConfirmed) {
+          this.loading = false;
+          return false;
+        }
+      }
       try {
           const response = await fetch($api.approveQuotation(quotationId), {
               method: 'PATCH',
@@ -565,11 +594,32 @@ export const useQuotationStore = defineStore('quotation', {
       }
     },
 
-    async rejectQuotation(quotationId: string, remarks?: string) {
+    async rejectQuotation(quotationId: string, remarks?: string, skipConfirm = false) {
       const toast     = useToast();
       this.loading = true;
       this.error = null;
       const { $api } = useNuxtApp();
+      if (!skipConfirm) {
+        const result = await Swal.fire({
+          title: 'Reject / Cancel Quotation',
+          text: 'Apakah Anda yakin akan menolak/membatalkan quotation ini?',
+          icon: 'warning',
+          input: 'textarea',
+          inputLabel: 'Alasan reject (wajib)',
+          inputPlaceholder: 'Tulis alasan reject...',
+          inputValidator: (value) => (!value || !value.trim() ? 'Alasan reject wajib diisi' : undefined),
+          showCancelButton: true,
+          confirmButtonColor: '#d33',
+          cancelButtonColor: '#6c757d',
+          confirmButtonText: 'Ya, Reject',
+          cancelButtonText: 'Batal',
+        });
+        if (!result.isConfirmed) {
+          this.loading = false;
+          return false;
+        }
+        remarks = result.value?.trim() || remarks;
+      }
       try {
           const response = await fetch($api.rejectQuotation(quotationId), {
               method: 'PATCH',
@@ -616,6 +666,17 @@ export const useQuotationStore = defineStore('quotation', {
       const toast = useToast();
       this.error = null;
       const { $api } = useNuxtApp();
+      const result = await Swal.fire({
+        title: 'Submit Quotation',
+        text: 'Apakah Anda yakin akan mengirim quotation ini? Status akan berubah menjadi Pending.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Ya, Submit',
+        cancelButtonText: 'Batal',
+      });
+      if (!result.isConfirmed) return false;
       try {
         const response = await fetch($api.submitQuotation(quotationId), {
           method: 'PATCH',
@@ -796,7 +857,7 @@ export const useQuotationStore = defineStore('quotation', {
                 support: false,
                 performance: false,
                 attachment: null,
-                description: '',
+                description: DEFAULT_QUOTATION_DESCRIPTION,
                 status: 'draft',
                 quotationItems: [],
                 quotationServices: [],

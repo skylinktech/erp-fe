@@ -76,6 +76,7 @@ export default defineNuxtConfig({
   },
   plugins: [
     '~/plugins/jquery.client.ts',
+    '~/plugins/bootstrap.client.ts',
     '~/plugins/api.client.ts',
     '~/plugins/quill.client.ts',
     '~/plugins/primevue.ts',
@@ -147,11 +148,7 @@ export default defineNuxtConfig({
 
         // @ts-ignore
         { src: '/vendor/libs/datatables-bs5/datatables-bootstrap5.js', body: true, type: 'text/javascript' },
-        
-        // @ts-ignore
-        { src: '/vendor/libs/popper/popper.js', body: true, type: 'text/javascript' },
-        // @ts-ignore
-        { src: '/vendor/js/bootstrap.js', body: true, type: 'text/javascript' },
+        // Bootstrap: loaded via ~/plugins/bootstrap.client.ts (bundle) to avoid OpaqueResponseBlocking from static script
         // @ts-ignore
         { src: '/vendor/libs/node-waves/node-waves.js', body: true, type: 'text/javascript' },
         // @ts-ignore

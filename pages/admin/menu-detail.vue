@@ -144,7 +144,7 @@
                 :validation-errors-from-parent="validationErrors"
             >
                 <template #default>
-                    <form @submit.prevent="menuDetailStore.saveMenuDetail()">
+                    <form v-if="showModal" @submit.prevent="menuDetailStore.saveMenuDetail()">
                         <div class="row g-6 p-3">
                             <div class="col-md-6">
                                 <div class="form-floating form-floating-outline">
@@ -187,8 +187,8 @@
                             <div class="col-md-6">
                                 <div class="form-floating form-floating-outline">
                                     <CustomSelect2 v-model="form.status" :options="statusOptions"
-                                        :get-option-label="option => option.label"
-                                        :reduce="option => option.value" searchable clearable
+                                        :get-option-label="option => option?.label ?? ''"
+                                        :reduce="option => option?.value" searchable clearable
                                         placeholder="-- Pilih Status --"
                                         class="select-status"
                                     />   
@@ -196,9 +196,9 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-floating form-floating-outline">
-                                    <CustomSelect2 v-model="form.menuGroupId" :options="menuGroups"
-                                        :get-option-label="option => option.name"
-                                        :reduce="option => option.id" searchable clearable
+                                    <CustomSelect2 v-model="form.menuGroupId" :options="menuGroups || []"
+                                        :get-option-label="option => option?.name ?? ''"
+                                        :reduce="option => option?.id" searchable clearable
                                         placeholder="-- Pilih Menu Group --"
                                         class="select-menu-group"
                                     />   

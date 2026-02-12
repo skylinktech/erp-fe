@@ -588,20 +588,21 @@ async function onReject () {
 }
 
 async function onSubmit () {
-async function onCancel () {
-  if (!siteInvest.value) return
-  await siteInvestStore.cancelSiteInvest(siteInvest.value.id)
-  refreshAfterAction()
-}
   if (!siteInvest.value) return
   await siteInvestStore.submitSiteInvest(siteInvest.value.id)
   refreshAfterAction()
 }
 
-function handleDelete () {
+async function onCancel () {
   if (!siteInvest.value) return
-  siteInvestStore.deleteSiteInvest(siteInvest.value.id)
-  navigateTo('/sales/site-investment')
+  await siteInvestStore.cancelSiteInvest(siteInvest.value.id)
+  refreshAfterAction()
+}
+
+async function handleDelete () {
+  if (!siteInvest.value) return
+  const deleted = await siteInvestStore.deleteSiteInvest(siteInvest.value.id)
+  if (deleted) navigateTo('/sales/site-investment')
 }
 
 function onPrintSI () {

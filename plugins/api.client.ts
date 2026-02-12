@@ -323,6 +323,12 @@ export default defineNuxtPlugin(() => {
     categories            : () => `${apiBase}/categories`,
     countProductByCategory: () => `${apiBase}/categories/countProductByCategory`,
 
+    // Documentations (dokumentasi aplikasi)
+    documentations       : () => `${apiBase}/documentations`,
+    documentationShow    : (id: number | string) => `${apiBase}/documentations/${id}`,
+    documentationUpdate  : (id: number | string) => `${apiBase}/documentations/${id}`,
+    documentationDelete  : (id: number | string) => `${apiBase}/documentations/${id}`,
+
     // Unit
     unit: () => `${apiBase}/unit`,
 

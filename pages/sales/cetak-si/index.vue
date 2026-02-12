@@ -271,26 +271,28 @@ const firstServicePlanName = computed(() => {
   return first?.priceListLine?.service?.name || first?.priceListLine?.service?.code || '-'
 })
 
+// Number of Unit: jumlah product (item material/hardware) yang disimpan
 const totalUnitDisplay = computed(() => {
   const si = siteInvest.value
-  if (!si) return '1'
-  let qty = 0
-  const svc = (si.siteInvestServices ?? si.site_invest_services) || []
+  if (!si) return '0'
   const mat = (si.siteInvestMaterials ?? si.site_invest_materials) || []
-  const did = (si.siteInvestDids ?? si.site_invest_dids) || []
-  svc.forEach((i) => { qty += Number(i.quantity) || 0 })
-  mat.forEach((i) => { qty += Number(i.quantity) || 0 })
-  did.forEach((i) => { qty += Number(i.quantity) || 0 })
-  return qty > 0 ? String(qty) : '1'
+  return String(mat.length)
 })
 
+// Duration: tampilkan angka saja (nilai numerik dari billing cycle, atau qty service jika tidak ada angka)
 const durationDisplay = computed(() => {
   const si = siteInvest.value
   const list = (si?.siteInvestServices ?? si?.site_invest_services) || []
   if (!list.length) return '1'
-  const first = list[0]?.priceListLine?.billingCycle
-  if (first) return String(first)
-  return '1'
+  const billingCycle = list[0]?.priceListLine?.billingCycle
+  if (billingCycle != null && billingCycle !== '') {
+    const str = String(billingCycle)
+    const numMatch = str.match(/\d+/)
+    if (numMatch) return numMatch[0]
+  }
+  // Fallback: qty service (baris pertama)
+  const qty = Number(list[0]?.quantity)
+  return !Number.isNaN(qty) && qty > 0 ? String(qty) : '1'
 })
 
 /** Nilai numerik dari API dengan dukungan snake_case (selaras halaman detail) */

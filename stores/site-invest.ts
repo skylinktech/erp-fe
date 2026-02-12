@@ -535,7 +535,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
 
       if (!result.isConfirmed) {
         this.loading = false
-        return
+        return false
       }
 
       try {
@@ -561,6 +561,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
           position: 'topRight',
           layout: 2,
         })
+        return true
       } catch (error: any) {
         const toast = useToast()
         toast.error({
@@ -570,6 +571,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
           position: 'topRight',
           layout: 2,
         })
+        return false
       } finally {
         this.loading = false
       }
@@ -579,6 +581,20 @@ export const useSiteInvestStore = defineStore('siteInvest', {
       this.loading = true
       this.error = null
       const { $api } = useNuxtApp()
+      const result = await Swal.fire({
+        title: 'Approve Site Investment',
+        text: 'Apakah Anda yakin akan menyetujui Site Investment ini?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Ya, Approve',
+        cancelButtonText: 'Batal',
+      })
+      if (!result.isConfirmed) {
+        this.loading = false
+        return false
+      }
       try {
         const response = await fetch($api.approveSiteInvestment(siteInvestId), {
           method: 'PATCH',
@@ -644,6 +660,20 @@ export const useSiteInvestStore = defineStore('siteInvest', {
       this.loading = true
       this.error = null
       const { $api } = useNuxtApp()
+      const result = await Swal.fire({
+        title: 'Cancel Site Investment',
+        text: 'Apakah Anda yakin akan membatalkan Site Investment ini?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Ya, Batalkan',
+        cancelButtonText: 'Batal',
+      })
+      if (!result.isConfirmed) {
+        this.loading = false
+        return false
+      }
       try {
         const response = await fetch($api.cancelSiteInvestment(siteInvestId), {
           method: 'PATCH',
@@ -691,6 +721,20 @@ export const useSiteInvestStore = defineStore('siteInvest', {
       this.loading = true
       this.error = null
       const { $api } = useNuxtApp()
+      const result = await Swal.fire({
+        title: 'Reject Site Investment',
+        text: 'Apakah Anda yakin akan menolak Site Investment ini?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Ya, Reject',
+        cancelButtonText: 'Batal',
+      })
+      if (!result.isConfirmed) {
+        this.loading = false
+        return false
+      }
       try {
         const response = await fetch($api.rejectSiteInvestment(siteInvestId), {
           method: 'PATCH',
@@ -737,6 +781,20 @@ export const useSiteInvestStore = defineStore('siteInvest', {
       this.loading = true
       this.error = null
       const { $api } = useNuxtApp()
+      const result = await Swal.fire({
+        title: 'Submit Site Investment',
+        text: 'Apakah Anda yakin akan mengirim Site Investment ini? Status akan berubah menjadi Pending.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Ya, Submit',
+        cancelButtonText: 'Batal',
+      })
+      if (!result.isConfirmed) {
+        this.loading = false
+        return false
+      }
       try {
         const response = await fetch($api.submitSiteInvestment(siteInvestId), {
           method: 'PATCH',

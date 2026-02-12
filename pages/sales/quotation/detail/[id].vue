@@ -628,7 +628,7 @@ async function onApprove () {
     cancelButtonText: 'Batal',
   })
   if (!result.isConfirmed) return
-  const ok = await quotationStore.approveQuotation(quotation.value.id, result.value || '')
+  const ok = await quotationStore.approveQuotation(quotation.value.id, result.value || '', true)
   if (ok) refreshAfterAction()
 }
 
@@ -645,7 +645,7 @@ async function onReject () {
     cancelButtonText: 'Batal',
   })
   if (!result.isConfirmed) return
-  const ok = await quotationStore.rejectQuotation(quotation.value.id, result.value || '')
+  const ok = await quotationStore.rejectQuotation(quotation.value.id, result.value || '', true)
   if (ok) refreshAfterAction()
 }
 
@@ -654,10 +654,10 @@ function onPrintQuotation () {
   navigateTo({ path: '/sales/cetak-quotation', query: { id: quotation.value.id, print: 'true' } })
 }
 
-function handleDelete () {
+async function handleDelete () {
   if (!quotation.value) return
-  quotationStore.deleteQuotation(quotation.value.id)
-  navigateTo('/sales/quotation')
+  const deleted = await quotationStore.deleteQuotation(quotation.value.id)
+  if (deleted) navigateTo('/sales/quotation')
 }
 
 onMounted(() => load())
