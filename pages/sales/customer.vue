@@ -266,19 +266,7 @@
                                         @change="onLogoChange"
                                         placeholder="Masukkan logo customer"
                                     >
-                                    <label>Logo Customer</label>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-floating form-floating-outline">
-                                    <input 
-                                        type="text" 
-                                        class="form-control" 
-                                        v-model="form.code" 
-                                        placeholder="Masukkan kode customer"
-                                        
-                                    >
-                                    <label>Kode Customer</label>
+                                    <label>Logo Customer <span class="text-muted small">(Opsional)</span></label>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -290,7 +278,7 @@
                                         placeholder="Masukkan nama customer"
                                         
                                     >
-                                    <label>Nama Customer</label>
+                                    <label>Nama Customer <span class="text-danger">*</span></label>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -302,7 +290,7 @@
                                         placeholder="Masukkan email customer"
                                         
                                     >
-                                    <label>Email Customer</label>
+                                    <label>Email Customer <span class="text-danger">*</span></label>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -314,7 +302,7 @@
                                     placeholder="Masukkan no. telp customer"
                                     
                                     >
-                                    <label>No. Telp Customer</label>
+                                    <label>No. Telp Customer <span class="text-danger">*</span></label>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -325,7 +313,7 @@
                                     v-model="form.npwp" 
                                     placeholder="Masukkan npwp customer"
                                     >
-                                    <label>NPWP Customer</label>
+                                    <label>NPWP Customer <span class="text-muted small">(Opsional)</span></label>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -339,7 +327,6 @@
                                         clearable
                                         placeholder="-- Pilih Tipe Customer --"
                                     />
-                                    <label>Tipe Customer</label>
                                 </div>
                             </div>
                             <div class="col-md-12">
@@ -349,59 +336,9 @@
                                         placeholder="Alamat Customer"
                                         v-model="form.address">
                                     </textarea>
-                                    <label>Alamat Customer</label>
+                                    <label>Alamat Customer <span class="text-danger">*</span></label>
                                 </div>
                             </div>
-                            <hr class="mt-7 w-70 justify-content-center" />
-                            <div v-for="(item, index) in form.customerProducts" :key="index" class="repeater-item">
-                                <div class="row">
-                                    <div class="mb-6 col-lg-6 col-xl-6 col-12 mb-0">
-                                        <div class="form-floating form-floating-outline">
-                                            <CustomSelect2 v-model="item.productId" :options="allProducts"
-                                                :get-option-label="option => `${option.sku} | ${option.name}`" searchable clearable
-                                                :reduce="product => product.id"
-                                                placeholder="-- Pilih Produk --"
-
-                                                :filter-by="(option, label, search) => {
-                                                    const product = option;
-                                                    const searchLower = search.toLowerCase();
-                                                    return (product.name && product.name.toLowerCase().includes(searchLower)) || 
-                                                           (product.sku && product.sku.toLowerCase().includes(searchLower));
-                                                }"
-                                            />
-                                            <div v-if="isProductDuplicate(item.productId, index)" class="invalid-feedback">
-                                                Produk ini sudah dipilih sebelumnya
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="mb-3 col-lg-4 col-xl-3 col-12 mb-0">
-                                        <div class="form-floating form-floating-outline">
-                                            <input
-                                                type="text"
-                                                class="form-control"
-                                                placeholder="Harga"
-                                                :value="formatRupiah(item.priceSell)"
-                                                @input="e => {
-                                                    const angka = e.target.value.replace(/[^0-9]/g, '');
-                                                    item.priceSell = angka ? parseInt(angka) : 0;
-                                                }"
-                                            />
-                                            <label>Harga Jual</label>
-                                        </div>
-                                    </div>
-                                    <div class="mb-3 col-lg-2 col-xl-3 col-12 mb-0">
-                                        <button type="button" class="btn btn-sm btn-secondary" @click.prevent="customerStore.removeItem(index)" style="width: 100%;">
-                                            <span class="tf-icons ri-delete-bin-7-line ri-16px me-2"></span> Hapus
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="mt-0">
-                                <button class="btn btn-sm btn-primary w-100" @click.prevent="customerStore.addItem()">
-                                    <i class="ri-add-line me-1"></i>
-                                    <span class="align-middle">Tambah Item</span>
-                                </button>
-                            </div>  
                             <div class="modal-footer mt-6">
                                 <button type="button" class="btn btn-outline-secondary me-2" @click="customerStore.closeModal()">Tutup</button>
                                 <button type="submit" class="btn btn-primary" :disabled="loading">
@@ -428,7 +365,6 @@ import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import TableControls from '~/components/table/TableControls.vue'
 import { useCustomerStore } from '~/stores/customer'
-import { useProductStore } from '~/stores/product'
 import Dropdown from 'primevue/dropdown'
 import InputText from 'primevue/inputtext'
 import vSelect from 'vue-select'
@@ -436,7 +372,6 @@ import CustomSelect2 from '~/components/CustomSelect2.vue'
 import 'vue-select/dist/vue-select.css'
 import Column from 'primevue/column'
 import { useDebounceFn } from '@vueuse/core'
-import { useFormatRupiah } from '~/composables/formatRupiah';
 import { usePermissionsStore } from '~/stores/permissions'
 import { usePermissions } from '~/composables/usePermissions'
 import { useUserStore } from '~/stores/user'
@@ -450,17 +385,14 @@ const { getCustomerLogo, handleImageError } = useImageUrl();
 
 const config   = useRuntimeConfig();
 const router = useRouter()
-const formatRupiah = useFormatRupiah()
 
 const myDataTableRef                     = ref(null)
 const customerStore                      = useCustomerStore()
-const productStore                       = useProductStore()
 const { userHasPermission, userHasRole } = usePermissions();
 const permissionStore                    = usePermissionsStore()
 const userStore                          = useUserStore()
 
 const { customers, loading, totalRecords, params, form, isEditMode, showModal, validationErrors } = storeToRefs(customerStore)
-const { products, allProducts } = storeToRefs(productStore)
 const { permissions } = storeToRefs(permissionStore)
 
 const globalFilterValue = ref('')
@@ -492,10 +424,6 @@ onMounted(() => {
     userStore.loadUser();
     if (customerStore.customers.length === 0) {
       customerStore.fetchCustomers();
-    }
-    // Fetch all products for the select dropdown (without pagination)
-    if (productStore.allProducts.length === 0) {
-      productStore.fetchAllProducts();
     }
     const modalElement = document.getElementById('CustomerModal')
     if (modalElement) {
@@ -566,15 +494,6 @@ function onLogoChange(e) {
 // View Customer Details
 const openCustomerDetails = (customerId) => {
     router.push({ path: `/sales/customer-detail`, query: { id: customerId } });
-};
-
-// Check if product is duplicate
-const isProductDuplicate = (productId, currentIndex) => {
-    if (!productId || !form.value.customerProducts) return false;
-    
-    return form.value.customerProducts.some((item, index) => 
-        index !== currentIndex && item.productId === productId
-    );
 };
 
 definePageMeta({

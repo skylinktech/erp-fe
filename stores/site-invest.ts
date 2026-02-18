@@ -104,6 +104,7 @@ export interface SiteInvest {
   didSubtotal: number
   contingencyPercent: number
   contingencyAmount: number
+  marketingFee: number
   total: number
   grandTotal: number
   overBudget: boolean
@@ -213,7 +214,8 @@ export const useSiteInvestStore = defineStore('siteInvest', {
       siDate: new Date().toISOString().split('T')[0],
       estimatedStartDate: new Date().toISOString().split('T')[0],
       estimatedCompletionDate: new Date().toISOString().split('T')[0],
-      contingencyPercent: 10,
+      contingencyPercent: 0,
+      marketingFee: 0,
       status: 'draft',
       notes: '',
       attachment: null,
@@ -900,6 +902,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
         })
 
         formData.contingencyPercent = Number(formData.contingencyPercent) || 0
+        formData.marketingFee = Number(formData.marketingFee ?? formData.marketing_fee) || 0
 
         // Pastikan array items pakai key camelCase (API bisa return snake_case)
         formData.siteInvestMaterials = formData.siteInvestMaterials ?? formData.site_invest_materials ?? []
@@ -1017,7 +1020,8 @@ export const useSiteInvestStore = defineStore('siteInvest', {
         siDate: new Date().toISOString().split('T')[0],
         estimatedStartDate: new Date().toISOString().split('T')[0],
         estimatedCompletionDate: new Date().toISOString().split('T')[0],
-        contingencyPercent: 10,
+        contingencyPercent: 0,
+        marketingFee: 0,
         status: 'draft',
         siteInvestMaterials: [],
         siteInvestServices: [],
@@ -1096,6 +1100,28 @@ export const useSiteInvestStore = defineStore('siteInvest', {
       if (!response.ok) return []
       const data = await response.json()
       return Array.isArray(data) ? data : []
+    },
+
+    /**
+     * Fetch total stock quantity for a product (for site investment modal stock check).
+     * Returns { quantity: number } or null on error.
+     */
+    async fetchProductStock(productId: number): Promise<{ quantity: number } | null> {
+      if (!productId || Number(productId) <= 0) return null
+      const { $api } = useNuxtApp()
+      const url = `${$api.getProductStock()}?productId=${encodeURIComponent(productId)}`
+      try {
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: { Accept: 'application/json' },
+          credentials: 'include',
+        })
+        if (!response.ok) return null
+        const data = await response.json()
+        return data && typeof data.quantity === 'number' ? { quantity: data.quantity } : null
+      } catch {
+        return null
+      }
     },
 
     setPagination(event: any) {

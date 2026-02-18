@@ -56,7 +56,6 @@ export const useSiteStore = defineStore('site', {
       search: '',
     },
     form: {
-      code: '',
       name: '',
       type: 'office',
       address: null,
@@ -158,7 +157,6 @@ export const useSiteStore = defineStore('site', {
         const lng = toCoord(overrides?.longitude ?? this.form.longitude)
 
         const payload = {
-          code: this.form.code,
           name: this.form.name,
           type: this.form.type,
           address: this.form.address || null,
@@ -314,7 +312,6 @@ export const useSiteStore = defineStore('site', {
         this.form = { ...site }
       } else {
         this.form = {
-          code: '',
           name: '',
           type: 'office',
           address: null,
@@ -338,7 +335,6 @@ export const useSiteStore = defineStore('site', {
       this.showModal = false
       this.isEditMode = false
       this.form = {
-        code: '',
         name: '',
         type: 'office',
         address: null,

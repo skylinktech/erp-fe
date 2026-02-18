@@ -2,11 +2,6 @@ import { defineStore } from 'pinia'
 import { useNuxtApp } from '#app'
 import Swal from 'sweetalert2'
 
-export interface CustomerProduct {
-  productId: number | null
-  priceSell: number
-}
-
 export interface Customer {
   id?: number
   name: string
@@ -17,7 +12,6 @@ export interface Customer {
   npwp: string
   type?: 'prospect' | 'regular' | 'vip'
   logo: string | File
-  customerProducts?: CustomerProduct[]
 }
 
 interface CustomerState {
@@ -55,14 +49,12 @@ export const useCustomerStore = defineStore('customer', {
     },
     form: {
       name: '',
-      code: '',
       address: '',
       email: '',
       phone: '',
       npwp: '',
       type: '' as '' | 'prospect' | 'regular' | 'vip',
       logo: '',
-      customerProducts: []
     },
     isEditMode: false,
     showModal: false,
@@ -126,18 +118,11 @@ export const useCustomerStore = defineStore('customer', {
       this.validationErrors = [];
       const { $api } = useNuxtApp()
 
-      // Validasi unik produk di frontend
-      if (!this.validateUniqueProducts()) {
-        this.validationErrors = ['Produk yang sama tidak boleh dipilih lebih dari sekali'];
-        this.loading = false;
-        return;
-      }
-
       try {
         const formData = new FormData()
         
-        // Hanya kirim field yang diperlukan untuk backend
-        const fieldsToSend = ['name', 'code', 'address', 'email', 'phone', 'npwp', 'type'];
+        // Hanya kirim field yang diperlukan untuk backend (code digenerate otomatis di backend)
+        const fieldsToSend = ['name', 'address', 'email', 'phone', 'npwp', 'type'];
         fieldsToSend.forEach(key => {
             const value = this.form[key as keyof typeof this.form];
             if (value !== null && value !== undefined) {
@@ -154,16 +139,6 @@ export const useCustomerStore = defineStore('customer', {
         // Handle logo file
         if (this.form.logo instanceof File) {
             formData.append('logo', this.form.logo);
-        }
-        
-        // Handle customer products
-        if (this.form.customerProducts && Array.isArray(this.form.customerProducts)) {
-            this.form.customerProducts.forEach((item, index) => {
-                if (item.productId) {
-                    formData.append(`customerProducts[${index}][productId]`, String(item.productId))
-                }
-                formData.append(`customerProducts[${index}][priceSell]`, String(item.priceSell))
-            })
         }
 
         let method = 'POST';
@@ -312,12 +287,6 @@ export const useCustomerStore = defineStore('customer', {
         this.isEditMode = !!customer;
         this.validationErrors = [];
         
-        // ✅ NEW: Fetch all products untuk select dropdown saat membuka modal
-        const { useProductStore } = await import('./product');
-        const productStore = useProductStore();
-        if (productStore.allProducts.length === 0) {
-            await productStore.fetchAllProducts();
-        }
         if (customer && customer.id) {
             // Fetch complete data for editing
             this.loading = true;
@@ -333,7 +302,6 @@ export const useCustomerStore = defineStore('customer', {
                 this.form = { 
                     ...data,
                     type: data.type || '',
-                    customerProducts: data.customerProducts && data.customerProducts.length > 0 ? data.customerProducts: [{ productId: null, priceSell: 0 }]
                 };
             } catch (error: any) {
                 const toast = useToast()                
@@ -350,14 +318,12 @@ export const useCustomerStore = defineStore('customer', {
             // New customer
             this.form = {
                 name: '',
-                code: '',
                 address: '',
                 email: '',
                 phone: '',
                 npwp: '',
                 type: '',
                 logo: '',
-                customerProducts: [{ productId: null, priceSell: 0 }]
             };
         }
         this.showModal = true;
@@ -368,14 +334,12 @@ export const useCustomerStore = defineStore('customer', {
         this.isEditMode = false;
         this.form = {
             name: '',
-            code: '',
             address: '',
             email: '',
             phone: '',
             npwp: '',
             type: '',
             logo: '',
-            customerProducts: [{ productId: null, priceSell: 0 }]
         };
         this.validationErrors = [];
     },
@@ -403,33 +367,5 @@ export const useCustomerStore = defineStore('customer', {
             this.form.logo = file;
         }
     },
-
-    addItem() {
-        if (!this.form.customerProducts) {
-            this.form.customerProducts = [];
-        }
-        this.form.customerProducts.push({
-            productId: null,
-            priceSell: 0
-        });
-    },
-
-    validateUniqueProducts() {
-        if (!this.form.customerProducts) return true;
-        
-        const productIds = this.form.customerProducts
-            .map(item => item.productId)
-            .filter(id => id !== null);
-        
-        const uniqueProductIds = [...new Set(productIds)];
-        
-        return productIds.length === uniqueProductIds.length;
-    },
-
-    removeItem(index: number) {
-        if (this.form.customerProducts) {
-            this.form.customerProducts.splice(index, 1);
-        }
-    }
   }
 })

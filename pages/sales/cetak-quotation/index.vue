@@ -120,19 +120,18 @@
       <div class="cetak-qo-description-body prose" v-html="descriptionHtml"></div>
     </div>
 
-    <!-- Tanda tangan digital (TTD + QR) ketika quotation approved -->
+    <!-- Tanda tangan digital (TTD + QR) ketika quotation approved; tanpa label "Approved by" -->
     <div v-if="showSignatureSection" class="signature-section mt-5">
-      <h2 class="text-center fw-bold mb-3" style="font-size: 16px;">LEMBAR PENGESAHAN</h2>
-      <p class="text-center mb-0 mb-3" style="font-size: 12px; max-width: 720px; margin-left: auto; margin-right: auto;">
+      <p class="text-center mb-0" style="font-size: 12px; max-width: 720px; margin-left: auto; margin-right: auto;">
         Dokumen Quotation ini telah disetujui dan ditandatangani secara digital.
       </p>
       <MultiSignatureDisplay
         :key="'sig-' + (quotation.id ?? '')"
         document-type="quotations"
         :document-id="quotation.id != null ? String(quotation.id) : ''"
-        title="Verifikasi Digital Dokumen"
         :columns="4"
         :qr-size="96"
+        :show-approved-by-label="false"
         :legacy-signature-token="quotation.signatureToken || undefined"
         :legacy-signer-name="legacySignerName"
         :legacy-signer-title="legacySignerTitle"
@@ -173,7 +172,7 @@ const perusahaan = computed(() => {
   return quotation.value?.perusahaan || null
 })
 
-// Tampilkan section TTD digital ketika quotation approved
+// Tampilkan section TTD digital ketika quotation approved (tanpa label "Approved by")
 const showSignatureSection = computed(() => quotation.value?.status === 'approved')
 const legacySignerName = computed(() => quotation.value?.approvedByUser?.fullName || null)
 const legacySignerTitle = computed(() => {

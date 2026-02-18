@@ -86,6 +86,26 @@
             </div>
           </div>
         </div>
+        <div class="col-xl-3 col-lg-6 col-md-6">
+          <div class="card">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-4">
+                <p class="mb-0">Canceled</p>
+                <div class="avatar">
+                  <span class="avatar-initial rounded bg-label-danger">
+                    <i class="ri-close-circle-line"></i>
+                  </span>
+                </div>
+              </div>
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="account-heading">
+                  <h5 class="mb-1">{{ statistics?.canceledSubscriptions || 0 }}</h5>
+                  <span class="text-muted">Canceled</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="row g-6">
@@ -195,6 +215,9 @@
                         <li v-if="(userHasRole('superadmin') || userHasPermission('edit_subscription')) && slotProps.data.status === 'draft'">
                           <a class="dropdown-item" href="javascript:void(0)" @click="subscriptionStore.fetchSubscriptionForEdit(slotProps.data.id)"><i class="ri-edit-box-line me-2"></i> Edit</a>
                         </li>
+                        <li v-if="(userHasRole('superadmin') || userHasPermission('edit_subscription')) && (slotProps.data.status === 'draft' || slotProps.data.status === 'signed')">
+                          <a class="dropdown-item text-warning" href="javascript:void(0)" @click="openCancelModal(slotProps.data)"><i class="ri-close-circle-line me-2"></i> Cancel</a>
+                        </li>
                         <li v-if="(userHasRole('superadmin') || userHasPermission('delete_subscription')) && slotProps.data.status === 'draft'">
                           <a class="dropdown-item text-danger" href="javascript:void(0)" @click="subscriptionStore.deleteSubscription(slotProps.data.id)"><i class="ri-delete-bin-7-line me-2"></i> Hapus</a>
                         </li>
@@ -236,6 +259,7 @@ import Dropdown from 'primevue/dropdown'
 import InputText from 'primevue/inputtext'
 import { useDebounceFn } from '@vueuse/core'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
+import Swal from 'sweetalert2'
 
 const { setListTitle } = useDynamicTitle()
 const subscriptionStore = useSubscriptionStore()
@@ -256,6 +280,7 @@ const statusOptions = [
   { label: 'Active', value: 'active' },
   { label: 'Terminated', value: 'terminated' },
   { label: 'Expired', value: 'expired' },
+  { label: 'Canceled', value: 'canceled' },
 ]
 
 function getStatusBadge(status) {
@@ -266,7 +291,30 @@ function getStatusBadge(status) {
     case 'active': return { text: 'Active', class: 'badge rounded-pill bg-label-success' }
     case 'terminated': return { text: 'Terminated', class: 'badge rounded-pill bg-label-warning' }
     case 'expired': return { text: 'Expired', class: 'badge rounded-pill bg-label-dark' }
+    case 'canceled': return { text: 'Canceled', class: 'badge rounded-pill bg-label-danger' }
     default: return { text: status, class: 'badge rounded-pill bg-label-light' }
+  }
+}
+
+async function openCancelModal(row) {
+  const result = await Swal.fire({
+    title: 'Cancel Subscription',
+    html: `<div style="text-align:left;width:100%;padding:0">
+             <p style="margin:0 0 0.75rem 0">Yakin ingin membatalkan subscription <strong>${row.noSubscription || row.no_subscription || row.id}</strong>?</p>
+             <label for="swal-reason-cancel" style="display:block;margin-bottom:0.35rem;font-weight:500">Alasan cancel (opsional)</label>
+             <textarea id="swal-reason-cancel" rows="3" placeholder="Masukkan alasan cancel..." style="width:100%;box-sizing:border-box;padding:0.5rem 0.6rem;margin:0;border:1px solid #d9dee3;border-radius:0.375rem;font-size:0.9375rem;resize:vertical;min-height:4rem"></textarea>
+           </div>`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#d33',
+    cancelButtonColor: '#6c757d',
+    confirmButtonText: 'Ya, Cancel',
+    cancelButtonText: 'Batal',
+    preConfirm: () => document.getElementById('swal-reason-cancel')?.value?.trim() || null,
+  })
+  if (result.isConfirmed) {
+    const ok = await subscriptionStore.cancelSubscription(row.id, result.value ?? null)
+    if (ok) subscriptionStore.fetchSubscriptions()
   }
 }
 

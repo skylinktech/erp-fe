@@ -47,26 +47,6 @@
             </div>
           </div>
         </div>
-        <div class="col-12">
-          <!-- customer Products Table -->
-          <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
-              <h5 class="mb-0">Produk untuk {{ customer.name }}</h5>
-            </div>
-            <div class="card-datatable table-responsive py-3 px-3">
-              <MyDataTable :data="customer.customerProducts" :loading="loading">
-                <Column field="id" header="#" :sortable="true"></Column>
-                <Column field="name" header="Nama Produk" :sortable="true"></Column>
-                <Column field="priceSell" header="Harga Jual" :sortable="true">
-                  <template #body="slotProps">
-                    {{ formatRupiah(slotProps.data.priceSell) }}
-                  </template>
-                </Column>
-              </MyDataTable>
-            </div>
-          </div>
-          <!--/ customer Products Table -->
-        </div>
       </div>
       <div v-else class="alert alert-danger" role="alert">
         Customer tidak ditemukan.
@@ -81,20 +61,16 @@
 <script setup>
 import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import MyDataTable from '~/components/table/MyDataTable.vue'
-import Column from 'primevue/column'
 import { useCustomerStore } from '~/stores/customer'
 import { storeToRefs } from 'pinia'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import { useImageUrl } from '~/composables/useImageUrl'
-import { useFormatRupiah } from '~/composables/formatRupiah'
 
 // Composables
 const { setDetailTitle } = useDynamicTitle()
 const { getCustomerLogo, handleImageError } = useImageUrl();
 
 const route         = useRoute()
-const formatRupiah  = useFormatRupiah()
 const customerStore = useCustomerStore()
 const customerId    = route.query.id
 
@@ -106,6 +82,6 @@ onMounted(async () => {
   if (customerId) {
     await customerStore.getCustomerDetails(customerId)
   }
-  setDetailTitle('Customer', customer.value.name)
+  setDetailTitle('Customer', customer.value?.name ?? '')
 })
 </script>

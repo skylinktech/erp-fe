@@ -45,7 +45,7 @@ export interface Subscription {
   quotationId: string
   customerId: number
   customerName: string
-  status: 'draft' | 'signed' | 'active' | 'terminated' | 'expired'
+  status: 'draft' | 'signed' | 'active' | 'terminated' | 'expired' | 'canceled'
   contractPeriod: number
   targetActiveDate: string | null
   contractStartDate: string | null
@@ -54,8 +54,12 @@ export interface Subscription {
   termOfPayment: string
   leTechReviewId?: number | null
   leTechReviewAt?: string | null
+  canceledAt?: string | null
+  reasonCancel?: string | null
+  canceledBy?: number | null
   createdAt: string
   updatedAt: string
+  canceledByUser?: { id: number; fullName?: string; full_name?: string; email?: string } | null
   iro?: { id: string; noIro?: string }
   quotation?: { id: string; noQuotation?: string }
   customer?: { id: number; name: string }
@@ -111,6 +115,7 @@ interface SubscriptionState {
     activeSubscriptions: number
     terminatedSubscriptions: number
     expiredSubscriptions: number
+    canceledSubscriptions: number
   }
 }
 
@@ -160,6 +165,7 @@ export const useSubscriptionStore = defineStore('subscription', {
       activeSubscriptions: 0,
       terminatedSubscriptions: 0,
       expiredSubscriptions: 0,
+      canceledSubscriptions: 0,
     },
   }),
 
@@ -400,6 +406,23 @@ export const useSubscriptionStore = defineStore('subscription', {
         return true
       } catch (e: any) {
         toast.error({ title: 'Error', message: e.message || 'Gagal submit Subscription', color: 'red', position: 'topRight', layout: 2 })
+        return false
+      }
+    },
+
+    async cancelSubscription(id: string, reasonCancel?: string | null) {
+      const toast = useToast()
+      const { $api } = useNuxtApp()
+      try {
+        const body = JSON.stringify({ reasonCancel: reasonCancel ?? '' })
+        const res = await fetch($api.cancelSubscription(id), { method: 'PATCH', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, credentials: 'include', body })
+        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message || 'Gagal cancel Subscription')
+        await this.fetchSubscriptions()
+        await this.fetchStatistics()
+        toast.success({ title: 'Sukses', message: 'Subscription berhasil di-cancel', color: 'green', position: 'topRight', layout: 2 })
+        return true
+      } catch (e: any) {
+        toast.error({ title: 'Error', message: e.message || 'Gagal cancel Subscription', color: 'red', position: 'topRight', layout: 2 })
         return false
       }
     },

@@ -192,21 +192,10 @@
                     <input
                       type="text"
                       class="form-control"
-                      v-model="form.code"
-                      placeholder="Masukkan kode site"
-                    />
-                    <label>Kode Site *</label>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="form-floating form-floating-outline">
-                    <input
-                      type="text"
-                      class="form-control"
                       v-model="form.name"
                       placeholder="Masukkan nama site"
                     />
-                    <label>Nama Site *</label>
+                    <label>Nama Site <span class="text-danger">*</span></label>
                   </div>
                 </div>
                 <div class="col-md-6">
@@ -217,10 +206,10 @@
                         {{ option.label }}
                       </option>
                     </select>
-                    <label>Tipe Site *</label>
+                    <label>Tipe Site <span class="text-danger">*</span></label>
                   </div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-12">
                   <div class="form-floating form-floating-outline">
                     <select class="form-select" v-model="form.status">
                       <option value="">Pilih Status</option>
@@ -228,7 +217,7 @@
                         {{ option.label }}
                       </option>
                     </select>
-                    <label>Status</label>
+                    <label>Status <span class="text-muted small">(Opsional)</span></label>
                   </div>
                 </div>
                 <div class="col-md-12">
@@ -239,7 +228,7 @@
                       placeholder="Masukkan alamat"
                       rows="2"
                     ></textarea>
-                    <label>Alamat</label>
+                    <label>Alamat <span class="text-muted small">(Opsional)</span></label>
                   </div>
                 </div>
                 <div class="col-md-4">
@@ -250,7 +239,7 @@
                       v-model="form.city"
                       placeholder="Masukkan kota"
                     />
-                    <label>Kota</label>
+                    <label>Kota <span class="text-muted small">(Opsional)</span></label>
                   </div>
                 </div>
                 <div class="col-md-4">
@@ -261,7 +250,7 @@
                       v-model="form.province"
                       placeholder="Masukkan provinsi"
                     />
-                    <label>Provinsi</label>
+                    <label>Provinsi <span class="text-muted small">(Opsional)</span></label>
                   </div>
                 </div>
                 <div class="col-md-4">
@@ -272,7 +261,7 @@
                       v-model="form.country"
                       placeholder="Masukkan negara"
                     />
-                    <label>Negara</label>
+                    <label>Negara <span class="text-muted small">(Opsional)</span></label>
                   </div>
                 </div>
                 <div class="col-md-6">
@@ -286,7 +275,7 @@
                       v-model="form.latitude"
                       placeholder="-6.2088"
                     />
-                    <label>Latitude *</label>
+                    <label>Latitude <span class="text-danger">*</span></label>
                   </div>
                   <small class="text-muted d-block mt-1">Wajib. Range: -90 s/d 90 (contoh: -6.2088)</small>
                 </div>
@@ -301,7 +290,7 @@
                       v-model="form.longitude"
                       placeholder="106.8456"
                     />
-                    <label>Longitude *</label>
+                    <label>Longitude <span class="text-danger">*</span></label>
                   </div>
                   <small class="text-muted d-block mt-1">Wajib. Range: -180 s/d 180 (contoh: 106.8456)</small>
                 </div>
@@ -313,7 +302,7 @@
                       v-model="form.startDate"
                       placeholder="Masukkan tanggal mulai"
                     />
-                    <label>Tanggal Mulai</label>
+                    <label>Tanggal Mulai <span class="text-muted small">(Opsional)</span></label>
                   </div>
                 </div>
                 <div class="col-md-6">
@@ -324,7 +313,7 @@
                       v-model="form.endDate"
                       placeholder="Masukkan tanggal selesai"
                     />
-                    <label>Tanggal Selesai</label>
+                    <label>Tanggal Selesai <span class="text-muted small">(Opsional)</span></label>
                   </div>
                 </div>
                 <div class="col-md-6">
@@ -335,7 +324,7 @@
                         [{{ getTypeLabel(parent.type) }}] {{ parent.code }} - {{ parent.name }}
                       </option>
                     </select>
-                    <label>Parent Site</label>
+                    <label>Parent Site <span class="text-muted small">(Opsional)</span></label>
                   </div>
                 </div>
                 <div class="col-md-6">
@@ -350,7 +339,7 @@
                         {{ cc.code }} - {{ cc.name }}
                       </option>
                     </select>
-                    <label>Cost Center</label>
+                    <label>Cost Center <span class="text-muted small">(Opsional)</span></label>
                   </div>
                 </div>
               </div>

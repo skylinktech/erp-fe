@@ -105,6 +105,10 @@
                       <p class="mb-0 fw-medium">{{ quotation.noQuotation || '—' }}</p>
                     </div>
                     <div class="col-md-6">
+                      <label class="form-label text-muted medium">Ref. PO</label>
+                      <p class="mb-0 fw-medium">{{ quotation.refPo || quotation.ref_po || '—' }}</p>
+                    </div>
+                    <div class="col-md-6">
                       <label class="form-label text-muted medium">UP / PIC</label>
                       <p class="mb-0 fw-medium">{{ quotation.up || '—' }}</p>
                     </div>

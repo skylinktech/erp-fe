@@ -35,9 +35,9 @@
           :class="signatures.length === 1 ? 'col-12 col-md-6 col-lg-4' : columnClass"
         >
           <div class="signature-card">
-            <!-- Judul di atas QR: Prepared by / Approved by -->
+            <!-- Judul di atas QR: Prepared by / Approved by (Approved by bisa disembunyikan via prop, mis. di cetak quotation) -->
             <div v-if="isPreparedBy(signature)" class="signature-card-label mb-2">Prepared by</div>
-            <div v-else class="signature-card-label mb-2">Approved by</div>
+            <div v-else-if="showApprovedByLabel" class="signature-card-label mb-2 mt-8"></div>
             <!-- QR Code -->
             <div class="qr-wrapper">
               <QRCodeGenerator
@@ -96,7 +96,6 @@
 
     <!-- Legacy: single QR jika tidak ada multi-signature tapi ada token lama -->
     <div v-else-if="legacySignatureToken" class="legacy-single-qr text-center py-3">
-      <h6 class="fw-bold mb-3">Verifikasi Digital Dokumen</h6>
       <QRCodeGenerator
         :value="getVerificationUrl(legacySignatureToken)"
         :size="qrSize"
@@ -136,12 +135,6 @@ const props = defineProps({
     type: [String, Number],
     required: true,
   },
-  
-  // Display options
-  title: {
-    type: String,
-    default: 'Tanda Tangan Digital',
-  },
   qrSize: {
     type: Number,
     default: 96,
@@ -176,6 +169,11 @@ const props = defineProps({
   legacySignerTitle: {
     type: String,
     default: null,
+  },
+  /** Tampilkan label "Approved by" di atas QR (false = sembunyikan, mis. di halaman cetak quotation) */
+  showApprovedByLabel: {
+    type: Boolean,
+    default: true,
   },
 })
 

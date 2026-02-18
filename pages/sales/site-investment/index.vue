@@ -155,8 +155,8 @@
                                         <CustomSelect2
                                             v-model="filters.customerId"
                                             :options="customers"
-                                            :get-option-label="c => c.name"
-                                            :reduce="c => c.id"
+                                            :get-option-label="getCustomerLabel"
+                                            :reduce="getCustomerId"
                                             placeholder="Pilih Customer"
                                             searchable
                                             clearable
@@ -169,8 +169,8 @@
                                         <CustomSelect2
                                             v-model="filters.status"
                                             :options="statusOptions"
-                                            :get-option-label="option => option.label"
-                                            :reduce="option => option.value"
+                                            :get-option-label="getOptionLabel"
+                                            :reduce="getOptionValue"
                                             placeholder="Pilih Status"
                                             searchable
                                             clearable
@@ -181,8 +181,8 @@
                                         <CustomSelect2
                                             v-model="filters.priority"
                                             :options="priorityOptions"
-                                            :get-option-label="option => option.label"
-                                            :reduce="option => option.value"
+                                            :get-option-label="getOptionLabel"
+                                            :reduce="getOptionValue"
                                             placeholder="Pilih Priority"
                                             searchable
                                             clearable
@@ -287,15 +287,15 @@
                                     <Column field="businessScheme.name" header="Skema" :sortable="true" class="text-nowrap fw-semibold"></Column>
                                     <Column field="priority" header="Priority" :sortable="true">
                                         <template #body="slotProps">
-                                            <span :class="getPriorityBadge(slotProps.data.priority).class">
-                                                {{ getPriorityBadge(slotProps.data.priority).text }}
+                                            <span :class="getPriorityBadgeClass(slotProps.data.priority)">
+                                                {{ getPriorityBadgeText(slotProps.data.priority) }}
                                             </span>
                                         </template>
                                     </Column>
                                     <Column field="status" header="Status" :sortable="true">
                                         <template #body="slotProps">
-                                            <span :class="getStatusBadge(slotProps.data).class">
-                                                {{ getStatusBadge(slotProps.data).text }}
+                                            <span :class="getStatusBadgeClass(slotProps.data)">
+                                                {{ getStatusBadgeText(slotProps.data) }}
                                             </span>
                                         </template>
                                     </Column>
@@ -306,7 +306,7 @@
                                     </Column>
                                     <Column field="siDate" header="Tanggal" :sortable="true">
                                         <template #body="slotProps">
-                                            {{ slotProps.data.siDate ? new Date(slotProps.data.siDate).toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-' }}
+                                            {{ formatSiDate(slotProps.data.siDate) }}
                                         </template>
                                     </Column>
                                     <Column field="attachment" header="Attachment" :sortable="false">
@@ -425,8 +425,8 @@
                                             <CustomSelect2
                                                 v-model="form.customerId"
                                                 :options="customers"
-                                                :get-option-label="c => c.name"
-                                                :reduce="c => c.id"
+                                                :get-option-label="getCustomerLabel"
+                                                :reduce="getCustomerId"
                                                 placeholder="Pilih Customer"
                                                 searchable
                                                 clearable
@@ -436,8 +436,8 @@
                                             <CustomSelect2
                                                 v-model="form.siteId"
                                                 :options="sites"
-                                                :get-option-label="s => (s.code || '') + ' - ' + (s.name || '')"
-                                                :reduce="s => s.id"
+                                                :get-option-label="getSiteLabel"
+                                                :reduce="getSiteId"
                                                 placeholder="Pilih Site"
                                                 searchable
                                                 clearable
@@ -448,8 +448,8 @@
                                             <CustomSelect2
                                                 v-model="form.businessSchemeId"
                                                 :options="businessSchemes"
-                                                :get-option-label="b => (b.code || '') + ' - ' + (b.name || '')"
-                                                :reduce="b => b.id"
+                                                :get-option-label="getBranchLabel"
+                                                :reduce="getBranchId"
                                                 placeholder="Pilih Business Scheme"
                                                 searchable
                                                 clearable
@@ -460,8 +460,8 @@
                                             <CustomSelect2
                                                 v-model="selectedPriceListId"
                                                 :options="priceListOptions"
-                                                :get-option-label="pl => pl ? (pl.name || '') + (pl.type ? ` (${pl.type})` : '') : '—'"
-                                                :reduce="pl => pl ? pl.id : null"
+                                                :get-option-label="getPriceListLabel"
+                                                :reduce="getPriceListId"
                                                 placeholder="Pilih Price List untuk mengisi Material, Service, DID"
                                                 searchable
                                                 clearable
@@ -479,8 +479,8 @@
                                             <CustomSelect2
                                                 v-model="form.priority"
                                                 :options="priorityOptions"
-                                                :get-option-label="option => option.label"
-                                                :reduce="option => option.value"
+                                                :get-option-label="getOptionLabel"
+                                                :reduce="getOptionValue"
                                                 placeholder="Pilih Priority"
                                                 searchable
                                                 clearable
@@ -504,16 +504,29 @@
                                                 <label>Estimasi Selesai</label>
                                             </div>
                                         </div>
-                                        <div class="col-md-6">
+                                        <div class="col-md-3">
                                             <div class="form-floating form-floating-outline">
                                                 <input type="text" v-model="form.lat" class="form-control" placeholder="Latitude">
                                                 <label>Latitude</label>
                                             </div>
                                         </div>
-                                        <div class="col-md-6">
+                                        <div class="col-md-3">
                                             <div class="form-floating form-floating-outline">
                                                 <input type="text" v-model="form.long" class="form-control" placeholder="Longitude">
                                                 <label>Longitude</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-floating form-floating-outline">
+                                                <input
+                                                    type="text"
+                                                    :value="formatRupiah(form.marketingFee)"
+                                                    @input="onMarketingFeeInput"
+                                                    @blur="onMarketingFeeBlur"
+                                                    class="form-control"
+                                                    placeholder="Rp 0"
+                                                >
+                                                <label>Marketing Fee</label>
                                             </div>
                                         </div>
                                         <div class="col-md-6">
@@ -526,8 +539,8 @@
                                             <CustomSelect2
                                                 v-model="form.preparedByIds"
                                                 :options="pegawaiOptions"
-                                                :get-option-label="p => p.nm_pegawai || p.nmPegawai || `Pegawai #${p.id_pegawai ?? p.idPegawai}`"
-                                                :reduce="p => (p && (p.id_pegawai ?? p.idPegawai)) ?? null"
+                                                :get-option-label="getPegawaiLabel"
+                                                :reduce="getPegawaiId"
                                                 placeholder="Prepared by (bisa lebih dari satu)"
                                                 searchable
                                                 clearable
@@ -547,7 +560,7 @@
                                                 <small class="text-muted d-block mt-1">Maks. 2MB. Format: jpg, png, pdf, doc, docx, xls, xlsx, csv</small>
                                                 <div v-if="form.attachmentPreview" class="mt-2">
                                                     <a :href="form.attachmentPreview" target="_blank" rel="noopener noreferrer" class="d-block mb-1">Lihat Attachment</a>
-                                                    <img v-if="isImageFile(form.attachment?.name || form.attachmentPreview)" :src="form.attachmentPreview" alt="Preview" class="attachment-preview" style="height: 60px; max-width: 120px; object-fit: contain; border: 2px solid #ddd; border-radius: 8px;">
+                                                    <img v-if="isAttachmentPreviewImage(form)" :src="form.attachmentPreview" alt="Preview" class="attachment-preview" style="height: 60px; max-width: 120px; object-fit: contain; border: 2px solid #ddd; border-radius: 8px;">
                                                 </div>
                                             </div>
                                         </div>
@@ -581,20 +594,9 @@
                                                         <span class="investment-summary-value">{{ formatRupiah(totalInvestment) }}</span>
                                                     </div>
 
-                                                    <div class="investment-summary-row investment-summary-row-contingency">
-                                                        <span class="investment-summary-label d-flex align-items-center gap-2">
-                                                            Contingency
-                                                            <input
-                                                                type="text"
-                                                                :value="formatForDisplay(form.contingencyPercent)"
-                                                                class="form-control form-control-sm contingency-input"
-                                                                placeholder="10"
-                                                                @input="onContingencyPercentInput"
-                                                                @blur="onContingencyPercentBlur"
-                                                            >
-                                                            <span class="text-muted">%</span>
-                                                        </span>
-                                                        <span class="investment-summary-value">{{ formatRupiah(contingencyAmount) }}</span>
+                                                    <div class="investment-summary-row">
+                                                        <span class="investment-summary-label">Marketing Fee</span>
+                                                        <span class="investment-summary-value">{{ formatRupiah(marketingFeeAmount) }}</span>
                                                     </div>
 
                                                     <div class="investment-summary-divider"></div>
@@ -629,8 +631,8 @@
                                                 <CustomSelect2
                                                     v-model="item.priceListLineId"
                                                     :options="priceListLinesProduct"
-                                                    :get-option-label="line => line ? (line.price_list?.name || (line.product ? `${line.product.name} (${line.product.sku || ''})` : `Line #${line.id}`)) : '—'"
-                                                    :reduce="line => line ? line.id : null"
+                                                    :get-option-label="getMaterialLineLabel"
+                                                    :reduce="getMaterialLineId"
                                                     placeholder="Pilih Product (dari Price List)"
                                                     searchable
                                                     clearable
@@ -652,7 +654,7 @@
                                                         class="form-control" 
                                                         placeholder="Harga"
                                                         :readonly="!item.isPriceOverridden"
-                                                        :class="{ 'bg-light': !item.isPriceOverridden }"
+                                                        :class="getReadonlyInputClass(item)"
                                                     >
                                                     <label>Harga Satuan</label>
                                                 </div>
@@ -672,6 +674,12 @@
                                                         rows="2"
                                                     ></textarea>
                                                     <label>Alasan Custom Price <span class="text-danger">*</span></label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-12" v-if="isMaterialStockInsufficient(index)" role="alert">
+                                                <div class="alert alert-danger py-2 mb-0">
+                                                    <i class="ri-error-warning-line me-1"></i>
+                                                    Stock pada product ini tidak mencukupi.
                                                 </div>
                                             </div>
                                         </div>
@@ -705,8 +713,8 @@
                                                 <CustomSelect2
                                                     v-model="item.priceListLineId"
                                                     :options="priceListLinesService"
-                                                    :get-option-label="line => line ? (line.price_list?.name || (line.service ? line.service.name : `Line #${line.id}`)) : '—'"
-                                                    :reduce="line => line ? line.id : null"
+                                                    :get-option-label="getServiceLineLabel"
+                                                    :reduce="getServiceLineId"
                                                     placeholder="Pilih Service (dari Price List)"
                                                     searchable
                                                     clearable
@@ -728,7 +736,7 @@
                                                         class="form-control" 
                                                         placeholder="Harga Satuan"
                                                         :readonly="!item.isPriceOverridden"
-                                                        :class="{ 'bg-light': !item.isPriceOverridden }"
+                                                        :class="getReadonlyInputClass(item)"
                                                     >
                                                     <label>Harga Satuan</label>
                                                 </div>
@@ -736,7 +744,7 @@
                                             <!-- Field dari price list line (service): terminal_kit, quota_priority, new_service_line, additional_data -->
                                             <div class="col-6 col-md-3">
                                                 <div class="form-floating form-floating-outline">
-                                                    <input type="text" :value="(item.terminalKitCount ?? serviceLineField(getServiceLineForItem(index), 'terminal_kit_count')) ?? '—'" class="form-control bg-light" readonly placeholder="Terminal Kit">
+                                                    <input type="text" :value="getServiceTerminalKitDisplay(item, index)" class="form-control bg-light" readonly placeholder="Terminal Kit">
                                                     <label>Terminal Kit</label>
                                                 </div>
                                             </div>
@@ -744,19 +752,19 @@
                                         <div class="row g-3 mt-3">
                                             <div class="col-6 col-md-3">
                                                 <div class="form-floating form-floating-outline">
-                                                    <input type="text" :value="(item.quotaPriority ?? serviceLineField(getServiceLineForItem(index), 'quota_priority')) != null ? formatRupiah(item.quotaPriority ?? serviceLineField(getServiceLineForItem(index), 'quota_priority')) : '—'" class="form-control bg-light" readonly placeholder="Quota Priority">
+                                                    <input type="text" :value="getServiceQuotaPriorityDisplay(item, index)" class="form-control bg-light" readonly placeholder="Quota Priority">
                                                     <label>Quota Priority</label>
                                                 </div>
                                             </div>
                                             <div class="col-6 col-md-3">
                                                 <div class="form-floating form-floating-outline">
-                                                    <input type="text" :value="(item.newServiceLine ?? serviceLineField(getServiceLineForItem(index), 'new_service_line')) != null ? formatRupiah(item.newServiceLine ?? serviceLineField(getServiceLineForItem(index), 'new_service_line')) : '—'" class="form-control bg-light" readonly placeholder="New Service Line">
+                                                    <input type="text" :value="getServiceNewServiceLineDisplay(item, index)" class="form-control bg-light" readonly placeholder="New Service Line">
                                                     <label>New Service Line</label>
                                                 </div>
                                             </div>
                                             <div class="col-6 col-md-3">
                                                 <div class="form-floating form-floating-outline">
-                                                    <input type="text" :value="(item.additionalData ?? serviceLineField(getServiceLineForItem(index), 'additional_data')) != null ? formatRupiah(item.additionalData ?? serviceLineField(getServiceLineForItem(index), 'additional_data')) : '—'" class="form-control bg-light" readonly placeholder="Additional Data">
+                                                    <input type="text" :value="getServiceAdditionalDataDisplay(item, index)" class="form-control bg-light" readonly placeholder="Additional Data">
                                                     <label>Additional Data</label>
                                                 </div>
                                             </div>
@@ -795,8 +803,8 @@
                                         <CustomSelect2
                                             v-model="selectedDidPriceListId"
                                             :options="priceListOptionsDid"
-                                            :get-option-label="pl => pl ? pl.name : '—'"
-                                            :reduce="pl => pl ? pl.id : null"
+                                            :get-option-label="getDidPriceListLabel"
+                                            :reduce="getDidPriceListId"
                                             placeholder="Pilih Price List (DID)"
                                             searchable
                                             clearable
@@ -836,7 +844,7 @@
                                                         class="form-control" 
                                                         placeholder="Harga"
                                                         :readonly="!item.isPriceOverridden"
-                                                        :class="{ 'bg-light': !item.isPriceOverridden }"
+                                                        :class="getReadonlyInputClass(item)"
                                                     >
                                                     <label>Harga</label>
                                                 </div>
@@ -888,8 +896,8 @@
                                                 <CustomSelect2
                                                     v-model="item.budgetSourceId"
                                                     :options="approvedBudgets || []"
-                                                    :get-option-label="b => (b && `${b.budgetCode || b.budget_code || ''} - ${b.budgetName || b.budget_name || ''}`) || '—'"
-                                                    :reduce="b => (b && b.id) ?? null"
+                                                    :get-option-label="getBudgetLabel"
+                                                    :reduce="getBudgetId"
                                                     placeholder="Pilih Budget"
                                                     searchable
                                                     clearable
@@ -900,8 +908,8 @@
                                                 <CustomSelect2
                                                     v-model="item.budgetHolderId"
                                                     :options="usersForBudget"
-                                                    :get-option-label="u => u.fullName || u.email || `User #${u.id}`"
-                                                    :reduce="u => u.id"
+                                                    :get-option-label="getUserLabel"
+                                                    :reduce="getUserId"
                                                     placeholder="Pilih User"
                                                     searchable
                                                     clearable
@@ -967,6 +975,24 @@ const { userHasPermission, userHasRole } = usePermissions()
 const { getStatusBadge } = useApprovalStatus()
 const { getAttachmentUrl, isImageFile } = useImageUrl()
 
+function formatSiDate(value) {
+    if (value == null || value === '') return '-'
+    try {
+        const d = new Date(value)
+        if (Number.isNaN(d.getTime())) return '-'
+        return d.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    } catch {
+        return '-'
+    }
+}
+
+function isAttachmentPreviewImage(formData) {
+    if (!formData) return false
+    const name = formData.attachment?.name
+    const preview = formData.attachmentPreview
+    return isImageFile(name || preview)
+}
+
 const { siteInvests, loading, totalRecords, params, form, isEditMode, showModal, validationErrors, stats } = storeToRefs(siteInvestStore)
 const { customers } = storeToRefs(customerStore)
 const { user } = storeToRefs(userStore)
@@ -977,6 +1003,147 @@ const { budgets } = storeToRefs(budgetStore)
 const priceListLinesProduct = ref([])
 const priceListLinesService = ref([])
 const priceListLinesDid = ref([])
+
+/** Per-index: true jika stock product tidak mencukupi untuk qty yang diminta (hanya untuk Material/Product) */
+const materialStockInsufficient = ref({})
+
+function isMaterialStockInsufficient(i) {
+    return !!(materialStockInsufficient.value && materialStockInsufficient.value[i])
+}
+
+function getMaterialLineLabel(line) {
+    if (!line) return '—'
+    const name = line.price_list?.name || (line.product ? `${line.product.name} (${line.product.sku || ''})` : `Line #${line.id}`)
+    return name || '—'
+}
+
+function getMaterialLineId(line) {
+    return line ? line.id : null
+}
+
+function getReadonlyInputClass(item) {
+    return item && !item.isPriceOverridden ? 'bg-light' : ''
+}
+
+function getServiceTerminalKitDisplay(item, index) {
+    const line = getServiceLineForItem(index)
+    const val = item?.terminalKitCount ?? serviceLineField(line, 'terminal_kit_count')
+    return val != null && val !== '' ? String(val) : '—'
+}
+
+function getServiceQuotaPriorityDisplay(item, index) {
+    const line = getServiceLineForItem(index)
+    const val = item?.quotaPriority ?? serviceLineField(line, 'quota_priority')
+    return val != null ? formatRupiah(val) : '—'
+}
+
+function getServiceNewServiceLineDisplay(item, index) {
+    const line = getServiceLineForItem(index)
+    const val = item?.newServiceLine ?? serviceLineField(line, 'new_service_line')
+    return val != null ? formatRupiah(val) : '—'
+}
+
+function getServiceAdditionalDataDisplay(item, index) {
+    const line = getServiceLineForItem(index)
+    const val = item?.additionalData ?? serviceLineField(line, 'additional_data')
+    return val != null ? formatRupiah(val) : '—'
+}
+
+function getPriceListLabel(pl) {
+    if (!pl) return '—'
+    let label = pl.name || ''
+    if (pl.type) label += ` (${pl.type})`
+    return label || '—'
+}
+
+function getPriceListId(pl) {
+    return pl ? pl.id : null
+}
+
+function getServiceLineLabel(line) {
+    if (!line) return '—'
+    return line.price_list?.name || (line.service ? line.service.name : `Line #${line.id}`) || '—'
+}
+
+function getServiceLineId(line) {
+    return line ? line.id : null
+}
+
+function getDidPriceListLabel(pl) {
+    return pl ? pl.name : '—'
+}
+
+function getDidPriceListId(pl) {
+    return pl ? pl.id : null
+}
+
+function getPegawaiLabel(p) {
+    if (!p) return ''
+    return p.nm_pegawai || p.nmPegawai || `Pegawai #${p.id_pegawai || p.idPegawai || ''}`
+}
+
+function getPegawaiId(p) {
+    if (!p) return null
+    return p.id_pegawai || p.idPegawai || null
+}
+
+function getBudgetLabel(b) {
+    if (!b) return '—'
+    const code = b.budgetCode || b.budget_code || ''
+    const name = b.budgetName || b.budget_name || ''
+    return code || name ? `${code} - ${name}` : '—'
+}
+
+function getBudgetId(b) {
+    return b ? b.id : null
+}
+
+function getUserLabel(u) {
+    if (!u) return ''
+    return u.fullName || u.email || `User #${u.id || ''}`
+}
+
+function getUserId(u) {
+    return u ? u.id : null
+}
+
+function getCustomerLabel(c) {
+    return c ? c.name : ''
+}
+
+function getCustomerId(c) {
+    return c ? c.id : null
+}
+
+function getOptionLabel(option) {
+    return option ? option.label : ''
+}
+
+function getOptionValue(option) {
+    return option ? option.value : null
+}
+
+function getSiteLabel(s) {
+    if (!s) return ''
+    const code = s.code || ''
+    const name = s.name || ''
+    return `${code} - ${name}`
+}
+
+function getSiteId(s) {
+    return s ? s.id : null
+}
+
+function getBranchLabel(b) {
+    if (!b) return ''
+    const code = b.code || ''
+    const name = b.name || ''
+    return `${code} - ${name}`
+}
+
+function getBranchId(b) {
+    return b ? b.id : null
+}
 
 // Dropdown "Isi dari Price List" (untuk autofill Materials, Services, DID)
 const selectedPriceListId = ref(null)
@@ -1182,6 +1349,8 @@ async function onPriceListSelect(priceListId) {
         selectedDidPriceListId.value = priceList.id
 
         recalcServiceItemsFromLines()
+        await nextTick()
+        await Promise.all((form.value?.siteInvestMaterials ?? []).map((_, i) => checkMaterialStock(i)))
     } catch (e) {
         console.error('Error filling from price list:', e)
     }
@@ -1312,17 +1481,14 @@ const totalInvestment = computed(() => {
     return fromItems
 })
 
-const contingencyAmount = computed(() => {
-    const fromCalc = totalInvestment.value * ((form.value?.contingencyPercent ?? 0) / 100)
-    if (fromCalc > 0) return fromCalc
-    if (isEditMode.value && form.value && (form.value.contingencyAmount != null && form.value.contingencyAmount !== '')) {
-      return Number(form.value.contingencyAmount) || 0
-    }
-    return fromCalc
+const marketingFeeAmount = computed(() => {
+    const v = form.value?.marketingFee ?? form.value?.marketing_fee
+    if (v === null || v === undefined || v === '') return 0
+    return Number(v) || 0
 })
 
 const grandTotal = computed(() => {
-    const fromCalc = totalInvestment.value + contingencyAmount.value
+    const fromCalc = totalInvestment.value + marketingFeeAmount.value
     if (fromCalc > 0) return fromCalc
     if (isEditMode.value && form.value && (form.value.grandTotal != null && form.value.grandTotal !== '')) {
       return Number(form.value.grandTotal) || 0
@@ -1379,6 +1545,7 @@ watch(() => globalFilterValue.value, (newValue) => {
 
 watch(showModal, async (newValue) => {
     if (newValue) {
+        materialStockInsufficient.value = {}
         await Promise.all([fetchPriceListsForSelect(), fetchPriceListLinesForModal(), fetchPegawaiForPreparedBy()])
         if (!isEditMode.value) {
             selectedPriceListId.value = null
@@ -1484,22 +1651,18 @@ const formatForDisplay = (value) => {
     return numValue.toString().replace('.', ',')
 }
 
-const onContingencyPercentInput = (event) => {
+const onMarketingFeeInput = (event) => {
     const target = event.target
-    let value = target.value
-    if (value && !/^[0-9]*([,\.][0-9]*)?$/.test(value)) {
-        value = value.slice(0, -1)
-        target.value = value
-    }
-    const numValue = convertToNumber(value)
-    form.value.contingencyPercent = numValue
+    const value = target.value
+    const numValue = parseRupiahToNumber(value)
+    form.value.marketingFee = numValue
 }
 
-const onContingencyPercentBlur = (event) => {
+const onMarketingFeeBlur = (event) => {
     const target = event.target
-    const numValue = convertToNumber(target.value)
-    form.value.contingencyPercent = numValue
-    target.value = formatForDisplay(numValue)
+    const numValue = parseRupiahToNumber(target.value)
+    form.value.marketingFee = numValue
+    target.value = formatRupiah(numValue)
 }
 
 function onAttachmentChange(e) {
@@ -1531,11 +1694,35 @@ function onAttachmentChange(e) {
 }
 
 const handleSubmit = () => {
-    form.value.contingencyPercent = convertToNumber(form.value.contingencyPercent)
+    form.value.marketingFee = parseRupiahToNumber(form.value.marketingFee) || 0
     siteInvestStore.saveSiteInvest()
 }
 
-const onMaterialLineChange = (index, lineId) => {
+/** Cek stok product untuk material row; set materialStockInsufficient[index] jika qty > stok tersedia */
+async function checkMaterialStock(index) {
+    const item = form.value?.siteInvestMaterials?.[index]
+    let line = null
+    if (item?.priceListLineId) {
+        line = priceListLinesProduct.value.find(l => l.id === item.priceListLineId) || null
+    }
+    const productId = line?.product?.id ?? line?.priceable_id
+    const priceableType = line?.priceable_type ?? line?.priceableType
+    if (!productId || priceableType !== 'product') {
+        const next = Object.assign({}, materialStockInsufficient.value)
+        next[index] = false
+        materialStockInsufficient.value = next
+        return
+    }
+    const res = await siteInvestStore.fetchProductStock(Number(productId))
+    const requested = Number(item?.quantity) || 0
+    let available = 0
+    if (res != null && typeof res.quantity === 'number') available = res.quantity
+    const next = Object.assign({}, materialStockInsufficient.value)
+    next[index] = requested > 0 && available < requested
+    materialStockInsufficient.value = next
+}
+
+const onMaterialLineChange = async (index, lineId) => {
     const line = priceListLinesProduct.value.find(l => l.id === lineId)
     if (!line || !form.value?.siteInvestMaterials?.[index]) return
     const item = form.value.siteInvestMaterials[index]
@@ -1543,6 +1730,7 @@ const onMaterialLineChange = (index, lineId) => {
     item.quantity = Number(line.quantity) || 1
     item.isPriceOverridden = false
     item.subtotal = item.quantity * item.price
+    await checkMaterialStock(index)
 }
 
 const calculateMaterialSubtotal = (index) => {
@@ -1551,6 +1739,7 @@ const calculateMaterialSubtotal = (index) => {
     const quantity = Number(item.quantity) || 0
     const price = Number(item.price) || 0
     item.subtotal = quantity * price
+    checkMaterialStock(index)
 }
 
 /** Harga satuan efektif dari price list (base price + New Service Line, selaras dengan perhitungan Price List & tampilan detail) */
@@ -1709,6 +1898,22 @@ const getPriorityBadge = (priority) => {
     }
 }
 
+function getPriorityBadgeClass(priority) {
+    return getPriorityBadge(priority).class
+}
+
+function getPriorityBadgeText(priority) {
+    return getPriorityBadge(priority).text
+}
+
+function getStatusBadgeClass(data) {
+    return getStatusBadge(data).class
+}
+
+function getStatusBadgeText(data) {
+    return getStatusBadge(data).text
+}
+
 const clearDateFilters = () => {
     filters.value.startDate = null
     filters.value.endDate = null
@@ -1819,13 +2024,6 @@ definePageMeta({
 .investment-summary-row-total .investment-summary-value {
     font-weight: 700;
     color: #4f46e5;
-}
-
-.investment-summary-row-contingency .contingency-input {
-    width: 72px;
-    display: inline-block;
-    text-align: center;
-    font-weight: 600;
 }
 
 .investment-summary-row-grand {

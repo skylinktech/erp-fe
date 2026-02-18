@@ -125,8 +125,8 @@ export const useCostCenterStore = defineStore('cost-center', {
       const toast = useToast()
 
       try {
+        // Kode di-generate otomatis oleh backend (format CC-SIP + 4 digit), tidak dikirim
         const payload = {
-          code: this.form.code,
           name: this.form.name,
           type: this.form.type,
           parentId: this.form.parentId || null,

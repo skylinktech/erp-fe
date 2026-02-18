@@ -67,6 +67,7 @@
             <th class="text-center" style="width: 50px;">QTY</th>
             <th class="text-center" style="width: 50px;">DUR</th>
             <th class="text-end" style="width: 100px;">RATE</th>
+            <th class="text-end" style="width: 100px;">HARGA BELI</th>
             <th class="text-end" style="width: 110px;">INCOME</th>
             <th class="text-end" style="width: 110px;">EXPENSES</th>
           </tr>
@@ -75,7 +76,7 @@
           <!-- SERVICEPLAN [MRC] -->
           <template v-if="siteInvestServicesList.length > 0">
             <tr class="fw-bold bg-light">
-              <td colspan="7" class="text-start">SERVICEPLAN [MRC]</td>
+              <td colspan="8" class="text-start">SERVICEPLAN [MRC]</td>
             </tr>
             <tr v-for="(item, index) in siteInvestServicesList" :key="'svc-' + (item.id || index)">
               <td class="text-start">{{ item.priceListLine?.service?.name || item.priceListLine?.service?.code || '-' }}</td>
@@ -83,11 +84,13 @@
               <td class="text-center">{{ Number(item.quantity) }}</td>
               <td class="text-center">{{ Number(item.quantity) }}</td>
               <td class="text-end">{{ formatRupiahNum(getServicePrice(item)) }}</td>
+              <td class="text-end">{{ itemPriceBuyDisplay(item) }}</td>
               <td class="text-end">{{ formatRupiahNum(getServiceSubtotal(item)) }}</td>
               <td class="text-end">{{ itemExpenseDisplay(item) }}</td>
             </tr>
             <tr class="fw-bold">
               <td colspan="5" class="text-end">TOTAL</td>
+              <td class="text-end">-</td>
               <td class="text-end">{{ formatRupiahNum(serviceSubtotalDisplay) }}</td>
               <td class="text-end">{{ formatRupiahNum(serviceExpenseSubtotal) }}</td>
             </tr>
@@ -96,7 +99,7 @@
           <!-- HARDWARE [OTC] -->
           <template v-if="siteInvestMaterialsList.length > 0">
             <tr class="fw-bold bg-light">
-              <td colspan="7" class="text-start">HARDWARE [OTC]</td>
+              <td colspan="8" class="text-start">HARDWARE [OTC]</td>
             </tr>
             <tr v-for="(item, index) in siteInvestMaterialsList" :key="'mat-' + (item.id || index)">
               <td class="text-start">{{ item.priceListLine?.product?.name || item.priceListLine?.product?.sku || '-' }}</td>
@@ -104,11 +107,13 @@
               <td class="text-center">{{ Number(item.quantity) }}</td>
               <td class="text-center">1</td>
               <td class="text-end">{{ formatRupiahNum(item.price || 0) }}</td>
+              <td class="text-end">{{ itemPriceBuyDisplay(item) }}</td>
               <td class="text-end">{{ formatRupiahNum(getItemSubtotal(item)) }}</td>
               <td class="text-end">{{ itemExpenseDisplay(item) }}</td>
             </tr>
             <tr class="fw-bold">
               <td colspan="5" class="text-end">TOTAL</td>
+              <td class="text-end">-</td>
               <td class="text-end">{{ formatRupiahNum(materialSubtotal) }}</td>
               <td class="text-end">{{ formatRupiahNum(materialExpenseSubtotal) }}</td>
             </tr>
@@ -117,7 +122,7 @@
           <!-- DID [MRC/OTC] -->
           <template v-if="siteInvestDidsList.length > 0">
             <tr class="fw-bold bg-light">
-              <td colspan="7" class="text-start">Delivery & Installation (OTC)</td>
+              <td colspan="8" class="text-start">Delivery & Installation (OTC)</td>
             </tr>
             <tr v-for="(item, index) in siteInvestDidsList" :key="'did-' + (item.id || index)">
               <td class="text-start">{{ item.priceListLine?.did?.name || item.priceListLine?.did?.code || '-' }}</td>
@@ -125,11 +130,13 @@
               <td class="text-center">{{ Number(item.quantity) }}</td>
               <td class="text-center">1</td>
               <td class="text-end">{{ formatRupiahNum(item.price || 0) }}</td>
+              <td class="text-end">{{ itemPriceBuyDisplay(item) }}</td>
               <td class="text-end">{{ formatRupiahNum(getItemSubtotal(item)) }}</td>
               <td class="text-end">{{ itemExpenseDisplay(item) }}</td>
             </tr>
             <tr class="fw-bold">
               <td colspan="5" class="text-end">TOTAL</td>
+              <td class="text-end">-</td>
               <td class="text-end">{{ formatRupiahNum(didSubtotal) }}</td>
               <td class="text-end">{{ formatRupiahNum(didExpenseSubtotal) }}</td>
             </tr>
@@ -137,7 +144,7 @@
 
           <!-- Kosong -->
           <tr v-if="!hasAnyItems">
-            <td colspan="7" class="text-center py-4 text-muted">Tidak ada item</td>
+            <td colspan="8" class="text-center py-4 text-muted">Tidak ada item</td>
           </tr>
         </tbody>
       </table>
@@ -152,22 +159,24 @@
           <col style="width: 50px;">
           <col style="width: 50px;">
           <col style="width: 100px;">
+          <col style="width: 100px;">
           <col style="width: 110px;">
           <col style="width: 110px;">
         </colgroup>
         <tbody>
           <tr class="cetak-si-grand-total fw-bold">
             <td colspan="5" class="text-start">GRAND TOTAL</td>
+            <td class="text-end">-</td>
             <td class="text-end">{{ formatRupiahNum(grandTotalIncome) }}</td>
             <td class="text-end">{{ formatRupiahNum(grandTotalExpenses) }}</td>
           </tr>
           <tr>
             <td colspan="5" class="text-start fw-medium">INCOME LESS EXPENSES</td>
-            <td colspan="2" class="text-end">{{ formatRupiahNum(incomeLessExpenses) }}</td>
+            <td colspan="3" class="text-end">{{ formatRupiahNum(incomeLessExpenses) }}</td>
           </tr>
           <tr>
             <td colspan="5" class="text-start fw-medium">PCT MARGIN</td>
-            <td colspan="2" class="text-end">{{ pctMarginDisplay }}</td>
+            <td colspan="3" class="text-end">{{ pctMarginDisplay }}</td>
           </tr>
         </tbody>
       </table>
@@ -368,6 +377,22 @@ function getItemExpense (item) {
 
 function itemExpenseDisplay (item) {
   const val = getItemExpense(item)
+  if (val == null) return '-'
+  return formatRupiahNum(val)
+}
+
+/** Harga beli satuan (unit) dari price list line */
+function getItemPriceBuy (item) {
+  if (!item) return null
+  const pl = item.priceListLine ?? item.price_list_line
+  const v = pl?.priceBuy ?? pl?.price_buy
+  if (v === null || v === undefined || v === '') return null
+  const n = Number(v)
+  return Number.isNaN(n) ? null : n
+}
+
+function itemPriceBuyDisplay (item) {
+  const val = getItemPriceBuy(item)
   if (val == null) return '-'
   return formatRupiahNum(val)
 }

@@ -251,6 +251,7 @@ export default defineNuxtPlugin(() => {
     priceList: () => `${apiBase}/price-list`,
     priceListShow: (id: number | string) => `${apiBase}/price-list/${id}`,
     getProductPrice: () => `${apiBase}/site-investment/product-price`,
+    getProductStock: () => `${apiBase}/site-investment/product-stock`,
     getServicePrice: () => `${apiBase}/site-investment/service-price`,
     getDidPrice: () => `${apiBase}/site-investment/did-price`,
 
@@ -390,6 +391,7 @@ export default defineNuxtPlugin(() => {
     approveSubscription: (id: string) => `${apiBase}/subscription/approveSubscription/${id}`,
     rejectSubscription: (id: string) => `${apiBase}/subscription/rejectSubscription/${id}`,
     submitSubscription: (id: string) => `${apiBase}/subscription/submitSubscription/${id}`,
+    cancelSubscription: (id: string) => `${apiBase}/subscription/cancelSubscription/${id}`,
 
     // Sales Pipeline
     salesPipelineStage: () => `${apiBase}/sales-pipeline-stage`,

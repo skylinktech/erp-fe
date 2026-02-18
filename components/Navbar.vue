@@ -742,6 +742,12 @@
             case 'sales_order':
                 router.push('/sales/sales-order');
                 break;
+            case 'quotation':
+                router.push('/sales/quotation');
+                break;
+            case 'price_adjustment':
+                router.push('/price-adjustment');
+                break;
         }
         isNotificationDropdownOpen.value = false;
     };
@@ -762,6 +768,10 @@
                 return 'bg-label-info'
             case 'sales_order':
                 return 'bg-label-success'
+            case 'quotation':
+                return 'bg-label-primary'
+            case 'price_adjustment':
+                return 'bg-label-secondary'
             default:
                 return 'bg-label-secondary'
         }
@@ -777,6 +787,10 @@
                 return 'ri-shopping-bag-4-line'
             case 'sales_order':
                 return 'ri-file-list-3-line'
+            case 'quotation':
+                return 'ri-file-text-line'
+            case 'price_adjustment':
+                return 'ri-price-tag-3-line'
             default:
                 return 'ri-notification-line'
         }
@@ -785,15 +799,21 @@
     const getNotificationTitle = (notification) => {
         switch (notification.type) {
             case 'stock_in':
-                return `Stock In ${notification.noSi} belum di-posting`
+                return `Stock In ${notification.noSi || '-'} belum di-posting`
             case 'stock_out':
-                return `Stock Out ${notification.noSo} belum di-posting`
+                return `Stock Out ${notification.noSo || '-'} belum di-posting`
             case 'purchase_order':
-                return `Purchase Order ${notification.noPo} memerlukan approval`
+                return `Purchase Order ${notification.noPo || '-'} membutuhkan approval`
             case 'sales_order':
-                return `Sales Order ${notification.noSo} memerlukan approval`
+                return `Sales Order ${notification.noSo || '-'} membutuhkan approval`
+            case 'quotation':
+                return `Quotation dengan nomor ${notification.noQuotation || notification.description?.replace?.(/^Quotation\s+/i, '') || '-'} membutuhkan approval`
+            case 'price_adjustment':
+                return notification.description
+                    ? `Permintaan price adjustment membutuhkan approval`
+                    : 'Permintaan price adjustment membutuhkan approval'
             default:
-                return 'Notifikasi'
+                return notification.description || 'Notifikasi'
         }
     }
 
@@ -801,13 +821,21 @@
         switch (notification.type) {
             case 'stock_in':
             case 'stock_out':
-                return `Quantity: ${notification.quantity} | ${notification.warehouseName}`
+                return `Quantity: ${notification.quantity ?? '-'} | ${notification.warehouseName ?? '-'}`
             case 'purchase_order':
-                return `Vendor: ${notification.vendorName} | Total: ${formatCurrency(notification.total)}`
+                return `Vendor: ${notification.vendorName ?? '-'} | Total: ${formatCurrency(notification.total ?? 0)}`
             case 'sales_order':
-                return `Customer: ${notification.customerName} | Total: ${formatCurrency(notification.total)}`
+                return `Customer: ${notification.customerName ?? '-'} | Total: ${formatCurrency(notification.total ?? 0)}`
+            case 'quotation':
+                return notification.customerName
+                    ? `Customer: ${notification.customerName} | Total: ${formatCurrency(notification.total ?? 0)}`
+                    : (notification.description || '')
+            case 'price_adjustment':
+                return notification.customerName
+                    ? `Customer: ${notification.customerName}`
+                    : (notification.description || '')
             default:
-                return ''
+                return notification.description || ''
         }
     }
 

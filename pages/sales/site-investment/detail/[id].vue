@@ -367,8 +367,8 @@
                     <p class="mb-0 fw-semibold">{{ formatRupiah(totalFromApi) }}</p>
                   </div>
                   <div class="d-flex justify-content-between py-1">
-                    <label class="form-label text-muted medium mb-0">Contingency ({{ contingencyPercentFromApi || 0 }}%)</label>
-                    <p class="mb-0 fw-medium">{{ formatRupiah(contingencyAmountFromApi) }}</p>
+                    <label class="form-label text-muted medium mb-0">Marketing Fee</label>
+                    <p class="mb-0 fw-medium">{{ formatRupiah(marketingFeeFromApi) }}</p>
                   </div>
                   <hr class="my-2" />
                   <div class="d-flex justify-content-between py-1">
@@ -558,9 +558,8 @@ function fromApiNum (si: any, ...keys: string[]): number {
 }
 
 const totalFromApi = computed(() => fromApiNum(siteInvest.value, 'total'))
-const contingencyAmountFromApi = computed(() => fromApiNum(siteInvest.value, 'contingencyAmount', 'contingency_amount'))
+const marketingFeeFromApi = computed(() => fromApiNum(siteInvest.value, 'marketingFee', 'marketing_fee'))
 const grandTotalFromApi = computed(() => fromApiNum(siteInvest.value, 'grandTotal', 'grand_total'))
-const contingencyPercentFromApi = computed(() => fromApiNum(siteInvest.value, 'contingencyPercent', 'contingency_percent'))
 
 async function load () {
   if (!id.value) return

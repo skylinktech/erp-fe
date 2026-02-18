@@ -24,9 +24,10 @@ export interface StockNotification {
 
 export interface OrderNotification {
   id: string
-  type: 'purchase_order' | 'sales_order'
+  type: 'purchase_order' | 'sales_order' | 'quotation' | 'price_adjustment'
   noPo?: string
   noSo?: string
+  noQuotation?: string
   status: string
   createdAt: string
   createdBy: string
@@ -270,6 +271,7 @@ export const useNotificationsStore = defineStore('notifications', {
             paList.forEach((rec: any) => {
               const n = rec.notification || {}
               const payload = n.payload || {}
+              const productName = payload.product?.name || payload.service?.name || payload.did?.code || ''
               orderNotifications.push({
                 id: String(rec.id),
                 type: n.type || 'price_adjustment',
@@ -279,7 +281,7 @@ export const useNotificationsStore = defineStore('notifications', {
                 createdByName: payload.requestedByUser?.fullName || payload.requested_by_user?.full_name || payload.createdByName || 'Sales',
                 customerName: payload.customer?.name || payload.customerName || '',
                 total: payload.proposedPrice || payload.total || 0,
-                description: `Price request ${payload.id || n.id} ${payload.product?.name || payload.service?.name || payload.did?.code || ''}`,
+                description: productName ? `Price adjustment - ${productName}` : `Permintaan price adjustment #${payload.id || n.id}`,
               })
             })
           }
@@ -299,16 +301,18 @@ export const useNotificationsStore = defineStore('notifications', {
             qList.forEach((rec: any) => {
               const n = rec.notification || {}
               const payload = n.payload || {}
+              const noQuotation = payload.noQuotation || payload.no_quotation || ''
               orderNotifications.push({
                 id: String(rec.id),
                 type: n.type || 'quotation',
+                noQuotation,
                 status: n.event || payload.status || '',
                 createdAt: n.created_at || payload.createdAt || rec.created_at,
                 createdBy: payload.createdBy || payload.requestedBy || '',
                 createdByName: payload.createdByUser?.fullName || payload.requestedByUser?.fullName || 'Sales',
                 customerName: payload.customer?.name || '',
                 total: payload.total || payload.grandTotal || 0,
-                description: payload.noQuotation ? `Quotation ${payload.noQuotation}` : (payload.description || '')
+                description: noQuotation ? `Quotation ${noQuotation}` : (payload.description || '')
               })
             })
           }
@@ -363,6 +367,7 @@ export const useNotificationsStore = defineStore('notifications', {
               socket.on('price_adjustment', (payload: any) => {
                 try {
                   const p = payload.data || payload
+                  const productName = p.product?.name || p.service?.name || p.did?.code || ''
                   const n = {
                     id: `pa-${p.id}`,
                     type: 'price_adjustment',
@@ -372,16 +377,15 @@ export const useNotificationsStore = defineStore('notifications', {
                     createdByName: p.requestedByUser?.fullName || p.requested_by_user?.full_name || 'Sales',
                     customerName: p.customer?.name || '',
                     total: p.proposedPrice || 0,
-                    description: (payload.event || '') + ' - ' + (p.product?.name || p.service?.name || p.did?.code || '')
+                    description: productName ? `Price adjustment - ${productName}` : `Permintaan price adjustment membutuhkan approval`
                   }
                   this.orderNotifications.unshift(n as any)
                   this.notifications.unshift(n as any)
                   this.unreadCount = this.notifications.filter(notification => !this.readNotifications.has(notification.id)).length
-                  // optional: show toast (use global composable)
                   try {
                     const toast = useToast()
                     if (toast?.info) {
-                      toast.info({ title: 'Notifikasi', message: `Price request ${payload.event}` })
+                      toast.info({ title: 'Price Adjustment', message: productName ? `Price adjustment - ${productName} membutuhkan approval` : 'Permintaan price adjustment membutuhkan approval' })
                     }
                   } catch {}
                 } catch (e) {
@@ -393,16 +397,18 @@ export const useNotificationsStore = defineStore('notifications', {
               socket.on('quotation', (payload: any) => {
                 try {
                   const p = payload.data || payload
+                  const noQuotation = p.noQuotation || p.no_quotation || ''
                   const n = {
                     id: `q-${p.id}`,
                     type: 'quotation',
+                    noQuotation,
                     status: payload.event || p.status,
                     createdAt: p.createdAt || p.created_at,
                     createdBy: p.createdBy || p.created_by,
                     createdByName: p.createdByUser?.fullName || p.created_by_user?.full_name || 'Sales',
                     customerName: p.customer?.name || '',
                     total: p.total || p.grandTotal || 0,
-                    description: (payload.event || '') + ' - ' + (p.noQuotation || p.description || '')
+                    description: noQuotation ? `Quotation ${noQuotation} membutuhkan approval` : (p.description || '')
                   }
                   this.orderNotifications.unshift(n as any)
                   this.notifications.unshift(n as any)
@@ -410,7 +416,7 @@ export const useNotificationsStore = defineStore('notifications', {
                   try {
                     const toast = useToast()
                     if (toast?.info) {
-                      toast.info({ title: 'Notifikasi', message: `Quotation ${payload.event}` })
+                      toast.info({ title: 'Quotation', message: noQuotation ? `Quotation ${noQuotation} membutuhkan approval` : `Quotation ${payload.event}` })
                     }
                   } catch {}
                 } catch (e) {

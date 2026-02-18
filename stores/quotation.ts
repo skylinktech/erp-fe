@@ -63,6 +63,7 @@ export interface QuotationDidItem {
 export interface Quotation {
   id                 : string
   noQuotation        : string
+  refPo?             : string | null
   up                 : string
   siteInvestId       : string
   customerId         : number
@@ -156,6 +157,7 @@ export const useQuotationStore = defineStore('quotation', {
     },
     form: {
         noQuotation: '',
+        refPo: '',
         up: '',
         siteInvestId: null,
         customerId: null,
@@ -741,6 +743,7 @@ export const useQuotationStore = defineStore('quotation', {
                 site,
                 costCenter,
                 customer,
+                refPo: raw.refPo ?? raw.ref_po ?? '',
                 up: raw.up ?? raw.untuk_perhatian ?? '',
                 description: raw.description ?? raw.deskripsi ?? '',
             };
@@ -842,6 +845,7 @@ export const useQuotationStore = defineStore('quotation', {
         } else {
             this.form = {
                 noQuotation: '',
+                refPo: '',
                 up: '',
                 siteInvestId: null,
                 customerId: null,
@@ -875,6 +879,7 @@ export const useQuotationStore = defineStore('quotation', {
         this.isEditMode = false;
         this.form = {
             noQuotation: '',
+            refPo: '',
             up: '',
             siteInvestId: null,
             customerId: null,
@@ -1147,6 +1152,28 @@ export const useQuotationStore = defineStore('quotation', {
         });
       } finally {
         this.loading = false
+      }
+    },
+
+    /**
+     * Fetch total stock quantity for a product (for quotation modal stock check).
+     * Returns { quantity: number } or null on error.
+     */
+    async fetchProductStock(productId: number): Promise<{ quantity: number } | null> {
+      if (!productId || Number(productId) <= 0) return null
+      const { $api } = useNuxtApp()
+      const url = `${$api.getProductStock()}?productId=${encodeURIComponent(productId)}`
+      try {
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: { Accept: 'application/json' },
+          credentials: 'include',
+        })
+        if (!response.ok) return null
+        const data = await response.json()
+        return data && typeof data.quantity === 'number' ? { quantity: data.quantity } : null
+      } catch {
+        return null
       }
     },
 

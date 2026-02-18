@@ -193,18 +193,7 @@
           <template #default>
             <form @submit.prevent="costCenterStore.saveCostCenter()">
               <div class="row g-6">
-                <div class="col-md-6">
-                  <div class="form-floating form-floating-outline">
-                    <input
-                      type="text"
-                      class="form-control"
-                      v-model="form.code"
-                      placeholder="Masukkan kode cost center"
-                    />
-                    <label>Kode Cost Center *</label>
-                  </div>
-                </div>
-                <div class="col-md-6">
+                <div class="col-md-12">
                   <div class="form-floating form-floating-outline">
                     <input
                       type="text"

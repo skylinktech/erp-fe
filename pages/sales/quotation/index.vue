@@ -186,6 +186,11 @@
                                             </a>
                                         </template>
                                   </Column>
+                                    <Column field="refPo" header="Ref. PO" :sortable="true" class="text-nowrap">
+                                        <template #body="slotProps">
+                                            {{ slotProps.data.refPo || slotProps.data.ref_po || '—' }}
+                                        </template>
+                                    </Column>
                                     <Column field="customer.name" header="Customer" :sortable="true"></Column>
                                     <Column field="status" header="Status" :sortable="true">
                                         <template #body="slotProps">
@@ -336,65 +341,69 @@
                                         <input type="hidden" v-model="form.noQuotation" class="form-control" placeholder="No Quotation" >
                                     </div>
                                     <div class="col-md-3">
-                                        <label class="form-label text-muted">Site Investment</label>
+                                        <label class="form-label text-muted">Site Investment <span class="text-danger">*</span></label>
                                         <CustomSelect2 v-model="form.siteInvestId" :options="siteInvests" :get-option-label="s => s ? ((s.siNumber || '') + ' - ' + (s.name || '')) : ''" :reduce="s => s?.id" searchable clearable placeholder="Pilih Site Investment" @update:modelValue="onSiteInvestChange" />
                                         <small class="text-muted d-block mt-1">Hanya yang sudah approved</small>
                                     </div>
                                     <div class="col-md-3">
-                                        <label class="form-label text-muted">Customer</label>
+                                        <label class="form-label text-muted">Customer <span class="text-danger">*</span></label>
                                         <CustomSelect2 v-model="form.customerId" :options="customers || []" :get-option-label="option => option?.name ?? ''" :reduce="option => option?.id" searchable clearable placeholder="Pilih Customer" />
                                         <small class="text-muted d-block mt-1">Otomatis berdasarkan Site Investment</small>
                                     </div>
                                     <div class="col-md-3">
-                                        <label class="form-label text-muted">Site</label>
+                                        <label class="form-label text-muted">Site <span class="text-danger">*</span></label>
                                         <CustomSelect2 v-model="form.siteId" :options="sites" :get-option-label="s => s ? ((s.code || '') + ' - ' + (s.name || '')) : ''" :reduce="s => s?.id" searchable clearable placeholder="Pilih Site" />
                                         <small class="text-muted d-block mt-1">Otomatis berdasarkan Site Investment</small>
                                     </div>
                                     <div class="col-md-3">
-                                        <label class="form-label text-muted">Cost Center</label>
+                                        <label class="form-label text-muted">Cost Center <span class="text-danger">*</span></label>
                                         <CustomSelect2 v-model="form.costCenterId" :options="costCenters" :get-option-label="c => c ? ((c.code || '') + ' - ' + (c.name || '')) : ''" :reduce="c => c?.id" searchable clearable placeholder="Pilih Cost Center" />
                                         <small class="text-muted d-block mt-1">Otomatis berdasarkan Site Investment</small>
                                     </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label text-muted">Untuk Perhatian</label>
+                                    <div class="col-md-3">
+                                        <label class="form-label text-muted">Untuk Perhatian <span class="text-danger">*</span></label>
                                         <input type="text" v-model="form.up" class="form-control" placeholder="Untuk Perhatian" >
                                     </div>
                                     <div class="col-md-3">
-                                        <label class="form-label text-muted">Tanggal Quotation</label>
+                                        <label class="form-label text-muted">Ref. PO <small class="text-muted fw-normal">(opsional)</small></label>
+                                        <input type="text" v-model="form.refPo" class="form-control" placeholder="Ref. PO (maks. 100 karakter)" maxlength="100">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label text-muted">Tanggal Quotation <span class="text-danger">*</span></label>
                                         <input type="date" v-model="form.date" class="form-control" >
                                     </div>
                                     <div class="col-md-3">
-                                        <label class="form-label text-muted">Berlaku Sampai</label>
+                                        <label class="form-label text-muted">Berlaku Sampai <span class="text-danger">*</span></label>
                                         <input type="date" v-model="form.validUntil" class="form-control" >
                                     </div>
                                     <div class="col-md-3">
-                                        <label class="form-label text-muted">Terms of Payment</label>
+                                        <label class="form-label text-muted">Terms of Payment <small class="text-muted fw-normal">(opsional)</small></label>
                                         <CustomSelect2 v-model="form.termsOfPayment" :options="termsOfPaymentOptions" :get-option-label="o => o.label" :reduce="o => o.value" searchable clearable placeholder="Pilih" />
                                     </div>
                                     <div class="col-md-3">
-                                        <label class="form-label text-muted">DP (%)</label>
+                                        <label class="form-label text-muted">DP (%) <small class="text-muted fw-normal">(opsional)</small></label>
                                         <input type="number" v-model.number="form.dpPercent" class="form-control" placeholder="DP (%)" :disabled="form.termsOfPayment !== 'down_payment'">
                                     </div>
                                     <div class="col-md-3">
-                                        <label class="form-label text-muted">Discount (%)</label>
+                                        <label class="form-label text-muted">Discount (%) <small class="text-muted fw-normal">(opsional)</small></label>
                                         <input type="number" v-model.number="form.discountPercent" class="form-control" placeholder="Discount (%)">
                                     </div>
                                     <div class="col-md-3">
-                                        <label class="form-label text-muted">Tax (%)</label>
+                                        <label class="form-label text-muted">Tax (%) <small class="text-muted fw-normal">(opsional)</small></label>
                                         <input type="number" v-model.number="form.taxPercent" class="form-control" placeholder="Tax (%)">
                                     </div>
                                     <div class="col-md-12">
-                                        <label class="form-label text-muted">Attachment (PDF, Excel, Word, Image)</label>
+                                        <label class="form-label text-muted">Attachment (PDF, Excel, Word, Image) <small class="text-muted fw-normal">(opsional)</small></label>
                                         <input type="file" @change="onFileChange" class="form-control" accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx,.csv">
                                         <small class="text-muted d-block mt-1">Maks. 2MB</small>
                                         <a v-if="form.attachmentPreview" :href="form.attachmentPreview" target="_blank" rel="noopener noreferrer" class="d-block mt-1 small">Lihat attachment saat ini</a>
                                     </div>
                                     <div class="col-md-12">
-                                        <label class="form-label text-muted">Deskripsi</label>
+                                        <label class="form-label text-muted">Deskripsi <small class="text-muted fw-normal">(opsional)</small></label>
                                         <Editor v-model="form.description" editor-style="min-height: 200px" class="quotation-description-editor" placeholder="Deskripsi / Term and Conditions (akan tampil di cetak quotation)..." />
                                     </div>
                                     <div class="col-md-6">
-                                        <h6 class="mb-3">Add-ons</h6>
+                                        <h6 class="mb-3">Add-ons <small class="text-muted fw-normal">(opsional)</small></h6>
                                         <p class="text-muted mb-4">Pilih layanan tambahan yang akan ditambahkan ke quotation</p>
                                         <div class="form-check form-check-inline mt-4">
                                             <input type="checkbox" v-model="form.slaGuarantee" class="form-check-input" id="slaGuarantee">
@@ -413,8 +422,9 @@
                             </div>
                             <div class="tab-pane fade" id="form-tabs-items" role="tabpanel">
                                 <div class="alert alert-secondary mb-6">
-                                    <ul class="align-items-center py-0 px-2 mt-3">
+                                    <ul class="align-items-center py-0 px-2 mt-3 mb-0">
                                         <li><strong>Pilih customer terlebih dahulu</strong> di tab "Informasi Quotation"</li>
+                                        <li><span class="text-danger">*</span> <strong>Minimal 1 item</strong> produk, service, atau DID wajib diisi (di salah satu tab)</li>
                                     </ul>
                                 </div>
                                 <div v-for="(item, index) in form.quotationItems" :key="index" class="repeater-item mb-4">
@@ -426,6 +436,7 @@
                                     </div>
                                     <div class="row g-3">
                                         <div class="col-md-4">
+                                            <label class="form-label text-muted">Produk <span class="text-danger">*</span></label>
                                             <CustomSelect2 v-model="item.productId" :options="filteredCustomerProducts" 
                                                 :get-option-label="option => option ? (option.displayName || `${option.sku || ''} | ${option.name || ''}`) : ''" 
                                                 searchable 
@@ -490,10 +501,8 @@
                                              </small>
                                          </div>
                                          <div class="col-md-2">
-                                             <div class="form-floating form-floating-outline">
-                                                 <input type="number" v-model.number="item.quantity" @input="onQuantityChange(index)" class="form-control" placeholder="Qty">
-                                                 <label>Jumlah</label>
-                                             </div>
+                                            <label class="form-label text-muted">Jumlah <span class="text-danger">*</span></label>
+                                            <input type="number" v-model.number="item.quantity" @input="onQuantityChange(index)" class="form-control" placeholder="Qty">
                                          </div>
                                         <div class="col-md-3">
                                             <div class="border rounded p-3 bg-light bg-opacity-50">
@@ -501,7 +510,7 @@
                                                     <input class="form-check-input" type="checkbox" v-model="item.isPriceOverridden" :id="'customPriceItem' + index">
                                                     <label class="form-check-label" :for="'customPriceItem' + index">Custom Price</label>
                                                 </div>
-                                                <label class="form-label text-muted small mb-1">Harga</label>
+                                                <label class="form-label text-muted small mb-1">Harga <span class="text-danger">*</span></label>
                                                 <input
                                                     type="text"
                                                     :value="formatRupiah(item.price)"
@@ -514,20 +523,24 @@
                                             </div>
                                         </div>
                                          <div class="col-md-3">
-                                             <div class="form-floating form-floating-outline">
-                                                 <input type="text" :value="formatRupiah(item.subtotal)" class="form-control" placeholder="Subtotal" readonly>
-                                                 <label>Subtotal</label>
-                                             </div>
+                                            <label class="form-label text-muted">Subtotal</label>
+                                            <input type="text" :value="formatRupiah(item.subtotal)" class="form-control" placeholder="Subtotal" readonly>
                                          </div>
                                          <div class="col-12">
                                               <div class="form-floating form-floating-outline">
                                                  <input type="text" v-model="item.description" class="form-control" placeholder="Deskripsi item">
-                                                 <label>Deskripsi</label>
+                                                 <label>Deskripsi <small class="text-muted fw-normal">(opsional)</small></label>
                                              </div>
                                              <div v-if="item.isPriceOverridden" class="mt-2">
                                                <div class="form-floating form-floating-outline">
                                                  <textarea v-model="item.priceReason" class="form-control" placeholder="Alasan custom price" rows="2"></textarea>
                                                  <label>Alasan Custom Price <span class="text-danger">*</span></label>
+                                               </div>
+                                             </div>
+                                             <div class="mt-2" v-if="isProductStockInsufficient(index)" role="alert">
+                                               <div class="alert alert-danger py-2 mb-0">
+                                                 <i class="ri-error-warning-line me-1"></i>
+                                                 Stock pada product ini tidak mencukupi.
                                                </div>
                                              </div>
                                          </div>
@@ -563,15 +576,15 @@
                                      </div>
                                      <div class="row g-3">
                                          <div class="col-md-3">
-                                             <label class="form-label text-muted">Service</label>
+                                             <label class="form-label text-muted">Service <span class="text-danger">*</span></label>
                                              <CustomSelect2 v-model="item.serviceId" :options="serviceOptions" :get-option-label="s => s?.name ?? ''" :reduce="s => s?.id" searchable clearable placeholder="Pilih Service" @update:modelValue="onServiceChange(idx)" />
                                          </div>
                                          <div class="col-md-2">
-                                             <label class="form-label text-muted">Unit</label>
+                                             <label class="form-label text-muted">Unit <span class="text-danger">*</span></label>
                                              <CustomSelect2 v-model="item.unitId" :options="units" :get-option-label="u => u ? (u.symbol || u.name || '') : ''" :reduce="u => u?.id" searchable clearable placeholder="Unit" />
                                          </div>
                                          <div class="col-md-2">
-                                            <label class="form-label text-muted">Jumlah</label>
+                                            <label class="form-label text-muted">Jumlah <span class="text-danger">*</span></label>
                                             <input type="number" v-model.number="item.quantity" @input="calculateServiceSubtotal(idx)" class="form-control" placeholder="Qty" min="1" disabled>
                                          </div>
                                          <div class="col-md-3">
@@ -663,7 +676,7 @@
                                      </div>
                                      <div class="row g-3">
                                          <div class="col-md-4">
-                                             <label class="form-label text-muted">Item (Price List Line)</label>
+                                             <label class="form-label text-muted">Item (Price List Line) <small class="text-muted fw-normal">(opsional)</small></label>
                                              <template v-if="form.useDidFromSiteInvest === false">
                                                  <CustomSelect2
                                                      v-model="item.priceListLineId"
@@ -803,6 +816,9 @@ import InputText from 'primevue/inputtext'
   const units = ref([])
   const priceListLinesDid = ref([])
 
+  /** Per-index: true jika stock product tidak mencukupi untuk qty yang diminta (item produk) */
+  const productStockInsufficient = ref({})
+
 // State
 const globalFilterValue = ref('');
 const attachmentPreview = ref(null);
@@ -831,9 +847,11 @@ const filters = ref({
 
   watch(showModal, async (visible) => {
     if (visible) {
+      productStockInsufficient.value = {};
       await nextTick();
       // Ensure all service items have billingType when modal opens
       await ensureServiceBillingTypes();
+      await Promise.all((form.value?.quotationItems || []).map((_, i) => checkProductStock(i)));
       summaryRefreshKey.value += 1;
     }
   });
@@ -1455,6 +1473,8 @@ const filters = ref({
                   };
                 });
                 form.value.quotationItems = resolved.filter((item) => item.productId != null);
+                await nextTick();
+                await Promise.all((form.value.quotationItems || []).map((_, i) => checkProductStock(i)));
               } else {
                 // Jika tidak ada material yang valid untuk customer, reset ke satu item kosong
                 form.value.quotationItems = [];
@@ -1577,6 +1597,30 @@ const filters = ref({
     }
   };
 
+  function isProductStockInsufficient(i) {
+    return !!(productStockInsufficient.value && productStockInsufficient.value[i]);
+  }
+
+  async function checkProductStock(index) {
+    const item = form.value?.quotationItems?.[index];
+    const productId = item?.productId != null ? Number(item.productId) : null;
+    if (!productId || productId <= 0) {
+      const next = Object.assign({}, productStockInsufficient.value);
+      next[index] = false;
+      productStockInsufficient.value = next;
+      return;
+    }
+    const res = await quotationStore.fetchProductStock(productId);
+    const requested = Number(item?.quantity) || 0;
+    let available = 0;
+    if (res != null && typeof res.quantity === 'number') {
+      available = res.quantity;
+    }
+    const next = Object.assign({}, productStockInsufficient.value);
+    next[index] = requested > 0 && available < requested;
+    productStockInsufficient.value = next;
+  }
+
   const onProductChange = (index) => {
     if (!form.value || !form.value.quotationItems) return;
     const selectedProductId = form.value.quotationItems[index].productId;
@@ -1626,6 +1670,7 @@ const filters = ref({
       } finally {
         calculateSubtotal(index);
         refreshModalSummary();
+        await checkProductStock(index);
       }
     })();
   };
@@ -1762,6 +1807,7 @@ const filters = ref({
     }
     
     calculateSubtotal(index);
+    checkProductStock(index);
   };
 
   const calculateSubtotal = (index) => {

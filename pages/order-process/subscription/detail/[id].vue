@@ -41,6 +41,9 @@
                   <a v-if="(userHasRole('superadmin') || userHasPermission('edit_subscription')) && subscription.status === 'draft'" class="dropdown-item" href="javascript:void(0)" @click="onSubmit">
                     <i class="ri-send-plane-line me-2"></i> Submit Subscription
                   </a>
+                  <a v-if="(userHasRole('superadmin') || userHasPermission('edit_subscription')) && (subscription.status === 'draft' || subscription.status === 'signed')" class="dropdown-item text-warning" href="javascript:void(0)" @click="onCancel">
+                    <i class="ri-close-circle-line me-2"></i> Cancel Subscription
+                  </a>
                   <a v-if="subscription.status === 'draft'" class="dropdown-item" href="javascript:void(0)" @click="navigateTo('/order-process/subscription?edit=' + subscription.id)">
                     <i class="ri-edit-box-line me-2"></i> Edit
                   </a>
@@ -141,6 +144,23 @@
                       <label class="form-label text-muted medium">Legal Tech Review Date</label>
                       <p class="mb-0">{{ formatDateTime(subscription.leTechReviewAt) }}</p>
                     </div>
+                    <template v-if="subscription.status === 'canceled'">
+                      <div class="col-12 mt-3 pt-3 border-top">
+                        <h6 class="text-danger mb-2"><i class="ri-close-circle-line me-1"></i> Informasi Pembatalan</h6>
+                      </div>
+                      <div class="col-md-6" v-if="subscription.canceledAt || subscription.canceled_at">
+                        <label class="form-label text-muted medium">Tanggal Cancel</label>
+                        <p class="mb-0">{{ formatDateTime(subscription.canceledAt || subscription.canceled_at) }}</p>
+                      </div>
+                      <div class="col-md-6" v-if="subscription.canceledByUser || subscription.canceled_by">
+                        <label class="form-label text-muted medium">Canceled By</label>
+                        <p class="mb-0">{{ (subscription.canceledByUser?.fullName || subscription.canceledByUser?.full_name) || subscription.canceled_by || '—' }}</p>
+                      </div>
+                      <div class="col-12" v-if="subscription.reasonCancel || subscription.reason_cancel">
+                        <label class="form-label text-muted medium">Alasan Cancel</label>
+                        <p class="mb-0">{{ subscription.reasonCancel || subscription.reason_cancel || '—' }}</p>
+                      </div>
+                    </template>
                   </div>
                 </div>
               </div>
@@ -394,6 +414,7 @@ import { storeToRefs } from 'pinia'
 import { useSubscriptionStore } from '~/stores/subscription'
 import { usePermissions } from '~/composables/usePermissions'
 import { useImageUrl } from '~/composables/useImageUrl'
+import Swal from 'sweetalert2'
 
 const route = useRoute()
 const subscriptionStore = useSubscriptionStore()
@@ -423,6 +444,7 @@ function getStatusBadge (status: string) {
     case 'active': return { text: 'Active', class: 'badge rounded-pill bg-label-success' }
     case 'terminated': return { text: 'Terminated', class: 'badge rounded-pill bg-label-warning' }
     case 'expired': return { text: 'Expired', class: 'badge rounded-pill bg-label-dark' }
+    case 'canceled': return { text: 'Canceled', class: 'badge rounded-pill bg-label-danger' }
     default: return { text: status || '—', class: 'badge rounded-pill bg-label-light' }
   }
 }
@@ -515,6 +537,34 @@ async function onSubmit () {
     if (ok) refreshAfterAction()
   } finally {
     submitting.value = false
+  }
+}
+
+async function onCancel () {
+  if (!subscription.value) return
+  const result = await Swal.fire({
+    title: 'Cancel Subscription',
+    html: `<div style="text-align:left;width:100%;padding:0">
+             <p style="margin:0 0 0.75rem 0">Yakin ingin membatalkan subscription <strong>${subscription.value.noSubscription || subscription.value.no_subscription}</strong>?</p>
+             <label for="swal-reason-cancel-detail" style="display:block;margin-bottom:0.35rem;font-weight:500">Alasan cancel (opsional)</label>
+             <textarea id="swal-reason-cancel-detail" rows="3" placeholder="Masukkan alasan cancel..." style="width:100%;box-sizing:border-box;padding:0.5rem 0.6rem;margin:0;border:1px solid #d9dee3;border-radius:0.375rem;font-size:0.9375rem;resize:vertical;min-height:4rem"></textarea>
+           </div>`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#d33',
+    cancelButtonColor: '#6c757d',
+    confirmButtonText: 'Ya, Cancel',
+    cancelButtonText: 'Batal',
+    preConfirm: () => (document.getElementById('swal-reason-cancel-detail') as HTMLTextAreaElement)?.value?.trim() || null,
+  })
+  if (result.isConfirmed) {
+    submitting.value = true
+    try {
+      const ok = await subscriptionStore.cancelSubscription(subscription.value!.id, result.value ?? null)
+      if (ok) refreshAfterAction()
+    } finally {
+      submitting.value = false
+    }
   }
 }
 
