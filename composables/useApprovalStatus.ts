@@ -1,6 +1,19 @@
 /** Composable untuk status approval (Approved by X / Rejected by X): Jabatan → Role → fullName */
 
 export function useApprovalStatus() {
+  /** Dapatkan (currentStep, totalSteps) untuk approved: dari approvalLogs + workflow.steps */
+  function getApprovedStepCount(row: any): { current: number; total: number } | null {
+    const logs = row?.approvalLogs || row?.approval_logs || []
+    const approvedLogs = logs.filter((l: any) => (l.action ?? l.Action) === 'approved')
+    if (approvedLogs.length === 0) return null
+    const last = approvedLogs[approvedLogs.length - 1]
+    const steps = last?.workflow?.steps || []
+    const total = steps.length
+    if (total === 0) return null
+    const current = approvedLogs.length
+    return { current, total }
+  }
+
   /** Label untuk "Approved by X" / "Rejected by X": prioritas Jabatan → Role → step_name → fullName user; fallback approvedByUser/rejectedByUser jika tidak ada approvalLogs */
   function getApprovalStepJabatan(row: any, action: 'approved' | 'rejected') {
     const logs = row?.approvalLogs || []
@@ -44,11 +57,19 @@ export function useApprovalStatus() {
     const base = map[status] ?? { text: status, class: 'badge rounded-pill bg-label-light' }
     if (status === 'approved') {
       const by = getApprovalStepJabatan(row, 'approved')
-      return { text: by ? `Approved by ${by}` : base.text, class: base.class }
+      const stepCount = getApprovedStepCount(row)
+      const stepSuffix = stepCount && stepCount.total > 0 ? ` (${stepCount.current}/${stepCount.total})` : ''
+      return { text: by ? `Approved by ${by}${stepSuffix}` : base.text, class: base.class }
     }
     if (status === 'rejected') {
       const by = getApprovalStepJabatan(row, 'rejected')
       return { text: by ? `Rejected by ${by}` : base.text, class: base.class }
+    }
+    if (status === 'pending') {
+      const prog = row?.signatureProgress ?? row?.signature_progress
+      if (prog && typeof prog.count === 'number' && typeof prog.required === 'number' && prog.required > 0) {
+        return { text: `Pending (${prog.count}/${prog.required})`, class: base.class }
+      }
     }
     return base
   }
@@ -74,14 +95,22 @@ export function useApprovalStatus() {
     const map = { ...defaultMap, ...statusMap }
     if (status === 'approved') {
       const by = getApprovalStepJabatan(row, 'approved')
-      return by ? `Approved by ${by}` : (map[status] ?? status.toUpperCase())
+      const stepCount = getApprovedStepCount(row)
+      const stepSuffix = stepCount && stepCount.total > 0 ? ` (${stepCount.current}/${stepCount.total})` : ''
+      return by ? `Approved by ${by}${stepSuffix}` : (map[status] ?? status.toUpperCase())
     }
     if (status === 'rejected') {
       const by = getApprovalStepJabatan(row, 'rejected')
       return by ? `Rejected by ${by}` : (map[status] ?? status.toUpperCase())
     }
+    if (status === 'pending') {
+      const prog = row?.signatureProgress ?? row?.signature_progress
+      if (prog && typeof prog.count === 'number' && typeof prog.required === 'number' && prog.required > 0) {
+        return `Pending (${prog.count}/${prog.required})`
+      }
+    }
     return map[status] ?? status.toUpperCase()
   }
 
-  return { getApprovalStepJabatan, getStatusBadge, getStatusText }
+  return { getApprovalStepJabatan, getApprovedStepCount, getStatusBadge, getStatusText }
 }

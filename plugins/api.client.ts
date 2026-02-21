@@ -376,8 +376,22 @@ export default defineNuxtPlugin(() => {
     // Business Schemes (untuk dropdown Site Investment)
     businessSchemes: () => `${apiBase}/business-schemes`,
 
+    // FDR
+    fdr: () => `${apiBase}/fdr`,
+    fdrPriceListLines: (priceableType: string) => `${apiBase}/fdr/price-list-lines?priceableType=${priceableType}`,
+    countFdrByStatus: () => `${apiBase}/fdr/countByStatus`,
+    approveFdr: (id: string) => `${apiBase}/fdr/approveFdr/${id}`,
+    rejectFdr: (id: string) => `${apiBase}/fdr/rejectFdr/${id}`,
+    submitFdr: (id: string) => `${apiBase}/fdr/submitFdr/${id}`,
+    cancelFdr: (id: string) => `${apiBase}/fdr/cancelFdr/${id}`,
+    fdrProductPrice: () => `${apiBase}/fdr/product-price`,
+    fdrProductStock: () => `${apiBase}/fdr/product-stock`,
+    fdrServicePrice: () => `${apiBase}/fdr/service-price`,
+    fdrDidPrice: () => `${apiBase}/fdr/did-price`,
+
     // Site Investment
     siteInvestment: () => `${apiBase}/site-investment`,
+    siteInvestmentShow: (id: string) => `${apiBase}/site-investment/${id}`,
     siteInvestmentPriceListLines: (priceableType: string) => `${apiBase}/site-investment/price-list-lines?priceableType=${priceableType}`,
     countSiteInvestByStatus: () => `${apiBase}/site-investment/countByStatus`,
     approveSiteInvestment: (id: string) => `${apiBase}/site-investment/approveSiteInvestment/${id}`,

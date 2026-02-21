@@ -102,14 +102,14 @@ export interface SiteInvest {
   signedAt?: string | null
   signedBy?: number | null
   didSubtotal: number
-  contingencyPercent: number
-  contingencyAmount: number
   marketingFee: number
   total: number
   grandTotal: number
   overBudget: boolean
   status: 'draft' | 'pending' | 'approved' | 'rejected' | 'expired' | 'cancelled'
   siteId?: number | null
+  fdrId?: string | null
+  fdr?: { id: string; fdrNumber?: string; name?: string }
   site?: { id: number; code?: string; name?: string; address?: string | null; latitude?: number | null; longitude?: number | null }
   businessSchemeId?: number | null
   businessScheme?: { id: number; code?: string; name?: string }
@@ -133,6 +133,7 @@ export interface SiteInvest {
   attachment?: string | null
   preparedBy?: Array<{ id_pegawai: number; nm_pegawai: string }>
   currentApprovalStep?: number | null
+  signatureProgress?: { count: number; required: number }
   currentApprovers?: Array<{ userId: number; fullName?: string; email?: string; source?: string }>
   approvalLogs?: Array<{
     id: number
@@ -206,6 +207,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
       name: '',
       customerId: null,
       siteId: null,
+      fdrId: null,
       businessSchemeId: null,
       priority: 'medium',
       location: '',
@@ -214,7 +216,6 @@ export const useSiteInvestStore = defineStore('siteInvest', {
       siDate: new Date().toISOString().split('T')[0],
       estimatedStartDate: new Date().toISOString().split('T')[0],
       estimatedCompletionDate: new Date().toISOString().split('T')[0],
-      contingencyPercent: 0,
       marketingFee: 0,
       status: 'draft',
       notes: '',
@@ -278,8 +279,8 @@ export const useSiteInvestStore = defineStore('siteInvest', {
         if (!response.ok) throw new Error('Gagal mengambil data site investment')
 
         const result = await response.json()
-        this.siteInvests = result.data
-        this.totalRecords = result.meta.total
+        this.siteInvests = result.data || []
+        this.totalRecords = result.meta?.total ?? 0
       } catch (e: any) {
         console.error('Gagal mengambil data site investment:', e)
         this.error = e
@@ -352,7 +353,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
             message: 'Price list harus diisi untuk setiap baris Material, Service, atau DID.',
             color: 'red',
           })
-          return
+          return false
         }
 
         const formData = new FormData()
@@ -364,6 +365,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
         delete dataToAppend.siteInvestBudgets
         delete dataToAppend.customer
         delete dataToAppend.site
+        delete dataToAppend.fdr
         delete dataToAppend.businessScheme
         delete dataToAppend.createdByUser
         delete dataToAppend.approvedByUser
@@ -374,7 +376,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
 
         // Field yang nullable - selalu kirim (termasuk null/undefined)
         // Untuk FormData, kita kirim string kosong untuk null, dan backend akan menanganinya
-        const nullableFields = ['customerId', 'siteId', 'businessSchemeId', 'lat', 'long', 'notes']
+        const nullableFields = ['customerId', 'siteId', 'fdrId', 'businessSchemeId', 'lat', 'long', 'notes']
         
         Object.keys(dataToAppend).forEach(key => {
           const value = dataToAppend[key]
@@ -386,10 +388,13 @@ export const useSiteInvestStore = defineStore('siteInvest', {
             } else {
               formData.append(key, String(value))
             }
+          } else if (key === 'marketingFee') {
+            const rawVal = value != null && value !== '' ? String(value).replace(/[Rp\s.]/g, '').replace(',', '.') : '0'
+            const numVal = parseFloat(rawVal) || 0
+            formData.append(key, String(numVal))
           } else {
-            // Untuk field lain, hanya kirim jika tidak null/undefined
             if (value !== null && value !== undefined && value !== '') {
-              formData.append(key, value)
+              formData.append(key, String(value))
             }
           }
         })
@@ -490,6 +495,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
               message: 'Gagal Validasi',
               color: 'red'
             })
+            return false
           } else {
             throw new Error(errorData.message || 'Gagal menyimpan data site investment')
           }
@@ -504,6 +510,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
             position: 'topRight',
             layout: 2,
           })
+          return true
         }
       } catch (error: any) {
         this.validationErrors = []
@@ -515,15 +522,28 @@ export const useSiteInvestStore = defineStore('siteInvest', {
           position: 'topRight',
           layout: 2,
         })
+        return false
       } finally {
         this.loading = false
       }
     },
 
     async deleteSiteInvest(id: string) {
-      this.loading = true
       const { $api } = useNuxtApp()
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+      if (!id || id === 'undefined' || id === 'null' || String(id).trim() === '' || !uuidRegex.test(String(id))) {
+        const toast = useToast()
+        toast.error({
+          title: 'Error',
+          message: 'ID Site Investment tidak valid',
+          color: 'red',
+          position: 'topRight',
+          layout: 2,
+        })
+        return false
+      }
 
+      this.loading = true
       const result = await Swal.fire({
         title: 'Apakah Anda yakin?',
         text: "Data yang dihapus tidak dapat dikembalikan!",
@@ -580,9 +600,20 @@ export const useSiteInvestStore = defineStore('siteInvest', {
     },
 
     async approveSiteInvest(siteInvestId: string) {
+      const { $api } = useNuxtApp()
+      if (!siteInvestId || siteInvestId === 'undefined' || siteInvestId === 'null' || String(siteInvestId).trim() === '') {
+        const toast = useToast()
+        toast.error({
+          title: 'Error',
+          message: 'ID Site Investment tidak valid',
+          color: 'red',
+          position: 'topRight',
+          layout: 2,
+        })
+        return false
+      }
       this.loading = true
       this.error = null
-      const { $api } = useNuxtApp()
       const result = await Swal.fire({
         title: 'Approve Site Investment',
         text: 'Apakah Anda yakin akan menyetujui Site Investment ini?',
@@ -628,6 +659,8 @@ export const useSiteInvestStore = defineStore('siteInvest', {
           throw new Error(errorData.message || 'Gagal mengapprove site investment')
         }
 
+        this.params.status = null
+        this.params.first = 0
         await this.fetchSiteInvests()
         const toast = useToast()
         toast.success({
@@ -659,6 +692,11 @@ export const useSiteInvestStore = defineStore('siteInvest', {
     },
 
     async cancelSiteInvest(siteInvestId: string) {
+      if (!siteInvestId || siteInvestId === 'undefined' || siteInvestId === 'null' || String(siteInvestId).trim() === '') {
+        const toast = useToast()
+        toast.error({ title: 'Error', message: 'ID Site Investment tidak valid', color: 'red', position: 'topRight', layout: 2 })
+        return false
+      }
       this.loading = true
       this.error = null
       const { $api } = useNuxtApp()
@@ -691,6 +729,8 @@ export const useSiteInvestStore = defineStore('siteInvest', {
           throw new Error(errorData.message || 'Gagal membatalkan site investment')
         }
 
+        this.params.status = null
+        this.params.first = 0
         await this.fetchSiteInvests()
         await this.fetchStats()
         const toast = useToast()
@@ -720,6 +760,11 @@ export const useSiteInvestStore = defineStore('siteInvest', {
     },
 
     async rejectSiteInvest(siteInvestId: string) {
+      if (!siteInvestId || siteInvestId === 'undefined' || siteInvestId === 'null' || String(siteInvestId).trim() === '') {
+        const toast = useToast()
+        toast.error({ title: 'Error', message: 'ID Site Investment tidak valid', color: 'red', position: 'topRight', layout: 2 })
+        return false
+      }
       this.loading = true
       this.error = null
       const { $api } = useNuxtApp()
@@ -752,6 +797,8 @@ export const useSiteInvestStore = defineStore('siteInvest', {
           throw new Error(errorData.message || 'Gagal mereject site investment')
         }
 
+        this.params.status = null
+        this.params.first = 0
         await this.fetchSiteInvests()
         const toast = useToast()
         toast.success({
@@ -780,6 +827,11 @@ export const useSiteInvestStore = defineStore('siteInvest', {
     },
 
     async submitSiteInvest(siteInvestId: string) {
+      if (!siteInvestId || siteInvestId === 'undefined' || siteInvestId === 'null' || String(siteInvestId).trim() === '') {
+        const toast = useToast()
+        toast.error({ title: 'Error', message: 'ID Site Investment tidak valid', color: 'red', position: 'topRight', layout: 2 })
+        return false
+      }
       this.loading = true
       this.error = null
       const { $api } = useNuxtApp()
@@ -812,6 +864,8 @@ export const useSiteInvestStore = defineStore('siteInvest', {
           throw new Error(errorData.message || 'Gagal submit site investment')
         }
 
+        this.params.status = null
+        this.params.first = 0
         await this.fetchSiteInvests()
         await this.fetchStats()
         const toast = useToast()
@@ -841,6 +895,10 @@ export const useSiteInvestStore = defineStore('siteInvest', {
     },
 
     async getSiteInvestDetails(siId: string) {
+      if (!siId || siId === 'undefined' || siId === 'null' || String(siId).trim() === '') {
+        this.error = new Error('ID Site Investment tidak valid')
+        return
+      }
       this.loading = true
       this.error = null
       const { $api } = useNuxtApp()
@@ -872,7 +930,13 @@ export const useSiteInvestStore = defineStore('siteInvest', {
       this.validationErrors = []
 
       if (siteInvestData) {
-        await this.getSiteInvestDetails(siteInvestData.id)
+        const siId = siteInvestData.id ?? (siteInvestData as any).id
+        if (!siId || siId === 'undefined') {
+          const toast = useToast()
+          toast.error({ title: 'Error', message: 'ID Site Investment tidak valid.', color: 'red', position: 'topRight' })
+          return
+        }
+        await this.getSiteInvestDetails(siId)
         const fullData = this.siteInvest
 
         if (!fullData) {
@@ -901,7 +965,6 @@ export const useSiteInvestStore = defineStore('siteInvest', {
           }
         })
 
-        formData.contingencyPercent = Number(formData.contingencyPercent) || 0
         formData.marketingFee = Number(formData.marketingFee ?? formData.marketing_fee) || 0
 
         // Pastikan array items pakai key camelCase (API bisa return snake_case)
@@ -981,6 +1044,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
         this.addDidItem()
         this.addBudgetItem()
       }
+      this.loading = false
       this.showModal = true
     },
 
@@ -999,6 +1063,16 @@ export const useSiteInvestStore = defineStore('siteInvest', {
       this.form.siteInvestBudgets.splice(index, 1)
     },
 
+    /** Open modal with prefilled FDR (e.g. from FDR detail "Proceed to SI" flow) */
+    openModalFromFdr(fdrId: string) {
+      this.isEditMode = false
+      this.loading = false
+      this.validationErrors = []
+      this.resetForm()
+      this.form.fdrId = fdrId
+      this.showModal = true
+    },
+
     closeModal() {
       this.showModal = false
       this.isEditMode = false
@@ -1012,6 +1086,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
         name: '',
         customerId: null,
         siteId: null,
+        fdrId: null,
         businessSchemeId: null,
         priority: 'medium',
         location: '',
@@ -1020,7 +1095,6 @@ export const useSiteInvestStore = defineStore('siteInvest', {
         siDate: new Date().toISOString().split('T')[0],
         estimatedStartDate: new Date().toISOString().split('T')[0],
         estimatedCompletionDate: new Date().toISOString().split('T')[0],
-        contingencyPercent: 0,
         marketingFee: 0,
         status: 'draft',
         siteInvestMaterials: [],

@@ -77,6 +77,7 @@ export default defineNuxtConfig({
   plugins: [
     '~/plugins/jquery.client.ts',
     '~/plugins/bootstrap.client.ts',
+    '~/plugins/bootstrap-select.client.ts',
     '~/plugins/api.client.ts',
     '~/plugins/quill.client.ts',
     '~/plugins/primevue.ts',
@@ -157,8 +158,6 @@ export default defineNuxtConfig({
         { src: '/vendor/libs/hammer/hammer.js', body: true, type: 'text/javascript' },
         // @ts-ignore
         { src: '/vendor/libs/select2/select2.js', body: true, type: 'text/javascript' },
-        // @ts-ignore
-        { src: '/vendor/libs/bootstrap-select/bootstrap-select.js', body: true, type: 'text/javascript' },
         // @ts-ignore
         { src: '/vendor/libs/typeahead-js/typeahead.js', body: true, type: 'text/javascript' },
         // @ts-ignore

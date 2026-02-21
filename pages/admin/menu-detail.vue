@@ -114,12 +114,12 @@
                                                     <a href="javascript:;" class="btn btn-sm btn-text-secondary rounded-pill btn-icon dropdown-toggle hide-arrow" data-bs-toggle="dropdown"><i class="ri-more-2-fill"></i>
                                                     </a>
                                                     <ul class="dropdown-menu">
-                                                        <li v-if="userHasPermission('edit_menu_detail')">
-                                                            <a class="dropdown-item" href="javascript:void(0)" @click="menuDetailStore.openModal(slotProps.data)">
+                                                        <li v-if="userHasRole('superadmin') || userHasPermission('edit_menu_detail')">
+                                                            <a class="dropdown-item" href="javascript:void(0)" @click="menuDetailStore.openModal(slotProps.data, true)">
                                                                 <i class="ri-edit-box-line me-2"></i> Edit  
                                                             </a>
                                                         </li>
-                                                        <li v-if="userHasPermission('delete_menu_detail')">
+                                                        <li v-if="userHasRole('superadmin') || userHasPermission('delete_menu_detail')">
                                                             <a class="dropdown-item" href="javascript:void(0)" @click="menuDetailStore.deleteMenuDetail(slotProps.data.id)">
                                                                 <i class="ri-delete-bin-7-line me-2"></i> Delete
                                                             </a>
@@ -264,6 +264,7 @@ import InputText from 'primevue/inputtext'
 import { useDebounceFn } from '@vueuse/core'
 import { usePermissions } from '~/composables/usePermissions'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
+import { useUserStore } from '~/stores/user'
 
 // Composables
 const { setListTitle, setFormTitle } = useDynamicTitle()
@@ -271,7 +272,8 @@ const { setListTitle, setFormTitle } = useDynamicTitle()
 const myDataTableRef = ref(null)
 const menuDetailStore = useMenuDetailStore()
 const { menuDetails, menuGroups, loading, totalRecords, params, form, isEditMode, showModal, validationErrors } = storeToRefs(menuDetailStore)
-const { userHasPermission } = usePermissions();
+const { userHasPermission, userHasRole } = usePermissions();
+const { user } = useUserStore();
 
 const globalFilterValue = ref('')
 const rowsPerPageOptionsArray = ref([10, 25, 50, 100]);

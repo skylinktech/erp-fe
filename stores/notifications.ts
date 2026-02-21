@@ -424,6 +424,36 @@ export const useNotificationsStore = defineStore('notifications', {
                 }
               })
 
+              socket.on('fdr', (payload: any) => {
+                try {
+                  const p = payload.data || payload
+                  const fdrNumber = p.fdrNumber || p.fdr_number || ''
+                  const n = {
+                    id: `fdr-${p.id}`,
+                    type: 'fdr',
+                    status: payload.event || p.status,
+                    createdAt: p.createdAt || p.created_at,
+                    createdBy: p.createdBy || p.created_by,
+                    createdByName: p.createdByUser?.fullName || p.created_by_user?.full_name || 'Sales',
+                    description: fdrNumber ? `FDR ${fdrNumber}` : `FDR ${p.name || p.id || ''}`
+                  }
+                  this.orderNotifications.unshift(n as any)
+                  this.notifications.unshift(n as any)
+                  this.unreadCount = this.notifications.filter(notification => !this.readNotifications.has(notification.id)).length
+                  try {
+                    const toast = useToast()
+                    if (toast?.info) {
+                      const msg = payload.event === 'submitted'
+                        ? (fdrNumber ? `FDR ${fdrNumber} membutuhkan approval` : 'FDR membutuhkan approval')
+                        : (fdrNumber ? `FDR ${fdrNumber} telah diapprove` : 'FDR telah diapprove')
+                      toast.info({ title: 'FDR', message: msg })
+                    }
+                  } catch {}
+                } catch (e) {
+                  console.error('WS payload handle error (fdr)', e)
+                }
+              })
+
               socket.on('disconnect', () => {
                 console.warn('Notification socket disconnected')
               })

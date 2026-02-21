@@ -267,7 +267,7 @@
                                                             <i class="ri-eye-line me-2"></i> Lihat Detail
                                                         </a>
                                                     </li>
-                                                    <li v-if="userHasRole('superadmin') || (userHasPermission('edit_purchase_order') && slotProps.data.status == 'draft')">
+                                                    <li v-if="(userHasRole('superadmin') || userHasPermission('edit_purchase_order')) && canEditQuotation(slotProps.data)">
                                                         <a class="dropdown-item" href="javascript:void(0)" @click="quotationStore.fetchQuotationForEdit(slotProps.data.id)">
                                                             <i class="ri-edit-box-line me-2"></i> Edit
                                                         </a>
@@ -1910,7 +1910,18 @@ const filters = ref({
       navigateTo(`/sales/quotation/detail/${quotationId}`);
   };
 
-  const { getStatusBadge: _getStatusBadge, getApprovalStepJabatan } = useApprovalStatus();
+  const { getStatusBadge: _getStatusBadge, getApprovalStepJabatan, getApprovedStepCount } = useApprovalStatus();
+
+  function canEditQuotation(row) {
+    if (!row) return false
+    const s = row.status
+    if (s === 'draft' || s === 'pending') return true
+    if (s === 'approved') {
+      const stepCount = getApprovedStepCount(row)
+      return stepCount != null && stepCount.total > 0 && stepCount.current < stepCount.total
+    }
+    return false
+  }
   const getStatusBadge = (row) => _getStatusBadge(row, {
       draft: { text: 'Draft', class: 'badge rounded-pill bg-label-secondary' },
       pending: { text: 'Pending', class: 'badge rounded-pill bg-label-warning' },

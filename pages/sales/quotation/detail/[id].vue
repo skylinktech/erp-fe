@@ -47,7 +47,7 @@
                   <a v-if="canApprove" class="dropdown-item" href="javascript:void(0)" @click="onReject">
                     <i class="ri-close-line me-2"></i> Reject
                   </a>
-                  <a class="dropdown-item" href="javascript:void(0)" @click="navigateTo('/sales/quotation?edit=' + quotation.id)">
+                  <a v-if="(userHasRole('superadmin') || userHasPermission('edit_purchase_order')) && canEditQuotation(quotation)" class="dropdown-item" href="javascript:void(0)" @click="navigateTo('/sales/quotation?edit=' + quotation.id)">
                     <i class="ri-edit-box-line me-2"></i> Edit
                   </a>
                   <a v-if="userHasRole('superadmin') || quotation.status === 'approved'" class="dropdown-item" href="javascript:void(0)" @click="onPrintQuotation">
@@ -419,7 +419,18 @@ function formatDateTime (v: string | null | undefined) {
   return new Date(v).toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
-const { getStatusBadge, getStatusText } = useApprovalStatus()
+const { getStatusBadge, getStatusText, getApprovedStepCount } = useApprovalStatus()
+
+function canEditQuotation(row: any) {
+  if (!row) return false
+  const s = row.status
+  if (s === 'draft' || s === 'pending') return true
+  if (s === 'approved') {
+    const stepCount = getApprovedStepCount(row)
+    return stepCount != null && stepCount.total > 0 && stepCount.current < stepCount.total
+  }
+  return false
+}
 
 // Nilai numerik dari API (camelCase / snake_case), tidak hitung ulang (selaras halaman SI/detail)
 function fromApiNum (q: any, ...keys: string[]): number {

@@ -1,5 +1,5 @@
 <template>
-  <div class="container-xxl flex-grow-1 container-p-y">
+  <div class="container-xxl flex-grow-1 container-pt-12">
     <div class="row">
       <div class="col-12">
         <div class="card">
@@ -202,6 +202,8 @@ const mapRecipientToItem = (r: any) => {
         return `PKS ${payload.noPks || payload.no_pks || payload.id || ''}`.trim()
       case 'iro':
         return `IRO ${payload.noIro || payload.no_iro || payload.id || ''}`.trim()
+      case 'fdr':
+        return `FDR ${payload.fdrNumber || payload.fdr_number || payload.id || ''}`.trim()
       case 'price_adjustment':
         return `Price Adjustment ${payload.id || ''}`.trim()
       default:
@@ -300,8 +302,12 @@ const handleRecipientClick = async (item: any) => {
   if (!item.isRead) await markRecipientAsRead(item)
   // basic navigation heuristics
   const t = item.type
+  const payload = item.raw?.notification?.payload || {}
   if (t === 'purchase_order') navigateTo('/purchasing/purchase-order')
   else if (t === 'sales_order') navigateTo('/sales/sales-order')
+  else if (t === 'site_investment' && payload.id) navigateTo(`/sales/site-investment/detail/${payload.id}`)
+  else if (t === 'fdr' && payload.id) navigateTo(`/sales/fdr/detail/${payload.id}`)
+  else if (t === 'fdr') navigateTo('/sales/fdr')
   else if (t === 'price_adjustment') {
     // go to price adjustment detail if payload contains id
     const payload = item.raw.notification?.payload || {}
@@ -376,6 +382,8 @@ const getTypeBadgeClass = (type: string) => {
       return 'bg-dark'
     case 'iro':
       return 'bg-warning'
+    case 'fdr':
+      return 'bg-info'
     default:
       return 'bg-secondary'
   }
@@ -405,6 +413,8 @@ const getTypeText = (type: string) => {
       return 'PKS'
     case 'iro':
       return 'IRO'
+    case 'fdr':
+      return 'FDR'
     default:
       return 'Unknown'
   }
@@ -448,8 +458,14 @@ const getStatusText = (status: string) => {
       return 'Pending'
     case 'draft':
       return 'Draft'
+    case 'submitted':
+      return 'Perlu Approval'
+    case 'approved':
+      return 'Sudah Approved'
+    case 'rejected':
+      return 'Ditolak'
     default:
-      return 'Not Posted'
+      return status || '—'
   }
 }
 

@@ -1,4 +1,5 @@
 <template>
+  <div>
   <div class="page-wrapper">
     <div class="content-wrapper">
       <div class="container-xxl flex-grow-1 container p-y">
@@ -8,59 +9,71 @@
             <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
               <span class="visually-hidden">Loading...</span>
             </div>
-            <p class="mt-3 text-muted">Memuat detail Site Investment...</p>
+            <p class="mt-3 text-muted">Memuat detail FDR...</p>
           </div>
         </div>
 
         <!-- Error -->
-        <div v-else-if="error && !siteInvest" class="alert alert-danger">
+        <div v-else-if="error && !fdr" class="alert alert-danger">
           <i class="ri-error-warning-line me-2"></i>
           {{ error.message || 'Gagal memuat data.' }}
-          <NuxtLink to="/sales/site-investment" class="alert-link ms-2">Kembali ke Daftar</NuxtLink>
+          <NuxtLink to="/sales/fdr" class="alert-link ms-2">Kembali ke Daftar</NuxtLink>
         </div>
 
         <!-- Content -->
-        <template v-else-if="siteInvest">
+        <template v-else-if="fdr">
           <!-- Header: Breadcrumb + Actions -->
           <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
             <div class="d-flex flex-wrap align-items-center gap-3">
-              <NuxtLink to="/sales/site-investment" class="btn btn-outline-secondary btn-sm">
+              <NuxtLink to="/sales/fdr" class="btn btn-outline-secondary btn-sm">
                 <i class="ri-arrow-left-line me-1"></i> Kembali
               </NuxtLink>
               <span class="text-muted align-self-center">/</span>
               <div class="d-flex flex-column">
-                <h4 class="mb-0 fw-semibold">{{ siteInvest.siNumber || siteInvest.name }}</h4>
-                <small class="text-muted">{{ formatDateTime(siteInvest.createdAt) }}</small>
+                <h4 class="mb-0 fw-semibold">{{ fdr.fdrNumber || fdr.name }}</h4>
+                <small class="text-muted">{{ formatDateTime(fdr.createdAt) }}</small>
               </div>
-              <span :class="getStatusBadge(siteInvest).class" class="badge">{{ getStatusBadge(siteInvest).text }}</span>
-              <span :class="getPriorityBadge(siteInvest.priority).class" class="badge">{{ getPriorityBadge(siteInvest.priority).text }}</span>
-              <span v-if="siteInvest.overBudget" class="badge bg-label-warning">
+              <span :class="getStatusBadge(fdr).class" class="badge">{{ getStatusBadge(fdr).text }}</span>
+              <span :class="getPriorityBadge(fdr.priority).class" class="badge">{{ getPriorityBadge(fdr.priority).text }}</span>
+              <span v-if="fdr.overBudget" class="badge bg-label-warning">
                 <i class="ri-alert-line me-1"></i> Over Budget
+              </span>
+              <span v-if="fdr.pocNeeded" class="badge bg-label-info">
+                <i class="ri-checkbox-circle-line me-1"></i> POC Needed
               </span>
             </div>
             <div class="d-flex flex-wrap gap-2">
+              <!-- Proceed to SI Button -->
+              <button
+                v-if="fdr.status === 'approved' && (userHasRole('superadmin') || userHasPermission('create_site_investment'))"
+                @click="openSiteInvestmentModal"
+                class="btn btn-success btn-sm"
+              >
+                <i class="ri-file-add-line me-1"></i>
+                Proceed to SI
+              </button>
               <div class="btn-group" role="group">
                 <button id="btnGroupDrop1" type="button" class="btn btn-outline-secondary dropdown-toggle btn-sm" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="d-none d-sm-block">Actions</span></button>
                 <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
-                  <a v-if="siteInvest.status === 'draft'" class="dropdown-item" href="javascript:void(0)" @click="onSubmit">
-                    <i class="ri-send-plane-line me-2"></i> Submit SI
+                  <a v-if="fdr.status === 'draft' && (userHasRole('superadmin') || userHasPermission('edit_fdr'))" class="dropdown-item" href="javascript:void(0)" @click="onSubmit">
+                    <i class="ri-send-plane-line me-2"></i> Submit FDR
                   </a>
-                  <a class="dropdown-item" href="javascript:void(0)" @click="onApprove">
+                  <a v-if="fdr.status === 'pending' && (userHasRole('superadmin') || userHasPermission('approve_fdr'))" class="dropdown-item" href="javascript:void(0)" @click="onApprove">
                     <i class="ri-check-line me-2"></i> Approve
                   </a>
-                  <a class="dropdown-item" href="javascript:void(0)" @click="onReject">
+                  <a v-if="fdr.status === 'pending' && (userHasRole('superadmin') || userHasPermission('reject_fdr'))" class="dropdown-item" href="javascript:void(0)" @click="onReject">
                     <i class="ri-close-line me-2"></i> Reject
                   </a>
-                  <a class="dropdown-item" href="javascript:void(0)" @click="onCancel">
+                  <a v-if="fdr.status === 'approved' && (userHasRole('superadmin') || userHasPermission('create_site_investment'))" class="dropdown-item" href="javascript:void(0)" @click="openSiteInvestmentModal">
+                    <i class="ri-file-add-line me-2"></i> Proceed to SI
+                  </a>
+                  <a v-if="fdr.status !== 'cancelled' && (userHasRole('superadmin') || userHasPermission('approve_fdr'))" class="dropdown-item" href="javascript:void(0)" @click="onCancel">
                     <i class="ri-close-circle-line me-2"></i> Cancel
                   </a>
-                  <a v-if="canEditSiteInvest(siteInvest)" class="dropdown-item" href="javascript:void(0)" @click="navigateTo('/sales/site-investment?edit=' + siteInvest.id)">
+                  <a v-if="(userHasRole('superadmin') || userHasPermission('edit_fdr'))" class="dropdown-item" href="javascript:void(0)" @click="navigateTo('/sales/fdr?edit=' + fdr.id)">
                     <i class="ri-edit-box-line me-2"></i> Edit
                   </a>
-                  <a v-if="siteInvest.status === 'approved'" class="dropdown-item" href="javascript:void(0)" @click="onPrintSI">
-                    <i class="ri-printer-line me-2"></i> Print SI
-                  </a>
-                  <a class="dropdown-item text-danger" href="javascript:void(0)" @click="handleDelete">
+                  <a v-if="userHasRole('superadmin') || userHasPermission('delete_fdr')" class="dropdown-item text-danger" href="javascript:void(0)" @click="handleDelete">
                     <i class="ri-delete-bin-7-line me-2"></i> Hapus
                   </a>
                 </div>
@@ -76,7 +89,7 @@
             <div class="card-body px-5 pt-0 pb-4">
               <div class="d-flex flex-wrap align-items-center gap-2 process-flow">
                 <span class="process-pill process-pill-done">
-                  <i class="ri-check-line me-1"></i> Site Investment{{ siteInvest.siDate ? ' (' + formatDate(siteInvest.siDate) + ')' : '' }}
+                  <i class="ri-check-line me-1"></i> FDR{{ fdr.fdrDate ? ' (' + formatDate(fdr.fdrDate) + ')' : '' }}
                 </span>
                 <span class="process-arrow text-muted">&gt;</span>
                 <span class="process-pill process-pill-pending">
@@ -108,91 +121,63 @@
                   <div class="row g-2">
                     <div class="col-md-6">
                       <label class="form-label text-muted medium">Nama Project</label>
-                      <p class="mb-0 fw-medium">{{ siteInvest.name || '—' }}</p>
+                      <p class="mb-0 fw-medium">{{ fdr.name || '—' }}</p>
                     </div>
                     <div class="col-md-6">
                       <label class="form-label text-muted medium">Customer</label>
-                      <p class="mb-0 fw-medium">{{ siteInvest.customer?.name || '—' }}</p>
+                      <p class="mb-0 fw-medium">{{ fdr.customer?.name || '—' }}</p>
                     </div>
-                    <div class="col-md-6" v-if="siteInvest.site">
+                    <div class="col-md-6" v-if="fdr.site">
                       <label class="form-label text-muted medium">Site</label>
-                      <p class="mb-0 fw-medium">{{ (siteInvest.site?.code || '') + ' - ' + (siteInvest.site?.name || '—') }}</p>
+                      <p class="mb-0 fw-medium">{{ (fdr.site?.code || '') + ' - ' + (fdr.site?.name || '—') }}</p>
                     </div>
-                    <div class="col-md-6" v-if="siteInvest.businessSchemeId">
+                    <div class="col-md-6" v-if="fdr.businessSchemeId">
                       <label class="form-label text-muted medium">Skema</label>
                       <p class="mb-0">
-                        <span :class="getBusinessSchemeBadgeClass(siteInvest.businessSchemeId)" class="badge">
-                          {{ siteInvest.businessScheme?.name || siteInvest.businessScheme?.code || '—' }}
+                        <span :class="getBusinessSchemeBadgeClass(fdr.businessSchemeId)" class="badge">
+                          {{ fdr.businessScheme?.name || fdr.businessScheme?.code || '—' }}
                         </span>
                       </p>
                     </div>
                     <div class="col-md-6">
                       <label class="form-label text-muted medium">Lokasi</label>
-                      <p class="mb-0">{{ siteInvest.location || '—' }}</p>
+                      <p class="mb-0">{{ fdr.location || '—' }}</p>
                     </div>
                     <div class="col-md-6">
-                      <label class="form-label text-muted medium">Tanggal SI</label>
-                      <p class="mb-0">{{ formatDate(siteInvest.siDate) }}</p>
+                      <label class="form-label text-muted medium">Tanggal FDR</label>
+                      <p class="mb-0">{{ formatDate(fdr.fdrDate) }}</p>
                     </div>
                     <div class="col-md-6">
                       <label class="form-label text-muted medium">Estimasi Mulai</label>
-                      <p class="mb-0">{{ formatDate(siteInvest.estimatedStartDate) }}</p>
+                      <p class="mb-0">{{ formatDate(fdr.estimatedStartDate) }}</p>
                     </div>
                     <div class="col-md-6">
                       <label class="form-label text-muted medium">Estimasi Selesai</label>
-                      <p class="mb-0">{{ formatDate(siteInvest.estimatedCompletionDate) }}</p>
+                      <p class="mb-0">{{ formatDate(fdr.estimatedCompletionDate) }}</p>
                     </div>
-                    <div class="col-md-6" v-if="siteInvest.lat || siteInvest.long">
-                      <label class="form-label text-muted medium">Koordinat</label>
-                      <p class="mb-0">
-                        <a
-                          v-if="siteInvest.lat && siteInvest.long"
-                          :href="`https://www.google.com/maps?q=${siteInvest.lat},${siteInvest.long}`"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          class="text-primary"
-                        >
-                          {{ siteInvest.lat }}, {{ siteInvest.long }}
-                          <i class="ri-external-link-line ms-1 medium"></i>
-                        </a>
-                        <span v-else>—</span>
-                      </p>
-                    </div>
-                    <div class="col-6" v-if="siteInvest.notes">
+                    <div class="col-6" v-if="fdr.notes">
                       <label class="form-label text-muted medium">Catatan</label>
-                      <p class="mb-0 text-break">{{ siteInvest.notes }}</p>
+                      <p class="mb-0 text-break">{{ fdr.notes }}</p>
                     </div>
-                    <div class="col-12" v-if="siteInvest.attachment">
+                    <div class="col-12" v-if="fdr.attachment">
                       <label class="form-label text-muted medium">Attachment</label>
                       <a
-                        :href="getAttachmentUrl(siteInvest.attachment)"
+                        :href="getAttachmentUrl(fdr.attachment)"
                         target="_blank"
                         rel="noopener noreferrer"
                         class="d-inline-flex align-items-center gap-2 badge bg-label-primary text-decoration-none py-2 px-3"
                       >
-                        <i :class="getFileIcon(siteInvest.attachment) + ' me-1'"></i>
+                        <i :class="getFileIcon(fdr.attachment) + ' me-1'"></i>
                         Lihat / Unduh File
                       </a>
                       <img
-                        v-if="isImageFile(siteInvest.attachment)"
-                        :src="getAttachmentUrl(siteInvest.attachment)"
+                        v-if="isImageFile(fdr.attachment)"
+                        :src="getAttachmentUrl(fdr.attachment)"
                         alt="Attachment"
                         class="d-block mt-2 rounded border"
                         style="max-height: 160px; max-width: 100%; object-fit: contain;"
                         @error="(e) => (e.target.style.display = 'none')"
                       />
-                    </div>
-                    <div class="col-12" v-if="(siteInvest.preparedBy || []).length">
-                      <label class="form-label text-muted medium">Prepared By</label>
-                      <p class="mb-0">
-                        <span
-                          v-for="(p, i) in (siteInvest.preparedBy || [])"
-                          :key="p.id_pegawai ?? p.idPegawai ?? i"
-                          class="badge bg-label-secondary me-1 mb-1"
-                        >
-                          {{ p.nm_pegawai || p.nmPegawai || '—' }}
-                        </span>
-                      </p>
                     </div>
                   </div>
                 </div>
@@ -205,10 +190,10 @@
                     <i class="ri-product-hunt-line me-2 text-primary"></i>
                     Material / Produk
                   </h5>
-                  <span class="badge bg-label-primary">{{ (siteInvest.siteInvestMaterials || []).length }} item</span>
+                  <span class="badge bg-label-primary">{{ (fdr.fdrItems ?? fdr.fdr_items ?? []).length }} item</span>
                 </div>
                 <div class="card-body px-5 pt-4 pb-4">
-                  <div v-if="!((siteInvest.siteInvestMaterials ?? siteInvest.site_invest_materials) || []).length" class="text-muted text-center py-4">
+                  <div v-if="!((fdr.fdrItems ?? fdr.fdr_items) || []).length" class="text-muted text-center py-4">
                     Tidak ada material
                   </div>
                   <div v-else class="table-responsive">
@@ -222,8 +207,8 @@
                         </tr>
                       </thead>
                       <tbody>
-                        <tr v-for="(m, i) in ((siteInvest.siteInvestMaterials ?? siteInvest.site_invest_materials) || [])" :key="m.id || i">
-                          <td>{{ m.priceListLine?.product?.name || m.priceListLine?.product?.sku || '—' }}</td>
+                        <tr v-for="(m, i) in ((fdr.fdrItems ?? fdr.fdr_items) || [])" :key="m.id || i">
+                          <td>{{ m.priceListLine?.product?.name || m.priceListLine?.product?.sku || m.price_list_line?.product?.name || '—' }}</td>
                           <td class="text-center">{{ m.quantity ?? 0 }}</td>
                           <td class="text-end">{{ formatRupiah(m.price) }}</td>
                           <td class="text-end fw-medium">{{ formatRupiah(m.subtotal) }}</td>
@@ -242,10 +227,10 @@
                     <i class="ri-service-line me-2 text-primary"></i>
                     Managed Service
                   </h5>
-                  <span class="badge bg-label-primary">{{ ((siteInvest.siteInvestServices ?? siteInvest.site_invest_services) || []).length }} item</span>
+                  <span class="badge bg-label-primary">{{ ((fdr.fdrServices ?? fdr.fdr_services) || []).length }} item</span>
                 </div>
                 <div class="card-body px-5 pt-4 pb-4">
-                  <div v-if="!((siteInvest.siteInvestServices ?? siteInvest.site_invest_services) || []).length" class="text-muted text-center py-4">
+                  <div v-if="!((fdr.fdrServices ?? fdr.fdr_services) || []).length" class="text-muted text-center py-4">
                     Tidak ada service
                   </div>
                   <div v-else class="table-responsive">
@@ -259,8 +244,8 @@
                         </tr>
                       </thead>
                       <tbody>
-                        <tr v-for="(s, i) in ((siteInvest.siteInvestServices ?? siteInvest.site_invest_services) || [])" :key="s.id || i">
-                          <td>{{ s.priceListLine?.service?.name || '—' }}</td>
+                        <tr v-for="(s, i) in ((fdr.fdrServices ?? fdr.fdr_services) || [])" :key="s.id || i">
+                          <td>{{ s.priceListLine?.service?.name || s.price_list_line?.service?.name || '—' }}</td>
                           <td class="text-center">{{ s.quantity ?? 0 }}</td>
                           <td class="text-end">{{ formatRupiah(getServicePrice(s)) }}</td>
                           <td class="text-end fw-medium">{{ formatRupiah(getServiceSubtotal(s)) }}</td>
@@ -272,17 +257,17 @@
                 </div>
               </div>
 
-              <!-- DID (Delivery/Installation) -->
+              <!-- DID -->
               <div class="card mb-4 shadow-sm border-0">
                 <div class="card-header border-0 bg-transparent px-5 py-4 d-flex justify-content-between align-items-center">
                   <h5 class="card-title mb-0 d-flex align-items-center">
                     <i class="ri-truck-line me-2 text-primary"></i>
                     DID (Delivery / Installation)
                   </h5>
-                  <span class="badge bg-label-primary">{{ ((siteInvest.siteInvestDids ?? siteInvest.site_invest_dids) || []).length }} item</span>
+                  <span class="badge bg-label-primary">{{ ((fdr.fdrDids ?? fdr.fdr_dids) || []).length }} item</span>
                 </div>
                 <div class="card-body px-5 pt-4 pb-4">
-                  <div v-if="!((siteInvest.siteInvestDids ?? siteInvest.site_invest_dids) || []).length" class="text-muted text-center py-4">
+                  <div v-if="!((fdr.fdrDids ?? fdr.fdr_dids) || []).length" class="text-muted text-center py-4">
                     Tidak ada DID
                   </div>
                   <div v-else class="table-responsive">
@@ -296,8 +281,8 @@
                         </tr>
                       </thead>
                       <tbody>
-                        <tr v-for="(d, i) in ((siteInvest.siteInvestDids ?? siteInvest.site_invest_dids) || [])" :key="d.id || i">
-                          <td>{{ d.priceListLine?.did?.code || d.priceListLine?.did?.name || '—' }}</td>
+                        <tr v-for="(d, i) in ((fdr.fdrDids ?? fdr.fdr_dids) || [])" :key="d.id || i">
+                          <td>{{ d.priceListLine?.did?.code || d.priceListLine?.did?.name || d.price_list_line?.did?.code || '—' }}</td>
                           <td class="text-center">{{ d.quantity ?? 1 }}</td>
                           <td class="text-end">{{ formatRupiah(d.price) }}</td>
                           <td class="text-end fw-medium">{{ formatRupiah(d.subtotal) }}</td>
@@ -305,34 +290,6 @@
                       </tbody>
                     </table>
                     <p class="mb-0 text-end fw-semibold mt-3">Subtotal DID: {{ formatRupiah(didSubtotalFromApi) }}</p>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Budget -->
-              <div class="card mb-4 shadow-sm border-0" v-if="(siteInvest.siteInvestBudgets || []).length">
-                <div class="card-header border-0 bg-transparent px-5 py-4">
-                  <h5 class="card-title mb-0 d-flex align-items-center">
-                    <i class="ri-money-dollar-circle-line me-2 text-primary"></i>
-                    Alokasi Budget
-                  </h5>
-                </div>
-                <div class="card-body px-5 pt-4 pb-4">
-                  <div class="table-responsive">
-                    <table class="table table-sm table-hover align-middle">
-                      <thead>
-                        <tr>
-                          <th>Sumber Budget</th>
-                          <th>Budget Holder (Penanggung Jawab)</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr v-for="(b, i) in (siteInvest.siteInvestBudgets || [])" :key="b.id || i">
-                          <td>{{ (b.budgetSource?.budgetCode || b.budgetSource?.budget_code || '') + ' - ' + (b.budgetSource?.budgetName || b.budgetSource?.budget_name || '—') }}</td>
-                          <td>{{ b.budgetHolder?.fullName || b.budgetHolder?.email || '—' }}</td>
-                        </tr>
-                      </tbody>
-                    </table>
                   </div>
                 </div>
               </div>
@@ -363,15 +320,6 @@
                   </div>
                   <hr class="my-2" />
                   <div class="d-flex justify-content-between py-1">
-                    <label class="form-label text-muted medium mb-0">Total Investasi</label>
-                    <p class="mb-0 fw-semibold">{{ formatRupiah(totalFromApi) }}</p>
-                  </div>
-                  <div class="d-flex justify-content-between py-1">
-                    <label class="form-label text-muted medium mb-0">Marketing Fee</label>
-                    <p class="mb-0 fw-medium">{{ formatRupiah(marketingFeeFromApi) }}</p>
-                  </div>
-                  <hr class="my-2" />
-                  <div class="d-flex justify-content-between py-1">
                     <label class="form-label text-muted medium mb-0">Grand Total</label>
                     <p class="mb-0 fw-medium fs-5 text-primary">{{ formatRupiah(grandTotalFromApi) }}</p>
                   </div>
@@ -389,23 +337,23 @@
                 <div class="card-body px-5 pt-4 pb-4">
                   <div class="mb-3">
                     <label class="form-label text-muted mb-1">Nama Customer</label>
-                    <p class="mb-0 fw-medium">{{ siteInvest.customer?.name || '—' }}</p>
+                    <p class="mb-0 fw-medium">{{ fdr.customer?.name || '—' }}</p>
                   </div>
                   <div class="mb-3">
                     <label class="form-label text-muted mb-1">Telepon</label>
-                    <p class="mb-0 fw-medium">{{ siteInvest.customer?.phone || '—' }}</p>
+                    <p class="mb-0 fw-medium">{{ fdr.customer?.phone || '—' }}</p>
                   </div>
                   <div class="mb-3">
                     <label class="form-label text-muted mb-1">Email</label>
-                    <p class="mb-0 fw-medium">{{ siteInvest.customer?.email || '—' }}</p>
+                    <p class="mb-0 fw-medium">{{ fdr.customer?.email || '—' }}</p>
                   </div>
                   <div class="mb-3">
                     <label class="form-label text-muted mb-1">Alamat</label>
-                    <p class="mb-0 fw-medium text-break">{{ siteInvest.customer?.address || '—' }}</p>
+                    <p class="mb-0 fw-medium text-break">{{ fdr.customer?.address || '—' }}</p>
                   </div>
-                  <div v-if="siteInvest.customer?.npwp" class="mb-0">
+                  <div v-if="fdr.customer?.npwp" class="mb-0">
                     <label class="form-label text-muted mb-1">NPWP</label>
-                    <p class="mb-0 fw-medium">{{ siteInvest.customer.npwp }}</p>
+                    <p class="mb-0 fw-medium">{{ fdr.customer.npwp }}</p>
                   </div>
                 </div>
               </div>
@@ -422,18 +370,18 @@
                   <div class="mb-3">
                     <label class="form-label text-muted mb-1">Status</label>
                     <p class="mb-0">
-                      <span :class="getStatusBadge(siteInvest).class" class="badge">{{ getStatusBadge(siteInvest).text }}</span>
+                      <span :class="getStatusBadge(fdr).class" class="badge">{{ getStatusBadge(fdr).text }}</span>
                     </p>
                   </div>
-                  <div v-if="siteInvest.status === 'approved' && (getApprovalStepJabatan(siteInvest, 'approved') || siteInvest.approvedByUser)" class="mb-3">
+                  <div v-if="fdr.status === 'approved' && (getApprovalStepJabatan(fdr, 'approved') || fdr.approvedByUser)" class="mb-3">
                     <label class="form-label text-muted mb-1">Disetujui Oleh</label>
-                    <p class="mb-0 fw-medium">{{ getApprovalStepJabatan(siteInvest, 'approved') || siteInvest.approvedByUser?.fullName || siteInvest.approvedByUser?.full_name || '—' }}</p>
-                    <small v-if="siteInvest.approvedAt" class="text-muted">{{ formatDateTime(siteInvest.approvedAt) }}</small>
+                    <p class="mb-0 fw-medium">{{ getApprovalStepJabatan(fdr, 'approved') || fdr.approvedByUser?.fullName || fdr.approvedByUser?.full_name || '—' }}</p>
+                    <small v-if="fdr.approvedAt" class="text-muted">{{ formatDateTime(fdr.approvedAt) }}</small>
                   </div>
-                  <div v-if="siteInvest.status === 'rejected' && (getApprovalStepJabatan(siteInvest, 'rejected') || siteInvest.rejectedByUser)" class="mb-0">
+                  <div v-if="fdr.status === 'rejected' && (getApprovalStepJabatan(fdr, 'rejected') || fdr.rejectedByUser)" class="mb-0">
                     <label class="form-label text-muted mb-1">Ditolak Oleh</label>
-                    <p class="mb-0 fw-medium">{{ getApprovalStepJabatan(siteInvest, 'rejected') || siteInvest.rejectedByUser?.fullName || siteInvest.rejectedByUser?.full_name || '—' }}</p>
-                    <small v-if="siteInvest.rejectedAt" class="text-muted">{{ formatDateTime(siteInvest.rejectedAt) }}</small>
+                    <p class="mb-0 fw-medium">{{ getApprovalStepJabatan(fdr, 'rejected') || fdr.rejectedByUser?.fullName || fdr.rejectedByUser?.full_name || '—' }}</p>
+                    <small v-if="fdr.rejectedAt" class="text-muted">{{ formatDateTime(fdr.rejectedAt) }}</small>
                   </div>
                 </div>
               </div>
@@ -444,53 +392,48 @@
     </div>
     <div class="content-backdrop fade"></div>
   </div>
+  <SiteInvestFormModal
+    modal-id="FdrSiteInvestModal"
+    :prefilled-fdr-id="fdr?.id"
+    @saved="onSiteInvestSaved"
+    @close="onSiteInvestClose"
+  />
+  </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
+import { useFdrStore } from '~/stores/fdr'
 import { useSiteInvestStore } from '~/stores/site-invest'
+import SiteInvestFormModal from '~/components/modal/SiteInvestFormModal.vue'
 import { usePermissions } from '~/composables/usePermissions'
 import { useImageUrl } from '~/composables/useImageUrl'
 import { useApprovalStatus } from '~/composables/useApprovalStatus'
 
 const route = useRoute()
+const fdrStore = useFdrStore()
 const siteInvestStore = useSiteInvestStore()
 const { userHasPermission, userHasRole } = usePermissions()
 const { getAttachmentUrl, getFileIcon, isImageFile } = useImageUrl()
-const { getStatusBadge, getApprovalStepJabatan, getApprovedStepCount } = useApprovalStatus()
-
-function canEditSiteInvest(row: any) {
-  if (!row) return false
-  const s = row.status
-  if (s === 'draft' || s === 'pending') return true
-  if (s === 'approved') {
-    const stepCount = getApprovedStepCount(row)
-    return stepCount != null && stepCount.total > 0 && stepCount.current < stepCount.total
-  }
-  return false
-}
+const { getStatusBadge, getApprovalStepJabatan } = useApprovalStatus()
 const formatRupiah = useFormatRupiah()
 
-const { siteInvest, loading, error } = storeToRefs(siteInvestStore)
+const { fdr, loading, error } = storeToRefs(fdrStore)
 
-const id = computed(() => {
-  const p = route.params.id
-  if (p == null || p === 'undefined' || p === 'null') return ''
-  return String(p)
-})
+const id = computed(() => String(route.params.id || ''))
 
-function formatDate (v: string | null | undefined) {
+function formatDate(v: string | null | undefined) {
   if (!v) return '—'
   return new Date(v).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
-function formatDateTime (v: string | null | undefined) {
+function formatDateTime(v: string | null | undefined) {
   if (!v) return '—'
   return new Date(v).toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
-function getPriorityBadge (priority: string) {
+function getPriorityBadge(priority: string) {
   switch (priority) {
     case 'low': return { text: 'Low', class: 'badge rounded-pill bg-label-info' }
     case 'medium': return { text: 'Medium', class: 'badge rounded-pill bg-label-warning' }
@@ -499,7 +442,7 @@ function getPriorityBadge (priority: string) {
   }
 }
 
-function getBusinessSchemeBadgeClass (businessSchemeId: number | null | undefined): string {
+function getBusinessSchemeBadgeClass(businessSchemeId: number | null | undefined): string {
   switch (businessSchemeId) {
     case 1: return 'bg-label-info'
     case 2: return 'bg-label-secondary'
@@ -509,16 +452,14 @@ function getBusinessSchemeBadgeClass (businessSchemeId: number | null | undefine
   }
 }
 
-/** Harga satuan service: murni dari API (tidak hitung ulang) */
-function getServicePrice (s: any): number {
+function getServicePrice(s: any): number {
   if (!s) return 0
   const p = s.price ?? (s as any).price
   const n = Number(p)
   return Number.isNaN(n) ? 0 : n
 }
 
-/** Subtotal service per baris: murni dari API; fallback qty×price hanya jika subtotal tidak ada */
-function getServiceSubtotal (s: any): number {
+function getServiceSubtotal(s: any): number {
   if (!s) return 0
   const st = s.subtotal ?? (s as any).subtotal
   if (st !== undefined && st !== null && st !== '') {
@@ -530,37 +471,7 @@ function getServiceSubtotal (s: any): number {
   return qty * price
 }
 
-/** Subtotal service: selalu dari API (service_subtotal / serviceSubtotal), tidak hitung ulang */
-const serviceSubtotalFromApi = computed(() => {
-  const si = siteInvest.value
-  if (!si) return 0
-  const v = (si as any).serviceSubtotal ?? (si as any).service_subtotal
-  if (v === undefined || v === null || v === '') return 0
-  const n = Number(v)
-  return Number.isNaN(n) ? 0 : n
-})
-
-/** Subtotal material: dari API (material_subtotal / materialSubtotal) */
-const materialSubtotalFromApi = computed(() => {
-  const si = siteInvest.value
-  if (!si) return 0
-  const v = (si as any).materialSubtotal ?? (si as any).material_subtotal
-  if (v === undefined || v === null || v === '') return 0
-  const n = Number(v)
-  return Number.isNaN(n) ? 0 : n
-})
-
-/** Subtotal DID: dari API (did_subtotal / didSubtotal) */
-const didSubtotalFromApi = computed(() => {
-  const si = siteInvest.value
-  if (!si) return 0
-  const v = (si as any).didSubtotal ?? (si as any).did_subtotal
-  if (v === undefined || v === null || v === '') return 0
-  const n = Number(v)
-  return Number.isNaN(n) ? 0 : n
-})
-
-function fromApiNum (si: any, ...keys: string[]): number {
+function fromApiNum(si: any, ...keys: string[]): number {
   if (!si) return 0
   for (const k of keys) {
     const v = (si as any)[k]
@@ -572,65 +483,84 @@ function fromApiNum (si: any, ...keys: string[]): number {
   return 0
 }
 
-const totalFromApi = computed(() => fromApiNum(siteInvest.value, 'total'))
-const marketingFeeFromApi = computed(() => fromApiNum(siteInvest.value, 'marketingFee', 'marketing_fee'))
-const grandTotalFromApi = computed(() => fromApiNum(siteInvest.value, 'grandTotal', 'grand_total'))
+const serviceSubtotalFromApi = computed(() => {
+  const d = fdr.value
+  if (!d) return 0
+  return fromApiNum(d, 'serviceSubtotal', 'service_subtotal')
+})
 
-async function load () {
+const materialSubtotalFromApi = computed(() => {
+  const d = fdr.value
+  if (!d) return 0
+  return fromApiNum(d, 'materialSubtotal', 'material_subtotal')
+})
+
+const didSubtotalFromApi = computed(() => {
+  const d = fdr.value
+  if (!d) return 0
+  return fromApiNum(d, 'didSubtotal', 'did_subtotal')
+})
+
+const totalFromApi = computed(() => fromApiNum(fdr.value, 'total'))
+const grandTotalFromApi = computed(() => fromApiNum(fdr.value, 'grandTotal', 'grand_total'))
+
+async function load() {
   if (!id.value) return
   try {
-    await siteInvestStore.getSiteInvestDetails(id.value)
+    await fdrStore.getFdrDetails(id.value)
   } catch (e) {
     console.error('Detail load error:', e)
   }
 }
 
-function refreshAfterAction () {
+function refreshAfterAction() {
   setTimeout(() => load(), 500)
 }
 
-function getTargetId () {
-  return siteInvest.value?.id || id.value
-}
-
-async function onApprove () {
-  const targetId = getTargetId()
-  if (!targetId) return
-  await siteInvestStore.approveSiteInvest(targetId)
+async function onApprove() {
+  if (!fdr.value) return
+  await fdrStore.approveFdr(fdr.value.id)
   refreshAfterAction()
 }
 
-async function onReject () {
-  const targetId = getTargetId()
-  if (!targetId) return
-  await siteInvestStore.rejectSiteInvest(targetId)
+async function onReject() {
+  if (!fdr.value) return
+  await fdrStore.rejectFdr(fdr.value.id)
   refreshAfterAction()
 }
 
-async function onSubmit () {
-  const targetId = getTargetId()
-  if (!targetId) return
-  await siteInvestStore.submitSiteInvest(targetId)
+async function onSubmit() {
+  if (!fdr.value) return
+  await fdrStore.submitFdr(fdr.value.id)
   refreshAfterAction()
 }
 
-async function onCancel () {
-  const targetId = getTargetId()
-  if (!targetId) return
-  await siteInvestStore.cancelSiteInvest(targetId)
+async function onCancel() {
+  if (!fdr.value) return
+  await fdrStore.cancelFdr(fdr.value.id)
   refreshAfterAction()
 }
 
-async function handleDelete () {
-  const targetId = siteInvest.value?.id || id.value
-  if (!targetId) return
-  const deleted = await siteInvestStore.deleteSiteInvest(targetId)
-  if (deleted) navigateTo('/sales/site-investment')
+async function handleDelete() {
+  if (!fdr.value) return
+  const deleted = await fdrStore.deleteFdr(fdr.value.id)
+  if (deleted) navigateTo('/sales/fdr')
 }
 
-function onPrintSI () {
-  if (!siteInvest.value?.id) return
-  navigateTo({ path: '/sales/cetak-si', query: { id: siteInvest.value.id, print: 'true' } })
+function openSiteInvestmentModal() {
+  if (!fdr.value) return
+  siteInvestStore.openModalFromFdr(fdr.value.id)
+}
+
+function onSiteInvestSaved() {
+  const toast = useToast()
+  toast.success({ title: 'Sukses', message: 'Site Investment berhasil dibuat dari FDR', color: 'green', position: 'topRight', layout: 2 })
+  load()
+  navigateTo('/sales/site-investment')
+}
+
+function onSiteInvestClose() {
+  // Modal closed
 }
 
 onMounted(() => load())
@@ -639,6 +569,7 @@ watch(id, () => load())
 definePageMeta({
   layout: 'default',
   middleware: ['auth', 'check-permission'],
+  title: 'Detail FDR',
 })
 </script>
 

@@ -281,10 +281,18 @@
                                             </a>
                                         </template>
                                     </Column>
-                                    <Column field="name" header="Project Name" :sortable="true" class="text-nowrap"></Column>
-                                    <Column field="customer.name" header="Customer" :sortable="true" class="text-nowrap fw-semibold"></Column>
-                                    <Column field="location" header="Lokasi" :sortable="true"></Column>
-                                    <Column field="businessScheme.name" header="Skema" :sortable="true" class="text-nowrap fw-semibold"></Column>
+                                    <Column field="name" header="Project Name" :sortable="true" class="text-nowrap">
+                                        <template #body="slotProps">{{ slotProps.data.name || '-' }}</template>
+                                    </Column>
+                                    <Column field="customer.name" header="Customer" :sortable="true" class="text-nowrap fw-semibold">
+                                        <template #body="slotProps">{{ (slotProps.data.customer?.name ?? slotProps.data.customerName) || '-' }}</template>
+                                    </Column>
+                                    <Column field="location" header="Lokasi" :sortable="true">
+                                        <template #body="slotProps">{{ slotProps.data.location || '-' }}</template>
+                                    </Column>
+                                    <Column field="businessScheme.name" header="Skema" :sortable="true" class="text-nowrap fw-semibold">
+                                        <template #body="slotProps">{{ (slotProps.data.businessScheme?.name ?? slotProps.data.businessSchemeName) || '-' }}</template>
+                                    </Column>
                                     <Column field="priority" header="Priority" :sortable="true">
                                         <template #body="slotProps">
                                             <span :class="getPriorityBadgeClass(slotProps.data.priority)">
@@ -302,6 +310,11 @@
                                     <Column field="grandTotal" header="Total Investment" :sortable="true" class="text-nowrap">
                                         <template #body="slotProps">
                                             {{ formatRupiah(slotProps.data.grandTotal) }}
+                                        </template>
+                                    </Column>
+                                    <Column field="marketingFee" header="Marketing Fee" :sortable="true" class="text-nowrap">
+                                        <template #body="slotProps">
+                                            {{ formatRupiah(slotProps.data.marketingFee ?? slotProps.data.marketing_fee ?? 0) }}
                                         </template>
                                     </Column>
                                     <Column field="siDate" header="Tanggal" :sortable="true">
@@ -325,7 +338,7 @@
                                                 </a>
                                                 <ul class="dropdown-menu dropdown-menu-end si-actions-dropdown">
                                                     <li v-if="(userHasRole('superadmin') || userHasPermission('edit_site_investment')) && slotProps.data.status === 'draft'">
-                                                        <a class="dropdown-item" href="javascript:void(0)" @click="siteInvestStore.submitSiteInvest(slotProps.data.id)">
+                                                        <a class="dropdown-item" href="javascript:void(0)" @click="onSubmitSi(slotProps.data.id)">
                                                             <i class="ri-send-plane-line me-2"></i> Submit SI
                                                         </a>
                                                     </li>
@@ -344,7 +357,7 @@
                                                             <i class="ri-close-line me-2"></i> Reject
                                                         </a>
                                                     </li>
-                                                    <li v-if="userHasRole('superadmin') || userHasPermission('edit_site_investment')">
+                                                    <li v-if="(userHasRole('superadmin') || userHasPermission('edit_site_investment')) && canEditSiteInvest(slotProps.data)">
                                                         <a class="dropdown-item" href="javascript:void(0)" @click="siteInvestStore.openModal(slotProps.data)">
                                                             <i class="ri-edit-box-line me-2"></i> Edit
                                                         </a>
@@ -363,595 +376,31 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Modal -->
-                <Modal
-                    id="SiteInvestmentModal"
-                    :title="modalTitle"
-                    :description="modalDescription"
-                    :validation-errors-from-parent="validationErrors"
-                    class="modal-xl"
-                >
-                    <template #default>
-                        <form @submit.prevent="handleSubmit" novalidate>
-                            <div class="row">
-                                <div class="col">
-                                    <ul class="nav nav-tabs" role="tablist">
-                                        <li class="nav-item">
-                                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#form-tabs-info" role="tab" aria-selected="true" type="button">
-                                                <span class="ri-information-line ri-20px d-sm-none"></span>
-                                                <span class="d-none d-sm-block">Informasi</span>
-                                            </button>
-                                        </li>
-                                        <li class="nav-item">
-                                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#form-tabs-materials" role="tab" aria-selected="false" type="button">
-                                                <span class="ri-box-line ri-20px d-sm-none"></span>
-                                                <span class="d-none d-sm-block">Material/Product</span>
-                                            </button>
-                                        </li>
-                                        <li class="nav-item">
-                                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#form-tabs-services" role="tab" aria-selected="false" type="button">
-                                                <span class="ri-service-line ri-20px d-sm-none"></span>
-                                                <span class="d-none d-sm-block">Services</span>
-                                            </button>
-                                        </li>
-                                        <li class="nav-item">
-                                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#form-tabs-dids" role="tab" aria-selected="false" type="button">
-                                                <span class="ri-truck-line ri-20px d-sm-none"></span>
-                                                <span class="d-none d-sm-block">DID (Delivery/Installation)</span>
-                                            </button>
-                                        </li>
-                                        <li class="nav-item">
-                                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#form-tabs-budgets" role="tab" aria-selected="false" type="button">
-                                                <span class="ri-money-dollar-circle-line ri-20px d-sm-none"></span>
-                                                <span class="d-none d-sm-block">Budget</span>
-                                            </button>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-
-                            <div class="tab-content pt-6">
-                                <!-- Tab Info -->
-                                <div class="tab-pane fade active show" id="form-tabs-info" role="tabpanel">
-                                    <div class="row g-4">
-                                        <div class="col-md-6">
-                                            <div class="form-floating form-floating-outline">
-                                                <input type="text" v-model="form.name" class="form-control" placeholder="Nama Site Investment" required>
-                                                <label>Nama Site Investment</label>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <CustomSelect2
-                                                v-model="form.customerId"
-                                                :options="customers"
-                                                :get-option-label="getCustomerLabel"
-                                                :reduce="getCustomerId"
-                                                placeholder="Pilih Customer"
-                                                searchable
-                                                clearable
-                                            />
-                                        </div>
-                                        <div class="col-md-6">
-                                            <CustomSelect2
-                                                v-model="form.siteId"
-                                                :options="sites"
-                                                :get-option-label="getSiteLabel"
-                                                :reduce="getSiteId"
-                                                placeholder="Pilih Site"
-                                                searchable
-                                                clearable
-                                                @update:modelValue="onSiteChange"
-                                            />
-                                        </div>
-                                        <div class="col-md-6">
-                                            <CustomSelect2
-                                                v-model="form.businessSchemeId"
-                                                :options="businessSchemes"
-                                                :get-option-label="getBranchLabel"
-                                                :reduce="getBranchId"
-                                                placeholder="Pilih Business Scheme"
-                                                searchable
-                                                clearable
-                                            />
-                                        </div>
-                                        <div class="col-md-12">
-                                            <label class="form-label text-muted">Isi dari Price List</label>
-                                            <CustomSelect2
-                                                v-model="selectedPriceListId"
-                                                :options="priceListOptions"
-                                                :get-option-label="getPriceListLabel"
-                                                :reduce="getPriceListId"
-                                                placeholder="Pilih Price List untuk mengisi Material, Service, DID"
-                                                searchable
-                                                clearable
-                                                @update:modelValue="onPriceListSelect"
-                                            />
-                                            <small class="text-muted">Pilih untuk mengisi tab Material/Product, Services, dan DID secara otomatis.</small>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="form-floating form-floating-outline">
-                                                <input type="text" v-model="form.location" class="form-control" placeholder="Lokasi" required>
-                                                <label>Lokasi</label>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <CustomSelect2
-                                                v-model="form.priority"
-                                                :options="priorityOptions"
-                                                :get-option-label="getOptionLabel"
-                                                :reduce="getOptionValue"
-                                                placeholder="Pilih Priority"
-                                                searchable
-                                                clearable
-                                            />
-                                        </div>
-                                        <div class="col-md-3">
-                                            <div class="form-floating form-floating-outline">
-                                                <input type="date" v-model="form.siDate" class="form-control">
-                                                <label>Tanggal SI</label>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="form-floating form-floating-outline">
-                                                <input type="date" v-model="form.estimatedStartDate" class="form-control">
-                                                <label>Estimasi Mulai</label>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="form-floating form-floating-outline">
-                                                <input type="date" v-model="form.estimatedCompletionDate" class="form-control">
-                                                <label>Estimasi Selesai</label>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <div class="form-floating form-floating-outline">
-                                                <input type="text" v-model="form.lat" class="form-control" placeholder="Latitude">
-                                                <label>Latitude</label>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <div class="form-floating form-floating-outline">
-                                                <input type="text" v-model="form.long" class="form-control" placeholder="Longitude">
-                                                <label>Longitude</label>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="form-floating form-floating-outline">
-                                                <input
-                                                    type="text"
-                                                    :value="formatRupiah(form.marketingFee)"
-                                                    @input="onMarketingFeeInput"
-                                                    @blur="onMarketingFeeBlur"
-                                                    class="form-control"
-                                                    placeholder="Rp 0"
-                                                >
-                                                <label>Marketing Fee</label>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="form-floating form-floating-outline">
-                                                <textarea v-model="form.notes" class="form-control" placeholder="Catatan" rows="3"></textarea>
-                                                <label>Notes</label>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <CustomSelect2
-                                                v-model="form.preparedByIds"
-                                                :options="pegawaiOptions"
-                                                :get-option-label="getPegawaiLabel"
-                                                :reduce="getPegawaiId"
-                                                placeholder="Prepared by (bisa lebih dari satu)"
-                                                searchable
-                                                clearable
-                                                multiple
-                                            />
-                                            <small class="text-muted">Pilih satu atau lebih pegawai yang menyiapkan Site Investment ini.</small>
-                                        </div>
-                                        <div class="col-md-12">
-                                            <div class="form-floating form-floating-outline">
-                                                <input
-                                                    type="file"
-                                                    @change="onAttachmentChange"
-                                                    class="form-control"
-                                                    accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx,.csv"
-                                                >
-                                                <label>Attachment (PDF, Excel, Word, Image)</label>
-                                                <small class="text-muted d-block mt-1">Maks. 2MB. Format: jpg, png, pdf, doc, docx, xls, xlsx, csv</small>
-                                                <div v-if="form.attachmentPreview" class="mt-2">
-                                                    <a :href="form.attachmentPreview" target="_blank" rel="noopener noreferrer" class="d-block mb-1">Lihat Attachment</a>
-                                                    <img v-if="isAttachmentPreviewImage(form)" :src="form.attachmentPreview" alt="Preview" class="attachment-preview" style="height: 60px; max-width: 120px; object-fit: contain; border: 2px solid #ddd; border-radius: 8px;">
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- Total Investment Summary -->
-                                        <div class="col-12 mt-5">
-                                            <div class="investment-summary-card">
-                                                <h6 class="investment-summary-title">
-                                                    <i class="ri-pie-chart-2-line me-2"></i>
-                                                    Ringkasan Total Investasi
-                                                </h6>
-
-                                                <div class="investment-summary-body">
-                                                    <div class="investment-summary-row">
-                                                        <span class="investment-summary-label">Managed Service</span>
-                                                        <span class="investment-summary-value">{{ formatRupiah(serviceSubtotal) }}</span>
-                                                    </div>
-                                                    <div class="investment-summary-row">
-                                                        <span class="investment-summary-label">Material</span>
-                                                        <span class="investment-summary-value">{{ formatRupiah(materialSubtotal) }}</span>
-                                                    </div>
-                                                    <div class="investment-summary-row">
-                                                        <span class="investment-summary-label">DID (Delivery/Installation)</span>
-                                                        <span class="investment-summary-value">{{ formatRupiah(didSubtotal) }}</span>
-                                                    </div>
-
-                                                    <div class="investment-summary-divider"></div>
-
-                                                    <div class="investment-summary-row investment-summary-row-total">
-                                                        <span class="investment-summary-label">Total Investasi</span>
-                                                        <span class="investment-summary-value">{{ formatRupiah(totalInvestment) }}</span>
-                                                    </div>
-
-                                                    <div class="investment-summary-row">
-                                                        <span class="investment-summary-label">Marketing Fee</span>
-                                                        <span class="investment-summary-value">{{ formatRupiah(marketingFeeAmount) }}</span>
-                                                    </div>
-
-                                                    <div class="investment-summary-divider"></div>
-
-                                                    <div class="investment-summary-row investment-summary-row-grand">
-                                                        <span class="investment-summary-label">Grand Total</span>
-                                                        <span class="investment-summary-value">{{ formatRupiah(grandTotal) }}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Tab Materials (from price_list_lines priceableType=product) -->
-                                <div class="tab-pane fade" id="form-tabs-materials" role="tabpanel">
-                                    <div v-for="(item, index) in form.siteInvestMaterials" :key="index" class="repeater-item mb-4">
-                                        <div class="d-flex justify-content-between align-items-center mb-3">
-                                            <span class="text-muted fw-medium">Item #{{ index + 1 }}</span>
-                                            <button class="btn btn-sm btn-outline-danger" @click.prevent="siteInvestStore.removeMaterialItem(index)" type="button" title="Hapus item">
-                                                <i class="ri-delete-bin-line me-1"></i> Hapus
-                                            </button>
-                                        </div>
-                                        <div class="row g-3">
-                                            <div class="col-md-12 form-check mb-2 pl-3">
-                                                <input class="form-check-input" type="checkbox" v-model="item.isPriceOverridden" :id="'customPriceMaterial' + index">
-                                                <label class="form-check-label" :for="'customPriceMaterial' + index">
-                                                    Custom Price
-                                                </label>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <CustomSelect2
-                                                    v-model="item.priceListLineId"
-                                                    :options="priceListLinesProduct"
-                                                    :get-option-label="getMaterialLineLabel"
-                                                    :reduce="getMaterialLineId"
-                                                    placeholder="Pilih Product (dari Price List)"
-                                                    searchable
-                                                    clearable
-                                                    @update:modelValue="onMaterialLineChange(index, $event)"
-                                                />
-                                            </div>
-                                            <div class="col-md-1">
-                                                <div class="form-floating form-floating-outline">
-                                                    <input type="number" v-model.number="item.quantity" @input="calculateMaterialSubtotal(index)" class="form-control" placeholder="Qty" min="0.01" step="0.01">
-                                                    <label>Qty</label>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-2">
-                                                <div class="form-floating form-floating-outline">
-                                                    <input 
-                                                        type="text" 
-                                                        :value="formatRupiah(item.price)" 
-                                                        @input="updateMaterialPriceFromInput(index, $event)"
-                                                        class="form-control" 
-                                                        placeholder="Harga"
-                                                        :readonly="!item.isPriceOverridden"
-                                                        :class="getReadonlyInputClass(item)"
-                                                    >
-                                                    <label>Harga Satuan</label>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <div class="form-floating form-floating-outline">
-                                                    <input type="text" :value="formatRupiah(item.subtotal)" class="form-control" placeholder="Subtotal" readonly>
-                                                    <label>Subtotal</label>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-12" v-if="item.isPriceOverridden">
-                                                <div class="form-floating form-floating-outline">
-                                                    <textarea 
-                                                        v-model="item.priceReason" 
-                                                        class="form-control" 
-                                                        placeholder="Alasan custom price"
-                                                        rows="2"
-                                                    ></textarea>
-                                                    <label>Alasan Custom Price <span class="text-danger">*</span></label>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-12" v-if="isMaterialStockInsufficient(index)" role="alert">
-                                                <div class="alert alert-danger py-2 mb-0">
-                                                    <i class="ri-error-warning-line me-1"></i>
-                                                    Stock pada product ini tidak mencukupi.
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <hr class="my-4">
-                                    </div>
-                                    <div class="mt-4">
-                                        <button @click.prevent="siteInvestStore.addMaterialItem()" class="btn btn-primary">Tambah Material</button>
-                                    </div>
-                                    <div class="d-flex justify-content-end mt-4">
-                                        <span class="fw-bold fs-5">Subtotal Material: {{ formatRupiah(materialSubtotal) }}</span>
-                                    </div>
-                                </div>
-
-                                <!-- Tab Services (from price_list_lines priceableType=service) -->
-                                <div class="tab-pane fade" id="form-tabs-services" role="tabpanel">
-                                    <div v-for="(item, index) in form.siteInvestServices" :key="index" class="repeater-item mb-4">
-                                        <div class="d-flex justify-content-between align-items-center mb-3">
-                                            <span class="text-muted fw-medium">Item #{{ index + 1 }}</span>
-                                            <button class="btn btn-sm btn-outline-danger" @click.prevent="siteInvestStore.removeServiceItem(index)" type="button" title="Hapus item">
-                                                <i class="ri-delete-bin-line me-1"></i> Hapus
-                                            </button>
-                                        </div>
-                                        <div class="row g-3">
-                                            <div class="col-md-12 form-check mb-2 pl-3">
-                                                <input class="form-check-input" type="checkbox" v-model="item.isPriceOverridden" :id="'customPriceService' + index">
-                                                <label class="form-check-label" :for="'customPriceService' + index">
-                                                    Custom Price
-                                                </label>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <CustomSelect2
-                                                    v-model="item.priceListLineId"
-                                                    :options="priceListLinesService"
-                                                    :get-option-label="getServiceLineLabel"
-                                                    :reduce="getServiceLineId"
-                                                    placeholder="Pilih Service (dari Price List)"
-                                                    searchable
-                                                    clearable
-                                                    @update:modelValue="onServiceLineChange(index, $event)"
-                                                />
-                                            </div>
-                                            <div class="col-md-1">
-                                                <div class="form-floating form-floating-outline">
-                                                    <input type="number" v-model.number="item.quantity" @input="calculateServiceSubtotal(index)" class="form-control" placeholder="Qty" min="0.01" step="0.01">
-                                                    <label>Qty</label>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-2">
-                                                <div class="form-floating form-floating-outline">
-                                                    <input 
-                                                        type="text" 
-                                                        :value="formatRupiah(item.price)" 
-                                                        @input="updateServicePriceFromInput(index, $event)"
-                                                        class="form-control" 
-                                                        placeholder="Harga Satuan"
-                                                        :readonly="!item.isPriceOverridden"
-                                                        :class="getReadonlyInputClass(item)"
-                                                    >
-                                                    <label>Harga Satuan</label>
-                                                </div>
-                                            </div>
-                                            <!-- Field dari price list line (service): terminal_kit, quota_priority, new_service_line, additional_data -->
-                                            <div class="col-6 col-md-3">
-                                                <div class="form-floating form-floating-outline">
-                                                    <input type="text" :value="getServiceTerminalKitDisplay(item, index)" class="form-control bg-light" readonly placeholder="Terminal Kit">
-                                                    <label>Terminal Kit</label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="row g-3 mt-3">
-                                            <div class="col-6 col-md-3">
-                                                <div class="form-floating form-floating-outline">
-                                                    <input type="text" :value="getServiceQuotaPriorityDisplay(item, index)" class="form-control bg-light" readonly placeholder="Quota Priority">
-                                                    <label>Quota Priority</label>
-                                                </div>
-                                            </div>
-                                            <div class="col-6 col-md-3">
-                                                <div class="form-floating form-floating-outline">
-                                                    <input type="text" :value="getServiceNewServiceLineDisplay(item, index)" class="form-control bg-light" readonly placeholder="New Service Line">
-                                                    <label>New Service Line</label>
-                                                </div>
-                                            </div>
-                                            <div class="col-6 col-md-3">
-                                                <div class="form-floating form-floating-outline">
-                                                    <input type="text" :value="getServiceAdditionalDataDisplay(item, index)" class="form-control bg-light" readonly placeholder="Additional Data">
-                                                    <label>Additional Data</label>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <div class="form-floating form-floating-outline">
-                                                    <input type="text" :value="formatRupiah(item.subtotal)" class="form-control" placeholder="Subtotal" readonly>
-                                                    <label>Subtotal</label>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-12" v-if="item.isPriceOverridden">
-                                                <div class="form-floating form-floating-outline">
-                                                    <textarea 
-                                                        v-model="item.priceReason" 
-                                                        class="form-control" 
-                                                        placeholder="Alasan custom price"
-                                                        rows="2"
-                                                    ></textarea>
-                                                    <label>Alasan Custom Price <span class="text-danger">*</span></label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <hr class="my-4">
-                                    </div>
-                                    <div class="mt-4">
-                                        <button @click.prevent="siteInvestStore.addServiceItem()" class="btn btn-primary">Tambah Service</button>
-                                    </div>
-                                    <div class="d-flex justify-content-end mt-4">
-                                        <span class="fw-bold fs-5">Subtotal Service: {{ formatRupiah(serviceSubtotal) }}</span>
-                                    </div>
-                                </div>
-
-                                <!-- Tab DIDs (from price_list_lines priceableType=did) -->
-                                <div class="tab-pane fade" id="form-tabs-dids" role="tabpanel">
-                                    <div class="mb-4">
-                                        <label class="form-label text-muted">Pilih Price List</label>
-                                        <CustomSelect2
-                                            v-model="selectedDidPriceListId"
-                                            :options="priceListOptionsDid"
-                                            :get-option-label="getDidPriceListLabel"
-                                            :reduce="getDidPriceListId"
-                                            placeholder="Pilih Price List (DID)"
-                                            searchable
-                                            clearable
-                                            @update:modelValue="onDidPriceListSelect"
-                                        />
-                                    </div>
-                                    <div v-for="(item, index) in form.siteInvestDids" :key="index" class="repeater-item mb-4">
-                                        <div class="d-flex justify-content-between align-items-center mb-3">
-                                            <span class="text-muted fw-medium">Item #{{ index + 1 }}</span>
-                                            <span v-if="getDidLineForItem(index)" class="badge bg-primary">{{ getDidLineLabel(item) }}</span>
-                                            <button class="btn btn-sm btn-outline-danger" @click.prevent="siteInvestStore.removeDidItem(index)" type="button" title="Hapus item">
-                                                <i class="ri-delete-bin-line me-1"></i> Hapus
-                                            </button>
-                                        </div>
-                                        <div class="row g-3">
-                                            <div class="col-md-12 form-check mb-2 pl-3">
-                                                <input class="form-check-input" type="checkbox" v-model="item.isPriceOverridden" :id="'customPriceDid' + index">
-                                                <label class="form-check-label" :for="'customPriceDid' + index">
-                                                    Custom Price
-                                                </label>
-                                            </div>
-                                            <div class="col-md-4">
-                                                <div class="form-control bg-light form-floating-outline">{{ getDidLineLabel(item) || '—' }}</div>
-                                            </div>
-                                            <div class="col-md-2">
-                                                <div class="form-floating form-floating-outline">
-                                                    <input type="number" v-model.number="item.quantity" @input="calculateDidSubtotal(index)" class="form-control" placeholder="Qty" min="1">
-                                                    <label>Qty</label>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <div class="form-floating form-floating-outline">
-                                                    <input 
-                                                        type="text" 
-                                                        :value="formatRupiah(item.price)" 
-                                                        @input="updateDidPriceFromInput(index, $event)" 
-                                                        class="form-control" 
-                                                        placeholder="Harga"
-                                                        :readonly="!item.isPriceOverridden"
-                                                        :class="getReadonlyInputClass(item)"
-                                                    >
-                                                    <label>Harga</label>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <div class="form-floating form-floating-outline">
-                                                    <input type="text" :value="formatRupiah(item.subtotal || (item.quantity || 1) * (item.price || 0))" class="form-control" placeholder="Subtotal" readonly>
-                                                    <label>Subtotal</label>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-12" v-if="item.isPriceOverridden">
-                                                <div class="form-floating form-floating-outline">
-                                                    <textarea 
-                                                        v-model="item.priceReason" 
-                                                        class="form-control" 
-                                                        placeholder="Alasan custom price"
-                                                        rows="2"
-                                                    ></textarea>
-                                                    <label>Alasan Custom Price <span class="text-danger">*</span></label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <hr class="my-4">
-                                    </div>
-                                    <div class="mt-4">
-                                        <button @click.prevent="siteInvestStore.addDidItem()" class="btn btn-primary">Tambah DID</button>
-                                    </div>
-                                    <div class="d-flex justify-content-end mt-4">
-                                        <span class="fw-bold fs-5">Subtotal DID: {{ formatRupiah(didSubtotal) }}</span>
-                                    </div>
-                                </div>
-
-                                <!-- Tab Budget -->
-                                <div class="tab-pane fade" id="form-tabs-budgets" role="tabpanel">
-                                    <div class="alert alert-info mb-4">
-                                        <i class="ri-information-line me-2"></i>
-                                        <strong>Info:</strong> Pilih sumber budget dan penanggung jawab (budget holder) untuk masing-masing alokasi.
-                                    </div>
-                                    <div v-for="(item, index) in (form.siteInvestBudgets || [])" :key="index" class="repeater-item mb-4">
-                                        <div class="d-flex justify-content-between align-items-center mb-3">
-                                            <span class="text-muted fw-medium">Item #{{ index + 1 }}</span>
-                                            <button class="btn btn-sm btn-outline-danger" @click.prevent="removeBudgetItem(index)" type="button" title="Hapus item">
-                                                <i class="ri-delete-bin-line me-1"></i> Hapus
-                                            </button>
-                                        </div>
-                                        <div class="row g-3">
-                                            <div class="col-md-6">
-                                                <label class="form-label text-muted">Sumber Budget</label>
-                                                <CustomSelect2
-                                                    v-model="item.budgetSourceId"
-                                                    :options="approvedBudgets || []"
-                                                    :get-option-label="getBudgetLabel"
-                                                    :reduce="getBudgetId"
-                                                    placeholder="Pilih Budget"
-                                                    searchable
-                                                    clearable
-                                                />
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label text-muted">Budget Holder (Penanggung Jawab)</label>
-                                                <CustomSelect2
-                                                    v-model="item.budgetHolderId"
-                                                    :options="usersForBudget"
-                                                    :get-option-label="getUserLabel"
-                                                    :reduce="getUserId"
-                                                    placeholder="Pilih User"
-                                                    searchable
-                                                    clearable
-                                                />
-                                            </div>
-                                        </div>
-                                        <hr class="my-4">
-                                    </div>
-                                    <div class="mt-4">
-                                        <button @click.prevent="addBudgetItem()" class="btn btn-primary">Tambah Budget</button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="modal-footer mt-6">
-                                <button type="button" class="btn btn-outline-secondary" @click="siteInvestStore.closeModal()">Tutup</button>
-                                <button type="submit" class="btn btn-primary ms-2" :disabled="loading">
-                                    <span v-if="loading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                    Simpan
-                                </button>
-                            </div>
-                        </form>
-                    </template>
-                </Modal>
             </div>
+
+            <!-- Modal -->
+            <SiteInvestFormModal
+                modal-id="SiteInvestmentModal"
+                :prefilled-fdr-id="route.query.fromFdr"
+                @saved="onSiteInvestSaved"
+                @close="onSiteInvestClose"
+            />
         </div>
         <div class="content-backdrop fade"></div>
     </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useSiteInvestStore } from '~/stores/site-invest'
 import { useCustomerStore } from '~/stores/customer'
 import { useUserStore } from '~/stores/user'
 import { usePermissionsStore } from '~/stores/permissions'
-import { useBudgetStore } from '~/stores/budget'
 import { usePermissions } from '~/composables/usePermissions'
 import { useApprovalStatus } from '~/composables/useApprovalStatus'
 import { useImageUrl } from '~/composables/useImageUrl'
-import Modal from '~/components/modal/Modal.vue'
+import SiteInvestFormModal from '~/components/modal/SiteInvestFormModal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import Column from 'primevue/column'
 import Dropdown from 'primevue/dropdown'
@@ -969,10 +418,20 @@ const siteInvestStore = useSiteInvestStore()
 const customerStore = useCustomerStore()
 const userStore = useUserStore()
 const permissionStore = usePermissionsStore()
-const budgetStore = useBudgetStore()
 const formatRupiah = useFormatRupiah()
 const { userHasPermission, userHasRole } = usePermissions()
-const { getStatusBadge } = useApprovalStatus()
+const { getStatusBadge, getApprovedStepCount } = useApprovalStatus()
+
+function canEditSiteInvest(row) {
+  if (!row) return false
+  const s = row.status
+  if (s === 'draft' || s === 'pending') return true
+  if (s === 'approved') {
+    const stepCount = getApprovedStepCount(row)
+    return stepCount != null && stepCount.total > 0 && stepCount.current < stepCount.total
+  }
+  return false
+}
 const { getAttachmentUrl, isImageFile } = useImageUrl()
 
 function formatSiDate(value) {
@@ -986,126 +445,25 @@ function formatSiDate(value) {
     }
 }
 
-function isAttachmentPreviewImage(formData) {
-    if (!formData) return false
-    const name = formData.attachment?.name
-    const preview = formData.attachmentPreview
-    return isImageFile(name || preview)
+const { siteInvests, loading, totalRecords, params, stats } = storeToRefs(siteInvestStore)
+const { customers } = storeToRefs(customerStore)
+
+function onSiteInvestSaved() {
+  siteInvestStore.fetchSiteInvests()
+  siteInvestStore.fetchStats()
 }
 
-const { siteInvests, loading, totalRecords, params, form, isEditMode, showModal, validationErrors, stats } = storeToRefs(siteInvestStore)
-const { customers } = storeToRefs(customerStore)
+function onSiteInvestClose() {
+  const q = { ...route.query }
+  delete q.fromFdr
+  delete q.edit
+  if (Object.keys(q).length < Object.keys(route.query).length) {
+    router.replace({ path: route.path, query: Object.keys(q).length ? q : {} })
+  }
+}
+
 const { user } = storeToRefs(userStore)
 const { permissions } = storeToRefs(permissionStore)
-const { budgets } = storeToRefs(budgetStore)
-
-// Price list lines for modal tabs (from API site-investment/price-list-lines)
-const priceListLinesProduct = ref([])
-const priceListLinesService = ref([])
-const priceListLinesDid = ref([])
-
-/** Per-index: true jika stock product tidak mencukupi untuk qty yang diminta (hanya untuk Material/Product) */
-const materialStockInsufficient = ref({})
-
-function isMaterialStockInsufficient(i) {
-    return !!(materialStockInsufficient.value && materialStockInsufficient.value[i])
-}
-
-function getMaterialLineLabel(line) {
-    if (!line) return '—'
-    const name = line.price_list?.name || (line.product ? `${line.product.name} (${line.product.sku || ''})` : `Line #${line.id}`)
-    return name || '—'
-}
-
-function getMaterialLineId(line) {
-    return line ? line.id : null
-}
-
-function getReadonlyInputClass(item) {
-    return item && !item.isPriceOverridden ? 'bg-light' : ''
-}
-
-function getServiceTerminalKitDisplay(item, index) {
-    const line = getServiceLineForItem(index)
-    const val = item?.terminalKitCount ?? serviceLineField(line, 'terminal_kit_count')
-    return val != null && val !== '' ? String(val) : '—'
-}
-
-function getServiceQuotaPriorityDisplay(item, index) {
-    const line = getServiceLineForItem(index)
-    const val = item?.quotaPriority ?? serviceLineField(line, 'quota_priority')
-    return val != null ? formatRupiah(val) : '—'
-}
-
-function getServiceNewServiceLineDisplay(item, index) {
-    const line = getServiceLineForItem(index)
-    const val = item?.newServiceLine ?? serviceLineField(line, 'new_service_line')
-    return val != null ? formatRupiah(val) : '—'
-}
-
-function getServiceAdditionalDataDisplay(item, index) {
-    const line = getServiceLineForItem(index)
-    const val = item?.additionalData ?? serviceLineField(line, 'additional_data')
-    return val != null ? formatRupiah(val) : '—'
-}
-
-function getPriceListLabel(pl) {
-    if (!pl) return '—'
-    let label = pl.name || ''
-    if (pl.type) label += ` (${pl.type})`
-    return label || '—'
-}
-
-function getPriceListId(pl) {
-    return pl ? pl.id : null
-}
-
-function getServiceLineLabel(line) {
-    if (!line) return '—'
-    return line.price_list?.name || (line.service ? line.service.name : `Line #${line.id}`) || '—'
-}
-
-function getServiceLineId(line) {
-    return line ? line.id : null
-}
-
-function getDidPriceListLabel(pl) {
-    return pl ? pl.name : '—'
-}
-
-function getDidPriceListId(pl) {
-    return pl ? pl.id : null
-}
-
-function getPegawaiLabel(p) {
-    if (!p) return ''
-    return p.nm_pegawai || p.nmPegawai || `Pegawai #${p.id_pegawai || p.idPegawai || ''}`
-}
-
-function getPegawaiId(p) {
-    if (!p) return null
-    return p.id_pegawai || p.idPegawai || null
-}
-
-function getBudgetLabel(b) {
-    if (!b) return '—'
-    const code = b.budgetCode || b.budget_code || ''
-    const name = b.budgetName || b.budget_name || ''
-    return code || name ? `${code} - ${name}` : '—'
-}
-
-function getBudgetId(b) {
-    return b ? b.id : null
-}
-
-function getUserLabel(u) {
-    if (!u) return ''
-    return u.fullName || u.email || `User #${u.id || ''}`
-}
-
-function getUserId(u) {
-    return u ? u.id : null
-}
 
 function getCustomerLabel(c) {
     return c ? c.name : ''
@@ -1122,55 +480,6 @@ function getOptionLabel(option) {
 function getOptionValue(option) {
     return option ? option.value : null
 }
-
-function getSiteLabel(s) {
-    if (!s) return ''
-    const code = s.code || ''
-    const name = s.name || ''
-    return `${code} - ${name}`
-}
-
-function getSiteId(s) {
-    return s ? s.id : null
-}
-
-function getBranchLabel(b) {
-    if (!b) return ''
-    const code = b.code || ''
-    const name = b.name || ''
-    return `${code} - ${name}`
-}
-
-function getBranchId(b) {
-    return b ? b.id : null
-}
-
-// Dropdown "Isi dari Price List" (untuk autofill Materials, Services, DID)
-const selectedPriceListId = ref(null)
-const priceListOptions = ref([])
-
-// Tab DID: pilih satu Price List (unik), lalu repeater diisi semua baris DID dari price list itu
-const selectedDidPriceListId = ref(null)
-/** Opsi dropdown DID = price list yang punya baris priceable_type=did (satu nama per price list) */
-const priceListOptionsDid = computed(() => {
-    const lines = priceListLinesDid.value || []
-    const seen = new Set()
-    const options = []
-    for (const line of lines) {
-        const plId = line.price_list_id ?? line.priceList?.id ?? line.price_list?.id
-        if (plId != null && !seen.has(plId)) {
-            seen.add(plId)
-            const name = line.price_list?.name ?? line.priceList?.name ?? `Price List #${plId}`
-            options.push({ id: plId, name })
-        }
-    }
-    return options
-})
-
-// Filter budgets untuk tab budget - hanya tampilkan yang status approved
-const approvedBudgets = computed(() => {
-    return (budgets.value || []).filter(b => b.status === 'approved')
-})
 
 const myDataTableRef = ref(null)
 const filters = ref({
@@ -1193,8 +502,8 @@ const sites = ref([])
 const businessSchemes = ref([])
 const pegawaiOptions = ref([])
 
-const fetchBudgetsAndUsers = async () => {
-    const prevRows = budgetStore.params.rows
+const fetchBudgetsAndUsers_REMOVED = async () => {
+    const prevRows = 10 // budgetStore was removed
     budgetStore.params.rows = 500
     await budgetStore.fetchBudgets(true)
     budgetStore.params.rows = prevRows
@@ -1288,6 +597,38 @@ function toNum(v) {
     return (v !== null && v !== undefined && v !== '') ? Number(v) : 0
 }
 
+/** Ambil data Price List lengkap dan merge ke priceListLines agar nominal (price, terminal_kit, dll) terisi. Dipakai saat autofill dari FDR karena data dari FDR API bisa minimal. */
+async function enrichPriceListLinesFromPriceList(priceListId) {
+    if (!priceListId) return
+    const { $api } = useNuxtApp()
+    try {
+        const res = await fetch(`${$api.priceListShow(priceListId)}?includeLines=true`, {
+            credentials: 'include',
+            headers: { Accept: 'application/json' },
+        })
+        if (!res.ok) return
+        const priceList = await res.json()
+        const lines = priceList.lines || []
+        const pt = (l) => l.priceableType ?? l.priceable_type
+        const mergeLine = (arr, fullLine) => {
+            const idx = arr.findIndex((x) => (x.id ?? x) === (fullLine.id ?? fullLine))
+            if (idx >= 0) {
+                arr[idx] = { ...arr[idx], ...fullLine }
+            } else {
+                arr.push(fullLine)
+            }
+        }
+        const productLines = lines.filter((l) => pt(l) === 'product')
+        productLines.forEach((l) => mergeLine(priceListLinesProduct.value, l))
+        const serviceLines = lines.filter((l) => pt(l) === 'service')
+        serviceLines.forEach((l) => mergeLine(priceListLinesService.value, l))
+        const didLines = lines.filter((l) => pt(l) === 'did')
+        didLines.forEach((l) => mergeLine(priceListLinesDid.value, l))
+    } catch (e) {
+        console.error('Error enriching price list lines from Price List:', e)
+    }
+}
+
 /** Saat user pilih Price List: fetch detail + lines, lalu isi tab Materials, Services, DID */
 async function onPriceListSelect(priceListId) {
     if (!form.value || !priceListId) return
@@ -1367,18 +708,18 @@ function getServiceLineEffectivePriceFromLine(line) {
     return base + tk + qp + nsl + ad
 }
 
-/** Autofill price, subtotal, dan 4 field komponen tiap service item dari price list line (untuk edit / setelah lines dimuat). Harga satuan = base + New Service Line (selaras detail). Subtotal dari Price List. */
+/** Autofill price, subtotal, dan 4 field komponen tiap service item dari price list line (untuk edit / setelah lines dimuat). Harga satuan = efektif (base + terminal_kit + quota_priority + new_service_line + additional_data). */
 const recalcServiceItemsFromLines = () => {
     const items = form.value?.siteInvestServices ?? []
     const lines = priceListLinesService.value
     items.forEach((item) => {
         if (!item.priceListLineId) return
-        const line = lines.find(l => l.id === item.priceListLineId)
+        const line = lines.find(l => l.id === item.priceListLineId || String(l.id) === String(item.priceListLineId))
         if (!line) return
-        const unitPrice = getServiceLineUnitPrice(line)
+        const unitPrice = getServiceLineEffectivePrice(line)
         item.price = unitPrice
         item.quantity = Number(item.quantity) || Number(line.quantity) || 1
-        item.subtotal = Number(line.subtotal) ?? (item.quantity * unitPrice)
+        item.subtotal = (Number(item.quantity) || 1) * unitPrice
         item.terminalKitCount = serviceLineField(line, 'terminal_kit_count') != null ? Number(serviceLineField(line, 'terminal_kit_count')) : null
         item.quotaPriority = serviceLineField(line, 'quota_priority') != null ? Number(serviceLineField(line, 'quota_priority')) : null
         item.newServiceLine = serviceLineField(line, 'new_service_line') != null ? Number(serviceLineField(line, 'new_service_line')) : null
@@ -1432,6 +773,7 @@ const modalTitle = computed(() => isEditMode.value ? 'Edit Site Investment' : 'T
 const modalDescription = computed(() => isEditMode.value ? 'Silakan ubah data Site Investment di bawah ini.' : 'Silakan isi form di bawah ini untuk menambahkan data Site Investment baru.')
 
 const statusOptions = ref([
+    { label: 'Semua', value: null },
     { label: 'Draft', value: 'draft' },
     { label: 'Pending', value: 'pending' },
     { label: 'Approved', value: 'approved' },
@@ -1499,12 +841,22 @@ const grandTotal = computed(() => {
 const { isLoading: isDataLoading, error: dataError } = usePageData({
     pageName: 'Site Investment',
     loaders: [
+        () => {
+            filters.value.status = null
+            filters.value.customerId = null
+            filters.value.priority = null
+            filters.value.startDate = null
+            filters.value.endDate = null
+            siteInvestStore.params.status = null
+            siteInvestStore.params.customerId = null
+            siteInvestStore.params.priority = null
+            siteInvestStore.params.startDate = null
+            siteInvestStore.params.endDate = null
+            siteInvestStore.params.first = 0
+        },
         () => customerStore.fetchCustomers(),
         () => permissionStore.fetchPermissions(),
         () => userStore.loadUser(),
-        () => fetchSitesForSelect(),
-        () => fetchBusinessSchemesForSelect(),
-        () => fetchBudgetsAndUsers(),
         () => siteInvestStore.fetchSiteInvests(),
         () => siteInvestStore.fetchStats(),
     ],
@@ -1518,20 +870,17 @@ watch(isDataLoading, (value) => {
     isInitialLoading.value = value
 })
 
-let modalInstance = null
-
 onMounted(() => {
-    const modalElement = document.getElementById('SiteInvestmentModal')
-    if (modalElement) {
-        modalInstance = new bootstrap.Modal(modalElement)
-    }
-
     tableControls.value.rows = Number(params.value.rows) || 10
     tableControls.value.search = globalFilterValue.value
 
     const editId = route.query.edit
     if (editId && typeof editId === 'string') {
         nextTick(() => siteInvestStore.openModal({ id: editId }))
+    }
+    const fromFdrId = route.query.fromFdr
+    if (fromFdrId && typeof fromFdrId === 'string') {
+        nextTick(() => siteInvestStore.openModalFromFdr(fromFdrId))
     }
 })
 
@@ -1541,44 +890,6 @@ watch(() => params.value.rows, (newValue) => {
 
 watch(() => globalFilterValue.value, (newValue) => {
     tableControls.value.search = newValue
-})
-
-watch(showModal, async (newValue) => {
-    if (newValue) {
-        materialStockInsufficient.value = {}
-        await Promise.all([fetchPriceListsForSelect(), fetchPriceListLinesForModal(), fetchPegawaiForPreparedBy()])
-        if (!isEditMode.value) {
-            selectedPriceListId.value = null
-        }
-        if (isEditMode.value && form.value?.siteInvestDids?.length > 0) {
-            const first = form.value.siteInvestDids[0]
-            const lineId = first.priceListLineId
-            const line = priceListLinesDid.value.find((l) => l.id === lineId)
-            selectedDidPriceListId.value = line ? (line.price_list_id ?? line.price_list?.id ?? line.priceList?.id) : null
-        } else {
-            selectedDidPriceListId.value = null
-        }
-        nextTick(() => {
-            const modalElement = document.getElementById('SiteInvestmentModal')
-            if (modalElement && !modalInstance) {
-                modalInstance = new bootstrap.Modal(modalElement)
-            }
-            modalInstance?.show()
-            if (form.value?.site && form.value?.siteId && !sites.value.find(s => s.id === form.value.siteId)) {
-                sites.value = [{ ...form.value.site, id: form.value.siteId }, ...sites.value]
-            }
-            if (form.value?.businessScheme && form.value?.businessSchemeId && !businessSchemes.value.find(b => b.id === form.value.businessSchemeId)) {
-                businessSchemes.value = [{ ...form.value.businessScheme, id: form.value.businessSchemeId }, ...businessSchemes.value]
-            }
-        })
-    } else {
-        modalInstance?.hide()
-        if (route.query.edit) {
-            const q = { ...route.query }
-            delete q.edit
-            router.replace({ path: route.path, query: q })
-        }
-    }
 })
 
 const debouncedSearch = useDebounceFn(() => {
@@ -1615,6 +926,13 @@ const handleSearch = (value) => {
     globalFilterValue.value = value
     params.value.first = 0
     siteInvestStore.fetchSiteInvests()
+}
+
+const onSubmitSi = async (id) => {
+    const ok = await siteInvestStore.submitSiteInvest(id)
+    if (ok) {
+        filters.value.status = null
+    }
 }
 
 const onSort = (event) => {
@@ -1742,23 +1060,20 @@ const calculateMaterialSubtotal = (index) => {
     checkMaterialStock(index)
 }
 
-/** Harga satuan efektif dari price list (base price + New Service Line, selaras dengan perhitungan Price List & tampilan detail) */
+/** Harga satuan efektif dari price list (base + terminal_kit + quota_priority + new_service_line + additional_data). Dipakai untuk autofill nominal. */
 function getServiceLineUnitPrice(line) {
-    if (!line) return 0
-    const base = Number(line.price) || 0
-    const newServiceLine = Number(serviceLineField(line, 'new_service_line')) || 0
-    return base + newServiceLine
+    return getServiceLineEffectivePrice(line)
 }
 
 const onServiceLineChange = (index, lineId) => {
-    const line = priceListLinesService.value.find(l => l.id === lineId)
+    const line = priceListLinesService.value.find(l => l.id === lineId || String(l.id) === String(lineId))
     if (!line || !form.value?.siteInvestServices?.[index]) return
     const item = form.value.siteInvestServices[index]
-    const unitPrice = getServiceLineUnitPrice(line)
+    const unitPrice = getServiceLineEffectivePrice(line)
     item.price = unitPrice
     item.quantity = Number(line.quantity) || 1
     item.isPriceOverridden = false
-    item.subtotal = Number(line.subtotal) ?? (item.quantity * unitPrice)
+    item.subtotal = (Number(item.quantity) || 1) * unitPrice
     item.terminalKitCount = serviceLineField(line, 'terminal_kit_count') != null ? Number(serviceLineField(line, 'terminal_kit_count')) : null
     item.quotaPriority = serviceLineField(line, 'quota_priority') != null ? Number(serviceLineField(line, 'quota_priority')) : null
     item.newServiceLine = serviceLineField(line, 'new_service_line') != null ? Number(serviceLineField(line, 'new_service_line')) : null
@@ -1796,9 +1111,13 @@ const getServiceLineEffectivePrice = (line) => {
     return base + terminalKit + quotaPriority + newServiceLine + additionalData
 }
 
-/** Subtotal service tidak dihitung ulang di modal; hanya autofill dari Price List. */
-const calculateServiceSubtotal = (_index) => {
-    // No-op: subtotal service diisi dari Price List saja, tidak di-recalculate saat qty/harga berubah.
+/** Recalculate subtotal service saat qty berubah */
+const calculateServiceSubtotal = (index) => {
+    const item = form.value?.siteInvestServices?.[index]
+    if (!item) return
+    const qty = Number(item.quantity) || 0
+    const price = Number(item.price) || 0
+    item.subtotal = qty * price
 }
 
 /** Saat user pilih satu Price List di tab DID: isi repeater dengan semua baris DID dari price list itu */
