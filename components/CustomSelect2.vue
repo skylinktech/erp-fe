@@ -308,7 +308,7 @@ const filteredOptions = computed(() => {
 const toggleDropdown = (event) => {
   if (props.disabled) return
   // Prevent toggle when clicking clear button or arrow - they have their own handlers
-  if (event.target?.closest?.('.select2-clear-btn') || event.target?.closest?.('.select2-selection__arrow')) {
+  if (event.target?.closest('.select2-clear-btn') || event.target?.closest('.select2-selection__arrow')) {
     return
   }
   if (isOpen.value) {

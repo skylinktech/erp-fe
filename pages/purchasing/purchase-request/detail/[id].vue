@@ -1,7 +1,7 @@
 <template>
   <div class="page-wrapper">
     <div class="content-wrapper">
-      <div class="container-xxl flex-grow-1 container pt-12">
+      <div class="container-xxl flex-grow-1 container p-y">
         <!-- Loading -->
         <div v-if="loading" class="d-flex justify-content-center align-items-center" style="min-height: 400px;">
           <div class="text-center">
@@ -33,24 +33,25 @@
                 <small class="text-muted">{{ formatDateTime(purchaseRequest.createdAt) }}</small>
               </div>
               <span :class="getStatusBadge(purchaseRequest).class" class="badge">{{ getStatusBadge(purchaseRequest).text }}</span>
+              <span v-if="(purchaseRequest.revision ?? 0) > 0" class="badge bg-label-info">Revisi {{ purchaseRequest.revision }}</span>
             </div>
             <div class="d-flex flex-wrap gap-2">
               <div class="btn-group" role="group">
                 <button id="btnGroupDrop1" type="button" class="btn btn-outline-secondary dropdown-toggle btn-sm" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="d-none d-sm-block">Actions</span></button>
                 <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
-                  <a v-if="purchaseRequest.status === 'draft'" class="dropdown-item" href="javascript:void(0)" @click="onSubmit">
-                    <i class="ri-send-plane-line me-2"></i> Submit Purchase Request
+                  <a v-if="(userHasRole('superadmin') || userHasPermission('create_purchase_request') || userHasPermission('approve_purchase_request')) && (purchaseRequest.status === 'draft' || purchaseRequest.status === 'rejected')" class="dropdown-item" href="javascript:void(0)" @click="onSubmit">
+                    <i class="ri-send-plane-line me-2"></i> {{ purchaseRequest.status === 'rejected' ? 'Submit Revisi' : 'Submit Purchase Request' }}
                   </a>
-                  <a v-if="purchaseRequest.status === 'pending'" class="dropdown-item" href="javascript:void(0)" @click="onApprove">
+                  <a v-if="canApprove" class="dropdown-item" href="javascript:void(0)" @click="onApprove">
                     <i class="ri-check-line me-2"></i> Approve
                   </a>
-                  <a v-if="purchaseRequest.status === 'pending'" class="dropdown-item" href="javascript:void(0)" @click="onReject">
+                  <a v-if="canReject" class="dropdown-item" href="javascript:void(0)" @click="onReject">
                     <i class="ri-close-line me-2"></i> Reject
                   </a>
-                  <a class="dropdown-item" href="javascript:void(0)" @click="navigateTo('/purchasing/purchase-request?edit=' + purchaseRequest.id)">
+                  <a v-if="(userHasRole('superadmin') || userHasPermission('edit_purchase_request')) && canEditPurchaseRequest(purchaseRequest)" class="dropdown-item" href="javascript:void(0)" @click="navigateTo('/purchasing/purchase-request?edit=' + purchaseRequest.id)">
                     <i class="ri-edit-box-line me-2"></i> Edit
                   </a>
-                  <a v-if="purchaseRequest.status === 'draft'" class="dropdown-item text-danger" href="javascript:void(0)" @click="handleDelete">
+                  <a v-if="(userHasRole('superadmin') || userHasPermission('delete_purchase_request')) && purchaseRequest.status === 'draft'" class="dropdown-item text-danger" href="javascript:void(0)" @click="handleDelete">
                     <i class="ri-delete-bin-7-line me-2"></i> Hapus
                   </a>
                 </div>
@@ -101,6 +102,14 @@
                           {{ getStatusBadge(purchaseRequest).text }}
                         </span>
                       </p>
+                    </div>
+                    <div class="col-md-6" v-if="(purchaseRequest.revision ?? 0) > 0">
+                      <label class="form-label text-muted medium">Revisi</label>
+                      <p class="mb-0 fw-medium">{{ purchaseRequest.revision }}</p>
+                    </div>
+                    <div class="col-12" v-if="purchaseRequest.status === 'rejected' && (purchaseRequest.rejectReason || purchaseRequest.reject_reason || getLastRejectionRemarks(purchaseRequest))">
+                      <label class="form-label text-muted medium">Alasan Penolakan (reject_reason)</label>
+                      <p class="mb-0 text-danger text-break">{{ purchaseRequest.rejectReason || purchaseRequest.reject_reason || getLastRejectionRemarks(purchaseRequest) }}</p>
                     </div>
                     <div class="col-12" v-if="purchaseRequest.description">
                       <label class="form-label text-muted medium">Deskripsi</label>
@@ -186,9 +195,9 @@
               <!-- Approval Card -->
               <ApprovalCard
                 :status-text="getStatusText(purchaseRequest)"
-                :current-step="purchaseRequest.currentApprovalStep ?? null"
+                :current-step="purchaseRequest.currentApprovalStep ?? purchaseRequest.nextApprovalStep"
                 :current-approvers="purchaseRequest.currentApprovers ?? []"
-                :approval-logs="purchaseRequest.approvalLogs ?? []"
+                :approval-logs="(purchaseRequest.approvalLogs || purchaseRequest.approval_logs || [])"
               />
 
               <!-- Ringkasan Total -->
@@ -303,19 +312,55 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { usePurchaseRequestStore } from '~/stores/purchase-request'
+import { useUserStore } from '~/stores/user'
 import { usePermissions } from '~/composables/usePermissions'
 import { useImageUrl } from '~/composables/useImageUrl'
 import { useApprovalStatus } from '~/composables/useApprovalStatus'
 import ApprovalCard from '~/components/ApprovalCard.vue'
+import Swal from 'sweetalert2'
 
 const route = useRoute()
 const purchaseRequestStore = usePurchaseRequestStore()
 const { userHasPermission, userHasRole } = usePermissions()
 const { getAttachmentUrl, getFileIcon, isImageFile } = useImageUrl()
-const { getStatusBadge, getStatusText, getApprovalStepJabatan } = useApprovalStatus()
+const { getStatusBadge, getStatusText, getApprovalStepJabatan, getApprovedStepCount } = useApprovalStatus()
 const formatRupiah = useFormatRupiah()
 
 const { purchaseRequest, loading, error } = storeToRefs(purchaseRequestStore)
+const userStore = useUserStore()
+
+const currentUserId = computed(() => userStore.user?.id ?? null)
+const canApprove = computed(() => {
+  if (!purchaseRequest.value || currentUserId.value == null) return false
+  const approvers = purchaseRequest.value.currentApprovers || []
+  const uid = currentUserId.value
+  const isCurrentApprover = approvers.length === 0 || approvers.some((a: any) => Number(a.userId) === Number(uid))
+  const pr = purchaseRequest.value
+  if (pr.status === 'pending') return isCurrentApprover
+  if (pr.status === 'approved') {
+    const stepCount = getApprovedStepCount(pr)
+    if (stepCount && stepCount.current < stepCount.total) return isCurrentApprover
+  }
+  return false
+})
+const canReject = computed(() => canApprove.value)
+
+function canEditPurchaseRequest(row: any) {
+  if (!row) return false
+  const s = row.status
+  if (s === 'draft' || s === 'pending' || s === 'rejected') return true
+  if (s === 'approved') {
+    const stepCount = getApprovedStepCount(row)
+    return stepCount != null && stepCount.total > 0 && stepCount.current < stepCount.total
+  }
+  return false
+}
+
+function getLastRejectionRemarks(row: any) {
+  const logs = row?.approvalLogs ?? row?.approval_logs ?? []
+  const lastReject = [...logs].reverse().find((l: any) => (l.action ?? l.Action) === 'rejected')
+  return lastReject?.remarks ?? null
+}
 
 const id = computed(() => String(route.params.id || ''))
 
@@ -364,14 +409,24 @@ function refreshAfterAction () {
 
 async function onApprove () {
   if (!purchaseRequest.value) return
-  await purchaseRequestStore.approvePurchaseRequest(purchaseRequest.value.id)
-  refreshAfterAction()
+  const result = await Swal.fire({
+    title: 'Approve Purchase Request',
+    input: 'textarea',
+    inputLabel: 'Catatan (optional)',
+    inputPlaceholder: 'Tulis catatan approval jika diperlukan...',
+    showCancelButton: true,
+    confirmButtonText: 'Approve',
+    cancelButtonText: 'Batal',
+  })
+  if (!result.isConfirmed) return
+  const ok = await purchaseRequestStore.approvePurchaseRequest(purchaseRequest.value.id, result.value || '', true) // skipConfirm=true karena sudah ada Swal di sini
+  if (ok) refreshAfterAction()
 }
 
 async function onReject () {
   if (!purchaseRequest.value) return
-  await purchaseRequestStore.rejectPurchaseRequest(purchaseRequest.value.id)
-  refreshAfterAction()
+  const ok = await purchaseRequestStore.rejectPurchaseRequest(purchaseRequest.value.id)
+  if (ok) refreshAfterAction()
 }
 
 async function onSubmit () {

@@ -12,7 +12,7 @@
             </div>
 
             <!-- Content -->
-            <div v-else class="container-xxl flex-grow-1 container-p-y">
+            <div v-else class="container-xxl flex-grow-1 container-pt-12">
                 <h4 class="mb-1">Purchase Request</h4>
                 <p class="mb-6">List Purchase Request yang terdaftar di sistem</p>
 
@@ -279,6 +279,7 @@
                                             >
                                                 {{ slotProps.data.noPr || '-' }}
                                             </a>
+                                            <span v-if="(slotProps.data.revision ?? 0) > 0" class="badge bg-label-info ms-1">R{{ slotProps.data.revision }}</span>
                                         </template>
                                     </Column>
                                     <Column field="mgrf.noMgrf" header="MGRF" :sortable="true" class="text-nowrap">
@@ -326,9 +327,9 @@
                                                     <i class="ri-more-2-fill"></i>
                                                 </a>
                                                 <ul class="dropdown-menu dropdown-menu-end purchase-request-actions-dropdown">
-                                                    <li v-if="(userHasRole('superadmin') || userHasPermission('edit_purchase_request')) && slotProps.data.status === 'draft'">
+                                                    <li v-if="(userHasRole('superadmin') || userHasPermission('create_purchase_request') || userHasPermission('approve_purchase_request')) && (slotProps.data.status === 'draft' || slotProps.data.status === 'rejected')">
                                                         <a class="dropdown-item" href="javascript:void(0)" @click="purchaseRequestStore.submitPurchaseRequest(slotProps.data.id)">
-                                                            <i class="ri-send-plane-line me-2"></i> Submit Purchase Request
+                                                            <i class="ri-send-plane-line me-2"></i> {{ slotProps.data.status === 'rejected' ? 'Submit Revisi' : 'Submit Purchase Request' }}
                                                         </a>
                                                     </li>
                                                     <li v-if="(userHasRole('superadmin') || userHasPermission('approve_purchase_request')) && slotProps.data.status === 'pending'">
@@ -341,7 +342,7 @@
                                                             <i class="ri-close-line me-2"></i> Reject
                                                         </a>
                                                     </li>
-                                                    <li v-if="userHasRole('superadmin') || userHasPermission('edit_purchase_request')">
+                                                    <li v-if="(userHasRole('superadmin') || userHasPermission('edit_purchase_request')) && canEditPurchaseRequest(slotProps.data)">
                                                         <a class="dropdown-item" href="javascript:void(0)" @click="purchaseRequestStore.openModal(slotProps.data)">
                                                             <i class="ri-edit-box-line me-2"></i> Edit
                                                         </a>
@@ -553,7 +554,7 @@
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { usePurchaseRequestStore } from '~/stores/purchase-request'
@@ -586,7 +587,18 @@ const permissionStore = usePermissionsStore()
 const formatRupiah = useFormatRupiah()
 const { userHasPermission, userHasRole } = usePermissions()
 const { getAttachmentUrl, isImageFile } = useImageUrl()
-const { getStatusBadge } = useApprovalStatus()
+const { getStatusBadge, getApprovedStepCount } = useApprovalStatus()
+
+function canEditPurchaseRequest(row: any) {
+  if (!row) return false
+  const s = row.status
+  if (s === 'draft' || s === 'pending' || s === 'rejected') return true
+  if (s === 'approved') {
+    const stepCount = getApprovedStepCount(row)
+    return stepCount != null && stepCount.total > 0 && stepCount.current < stepCount.total
+  }
+  return false
+}
 
 const { purchaseRequests, loading, totalRecords, params, form, isEditMode, showModal, validationErrors, stats, enableAdditional } = storeToRefs(purchaseRequestStore)
 const { products } = storeToRefs(productStore)

@@ -50,6 +50,9 @@ export interface Iro {
   approvedBy: number | null
   rejectedBy: number | null
   currentApprovalStep?: number | null
+  revision?: number
+  reject_reason?: string | null
+  rejectReason?: string | null
   submittedAt?: string | null
   approvedAt?: string | null
   rejectedAt?: string | null
@@ -390,7 +393,7 @@ export const useIroStore = defineStore('iro', {
       }
     },
 
-    async rejectIro(id: string, remarks?: string) {
+    async rejectIro(id: string, reason?: string) {
       const toast = useToast()
       this.loading = true
       const { $api } = useNuxtApp()
@@ -399,7 +402,7 @@ export const useIroStore = defineStore('iro', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
           credentials: 'include',
-          body: JSON.stringify({ remarks: remarks || undefined }),
+          body: JSON.stringify({ reject_reason: reason || '' }),
         })
         if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message || 'Gagal reject IRO')
         await this.fetchIros()

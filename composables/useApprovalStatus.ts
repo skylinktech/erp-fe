@@ -111,10 +111,17 @@ export function useApprovalStatus() {
       const by = getApprovalStepJabatan(row, 'rejected')
       return { text: by ? `Rejected by ${by}` : base.text, class: base.class }
     }
-    if (status === 'pending') {
+    if (status === 'pending' || status === 'submitted') {
+      // Ketika ada partial approval (approver pertama sudah approve), tampilkan "Approved by X (1/2)" seperti SI & Quotation
+      const stepCount = getStepCountForApproved(row)
+      if (stepCount && stepCount.current > 0 && stepCount.current < stepCount.total) {
+        const by = getApprovalStepJabatan(row, 'approved')
+        const stepSuffix = ` (${stepCount.current}/${stepCount.total})`
+        return { text: by ? `Approved by ${by}${stepSuffix}` : `Submitted${stepSuffix}`, class: 'badge rounded-pill bg-label-success' }
+      }
       const prog = row?.signatureProgress ?? row?.signature_progress
       if (prog && typeof prog.count === 'number' && typeof prog.required === 'number' && prog.required > 0) {
-        return { text: `Pending (${prog.count}/${prog.required})`, class: base.class }
+        return { text: status === 'pending' ? `Pending (${prog.count}/${prog.required})` : `Submitted (${prog.count}/${prog.required})`, class: base.class }
       }
     }
     return base
@@ -149,10 +156,16 @@ export function useApprovalStatus() {
       const by = getApprovalStepJabatan(row, 'rejected')
       return by ? `Rejected by ${by}` : (map[status] ?? status.toUpperCase())
     }
-    if (status === 'pending') {
+    if (status === 'pending' || status === 'submitted') {
+      const stepCount = getStepCountForApproved(row)
+      if (stepCount && stepCount.current > 0 && stepCount.current < stepCount.total) {
+        const by = getApprovalStepJabatan(row, 'approved')
+        const stepSuffix = ` (${stepCount.current}/${stepCount.total})`
+        return by ? `Approved by ${by}${stepSuffix}` : (status === 'pending' ? `Pending${stepSuffix}` : `Submitted${stepSuffix}`)
+      }
       const prog = row?.signatureProgress ?? row?.signature_progress
       if (prog && typeof prog.count === 'number' && typeof prog.required === 'number' && prog.required > 0) {
-        return `Pending (${prog.count}/${prog.required})`
+        return status === 'pending' ? `Pending (${prog.count}/${prog.required})` : `Submitted (${prog.count}/${prog.required})`
       }
     }
     return map[status] ?? status.toUpperCase()

@@ -366,6 +366,13 @@ export default defineNuxtPlugin(() => {
     rejectIro: (id: string) => `${apiBase}/iro/rejectIro/${id}`,
     submitIro: (id: string) => `${apiBase}/iro/submitIro/${id}`,
 
+    // MGRF (Material Good Request Form)
+    mgrf: () => `${apiBase}/mgrf`,
+    countMgrfByStatus: () => `${apiBase}/mgrf/countByStatus`,
+    approveMgrf: (id: string) => `${apiBase}/mgrf/approveMgrf/${id}`,
+    rejectMgrf: (id: string) => `${apiBase}/mgrf/rejectMgrf/${id}`,
+    submitMgrf: (id: string) => `${apiBase}/mgrf/submitMgrf/${id}`,
+
     // Legal-Tech Review
     leTechReview: () => `${apiBase}/le-tech-review`,
     leTechReviewShow: (id: number | string) => `${apiBase}/le-tech-review/${id}`,

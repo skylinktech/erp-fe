@@ -46,6 +46,9 @@ export interface Mgrf {
   createdAt: string
   updatedAt: string
   currentApprovalStep?: number | null
+  nextApprovalStep?: number | null
+  revision?: number
+  rejectReason?: string | null
   currentApprovers?: Array<{ userId: number; fullName?: string; email?: string; source?: string }>
   approvalLogs?: ApprovalLogEntry[]
   iro?: { id: number; noIro?: string }
@@ -418,6 +421,7 @@ export const useMgrfStore = defineStore('mgrf', {
           position: 'topRight',
           layout: 2,
         })
+        return true
       } catch (error: any) {
         const toast = useToast()
         toast.error({
@@ -427,6 +431,7 @@ export const useMgrfStore = defineStore('mgrf', {
           position: 'topRight',
           layout: 2,
         })
+        return false
       } finally {
         this.loading = false
       }
@@ -478,7 +483,7 @@ export const useMgrfStore = defineStore('mgrf', {
       }
     },
 
-    async rejectMgrf(mgrfId: string) {
+    async rejectMgrf(mgrfId: string, remarks = '') {
       this.loading = true
       this.error = null
       const { $api } = useNuxtApp()
@@ -489,6 +494,7 @@ export const useMgrfStore = defineStore('mgrf', {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
+          body: JSON.stringify({ remarks, rejectionReason: remarks, reject_reason: remarks }),
           credentials: 'include',
         })
 
@@ -548,12 +554,11 @@ export const useMgrfStore = defineStore('mgrf', {
         const toast = useToast()
         toast.success({
           title: 'Success',
-          message: 'MGRF berhasil di-submit (status: pending).',
+          message: 'MGRF berhasil di-submit.',
           color: 'green',
           position: 'topRight',
           layout: 2,
         })
-
         return true
       } catch (error: any) {
         console.error('Error submit MGRF:', error)

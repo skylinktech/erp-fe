@@ -1,7 +1,7 @@
 <template>
   <div class="page-wrapper">
     <div class="content-wrapper">
-      <div class="container-xxl flex-grow-1 container pt-12">
+      <div class="container-xxl flex-grow-1 container p-y">
         <!-- Loading -->
         <div v-if="loading" class="d-flex justify-content-center align-items-center" style="min-height: 400px;">
           <div class="text-center">
@@ -33,27 +33,49 @@
                 <small class="text-muted">{{ formatDateTime(mgrf.createdAt) }}</small>
               </div>
               <span :class="getStatusBadge(mgrf).class" class="badge">{{ getStatusBadge(mgrf).text }}</span>
+              <span v-if="(mgrf.revision ?? 0) > 0" class="badge bg-label-info">Revisi {{ mgrf.revision }}</span>
             </div>
             <div class="d-flex flex-wrap gap-2">
               <div class="btn-group" role="group">
                 <button id="btnGroupDrop1" type="button" class="btn btn-outline-secondary dropdown-toggle btn-sm" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="d-none d-sm-block">Actions</span></button>
                 <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
-                  <a v-if="mgrf.status === 'draft'" class="dropdown-item" href="javascript:void(0)" @click="onSubmit">
-                    <i class="ri-send-plane-line me-2"></i> Submit MGRF
+                  <a v-if="(userHasRole('superadmin') || userHasPermission('create_mgrf')) && (mgrf.status === 'draft' || mgrf.status === 'rejected')" class="dropdown-item" href="javascript:void(0)" @click="onSubmit">
+                    <i class="ri-send-plane-line me-2"></i> {{ mgrf.status === 'rejected' ? 'Submit Revisi' : 'Submit MGRF' }}
                   </a>
-                  <a v-if="mgrf.status === 'pending'" class="dropdown-item" href="javascript:void(0)" @click="onApprove">
+                  <a v-if="canApprove" class="dropdown-item" href="javascript:void(0)" @click="onApprove">
                     <i class="ri-check-line me-2"></i> Approve
                   </a>
-                  <a v-if="mgrf.status === 'pending'" class="dropdown-item" href="javascript:void(0)" @click="onReject">
+                  <a v-if="canReject" class="dropdown-item" href="javascript:void(0)" @click="onReject">
                     <i class="ri-close-line me-2"></i> Reject
                   </a>
-                  <a class="dropdown-item" href="javascript:void(0)" @click="navigateTo('/purchasing/mgrf?edit=' + mgrf.id)">
+                  <a v-if="(userHasRole('superadmin') || userHasPermission('edit_mgrf')) && canEditMgrf(mgrf)" class="dropdown-item" href="javascript:void(0)" @click="navigateTo('/purchasing/mgrf?edit=' + mgrf.id)">
                     <i class="ri-edit-box-line me-2"></i> Edit
                   </a>
-                  <a v-if="mgrf.status === 'draft'" class="dropdown-item text-danger" href="javascript:void(0)" @click="handleDelete">
+                  <a v-if="(userHasRole('superadmin') || userHasPermission('delete_mgrf')) && mgrf.status === 'draft'" class="dropdown-item text-danger" href="javascript:void(0)" @click="handleDelete">
                     <i class="ri-delete-bin-7-line me-2"></i> Hapus
                   </a>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Process Flow (sama seperti SI & Quotation) -->
+          <div class="card mb-4 shadow-sm border-0">
+            <div class="card-header border-0 bg-transparent px-5 py-4">
+              <h5 class="card-title mb-0">Process Flow</h5>
+            </div>
+            <div class="card-body px-5 pt-0 pb-4">
+              <div class="d-flex flex-wrap align-items-center gap-2 process-flow">
+                <NuxtLink v-if="mgrf.iro?.id" :to="'/order-process/iro/detail/' + mgrf.iro.id" class="process-pill process-pill-done text-decoration-none">
+                  <i class="ri-check-line me-1"></i> IRO{{ mgrf.iro?.noIro ? ' (' + mgrf.iro.noIro + ')' : '' }}
+                </NuxtLink>
+                <span v-else class="process-pill process-pill-done"><i class="ri-check-line me-1"></i> IRO</span>
+                <span class="process-arrow text-muted">&gt;</span>
+                <span class="process-pill process-pill-active">
+                  <i class="ri-file-list-3-line me-1"></i> MGRF
+                </span>
+                <span class="process-arrow text-muted">&gt;</span>
+                <span class="process-pill process-pill-inactive">Purchase Request</span>
               </div>
             </div>
           </div>
@@ -102,9 +124,21 @@
                         </span>
                       </p>
                     </div>
+                    <div class="col-md-6" v-if="mgrf.currentApprovalStep != null">
+                      <label class="form-label text-muted medium">Current Approval Step</label>
+                      <p class="mb-0 fw-medium">{{ mgrf.currentApprovalStep ?? mgrf.nextApprovalStep ?? '—' }}</p>
+                    </div>
+                    <div class="col-md-6" v-if="(mgrf.revision ?? 0) > 0">
+                      <label class="form-label text-muted medium">Revisi</label>
+                      <p class="mb-0 fw-medium">{{ mgrf.revision }}</p>
+                    </div>
                     <div class="col-12" v-if="mgrf.description">
                       <label class="form-label text-muted medium">Deskripsi</label>
                       <p class="mb-0 text-break">{{ mgrf.description }}</p>
+                    </div>
+                    <div class="col-12" v-if="mgrf.status === 'rejected' && (mgrf.rejectReason || mgrf.reject_reason || getLastRejectionRemarks(mgrf))">
+                      <label class="form-label text-muted medium">Alasan Penolakan (reject_reason)</label>
+                      <p class="mb-0 text-danger text-break">{{ mgrf.rejectReason || mgrf.reject_reason || getLastRejectionRemarks(mgrf) }}</p>
                     </div>
                     <div class="col-12" v-if="mgrf.attachment">
                       <label class="form-label text-muted medium">Attachment</label>
@@ -223,12 +257,12 @@
                 </div>
               </div>
 
-              <!-- Approval Card -->
+              <!-- Approval Card (sama seperti SI & Quotation) -->
               <ApprovalCard
                 :status-text="getStatusText(mgrf)"
-                :current-step="mgrf.currentApprovalStep ?? null"
+                :current-step="mgrf.currentApprovalStep ?? mgrf.nextApprovalStep ?? null"
                 :current-approvers="mgrf.currentApprovers ?? []"
-                :approval-logs="mgrf.approvalLogs ?? []"
+                :approval-logs="mgrf.approvalLogs ?? mgrf.approval_logs ?? []"
               />
 
               <!-- Informasi User -->
@@ -270,21 +304,60 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useMgrfStore } from '~/stores/mgrf'
+import { useUserStore } from '~/stores/user'
 import { usePermissions } from '~/composables/usePermissions'
 import { useImageUrl } from '~/composables/useImageUrl'
 import { useApprovalStatus } from '~/composables/useApprovalStatus'
 import ApprovalCard from '~/components/ApprovalCard.vue'
+import Swal from 'sweetalert2'
 
 const route = useRoute()
 const mgrfStore = useMgrfStore()
+const userStore = useUserStore()
 const { userHasPermission, userHasRole } = usePermissions()
 const { getAttachmentUrl, getFileIcon, isImageFile } = useImageUrl()
-const { getStatusBadge, getStatusText, getApprovalStepJabatan } = useApprovalStatus()
+const { getStatusBadge, getStatusText, getApprovalStepJabatan, getApprovedStepCount } = useApprovalStatus()
 const formatRupiah = useFormatRupiah()
 
 const { mgrf, loading, error } = storeToRefs(mgrfStore)
 
 const id = computed(() => String(route.params.id || ''))
+
+const currentUserId = computed(() => userStore.user?.id ?? null)
+
+const canApprove = computed(() => {
+  if (!mgrf.value || currentUserId.value == null) return false
+  const approvers = mgrf.value.currentApprovers || []
+  const uid = currentUserId.value
+  const isCurrentApprover = approvers.length === 0 || approvers.some((a: any) => Number(a.userId) === Number(uid))
+  const m = mgrf.value
+  if (m.status === 'pending') return isCurrentApprover
+  if (m.status === 'approved') {
+    const stepCount = getApprovedStepCount(m)
+    if (stepCount && stepCount.current < stepCount.total) return isCurrentApprover
+  }
+  return false
+})
+
+const canReject = computed(() => canApprove.value)
+
+function canEditMgrf(row: any) {
+  if (!row) return false
+  const s = row.status
+  if (s === 'draft' || s === 'pending' || s === 'rejected') return true
+  if (s === 'approved') {
+    const stepCount = getApprovedStepCount(row)
+    return stepCount != null && stepCount.total > 0 && stepCount.current < stepCount.total
+  }
+  return false
+}
+
+function getLastRejectionRemarks(row: any): string {
+  const logs = row?.approvalLogs ?? row?.approval_logs ?? []
+  const rejectedLogs = logs.filter((l: any) => (l.action ?? l.Action) === 'rejected')
+  const last = rejectedLogs.pop()
+  return last?.remarks || ''
+}
 
 function formatDate (v: string | null | undefined) {
   if (!v) return '—'
@@ -331,26 +404,40 @@ function refreshAfterAction () {
 
 async function onApprove () {
   if (!mgrf.value) return
-  await mgrfStore.approveMgrf(mgrf.value.id)
-  refreshAfterAction()
+  const ok = await mgrfStore.approveMgrf(mgrf.value.id)
+  if (ok) refreshAfterAction()
 }
 
 async function onReject () {
   if (!mgrf.value) return
-  await mgrfStore.rejectMgrf(mgrf.value.id)
-  refreshAfterAction()
+  const result = await Swal.fire({
+    title: 'Reject MGRF',
+    input: 'textarea',
+    inputLabel: 'Alasan penolakan',
+    inputPlaceholder: 'Tulis alasan penolakan...',
+    inputValidator: (value) => {
+      if (!value || !value.trim()) return 'Alasan penolakan wajib diisi'
+      return null
+    },
+    showCancelButton: true,
+    confirmButtonText: 'Reject',
+    cancelButtonText: 'Batal',
+  })
+  if (!result.isConfirmed) return
+  const ok = await mgrfStore.rejectMgrf(mgrf.value.id, result.value || '')
+  if (ok) refreshAfterAction()
 }
 
 async function onSubmit () {
   if (!mgrf.value) return
-  await mgrfStore.submitMgrf(mgrf.value.id)
-  refreshAfterAction()
+  const ok = await mgrfStore.submitMgrf(mgrf.value.id)
+  if (ok) refreshAfterAction()
 }
 
-function handleDelete () {
+async function handleDelete () {
   if (!mgrf.value) return
-  mgrfStore.deleteMgrf(mgrf.value.id)
-  navigateTo('/purchasing/mgrf')
+  const deleted = await mgrfStore.deleteMgrf(mgrf.value.id)
+  if (deleted) navigateTo('/purchasing/mgrf')
 }
 
 onMounted(() => load())
@@ -365,5 +452,40 @@ definePageMeta({
 <style scoped>
 .mgrf-detail-summary .card-body {
   font-variant-numeric: tabular-nums;
+}
+
+.process-flow {
+  font-size: 0.9rem;
+}
+
+.process-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.4rem 0.85rem;
+  border-radius: 9999px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.process-pill-done {
+  background: rgba(34, 197, 94, 0.15);
+  color: #16a34a;
+}
+
+.process-pill-active {
+  background: var(--bs-primary, #696cff);
+  color: #fff;
+  font-weight: 600;
+}
+
+.process-pill-inactive {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.process-arrow {
+  font-size: 0.85rem;
+  font-weight: 600;
+  user-select: none;
 }
 </style>

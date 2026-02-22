@@ -25,15 +25,16 @@
                 <small class="text-muted">{{ formatDateTime(iro.createdAt) }}</small>
               </div>
               <span :class="getStatusBadge(iro).class" class="badge">{{ getStatusBadge(iro).text }}</span>
+              <span v-if="(iro.revision ?? 0) > 0" class="badge bg-label-info">Revisi {{ iro.revision }}</span>
             </div>
           <div class="d-flex gap-2">
               <div class="btn-group">
                 <button type="button" class="btn btn-outline-secondary dropdown-toggle btn-sm" data-bs-toggle="dropdown">Actions</button>
                 <div class="dropdown-menu">
-                  <a v-if="iro.status === 'draft'" class="dropdown-item" href="javascript:void(0)" @click="onSubmit"><i class="ri-send-plane-line me-2"></i> Submit IRO</a>
+                  <a v-if="iro.status === 'draft' || iro.status === 'rejected'" class="dropdown-item" href="javascript:void(0)" @click="onSubmit"><i class="ri-send-plane-line me-2"></i> {{ iro.status === 'rejected' ? 'Submit Revisi' : 'Submit IRO' }}</a>
                 <a v-if="canApprove" class="dropdown-item" href="javascript:void(0)" @click="onApprove"><i class="ri-check-line me-2"></i> Approve</a>
                 <a v-if="canReject" class="dropdown-item" href="javascript:void(0)" @click="onReject"><i class="ri-close-line me-2"></i> Reject</a>
-                  <a v-if="iro.status === 'draft'" class="dropdown-item" href="javascript:void(0)" @click="navigateTo('/order-process/iro?edit=' + iro.id)"><i class="ri-edit-box-line me-2"></i> Edit</a>
+                  <a v-if="iro.status === 'draft' || iro.status === 'rejected'" class="dropdown-item" href="javascript:void(0)" @click="navigateTo('/order-process/iro?edit=' + iro.id)"><i class="ri-edit-box-line me-2"></i> Edit</a>
                   <a class="dropdown-item" href="javascript:void(0)" @click="navigateTo({ path: '/order-process/cetak-iro', query: { id: iro.id } })"><i class="ri-printer-line me-2"></i> Cetak IRO</a>
                   <a class="dropdown-item text-danger" href="javascript:void(0)" @click="onDelete" v-if="iro.status === 'draft'"><i class="ri-delete-bin-7-line me-2"></i> Hapus</a>
                 </div>
@@ -55,6 +56,10 @@
                     <div class="col-md-6"><label class="form-label text-muted">Terms of Payment</label><p class="mb-0">{{ iro.termsOfPayment || '—' }}</p></div>
                     <div class="col-md-6"><label class="form-label text-muted">Dibuat oleh</label><p class="mb-0">{{ iro.createdByUser?.fullName || iro.createdByUser?.full_name || '—' }}</p></div>
                     <div v-if="iro.up" class="col-12"><label class="form-label text-muted">Untuk Perhatian (UP)</label><p class="mb-0">{{ iro.up }}</p></div>
+                    <div class="col-12" v-if="iro.status === 'rejected' && (iro.rejectReason || iro.reject_reason)">
+                      <label class="form-label text-muted">Alasan Penolakan</label>
+                      <p class="mb-0 text-danger text-break">{{ iro.rejectReason || iro.reject_reason || '—' }}</p>
+                    </div>
                     <div class="col-12 mt-2">
                       <label class="form-label text-muted d-block">Lampiran</label>
                       <div class="d-flex flex-wrap gap-3">
@@ -184,8 +189,8 @@
                   <div v-if="(iro.approvalLogs?.length || 0) > 0">
                     <div class="text-muted">Riwayat Approval</div>
                     <ul class="mb-0 ps-3">
-                      <li v-for="log in iro.approvalLogs" :key="log.id">
-                        {{ log.action === 'approved' ? 'Approved' : 'Rejected' }} by {{ getStepJabatanLabel(log) }} — {{ getStepLabel(log) }}
+                      <li v-for="log in sortedApprovalLogs" :key="log.id" :class="(log.action ?? log.Action) === 'approved' ? 'text-success' : 'text-danger'">
+                        {{ (log.action ?? log.Action) === 'approved' ? 'Approved' : 'Rejected' }} by {{ getStepJabatanLabel(log) }}
                         <div v-if="log.remarks" class="text-muted small">Catatan: {{ log.remarks }}</div>
                       </li>
                     </ul>
@@ -217,10 +222,16 @@ const id = computed(() => String(route.params.id || ''))
 const currentUserId = computed(() => userStore.user?.id ?? null)
 
 const canApprove = computed(() => {
-  if (!iro.value || iro.value.status !== 'pending') return false
+  if (!iro.value || !currentUserId.value) return false
+  const st = iro.value.status
   const approvers = iro.value.currentApprovers || []
-  if (!currentUserId.value) return false
-  return approvers.length === 0 || approvers.some((a) => a.userId === currentUserId.value)
+  if (st === 'pending') {
+    return approvers.length === 0 || approvers.some((a) => a.userId === currentUserId.value)
+  }
+  if (st === 'approved' && approvers.length > 0) {
+    return approvers.some((a) => a.userId === currentUserId.value)
+  }
+  return false
 })
 
 const canReject = computed(() => canApprove.value)
@@ -241,6 +252,17 @@ const computedServiceSubtotal = computed(() => {
   return Math.max(0, g - m - d)
 })
 
+/** Urutan kronologis: sesuai urutan kejadian (created_at asc) */
+const sortedApprovalLogs = computed(() => {
+  const logs = iro.value?.approvalLogs ?? iro.value?.approval_logs ?? []
+  return [...logs].sort((a: any, b: any) => {
+    const ta = new Date(a?.createdAt ?? a?.created_at ?? 0).getTime()
+    const tb = new Date(b?.createdAt ?? b?.created_at ?? 0).getTime()
+    if (ta !== tb) return ta - tb
+    return (a?.id ?? 0) - (b?.id ?? 0)
+  })
+})
+
 function formatDateTime (v: string | null | undefined) {
   if (!v) return '—'
   return new Date(v).toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
@@ -249,9 +271,10 @@ function formatDateTime (v: string | null | undefined) {
 const { getStatusBadge } = useApprovalStatus()
 
 /** Jabatan dari step workflow (approval_workflow_steps.jabatan) — bukan jabatan user */
-function getStepJabatanLabel (log: { stepOrder: number; workflow?: { steps?: Array<{ step_order?: number; stepOrder?: number; step_name?: string; stepName?: string; jabatan?: { nm_jabatan?: string; nmJabatan?: string } }> }; user?: { fullName?: string; full_name?: string; email?: string } }) {
+function getStepJabatanLabel (log: { stepOrder?: number; step_order?: number; workflow?: { steps?: Array<{ step_order?: number; stepOrder?: number; step_name?: string; stepName?: string; jabatan?: { nm_jabatan?: string; nmJabatan?: string } }> }; user?: { fullName?: string; full_name?: string; email?: string } }) {
   const steps = log.workflow?.steps || []
-  const step = steps.find((s) => (s.step_order ?? s.stepOrder) === log.stepOrder)
+  const stepOrder = log.stepOrder ?? log.step_order
+  const step = steps.find((s) => (s.step_order ?? s.stepOrder) === stepOrder)
   const nm = step?.jabatan?.nm_jabatan ?? step?.jabatan?.nmJabatan ?? ''
   if (nm) return nm
   const stepName = step?.step_name ?? step?.stepName ?? ''
@@ -302,13 +325,13 @@ async function onReject () {
     input: 'textarea',
     inputLabel: 'Alasan reject (wajib)',
     inputPlaceholder: 'Tulis alasan reject...',
-    inputValidator: (value) => (!value ? 'Alasan reject wajib diisi' : undefined),
+    inputValidator: (value) => (!value?.trim() ? 'Alasan reject wajib diisi' : undefined),
     showCancelButton: true,
     confirmButtonText: 'Reject',
     cancelButtonText: 'Batal',
   })
   if (!result.isConfirmed) return
-  const ok = await iroStore.rejectIro(iro.value.id, result.value || '')
+  const ok = await iroStore.rejectIro(iro.value.id, result.value?.trim() || '')
   if (ok) refresh()
 }
 

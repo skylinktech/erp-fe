@@ -1,7 +1,7 @@
 <template>
   <div class="page-wrapper">
     <div class="content-wrapper">
-      <div class="container-xxl flex-grow-1 container pt-12">
+      <div class="container-xxl flex-grow-1 container p-y">
         <!-- Loading -->
         <div v-if="loading" class="d-flex justify-content-center align-items-center" style="min-height: 400px;">
           <div class="text-center">
@@ -33,18 +33,19 @@
                 <small class="text-muted">{{ formatDateTime(arf.createdAt) }}</small>
               </div>
               <span :class="getStatusBadge(arf).class" class="badge">{{ getStatusBadge(arf).text }}</span>
+              <span v-if="(arf.revision ?? 0) > 0" class="badge bg-label-info">Revisi {{ arf.revision }}</span>
             </div>
             <div class="d-flex flex-wrap gap-2">
               <div class="btn-group" role="group">
                 <button id="btnGroupDrop1" type="button" class="btn btn-outline-secondary dropdown-toggle btn-sm" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="d-none d-sm-block">Actions</span></button>
                 <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
-                  <a v-if="arf.status === 'draft'" class="dropdown-item" href="javascript:void(0)" @click="onSubmit">
-                    <i class="ri-send-plane-line me-2"></i> Submit ARF
+                  <a v-if="(userHasRole('superadmin') || userHasPermission('create_arf')) && (arf.status === 'draft' || arf.status === 'rejected')" class="dropdown-item" href="javascript:void(0)" @click="onSubmit">
+                    <i class="ri-send-plane-line me-2"></i> {{ arf.status === 'rejected' ? 'Submit Revisi' : 'Submit ARF' }}
                   </a>
-                  <a v-if="arf.status === 'submitted' && (userHasRole('superadmin') || userHasPermission('approve_arf'))" class="dropdown-item" href="javascript:void(0)" @click="onApprove">
+                  <a v-if="canApprove" class="dropdown-item" href="javascript:void(0)" @click="onApprove">
                     <i class="ri-check-line me-2"></i> Approve
                   </a>
-                  <a v-if="arf.status === 'submitted' && (userHasRole('superadmin') || userHasPermission('approve_arf'))" class="dropdown-item" href="javascript:void(0)" @click="onReject">
+                  <a v-if="canReject" class="dropdown-item" href="javascript:void(0)" @click="onReject">
                     <i class="ri-close-line me-2"></i> Reject
                   </a>
                   <a v-if="arf.status === 'approved' && (userHasRole('superadmin') || userHasPermission('approve_arf'))" class="dropdown-item" href="javascript:void(0)" @click="onDisburse">
@@ -56,7 +57,7 @@
                   <a v-if="arf.status !== 'settled' && arf.status !== 'cancelled' && (userHasRole('superadmin') || userHasPermission('approve_arf'))" class="dropdown-item" href="javascript:void(0)" @click="onCancel">
                     <i class="ri-close-circle-line me-2"></i> Cancel
                   </a>
-                  <a v-if="userHasRole('superadmin') || userHasPermission('edit_arf')" class="dropdown-item" href="javascript:void(0)" @click="navigateTo('/purchasing/arf?edit=' + arf.id)">
+                  <a v-if="(userHasRole('superadmin') || userHasPermission('edit_arf')) && canEditArf(arf)" class="dropdown-item" href="javascript:void(0)" @click="navigateTo('/purchasing/arf?edit=' + arf.id)">
                     <i class="ri-edit-box-line me-2"></i> Edit
                   </a>
                   <a v-if="arf.status === 'draft' && (userHasRole('superadmin') || userHasPermission('delete_arf'))" class="dropdown-item text-danger" href="javascript:void(0)" @click="handleDelete">
@@ -127,9 +128,17 @@
                       <label class="form-label text-muted medium">Currency</label>
                       <p class="mb-0 fw-medium">{{ arf.currency || 'IDR' }}</p>
                     </div>
+                    <div class="col-md-6" v-if="(arf.revision ?? 0) > 0">
+                      <label class="form-label text-muted medium">Revisi</label>
+                      <p class="mb-0 fw-medium">{{ arf.revision }}</p>
+                    </div>
                     <div class="col-12" v-if="arf.purpose">
                       <label class="form-label text-muted medium">Purpose</label>
                       <p class="mb-0 text-break">{{ arf.purpose }}</p>
+                    </div>
+                    <div class="col-12" v-if="arf.status === 'rejected' && (arf.rejectReason || arf.reject_reason || getLastRejectionRemarks(arf))">
+                      <label class="form-label text-muted medium">Alasan Penolakan (reject_reason)</label>
+                      <p class="mb-0 text-danger text-break">{{ arf.rejectReason || arf.reject_reason || getLastRejectionRemarks(arf) }}</p>
                     </div>
                   </div>
                 </div>
@@ -191,7 +200,7 @@
               <!-- Approval Card -->
               <ApprovalCard
                 :status-text="getStatusText(arf)"
-                :current-step="arf.currentApprovalStep ?? null"
+                :current-step="arf.currentApprovalStep ?? arf.nextApprovalStep ?? null"
                 :current-approvers="arf.currentApprovers ?? []"
                 :approval-logs="arf.approvalLogs ?? []"
               />
@@ -322,14 +331,52 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useArfStore } from '~/stores/arf'
+import { useUserStore } from '~/stores/user'
 import { useApprovalStatus } from '~/composables/useApprovalStatus'
 import ApprovalCard from '~/components/ApprovalCard.vue'
 import { usePermissions } from '~/composables/usePermissions'
+import Swal from 'sweetalert2'
 
 const route = useRoute()
 const arfStore = useArfStore()
+const userStore = useUserStore()
 const { userHasPermission, userHasRole } = usePermissions()
-const { getStatusBadge, getStatusText, getApprovalStepJabatan } = useApprovalStatus()
+const { getStatusBadge, getStatusText, getApprovalStepJabatan, getApprovedStepCount } = useApprovalStatus()
+const currentUserId = computed(() => userStore.user?.id ?? null)
+
+const canApprove = computed(() => {
+  if (!arf.value || !(userHasRole('superadmin') || userHasPermission('approve_arf'))) return false
+  const approvers = arf.value.currentApprovers || []
+  const uid = currentUserId.value
+  const isCurrentApprover = approvers.length === 0 || approvers.some((a: any) => Number(a.userId) === Number(uid))
+  const m = arf.value
+  if (m.status === 'submitted') return isCurrentApprover
+  if (m.status === 'approved') {
+    const stepCount = getApprovedStepCount(m)
+    if (stepCount && stepCount.current < stepCount.total) return isCurrentApprover
+  }
+  return false
+})
+
+const canReject = computed(() => canApprove.value)
+
+function canEditArf(row: any) {
+  if (!row) return false
+  const s = row.status
+  if (s === 'draft' || s === 'rejected') return true
+  if (s === 'approved') {
+    const stepCount = getApprovedStepCount(row)
+    return stepCount != null && stepCount.total > 0 && stepCount.current < stepCount.total
+  }
+  return false
+}
+
+function getLastRejectionRemarks(row: any): string {
+  const logs = row?.approvalLogs ?? row?.approval_logs ?? []
+  const rejectedLogs = logs.filter((l: any) => (l.action ?? l.Action) === 'rejected')
+  const last = rejectedLogs.pop()
+  return last?.remarks || ''
+}
 const formatRupiah = useFormatRupiah()
 
 const { arf, loading, error } = storeToRefs(arfStore)
@@ -381,14 +428,28 @@ function refreshAfterAction () {
 
 async function onApprove () {
   if (!arf.value) return
-  await arfStore.approveArf(arf.value.id)
-  refreshAfterAction()
+  const ok = await arfStore.approveArf(arf.value.id)
+  if (ok) refreshAfterAction()
 }
 
 async function onReject () {
   if (!arf.value) return
-  await arfStore.rejectArf(arf.value.id)
-  refreshAfterAction()
+  const result = await Swal.fire({
+    title: 'Reject ARF',
+    input: 'textarea',
+    inputLabel: 'Alasan penolakan',
+    inputPlaceholder: 'Tulis alasan penolakan...',
+    inputValidator: (value) => {
+      if (!value || !value.trim()) return 'Alasan penolakan wajib diisi'
+      return null
+    },
+    showCancelButton: true,
+    confirmButtonText: 'Reject',
+    cancelButtonText: 'Batal',
+  })
+  if (!result.isConfirmed) return
+  const ok = await arfStore.rejectArf(arf.value.id, result.value || '')
+  if (ok) refreshAfterAction()
 }
 
 async function onDisburse () {

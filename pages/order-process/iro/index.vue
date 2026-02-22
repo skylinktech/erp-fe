@@ -1,6 +1,6 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-p-y">
+    <div class="container-xxl flex-grow-1 container-pt-12">
       <h4 class="mb-1">IRO (Internal Request Order)</h4>
       <p class="mb-6">Daftar IRO yang terdaftar di sistem</p>
 
@@ -201,6 +201,7 @@
                 <Column field="status" header="Status" :sortable="true">
                   <template #body="slotProps">
                     <span :class="getStatusBadge(slotProps.data).class">{{ getStatusBadge(slotProps.data).text }}</span>
+                    <span v-if="(slotProps.data.revision ?? 0) > 0" class="badge bg-label-info ms-1">R{{ slotProps.data.revision }}</span>
                   </template>
                 </Column>
                 <Column field="jenisIro" header="Jenis IRO" :sortable="true">
@@ -219,19 +220,19 @@
                     <div class="dropdown d-inline-block">
                       <a href="javascript:;" class="btn btn-sm btn-text-secondary rounded-pill btn-icon dropdown-toggle hide-arrow" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed"}'><i class="ri-more-2-fill"></i></a>
                       <ul class="dropdown-menu dropdown-menu-end">
-                        <li v-if="(userHasRole('superadmin') || userHasPermission('edit_iro')) && slotProps.data.status === 'draft'">
-                          <a class="dropdown-item" href="javascript:void(0)" @click="iroStore.submitIro(slotProps.data.id)"><i class="ri-send-plane-line me-2"></i> Submit IRO</a>
+                        <li v-if="(userHasRole('superadmin') || userHasPermission('edit_iro')) && (slotProps.data.status === 'draft' || slotProps.data.status === 'rejected')">
+                          <a class="dropdown-item" href="javascript:void(0)" @click="iroStore.submitIro(slotProps.data.id)"><i class="ri-send-plane-line me-2"></i> {{ slotProps.data.status === 'rejected' ? 'Submit Revisi' : 'Submit IRO' }}</a>
                         </li>
-                        <li v-if="(userHasRole('superadmin') || userHasPermission('approve_iro')) && slotProps.data.status === 'pending'">
+                        <li v-if="(userHasRole('superadmin') || userHasPermission('approve_iro')) && (slotProps.data.status === 'pending' || slotProps.data.status === 'approved')">
                           <a class="dropdown-item" href="javascript:void(0)" @click="iroStore.approveIro(slotProps.data.id)"><i class="ri-check-line me-2"></i> Approve</a>
                         </li>
-                        <li v-if="(userHasRole('superadmin') || userHasPermission('reject_iro')) && slotProps.data.status === 'pending'">
-                          <a class="dropdown-item" href="javascript:void(0)" @click="iroStore.rejectIro(slotProps.data.id)"><i class="ri-close-line me-2"></i> Reject</a>
+                        <li v-if="(userHasRole('superadmin') || userHasPermission('reject_iro')) && (slotProps.data.status === 'pending' || slotProps.data.status === 'approved')">
+                          <a class="dropdown-item" href="javascript:void(0)" @click="onRejectFromIndex(slotProps.data.id)"><i class="ri-close-line me-2"></i> Reject</a>
                         </li>
                         <li>
                           <a class="dropdown-item" href="javascript:void(0)" @click="navigateTo(`/order-process/iro/detail/${slotProps.data.id}`)"><i class="ri-eye-line me-2"></i> Lihat Detail</a>
                         </li>
-                        <li v-if="(userHasRole('superadmin') || userHasPermission('edit_iro')) && slotProps.data.status === 'draft'">
+                        <li v-if="(userHasRole('superadmin') || userHasPermission('edit_iro')) && (slotProps.data.status === 'draft' || slotProps.data.status === 'rejected')">
                           <a class="dropdown-item" href="javascript:void(0)" @click="iroStore.fetchIroForEdit(slotProps.data.id)"><i class="ri-edit-box-line me-2"></i> Edit</a>
                         </li>
                         <li v-if="(userHasRole('superadmin') || userHasPermission('delete_iro')) && slotProps.data.status === 'draft'">
@@ -393,6 +394,7 @@ import Dropdown from 'primevue/dropdown'
 import InputText from 'primevue/inputtext'
 import { useDebounceFn } from '@vueuse/core'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
+import Swal from 'sweetalert2'
 
 const { setListTitle } = useDynamicTitle()
 const iroStore = useIroStore()
@@ -563,6 +565,22 @@ function getDetailLabel(d) {
 }
 
 const { getStatusBadge } = useApprovalStatus()
+
+async function onRejectFromIndex(id) {
+  const result = await Swal.fire({
+    title: 'Reject IRO',
+    input: 'textarea',
+    inputLabel: 'Alasan reject (wajib)',
+    inputPlaceholder: 'Tulis alasan reject...',
+    inputValidator: (value) => (!value?.trim() ? 'Alasan reject wajib diisi' : undefined),
+    showCancelButton: true,
+    confirmButtonText: 'Reject',
+    cancelButtonText: 'Batal',
+  })
+  if (!result.isConfirmed) return
+  const ok = await iroStore.rejectIro(id, result.value?.trim() || '')
+  if (ok) iroStore.fetchIros()
+}
 
 const onPage = (e) => { if (e) iroStore.setPagination(e) }
 const handleRowsChange = (v) => { 

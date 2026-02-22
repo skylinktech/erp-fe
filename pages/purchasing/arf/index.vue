@@ -20,7 +20,7 @@
       </div>
 
       <!-- Content -->
-      <div v-else class="container-xxl flex-grow-1 container-p-y">
+      <div v-else class="container-xxl flex-grow-1 container-pt-12">
         <h4 class="mb-1">ARF (Asset Request Form)</h4>
         <p class="mb-6">List ARF yang terdaftar di sistem</p>
 
@@ -345,6 +345,7 @@
                       >
                         {{ slotProps.data.noArf || '-' }}
                       </a>
+                      <span v-if="(slotProps.data.revision ?? 0) > 0" class="badge bg-label-info ms-1">Revisi {{ slotProps.data.revision }}</span>
                     </template>
                   </Column>
 
@@ -410,19 +411,19 @@
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end arf-actions-dropdown">
                           <li
-                            v-if="(userHasRole('superadmin') || userHasPermission('edit_arf')) && slotProps.data.status === 'draft'"
+                            v-if="(userHasRole('superadmin') || userHasPermission('create_arf')) && (slotProps.data.status === 'draft' || slotProps.data.status === 'rejected')"
                           >
                             <a
                               class="dropdown-item"
                               href="javascript:void(0)"
                               @click="arfStore.submitArf(slotProps.data.id)"
                             >
-                              <i class="ri-send-plane-line me-2"></i> Submit ARF
+                              <i class="ri-send-plane-line me-2"></i> {{ slotProps.data.status === 'rejected' ? 'Submit Revisi' : 'Submit ARF' }}
                             </a>
                           </li>
 
                           <li
-                            v-if="(userHasRole('superadmin') || userHasPermission('approve_arf')) && slotProps.data.status === 'submitted'"
+                            v-if="canApprove(slotProps.data)"
                           >
                             <a
                               class="dropdown-item"
@@ -433,12 +434,12 @@
                             </a>
                           </li>
                           <li
-                            v-if="(userHasRole('superadmin') || userHasPermission('approve_arf')) && slotProps.data.status === 'submitted'"
+                            v-if="canReject(slotProps.data)"
                           >
                             <a
                               class="dropdown-item"
                               href="javascript:void(0)"
-                              @click="arfStore.rejectArf(slotProps.data.id)"
+                              @click="onRejectArf(slotProps.data.id)"
                             >
                               <i class="ri-close-line me-2"></i> Reject
                             </a>
@@ -480,7 +481,7 @@
                             </a>
                           </li>
 
-                          <li v-if="userHasRole('superadmin') || userHasPermission('edit_arf')">
+                          <li v-if="(userHasRole('superadmin') || userHasPermission('edit_arf')) && canEditArf(slotProps.data)">
                             <a
                               class="dropdown-item"
                               href="javascript:void(0)"
@@ -558,7 +559,7 @@
                 <!-- Tab Info -->
                 <div class="tab-pane fade active show" id="form-tabs-info" role="tabpanel">
                   <div class="row g-4">
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                       <div class="form-floating form-floating-outline">
                         <input
                           type="date"
@@ -569,7 +570,7 @@
                         <label>Request Date</label>
                       </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                       <div class="form-floating form-floating-outline">
                         <input
                           type="date"
@@ -580,7 +581,7 @@
                         <label>Needed Date</label>
                       </div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-3">
                       <label class="form-label text-muted mb-2">Purchase Request</label>
                       <CustomSelect2
                         v-model="form.purchaseRequestId"
@@ -594,7 +595,7 @@
                         @update:modelValue="onPurchaseRequestChange"
                       />
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-3">
                       <label class="form-label text-muted mb-2">Site</label>
                       <CustomSelect2
                         v-model="form.siteId"
@@ -606,7 +607,7 @@
                         clearable
                       />
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-3">
                       <label class="form-label text-muted mb-2">Cost Center</label>
                       <CustomSelect2
                         v-model="form.costCenterId"
@@ -619,15 +620,13 @@
                       />
                     </div>
                     <div class="col-md-3">
-                      <div class="form-floating form-floating-outline">
-                        <input
+                      <label class="form-label text-muted mb-2">Currency</label>
+                      <input
                           type="text"
                           v-model="form.currency"
                           class="form-control"
                           placeholder="Currency"
                         >
-                        <label>Currency</label>
-                      </div>
                     </div>
                     <div class="col-md-12">
                       <div class="form-floating form-floating-outline">
@@ -794,15 +793,17 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useArfStore } from '~/stores/arf'
 import { useProductStore } from '~/stores/product'
 import { useWarehouseStore } from '~/stores/warehouse'
 import { usePermissionsStore } from '~/stores/permissions'
+import { useUserStore } from '~/stores/user'
 import { usePermissions } from '~/composables/usePermissions'
 import { useApprovalStatus } from '~/composables/useApprovalStatus'
+import Swal from 'sweetalert2'
 import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import Column from 'primevue/column'
@@ -822,8 +823,57 @@ const productStore = useProductStore()
 const warehouseStore = useWarehouseStore()
 const permissionStore = usePermissionsStore()
 const formatRupiah = useFormatRupiah()
+const userStore = useUserStore()
 const { userHasPermission, userHasRole } = usePermissions()
-const { getStatusBadge } = useApprovalStatus()
+const { getStatusBadge, getApprovedStepCount } = useApprovalStatus()
+const currentUserId = computed(() => userStore.user?.id ?? null)
+
+function canApprove(row: any) {
+  if (!row || !(userHasRole('superadmin') || userHasPermission('approve_arf'))) return false
+  if (row.status !== 'submitted') return false
+  const approvers = row.currentApprovers || []
+  const uid = currentUserId.value
+  const isCurrentApprover = approvers.length === 0 || approvers.some((a: any) => Number(a.userId) === Number(uid))
+  if (row.status === 'submitted') return isCurrentApprover
+  if (row.status === 'approved') {
+    const stepCount = getApprovedStepCount(row)
+    if (stepCount && stepCount.current < stepCount.total) return isCurrentApprover
+  }
+  return false
+}
+
+function canReject(row: any) {
+  return canApprove(row)
+}
+
+function canEditArf(row: any) {
+  if (!row) return false
+  const s = row.status
+  if (s === 'draft' || s === 'rejected') return true
+  if (s === 'approved') {
+    const stepCount = getApprovedStepCount(row)
+    return stepCount != null && stepCount.total > 0 && stepCount.current < stepCount.total
+  }
+  return false
+}
+
+async function onRejectArf(arfId: string) {
+  const result = await Swal.fire({
+    title: 'Reject ARF',
+    input: 'textarea',
+    inputLabel: 'Alasan penolakan',
+    inputPlaceholder: 'Tulis alasan penolakan...',
+    inputValidator: (value) => {
+      if (!value || !value.trim()) return 'Alasan penolakan wajib diisi'
+      return null
+    },
+    showCancelButton: true,
+    confirmButtonText: 'Reject',
+    cancelButtonText: 'Batal',
+  })
+  if (!result.isConfirmed) return
+  await arfStore.rejectArf(arfId, result.value || '')
+}
 
 const { arfs, loading, totalRecords, params, form, isEditMode, showModal, validationErrors, stats, enableAdditional } = storeToRefs(arfStore)
 const { products } = storeToRefs(productStore)

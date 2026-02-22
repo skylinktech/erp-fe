@@ -42,6 +42,9 @@ export interface Arf {
   estimatedAmount: number
   currency: string
   status: 'draft' | 'submitted' | 'approved' | 'rejected' | 'disbursed' | 'settled' | 'cancelled'
+  revision?: number
+  rejectReason?: string | null
+  reject_reason?: string | null
   purchaseRequestId: string | null
   requestorId: number | null
   costCenterId: number | null
@@ -489,7 +492,7 @@ export const useArfStore = defineStore('arf', {
         const toast = useToast()
         toast.success({
           title: 'Success',
-          message: 'ARF berhasil di-submit (status: submitted).',
+          message: 'ARF berhasil di-submit.',
           color: 'green',
           position: 'topRight',
           layout: 2,
@@ -558,7 +561,7 @@ export const useArfStore = defineStore('arf', {
       }
     },
 
-    async rejectArf(arfId: string) {
+    async rejectArf(arfId: string, remarks = '') {
       this.loading = true
       this.error = null
       const { $api } = useNuxtApp()
@@ -569,6 +572,7 @@ export const useArfStore = defineStore('arf', {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
+          body: JSON.stringify({ remarks, rejectionReason: remarks, reject_reason: remarks }),
           credentials: 'include',
         })
 
@@ -578,6 +582,7 @@ export const useArfStore = defineStore('arf', {
         }
 
         await this.fetchArfs()
+        await this.fetchStats()
         const toast = useToast()
         toast.success({
           title: 'Success',

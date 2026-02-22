@@ -24,7 +24,7 @@
       <div v-if="(approvalLogs?.length || 0) > 0">
         <div class="text-muted">Riwayat Approval</div>
         <ul class="mb-0 ps-3">
-          <li v-for="log in approvalLogs" :key="log.id" :class="(log.action ?? log.Action) === 'approved' ? 'text-success' : 'text-danger'">
+          <li v-for="log in sortedApprovalLogs" :key="log.id" :class="(log.action ?? log.Action) === 'approved' ? 'text-success' : 'text-danger'">
             {{ (log.action ?? log.Action) === 'approved' ? 'Approved' : 'Rejected' }} by {{ getStepJabatanLabel(log) }}
             <div v-if="log.remarks" class="text-muted small">Catatan: {{ log.remarks }}</div>
           </li>
@@ -35,6 +35,8 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+
 interface ApproverInfo {
   userId: number
   fullName?: string
@@ -52,6 +54,7 @@ interface ApprovalLog {
   user?: { fullName?: string; full_name?: string; email?: string }
   workflow?: { steps?: Array<{ step_order?: number; stepOrder?: number; step_name?: string; stepName?: string; jabatan?: { nm_jabatan?: string; nmJabatan?: string }; role?: { name?: string } }> }
   createdAt?: string
+  created_at?: string
 }
 
 const props = defineProps<{
@@ -60,6 +63,17 @@ const props = defineProps<{
   currentApprovers?: ApproverInfo[]
   approvalLogs?: ApprovalLog[]
 }>()
+
+/** Urutan kronologis: sesuai urutan kejadian (created_at asc). Contoh: Approved → Rejected → Approved (resubmit) → Approved */
+const sortedApprovalLogs = computed(() => {
+  const logs = props.approvalLogs || []
+  return [...logs].sort((a, b) => {
+    const ta = new Date(a.createdAt ?? a.created_at ?? 0).getTime()
+    const tb = new Date(b.createdAt ?? b.created_at ?? 0).getTime()
+    if (ta !== tb) return ta - tb
+    return (a.id ?? 0) - (b.id ?? 0)
+  })
+})
 
 /** Label "Approved by X": prioritas Jabatan → Role → step_name → fullName user */
 function getStepJabatanLabel(log: ApprovalLog) {

@@ -12,7 +12,7 @@
             </div>
 
             <!-- Content -->
-            <div v-else class="container-xxl flex-grow-1 container-p-y">
+            <div v-else class="container-xxl flex-grow-1 container-pt-12">
                 <h4 class="mb-1">MGRF (Material Goods Request Form)</h4>
                 <p class="mb-6">List MGRF yang terdaftar di sistem</p>
 
@@ -272,6 +272,7 @@
                                             <span :class="getStatusBadge(slotProps.data).class">
                                                 {{ getStatusBadge(slotProps.data).text }}
                                             </span>
+                                            <span v-if="(slotProps.data.revision ?? 0) > 0" class="badge bg-label-info ms-1">R{{ slotProps.data.revision }}</span>
                                         </template>
                                     </Column>
                                     <Column field="description" header="Deskripsi" :sortable="true"></Column>
@@ -295,9 +296,9 @@
                                                     <i class="ri-more-2-fill"></i>
                                                 </a>
                                                 <ul class="dropdown-menu dropdown-menu-end mgrf-actions-dropdown">
-                                                    <li v-if="(userHasRole('superadmin') || userHasPermission('edit_mgrf')) && slotProps.data.status === 'draft'">
+                                                    <li v-if="(userHasRole('superadmin') || userHasPermission('create_mgrf')) && (slotProps.data.status === 'draft' || slotProps.data.status === 'rejected')">
                                                         <a class="dropdown-item" href="javascript:void(0)" @click="mgrfStore.submitMgrf(slotProps.data.id)">
-                                                            <i class="ri-send-plane-line me-2"></i> Submit MGRF
+                                                            <i class="ri-send-plane-line me-2"></i> {{ slotProps.data.status === 'rejected' ? 'Submit Revisi' : 'Submit MGRF' }}
                                                         </a>
                                                     </li>
                                                     <li v-if="(userHasRole('superadmin') || userHasPermission('approve_mgrf')) && slotProps.data.status === 'pending'">
@@ -310,7 +311,7 @@
                                                             <i class="ri-close-line me-2"></i> Reject
                                                         </a>
                                                     </li>
-                                                    <li v-if="userHasRole('superadmin') || userHasPermission('edit_mgrf')">
+                                                    <li v-if="(userHasRole('superadmin') || userHasPermission('edit_mgrf')) && canEditMgrf(slotProps.data)">
                                                         <a class="dropdown-item" href="javascript:void(0)" @click="mgrfStore.openModal(slotProps.data)">
                                                             <i class="ri-edit-box-line me-2"></i> Edit
                                                         </a>
@@ -548,7 +549,18 @@ const permissionStore = usePermissionsStore()
 const formatRupiah = useFormatRupiah()
 const { userHasPermission, userHasRole } = usePermissions()
 const { getAttachmentUrl, isImageFile } = useImageUrl()
-const { getStatusBadge } = useApprovalStatus()
+const { getStatusBadge, getApprovedStepCount } = useApprovalStatus()
+
+function canEditMgrf(row) {
+  if (!row) return false
+  const s = row.status
+  if (s === 'draft' || s === 'pending' || s === 'rejected') return true
+  if (s === 'approved') {
+    const stepCount = getApprovedStepCount(row)
+    return stepCount != null && stepCount.total > 0 && stepCount.current < stepCount.total
+  }
+  return false
+}
 
 const { mgrfs, loading, totalRecords, params, form, isEditMode, showModal, validationErrors, stats, enableAdditional } = storeToRefs(mgrfStore)
 const { products } = storeToRefs(productStore)

@@ -36,6 +36,9 @@ export interface PurchaseRequest {
   mgrfId: string
   vendorId: number | null
   noPr: string
+  revision?: number
+  rejectReason?: string | null
+  reject_reason?: string | null
   status: 'draft' | 'approved' | 'rejected' | 'received' | 'pending'
   description?: string | null
   attachment?: string | null
@@ -331,14 +334,11 @@ export const usePurchaseRequestStore = defineStore('purchaseRequest', {
           formData.append('attachment', this.form.attachment)
         }
 
-        const method = this.isEditMode ? 'POST' : 'POST'
+        const method = this.isEditMode ? 'PUT' : 'POST'
         const url = this.isEditMode ? `${$api.purchaseRequest()}/${this.form.id}` : $api.purchaseRequest()
-        if (this.isEditMode) {
-          formData.append('_method', 'PUT')
-        }
 
         const response = await fetch(url, {
-          method: method,
+          method,
           headers: {
             'Accept': 'application/json',
           },
@@ -443,11 +443,29 @@ export const usePurchaseRequestStore = defineStore('purchaseRequest', {
       }
     },
 
-    async approvePurchaseRequest(prId: string) {
+    async approvePurchaseRequest(prId: string, remarks?: string, skipConfirm = false) {
       this.loading = true
       this.error = null
       const { $api } = useNuxtApp()
+      const toast = useToast()
       try {
+        if (!skipConfirm) {
+          const result = await Swal.fire({
+            title: 'Approve Purchase Request',
+            text: 'Apakah Anda yakin akan menyetujui Purchase Request ini?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Ya, Approve',
+            cancelButtonText: 'Batal',
+          })
+          if (!result.isConfirmed) {
+            this.loading = false
+            return false
+          }
+        }
+
         const response = await fetch($api.approvePurchaseRequest(prId), {
           method: 'PATCH',
           headers: {
@@ -455,6 +473,7 @@ export const usePurchaseRequestStore = defineStore('purchaseRequest', {
             'Accept': 'application/json',
           },
           credentials: 'include',
+          body: JSON.stringify({ remarks: remarks ?? undefined }),
         })
 
         if (!response.ok) {
@@ -463,7 +482,6 @@ export const usePurchaseRequestStore = defineStore('purchaseRequest', {
         }
 
         await this.fetchPurchaseRequests()
-        const toast = useToast()
         toast.success({
           title: 'Success',
           message: 'Purchase Request berhasil diapprove.',
@@ -475,7 +493,6 @@ export const usePurchaseRequestStore = defineStore('purchaseRequest', {
         return true
       } catch (error: any) {
         console.error('Error approving Purchase Request:', error)
-        const toast = useToast()
         toast.error({
           title: 'Error',
           message: error.message || 'Gagal mengapprove Purchase Request.',
@@ -489,10 +506,44 @@ export const usePurchaseRequestStore = defineStore('purchaseRequest', {
       }
     },
 
-    async rejectPurchaseRequest(prId: string) {
+    async rejectPurchaseRequest(prId: string, rejectReason?: string) {
       this.loading = true
       this.error = null
       const { $api } = useNuxtApp()
+      const toast = useToast()
+      let reason = rejectReason
+      if (reason === undefined) {
+        const result = await Swal.fire({
+          title: 'Reject Purchase Request',
+          html: `
+            <p class="mb-4" style="text-align: center;">Apakah Anda yakin akan menolak Purchase Request ini?</p>
+            <div class="swal-reject-form" style="text-align: left; max-width: 100%;">
+              <label for="swal-reject-reason" class="d-block mb-2 fw-medium" style="font-size: 0.9375rem;">Alasan penolakan <span class="text-danger">*</span></label>
+              <textarea id="swal-reject-reason" class="form-control" rows="4" placeholder="Masukkan alasan penolakan..." style="width: 100%; padding: 0.5rem 0.75rem; border: 1px solid #d9dee3; border-radius: 0.375rem; resize: vertical; font-size: 0.9375rem;" required></textarea>
+            </div>
+          `,
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#d33',
+          cancelButtonColor: '#6c757d',
+          confirmButtonText: 'Ya, Reject',
+          cancelButtonText: 'Batal',
+          preConfirm: () => {
+            const el = document.getElementById('swal-reject-reason') as HTMLTextAreaElement
+            const val = el?.value?.trim() || ''
+            if (!val) {
+              Swal.showValidationMessage('Alasan penolakan wajib diisi')
+              return false
+            }
+            return val
+          },
+        })
+        if (!result.isConfirmed || typeof result.value !== 'string') {
+          this.loading = false
+          return false
+        }
+        reason = result.value
+      }
       try {
         const response = await fetch($api.rejectPurchaseRequest(prId), {
           method: 'PATCH',
@@ -501,6 +552,7 @@ export const usePurchaseRequestStore = defineStore('purchaseRequest', {
             'Accept': 'application/json',
           },
           credentials: 'include',
+          body: JSON.stringify({ reject_reason: reason || '' }),
         })
 
         if (!response.ok) {
@@ -509,7 +561,6 @@ export const usePurchaseRequestStore = defineStore('purchaseRequest', {
         }
 
         await this.fetchPurchaseRequests()
-        const toast = useToast()
         toast.success({
           title: 'Success',
           message: 'Purchase Request berhasil direject.',
@@ -521,7 +572,6 @@ export const usePurchaseRequestStore = defineStore('purchaseRequest', {
         return true
       } catch (error: any) {
         console.error('Error rejecting Purchase Request:', error)
-        const toast = useToast()
         toast.error({
           title: 'Error',
           message: error.message || 'Gagal mereject Purchase Request.',
