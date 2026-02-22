@@ -876,6 +876,7 @@ const filters = ref({
   async function ensureServiceBillingTypes () {
     if (!form.value?.quotationServices) return;
     const { $api } = useNuxtApp();
+    const { getServicePrice: getServicePriceCached } = usePriceCache();
     const serviceItems = form.value.quotationServices;
     
     for (let i = 0; i < serviceItems.length; i++) {
@@ -886,7 +887,7 @@ const filters = ref({
       const currentBt = (item?.billingType ?? item?.billing_type ?? '').toLowerCase();
       if (currentBt && currentBt !== 'one_time') continue;
       
-      // Fetch billingType from API
+      // Fetch billingType from API (cached)
       const opts = serviceOptions.value || [];
       const svc = opts.find(s => (s.id ?? s) == item.serviceId);
       const servicePlanId = item.servicePlanId ?? svc?.servicePlanId ?? svc?.service_plan_id ?? null;
@@ -894,21 +895,28 @@ const filters = ref({
       if (!servicePlanId) continue;
       
       try {
-        const params = new URLSearchParams({
-          serviceId: String(item.serviceId),
-          servicePlanId: String(servicePlanId),
-          type: 'site_investment'
-        });
-        const res = await fetch(`${$api.getServicePrice()}?${params.toString()}`, {
-          credentials: 'include', headers: { Accept: 'application/json' },
-        });
-        if (res.ok) {
-          const json = await res.json();
+        const json = await getServicePriceCached(
+          item.serviceId,
+          servicePlanId,
+          'site_investment',
+          async () => {
+            const params = new URLSearchParams({
+              serviceId: String(item.serviceId),
+              servicePlanId: String(servicePlanId),
+              type: 'site_investment'
+            });
+            const res = await fetch(`${$api.getServicePrice()}?${params.toString()}`, {
+              credentials: 'include',
+              headers: { Accept: 'application/json' },
+            });
+            return res.ok ? res.json() : null;
+          }
+        );
+        if (json) {
           const priceData = json?.data ?? json;
           const billingType = (priceData?.billing_type ?? priceData?.billingType ?? 'one_time') + '';
           item.billingType = billingType;
           item.billing_type = billingType;
-          // Also update price if needed
           if (!item.price || item.price === 0) {
             const price = Number(priceData?.price_sell ?? priceData?.price) || 0;
             item.price = price;
@@ -1635,18 +1643,23 @@ const filters = ref({
       return;
     }
     const { $api } = useNuxtApp();
-    // Fetch price from backend price list
+    const { getProductPrice: getProductPriceCached } = usePriceCache();
+    // Fetch price from backend price list (cached to avoid redundant calls)
     (async () => {
       try {
-        const params = new URLSearchParams({
-          productId: String(selectedProductId),
-          type: 'site_investment'
-        });
-        const res = await fetch(`${$api.getProductPrice()}?${params.toString()}`, {
-          credentials: 'include', headers: { Accept: 'application/json' },
-        });
-        if (res.ok) {
-          const priceData = await res.json();
+        const priceData = await getProductPriceCached(
+          selectedProductId,
+          'site_investment',
+          async () => {
+            const params = new URLSearchParams({ productId: String(selectedProductId), type: 'site_investment' });
+            const res = await fetch(`${$api.getProductPrice()}?${params.toString()}`, {
+              credentials: 'include',
+              headers: { Accept: 'application/json' },
+            });
+            return res.ok ? res.json() : null;
+          }
+        );
+        if (priceData) {
           item.price = Number(priceData.price_sell) || 0;
           // ✅ PERBAIKAN: Set billing_type dari price list
           const billingType = (priceData?.billing_type ?? priceData?.billingType ?? 'one_time') + '';
@@ -1694,6 +1707,7 @@ const filters = ref({
     // namun jangan tampilkan inputnya di UI.
     item.servicePlanId = servicePlanId;
     const { $api } = useNuxtApp();
+    const { getServicePrice: getServicePriceCached } = usePriceCache();
     (async () => {
       try {
         if (!servicePlanId) {
@@ -1704,16 +1718,24 @@ const filters = ref({
           refreshModalSummary();
           return;
         }
-        const params = new URLSearchParams({
-          serviceId: String(item.serviceId),
-          servicePlanId: String(servicePlanId),
-          type: 'site_investment'
-        });
-        const res = await fetch(`${$api.getServicePrice()}?${params.toString()}`, {
-          credentials: 'include', headers: { Accept: 'application/json' },
-        });
-        if (res.ok) {
-          const json = await res.json();
+        const json = await getServicePriceCached(
+          item.serviceId,
+          servicePlanId,
+          'site_investment',
+          async () => {
+            const params = new URLSearchParams({
+              serviceId: String(item.serviceId),
+              servicePlanId: String(servicePlanId),
+              type: 'site_investment'
+            });
+            const res = await fetch(`${$api.getServicePrice()}?${params.toString()}`, {
+              credentials: 'include',
+              headers: { Accept: 'application/json' },
+            });
+            return res.ok ? res.json() : null;
+          }
+        );
+        if (json) {
           const priceData = json?.data ?? json;
           const price = Number(priceData?.price_sell ?? priceData?.price) || 0;
           const billingType = (priceData?.billing_type ?? priceData?.billingType ?? 'one_time') + '';

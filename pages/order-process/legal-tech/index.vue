@@ -437,16 +437,20 @@ function exportData() {
   useToast().info({ title: 'Info', message: 'Export akan tersedia pada rilis berikutnya.', color: 'blue', position: 'topRight', layout: 2 })
 }
 
+/** Fetch quotations once - filter approved for select, use full list for filter (avoids 2x API calls) */
 async function fetchQuotations() {
   const { $api } = useNuxtApp()
   try {
-    const r = await fetch(`${$api.quotation()}?page=1&rows=500&status=approved`, { headers: { Accept: 'application/json' }, credentials: 'include' })
-    if (r.ok) { const j = await r.json(); quotationsForSelect.value = j.data || []; quotationsForFilter.value = j.data || [] }
-  } catch (e) { console.error(e) }
-  try {
-    const r2 = await fetch(`${$api.quotation()}?page=1&rows=500`, { headers: { Accept: 'application/json' }, credentials: 'include' })
-    if (r2.ok) { const j = await r2.json(); quotationsForFilter.value = j.data || quotationsForFilter.value }
-  } catch (e) { console.error(e) }
+    const r = await fetch(`${$api.quotation()}?page=1&rows=500`, { headers: { Accept: 'application/json' }, credentials: 'include' })
+    if (r.ok) {
+      const j = await r.json()
+      const all = j.data || []
+      quotationsForFilter.value = all
+      quotationsForSelect.value = all.filter((q) => q.status === 'approved')
+    }
+  } catch (e) {
+    console.error('fetchQuotations:', e)
+  }
 }
 
 async function fetchIros() {
