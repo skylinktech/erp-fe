@@ -745,6 +745,13 @@
             case 'quotation':
                 router.push('/sales/quotation');
                 break;
+            case 'quotation_expiring':
+                if (notification.quotationId) {
+                    router.push(`/sales/quotation/detail/${notification.quotationId}`);
+                } else {
+                    router.push('/sales/quotation');
+                }
+                break;
             case 'price_adjustment':
                 router.push('/price-adjustment');
                 break;
@@ -770,6 +777,8 @@
                 return 'bg-label-success'
             case 'quotation':
                 return 'bg-label-primary'
+            case 'quotation_expiring':
+                return 'bg-label-warning'
             case 'price_adjustment':
                 return 'bg-label-secondary'
             default:
@@ -789,6 +798,8 @@
                 return 'ri-file-list-3-line'
             case 'quotation':
                 return 'ri-file-text-line'
+            case 'quotation_expiring':
+                return 'ri-calendar-event-line'
             case 'price_adjustment':
                 return 'ri-price-tag-3-line'
             default:
@@ -808,6 +819,8 @@
                 return `Sales Order ${notification.noSo || '-'} membutuhkan approval`
             case 'quotation':
                 return `Quotation dengan nomor ${notification.noQuotation || notification.description?.replace?.(/^Quotation\s+/i, '') || '-'} membutuhkan approval`
+            case 'quotation_expiring':
+                return `Quotation ${notification.noQuotation || '-'} akan expired dalam 1 minggu`
             case 'price_adjustment':
                 return notification.description
                     ? `Permintaan price adjustment membutuhkan approval`
@@ -830,6 +843,13 @@
                 return notification.customerName
                     ? `Customer: ${notification.customerName} | Total: ${formatCurrency(notification.total ?? 0)}`
                     : (notification.description || '')
+            case 'quotation_expiring':
+                const validStr = notification.validUntil
+                    ? new Date(notification.validUntil).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+                    : ''
+                return notification.customerName
+                    ? `Berlaku hingga: ${validStr} | Customer: ${notification.customerName}`
+                    : (validStr ? `Berlaku hingga: ${validStr}` : (notification.description || ''))
             case 'price_adjustment':
                 return notification.customerName
                     ? `Customer: ${notification.customerName}`

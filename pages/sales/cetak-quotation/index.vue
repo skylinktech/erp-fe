@@ -131,11 +131,18 @@
         :document-id="quotation.id != null ? String(quotation.id) : ''"
         :columns="4"
         :qr-size="96"
+        :compact="true"
         :show-approved-by-label="false"
         :legacy-signature-token="quotation.signatureToken || undefined"
         :legacy-signer-name="legacySignerName"
         :legacy-signer-title="legacySignerTitle"
       />
+    </div>
+
+    <!-- Footer halaman: kiri = Quotation (no_quotation) Skylink, kanan = Halaman 1/1 -->
+    <div class="cetak-qo-page-footer">
+      <span class="cetak-qo-footer-left">Quotation ({{ quotation.noQuotation || quotation.no_quotation || '-' }}) Skylink</span>
+      <span class="cetak-qo-footer-right">Halaman 1/1</span>
     </div>
   </div>
   <div v-else class="alert alert-danger m-6" role="alert">
@@ -380,6 +387,20 @@ onMounted(async () => {
 .cetak-qo-description-body.prose :deep(p) { margin-bottom: 0.5em; }
 .cetak-qo-description-body.prose :deep(ul), .cetak-qo-description-body.prose :deep(ol) { padding-left: 1.25rem; margin-bottom: 0.5em; }
 .cetak-qo-description-body.prose :deep(li) { margin-bottom: 0.25em; }
+
+/* Footer halaman: kiri dan kanan bawah */
+.cetak-qo-page-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2rem;
+  padding: 0.5rem 0;
+  font-size: 11px;
+  color: #666;
+  border-top: 1px solid #e0e0e0;
+}
+.cetak-qo-footer-left { text-align: left; }
+.cetak-qo-footer-right { text-align: right; }
 </style>
 
 <style>
@@ -400,6 +421,7 @@ onMounted(async () => {
   .cetak-qo-doc {
     padding: 0.5rem !important;
     padding-top: 0.25rem !important;
+    padding-bottom: 2.5rem !important;
     font-size: 12px;
   }
   .cetak-qo-doc .mb-4 {
@@ -459,6 +481,18 @@ onMounted(async () => {
   }
   .cetak-qo-terms-header.text-white {
     color: #fff !important;
+  }
+  .cetak-qo-page-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: 0;
+    padding: 0.35rem 1rem;
+    font-size: 10px;
+    color: #333;
+    border-top: 1pt solid #999;
+    background: #fff;
   }
 }
 </style>

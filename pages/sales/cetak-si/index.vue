@@ -197,11 +197,18 @@
           title="Verifikasi Digital Dokumen"
           :columns="4"
           :qr-size="96"
+          :compact="true"
           :legacy-signature-token="siteInvest.signatureToken || undefined"
           :legacy-signer-name="legacySignerName"
           :legacy-signer-title="legacySignerTitle"
         />
       </div>
+    </div>
+
+    <!-- Footer halaman: kiri = Site Investment (no_si) Skylink, kanan = Halaman 1/1 -->
+    <div class="cetak-si-page-footer">
+      <span class="cetak-si-footer-left">Site Investment ({{ siteInvest.siNumber || siteInvest.si_number || '-' }}) Skylink</span>
+      <span class="cetak-si-footer-right">Halaman 1/1</span>
     </div>
   </div>
   <div v-else class="alert alert-danger m-6" role="alert">
@@ -554,6 +561,20 @@ onMounted(async () => {
   background-color: #4275f6;
   color: #fff !important;
 }
+
+/* Footer halaman: kiri dan kanan bawah */
+.cetak-si-page-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2rem;
+  padding: 0.5rem 0;
+  font-size: 11px;
+  color: #666;
+  border-top: 1px solid #e0e0e0;
+}
+.cetak-si-footer-left { text-align: left; }
+.cetak-si-footer-right { text-align: right; }
 </style>
 
 <style>
@@ -575,6 +596,7 @@ onMounted(async () => {
   .cetak-si-doc {
     padding: 0.5rem !important;
     padding-top: 0.25rem !important;
+    padding-bottom: 2.5rem !important;
     font-size: 12px;
   }
   /* Rapatkan margin antar section agar TTD digital muat di halaman pertama */
@@ -646,6 +668,18 @@ onMounted(async () => {
     color: #fff !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+  }
+  .cetak-si-page-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: 0;
+    padding: 0.35rem 1rem;
+    font-size: 10px;
+    color: #333;
+    border-top: 1pt solid #999;
+    background: #fff;
   }
 }
 </style>

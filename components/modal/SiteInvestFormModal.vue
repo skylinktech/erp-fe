@@ -1473,6 +1473,20 @@ watch(showModal, async (newValue) => {
     ])
     if (!isEditMode.value) {
       selectedPriceListId.value = null
+    } else {
+      // Saat edit: isi Price List dropdown dari material/service/DID yang ada
+      const mats = form.value?.siteInvestMaterials ?? []
+      const svcs = form.value?.siteInvestServices ?? []
+      const dids = form.value?.siteInvestDids ?? []
+      const getPlId = (item) => {
+        const pl = item?.priceListLine ?? item?.price_list_line
+        return pl?.price_list_id ?? pl?.priceListId ?? pl?.priceList?.id ?? pl?.price_list?.id
+      }
+      const plId = getPlId(mats[0]) ?? getPlId(svcs[0]) ?? getPlId(dids[0])
+      if (plId != null) {
+        selectedPriceListId.value = plId
+        await enrichPriceListLinesFromPriceList(plId)
+      }
     }
     if (props.prefilledFdrId) {
       await onFdrSelect(props.prefilledFdrId)

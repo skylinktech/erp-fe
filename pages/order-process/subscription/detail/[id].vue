@@ -41,6 +41,9 @@
                   <a v-if="(userHasRole('superadmin') || userHasPermission('edit_subscription')) && subscription.status === 'draft'" class="dropdown-item" href="javascript:void(0)" @click="onSubmit">
                     <i class="ri-send-plane-line me-2"></i> Submit Subscription
                   </a>
+                  <a v-if="(userHasRole('superadmin') || userHasPermission('edit_subscription')) && (subscription.status === 'signed' || subscription.status === 'expired')" class="dropdown-item text-success" href="javascript:void(0)" @click="onActivate">
+                    <i class="ri-checkbox-circle-line me-2"></i> Aktifkan (Set Active)
+                  </a>
                   <a v-if="(userHasRole('superadmin') || userHasPermission('edit_subscription')) && (subscription.status === 'draft' || subscription.status === 'signed')" class="dropdown-item text-warning" href="javascript:void(0)" @click="onCancel">
                     <i class="ri-close-circle-line me-2"></i> Cancel Subscription
                   </a>
@@ -534,6 +537,28 @@ async function onSubmit () {
   submitting.value = true
   try {
     const ok = await subscriptionStore.submitSubscription(subscription.value.id)
+    if (ok) refreshAfterAction()
+  } finally {
+    submitting.value = false
+  }
+}
+
+async function onActivate () {
+  if (!subscription.value) return
+  const confirmed = await Swal.fire({
+    title: 'Aktifkan Subscription',
+    text: `Yakin ingin mengubah status subscription ${subscription.value.noSubscription || subscription.value.no_subscription} menjadi Active?`,
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonColor: '#198754',
+    cancelButtonColor: '#6c757d',
+    confirmButtonText: 'Ya, Aktifkan',
+    cancelButtonText: 'Batal',
+  })
+  if (!confirmed.isConfirmed) return
+  submitting.value = true
+  try {
+    const ok = await subscriptionStore.activateSubscription(subscription.value.id)
     if (ok) refreshAfterAction()
   } finally {
     submitting.value = false

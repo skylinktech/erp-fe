@@ -215,6 +215,9 @@
                         <li v-if="(userHasRole('superadmin') || userHasPermission('edit_subscription')) && slotProps.data.status === 'draft'">
                           <a class="dropdown-item" href="javascript:void(0)" @click="subscriptionStore.fetchSubscriptionForEdit(slotProps.data.id)"><i class="ri-edit-box-line me-2"></i> Edit</a>
                         </li>
+                        <li v-if="(userHasRole('superadmin') || userHasPermission('edit_subscription')) && (slotProps.data.status === 'signed' || slotProps.data.status === 'expired')">
+                          <a class="dropdown-item text-success" href="javascript:void(0)" @click="handleActivate(slotProps.data)"><i class="ri-checkbox-circle-line me-2"></i> Aktifkan</a>
+                        </li>
                         <li v-if="(userHasRole('superadmin') || userHasPermission('edit_subscription')) && (slotProps.data.status === 'draft' || slotProps.data.status === 'signed')">
                           <a class="dropdown-item text-warning" href="javascript:void(0)" @click="openCancelModal(slotProps.data)"><i class="ri-close-circle-line me-2"></i> Cancel</a>
                         </li>
@@ -293,6 +296,26 @@ function getStatusBadge(status) {
     case 'expired': return { text: 'Expired', class: 'badge rounded-pill bg-label-dark' }
     case 'canceled': return { text: 'Canceled', class: 'badge rounded-pill bg-label-danger' }
     default: return { text: status, class: 'badge rounded-pill bg-label-light' }
+  }
+}
+
+async function handleActivate(row) {
+  const confirmed = await Swal.fire({
+    title: 'Aktifkan Subscription',
+    text: `Yakin ingin mengubah status subscription ${row.noSubscription || row.no_subscription || row.id} menjadi Active?`,
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonColor: '#198754',
+    cancelButtonColor: '#6c757d',
+    confirmButtonText: 'Ya, Aktifkan',
+    cancelButtonText: 'Batal',
+  })
+  if (confirmed.isConfirmed) {
+    const ok = await subscriptionStore.activateSubscription(row.id)
+    if (ok) {
+      subscriptionStore.fetchSubscriptions()
+      subscriptionStore.fetchStatistics()
+    }
   }
 }
 

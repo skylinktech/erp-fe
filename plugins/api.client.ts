@@ -352,6 +352,7 @@ export default defineNuxtPlugin(() => {
 
     // Quotation
     quotation: () => `${apiBase}/quotation`,
+    quotationExpiringSoon: () => `${apiBase}/quotation/expiring-soon`,
     approveQuotation: (id: number | string) => `${apiBase}/quotation/approveQuotation/${id}`,
     rejectQuotation: (id: number | string) => `${apiBase}/quotation/rejectQuotation/${id}`,
     submitQuotation: (id: number | string) => `${apiBase}/quotation/submitQuotation/${id}`,
@@ -405,6 +406,7 @@ export default defineNuxtPlugin(() => {
     approveSubscription: (id: string) => `${apiBase}/subscription/approveSubscription/${id}`,
     rejectSubscription: (id: string) => `${apiBase}/subscription/rejectSubscription/${id}`,
     submitSubscription: (id: string) => `${apiBase}/subscription/submitSubscription/${id}`,
+    activateSubscription: (id: string) => `${apiBase}/subscription/activateSubscription/${id}`,
     cancelSubscription: (id: string) => `${apiBase}/subscription/cancelSubscription/${id}`,
 
     // Sales Pipeline

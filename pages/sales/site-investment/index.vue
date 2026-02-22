@@ -305,6 +305,7 @@
                                             <span :class="getStatusBadgeClass(slotProps.data)">
                                                 {{ getStatusBadgeText(slotProps.data) }}
                                             </span>
+                                            <span v-if="(slotProps.data.revision ?? 0) > 0" class="badge bg-label-info ms-1">R{{ slotProps.data.revision }}</span>
                                         </template>
                                     </Column>
                                     <Column field="grandTotal" header="Total Investment" :sortable="true" class="text-nowrap">
@@ -337,12 +338,12 @@
                                                     <i class="ri-more-2-fill"></i>
                                                 </a>
                                                 <ul class="dropdown-menu dropdown-menu-end si-actions-dropdown">
-                                                    <li v-if="(userHasRole('superadmin') || userHasPermission('edit_site_investment')) && slotProps.data.status === 'draft'">
+                                                    <li v-if="(userHasRole('superadmin') || userHasPermission('edit_site_investment')) && (slotProps.data.status === 'draft' || slotProps.data.status === 'rejected')">
                                                         <a class="dropdown-item" href="javascript:void(0)" @click="onSubmitSi(slotProps.data.id)">
-                                                            <i class="ri-send-plane-line me-2"></i> Submit SI
+                                                            <i class="ri-send-plane-line me-2"></i> {{ slotProps.data.status === 'rejected' ? 'Submit Revisi' : 'Submit SI' }}
                                                         </a>
                                                     </li>
-                                                    <li v-if="(userHasRole('superadmin') || userHasPermission('approve_site_investment')) && slotProps.data.status === 'pending'">
+                                                    <li v-if="(userHasRole('superadmin') || userHasPermission('approve_site_investment')) && canApproveSiteInvest(slotProps.data)">
                                                         <a class="dropdown-item" href="javascript:void(0)" @click="siteInvestStore.approveSiteInvest(slotProps.data.id)">
                                                             <i class="ri-check-line me-2"></i> Approve
                                                         </a>
@@ -352,7 +353,7 @@
                                                             <i class="ri-close-circle-line me-2"></i> Cancel
                                                         </a>
                                                     </li>
-                                                    <li v-if="(userHasRole('superadmin') || userHasPermission('reject_site_investment')) && slotProps.data.status === 'pending'">
+                                                    <li v-if="(userHasRole('superadmin') || userHasPermission('reject_site_investment')) && canRejectSiteInvest(slotProps.data)">
                                                         <a class="dropdown-item" href="javascript:void(0)" @click="siteInvestStore.rejectSiteInvest(slotProps.data.id)">
                                                             <i class="ri-close-line me-2"></i> Reject
                                                         </a>
@@ -420,18 +421,41 @@ const userStore = useUserStore()
 const permissionStore = usePermissionsStore()
 const formatRupiah = useFormatRupiah()
 const { userHasPermission, userHasRole } = usePermissions()
-const { getStatusBadge, getApprovedStepCount } = useApprovalStatus()
+const { getStatusBadge, getStepCountForApproved } = useApprovalStatus()
 
 function canEditSiteInvest(row) {
   if (!row) return false
   const s = row.status
-  if (s === 'draft' || s === 'pending') return true
+  if (s === 'draft' || s === 'pending' || s === 'rejected') return true
   if (s === 'approved') {
-    const stepCount = getApprovedStepCount(row)
+    const stepCount = getStepCountForApproved(row)
     return stepCount != null && stepCount.total > 0 && stepCount.current < stepCount.total
   }
   return false
 }
+
+function canApproveSiteInvest(row) {
+  if (!row) return false
+  const uid = userStore.user?.id
+  if (uid == null) return false
+  const approvers = row.currentApprovers || []
+  const isCurrentApprover = approvers.length === 0 || approvers.some((a) => Number(a.userId) === Number(uid))
+  if (row.status === 'pending') {
+    return isCurrentApprover
+  }
+  if (row.status === 'approved') {
+    const stepCount = getStepCountForApproved(row)
+    if (stepCount && stepCount.current < stepCount.total) {
+      return isCurrentApprover
+    }
+  }
+  return false
+}
+
+function canRejectSiteInvest(row) {
+  return canApproveSiteInvest(row)
+}
+
 const { getAttachmentUrl, isImageFile } = useImageUrl()
 
 function formatSiDate(value) {

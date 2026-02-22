@@ -146,9 +146,9 @@
                     </div>
                     <div class="col-12">
                       <label class="form-label">User (opsional)</label>
-                      <select v-model="stepForm.userId" class="form-select">
+                      <select v-model.number="stepForm.userId" class="form-select">
                         <option :value="null">— Tidak pakai user —</option>
-                        <option v-for="u in users" :key="u.id" :value="u.id">{{ u.full_name || u.email }} ({{ u.email }})</option>
+                        <option v-for="u in usersForSelect" :key="u.id" :value="u.id">{{ getUserLabel(u) }} ({{ u.email }})</option>
                       </select>
                     </div>
                     <div class="col-md-6">
@@ -212,7 +212,26 @@ const saving = ref(false)
 const stepErrors = ref<string[]>([])
 const roles = ref<{ id: number; name: string }[]>([])
 const jabatans = ref<{ id_jabatan: number; nm_jabatan: string }[]>([])
-const users = ref<{ id: number; full_name: string; email: string }[]>([])
+const users = ref<{ id: number; full_name: string; fullName: string; email: string }[]>([])
+
+/** Users + editing step's user (jika tidak ada di list) agar dropdown edit tampil */
+const usersForSelect = computed(() => {
+  const list = [...users.value]
+  const step = editingStep.value
+  if (step?.user && stepForm.userId) {
+    const u = step.user as any
+    const id = u.id ?? step.userId ?? (step as any).user_id
+    if (id && !list.some((x) => Number(x.id) === Number(id))) {
+      list.unshift({
+        id: Number(id),
+        full_name: u.fullName ?? u.full_name ?? '',
+        fullName: u.fullName ?? u.full_name ?? '',
+        email: u.email ?? '',
+      })
+    }
+  }
+  return list
+})
 
 const stepForm = reactive({
   stepOrder: 1,
@@ -243,15 +262,19 @@ function resetStepForm() {
   stepErrors.value = []
 }
 
+function getUserLabel(u: { full_name?: string; fullName?: string; email?: string }) {
+  return u.fullName ?? u.full_name ?? u.email ?? ''
+}
+
 function openStepModal(step?: ApprovalWorkflowStepItem | null) {
   resetStepForm()
   if (step) {
     editingStep.value = step
-    stepForm.stepOrder = step.stepOrder
-    stepForm.stepName = step.stepName
-    stepForm.roleId = step.roleId ?? null
-    stepForm.jabatanId = step.jabatanId ?? null
-    stepForm.userId = step.userId ?? null
+    stepForm.stepOrder = step.stepOrder ?? (step as any).step_order ?? 1
+    stepForm.stepName = step.stepName ?? (step as any).step_name ?? ''
+    stepForm.roleId = step.roleId ?? (step as any).role_id ?? null
+    stepForm.jabatanId = step.jabatanId ?? (step as any).jabatan_id ?? null
+    stepForm.userId = step.userId ?? (step as any).user_id ?? (step.user as any)?.id ?? null
     stepForm.minAmount = step.minAmount ?? null
     stepForm.maxAmount = step.maxAmount ?? null
     stepForm.description = step.description ?? ''
@@ -339,10 +362,18 @@ async function loadRefs() {
     }
     if (usersRes.ok) {
       const u = await usersRes.json()
-      const arr = u.data || u || []
-      users.value = Array.isArray(arr) ? arr : []
+      const arr = u.data ?? u.rows ?? (Array.isArray(u) ? u : [])
+      const list = Array.isArray(arr) ? arr : []
+      users.value = list.map((x: any) => ({
+        id: x.id,
+        full_name: x.fullName ?? x.full_name ?? '',
+        fullName: x.fullName ?? x.full_name ?? '',
+        email: x.email ?? '',
+      }))
     }
-  } catch (_) {}
+  } catch (e) {
+    console.error('Error loading refs for approval workflow:', e)
+  }
 }
 
 async function load() {

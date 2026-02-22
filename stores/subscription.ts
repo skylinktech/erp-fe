@@ -410,6 +410,26 @@ export const useSubscriptionStore = defineStore('subscription', {
       }
     },
 
+    async activateSubscription(id: string) {
+      const toast = useToast()
+      const { $api } = useNuxtApp()
+      try {
+        const res = await fetch($api.activateSubscription(id), {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          credentials: 'include',
+        })
+        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message || 'Gagal mengaktifkan Subscription')
+        await this.fetchSubscriptions()
+        await this.fetchStatistics()
+        toast.success({ title: 'Sukses', message: 'Subscription berhasil diaktifkan', color: 'green', position: 'topRight', layout: 2 })
+        return true
+      } catch (e: any) {
+        toast.error({ title: 'Error', message: e.message || 'Gagal mengaktifkan Subscription', color: 'red', position: 'topRight', layout: 2 })
+        return false
+      }
+    },
+
     async cancelSubscription(id: string, reasonCancel?: string | null) {
       const toast = useToast()
       const { $api } = useNuxtApp()

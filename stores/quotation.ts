@@ -93,6 +93,8 @@ export interface Quotation {
   rejectedBy         : number | null
   approvedAt         : string | null
   rejectedAt         : string | null
+  rejectReason?      : string | null
+  reject_reason?     : string | null
   currentApprovalStep? : number | null
   submittedAt?       : string | null
   approvalLogs?      : Array<{ id: number; stepOrder: number; action: string; remarks?: string; user?: { fullName?: string }; createdAt?: string }>
@@ -596,31 +598,43 @@ export const useQuotationStore = defineStore('quotation', {
       }
     },
 
-    async rejectQuotation(quotationId: string, remarks?: string, skipConfirm = false) {
+    async rejectQuotation(quotationId: string, rejectReason?: string, skipConfirm = false) {
       const toast     = useToast();
       this.loading = true;
       this.error = null;
       const { $api } = useNuxtApp();
-      if (!skipConfirm) {
+      let reason = rejectReason;
+      if (!skipConfirm && reason === undefined) {
         const result = await Swal.fire({
-          title: 'Reject / Cancel Quotation',
-          text: 'Apakah Anda yakin akan menolak/membatalkan quotation ini?',
+          title: 'Reject Quotation',
+          html: `
+            <p class="mb-4" style="text-align: center;">Apakah Anda yakin akan menolak Quotation ini?</p>
+            <div class="swal-reject-form" style="text-align: left; max-width: 100%;">
+              <label for="swal-reject-reason" class="d-block mb-2 fw-medium" style="font-size: 0.9375rem;">Alasan penolakan <span class="text-danger">*</span></label>
+              <textarea id="swal-reject-reason" class="form-control" rows="4" placeholder="Masukkan alasan penolakan..." style="width: 100%; padding: 0.5rem 0.75rem; border: 1px solid #d9dee3; border-radius: 0.375rem; resize: vertical; font-size: 0.9375rem;" required></textarea>
+            </div>
+          `,
           icon: 'warning',
-          input: 'textarea',
-          inputLabel: 'Alasan reject (wajib)',
-          inputPlaceholder: 'Tulis alasan reject...',
-          inputValidator: (value) => (!value || !value.trim() ? 'Alasan reject wajib diisi' : undefined),
           showCancelButton: true,
           confirmButtonColor: '#d33',
           cancelButtonColor: '#6c757d',
           confirmButtonText: 'Ya, Reject',
           cancelButtonText: 'Batal',
-        });
-        if (!result.isConfirmed) {
-          this.loading = false;
-          return false;
+          preConfirm: () => {
+            const el = document.getElementById('swal-reject-reason') as HTMLTextAreaElement
+            const val = el?.value?.trim() || ''
+            if (!val) {
+              Swal.showValidationMessage('Alasan penolakan wajib diisi')
+              return false
+            }
+            return val
+          },
+        })
+        if (!result.isConfirmed || typeof result.value !== 'string') {
+          this.loading = false
+          return false
         }
-        remarks = result.value?.trim() || remarks;
+        reason = result.value
       }
       try {
           const response = await fetch($api.rejectQuotation(quotationId), {
@@ -630,7 +644,7 @@ export const useQuotationStore = defineStore('quotation', {
                   'Accept'       : 'application/json',
               },
               credentials: 'include',
-              body: JSON.stringify({ remarks: remarks ?? undefined, reason: remarks ?? undefined }),
+              body: JSON.stringify({ reject_reason: reason || '' }),
           });
 
           if (!response.ok) {

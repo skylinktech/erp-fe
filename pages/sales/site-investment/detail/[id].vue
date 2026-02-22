@@ -33,6 +33,7 @@
                 <small class="text-muted">{{ formatDateTime(siteInvest.createdAt) }}</small>
               </div>
               <span :class="getStatusBadge(siteInvest).class" class="badge">{{ getStatusBadge(siteInvest).text }}</span>
+              <span v-if="(siteInvest.revision ?? 0) > 0" class="badge bg-label-info">Revisi {{ siteInvest.revision }}</span>
               <span :class="getPriorityBadge(siteInvest.priority).class" class="badge">{{ getPriorityBadge(siteInvest.priority).text }}</span>
               <span v-if="siteInvest.overBudget" class="badge bg-label-warning">
                 <i class="ri-alert-line me-1"></i> Over Budget
@@ -42,13 +43,13 @@
               <div class="btn-group" role="group">
                 <button id="btnGroupDrop1" type="button" class="btn btn-outline-secondary dropdown-toggle btn-sm" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="d-none d-sm-block">Actions</span></button>
                 <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
-                  <a v-if="siteInvest.status === 'draft'" class="dropdown-item" href="javascript:void(0)" @click="onSubmit">
-                    <i class="ri-send-plane-line me-2"></i> Submit SI
+                  <a v-if="siteInvest.status === 'draft' || siteInvest.status === 'rejected'" class="dropdown-item" href="javascript:void(0)" @click="onSubmit">
+                    <i class="ri-send-plane-line me-2"></i> {{ siteInvest.status === 'rejected' ? 'Submit Revisi' : 'Submit SI' }}
                   </a>
-                  <a class="dropdown-item" href="javascript:void(0)" @click="onApprove">
+                  <a v-if="canApprove" class="dropdown-item" href="javascript:void(0)" @click="onApprove">
                     <i class="ri-check-line me-2"></i> Approve
                   </a>
-                  <a class="dropdown-item" href="javascript:void(0)" @click="onReject">
+                  <a v-if="canReject" class="dropdown-item" href="javascript:void(0)" @click="onReject">
                     <i class="ri-close-line me-2"></i> Reject
                   </a>
                   <a class="dropdown-item" href="javascript:void(0)" @click="onCancel">
@@ -410,33 +411,13 @@
                 </div>
               </div>
 
-              <!-- Informasi Approval -->
-              <div class="card mb-4 shadow-sm border-0">
-                <div class="card-header border-0 bg-transparent px-5 py-4">
-                  <h5 class="card-title mb-0 d-flex align-items-center">
-                    <i class="ri-checkbox-circle-line me-2 text-primary"></i>
-                    Informasi Approval
-                  </h5>
-                </div>
-                <div class="card-body px-5 pt-4 pb-4">
-                  <div class="mb-3">
-                    <label class="form-label text-muted mb-1">Status</label>
-                    <p class="mb-0">
-                      <span :class="getStatusBadge(siteInvest).class" class="badge">{{ getStatusBadge(siteInvest).text }}</span>
-                    </p>
-                  </div>
-                  <div v-if="siteInvest.status === 'approved' && (getApprovalStepJabatan(siteInvest, 'approved') || siteInvest.approvedByUser)" class="mb-3">
-                    <label class="form-label text-muted mb-1">Disetujui Oleh</label>
-                    <p class="mb-0 fw-medium">{{ getApprovalStepJabatan(siteInvest, 'approved') || siteInvest.approvedByUser?.fullName || siteInvest.approvedByUser?.full_name || '—' }}</p>
-                    <small v-if="siteInvest.approvedAt" class="text-muted">{{ formatDateTime(siteInvest.approvedAt) }}</small>
-                  </div>
-                  <div v-if="siteInvest.status === 'rejected' && (getApprovalStepJabatan(siteInvest, 'rejected') || siteInvest.rejectedByUser)" class="mb-0">
-                    <label class="form-label text-muted mb-1">Ditolak Oleh</label>
-                    <p class="mb-0 fw-medium">{{ getApprovalStepJabatan(siteInvest, 'rejected') || siteInvest.rejectedByUser?.fullName || siteInvest.rejectedByUser?.full_name || '—' }}</p>
-                    <small v-if="siteInvest.rejectedAt" class="text-muted">{{ formatDateTime(siteInvest.rejectedAt) }}</small>
-                  </div>
-                </div>
-              </div>
+              <!-- Approval (sama seperti Quotation: current approval step, approvers, riwayat) -->
+              <ApprovalCard
+                :status-text="getStatusText(siteInvest)"
+                :current-step="siteInvest.currentApprovalStep ?? siteInvest.nextApprovalStep"
+                :current-approvers="siteInvest.currentApprovers || []"
+                :approval-logs="(siteInvest.approvalLogs || siteInvest.approval_logs || [])"
+              />
             </div>
           </div>
         </template>
@@ -450,26 +431,48 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useSiteInvestStore } from '~/stores/site-invest'
+import { useUserStore } from '~/stores/user'
 import { usePermissions } from '~/composables/usePermissions'
 import { useImageUrl } from '~/composables/useImageUrl'
 import { useApprovalStatus } from '~/composables/useApprovalStatus'
 
 const route = useRoute()
 const siteInvestStore = useSiteInvestStore()
+const userStore = useUserStore()
 const { userHasPermission, userHasRole } = usePermissions()
 const { getAttachmentUrl, getFileIcon, isImageFile } = useImageUrl()
-const { getStatusBadge, getApprovalStepJabatan, getApprovedStepCount } = useApprovalStatus()
+const { getStatusBadge, getStatusText, getApprovalStepJabatan, getApprovedStepCount, getUserDisplayName } = useApprovalStatus()
 
 function canEditSiteInvest(row: any) {
   if (!row) return false
   const s = row.status
-  if (s === 'draft' || s === 'pending') return true
+  if (s === 'draft' || s === 'pending' || s === 'rejected') return true
   if (s === 'approved') {
     const stepCount = getApprovedStepCount(row)
     return stepCount != null && stepCount.total > 0 && stepCount.current < stepCount.total
   }
   return false
 }
+
+const currentUserId = computed(() => userStore.user?.id ?? null)
+const canApprove = computed(() => {
+  if (!siteInvest.value || currentUserId.value == null) return false
+  const approvers = siteInvest.value.currentApprovers || []
+  const uid = currentUserId.value
+  const isCurrentApprover = approvers.length === 0 || approvers.some((a: any) => Number(a.userId) === Number(uid))
+  const si = siteInvest.value
+  if (si.status === 'pending') {
+    return isCurrentApprover
+  }
+  if (si.status === 'approved') {
+    const stepCount = getApprovedStepCount(si)
+    if (stepCount && stepCount.current < stepCount.total) {
+      return isCurrentApprover
+    }
+  }
+  return false
+})
+const canReject = computed(() => canApprove.value)
 const formatRupiah = useFormatRupiah()
 
 const { siteInvest, loading, error } = storeToRefs(siteInvestStore)

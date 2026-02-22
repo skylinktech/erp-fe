@@ -24,8 +24,8 @@
       <div v-if="(approvalLogs?.length || 0) > 0">
         <div class="text-muted">Riwayat Approval</div>
         <ul class="mb-0 ps-3">
-          <li v-for="log in approvalLogs" :key="log.id">
-            {{ log.action === 'approved' ? 'Approved' : 'Rejected' }} by {{ getStepJabatanLabel(log) }} — {{ stepLabel(log) }}
+          <li v-for="log in approvalLogs" :key="log.id" :class="(log.action ?? log.Action) === 'approved' ? 'text-success' : 'text-danger'">
+            {{ (log.action ?? log.Action) === 'approved' ? 'Approved' : 'Rejected' }} by {{ getStepJabatanLabel(log) }}
             <div v-if="log.remarks" class="text-muted small">Catatan: {{ log.remarks }}</div>
           </li>
         </ul>
@@ -44,8 +44,10 @@ interface ApproverInfo {
 
 interface ApprovalLog {
   id: number
-  stepOrder: number
-  action: string
+  stepOrder?: number
+  step_order?: number
+  action?: string
+  Action?: string
   remarks?: string
   user?: { fullName?: string; full_name?: string; email?: string }
   workflow?: { steps?: Array<{ step_order?: number; stepOrder?: number; step_name?: string; stepName?: string; jabatan?: { nm_jabatan?: string; nmJabatan?: string }; role?: { name?: string } }> }
@@ -62,7 +64,8 @@ const props = defineProps<{
 /** Label "Approved by X": prioritas Jabatan → Role → step_name → fullName user */
 function getStepJabatanLabel(log: ApprovalLog) {
   const steps = log.workflow?.steps || []
-  const step = steps.find((s) => (s.step_order ?? s.stepOrder) === log.stepOrder)
+  const stepOrder = log.stepOrder ?? log.step_order
+  const step = steps.find((s) => (s.step_order ?? s.stepOrder) === stepOrder)
   const jabatan = step?.jabatan?.nm_jabatan ?? step?.jabatan?.nmJabatan ?? ''
   if (jabatan) return jabatan
   const role = step?.role?.name ?? ''
@@ -74,9 +77,10 @@ function getStepJabatanLabel(log: ApprovalLog) {
 
 function stepLabel(log: ApprovalLog) {
   const steps = log.workflow?.steps || []
-  const step = steps.find((s) => (s.step_order ?? s.stepOrder) === log.stepOrder)
+  const stepOrder = log.stepOrder ?? log.step_order
+  const step = steps.find((s) => (s.step_order ?? s.stepOrder) === stepOrder)
   const stepName = step?.step_name ?? step?.stepName
   if (stepName) return stepName
-  return `Step ${log.stepOrder}`
+  return `Step ${stepOrder}`
 }
 </script>

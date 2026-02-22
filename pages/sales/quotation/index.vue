@@ -2,7 +2,7 @@
 <template>
     <div class="content-wrapper">
         <!-- Content -->
-        <div class="container-xxl flex-grow-1 container-p-y">
+        <div class="container-xxl flex-grow-1 container-pt-12">
             <h4 class="mb-1">List Quotation</h4>
             <p class="mb-6">
             List quotation yang terdaftar di sistem
@@ -194,9 +194,10 @@
                                     <Column field="customer.name" header="Customer" :sortable="true"></Column>
                                     <Column field="status" header="Status" :sortable="true">
                                         <template #body="slotProps">
-                                            <span :class="getStatusBadge(slotProps.data).class">
-                                                {{ getStatusBadge(slotProps.data).text }}
+                                            <span :class="getStatusBadgeClass(slotProps.data)">
+                                                {{ getStatusBadgeText(slotProps.data) }}
                                             </span>
+                                            <span v-if="(slotProps.data.revision ?? 0) > 0" class="badge bg-label-info ms-1">R{{ slotProps.data.revision }}</span>
                                         </template>
                                     </Column>
                                     <Column field="approvedByUser.fullName" header="Approved By" :sortable="true" class="text-nowrap">
@@ -247,17 +248,17 @@
                                                 <a href="javascript:;" class="btn btn-sm btn-text-secondary rounded-pill btn-icon dropdown-toggle hide-arrow" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed"}'><i class="ri-more-2-fill"></i>
                                                 </a>
                                                 <ul class="dropdown-menu dropdown-menu-end quotation-actions-dropdown">
-                                                    <li v-if="(userHasRole('superadmin') || userHasPermission('edit_purchase_order')) && slotProps.data.status === 'draft'">
+                                                    <li v-if="(userHasRole('superadmin') || userHasPermission('create_quotation') || userHasPermission('approve_quotation')) && (slotProps.data.status === 'draft' || slotProps.data.status === 'rejected')">
                                                         <a class="dropdown-item" href="javascript:void(0)" @click="quotationStore.submitQuotation(slotProps.data.id)">
-                                                            <i class="ri-send-plane-line me-2"></i> Submit Quotation
+                                                            <i class="ri-send-plane-line me-2"></i> {{ slotProps.data.status === 'rejected' ? 'Submit Revisi' : 'Submit Quotation' }}
                                                         </a>
                                                     </li>
-                                                    <li v-if="(userHasRole('superadmin') || userHasPermission('approve_purchase_order')) && slotProps.data.status === 'pending'">
+                                                    <li v-if="(userHasRole('superadmin') || userHasPermission('approve_quotation')) && canApproveQuotation(slotProps.data)">
                                                         <a class="dropdown-item" href="javascript:void(0)" @click="quotationStore.approveQuotation(slotProps.data.id)">
                                                             <i class="ri-check-line me-2"></i> Approve
                                                         </a>
                                                     </li>
-                                                    <li v-if="(userHasRole('superadmin') || userHasPermission('reject_purchase_order')) && slotProps.data.status === 'pending'">
+                                                    <li v-if="(userHasRole('superadmin') || userHasPermission('approve_quotation')) && canRejectQuotation(slotProps.data)">
                                                         <a class="dropdown-item" href="javascript:void(0)" @click="quotationStore.rejectQuotation(slotProps.data.id)">
                                                             <i class="ri-close-line me-2"></i> Reject
                                                         </a>
@@ -1910,25 +1911,47 @@ const filters = ref({
       navigateTo(`/sales/quotation/detail/${quotationId}`);
   };
 
-  const { getStatusBadge: _getStatusBadge, getApprovalStepJabatan, getApprovedStepCount } = useApprovalStatus();
+  const { getStatusBadge, getApprovalStepJabatan, getStepCountForApproved } = useApprovalStatus();
 
   function canEditQuotation(row) {
     if (!row) return false
     const s = row.status
-    if (s === 'draft' || s === 'pending') return true
+    if (s === 'draft' || s === 'pending' || s === 'rejected') return true
     if (s === 'approved') {
-      const stepCount = getApprovedStepCount(row)
+      const stepCount = getStepCountForApproved(row)
       return stepCount != null && stepCount.total > 0 && stepCount.current < stepCount.total
     }
     return false
   }
-  const getStatusBadge = (row) => _getStatusBadge(row, {
-      draft: { text: 'Draft', class: 'badge rounded-pill bg-label-secondary' },
-      pending: { text: 'Pending', class: 'badge rounded-pill bg-label-warning' },
-      approved: { text: 'Approved', class: 'badge rounded-pill bg-label-success' },
-      rejected: { text: 'Rejected', class: 'badge rounded-pill bg-label-danger' },
-      expired: { text: 'Expired', class: 'badge rounded-pill bg-label-dark' },
-  });
+
+  function canApproveQuotation(row) {
+    if (!row) return false
+    const uid = userStore.user?.id
+    if (uid == null) return false
+    const approvers = row.currentApprovers ?? row.current_approvers ?? []
+    const isCurrentApprover = approvers.length === 0 || approvers.some((a) => {
+      const aid = a.userId ?? a.user_id
+      return aid != null && Number(aid) === Number(uid)
+    })
+    if (row.status === 'pending') return isCurrentApprover
+    if (row.status === 'approved') {
+      const stepCount = getStepCountForApproved(row)
+      if (stepCount && stepCount.current < stepCount.total) return isCurrentApprover
+    }
+    return false
+  }
+
+  function canRejectQuotation(row) {
+    return canApproveQuotation(row)
+  }
+
+  function getStatusBadgeClass(data) {
+    return getStatusBadge(data).class
+  }
+
+  function getStatusBadgeText(data) {
+    return getStatusBadge(data).text
+  }
 
 // Fungsi export PDF khusus untuk Quotation
 const exportQuotationPDF = (dataToExport) => {

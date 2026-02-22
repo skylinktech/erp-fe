@@ -28,7 +28,7 @@
       </div>
 
       <!-- Signatures Grid; gap minimal antara Prepared by & Approved by -->
-      <div class="row signature-grid g-1" :class="{ 'justify-content-center': signatures.length === 1 }">
+      <div class="row signature-grid" :class="[compact ? 'g-0' : 'g-1', { 'justify-content-center': signatures.length === 1 || compact }, compact && 'signature-grid-compact']">
         <div 
           v-for="signature in signatures" 
           :key="signature.id"
@@ -175,6 +175,11 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
+  /** Mode compact: kurangi jarak antar QR (untuk halaman cetak) */
+  compact: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const emit = defineEmits(['signatures-loaded', 'error'])
@@ -195,6 +200,7 @@ const effectiveRequired = computed(() => {
 })
 
 const columnClass = computed(() => {
+  if (props.compact) return 'col-auto'
   const colMap = {
     2: 'col-md-6',
     3: 'col-md-4',
@@ -289,16 +295,18 @@ function isPreparedBy(signature) {
   return role && String(role).toLowerCase() === 'prepared by'
 }
 
-/** Nama yang ditampilkan: fullName user atau fallback */
+/** Nama di bawah QR: nm_pegawai prioritas, fallback username */
 function displayName(signature) {
-  return signature?.user?.name || signature?.user?.fullName || '-'
+  const nm = signature?.user?.nmPegawai
+  if (nm && String(nm).trim()) return String(nm).trim()
+  return signature?.user?.username || signature?.user?.fullName || signature?.user?.name || '-'
 }
 
-/** Baris di bawah nama: Jabatan (jika ada) atau Role user */
+/** Baris di bawah username: Jabatan (prioritas) atau Role (fallback) */
 function displayTitle(signature) {
-  const jabatan = signature?.user?.jabatan
-  if (jabatan) return jabatan
-  const role = signature?.user?.roleName || signature?.role
+  const jabatan = signature?.user?.jabatan ?? signature?.user?.nmJabatan
+  if (jabatan && String(jabatan).trim()) return String(jabatan).trim()
+  const role = signature?.user?.roleName ?? signature?.role ?? signature?.signatureRole
   return getRoleLabel(role) || '-'
 }
 
@@ -333,6 +341,45 @@ watch(
 .signature-grid {
   --bs-gutter-x: 0.35rem;
   --bs-gutter-y: 0.35rem;
+}
+
+.signature-grid-compact {
+  --bs-gutter-x: 0.1rem;
+  --bs-gutter-y: 0.15rem;
+  gap: 0.25rem 0.5rem;
+}
+
+.signature-grid-compact .signature-card {
+  padding: 0.2rem 0.35rem;
+  max-width: fit-content;
+}
+
+.signature-grid-compact .signature-info {
+  margin-top: 0.3rem;
+}
+
+.signature-grid-compact .qr-wrapper {
+  min-height: 72px;
+}
+
+.signature-grid-compact .user-name {
+  margin: 0.2rem 0 0.08rem;
+  font-size: 11px;
+}
+
+.signature-grid-compact .signature-title {
+  font-size: 10px;
+}
+
+.signature-grid-compact .signed-date {
+  font-size: 10px;
+  margin-top: 0.15rem;
+}
+
+.signature-grid-compact .verification-status {
+  margin-top: 0.25rem;
+  padding: 0.15rem 0.35rem;
+  font-size: 10px;
 }
 
 .signature-card {

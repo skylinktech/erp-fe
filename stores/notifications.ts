@@ -24,10 +24,12 @@ export interface StockNotification {
 
 export interface OrderNotification {
   id: string
-  type: 'purchase_order' | 'sales_order' | 'quotation' | 'price_adjustment'
+  type: 'purchase_order' | 'sales_order' | 'quotation' | 'quotation_expiring' | 'price_adjustment'
   noPo?: string
   noSo?: string
   noQuotation?: string
+  quotationId?: string
+  validUntil?: string
   status: string
   createdAt: string
   createdBy: string
@@ -320,6 +322,37 @@ export const useNotificationsStore = defineStore('notifications', {
           console.error('Error fetching quotation notifications:', e)
         }
 
+        // Fetch quotation expiring soon (valid_until dalam 1 minggu)
+        try {
+          const expRes = await fetch(`${$api.quotationExpiringSoon()}?rows=5&page=1`, {
+            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+            credentials: 'include'
+          })
+          if (expRes.ok) {
+            const expData = await expRes.json()
+            const expList = Array.isArray(expData.data) ? expData.data : []
+            expList.forEach((q: any) => {
+              const noQuotation = q.no_quotation || q.noQuotation || ''
+              orderNotifications.push({
+                id: `exp-${q.id}`,
+                type: 'quotation_expiring',
+                noQuotation,
+                quotationId: q.id,
+                status: q.status || '',
+                createdAt: q.created_at || q.createdAt,
+                createdBy: q.created_by || q.createdBy || '',
+                createdByName: (q.createdByUser || q.created_by_user)?.full_name || (q.createdByUser || q.created_by_user)?.fullName || 'Sales',
+                customerName: (q.customer?.name) || '',
+                total: q.total || q.grandTotal || 0,
+                validUntil: q.valid_until || q.validUntil,
+                description: noQuotation ? `Quotation ${noQuotation} akan expired dalam 1 minggu` : 'Quotation akan expired dalam 1 minggu'
+              })
+            })
+          }
+        } catch (e) {
+          console.error('Error fetching expiring quotation notifications:', e)
+        }
+
         // Combine all notifications
         const allNotifications: Notification[] = [...stockNotifications, ...orderNotifications]
         
@@ -536,13 +569,16 @@ export const useNotificationsStore = defineStore('notifications', {
       this.error = null
     },
 
-    // Clean up read notifications for items that are no longer in the notifications list
+    // Clean up read notifications for items that are no longer in the notifications list.
+    // Preserve numeric IDs (NotificationRecipient ids) - they're from the /notifications API
+    // and aren't in this.notifications (which is stock/order/price_adjustment etc).
     cleanupReadNotifications() {
       const currentNotificationIds = new Set(this.notifications.map(n => n.id))
       const cleanedReadNotifications = new Set<string>()
       
       this.readNotifications.forEach(id => {
-        if (currentNotificationIds.has(id)) {
+        const isRecipientId = /^\d+$/.test(String(id))
+        if (isRecipientId || currentNotificationIds.has(id)) {
           cleanedReadNotifications.add(id)
         }
       })

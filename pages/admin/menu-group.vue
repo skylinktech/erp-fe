@@ -258,6 +258,7 @@ const jenisMenuOptions = [
     { label: 'Service Management', value: 8 },
     { label: 'Order Processing', value: 9 },
     { label: 'Admin', value: 10 },
+    { label: 'Documentations', value: 11 },
 ];
 
 let modalInstance = null
@@ -330,6 +331,8 @@ const getStatusBadge = (jenisMenu) => {
             return { text: 'Order Processing', class: 'badge rounded-pill bg-label-dark' };
         case 10:
             return { text: 'Admin', class: 'badge rounded-pill bg-label-dark' };
+        case 11:
+            return { text: 'Documentations', class: 'badge rounded-pill bg-label-dark' };
         default:
             return { text: '-', class: 'badge rounded-pill bg-label-light' };
     }

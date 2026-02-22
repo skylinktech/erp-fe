@@ -38,13 +38,13 @@
               <div class="btn-group" role="group">
                 <button id="btnGroupDrop1" type="button" class="btn btn-outline-secondary dropdown-toggle btn-sm" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="d-none d-sm-block">Actions</span></button>
                 <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
-                  <a v-if="(userHasRole('superadmin') || userHasPermission('create_quotation') || userHasPermission('approve_quotation')) && quotation.status === 'draft'" class="dropdown-item" href="javascript:void(0)" @click="onSubmit">
-                    <i class="ri-send-plane-line me-2"></i> Submit Quotation
+                  <a v-if="(userHasRole('superadmin') || userHasPermission('create_quotation') || userHasPermission('approve_quotation')) && (quotation.status === 'draft' || quotation.status === 'rejected')" class="dropdown-item" href="javascript:void(0)" @click="onSubmit">
+                    <i class="ri-send-plane-line me-2"></i> {{ quotation.status === 'rejected' ? 'Submit Revisi' : 'Submit Quotation' }}
                   </a>
                   <a v-if="canApprove" class="dropdown-item" href="javascript:void(0)" @click="onApprove">
                     <i class="ri-check-line me-2"></i> Approve
                   </a>
-                  <a v-if="canApprove" class="dropdown-item" href="javascript:void(0)" @click="onReject">
+                  <a v-if="canReject" class="dropdown-item" href="javascript:void(0)" @click="onReject">
                     <i class="ri-close-line me-2"></i> Reject
                   </a>
                   <a v-if="(userHasRole('superadmin') || userHasPermission('edit_purchase_order')) && canEditQuotation(quotation)" class="dropdown-item" href="javascript:void(0)" @click="navigateTo('/sales/quotation?edit=' + quotation.id)">
@@ -146,6 +146,10 @@
                     <div class="col-md-6">
                       <label class="form-label text-muted medium">Dibuat oleh</label>
                       <p class="mb-0">{{ quotation.createdByUser?.fullName || quotation.createdByUser?.full_name || '—' }}</p>
+                    </div>
+                    <div class="col-12" v-if="quotation.status === 'rejected' && (quotation.rejectReason || quotation.reject_reason)">
+                      <label class="form-label text-muted medium">Alasan Penolakan</label>
+                      <p class="mb-0 text-danger text-break">{{ quotation.rejectReason || quotation.reject_reason || '—' }}</p>
                     </div>
                     <div class="col-12" v-if="quotation.description">
                       <label class="form-label text-muted medium">Deskripsi / Catatan</label>
@@ -336,7 +340,7 @@
 
               <ApprovalCard
                 :status-text="getStatusText(quotation)"
-                :current-step="quotation.nextApprovalStep ?? quotation.currentApprovalStep"
+                :current-step="quotation.currentApprovalStep ?? quotation.nextApprovalStep"
                 :current-approvers="quotation.currentApprovers"
                 :approval-logs="quotation.approvalLogs || quotation.approval_logs || []"
               />
@@ -403,11 +407,19 @@ const submitting = ref(false)
 const id = computed(() => String(route.params.id || ''))
 const currentUserId = computed(() => userStore.user?.id ?? null)
 const canApprove = computed(() => {
-  if (!quotation.value || quotation.value.status !== 'pending') return false
+  if (!quotation.value || currentUserId.value == null) return false
   const approvers = quotation.value.currentApprovers || []
-  if (!currentUserId.value) return false
-  return approvers.length === 0 || approvers.some((a) => a.userId === currentUserId.value)
+  const uid = currentUserId.value
+  const isCurrentApprover = approvers.length === 0 || approvers.some((a: any) => Number(a.userId) === Number(uid))
+  const q = quotation.value
+  if (q.status === 'pending') return isCurrentApprover
+  if (q.status === 'approved') {
+    const stepCount = getApprovedStepCount(q)
+    if (stepCount && stepCount.current < stepCount.total) return isCurrentApprover
+  }
+  return false
 })
+const canReject = computed(() => canApprove.value)
 
 function formatDate (v: string | Date | null | undefined) {
   if (!v) return '—'
@@ -424,7 +436,7 @@ const { getStatusBadge, getStatusText, getApprovedStepCount } = useApprovalStatu
 function canEditQuotation(row: any) {
   if (!row) return false
   const s = row.status
-  if (s === 'draft' || s === 'pending') return true
+  if (s === 'draft' || s === 'pending' || s === 'rejected') return true
   if (s === 'approved') {
     const stepCount = getApprovedStepCount(row)
     return stepCount != null && stepCount.total > 0 && stepCount.current < stepCount.total
@@ -649,18 +661,7 @@ async function onApprove () {
 
 async function onReject () {
   if (!quotation.value) return
-  const result = await Swal.fire({
-    title: 'Reject Quotation',
-    input: 'textarea',
-    inputLabel: 'Alasan reject (wajib)',
-    inputPlaceholder: 'Tulis alasan reject...',
-    inputValidator: (value) => (!value ? 'Alasan reject wajib diisi' : undefined),
-    showCancelButton: true,
-    confirmButtonText: 'Reject',
-    cancelButtonText: 'Batal',
-  })
-  if (!result.isConfirmed) return
-  const ok = await quotationStore.rejectQuotation(quotation.value.id, result.value || '', true)
+  const ok = await quotationStore.rejectQuotation(quotation.value.id)
   if (ok) refreshAfterAction()
 }
 

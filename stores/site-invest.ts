@@ -120,6 +120,8 @@ export interface SiteInvest {
   approvedAt: string | null
   rejectedBy: number | null
   rejectedAt: string | null
+  rejectReason?: string | null
+  reject_reason?: string | null
   cancelledBy: number | null
   cancelledAt: string | null
   customer?: Customer
@@ -373,6 +375,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
         delete dataToAppend.attachment
         delete dataToAppend.attachmentPreview
         delete dataToAppend.preparedByIds
+        delete dataToAppend.preparedBy
 
         // Field yang nullable - selalu kirim (termasuk null/undefined)
         // Untuk FormData, kita kirim string kosong untuk null, dan backend akan menanganinya
@@ -459,9 +462,12 @@ export const useSiteInvestStore = defineStore('siteInvest', {
 
         const preparedByIds = this.form.preparedByIds ?? []
         if (Array.isArray(preparedByIds)) {
-          preparedByIds.forEach((id: number, i: number) => {
-            if (id != null && Number(id) > 0) {
-              formData.append(`preparedBy[${i}]`, String(id))
+          preparedByIds.forEach((id: unknown, i: number) => {
+            const numId = typeof id === 'object' && id != null
+              ? Number((id as any).id_pegawai ?? (id as any).idPegawai)
+              : Number(id)
+            if (!Number.isNaN(numId) && numId > 0) {
+              formData.append(`preparedBy[${i}]`, String(numId))
             }
           })
         }
@@ -759,7 +765,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
       }
     },
 
-    async rejectSiteInvest(siteInvestId: string) {
+    async rejectSiteInvest(siteInvestId: string, rejectReason?: string) {
       if (!siteInvestId || siteInvestId === 'undefined' || siteInvestId === 'null' || String(siteInvestId).trim() === '') {
         const toast = useToast()
         toast.error({ title: 'Error', message: 'ID Site Investment tidak valid', color: 'red', position: 'topRight', layout: 2 })
@@ -768,20 +774,41 @@ export const useSiteInvestStore = defineStore('siteInvest', {
       this.loading = true
       this.error = null
       const { $api } = useNuxtApp()
-      const result = await Swal.fire({
-        title: 'Reject Site Investment',
-        text: 'Apakah Anda yakin akan menolak Site Investment ini?',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#6c757d',
-        confirmButtonText: 'Ya, Reject',
-        cancelButtonText: 'Batal',
-      })
-      if (!result.isConfirmed) {
-        this.loading = false
-        return false
+
+      let reason = rejectReason
+      if (reason === undefined) {
+        const result = await Swal.fire({
+          title: 'Reject Site Investment',
+          html: `
+            <p class="mb-4" style="text-align: center;">Apakah Anda yakin akan menolak Site Investment ini?</p>
+            <div class="swal-reject-form" style="text-align: left; max-width: 100%;">
+              <label for="swal-reject-reason" class="d-block mb-2 fw-medium" style="font-size: 0.9375rem;">Alasan penolakan <span class="text-danger">*</span></label>
+              <textarea id="swal-reject-reason" class="form-control" rows="4" placeholder="Masukkan alasan penolakan..." style="width: 100%; padding: 0.5rem 0.75rem; border: 1px solid #d9dee3; border-radius: 0.375rem; resize: vertical; font-size: 0.9375rem;" required></textarea>
+            </div>
+          `,
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#d33',
+          cancelButtonColor: '#6c757d',
+          confirmButtonText: 'Ya, Reject',
+          cancelButtonText: 'Batal',
+          preConfirm: () => {
+            const el = document.getElementById('swal-reject-reason') as HTMLTextAreaElement
+            const val = el?.value?.trim() || ''
+            if (!val) {
+              Swal.showValidationMessage('Alasan penolakan wajib diisi')
+              return false
+            }
+            return val
+          },
+        })
+        if (!result.isConfirmed || typeof result.value !== 'string') {
+          this.loading = false
+          return false
+        }
+        reason = result.value
       }
+
       try {
         const response = await fetch($api.rejectSiteInvestment(siteInvestId), {
           method: 'PATCH',
@@ -789,6 +816,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
+          body: JSON.stringify({ reject_reason: reason || '' }),
           credentials: 'include',
         })
 

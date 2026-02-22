@@ -37,6 +37,10 @@
               <li class="nav-item">
                 <a class="nav-link" :class="{active: activeTab === 'approved'}" href="#" @click.prevent="activeTab = 'approved'">Sudah Approved</a>
               </li>
+              <li class="nav-item">
+                <a class="nav-link" :class="{active: activeTab === 'expiring'}" href="#" @click.prevent="activeTab = 'expiring'">Mendekati Expired</a>
+                <span v-if="expiringMeta.total > 0" class="badge bg-warning text-dark ms-1">{{ expiringMeta.total }}</span>
+              </li>
             </ul>
             
             <!-- Loading State -->
@@ -57,7 +61,7 @@
             </div>
 
             <!-- Empty State -->
-            <div v-else-if="notificationsStore.notifications.length === 0" class="text-center py-5">
+            <div v-else-if="needApprovalMeta.total === 0 && approvedMeta.total === 0 && expiringMeta.total === 0" class="text-center py-5">
               <i class="ri-checkbox-circle-line ri-48px text-success mb-3"></i>
               <h6 class="text-muted">Tidak ada notifikasi saat ini</h6>
             </div>
@@ -72,7 +76,7 @@
                       <div class="d-flex align-items-center mb-2">
                         <span class="badge bg-primary me-2">{{ getTypeText(item.type) }}</span>
                         <span>{{ getStatusText(item.status) }}</span>
-                        <span v-if="!item.isRead" class="badge bg-dark ms-2">Baru</span>
+                        <span v-if="!isItemRead(item)" class="badge bg-dark ms-2">Baru</span>
                       </div>
                       <h6 class="mb-1 text-dark">{{ item.title }}</h6>
                       <div class="text-muted small">
@@ -83,10 +87,21 @@
                       </div>
                     </div>
                     <div class="flex-shrink-0">
-                      <button v-if="!item.isRead" @click.stop="markRecipientAsRead(item)" class="btn btn-sm btn-outline-dark" title="Tandai sebagai dibaca"><i class="ri-check-line"></i></button>
+                      <button v-if="!isItemRead(item)" @click.stop="markRecipientAsRead(item)" class="btn btn-sm btn-outline-dark" title="Tandai sebagai dibaca"><i class="ri-check-line"></i></button>
                       <i v-else class="ri-check-line text-success" title="Sudah dibaca"></i>
                     </div>
                   </div>
+                </div>
+                <div v-if="needApprovalMeta.total > ROWS_PER_PAGE" class="d-flex justify-content-center mt-3">
+                  <Paginator
+                    :rows="ROWS_PER_PAGE"
+                    :totalRecords="needApprovalMeta.total"
+                    :first="(needApprovalMeta.currentPage - 1) * ROWS_PER_PAGE"
+                    :rowsPerPageOptions="[10]"
+                    @page="onNeedApprovalPage($event)"
+                    template="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink"
+                    currentPageReportTemplate="Menampilkan {first} sampai {last} dari {totalRecords} data"
+                  />
                 </div>
               </div>
 
@@ -98,7 +113,7 @@
                       <div class="d-flex align-items-center mb-2">
                         <span class="badge bg-primary me-2">{{ getTypeText(item.type) }}</span>
                         <span>{{ getStatusText(item.status) }}</span>
-                        <span v-if="!item.isRead" class="badge bg-dark ms-2">Baru</span>
+                        <span v-if="!isItemRead(item)" class="badge bg-dark ms-2">Baru</span>
                       </div>
                       <h6 class="mb-1 text-dark">{{ item.title }}</h6>
                       <div class="text-muted small">
@@ -109,23 +124,58 @@
                       </div>
                     </div>
                     <div class="flex-shrink-0">
-                      <button v-if="!item.isRead" @click.stop="markRecipientAsRead(item)" class="btn btn-sm btn-outline-dark" title="Tandai sebagai dibaca"><i class="ri-check-line"></i></button>
+                      <button v-if="!isItemRead(item)" @click.stop="markRecipientAsRead(item)" class="btn btn-sm btn-outline-dark" title="Tandai sebagai dibaca"><i class="ri-check-line"></i></button>
                       <i v-else class="ri-check-line text-success" title="Sudah dibaca"></i>
                     </div>
                   </div>
                 </div>
+                <div v-if="approvedMeta.total > ROWS_PER_PAGE" class="d-flex justify-content-center mt-3">
+                  <Paginator
+                    :rows="ROWS_PER_PAGE"
+                    :totalRecords="approvedMeta.total"
+                    :first="(approvedMeta.currentPage - 1) * ROWS_PER_PAGE"
+                    :rowsPerPageOptions="[10]"
+                    @page="onApprovedPage($event)"
+                    template="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink"
+                    currentPageReportTemplate="Menampilkan {first} sampai {last} dari {totalRecords} data"
+                  />
+                </div>
               </div>
-            </div>
 
-            <!-- View All Button -->
-            <div v-if="notificationsStore.notifications.length > 0" class="text-center mt-3">
-              <button 
-                @click="viewAllNotifications" 
-                class="btn btn-outline-dark"
-              >
-                <i class="ri-eye-line me-1"></i>
-                Lihat Semua Notifikasi
-              </button>
+              <div v-if="activeTab === 'expiring'">
+                <div v-if="expiringNotifications.length === 0" class="text-center py-3 text-muted">Tidak ada quotation mendekati expired</div>
+                <div v-for="item in expiringNotifications" :key="`exp-${item.id}`" class="list-group-item list-group-item-action py-3 px-3" @click="handleExpiringClick(item)" style="cursor:pointer;">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                      <div class="d-flex align-items-center mb-2 flex-wrap gap-2">
+                        <span class="badge bg-warning text-dark">Quotation</span>
+                        <span class="badge bg-secondary">{{ getStatusText(item.status) }}</span>
+                        <span v-if="item.validUntil" class="badge bg-danger">
+                          <i class="ri-calendar-event-line me-1"></i>Berlaku hingga: {{ formatDateShort(item.validUntil) }}
+                        </span>
+                      </div>
+                      <h6 class="mb-1 text-dark">{{ item.title }}</h6>
+                      <div class="text-muted small">
+                        <div class="d-flex flex-wrap gap-3">
+                          <span><i class="ri-user-line me-1"></i>{{ item.createdByName || 'Unknown' }}</span>
+                          <span v-if="item.customerName"><i class="ri-building-line me-1"></i>{{ item.customerName }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div v-if="expiringMeta.total > ROWS_PER_PAGE" class="d-flex justify-content-center mt-3">
+                  <Paginator
+                    :rows="ROWS_PER_PAGE"
+                    :totalRecords="expiringMeta.total"
+                    :first="(expiringMeta.currentPage - 1) * ROWS_PER_PAGE"
+                    :rowsPerPageOptions="[10]"
+                    @page="onExpiringPage($event)"
+                    template="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink"
+                    currentPageReportTemplate="Menampilkan {first} sampai {last} dari {totalRecords} data"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -136,6 +186,7 @@
 
 <script setup lang="ts">
 import { useNotificationsStore } from '~/stores/notifications'
+import Paginator from 'primevue/paginator'
 
 // Meta
 definePageMeta({
@@ -146,8 +197,8 @@ definePageMeta({
 // Store
 const notificationsStore = useNotificationsStore()
 
-// Reactive data
-const loading = ref(false)
+// Reactive data - start with loading true to avoid flash of empty state
+const loading = ref(true)
 const error = ref<string | null>(null)
 
 // Computed
@@ -158,8 +209,11 @@ const refreshNotifications = async () => {
   loading.value = true
   error.value = null
   try {
-    // refresh both tabs
-    await Promise.all([fetchNeedApproval(), fetchApproved()])
+    await Promise.all([
+      fetchNeedApproval(needApprovalMeta.value.currentPage),
+      fetchApproved(approvedMeta.value.currentPage),
+      fetchExpiringSoon(expiringMeta.value.currentPage)
+    ])
   } catch (err) {
     error.value = 'Gagal memuat notifikasi'
     console.error('Error refreshing notifications:', err)
@@ -168,10 +222,29 @@ const refreshNotifications = async () => {
   }
 }
 
+const onNeedApprovalPage = (event: { page: number }) => {
+  fetchNeedApproval((event.page ?? 0) + 1)
+}
+
+const onApprovedPage = (event: { page: number }) => {
+  fetchApproved((event.page ?? 0) + 1)
+}
+
+const onExpiringPage = (event: { page: number }) => {
+  fetchExpiringSoon((event.page ?? 0) + 1)
+}
+
 // Local tab data
 const activeTab = ref('need')
 const needApprovalNotifications = ref<any[]>([])
 const approvedNotifications = ref<any[]>([])
+
+// Pagination state - 10 items per page
+const ROWS_PER_PAGE = 10
+const needApprovalMeta = ref<{ total: number; currentPage: number; lastPage: number }>({ total: 0, currentPage: 1, lastPage: 1 })
+const approvedMeta = ref<{ total: number; currentPage: number; lastPage: number }>({ total: 0, currentPage: 1, lastPage: 1 })
+const expiringNotifications = ref<any[]>([])
+const expiringMeta = ref<{ total: number; currentPage: number; lastPage: number }>({ total: 0, currentPage: 1, lastPage: 1 })
 
 const mapRecipientToItem = (r: any) => {
   const n = r.notification || {}
@@ -213,7 +286,7 @@ const mapRecipientToItem = (r: any) => {
 
   return {
     id: r.id,
-    isRead: !!r.is_read,
+    isRead: !!(r.is_read ?? r.isRead),
     type: n.type || payload.type,
     status: n.event || payload.status || '',
     createdAt: n.created_at || n.createdAt || r.created_at || r.createdAt,
@@ -223,32 +296,73 @@ const mapRecipientToItem = (r: any) => {
   }
 }
 
-const fetchNeedApproval = async () => {
+const fetchNeedApproval = async (page = 1) => {
   try {
     const { $api } = useNuxtApp()
-    const res = await fetch(`${$api.notifications()}?event=submitted&rows=50`, { credentials: 'include' })
+    const res = await fetch(`${$api.notifications()}?event=submitted&rows=${ROWS_PER_PAGE}&page=${page}`, { credentials: 'include' })
     if (!res.ok) throw new Error('Failed to fetch')
     const json = await res.json()
     const list = Array.isArray(json.data) ? json.data : []
     needApprovalNotifications.value = list.map(mapRecipientToItem)
-    // resolve any numeric user ids to names
+    const meta = json.meta || {}
+    needApprovalMeta.value = {
+      total: meta.total ?? list.length,
+      currentPage: meta.currentPage ?? page,
+      lastPage: meta.lastPage ?? 1
+    }
     await resolveMissingUserNames(needApprovalNotifications.value)
   } catch (e) {
     console.error('Error fetching need approval notifications:', e)
   }
 }
 
-const fetchApproved = async () => {
+const fetchApproved = async (page = 1) => {
   try {
     const { $api } = useNuxtApp()
-    const res = await fetch(`${$api.notifications()}?event=approved&rows=50`, { credentials: 'include' })
+    const res = await fetch(`${$api.notifications()}?event=approved&rows=${ROWS_PER_PAGE}&page=${page}`, { credentials: 'include' })
     if (!res.ok) throw new Error('Failed to fetch')
     const json = await res.json()
     const list = Array.isArray(json.data) ? json.data : []
     approvedNotifications.value = list.map(mapRecipientToItem)
+    const meta = json.meta || {}
+    approvedMeta.value = {
+      total: meta.total ?? list.length,
+      currentPage: meta.currentPage ?? page,
+      lastPage: meta.lastPage ?? 1
+    }
     await resolveMissingUserNames(approvedNotifications.value)
   } catch (e) {
     console.error('Error fetching approved notifications:', e)
+  }
+}
+
+const mapExpiringQuotationToItem = (q: any) => ({
+  id: q.id,
+  type: 'quotation',
+  status: q.status || '',
+  createdAt: q.created_at || q.createdAt,
+  createdByName: q.createdByUser?.full_name || q.created_by_user?.full_name || q.createdByUser?.fullName || '',
+  customerName: q.customer?.name || '',
+  title: `Quotation ${q.no_quotation || q.noQuotation || q.id || ''}`.trim(),
+  validUntil: q.valid_until || q.validUntil,
+})
+
+const fetchExpiringSoon = async (page = 1) => {
+  try {
+    const { $api } = useNuxtApp()
+    const res = await fetch(`${$api.quotationExpiringSoon()}?rows=${ROWS_PER_PAGE}&page=${page}`, { credentials: 'include' })
+    if (!res.ok) throw new Error('Failed to fetch')
+    const json = await res.json()
+    const list = Array.isArray(json.data) ? json.data : []
+    expiringNotifications.value = list.map(mapExpiringQuotationToItem)
+    const meta = json.meta || {}
+    expiringMeta.value = {
+      total: meta.total ?? list.length,
+      currentPage: meta.currentPage ?? page,
+      lastPage: meta.lastPage ?? 1
+    }
+  } catch (e) {
+    console.error('Error fetching expiring quotations:', e)
   }
 }
 
@@ -286,11 +400,15 @@ const resolveMissingUserNames = async (items: any[]) => {
   }
 }
 
+// Helper: treat as read if API says so OR user has marked it (stored in readNotifications)
+const isItemRead = (item: any) =>
+  !!item.isRead || notificationsStore.readNotifications.has(String(item.id))
+
 const markRecipientAsRead = async (item: any) => {
   try {
     // call store action which will call backend if id numeric
     await notificationsStore.markAsRead(String(item.id))
-    // update local lists
+    // update local lists so UI reflects immediately
     item.isRead = true
   } catch (e) {
     console.error('Error marking recipient as read:', e)
@@ -299,7 +417,7 @@ const markRecipientAsRead = async (item: any) => {
 
 const handleRecipientClick = async (item: any) => {
   // mark read and navigate if needed
-  if (!item.isRead) await markRecipientAsRead(item)
+  if (!isItemRead(item)) await markRecipientAsRead(item)
   // basic navigation heuristics
   const t = item.type
   const payload = item.raw?.notification?.payload || {}
@@ -308,11 +426,16 @@ const handleRecipientClick = async (item: any) => {
   else if (t === 'site_investment' && payload.id) navigateTo(`/sales/site-investment/detail/${payload.id}`)
   else if (t === 'fdr' && payload.id) navigateTo(`/sales/fdr/detail/${payload.id}`)
   else if (t === 'fdr') navigateTo('/sales/fdr')
+  else if (t === 'quotation' && payload.id) navigateTo(`/sales/quotation/detail/${payload.id}`)
   else if (t === 'price_adjustment') {
     // go to price adjustment detail if payload contains id
     const payload = item.raw.notification?.payload || {}
     if (payload.id) navigateTo(`/price-adjustment/${payload.id}`)
   }
+}
+
+const handleExpiringClick = (item: any) => {
+  if (item.id) navigateTo(`/sales/quotation/detail/${item.id}`)
 }
 
 const markAsRead = async (notificationId: string) => {
@@ -352,12 +475,6 @@ const handleNotificationClick = (notification: any) => {
       navigateTo('/sales/sales-order')
       break
   }
-}
-
-const viewAllNotifications = () => {
-  // This could navigate to a more comprehensive notifications page
-  // For now, just refresh to show all
-  refreshNotifications()
 }
 
 const getTypeBadgeClass = (type: string) => {
@@ -480,8 +597,19 @@ const formatDate = (dateString: string) => {
   })
 }
 
+const formatDateShort = (dateString: string) => {
+  const date = new Date(dateString)
+  return date.toLocaleDateString('id-ID', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric'
+  })
+}
+
 // Lifecycle
 onMounted(async () => {
+  // Load read state from localStorage so marks persist across refresh
+  notificationsStore.loadReadNotifications()
   await refreshNotifications()
 })
 </script>
