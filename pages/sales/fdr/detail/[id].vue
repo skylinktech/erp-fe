@@ -70,6 +70,9 @@
                   <a v-if="fdr.status !== 'cancelled' && (userHasRole('superadmin') || userHasPermission('approve_fdr'))" class="dropdown-item" href="javascript:void(0)" @click="onCancel">
                     <i class="ri-close-circle-line me-2"></i> Cancel
                   </a>
+                  <a class="dropdown-item" href="javascript:void(0)" @click="onPrintFdr">
+                    <i class="ri-printer-line me-2"></i> Cetak
+                  </a>
                   <a v-if="(userHasRole('superadmin') || userHasPermission('edit_fdr'))" class="dropdown-item" href="javascript:void(0)" @click="navigateTo('/sales/fdr?edit=' + fdr.id)">
                     <i class="ri-edit-box-line me-2"></i> Edit
                   </a>
@@ -264,31 +267,66 @@
                     <i class="ri-truck-line me-2 text-primary"></i>
                     DID (Delivery / Installation)
                   </h5>
-                  <span class="badge bg-label-primary">{{ ((fdr.fdrDids ?? fdr.fdr_dids) || []).length }} item</span>
+                  <span class="badge bg-label-primary">{{ groupedFdrDids.length }} DID</span>
                 </div>
                 <div class="card-body px-5 pt-4 pb-4">
-                  <div v-if="!((fdr.fdrDids ?? fdr.fdr_dids) || []).length" class="text-muted text-center py-4">
+                  <div v-if="groupedFdrDids.length === 0" class="text-muted text-center py-4">
                     Tidak ada DID
                   </div>
-                  <div v-else class="table-responsive">
-                    <table class="table table-sm table-hover align-middle">
-                      <thead>
-                        <tr>
-                          <th>DID</th>
-                          <th class="text-center">Qty</th>
-                          <th class="text-end">Harga</th>
-                          <th class="text-end">Subtotal</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr v-for="(d, i) in ((fdr.fdrDids ?? fdr.fdr_dids) || [])" :key="d.id || i">
-                          <td>{{ d.priceListLine?.did?.code || d.priceListLine?.did?.name || d.price_list_line?.did?.code || '—' }}</td>
-                          <td class="text-center">{{ d.quantity ?? 1 }}</td>
-                          <td class="text-end">{{ formatRupiah(d.price) }}</td>
-                          <td class="text-end fw-medium">{{ formatRupiah(d.subtotal) }}</td>
-                        </tr>
-                      </tbody>
-                    </table>
+                  <div v-else>
+                    <div
+                      v-for="(group, i) in groupedFdrDids"
+                      :key="group.didKey"
+                      class="did-parent-block mb-3"
+                    >
+                      <!-- Parent: 1 DID, expand untuk lihat services -->
+                      <div
+                        class="d-flex align-items-center justify-content-between py-2 px-3 rounded border bg-light cursor-pointer"
+                        @click="toggleDidExpanded(group.didKey)"
+                      >
+                        <div class="d-flex align-items-center gap-2">
+                          <i
+                            :class="isDidExpanded(group.didKey) ? 'ri-arrow-down-s-line' : 'ri-arrow-right-s-line'"
+                            class="ri-lg text-muted"
+                          />
+                          <span class="fw-medium">{{ group.didName }}</span>
+                          <span v-if="group.services.length" class="badge bg-label-secondary">
+                            {{ group.services.length }} service
+                          </span>
+                        </div>
+                        <div class="d-flex align-items-center gap-4">
+                          <span class="text-muted">Qty: {{ group.totalQty }}</span>
+                          <span class="fw-medium">{{ formatRupiah(group.totalSubtotal) }}</span>
+                        </div>
+                      </div>
+                      <!-- Child: Services table (muncul saat expand) -->
+                      <div
+                        v-if="isDidExpanded(group.didKey) && group.services.length"
+                        class="did-services-child mt-2 ms-4 border-start border-3 border-secondary ps-3 py-2"
+                      >
+                        <h6 class="text-secondary mb-2 small">Services</h6>
+                        <table class="table table-sm table-bordered mb-0">
+                          <thead>
+                            <tr>
+                              <th>Service Plan</th>
+                              <th>Kategori</th>
+                              <th class="text-end">Harga</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr v-for="(svc, si) in group.services" :key="si">
+                              <td>{{ svc.servicePlan?.name || '—' }}</td>
+                              <td>
+                                <span :class="getDidCategoryBadgeClass(svc.category)" class="badge">
+                                  {{ getDidCategoryLabel(svc.category) }}
+                                </span>
+                              </td>
+                              <td class="text-end">{{ formatRupiah(svc.price) }}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
                     <p class="mb-0 text-end fw-semibold mt-3">Subtotal DID: {{ formatRupiah(didSubtotalFromApi) }}</p>
                   </div>
                 </div>
@@ -423,6 +461,78 @@ const { fdr, loading, error } = storeToRefs(fdrStore)
 
 const id = computed(() => String(route.params.id || ''))
 
+const expandedDidIds = ref<Set<string | number>>(new Set())
+
+function toggleDidExpanded(key: string | number) {
+  const set = new Set(expandedDidIds.value)
+  if (set.has(key)) set.delete(key)
+  else set.add(key)
+  expandedDidIds.value = set
+}
+
+function isDidExpanded(key: string | number) {
+  return expandedDidIds.value.has(key)
+}
+
+/** Group fdrDids by did.id - 1 tampilan per unique DID; harga service dari price_list_lines.price (items[i]) */
+const groupedFdrDids = computed(() => {
+  const items = (fdr.value?.fdrDids ?? fdr.value?.fdr_dids) || []
+  const map = new Map<string | number, { didKey: string | number; didName: string; services: any[]; items: any[]; totalQty: number; totalSubtotal: number }>()
+  for (const d of items) {
+    const pl = d?.priceListLine ?? d?.price_list_line
+    const did = pl?.did
+    const didId = did?.id ?? `_${d.id ?? Math.random()}`
+    const didName = did?.name || did?.code || '—'
+    const services = did?.services ?? did?.did_services ?? []
+    const svcList = Array.isArray(services) ? services : []
+
+    if (map.has(didId)) {
+      const g = map.get(didId)!
+      g.items.push(d)
+      g.totalQty += Number(d.quantity ?? 1)
+      g.totalSubtotal += Number(d.subtotal ?? 0)
+    } else {
+      map.set(didId, {
+        didKey: didId,
+        didName,
+        services: svcList,
+        items: [d],
+        totalQty: Number(d.quantity ?? 1),
+        totalSubtotal: Number(d.subtotal ?? 0),
+      })
+    }
+  }
+  // Merge: service[i] pakai price dari items[i] (price_list_lines.price)
+  return Array.from(map.values()).map((g) => {
+    const servicesWithPrice = (g.services || []).map((svc: any, i: number) => {
+      const it = g.items[i]
+      const price = it?.price ?? it?.priceListLine?.price ?? it?.price_list_line?.price ?? (svc?.price ?? 0)
+      return { ...svc, price: Number(price) || 0 }
+    })
+    return { ...g, services: servicesWithPrice }
+  })
+})
+
+function getDidCategoryBadgeClass(category: string) {
+  const map: Record<string, string> = {
+    delivery: 'bg-primary',
+    dismantle: 'bg-danger',
+    installation: 'bg-secondary',
+    survey: 'bg-success',
+  }
+  return map[(category || '').toLowerCase()] || 'bg-secondary'
+}
+
+function getDidCategoryLabel(category: string) {
+  const map: Record<string, string> = {
+    delivery: 'Delivery',
+    dismantle: 'Dismantle',
+    installation: 'Installation',
+    survey: 'Survey',
+  }
+  return map[(category || '').toLowerCase()] || category || '—'
+}
+
 function formatDate(v: string | null | undefined) {
   if (!v) return '—'
   return new Date(v).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
@@ -552,6 +662,11 @@ function openSiteInvestmentModal() {
   siteInvestStore.openModalFromFdr(fdr.value.id)
 }
 
+function onPrintFdr() {
+  if (!fdr.value?.id) return
+  navigateTo({ path: '/sales/cetak-fdr', query: { id: fdr.value.id, print: 'true' } })
+}
+
 function onSiteInvestSaved() {
   const toast = useToast()
   toast.success({ title: 'Sukses', message: 'Site Investment berhasil dibuat dari FDR', color: 'green', position: 'topRight', layout: 2 })
@@ -610,5 +725,9 @@ definePageMeta({
   font-size: 0.85rem;
   font-weight: 600;
   user-select: none;
+}
+
+.cursor-pointer {
+  cursor: pointer;
 }
 </style>

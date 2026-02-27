@@ -41,6 +41,7 @@ const ENTITY_TYPES = [
   { value: 'purchase_request', label: 'Purchase Request' },
   { value: 'arf', label: 'ARF' },
   { value: 'le_tech_review', label: 'Legal-Tech Review' },
+  { value: 'access_request', label: 'Access Request' },
 ]
 
 export const useApprovalWorkflowsStore = defineStore('approval-workflows', {

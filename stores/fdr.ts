@@ -19,7 +19,12 @@ export interface FdrPriceListLineOption {
   price_list?: { id: number; name: string }
   product?: { id: number; name: string; sku?: string }
   service?: { id: number; name: string; code?: string }
-  did?: { id: number; code: string; name?: string }
+  did?: {
+    id: number
+    code: string
+    name?: string
+    services?: Array<{ id: number; category: string; servicePlan?: { id: number; name: string } }>
+  }
   terminal_kit_count?: number | null
   quota_priority?: number | null
   new_service_line?: number | null

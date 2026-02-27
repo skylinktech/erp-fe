@@ -60,6 +60,15 @@ export default defineNuxtPlugin(() => {
     menuGroupsAll: () => `${apiBase}/menu-groups-all`,
     menuDetails: () => `${apiBase}/menu-details`,
 
+    // Access Requests (permintaan akses modul/menu)
+    accessRequests: () => `${apiBase}/access-requests`,
+    accessRequestsCountByStatus: () => `${apiBase}/access-requests/countByStatus`,
+    accessRequestShow: (id: number | string) => `${apiBase}/access-requests/${id}`,
+    accessRequestSubmit: (id: number | string) => `${apiBase}/access-requests/${id}/submit`,
+    accessRequestApprove: (id: number | string) => `${apiBase}/access-requests/${id}/approve`,
+    accessRequestReject: (id: number | string) => `${apiBase}/access-requests/${id}/reject`,
+    accessRequestCancel: (id: number | string) => `${apiBase}/access-requests/${id}/cancel`,
+
     // Approval Workflows (Admin)
     approvalWorkflows     : () => `${apiBase}/approval-workflows`,
     approvalWorkflowShow  : (id: number | string) => `${apiBase}/approval-workflows/${id}`,

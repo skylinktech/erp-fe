@@ -334,9 +334,30 @@ export const usePriceListStore = defineStore('priceList', {
             expandedLines.push(base)
           }
         }
+        // Deduplicate DID lines: when user deleted DID and re-added, backend may keep old lines
+        // (if referenced). Keep one per (priceableId, categoryDid), prefer higher id (newer).
+        const seenDid = new Map<string, { line: PriceListLine; index: number }>()
+        const deduped: PriceListLine[] = []
+        for (const l of expandedLines) {
+          if (l.priceableType === 'did' && l.priceableId != null && l.categoryDid) {
+            const key = `${l.priceableId}:${String(l.categoryDid).trim().toLowerCase()}`
+            const entry = seenDid.get(key)
+            if (entry) {
+              const keep = ((l.id ?? 0) > (entry.line.id ?? 0)) ? l : entry.line
+              deduped[entry.index] = keep
+              seenDid.set(key, { line: keep, index: entry.index })
+            } else {
+              const idx = deduped.length
+              deduped.push(l)
+              seenDid.set(key, { line: l, index: idx })
+            }
+          } else {
+            deduped.push(l)
+          }
+        }
         this.form = {
           ...priceList,
-          lines: expandedLines,
+          lines: deduped,
         }
       } else {
         this.isEditMode = false

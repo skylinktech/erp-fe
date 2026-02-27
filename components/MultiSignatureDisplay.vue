@@ -129,7 +129,7 @@ const props = defineProps({
   documentType: {
     type: String,
     required: true,
-    validator: (value) => ['site-investments', 'quotations', 'iros', 'purchase-orders', 'sales-invoices', 'surat-jalans', 'stock-transfers'].includes(value),
+    validator: (value) => ['site-investments', 'quotations', 'iros', 'fdrs', 'purchase-orders', 'sales-invoices', 'surat-jalans', 'stock-transfers'].includes(value),
   },
   documentId: {
     type: [String, Number],
