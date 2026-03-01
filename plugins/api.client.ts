@@ -463,10 +463,25 @@ export default defineNuxtPlugin(() => {
     userSessionsCleanupExpired: () => `${apiBase}/user-sessions/cleanup-expired`,
   };
 
+  const token = useCookie('access_token')
+
+  const apiFetch = $fetch.create({
+    credentials: 'include',
+    onRequest({ options }) {
+      if (token.value) {
+        options.headers = {
+          ...options.headers,
+          Authorization: `Bearer ${token.value}`
+        }
+      }
+    }
+  })
+
   // Inject ke context Nuxt
   return {
     provide: {
       api,
+      apiFetch
     },
-  };
+  }
 });
