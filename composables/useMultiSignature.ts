@@ -1,4 +1,5 @@
 import { ref, computed } from 'vue'
+import { apiFetch } from '~/utils/apiFetch'
 
 export interface DocumentSignature {
   id: number
@@ -46,7 +47,9 @@ export function useMultiSignature() {
     error.value = null
 
     try {
-      const response = await $fetch<any>(`${config.public.apiBase}/api/${documentType}/${documentId}/signatures`)
+      const response = await apiFetch<any>(`${config.public.apiBase}/api/${documentType}/${documentId}/signatures`, {
+        credentials: 'include',
+      })
 
       signatures.value = response.signatures || []
       return response
@@ -69,7 +72,9 @@ export function useMultiSignature() {
     error.value = null
 
     try {
-      const response = await $fetch<any>(`${config.public.apiBase}/api/${documentType}/${documentId}/signature-status`)
+      const response = await apiFetch<any>(`${config.public.apiBase}/api/${documentType}/${documentId}/signature-status`, {
+        credentials: 'include',
+      })
 
       progress.value = {
         count: response.count,
@@ -106,8 +111,9 @@ export function useMultiSignature() {
     error.value = null
 
     try {
-      const response = await $fetch<any>(`${config.public.apiBase}/api/${documentType}/${documentId}/signatures`, {
+      const response = await apiFetch<any>(`${config.public.apiBase}/api/${documentType}/${documentId}/signatures`, {
         method: 'POST',
+        credentials: 'include',
         body: {
           signatureRole,
           notes,

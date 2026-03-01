@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { apiFetch } from '~/utils/apiFetch'
 
 type UserSession = {
   id: number
@@ -113,12 +114,8 @@ export const useUserSessionStore = defineStore('userSession', {
       try {
         const { $api } = useNuxtApp()
 
-        const response = await $fetch<{ success: boolean; data: UserSession[] }>($api.userSessionsActiveUsers(), {
-          headers: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-          },
-          credentials: 'include', // Token otomatis dikirim via cookie
+        const response = await apiFetch<{ success: boolean; data: UserSession[] }>($api.userSessionsActiveUsers(), {
+          credentials: 'include',
         })
 
         if (response.success) {
@@ -140,14 +137,9 @@ export const useUserSessionStore = defineStore('userSession', {
       try {
         const { $api } = useNuxtApp()
 
-        // Cookie-based auth: token akan otomatis dikirim via cookie
-        await $fetch($api.userSessionsForceLogout(sessionId), {
+        await apiFetch($api.userSessionsForceLogout(sessionId), {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-          },
-          credentials: 'include', // PENTING: kirim cookies untuk autentikasi
+          credentials: 'include',
         })
 
         // Refresh data setelah force logout
@@ -161,13 +153,8 @@ export const useUserSessionStore = defineStore('userSession', {
       try {
         const { $api } = useNuxtApp()
 
-        await $fetch($api.userSessionsCleanupExpired(), {
+        await apiFetch($api.userSessionsCleanupExpired(), {
           method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-          },
           credentials: 'include',
         })
 

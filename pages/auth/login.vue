@@ -235,9 +235,27 @@
           userData = await backendResponse.json();
           // Gunakan data dari backend ERP (yang sudah sync dengan SSO)
           userStore.setUser(userData);
+
+          // Simpan token ke cookie yang bisa dibaca frontend untuk Authorization header
+          // Penting untuk production cross-origin: ERP httpOnly cookie mungkin tidak terkirim
+          const accessTokenCookie = useCookie('access_token', {
+            maxAge: 24 * 60 * 60, // 24 jam
+            secure: !import.meta.dev,
+            sameSite: import.meta.dev ? 'lax' : 'none',
+            path: '/',
+          });
+          accessTokenCookie.value = ssoResponse.access_token;
         } else {
           // Jika 401, kemungkinan token invalid atau user sync gagal
-          // Gunakan data dari SSO sebagai fallback
+          // Tetap simpan token agar API call berikutnya bisa pakai Authorization header
+          const accessTokenCookie = useCookie('access_token', {
+            maxAge: 24 * 60 * 60,
+            secure: !import.meta.dev,
+            sameSite: import.meta.dev ? 'lax' : 'none',
+            path: '/',
+          });
+          accessTokenCookie.value = ssoResponse.access_token;
+
           userData = {
             id: ssoUserInfo.id,
             username: ssoUserInfo.username || ssoUserInfo.email,
@@ -252,7 +270,15 @@
           userStore.setUser(userData);
         }
       } catch (backendError) {
-        // Jika error, gunakan data dari SSO sebagai fallback
+        // Jika error, simpan token dan gunakan data dari SSO sebagai fallback
+        const accessTokenCookie = useCookie('access_token', {
+          maxAge: 24 * 60 * 60,
+          secure: !import.meta.dev,
+          sameSite: import.meta.dev ? 'lax' : 'none',
+          path: '/',
+        });
+        accessTokenCookie.value = ssoResponse.access_token;
+
         userData = {
           id: ssoUserInfo.id,
           username: ssoUserInfo.username || ssoUserInfo.email,

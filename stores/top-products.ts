@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { apiFetch } from '~/utils/apiFetch'
 
 type TopProduct = {
   productId: number
@@ -32,13 +33,9 @@ export const useTopProductsStore = defineStore('top-products', {
       this.loading = true
       this.error = null
       try {
-        const data = await $fetch<TopProduct[]>($api.salesOrderTopProducts(), {
-          headers: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-          },
-          credentials: 'include', // Cookie-based auth
-          query: { period, limit: 10 },
+        const url = `${$api.salesOrderTopProducts()}?period=${period}&limit=10`
+        const data = await apiFetch<TopProduct[]>(url, {
+          credentials: 'include',
         })
         this.items = Array.isArray(data) ? data.slice(0, 10) : []
         this.visibleCount = Math.min(5, this.items.length)

@@ -310,14 +310,11 @@
                 { key: 'role', label: 'Roles', icon: 'ri-shield-user-line', list: $api.roles?.(), path: '/settings/roles' }
             ].filter(e => !!e.list)
 
-            // Menggunakan cookie-based auth, tidak perlu token di header
+            const { apiFetch } = await import('~/utils/apiFetch')
             const requests = endpoints.map(async (e) => {
                 try {
-                    const data = await $fetch(buildUrl(e.list), {
-                        credentials: 'include', // Cookie-based auth
-                        headers: {
-                            Accept: 'application/json'
-                        },
+                    const data = await apiFetch(buildUrl(e.list), {
+                        credentials: 'include',
                     })
                     const items = Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : [])
                     

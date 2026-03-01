@@ -1,4 +1,5 @@
-import { defineStore } from 'pinia';
+import { defineStore } from 'pinia'
+import { apiFetch } from '~/utils/apiFetch'
 
 type AssociationRule = {
   antecedent: string[]
@@ -75,13 +76,8 @@ export const useDashboardStore = defineStore('dashboard', {
       const { $api } = useNuxtApp()
 
       try {
-        
-        const rules = await $fetch<AssociationRule[]>($api.associations(), {
-          headers: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-          },
-          credentials: 'include', // Cookie-based auth
+        const rules = await apiFetch<AssociationRule[]>($api.associations(), {
+          credentials: 'include',
         })
 
         if (rules && Array.isArray(rules) && rules.length > 0) {

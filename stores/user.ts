@@ -209,17 +209,20 @@ export const useUserStore = defineStore('user', {
     clearUser() {
       this.user = null
       this.lastLoadTime = 0
-      // Token sekarang disimpan di httpOnly cookie, akan dihapus oleh server saat logout
       localStorage.removeItem('user')
       localStorage.removeItem('user_cache')
-      
+
+      // Hapus access_token cookie (untuk Authorization header)
+      const accessTokenCookie = useCookie('access_token')
+      accessTokenCookie.value = null
+
       // Clear secure storage
       const secureStorage = useSecureStorage()
       secureStorage.clearUserSession()
-      
+
       // Hapus kredensial yang tersimpan untuk remember me
-      const usernameCookie = useCookie('remembered_username');
-      usernameCookie.value = null;
+      const usernameCookie = useCookie('remembered_username')
+      usernameCookie.value = null
     },
     async loadUser() {
       // Cookie-based auth: tidak perlu check localStorage lagi
@@ -274,11 +277,16 @@ export const useUserStore = defineStore('user', {
       const { $api } = useNuxtApp()
 
       try {
+        const token = useCookie('access_token')
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+        }
+        if (token.value) {
+          headers['Authorization'] = `Bearer ${token.value}`
+        }
         const response = await fetch($api.me(), {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include', // Token otomatis dikirim via cookie
+          headers,
+          credentials: 'include',
         })
         
         if (!response.ok) {

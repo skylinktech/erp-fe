@@ -228,7 +228,8 @@ async function fetchSignatures() {
     const base = (config.public.apiBase || '').replace(/\/$/, '')
     const path = `${props.documentType}/${id}/signatures`
     const url = base.endsWith('/api') ? `${base}/${path}` : `${base}/api/${path}`
-    const response = await $fetch(url, { credentials: 'include' })
+    const { apiFetch } = await import('~/utils/apiFetch')
+    const response = await apiFetch(url, { credentials: 'include' })
     const list = response.signatures || []
     signatures.value = list.slice().sort((a, b) => {
       const aPrepared = (a.role || '').toLowerCase() === 'prepared by'

@@ -2,14 +2,17 @@ import { useNuxtApp } from '#app'
 
 // Utilitas fetch terpusat yang secara otomatis menangani otentikasi (Bearer & CSRF).
 export const apiFetch = async <T = any>(url: string, options: any = {}) => {
-  // Cookie-based authentication: token akan otomatis dikirim via httpOnly cookie
-  // Tidak perlu ambil token dari localStorage lagi
-  
   const { $api } = useNuxtApp()
+  const token = useCookie('access_token')
 
   const customHeaders: any = {
     ...options.headers,
     Accept: 'application/json',
+  }
+
+  // Tambahkan Authorization header jika token tersedia (untuk production cross-origin)
+  if (token.value) {
+    customHeaders['Authorization'] = `Bearer ${token.value}`
   }
 
   // Tambahkan lokasi user ke header jika tersedia
