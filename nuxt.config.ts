@@ -79,6 +79,7 @@ export default defineNuxtConfig({
     '~/plugins/bootstrap.client.ts',
     '~/plugins/bootstrap-select.client.ts',
     '~/plugins/api.client.ts',
+    '~/plugins/auth-header.client.ts',
     '~/plugins/quill.client.ts',
     '~/plugins/primevue.ts',
     '~/plugins/toast-config.client.ts',

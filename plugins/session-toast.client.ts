@@ -32,9 +32,26 @@ export default defineNuxtPlugin((nuxtApp) => {
     return allSuppressedEndpoints.some(endpoint => url.includes(endpoint))
   }
 
-  // Interceptor untuk $fetch (ofetch)
+  // Interceptor untuk $fetch (ofetch) - tambah Authorization header untuk semua request API
+  const token = useCookie('access_token')
+  const config = useRuntimeConfig()
+  const apiBase = (config.public.apiBase || '').replace(/\/$/, '')
+  const authBase = (config.public.authBase || '').replace(/\/$/, '')
+
+  const isApiRequest = (url: string) => {
+    if (!url) return false
+    return url.includes(apiBase) || url.includes(authBase) || url.includes('/api') || url.includes('/auth/')
+  }
+
   // @ts-ignore - override instance diperbolehkan
   nuxtApp.$fetch = $fetch.create({
+    onRequest({ options, request }) {
+      const url = typeof request === 'string' ? request : request?.url || ''
+      if (token.value && isApiRequest(url)) {
+        options.headers = new Headers(options.headers || {})
+        ;(options.headers as Headers).set('Authorization', `Bearer ${token.value}`)
+      }
+    },
     onResponseError({ response, request }) {
       const status = response?.status
       const url = request?.toString() || ''
