@@ -664,8 +664,8 @@ definePageMeta({
   middleware: ['auth', 'check-permission'],
   title: 'Budgets',
   description: 'Budget Management',
-  keywords: 'Budget, Accounting, Kainnova Digital Solutions',
-  author: 'Kainnova Digital Solutions',
+  keywords: 'Budget, Accounting, Sinergi Innovate Pratama',
+  author: 'Sinergi Innovate Pratama',
   robots: 'index, follow',
   viewport:
     'width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0',

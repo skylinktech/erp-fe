@@ -934,8 +934,8 @@ definePageMeta({
     middleware: ['auth', 'check-permission'],
     title: 'MGRF',
     description: 'MGRF Management',
-    keywords: 'MGRF, Purchasing, Kainnova Digital Solutions',
-    author: 'Kainnova Digital Solutions',
+    keywords: 'MGRF, Purchasing, Sinergi Innovate Pratama',
+    author: 'Sinergi Innovate Pratama',
     robots: 'index, follow',
     viewport: 'width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0'
 })

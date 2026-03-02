@@ -723,8 +723,8 @@ definePageMeta({
     middleware: ['auth', 'check-permission'],
     title: 'Customer Verification',
     description: 'Customer Verification Management',
-    keywords: 'Customer Verification, Order Process, Kainnova Digital Solutions',
-    author: 'Kainnova Digital Solutions',
+    keywords: 'Customer Verification, Order Process, Sinergi Innovate Pratama',
+    author: 'Sinergi Innovate Pratama',
     robots: 'index, follow',
     viewport: 'width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0'
 })

@@ -1,7 +1,7 @@
 <template>
   <div>
     <Head>
-      <Title>{{ title ? title + ' - Kainnova Digital Solutions' : 'Kainnova Digital Solutions' }}</Title>
+      <Title>{{ title ? title + ' - Sinergi Innovate Pratama' : 'Sinergi Innovate Pratama' }}</Title>
       <Meta name="description" :content="description" />
       <Meta name="keywords" :content="keywords" />
       <Meta name="author" :content="author" />
@@ -24,7 +24,7 @@
   const author = route.meta.author;
   const robots = route.meta.robots;
   const viewport = route.meta.viewport;
-  const generator = route.meta.generator || 'Kainnova Digital Solutions';
+  const generator = route.meta.generator || 'Sinergi Innovate Pratama';
 </script>
 
 <style>

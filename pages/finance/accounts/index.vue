@@ -707,8 +707,8 @@ definePageMeta({
   middleware: ['auth', 'check-permission'],
   title: 'Chart of Accounts',
   description: 'Chart of Accounts Management',
-  keywords: 'Chart of Accounts, Accounting, Kainnova Digital Solutions',
-  author: 'Kainnova Digital Solutions',
+  keywords: 'Chart of Accounts, Accounting, Sinergi Innovate Pratama',
+  author: 'Sinergi Innovate Pratama',
   robots: 'index, follow',
   viewport: 'width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0'
 });

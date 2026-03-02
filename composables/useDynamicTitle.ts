@@ -1,7 +1,7 @@
 import { computed } from 'vue'
 
 export const useDynamicTitle = () => {
-    const defaultSuffix = 'Kainnova Digital Solutions'
+    const defaultSuffix = 'Sinergi Innovate Pratama'
 
     /**
      * Set title statis
@@ -118,7 +118,7 @@ export const useDynamicTitle = () => {
         useSeoMeta({
             title: fullTitle,
             description: description,
-            keywords: keywords || `${title.toLowerCase()}, kainnova`,
+            keywords: keywords || `${title.toLowerCase()}, sinergi innovate pratama`,
             ogTitle: fullTitle,
             ogDescription: description,
             ogImage: '/img/og-image.jpg',

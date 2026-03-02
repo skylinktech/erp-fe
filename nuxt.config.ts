@@ -92,7 +92,7 @@ export default defineNuxtConfig({
   app: {
     baseURL: '/',
     head: {
-      titleTemplate: '%s - Kainnova Digital Solutions',
+      titleTemplate: '%s - Sinergi Innovate Pratama',
       htmlAttrs: {
         lang: 'en',
         dir: 'ltr',

@@ -180,8 +180,8 @@
     layout: 'cetak',
     title: 'Cetak Stock Transfer',
     description: 'Cetak Stock Transfer',
-    keywords: 'Cetak Stock Transfer, Kainnova Digital Solutions',
-    author: 'Kainnova Digital Solutions',
+    keywords: 'Cetak Stock Transfer, Sinergi Innovate Pratama',
+    author: 'Sinergi Innovate Pratama',
     robots: 'index, follow',
     viewport: 'width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0'
   })
