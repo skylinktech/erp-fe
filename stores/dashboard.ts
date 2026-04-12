@@ -78,6 +78,7 @@ export const useDashboardStore = defineStore('dashboard', {
       try {
         const rules = await apiFetch<AssociationRule[]>($api.associations(), {
           credentials: 'include',
+          skip403Redirect: true,
         })
 
         if (rules && Array.isArray(rules) && rules.length > 0) {

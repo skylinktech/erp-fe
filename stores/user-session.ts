@@ -116,6 +116,7 @@ export const useUserSessionStore = defineStore('userSession', {
 
         const response = await apiFetch<{ success: boolean; data: UserSession[] }>($api.userSessionsActiveUsers(), {
           credentials: 'include',
+          skip403Redirect: true,
         })
 
         if (response.success) {
@@ -140,6 +141,7 @@ export const useUserSessionStore = defineStore('userSession', {
         await apiFetch($api.userSessionsForceLogout(sessionId), {
           method: 'POST',
           credentials: 'include',
+          skip403Redirect: true,
         })
 
         // Refresh data setelah force logout
@@ -156,6 +158,7 @@ export const useUserSessionStore = defineStore('userSession', {
         await apiFetch($api.userSessionsCleanupExpired(), {
           method: 'POST',
           credentials: 'include',
+          skip403Redirect: true,
         })
 
         // Refresh data setelah cleanup

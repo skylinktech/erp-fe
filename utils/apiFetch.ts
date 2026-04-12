@@ -2,11 +2,12 @@ import { useNuxtApp } from '#app'
 
 // Utilitas fetch terpusat yang secara otomatis menangani otentikasi (Bearer & CSRF).
 export const apiFetch = async <T = any>(url: string, options: any = {}) => {
+  const { skip403Redirect, ...fetchOptions } = options
   const { $api } = useNuxtApp()
   const token = useCookie('access_token')
 
   const customHeaders: any = {
-    ...options.headers,
+    ...fetchOptions.headers,
     Accept: 'application/json',
   }
 
@@ -48,7 +49,7 @@ export const apiFetch = async <T = any>(url: string, options: any = {}) => {
     }
   }
 
-  const method = options.method?.toUpperCase() || 'GET'
+  const method = fetchOptions.method?.toUpperCase() || 'GET'
   const writeMethods = ['POST', 'PUT', 'PATCH', 'DELETE']
 
   // Untuk metode penulisan, ambil dan lampirkan token CSRF.
@@ -71,7 +72,7 @@ export const apiFetch = async <T = any>(url: string, options: any = {}) => {
 
   try {
     return await $fetch<T>(url, {
-      ...options,
+      ...fetchOptions,
       // credentials: 'include' penting untuk otentikasi berbasis cookie/sesi
       credentials: 'include',
       headers: customHeaders,
@@ -97,8 +98,8 @@ export const apiFetch = async <T = any>(url: string, options: any = {}) => {
         router.push('/auth/login')
       }
     } else if (status === 403) {
-      // Redirect ke halaman 403 untuk permission denied
-      if (process.client) {
+      // Widget dashboard bisa 403 tanpa harus menghentikan seluruh app (opsional)
+      if (process.client && !skip403Redirect) {
         const router = useRouter()
         router.push('/errors/403')
       }
