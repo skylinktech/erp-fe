@@ -203,7 +203,7 @@
                                         </div>
                                     </div>
                                     <div class="col-md-4 mb-3 reset-filter-button">
-                                        <button @click="clearDateFilters" class="btn btn-outline-secondary me-2">
+                                        <button @click="clearDateFilters" class="btn btn-outline-secondary me-2 si-reset-filter-btn">
                                             <i class="ri-refresh-line me-1"></i> Reset Filter
                                         </button>
                                     </div>
@@ -215,35 +215,37 @@
                     <!-- Table -->
                     <div class="col-12">
                         <div class="card">
-                            <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
-                                <div class="d-flex align-items-center me-3 mb-2 mb-md-0">
-                                    <span class="me-2">Baris:</span>
-                                    <Dropdown
-                                        v-model="tableControls.rows"
-                                        :options="rowsPerPageOptionsArray"
-                                        @change="handleRowsChange"
-                                        placeholder="Jumlah"
-                                        style="width: 8rem;"
-                                    />
-                                </div>
-                                <div class="d-flex align-items-center gap-2">
+                            <div class="card-header si-table-header">
+                                <div class="si-header-top-row">
+                                    <div class="d-flex align-items-center si-rows-control">
+                                        <span class="me-2">Baris:</span>
+                                        <Dropdown
+                                            v-model="tableControls.rows"
+                                            :options="rowsPerPageOptionsArray"
+                                            @change="handleRowsChange"
+                                            placeholder="Jumlah"
+                                            style="width: 8rem;"
+                                        />
+                                    </div>
                                     <button
                                         v-if="userHasRole('superadmin') || userHasPermission('create_site_investment')"
                                         @click="siteInvestStore.openModal(null)"
-                                        class="btn btn-primary"
+                                        class="btn btn-primary si-add-button"
                                     >
                                         <i class="ri-add-line me-1"></i>
-                                        Tambah Site Investment
+                                        Tambah SI
                                     </button>
+                                </div>
+                                <div class="si-actions-row">
                                     <button @click="exportData('csv')" class="btn btn-outline-secondary" :disabled="loading">
                                         <i class="ri-download-line me-1"></i>
                                         Export
                                     </button>
-                                    <span class="p-input-icon-left">
+                                    <span class="p-input-icon-left si-search-input-wrap">
                                         <InputText
                                             v-model="globalFilterValue"
                                             placeholder="Cari Site Investment..."
-                                            class="w-full md:w-20rem"
+                                            class="si-search-input"
                                         />
                                     </span>
                                 </div>
@@ -1384,5 +1386,86 @@ definePageMeta({
     font-size: 1.15rem;
     font-weight: 800;
     color: #4f46e5;
+}
+
+.si-table-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.si-header-top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.si-rows-control {
+    min-width: 0;
+}
+
+.si-add-button {
+    flex: 0 0 auto;
+}
+
+.si-actions-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+}
+
+.si-search-input-wrap {
+    display: block;
+    width: 100%;
+}
+
+.si-search-input {
+    width: 100% !important;
+}
+
+@media (min-width: 768px) {
+    .si-table-header {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+
+    .si-header-top-row {
+        flex: 0 0 auto;
+    }
+
+    .si-actions-row {
+        width: auto;
+    }
+
+    .si-search-input-wrap {
+        width: auto;
+    }
+
+    .si-search-input {
+        width: 20rem !important;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .si-reset-filter-btn {
+        width: 100%;
+    }
+
+    .si-actions-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .si-actions-row > .btn {
+        width: 100%;
+    }
+
+    .si-search-input-wrap {
+        width: 100%;
+    }
 }
 </style>

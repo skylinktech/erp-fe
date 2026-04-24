@@ -126,7 +126,7 @@
                                     </div>
                                 </div>
                                 <div class="col-md-4 mb-3 reset-filter-button">
-                                    <button @click="clearDateFilters" class="btn btn-outline-secondary me-2">
+                                    <button @click="clearDateFilters" class="btn btn-outline-secondary me-2 so-reset-filter-btn">
                                         <i class="ri-refresh-line me-1"></i> Reset Filter
                                     </button>
                                 </div>
@@ -1794,6 +1794,10 @@ definePageMeta({
 @media (max-width: 576px) {
   .card-body {
     padding: 12px;
+  }
+
+  .so-reset-filter-btn {
+    width: 100%;
   }
 }
 </style>

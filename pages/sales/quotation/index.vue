@@ -113,39 +113,57 @@
                 <div class="col-12">
                     <!-- quotation Table -->
                     <div class="card">
-                        <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
-                            <div class="d-flex align-items-center me-3 mb-2 mb-md-0">
-                                <span class="me-2">Baris:</span>
-                                <Dropdown
-                                    v-model="tableControls.rows"
-                                    :options="rowsPerPageOptionsArray"
-                                    @change="handleRowsChange"
-                                    placeholder="Jumlah"
-                                    style="width: 8rem;"
-                                />
-                            </div>
-                            <div class="d-flex align-items-center gap-2">
+                        <div class="card-header quotation-table-header">
+                            <div class="quotation-header-top-row">
+                                <div class="d-flex align-items-center quotation-rows-control">
+                                    <span class="me-2">Baris:</span>
+                                    <Dropdown
+                                        v-model="tableControls.rows"
+                                        :options="rowsPerPageOptionsArray"
+                                        @change="handleRowsChange"
+                                        placeholder="Jumlah"
+                                        style="width: 8rem;"
+                                    />
+                                </div>
                                 <button
                                     v-if="userHasRole('superadmin') || userHasPermission('create_purchase_order')"
                                     @click="quotationStore.openModal()"
-                                    class="btn btn-primary"
+                                    class="btn btn-primary quotation-add-button"
                                 >
                                     <i class="ri-add-line me-1"></i>
                                     Tambah Quotation
                                 </button>
-                                <button @click="exportData('excel')" class="btn btn-outline-secondary" :disabled="loading">
-                                    <i class="ri-download-line me-1"></i>
-                                    Export Excel
-                                </button>
-                                <button @click="exportData('pdf')" class="btn btn-outline-secondary" :disabled="loading">
-                                    <i class="ri-file-pdf-line me-1"></i>
-                                    Export PDF
-                                </button>
-                                <span class="p-input-icon-left">
+                                <div class="btn-group quotation-export-group">
+                                    <button
+                                        class="btn btn-outline-secondary dropdown-toggle"
+                                        type="button"
+                                        data-bs-toggle="dropdown"
+                                        aria-expanded="false"
+                                        :disabled="loading"
+                                    >
+                                        <i class="ri-download-line me-1"></i>
+                                        Export
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <a class="dropdown-item" href="javascript:void(0)" @click="exportData('excel')">
+                                                Excel
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" href="javascript:void(0)" @click="exportData('pdf')">
+                                                PDF
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="quotation-actions-row">
+                                <span class="p-input-icon-left quotation-search-wrap">
                                     <InputText
                                         v-model="globalFilterValue"
                                         placeholder="Cari Quotation..."
-                                        class="w-full md:w-20rem"
+                                        class="quotation-search-input"
                                     />
                                 </span>
                             </div>
@@ -2515,8 +2533,80 @@ const exportQuotationExcel = (dataToExport) => {
   transition: all 0.2s ease-in-out;
 }
 
+.quotation-table-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.quotation-header-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.75rem;
+  flex-wrap: nowrap;
+}
+
+.quotation-rows-control {
+  min-width: 0;
+}
+
+.quotation-add-button {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.quotation-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.quotation-actions-row .p-input-icon-left {
+  display: block;
+  width: 100%;
+}
+
+.quotation-search-wrap {
+  width: 100%;
+}
+
+.quotation-search-input {
+  width: 100% !important;
+}
+
+@media (min-width: 768px) {
+  .quotation-table-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .quotation-header-top-row {
+    flex: 0 0 auto;
+  }
+
+  .quotation-actions-row {
+    width: auto;
+  }
+
+  .quotation-actions-row .p-input-icon-left {
+    width: auto;
+  }
+
+  .quotation-search-wrap {
+    width: auto;
+  }
+
+  .quotation-search-input {
+    width: 20rem !important;
+  }
+}
+
 /* Responsive adjustments */
-@media (max-width: 768px) {
+@media (max-width: 767.98px) {
   .card-body {
     padding: 16px;
   }
@@ -2524,6 +2614,48 @@ const exportQuotationExcel = (dataToExport) => {
   .form-label {
     font-size: 13px;
     margin-bottom: 6px;
+  }
+
+  .quotation-actions-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .quotation-table-header {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 0.75rem;
+  }
+
+  .quotation-header-top-row {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .quotation-actions-row {
+    width: 100%;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+  }
+
+  .quotation-add-button {
+    margin-left: auto;
+  }
+
+  .quotation-export-group {
+    margin-left: 0.5rem;
+  }
+
+  .quotation-search-wrap {
+    width: 100% !important;
+    flex-basis: 100%;
+  }
+
+  .quotation-search-input {
+    width: 100% !important;
   }
 }
 

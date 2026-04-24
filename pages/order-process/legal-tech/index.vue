@@ -145,35 +145,37 @@
         </div>
         <div class="col-12">
           <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
-              <div class="d-flex align-items-center me-3 mb-2 mb-md-0">
-                <span class="me-2">Baris:</span>
-                <Dropdown
-                  v-model="tableControls.rows"
-                  :options="rowsPerPageOptionsArray"
-                  @change="handleRowsChange"
-                  placeholder="Jumlah"
-                  style="width: 8rem;"
-                />
-              </div>
-              <div class="d-flex align-items-center gap-2">
+            <div class="card-header legal-table-header">
+              <div class="legal-header-top-row">
+                <div class="d-flex align-items-center legal-rows-control">
+                  <span class="me-2">Baris:</span>
+                  <Dropdown
+                    v-model="tableControls.rows"
+                    :options="rowsPerPageOptionsArray"
+                    @change="handleRowsChange"
+                    placeholder="Jumlah"
+                    style="width: 8rem;"
+                  />
+                </div>
                 <button
                   v-if="userHasRole('superadmin') || userHasPermission('create_quotation')"
                   @click="ltStore.openModal()"
-                  class="btn btn-primary"
+                  class="btn btn-primary legal-add-button"
                 >
                   <i class="ri-add-line me-1"></i>
                   Tambah Data
                 </button>
-                <button @click="exportData()" class="btn btn-outline-secondary" :disabled="loading">
+                <button @click="exportData()" class="btn btn-outline-secondary legal-export-button" :disabled="loading">
                   <i class="ri-download-line me-1"></i>
                   Export
                 </button>
-                <span class="p-input-icon-left">
+              </div>
+              <div class="legal-actions-row">
+                <span class="p-input-icon-left legal-search-wrap">
                   <InputText
                     v-model="globalFilterValue"
                     placeholder="Cari Legal-Tech Review..."
-                    class="w-full md:w-20rem"
+                    class="legal-search-input"
                   />
                 </span>
               </div>
@@ -628,5 +630,139 @@ definePageMeta({
   border-radius: 12px;
   padding: 16px;
   border: 1px solid #e9ecef;
+}
+
+.legal-table-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.legal-header-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.legal-rows-control {
+  min-width: 0;
+}
+
+.legal-add-button {
+  flex: 0 0 auto;
+}
+
+.legal-export-button {
+  margin-left: 0.5rem;
+}
+
+.legal-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.legal-search-wrap {
+  display: block;
+  width: 100%;
+}
+
+.legal-search-input {
+  width: 100% !important;
+}
+
+@media (min-width: 768px) {
+  .legal-table-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .legal-header-top-row {
+    flex: 0 0 auto;
+  }
+
+  .legal-actions-row {
+    width: auto;
+  }
+
+  .legal-search-wrap {
+    width: auto;
+  }
+
+  .legal-search-input {
+    width: 20rem !important;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .legal-table-header {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 0.75rem;
+  }
+
+  .legal-header-top-row {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .legal-add-button {
+    margin-left: auto;
+  }
+
+  .legal-export-button {
+    width: auto;
+  }
+
+  .legal-actions-row {
+    width: 100%;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+  }
+
+  .legal-search-wrap {
+    width: 100% !important;
+    flex-basis: 100%;
+  }
+
+  .legal-search-input {
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .legal-header-top-row {
+    flex-wrap: wrap;
+    align-items: stretch;
+  }
+
+  .legal-rows-control {
+    flex: 1 1 auto;
+  }
+
+  .legal-add-button {
+    flex: 1 1 auto;
+    margin-left: 0;
+  }
+
+  .legal-export-button {
+    order: 3;
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .legal-actions-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .legal-search-wrap {
+    width: 100%;
+  }
 }
 </style>

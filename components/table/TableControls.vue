@@ -38,8 +38,8 @@
     
     <!-- Mobile Layout -->
     <div class="table-controls-mobile d-md-none">
-      <div class="mobile-control-row">
-        <div class="mobile-control-item">
+      <div class="mobile-control-row mobile-control-row-top">
+        <div class="mobile-control-item mobile-control-item-rows">
           <span class="mobile-label">Baris:</span>
           <Dropdown 
             v-model="rowsPerPage" 
@@ -50,23 +50,7 @@
             :showClear="false"
           />
         </div>
-      </div>
-      <div class="mobile-control-row">
-        <div class="mobile-control-item">
-          <div class="input-group">
-            <span class="p-input-icon-left">
-              <InputText
-                v-model="searchValue"
-                :placeholder="searchPlaceholder"
-                class="mobile-search"
-                @input="handleSearch"
-              />
-            </span>
-          </div>
-        </div>
-      </div>
-      <div class="mobile-control-row">
-        <div class="mobile-control-item">
+        <div class="mobile-control-item mobile-control-item-export">
           <div class="btn-group w-100">
             <button class="btn btn-secondary dropdown-toggle w-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">
               <i class="ri-upload-2-line me-1"></i> Export
@@ -75,6 +59,20 @@
               <li><a class="dropdown-item" href="javascript:void(0)" @click="handleExport('excel')">Excel</a></li>
               <li><a class="dropdown-item" href="javascript:void(0)" @click="handleExport('pdf')">PDF</a></li>
             </ul>
+          </div>
+        </div>
+      </div>
+      <div class="mobile-control-row">
+        <div class="mobile-control-item">
+          <div class="input-group mobile-search-wrapper">
+            <span class="p-input-icon-left">
+              <InputText
+                v-model="searchValue"
+                :placeholder="searchPlaceholder"
+                class="mobile-search"
+                @input="handleSearch"
+              />
+            </span>
           </div>
         </div>
       </div>
@@ -146,10 +144,25 @@ watch(() => props.modelValue, (newValue) => {
   width: 100%;
 }
 
+.mobile-control-row-top {
+  align-items: center;
+  gap: 0.75rem;
+}
+
 .mobile-control-item {
   width: 100%;
   display: flex;
   align-items: center;
+}
+
+.mobile-control-item-rows {
+  flex: 1;
+  min-width: 0;
+}
+
+.mobile-control-item-export {
+  width: auto;
+  flex: 0 0 auto;
 }
 
 .mobile-label {
@@ -164,8 +177,16 @@ watch(() => props.modelValue, (newValue) => {
   min-width: 0;
 }
 
+.mobile-search-wrapper {
+  width: 100%;
+}
+
+.mobile-search-wrapper .p-input-icon-left {
+  width: 100%;
+}
+
 .mobile-search {
-  width: 16.875rem !important;
+  width: 100% !important;
   height: 38px;
   border-radius: 6px;
   border: 1px solid #ced4da;
@@ -206,6 +227,14 @@ watch(() => props.modelValue, (newValue) => {
   .btn-group .dropdown-toggle::after {
     margin-left: auto;
   }
+
+  .mobile-control-item-export .btn-group {
+    min-width: 7.5rem;
+  }
+
+  .mobile-control-item-export .btn-group .dropdown-toggle::after {
+    margin-left: 0.6rem;
+  }
 }
 
 /* Ensure proper spacing on very small screens */
@@ -220,6 +249,10 @@ watch(() => props.modelValue, (newValue) => {
   
   .mobile-label {
     font-size: 0.875rem;
+  }
+
+  .mobile-control-row-top {
+    gap: 0.5rem;
   }
 }
 </style>

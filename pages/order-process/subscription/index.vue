@@ -129,31 +129,33 @@
         </div>
         <div class="col-12">
           <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
-              <div class="d-flex align-items-center me-3 mb-2 mb-md-0">
-                <span class="me-2">Baris:</span>
-                <Dropdown
-                  v-model="tableControls.rows"
-                  :options="rowsPerPageOptionsArray"
-                  @change="handleRowsChange"
-                  placeholder="Jumlah"
-                  style="width: 8rem;"
-                />
-              </div>
-              <div class="d-flex align-items-center gap-2">
+            <div class="card-header subscription-table-header">
+              <div class="subscription-header-top-row">
+                <div class="d-flex align-items-center subscription-rows-control">
+                  <span class="me-2">Baris:</span>
+                  <Dropdown
+                    v-model="tableControls.rows"
+                    :options="rowsPerPageOptionsArray"
+                    @change="handleRowsChange"
+                    placeholder="Jumlah"
+                    style="width: 8rem;"
+                  />
+                </div>
                 <button
                   v-if="userHasRole('superadmin') || userHasPermission('create_subscription')"
                   @click="subscriptionStore.openModal()"
-                  class="btn btn-primary"
+                  class="btn btn-primary subscription-add-button"
                 >
                   <i class="ri-add-line me-1"></i>
                   Tambah Data
                 </button>
-                <span class="p-input-icon-left">
+              </div>
+              <div class="subscription-actions-row">
+                <span class="p-input-icon-left subscription-search-wrap">
                   <InputText
                     v-model="globalFilterValue"
                     placeholder="Cari Subscription..."
-                    class="w-full md:w-20rem"
+                    class="subscription-search-input"
                   />
                 </span>
               </div>
@@ -387,5 +389,102 @@ definePageMeta({
 </script>
 
 <style scoped>
-/* Styles moved to SubscriptionFormModal component */
+.subscription-table-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.subscription-header-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.subscription-rows-control {
+  min-width: 0;
+}
+
+.subscription-add-button {
+  flex: 0 0 auto;
+}
+
+.subscription-actions-row {
+  width: 100%;
+}
+
+.subscription-search-wrap {
+  display: block;
+  width: 100%;
+}
+
+.subscription-search-input {
+  width: 100% !important;
+}
+
+@media (min-width: 992px) {
+  .subscription-table-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .subscription-actions-row {
+    width: auto;
+  }
+
+  .subscription-search-wrap {
+    width: auto;
+  }
+
+  .subscription-search-input {
+    width: 20rem !important;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .subscription-table-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .subscription-header-top-row {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .subscription-add-button {
+    margin-left: auto;
+  }
+
+  .subscription-actions-row {
+    width: 100%;
+  }
+
+  .subscription-search-wrap {
+    width: 100% !important;
+  }
+
+  .subscription-search-input {
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .subscription-header-top-row {
+    flex-wrap: wrap;
+    align-items: stretch;
+  }
+
+  .subscription-rows-control {
+    flex: 1 1 auto;
+  }
+
+  .subscription-add-button {
+    flex: 1 1 auto;
+    margin-left: 0;
+  }
+}
 </style>

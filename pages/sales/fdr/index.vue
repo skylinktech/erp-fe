@@ -120,7 +120,7 @@
                     </div>
                   </div>
                   <div class="col-md-4 mb-3">
-                    <button @click="clearDateFilters" class="btn btn-outline-secondary">
+                    <button @click="clearDateFilters" class="btn btn-outline-secondary fdr-reset-filter-btn">
                       <i class="ri-refresh-line me-1"></i> Reset Filter
                     </button>
                   </div>
@@ -132,8 +132,9 @@
           <!-- Table -->
           <div class="col-12">
             <div class="card">
-              <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
-                <div class="d-flex align-items-center me-3 mb-2 mb-md-0">
+              <div class="card-header fdr-table-header">
+                <div class="fdr-header-top-row">
+                  <div class="d-flex align-items-center fdr-rows-control">
                   <span class="me-2">Baris:</span>
                   <Dropdown
                     v-model="tableControls.rows"
@@ -143,19 +144,24 @@
                     style="width: 8rem;"
                   />
                 </div>
-                <div class="d-flex align-items-center gap-2">
+                <div
+                  v-if="userHasRole('superadmin') || userHasPermission('create_fdr')"
+                  class="fdr-add-button-wrap"
+                >
                   <button
-                    v-if="userHasRole('superadmin') || userHasPermission('create_fdr')"
                     @click="fdrStore.openModal(null)"
                     class="btn btn-primary"
                   >
                     <i class="ri-add-line me-1"></i> Tambah FDR
                   </button>
-                  <span class="p-input-icon-left">
+                </div>
+                </div>
+                <div class="fdr-search-row">
+                  <span class="p-input-icon-left fdr-search-input-wrap">
                     <InputText
                       v-model="globalFilterValue"
                       placeholder="Cari FDR..."
-                      class="w-full md:w-20rem"
+                      class="fdr-search-input"
                     />
                   </span>
                 </div>
@@ -976,4 +982,69 @@ definePageMeta({
 .investment-summary-row-grand { padding-top: 12px; margin-top: 2px; }
 .investment-summary-row-grand .investment-summary-label { font-size: 1rem; font-weight: 700; color: #334155; }
 .investment-summary-row-grand .investment-summary-value { font-size: 1.15rem; font-weight: 800; color: #4f46e5; }
+
+.fdr-table-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.fdr-header-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.fdr-rows-control {
+  min-width: 0;
+}
+
+.fdr-add-button-wrap {
+  flex: 0 0 auto;
+}
+
+.fdr-search-row {
+  width: 100%;
+}
+
+.fdr-search-input-wrap {
+  display: block;
+  width: 100%;
+}
+
+.fdr-search-input {
+  width: 100% !important;
+}
+
+@media (min-width: 768px) {
+  .fdr-table-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .fdr-header-top-row {
+    flex: 0 0 auto;
+  }
+
+  .fdr-search-row {
+    width: auto;
+  }
+
+  .fdr-search-input-wrap {
+    width: auto;
+  }
+
+  .fdr-search-input {
+    width: 20rem !important;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .fdr-reset-filter-btn {
+    width: 100%;
+  }
+}
 </style>
