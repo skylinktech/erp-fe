@@ -382,8 +382,8 @@
                         <button type="button" class="btn btn-outline-secondary" @click="taxStore.closeModal()">
                             Tutup
                         </button>
-                        <button type="submit" class="btn btn-primary" :disabled="loading">
-                            <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
+                        <button type="submit" class="btn btn-primary" :disabled="saving">
+                            <span v-if="saving" class="spinner-border spinner-border-sm me-2"></span>
                             {{ isEditMode ? 'Update' : 'Simpan' }}
                         </button>
                     </div>
@@ -433,6 +433,7 @@ const { userHasRole, userHasPermission } = usePermissions();
 // Computed
 const taxes = computed(() => taxStore.taxes)
 const loading = computed(() => taxStore.loading)
+const saving = computed(() => taxStore.saving)
 const totalRecords = computed(() => taxStore.totalRecords)
 const params = computed(() => taxStore.params)
 const form = computed(() => taxStore.form)

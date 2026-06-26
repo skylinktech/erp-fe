@@ -1,53 +1,88 @@
 <template>
     <div class="content-wrapper">
         <!-- Content -->
-        <div class="container-xxl flex-grow-1 container-p-y">
+        <div class="container-xxl flex-grow-1 container-pt-12">
             <h4 class="mb-1">List Kategori</h4>
             <p class="mb-6">
             List category yang terdaftar di sistem
             </p>
-            <!-- category cards -->
             <div class="row g-6 mb-6">
-                <CardBox
-                    v-if="stats.total !== undefined"
-                    title="Total Kategori"
-                    :total="stats.total + ' Kategori'"
-                />
-                <CardBox
-                    v-if="stats.sparepart !== undefined"
-                    title="Sparepart"
-                    :total="stats.sparepart + ' Produk'"
-                />
-                <CardBox
-                    v-if="stats.oli !== undefined"
-                    title="Oli"
-                    :total="stats.oli + ' Produk'"
-                />
-                <CardBox
-                    v-if="stats.alat_berat !== undefined"
-                    title="Alat Berat"
-                    :total="stats.alat_berat + ' Produk'"
-                />
-                <CardBox
-                    v-if="stats.tooling !== undefined"
-                    title="Tooling"
-                    :total="stats.tooling + ' Produk'"
-                />
-                <div class="col-xl-4 col-lg-6 col-md-6">
-                    <div class="card h-100">
-                        <div class="row h-100">
-                            <div class="col-sm-5">
-                                <div class="d-flex align-items-end h-100 justify-content-center">
-                                    <img src="/img/illustrations/add-new-role-illustration.png" class="img-fluid" alt="Image" width="70">
+                <div v-if="stats.total !== undefined" class="col-xl col-lg-6 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <p class="mb-0">Total Kategori</p>
+                                <div class="avatar">
+                                    <span class="avatar-initial rounded bg-label-primary"><i class="ri-folder-line"></i></span>
                                 </div>
                             </div>
-                            <div class="col-sm-7">
-                                <div class="card-body text-sm-end text-center ps-sm-0">
-                                    <button v-if="userHasRole('superadmin') || userHasPermission('create_kategori')" @click="kategoriStore.openModal()" class="btn btn-primary mb-2 text-nowrap add-new-role">
-                                        Tambah Kategori
-                                    </button>
-                                    <p class="mb-0 mt-1">Buat Kategori baru</p>
+                            <div class="account-heading">
+                                <h5 class="mb-1">{{ stats.total }}</h5>
+                                <span class="text-muted">Kategori</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div v-if="stats.sparepart !== undefined" class="col-xl col-lg-6 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <p class="mb-0">Sparepart</p>
+                                <div class="avatar">
+                                    <span class="avatar-initial rounded bg-label-info"><i class="ri-settings-line"></i></span>
                                 </div>
+                            </div>
+                            <div class="account-heading">
+                                <h5 class="mb-1">{{ stats.sparepart }}</h5>
+                                <span class="text-muted">Produk</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div v-if="stats.oli !== undefined" class="col-xl col-lg-6 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <p class="mb-0">Oli</p>
+                                <div class="avatar">
+                                    <span class="avatar-initial rounded bg-label-warning"><i class="ri-oil-line"></i></span>
+                                </div>
+                            </div>
+                            <div class="account-heading">
+                                <h5 class="mb-1">{{ stats.oli }}</h5>
+                                <span class="text-muted">Produk</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div v-if="stats.alat_berat !== undefined" class="col-xl col-lg-6 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <p class="mb-0">Alat Berat</p>
+                                <div class="avatar">
+                                    <span class="avatar-initial rounded bg-label-success"><i class="ri-truck-line"></i></span>
+                                </div>
+                            </div>
+                            <div class="account-heading">
+                                <h5 class="mb-1">{{ stats.alat_berat }}</h5>
+                                <span class="text-muted">Produk</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div v-if="stats.tooling !== undefined" class="col-xl col-lg-6 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <p class="mb-0">Tooling</p>
+                                <div class="avatar">
+                                    <span class="avatar-initial rounded bg-label-secondary"><i class="ri-tools-line"></i></span>
+                                </div>
+                            </div>
+                            <div class="account-heading">
+                                <h5 class="mb-1">{{ stats.tooling }}</h5>
+                                <span class="text-muted">Produk</span>
                             </div>
                         </div>
                     </div>
@@ -55,24 +90,34 @@
             </div>
             <div class="row g-6">
                 <div class="col-12">
-                    <h4 class="mt-6 mb-1">Total Kategori</h4>
-                    <p class="mb-0">Find all of your company's administrator accounts and their associate Kategori.</p>
+                    <h4 class="mt-6 mb-1">Data Kategori</h4>
+                    <p class="mb-0">Kelola kategori produk dan deskripsinya.</p>
                 </div>
                 <div class="col-12">
                     <!-- category Table -->
                     <div class="card">
-                        <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
-                            <div class="d-flex align-items-center me-3 mb-2 mb-md-0">
-                                <span class="me-2">Baris:</span>
-                                <Dropdown v-model="params.rows" :options="rowsPerPageOptionsArray" @change="handleRowsChange" placeholder="Jumlah" style="width: 8rem;" />
-                            </div>
-                            <div class="d-flex align-items-center">
-                                <span class="p-input-icon-left">
-                                    <i class="ri-search-line"></i>
-                                    <InputText v-model="globalFilterValue" placeholder="Cari Kategori..." class="w-full md:w-20rem" />
-                                </span>
-                            </div>
-                        </div>
+                        <ListPageTableHeader
+                            :rows="Number(params.rows)"
+                            :rows-options="rowsPerPageOptionsArray"
+                            :search="globalFilterValue"
+                            search-placeholder="Cari Kategori..."
+                            :show-export="false"
+                            :export-disabled="loading"
+                            @update:rows="onKategoriToolbarRows"
+                            @update:search="(v) => { globalFilterValue = v }"
+                        >
+                            <template #add>
+                                <button
+                                    v-if="userHasRole('superadmin') || userHasPermission('create_kategori')"
+                                    type="button"
+                                    class="btn btn-primary"
+                                    @click="kategoriStore.openModal()"
+                                >
+                                    <i class="ri-add-line me-1"></i>
+                                    Tambah Kategori
+                                </button>
+                            </template>
+                        </ListPageTableHeader>
                         <div class="card-datatable table-responsive py-3 px-3">
                         <MyDataTable 
                             ref="myDataTableRef"
@@ -160,12 +205,10 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia';
 import Modal from '~/components/modal/Modal.vue'
-import CardBox from '~/components/cards/Cards.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
+import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
 import { useKategoriStore } from '~/stores/kategori'
-import Dropdown from 'primevue/dropdown'
 import Column from 'primevue/column'
-import InputText from 'primevue/inputtext'
 import { useDebounceFn } from '@vueuse/core'
 import { usePermissions } from '~/composables/usePermissions'
 import { usePermissionsStore } from '~/stores/permissions'
@@ -220,6 +263,11 @@ const onPage = (event) => kategoriStore.setPagination(event);
 const handleRowsChange = () => {
     params.value.first = 0; // Reset to first page
     kategoriStore.fetchKategori();
+};
+
+const onKategoriToolbarRows = (v) => {
+    params.value.rows = Number(v) || 10;
+    handleRowsChange();
 };
 
 const onSort = (event) => kategoriStore.setSort(event);

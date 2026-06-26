@@ -506,8 +506,8 @@
 
                                 <div class="modal-footer mt-4">
                                     <button type="button" class="btn btn-outline-secondary" @click="priceListStore.closeModal()">Tutup</button>
-                                    <button type="submit" class="btn btn-primary" :disabled="loading">
-                                        <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
+                                    <button type="submit" class="btn btn-primary" :disabled="saving">
+                                        <span v-if="saving" class="spinner-border spinner-border-sm me-2"></span>
                                         Simpan
                                     </button>
                                 </div>
@@ -546,7 +546,7 @@ const formatRupiah = useFormatRupiah()
 const myDataTableRef = ref(null)
 const priceListStore = usePriceListStore()
 
-const { priceLists, loading, totalRecords, params, form, isEditMode, showModal, validationErrors } = storeToRefs(priceListStore)
+const { priceLists, loading, saving, totalRecords, params, form, isEditMode, showModal, validationErrors } = storeToRefs(priceListStore)
 
 const activeTab = ref('info')
 const rowsPerPageOptionsArray = ref([10, 25, 50, 100])

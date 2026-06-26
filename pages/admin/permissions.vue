@@ -3,15 +3,14 @@
         <!-- Content wrapper -->
         <div class="content-wrapper">
             <!-- Content -->
-            <div class="container-xxl flex-grow-1 container-p-y">
+            <div class="container-xxl flex-grow-1 container-pt-12">
                 <div>
                         <h4 class="mb-1">List Permissions</h4>
                         <p class="mb-6">
                             List permissions yang terdaftar di sistem
                         </p>
                         <div class="row g-6 mb-6">
-                            <!-- Skeleton loader untuk card saat loading -->
-                            <div class="col-6" v-if="loading && stats.total === undefined">
+                            <div class="col-xl col-lg-6 col-md-6" v-if="loading && stats.total === undefined">
                                 <div class="card">
                                     <div class="card-body">
                                         <div class="d-flex align-items-center">
@@ -24,27 +23,42 @@
                                     </div>
                                 </div>
                             </div>
-                            <!-- Card total permission -->
-                            <CardBox
-                                v-else-if="stats.total !== undefined"
-                                title="Total Permission"
-                                :total="stats.total + ' Permission'"
-                            />
-                            <!-- Card statistik per role, dinamis sesuai data dari backend -->
-                            <CardBox
+                            <div v-else-if="stats.total !== undefined" class="col-xl col-lg-6 col-md-6">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center mb-4">
+                                            <p class="mb-0">Total Permission</p>
+                                            <div class="avatar">
+                                                <span class="avatar-initial rounded bg-label-primary"><i class="ri-lock-2-line"></i></span>
+                                            </div>
+                                        </div>
+                                        <div class="account-heading">
+                                            <h5 class="mb-1">{{ stats.total }}</h5>
+                                            <span class="text-muted">Permission terdaftar</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div
                                 v-for="role in stats.roles"
                                 :key="role.id"
-                                :title="role.name.charAt(0).toUpperCase() + role.name.slice(1)"
-                                :total="role.total + ' Permission'"
-                            />
-                            <CardBox
-                                :isAddButtonCard="true"
-                                image-src="/img/illustrations/add-new-role-illustration.png"
-                                image-alt="Tambah Permission"
-                                button-text="Tambah Permission"
-                                modal-target="#PermissionModal" 
-                                @button-click="openAddPermissionModal"
-                            />
+                                class="col-xl col-lg-6 col-md-6"
+                            >
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center mb-4">
+                                            <p class="mb-0 text-capitalize">{{ role.name }}</p>
+                                            <div class="avatar">
+                                                <span class="avatar-initial rounded bg-label-info"><i class="ri-shield-user-line"></i></span>
+                                            </div>
+                                        </div>
+                                        <div class="account-heading">
+                                            <h5 class="mb-1">{{ role.total }}</h5>
+                                            <span class="text-muted">Permission pada role</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
             
                         <div class="row g-6">
@@ -59,57 +73,49 @@
                             <div class="col-12">
                                 <!-- permission Table -->
                                 <div class="card">
-                                    <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
-                                        <div class="d-flex align-items-center me-3 mb-2 mb-md-0">
-                                            <span class="me-2">Baris:</span>
-                                            <Dropdown v-model="lazyParams.rows" :options="rowsPerPageOptionsArray" optionLabel="label" optionValue="value" @change="handleRowsChange" placeholder="Jumlah" style="width: 8rem;" />
-                                        </div>
-                                        <div class="d-flex align-items-center">
-                                            <!-- Batch Actions -->
-                                            <div v-if="selectedPermissions.length > 0" class="btn-group me-2">
-                                                <button 
-                                                    class="btn btn-sm btn-dark px-2 py-2 me-2" 
-                                                    type="button" 
-                                                    aria-expanded="false"
+                                    <ListPageTableHeader
+                                        :rows="Number(lazyParams.rows)"
+                                        :rows-options="permissionsRowsOptions"
+                                        :search="globalFilterValue"
+                                        search-placeholder="Cari permission..."
+                                        :export-disabled="loading"
+                                        :export-items="[
+                                            { value: 'excel', label: 'Excel' },
+                                            { value: 'pdf', label: 'PDF' },
+                                        ]"
+                                        @update:rows="onPermissionsToolbarRows"
+                                        @update:search="(v) => { globalFilterValue = v }"
+                                        @export="exportData"
+                                    >
+                                        <template #add>
+                                            <button type="button" class="btn btn-primary" @click="openAddPermissionModal">
+                                                <i class="ri-add-line me-1"></i>
+                                                Tambah Permission
+                                            </button>
+                                        </template>
+                                        <template #toolbar-extra>
+                                            <div v-if="selectedPermissions.length > 0" class="d-flex flex-wrap align-items-center gap-2">
+                                                <button
+                                                    class="btn btn-sm btn-dark"
+                                                    type="button"
                                                     @click="deleteBatchPermissions"
                                                     :disabled="selectedPermissions.length === 0"
-                                                    style="min-width: 120px; min-height: 38px;"
                                                 >
-                                                    <i class="ri-delete-bin-7-line me-1"></i> 
+                                                    <i class="ri-delete-bin-7-line me-1"></i>
                                                     Delete ({{ selectedPermissions.length }})
                                                 </button>
-                                                <button 
-                                                    class="btn btn-sm btn-primary px-2 py-2 me-2" 
-                                                    type="button" 
-                                                    aria-expanded="false"
+                                                <button
+                                                    class="btn btn-sm btn-primary"
+                                                    type="button"
                                                     @click="openUpdateBatchModal"
                                                     :disabled="selectedPermissions.length === 0"
-                                                    style="min-width: 120px; min-height: 38px;"
                                                 >
-                                                    <i class="ri-edit-line me-1"></i> 
+                                                    <i class="ri-edit-line me-1"></i>
                                                     Update ({{ selectedPermissions.length }})
                                                 </button>
                                             </div>
-                                            <div class="btn-group me-2">
-                                                <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                    <i class="ri-upload-2-line me-1"></i> Export
-                                                </button>
-                                                <ul class="dropdown-menu">
-                                                    <li><a class="dropdown-item" href="javascript:void(0)" @click="exportData('csv')">CSV</a></li>
-                                                    <li><a class="dropdown-item" href="javascript:void(0)" @click="exportData('pdf')">PDF</a></li>
-                                                </ul>
-                                            </div>
-                                            <div class="input-group">
-                                                <span class="p-input-icon-left">
-                                                <InputText
-                                                    v-model="globalFilterValue"
-                                                    placeholder="Cari permission..."
-                                                    class="w-full md:w-20rem"
-                                                />
-                                            </span>
-                                            </div>
-                                        </div>
-                                    </div>
+                                        </template>
+                                    </ListPageTableHeader>
                                     <div class="card-datatable table-responsive py-3 px-3">
                                     <MyDataTable 
                                         ref="myDataTableRef"
@@ -318,8 +324,8 @@
 import { ref, computed, onMounted, watch, onBeforeUnmount, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import Modal from '~/components/modal/Modal.vue'
-import CardBox from '~/components/cards/Cards.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
+import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
 import { usePermissionsStore } from '~/stores/permissions'
 import { useLayoutStore } from '~/stores/layout'
 import { useMenuGroupStore } from '~/stores/menu-group'
@@ -328,7 +334,6 @@ import vSelect from 'vue-select'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
 import Swal from 'sweetalert2'
 import 'vue-select/dist/vue-select.css'
-import Dropdown from 'primevue/dropdown'
 import InputText from 'primevue/inputtext'
 import { FilterMatchMode } from '@primevue/core/api'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
@@ -413,12 +418,7 @@ const batchForm = ref({
 // Track if batch modal is open to prevent watcher from running after modal is closed
 const isBatchModalOpen = ref(false);
 
-const rowsPerPageOptionsArray = ref([
-    { label: '10', value: 10 },
-    { label: '20', value: 20 },
-    { label: '50', value: 50 },
-    { label: '100', value: 100 }
-]);
+const permissionsRowsOptions = [10, 20, 50, 100]
 
 const modalTitle = computed(() => isEditMode.value ? 'Edit Permission' : 'Tambah Permission');
 const modalDescription = computed(() => isEditMode.value ? 'Silakan ubah data permission di bawah ini.' : 'Silakan isi form di bawah ini untuk menambahkan permission baru.');
@@ -603,6 +603,11 @@ const handleRowsChange = () => {
     fetchAllPageData();
 };
 
+const onPermissionsToolbarRows = (v) => {
+    lazyParams.value.rows = Number(v) || 10;
+    handleRowsChange();
+};
+
 const handleSearch = () => {
     lazyParams.value.first = 0;
     selectedPermissions.value = []; // Reset selection on search
@@ -617,10 +622,12 @@ const onSort = (event) => {
 };
 
 const exportData = (format) => {
-    if (format === 'csv') {
-        myDataTableRef.value.exportCSV();
-    } else if (format === 'pdf') {
-        myDataTableRef.value.exportPDF();
+    if (format === 'excel' || format === 'csv') {
+        myDataTableRef.value?.exportCSV?.();
+        return;
+    }
+    if (format === 'pdf') {
+        myDataTableRef.value?.exportPDF?.();
     }
 };
 

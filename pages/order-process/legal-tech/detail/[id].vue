@@ -287,16 +287,6 @@
     </div>
     <div class="content-backdrop fade"></div>
 
-    <!-- Subscription Form Modal (Reusable) -->
-    <SubscriptionFormModal
-      modal-id="LeTechSubscriptionModal"
-      :prefilled-quotation-id="review?.quotation?.id || review?.quotationId"
-      :prefilled-le-tech-review-id="review?.id"
-      :prefilled-le-tech-review-no="review?.noLr || review?.no_lr"
-      :prefilled-iro-id="review?.iroId || review?.iro_id || review?.iro?.id"
-      @saved="onSubscriptionSaved"
-      @close="onSubscriptionModalClose"
-    />
   </div>
 </template>
 
@@ -304,16 +294,13 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useLegalTechStore } from '~/stores/legal-tech'
-import { useSubscriptionStore } from '~/stores/subscription'
 import { usePermissions } from '~/composables/usePermissions'
 import { useImageUrl } from '~/composables/useImageUrl'
 import { useApprovalStatus } from '~/composables/useApprovalStatus'
 import ApprovalCard from '~/components/ApprovalCard.vue'
-import SubscriptionFormModal from '~/components/modal/SubscriptionFormModal.vue'
 
 const route = useRoute()
 const ltStore = useLegalTechStore()
-const subscriptionStore = useSubscriptionStore()
 const { userHasPermission, userHasRole } = usePermissions()
 const { getAttachmentUrl, getFileIcon, isImageFile } = useImageUrl()
 const { getStatusBadge, getStatusText, getApprovalStepJabatan } = useApprovalStatus()
@@ -430,18 +417,15 @@ function handleDelete() {
 // Subscription modal functions
 function openSubscriptionModal() {
   if (!review.value) return
-  subscriptionStore.openModalFromLeTechReview(review.value)
-}
-
-function onSubscriptionSaved() {
-  const toast = useToast()
-  toast.success({ title: 'Sukses', message: 'Subscription berhasil dibuat dari Legal-Tech Review', color: 'green', position: 'topRight', layout: 2 })
-  // Optionally navigate to subscription list
-  navigateTo('/order-process/subscription')
-}
-
-function onSubscriptionModalClose() {
-  // Modal closed, nothing special needed
+  navigateTo({
+    path: '/order-process/subscription/form',
+    query: {
+      quotationId: review.value?.quotation?.id || review.value?.quotationId,
+      leTechReviewId: review.value?.id,
+      leTechReviewNo: review.value?.noLr || review.value?.no_lr,
+      purchaseRequestId: review.value?.purchaseRequestId || review.value?.purchase_request_id || review.value?.purchaseRequest?.id,
+    },
+  })
 }
 
 onMounted(() => load())

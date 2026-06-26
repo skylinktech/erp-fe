@@ -1,7 +1,8 @@
 import { defineStore } from 'pinia'
-import { useNuxtApp } from '#app'
+import { navigateTo, useNuxtApp } from '#app'
 import { useDepartemenStore } from '~/stores/departemen'
 import { useImageUrl } from '~/composables/useImageUrl'
+import { mapPegawaiShowResponseToListRow } from '~/utils/pegawaiApiMapper'
 
 interface AvailableUserOption {
     id: number
@@ -30,6 +31,9 @@ interface PegawaiState {
     availableUsers: AvailableUserOption[]
     availableUsersLoading: boolean
     assignUserAccount: boolean
+    kontraks: Record<string, unknown>[]
+    kontraksLoading: boolean
+    kontrakWorkflowConfigured: boolean
 }
 
 export const usePegawaiStore = defineStore('pegawai', {
@@ -40,7 +44,7 @@ export const usePegawaiStore = defineStore('pegawai', {
             pkwtt: undefined,
             pkwt: undefined,
             resign: undefined,
-            outsource: undefined
+            freelance: undefined
         },
         loading: false,
         totalRecords: 0,
@@ -63,6 +67,9 @@ export const usePegawaiStore = defineStore('pegawai', {
         availableUsers: [],
         availableUsersLoading: false,
         assignUserAccount: false,
+        kontraks: [],
+        kontraksLoading: false,
+        kontrakWorkflowConfigured: false,
     }),
     actions: {
         async fetchPegawais() {
@@ -115,7 +122,7 @@ export const usePegawaiStore = defineStore('pegawai', {
         async fetchStats() {
             const toast = useToast();
             const { $api } = useNuxtApp()
-            const defaultStats = { total: undefined, pkwtt: undefined, pkwt: undefined, resign: undefined, outsource: undefined };
+            const defaultStats = { total: undefined, pkwtt: undefined, pkwt: undefined, resign: undefined, freelance: undefined };
             try {
                 const response = await fetch($api.pegawaiCountByStatus(), {
                     headers: {
@@ -136,7 +143,7 @@ export const usePegawaiStore = defineStore('pegawai', {
             }
         },
 
-        async savePegawai() {
+        async savePegawai(opts?: { navigateTo?: string }) {
             const toast = useToast();
             this.loading = true;
             this.validationErrors = [];
@@ -152,18 +159,30 @@ export const usePegawaiStore = defineStore('pegawai', {
                 return;
             }
 
+            const fileFieldKeys = ['avatar', 'cv_attachment', 'kk_attachment', 'ijazah_attachment', 'skck_attachment'] as const
             const formData = new FormData();
             for (const key in this.form) {
                 if (key === 'avatarPreview') continue;
-                
+                if (key.endsWith('_url')) continue;
+                if (key === 'nik_pegawai' && !this.isEditMode) continue;
+
                 const value = this.form[key];
-                if (value !== null && value !== undefined) {
-                    if (key === 'avatar' && value instanceof File) {
-                        formData.append(key, value);
-                    } else if (key !== 'avatar') {
-                        formData.append(key, value === null ? '' : value);
-                    }
+                if (value === null || value === undefined) continue;
+                if (key === 'nomor_rekening') {
+                    formData.append(key, String(value).trim());
+                    continue;
                 }
+
+                if (fileFieldKeys.includes(key as (typeof fileFieldKeys)[number])) {
+                    if (value instanceof File) {
+                        formData.append(key, value);
+                    }
+                    continue;
+                }
+
+                if (typeof value === 'object' && !(value instanceof File)) continue;
+
+                formData.append(key, value === null ? '' : String(value));
             }
 
             if (!this.assignUserAccount && this.isEditMode) {
@@ -195,14 +214,22 @@ export const usePegawaiStore = defineStore('pegawai', {
                 }
                 
                 if (response.ok) {
-                    this.closeModal();
+                    const result = await response.json().catch(() => ({}));
                     await this.fetchPegawais();
                     await this.fetchStats();
+                    let message = `Pegawai berhasil ${this.isEditMode ? 'diperbarui' : 'dibuat'}.`;
+                    if (!this.isEditMode && result.nik_pegawai) {
+                        message += ` NIK Pegawai: ${result.nik_pegawai}.`;
+                    }
                     toast.success({
                         title: 'Success',
-                        message: `Pegawai berhasil ${this.isEditMode ? 'diperbarui' : 'dibuat'}.`,
+                        message,
                         color: 'green'
                     });
+                    this.closeModal();
+                    if (opts?.navigateTo) {
+                        await navigateTo(opts.navigateTo);
+                    }
                 } else {
                     const errorData = await response.json();
                     if (response.status === 422) {
@@ -357,16 +384,75 @@ export const usePegawaiStore = defineStore('pegawai', {
             }
         },
 
-        async openModal(pegawaiData: any | null = null) {
+        /** Format tanggal dari API (string ISO / object) ke `YYYY-MM-DD` untuk input type=date */
+        formatDateFieldForForm(val: unknown): string {
+            if (val === null || val === undefined || val === '') return ''
+            if (typeof val === 'string') {
+                const s = val.includes('T') ? val.split('T')[0]! : val
+                return s.length >= 10 ? s.substring(0, 10) : s
+            }
+            if (typeof val === 'object' && val !== null && 'toISO' in (val as Record<string, unknown>)) {
+                try {
+                    const iso = (val as { toISO?: () => string }).toISO?.()
+                    if (iso && typeof iso === 'string') return iso.substring(0, 10)
+                } catch {
+                    /* ignore */
+                }
+            }
+            return ''
+        },
+
+        async loadPegawaiForEdit(id: number | string | (string | number)[]) {
+            const toast = useToast();
+            const { $api } = useNuxtApp();
+            const resolvedId = Array.isArray(id) ? id[0] : id
+            if (resolvedId === undefined || resolvedId === null || resolvedId === '') {
+                toast.error({ title: 'Error', message: 'ID pegawai tidak valid', color: 'red' })
+                await navigateTo('/hrd/pegawai')
+                return
+            }
+            try {
+                const response = await fetch($api.pegawaiShow(resolvedId), {
+                    headers: { Accept: 'application/json' },
+                    credentials: 'include',
+                });
+                if (!response.ok) {
+                    const err = await response.json().catch(() => ({ message: 'Pegawai tidak ditemukan' }));
+                    throw new Error(err.message || 'Pegawai tidak ditemukan');
+                }
+                const raw = await response.json();
+                const row = mapPegawaiShowResponseToListRow(raw as Record<string, unknown>);
+                await this.prepareFormForPage(row);
+            } catch (e: any) {
+                toast.error({
+                    title: 'Error',
+                    message: e?.message || 'Gagal memuat pegawai',
+                    color: 'red',
+                });
+                await navigateTo('/hrd/pegawai');
+            }
+        },
+
+        /**
+         * Hydrates `form` + `isEditMode` for full-page form or modal (no `showModal` side effect).
+         */
+        async prepareFormForPage(pegawaiData: any | null = null) {
             this.isEditMode = !!pegawaiData;
             this.validationErrors = [];
-            
+            if (!pegawaiData) {
+                this.kontraks = []
+                this.kontrakWorkflowConfigured = false
+            }
+
             if (pegawaiData) {
                 this.form = JSON.parse(JSON.stringify(pegawaiData));
                 
-                this.form.tgl_lahir_pegawai = pegawaiData.tgl_lahir_pegawai ? pegawaiData.tgl_lahir_pegawai.substring(0, 10) : '';
-                this.form.tgl_masuk_pegawai = pegawaiData.tgl_masuk_pegawai ? pegawaiData.tgl_masuk_pegawai.substring(0, 10) : '';
-                this.form.tgl_keluar_pegawai = pegawaiData.tgl_keluar_pegawai ? pegawaiData.tgl_keluar_pegawai.substring(0, 10) : null;
+                this.form.tgl_lahir_pegawai = this.formatDateFieldForForm(pegawaiData.tgl_lahir_pegawai)
+                this.form.tgl_masuk_pegawai = this.formatDateFieldForForm(pegawaiData.tgl_masuk_pegawai)
+                {
+                    const tk = this.formatDateFieldForForm(pegawaiData.tgl_keluar_pegawai)
+                    this.form.tgl_keluar_pegawai = tk || null
+                }
                 this.form.full_name = pegawaiData.nm_pegawai;
                 this.form.username = pegawaiData.username || '';
                 this.form.email = pegawaiData.email || '';
@@ -407,7 +493,18 @@ export const usePegawaiStore = defineStore('pegawai', {
                 } else {
                     this.form.avatarPreview = '';
                 }
-                 this.form.avatar = null;
+                this.form.avatar = null;
+
+                const { getAttachmentUrl } = useImageUrl();
+                const docUrl = (path: string | null | undefined) => (path ? getAttachmentUrl(path) : '');
+                this.form.cv_attachment_url = docUrl(pegawaiData.cv_attachment);
+                this.form.kk_attachment_url = docUrl(pegawaiData.kk_attachment);
+                this.form.ijazah_attachment_url = docUrl(pegawaiData.ijazah_attachment);
+                this.form.skck_attachment_url = docUrl(pegawaiData.skck_attachment);
+                this.form.cv_attachment = null;
+                this.form.kk_attachment = null;
+                this.form.ijazah_attachment = null;
+                this.form.skck_attachment = null;
 
                 if (this.assignUserAccount) {
                     await this.fetchAvailableUsers('', this.form.user_id || null)
@@ -417,18 +514,40 @@ export const usePegawaiStore = defineStore('pegawai', {
                 } else {
                     this.availableUsers = []
                 }
+
+                this.form.agama = pegawaiData.agama ?? '';
+                this.form.no_tlp_keluarga = pegawaiData.no_tlp_keluarga ?? '';
+                this.form.nomor_rekening = pegawaiData.nomor_rekening ?? '';
+                this.form.bpjstk = pegawaiData.bpjstk ?? '';
+                this.form.bpjsk = pegawaiData.bpjsk ?? '';
+
+                for (const key of ['status_pegawai', 'pendidikan_pegawai', 'jenis_kelamin_pegawai'] as const) {
+                    const v = this.form[key]
+                    if (v !== null && v !== undefined && v !== '' && typeof v === 'string' && !Number.isNaN(Number(v))) {
+                        ;(this.form as Record<string, unknown>)[key] = Number(v)
+                    }
+                }
             } else {
                 this.form = {
                     nm_pegawai: '', email: '', username: '', full_name: '', tgl_lahir_pegawai: '', tmp_lahir_pegawai: '',
                     no_tlp_pegawai: '', alamat_pegawai: '', pendidikan_pegawai: null, status_pegawai: 1,
-                    no_ktp_pegawai: '', nik_pegawai: '', npwp_pegawai: '', jenis_kelamin_pegawai: null,
+                    no_ktp_pegawai: '', npwp_pegawai: '', jenis_kelamin_pegawai: null,
+                    agama: '',
                     tgl_masuk_pegawai: '', tgl_keluar_pegawai: null, istri_suami_pegawai: '', anak_1: '', anak_2: '',
+                    no_tlp_keluarga: '',
+                    nomor_rekening: '', bpjstk: '', bpjsk: '',
                     user_id: null, jabatan_id: null, perusahaan_id: null, cabang_id: null, divisi_id: null,
                     departemen_id: null, gaji_pegawai: 0, tunjangan_pegawai: 0, avatar: null, avatarPreview: '',
+                    cv_attachment: null, kk_attachment: null, ijazah_attachment: null, skck_attachment: null,
+                    cv_attachment_url: '', kk_attachment_url: '', ijazah_attachment_url: '', skck_attachment_url: '',
                 };
                 this.assignUserAccount = false
                 this.availableUsers = []
             }
+        },
+
+        async openModal(pegawaiData: any | null = null) {
+            await this.prepareFormForPage(pegawaiData);
             this.showModal = true;
         },
 
@@ -438,10 +557,15 @@ export const usePegawaiStore = defineStore('pegawai', {
             this.form = {
                 nm_pegawai: '', email: '', username: '', full_name: '', tgl_lahir_pegawai: '', tmp_lahir_pegawai: '',
                 no_tlp_pegawai: '', alamat_pegawai: '', pendidikan_pegawai: null, status_pegawai: 1,
-                no_ktp_pegawai: '', nik_pegawai: '', npwp_pegawai: '', jenis_kelamin_pegawai: null,
+                no_ktp_pegawai: '', npwp_pegawai: '', jenis_kelamin_pegawai: null,
+                agama: '',
                 tgl_masuk_pegawai: '', tgl_keluar_pegawai: null, istri_suami_pegawai: '', anak_1: '', anak_2: '',
+                no_tlp_keluarga: '',
+                nomor_rekening: '', bpjstk: '', bpjsk: '',
                 user_id: null, jabatan_id: null, perusahaan_id: null, cabang_id: null, divisi_id: null,
                 departemen_id: null, gaji_pegawai: 0, tunjangan_pegawai: 0, avatar: null, avatarPreview: '',
+                cv_attachment: null, kk_attachment: null, ijazah_attachment: null, skck_attachment: null,
+                cv_attachment_url: '', kk_attachment_url: '', ijazah_attachment_url: '', skck_attachment_url: '',
             };
             this.validationErrors = [];
             this.initialHistory = { cabangId: null, departemenId: null };
@@ -521,6 +645,255 @@ export const usePegawaiStore = defineStore('pegawai', {
                 this.form.avatar = file;
                 this.form.avatarPreview = URL.createObjectURL(file);
             }
-        }
+        },
+
+        handlePegawaiDocumentChange(field: 'cv_attachment' | 'kk_attachment' | 'ijazah_attachment' | 'skck_attachment', file: File | undefined) {
+            const toast = useToast();
+            if (!file) return;
+
+            if (!file.size) {
+                toast.error({ title: 'Error', message: 'File dokumen kosong atau tidak valid', color: 'red' });
+                return;
+            }
+
+            const ext = file.name?.split('.').pop()?.toLowerCase() || '';
+            const mime = file.type || '';
+            const allowedExt = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'doc', 'docx'];
+            const allowedMime = [
+                'application/pdf',
+                'image/jpeg',
+                'image/jpg',
+                'image/png',
+                'image/webp',
+                'image/gif',
+                'application/msword',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            ];
+            const ok = allowedExt.includes(ext) || allowedMime.includes(mime);
+            if (!ok) {
+                toast.error({
+                    title: 'Error',
+                    message: 'Dokumen harus berupa PDF, gambar, atau Word (DOC/DOCX).',
+                    color: 'red',
+                });
+                return;
+            }
+
+            const maxSize = 5 * 1024 * 1024;
+            if (file.size > maxSize) {
+                toast.error({ title: 'Error', message: 'Ukuran file terlalu besar (maksimal 5MB)', color: 'red' });
+                return;
+            }
+
+            this.form[field] = file;
+        },
+
+        async fetchPegawaiKontraks(pegawaiId: number | string) {
+            const toast = useToast()
+            const { $api } = useNuxtApp()
+            this.kontraksLoading = true
+            try {
+                const response = await fetch($api.pegawaiKontrakList(pegawaiId), {
+                    headers: { Accept: 'application/json' },
+                    credentials: 'include',
+                })
+                if (!response.ok) {
+                    const err = await response.json().catch(() => ({ message: 'Gagal memuat kontrak' }))
+                    throw new Error(err.message || 'Gagal memuat kontrak')
+                }
+                const data = await response.json()
+                if (Array.isArray(data)) {
+                    this.kontraks = data
+                    this.kontrakWorkflowConfigured = false
+                } else {
+                    this.kontraks = Array.isArray(data.data) ? data.data : []
+                    this.kontrakWorkflowConfigured = !!data.workflowConfigured
+                }
+            } catch (e: any) {
+                this.kontraks = []
+                this.kontrakWorkflowConfigured = false
+                toast.error({
+                    title: 'Error',
+                    message: e?.message || 'Gagal memuat data kontrak',
+                    color: 'red',
+                })
+            } finally {
+                this.kontraksLoading = false
+            }
+        },
+
+        async postPegawaiKontrakDraft(opts: {
+            pegawaiId: number | string
+            editingKontrakId: number | null
+            jenis_kontrak: number
+            nomor_kontrak?: string
+            tgl_mulai: string
+            tgl_selesai?: string | null
+            catatan?: string
+            induk_id?: number | null
+            file?: File | null
+        }) {
+            const toast = useToast()
+            const { $api } = useNuxtApp()
+            const fd = new FormData()
+            fd.append('jenis_kontrak', String(opts.jenis_kontrak))
+            if (opts.nomor_kontrak?.trim()) fd.append('nomor_kontrak', opts.nomor_kontrak.trim())
+            fd.append('tgl_mulai', opts.tgl_mulai)
+            if (opts.tgl_selesai) fd.append('tgl_selesai', opts.tgl_selesai)
+            if (opts.catatan?.trim()) fd.append('catatan', opts.catatan.trim())
+            if (opts.induk_id) fd.append('induk_id', String(opts.induk_id))
+            if (opts.file) fd.append('file_sk', opts.file)
+
+            const url = opts.editingKontrakId
+                ? $api.pegawaiKontrakUpdate(opts.editingKontrakId)
+                : $api.pegawaiKontrakStore(opts.pegawaiId)
+
+            const response = await fetch(url, {
+                method: 'POST',
+                body: fd,
+                credentials: 'include',
+            })
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({ message: 'Gagal menyimpan kontrak' }))
+                throw new Error(err.message || err.error || 'Gagal menyimpan kontrak')
+            }
+            toast.success({
+                title: 'Berhasil',
+                message: opts.editingKontrakId ? 'Draft kontrak diperbarui.' : 'Draft kontrak dibuat.',
+                color: 'green',
+            })
+            await this.fetchPegawaiKontraks(opts.pegawaiId)
+        },
+
+        async activatePegawaiKontrak(kontrakId: number, pegawaiId: number | string) {
+            const toast = useToast()
+            const { $api } = useNuxtApp()
+            const response = await fetch($api.pegawaiKontrakActivate(kontrakId), {
+                method: 'POST',
+                headers: { Accept: 'application/json' },
+                credentials: 'include',
+            })
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({ message: 'Gagal mengaktifkan kontrak' }))
+                throw new Error(err.message || err.error || 'Gagal mengaktifkan kontrak')
+            }
+            toast.success({
+                title: 'Berhasil',
+                message: 'Kontrak diaktifkan. Status pegawai disesuaikan.',
+                color: 'green',
+            })
+            await this.fetchPegawaiKontraks(pegawaiId)
+            await this.loadPegawaiForEdit(pegawaiId)
+        },
+
+        async cancelPegawaiKontrakDraft(kontrakId: number, pegawaiId: number | string) {
+            const toast = useToast()
+            const { $api } = useNuxtApp()
+            const response = await fetch($api.pegawaiKontrakCancel(kontrakId), {
+                method: 'POST',
+                headers: { Accept: 'application/json' },
+                credentials: 'include',
+            })
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({ message: 'Gagal membatalkan draft' }))
+                throw new Error(err.message || err.error || 'Gagal membatalkan draft')
+            }
+            toast.success({ title: 'Berhasil', message: 'Draft kontrak dibatalkan.', color: 'green' })
+            await this.fetchPegawaiKontraks(pegawaiId)
+        },
+
+        async deletePegawaiKontrakDraft(kontrakId: number, pegawaiId: number | string) {
+            const toast = useToast()
+            const { $api } = useNuxtApp()
+            const response = await fetch($api.pegawaiKontrakDelete(kontrakId), {
+                method: 'DELETE',
+                headers: { Accept: 'application/json' },
+                credentials: 'include',
+            })
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({ message: 'Gagal menghapus draft' }))
+                throw new Error(err.message || err.error || 'Gagal menghapus draft')
+            }
+            toast.success({ title: 'Berhasil', message: 'Draft kontrak dihapus.', color: 'green' })
+            await this.fetchPegawaiKontraks(pegawaiId)
+        },
+
+        async submitPegawaiKontrakForApproval(kontrakId: number, pegawaiId: number | string) {
+            const toast = useToast()
+            const { $api } = useNuxtApp()
+            const response = await fetch($api.pegawaiKontrakSubmitApproval(kontrakId), {
+                method: 'POST',
+                headers: { Accept: 'application/json' },
+                credentials: 'include',
+            })
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({ message: 'Gagal mengajukan persetujuan' }))
+                throw new Error(err.message || err.error || 'Gagal mengajukan persetujuan')
+            }
+            toast.success({
+                title: 'Berhasil',
+                message: 'Kontrak diajukan untuk persetujuan.',
+                color: 'green',
+            })
+            await this.fetchPegawaiKontraks(pegawaiId)
+        },
+
+        async approvePegawaiKontrak(kontrakId: number, pegawaiId: number | string, remarks?: string) {
+            const toast = useToast()
+            const { $api } = useNuxtApp()
+            const response = await fetch($api.pegawaiKontrakApprove(kontrakId), {
+                method: 'POST',
+                headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ remarks: remarks ?? '' }),
+            })
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({ message: 'Gagal approve' }))
+                throw new Error(err.message || err.error || 'Gagal approve')
+            }
+            const body = await response.json().catch(() => ({} as Record<string, unknown>))
+            toast.success({
+                title: 'Berhasil',
+                message: (body.message as string) || 'Approval tercatat.',
+                color: 'green',
+            })
+            await this.fetchPegawaiKontraks(pegawaiId)
+            if (body.isFullyApproved === true) {
+                await this.loadPegawaiForEdit(pegawaiId)
+            }
+        },
+
+        async rejectPegawaiKontrak(kontrakId: number, pegawaiId: number | string, remarks: string) {
+            const toast = useToast()
+            const { $api } = useNuxtApp()
+            const response = await fetch($api.pegawaiKontrakReject(kontrakId), {
+                method: 'POST',
+                headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ remarks }),
+            })
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({ message: 'Gagal menolak' }))
+                throw new Error(err.message || err.error || 'Gagal menolak')
+            }
+            toast.success({ title: 'Berhasil', message: 'Kontrak ditolak.', color: 'green' })
+            await this.fetchPegawaiKontraks(pegawaiId)
+        },
+
+        async cancelPegawaiKontrakPending(kontrakId: number, pegawaiId: number | string) {
+            const toast = useToast()
+            const { $api } = useNuxtApp()
+            const response = await fetch($api.pegawaiKontrakCancelPending(kontrakId), {
+                method: 'POST',
+                headers: { Accept: 'application/json' },
+                credentials: 'include',
+            })
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({ message: 'Gagal membatalkan pengajuan' }))
+                throw new Error(err.message || err.error || 'Gagal membatalkan pengajuan')
+            }
+            toast.success({ title: 'Berhasil', message: 'Pengajuan kontrak dibatalkan.', color: 'green' })
+            await this.fetchPegawaiKontraks(pegawaiId)
+        },
     },
 })

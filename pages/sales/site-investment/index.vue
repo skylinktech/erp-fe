@@ -215,41 +215,28 @@
                     <!-- Table -->
                     <div class="col-12">
                         <div class="card">
-                            <div class="card-header si-table-header">
-                                <div class="si-header-top-row">
-                                    <div class="d-flex align-items-center si-rows-control">
-                                        <span class="me-2">Baris:</span>
-                                        <Dropdown
-                                            v-model="tableControls.rows"
-                                            :options="rowsPerPageOptionsArray"
-                                            @change="handleRowsChange"
-                                            placeholder="Jumlah"
-                                            style="width: 8rem;"
-                                        />
-                                    </div>
+                            <ListPageTableHeader
+                                :rows="Number(tableControls.rows)"
+                                :rows-options="rowsPerPageOptionsArray"
+                                :search="globalFilterValue"
+                                search-placeholder="Cari Site Investment..."
+                                :export-disabled="loading"
+                                @update:rows="onToolbarRows"
+                                @update:search="(v) => { globalFilterValue = v }"
+                                @export="exportData"
+                            >
+                                <template #add>
                                     <button
                                         v-if="userHasRole('superadmin') || userHasPermission('create_site_investment')"
-                                        @click="siteInvestStore.openModal(null)"
+                                        type="button"
                                         class="btn btn-primary si-add-button"
+                                        @click="navigateTo('/sales/site-investment/form')"
                                     >
                                         <i class="ri-add-line me-1"></i>
                                         Tambah SI
                                     </button>
-                                </div>
-                                <div class="si-actions-row">
-                                    <button @click="exportData('csv')" class="btn btn-outline-secondary" :disabled="loading">
-                                        <i class="ri-download-line me-1"></i>
-                                        Export
-                                    </button>
-                                    <span class="p-input-icon-left si-search-input-wrap">
-                                        <InputText
-                                            v-model="globalFilterValue"
-                                            placeholder="Cari Site Investment..."
-                                            class="si-search-input"
-                                        />
-                                    </span>
-                                </div>
-                            </div>
+                                </template>
+                            </ListPageTableHeader>
                             <div class="card-datatable table-responsive py-3 px-3">
                                 <MyDataTable
                                     ref="myDataTableRef"
@@ -361,7 +348,7 @@
                                                         </a>
                                                     </li>
                                                     <li v-if="(userHasRole('superadmin') || userHasPermission('edit_site_investment')) && canEditSiteInvest(slotProps.data)">
-                                                        <a class="dropdown-item" href="javascript:void(0)" @click="siteInvestStore.openModal(slotProps.data)">
+                                                        <a class="dropdown-item" href="javascript:void(0)" @click="navigateTo(`/sales/site-investment/form/${slotProps.data.id}`)">
                                                             <i class="ri-edit-box-line me-2"></i> Edit
                                                         </a>
                                                     </li>
@@ -381,20 +368,13 @@
                 </div>
             </div>
 
-            <!-- Modal -->
-            <SiteInvestFormModal
-                modal-id="SiteInvestmentModal"
-                :prefilled-fdr-id="route.query.fromFdr"
-                @saved="onSiteInvestSaved"
-                @close="onSiteInvestClose"
-            />
         </div>
         <div class="content-backdrop fade"></div>
     </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useSiteInvestStore } from '~/stores/site-invest'
 import { useCustomerStore } from '~/stores/customer'
@@ -403,18 +383,14 @@ import { usePermissionsStore } from '~/stores/permissions'
 import { usePermissions } from '~/composables/usePermissions'
 import { useApprovalStatus } from '~/composables/useApprovalStatus'
 import { useImageUrl } from '~/composables/useImageUrl'
-import SiteInvestFormModal from '~/components/modal/SiteInvestFormModal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
+import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
 import Column from 'primevue/column'
-import Dropdown from 'primevue/dropdown'
-import InputText from 'primevue/inputtext'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
 import { useDebounceFn } from '@vueuse/core'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 
 const { setListTitle } = useDynamicTitle()
-const route = useRoute()
-const router = useRouter()
 
 const isInitialLoading = ref(true)
 const siteInvestStore = useSiteInvestStore()
@@ -474,19 +450,6 @@ function formatSiDate(value) {
 const { siteInvests, loading, totalRecords, params, stats } = storeToRefs(siteInvestStore)
 const { customers } = storeToRefs(customerStore)
 
-function onSiteInvestSaved() {
-  siteInvestStore.fetchSiteInvests()
-  siteInvestStore.fetchStats()
-}
-
-function onSiteInvestClose() {
-  const q = { ...route.query }
-  delete q.fromFdr
-  delete q.edit
-  if (Object.keys(q).length < Object.keys(route.query).length) {
-    router.replace({ path: route.path, query: Object.keys(q).length ? q : {} })
-  }
-}
 
 const { user } = storeToRefs(userStore)
 const { permissions } = storeToRefs(permissionStore)
@@ -548,22 +511,28 @@ const fetchBudgetsAndUsers_REMOVED = async () => {
     }
 }
 
+function mapPegawaiToOptions(raw) {
+    const list = Array.isArray(raw) ? raw : []
+    return list
+        .map(function (p) {
+            return {
+                id_pegawai: Number(p.id_pegawai ?? p.idPegawai ?? p.id),
+                nm_pegawai: p.nm_pegawai ?? p.nmPegawai ?? ''
+            }
+        })
+        .filter(function (p) { return Number.isFinite(p.id_pegawai) && p.id_pegawai > 0 })
+}
+
 const fetchPegawaiForPreparedBy = async () => {
     const { $api } = useNuxtApp()
     try {
-        const r = await fetch(`${$api.pegawai()}?start=0&length=500`, {
-            headers: { 'Accept': 'application/json' },
-            credentials: 'include'
+        const r = await fetch($api.siteInvestmentPreparedByOptions(), {
+            headers: { Accept: 'application/json' },
+            credentials: 'include',
         })
         if (r.ok) {
             const j = await r.json()
-            const data = j.data || []
-            pegawaiOptions.value = data.map(function (p) {
-                return {
-                    id_pegawai: p.id_pegawai ?? p.idPegawai ?? p.id,
-                    nm_pegawai: p.nm_pegawai ?? p.nmPegawai ?? p.nm_pegawai ?? ''
-                }
-            }).filter(function (p) { return p.id_pegawai != null })
+            pegawaiOptions.value = mapPegawaiToOptions(j.data ?? j)
         } else {
             pegawaiOptions.value = []
         }
@@ -587,7 +556,7 @@ function removeBudgetItem(index) {
 const fetchPriceListsForSelect = async () => {
     const { $api } = useNuxtApp()
     try {
-        const res = await fetch(`${$api.priceList()}?page=1&rows=500&type=site_investment`, {
+        const res = await fetch(`${$api.priceList()}?page=1&rows=500&isActive=true`, {
             headers: { Accept: 'application/json' },
             credentials: 'include',
         })
@@ -900,13 +869,13 @@ onMounted(() => {
     tableControls.value.rows = Number(params.value.rows) || 10
     tableControls.value.search = globalFilterValue.value
 
-    const editId = route.query.edit
+    const editId = useRoute().query.edit
     if (editId && typeof editId === 'string') {
-        nextTick(() => siteInvestStore.openModal({ id: editId }))
+        nextTick(() => navigateTo(`/sales/site-investment/form/${editId}`))
     }
-    const fromFdrId = route.query.fromFdr
+    const fromFdrId = useRoute().query.fromFdr
     if (fromFdrId && typeof fromFdrId === 'string') {
-        nextTick(() => siteInvestStore.openModalFromFdr(fromFdrId))
+        nextTick(() => navigateTo({ path: '/sales/site-investment/form', query: { fromFdr: fromFdrId } }))
     }
 })
 
@@ -948,6 +917,11 @@ const handleRowsChange = (value) => {
     siteInvestStore.fetchSiteInvests()
 }
 
+const onToolbarRows = (value) => {
+    tableControls.value.rows = Number(value) || 10
+    handleRowsChange(value)
+}
+
 const handleSearch = (value) => {
     globalFilterValue.value = value
     params.value.first = 0
@@ -969,9 +943,15 @@ const onSort = (event) => {
 
 const exportData = async (format) => {
     const toast = useToast()
-    if (format === 'csv') {
-        myDataTableRef.value.exportCSV()
-    } else {
+    if (format === 'excel') {
+        if (myDataTableRef.value?.exportCSV) {
+            myDataTableRef.value.exportCSV()
+        } else {
+            toast.warning({ title: 'Warning', message: 'Export tidak tersedia', color: 'orange' })
+        }
+        return
+    }
+    if (format === 'pdf') {
         toast.info({
             title: 'Info',
             message: 'Export PDF akan segera tersedia',
@@ -1388,83 +1368,13 @@ definePageMeta({
     color: #4f46e5;
 }
 
-.si-table-header {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-.si-header-top-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-}
-
-.si-rows-control {
-    min-width: 0;
-}
-
 .si-add-button {
     flex: 0 0 auto;
-}
-
-.si-actions-row {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    width: 100%;
-}
-
-.si-search-input-wrap {
-    display: block;
-    width: 100%;
-}
-
-.si-search-input {
-    width: 100% !important;
-}
-
-@media (min-width: 768px) {
-    .si-table-header {
-        flex-direction: row;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1rem;
-    }
-
-    .si-header-top-row {
-        flex: 0 0 auto;
-    }
-
-    .si-actions-row {
-        width: auto;
-    }
-
-    .si-search-input-wrap {
-        width: auto;
-    }
-
-    .si-search-input {
-        width: 20rem !important;
-    }
+    white-space: nowrap;
 }
 
 @media (max-width: 767.98px) {
     .si-reset-filter-btn {
-        width: 100%;
-    }
-
-    .si-actions-row {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .si-actions-row > .btn {
-        width: 100%;
-    }
-
-    .si-search-input-wrap {
         width: 100%;
     }
 }

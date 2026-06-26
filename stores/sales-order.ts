@@ -104,6 +104,7 @@ interface SalesOrderState {
   originalSalesOrder: SalesOrder | null
   customerProducts  : SalesOrderCustomerProduct[]
   loading           : boolean
+  saving            : boolean
   error             : any
   stats             : Stats
   totalRecords      : number
@@ -134,6 +135,7 @@ export const useSalesOrderStore = defineStore('salesOrder', {
     originalSalesOrder: null,
     customerProducts  : [],
     loading           : true,
+    saving            : false,
     error             : null,
     totalRecords      : 0,
     stats             : {
@@ -383,7 +385,7 @@ export const useSalesOrderStore = defineStore('salesOrder', {
     },
 
     async saveSalesOrder() {
-        this.loading = true;
+        this.saving = true;
         this.validationErrors = [];
         const { $api } = useNuxtApp();
         const userStore = useUserStore();
@@ -516,7 +518,7 @@ export const useSalesOrderStore = defineStore('salesOrder', {
               layout: 2,
             });
         } finally {
-            this.loading = false;
+            this.saving = false;
         }
     },
 

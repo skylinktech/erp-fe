@@ -3,7 +3,7 @@
     <div class="container-xxl flex-grow-1 container-p-y">
       <h4 class="mb-1">Approval Workflows</h4>
       <p class="mb-6">
-        Kelola konfigurasi workflow approval berjenjang untuk berbagai entitas (IRO, Quotation, Purchase Order, Sales Order).
+        Kelola konfigurasi workflow approval berjenjang untuk berbagai entitas (Purchase Order, Purchase Request, Quotation, Sales Order, Kontrak Pegawai, dll).
       </p>
 
       <div class="row g-6 mb-6">
@@ -175,7 +175,7 @@
                 </div>
                 <div class="mb-3">
                   <label class="form-label">Nama <span class="text-danger">*</span></label>
-                  <input v-model="wfStore.form.name" type="text" class="form-control" placeholder="e.g. IRO Approval Workflow" required>
+                  <input v-model="wfStore.form.name" type="text" class="form-control" placeholder="e.g. Purchase Order Approval Workflow" required>
                 </div>
                 <div class="mb-3">
                   <label class="form-label">Entity Type <span class="text-danger">*</span></label>

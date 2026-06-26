@@ -13,11 +13,12 @@ export interface CustomerVerifDoc {
   nib: boolean
   ktp: boolean
   suratKuasa?: boolean | null
+  skKemenhum?: boolean
 }
 
 export interface CustomerVerif {
   id: number
-  iroId: string
+  purchaseRequestId: string
   customerId: number | null
   status: 'draft' | 'pending' | 'verified' | 'unverified'
   noVerif: string
@@ -28,6 +29,7 @@ export interface CustomerVerif {
   customerPhone: string | null
   customerAddress: string | null
   customerNpwp: string | null
+  customerKtp: string | null
   verifiedBy: number | null
   unverifiedBy: number | null
   createdBy: number
@@ -35,7 +37,7 @@ export interface CustomerVerif {
   unverifiedAt: string | null
   createdAt: string
   updatedAt: string
-  iro?: any
+  purchaseRequest?: any
   customer?: any
   createdByUser?: any
   verifiedByUser?: any
@@ -56,6 +58,7 @@ interface CustomerVerifState {
   customerVerif: CustomerVerif | null
   originalCustomerVerif: CustomerVerif | null
   loading: boolean
+  saving: boolean
   error: any
   totalRecords: number
   stats: Stats
@@ -67,14 +70,14 @@ interface CustomerVerifState {
     draw: number
     search: string
     status?: string | null
-    iroId?: string | null
+    purchaseRequestId?: string | null
     customerId?: number | null
   }
   form: any
   isEditMode: boolean
   showModal: boolean
   validationErrors: any[]
-  approvedIros: any[]
+  approvedPurchaseRequests: any[]
 }
 
 export const useCustomerVerifStore = defineStore('customerVerif', {
@@ -83,6 +86,7 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
     customerVerif: null,
     originalCustomerVerif: null,
     loading: true,
+    saving: false,
     error: null,
     totalRecords: 0,
     stats: {
@@ -100,11 +104,11 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
       draw: 1,
       search: '',
       status: null,
-      iroId: null,
+      purchaseRequestId: null,
       customerId: null,
     },
     form: {
-      iroId: null,
+      purchaseRequestId: null,
       customerId: null,
       status: 'draft',
       notes: '',
@@ -115,12 +119,13 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
       customerPhone: '',
       customerAddress: '',
       customerNpwp: '',
+      customerKtp: '',
       customerVerifDocs: [],
     },
     isEditMode: false,
     showModal: false,
     validationErrors: [],
-    approvedIros: [],
+    approvedPurchaseRequests: [],
   }),
 
   actions: {
@@ -142,8 +147,8 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
         if (this.params.status) {
           params.append('status', this.params.status)
         }
-        if (this.params.iroId) {
-          params.append('iroId', this.params.iroId)
+        if (this.params.purchaseRequestId) {
+          params.append('purchaseRequestId', this.params.purchaseRequestId)
         }
         if (this.params.customerId) {
           params.append('customerId', this.params.customerId.toString())
@@ -211,10 +216,10 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
       }
     },
 
-    async fetchApprovedIros() {
+    async fetchApprovedPurchaseRequests() {
       const { $api } = useNuxtApp()
       try {
-        const response = await fetch($api.customerVerifApprovedIros(), {
+        const response = await fetch($api.customerVerifApprovedPurchaseRequests(), {
           headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json'
@@ -222,22 +227,22 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
           credentials: 'include'
         })
 
-        if (!response.ok) throw new Error('Gagal mengambil data IRO approved')
+        if (!response.ok) throw new Error('Gagal mengambil data Purchase Request approved')
 
         const result = await response.json()
-        this.approvedIros = result.data || []
-        return this.approvedIros
+        this.approvedPurchaseRequests = result.data || []
+        return this.approvedPurchaseRequests
       } catch (e: any) {
-        console.error('Gagal mengambil data IRO approved:', e)
-        this.approvedIros = []
+        console.error('Gagal mengambil data Purchase Request approved:', e)
+        this.approvedPurchaseRequests = []
         return []
       }
     },
 
-    async fetchIroCustomer(iroId: string) {
+    async fetchPurchaseRequestCustomer(purchaseRequestId: string) {
       const { $api } = useNuxtApp()
       try {
-        const response = await fetch($api.customerVerifIroCustomer(iroId), {
+        const response = await fetch($api.customerVerifPurchaseRequestCustomer(purchaseRequestId), {
           headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json'
@@ -245,18 +250,18 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
           credentials: 'include'
         })
 
-        if (!response.ok) throw new Error('Gagal mengambil data customer dari IRO')
+        if (!response.ok) throw new Error('Gagal mengambil data customer dari Purchase Order')
 
         const result = await response.json()
         return result.data
       } catch (e: any) {
-        console.error('Gagal mengambil data customer dari IRO:', e)
+        console.error('Gagal mengambil data customer dari Purchase Order:', e)
         throw e
       }
     },
 
     async saveCustomerVerif() {
-      this.loading = true
+      this.saving = true
       this.validationErrors = []
       const { $api } = useNuxtApp()
       const userStore = useUserStore()
@@ -266,7 +271,7 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
 
         const dataToAppend = { ...this.form }
         delete dataToAppend.customerVerifDocs
-        delete dataToAppend.iro
+        delete dataToAppend.purchaseRequest
         delete dataToAppend.customer
         delete dataToAppend.createdByUser
         delete dataToAppend.verifiedByUser
@@ -286,7 +291,7 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
               message: 'User tidak terautentikasi. Silakan login ulang.',
               color: 'red',
             })
-            this.loading = false
+            this.saving = false
             return
           }
           // Remove status from dataToAppend, it will be set to 'draft' in backend
@@ -365,7 +370,7 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
           layout: 2,
         })
       } finally {
-        this.loading = false
+        this.saving = false
       }
     },
 
@@ -542,30 +547,32 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
       this.showModal = true
     },
 
-    async onIroChange(iroId: string) {
-      if (!iroId) {
+    async onPurchaseRequestChange(purchaseRequestId: string) {
+      if (!purchaseRequestId) {
         this.form.customerName = ''
         this.form.customerEmail = ''
         this.form.customerPhone = ''
         this.form.customerAddress = ''
         this.form.customerNpwp = ''
+        this.form.customerKtp = ''
         this.form.customerId = null
         return
       }
 
       try {
-        const customerData = await this.fetchIroCustomer(iroId)
+        const customerData = await this.fetchPurchaseRequestCustomer(purchaseRequestId)
         this.form.customerId = customerData.customerId
         this.form.customerName = customerData.customerName || ''
         this.form.customerEmail = customerData.customerEmail || ''
         this.form.customerPhone = customerData.customerPhone || ''
         this.form.customerAddress = customerData.customerAddress || ''
         this.form.customerNpwp = customerData.customerNpwp || ''
+        this.form.customerKtp = customerData.customerKtp || ''
       } catch (e: any) {
         const toast = useToast()
         toast.error({
           title: 'Error',
-          message: e.message || 'Gagal mengambil data customer dari IRO',
+          message: e.message || 'Gagal memuat data Purchase Request',
           color: 'red',
         })
       }
@@ -581,6 +588,7 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
         nib: false,
         ktp: false,
         suratKuasa: null,
+        skKemenhum: false,
       })
     },
 
@@ -693,7 +701,7 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
 
     resetForm() {
       this.form = {
-        iroId: null,
+        purchaseRequestId: null,
         customerId: null,
         status: 'draft',
         notes: '',
@@ -704,6 +712,7 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
         customerPhone: '',
         customerAddress: '',
         customerNpwp: '',
+        customerKtp: '',
         customerVerifDocs: [],
       }
     },
@@ -726,9 +735,9 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
       this.fetchCustomerVerifs()
     },
 
-    setFilters(filters: { status?: string | null, iroId?: string | null, customerId?: number | null, search?: string }) {
+    setFilters(filters: { status?: string | null, purchaseRequestId?: string | null, customerId?: number | null, search?: string }) {
       this.params.status = filters.status
-      this.params.iroId = filters.iroId
+      this.params.purchaseRequestId = filters.purchaseRequestId
       this.params.customerId = filters.customerId
       this.params.search = filters.search || ''
       this.params.first = 0

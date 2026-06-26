@@ -23,6 +23,7 @@ interface ExpenseState {
   expenses: Expense[]
   selectedExpense: Expense | null
   loading: boolean
+  saving: boolean
   error: any
   totalRecords: number
   params: {
@@ -46,6 +47,7 @@ export const useExpenseStore = defineStore('expense', {
     expenses: [],
     selectedExpense: null,
     loading: false,
+    saving: false,
     error: null,
     totalRecords: 0,
     params: {
@@ -170,7 +172,7 @@ export const useExpenseStore = defineStore('expense', {
     },
 
     async saveExpense() {
-      this.loading = true
+      this.saving = true
       this.validationErrors = [];
       const { $api } = useNuxtApp()
 
@@ -243,7 +245,7 @@ export const useExpenseStore = defineStore('expense', {
           });
         }
       } finally {
-        this.loading = false
+        this.saving = false
       }
     },
 

@@ -97,10 +97,16 @@ export const useMenuDetailStore = defineStore('menu-detail', {
       }
     },
     
-    async fetchMenuGroupsForSelect() {
+    async fetchMenuGroupsForSelect(search = '') {
         const { $api } = useNuxtApp();
         try {
-            const response = await fetch($api.menuGroups(), {
+            const params = new URLSearchParams();
+            if (search.trim()) {
+                params.set('search', search.trim());
+            }
+            const query = params.toString();
+            const url = query ? `${$api.menuGroupsOptions()}?${query}` : $api.menuGroupsOptions();
+            const response = await fetch(url, {
                 headers: {
                     'Accept': 'application/json',
                 },

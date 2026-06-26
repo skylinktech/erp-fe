@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { apiFetch } from '~/utils/apiFetch'
 import Swal from 'sweetalert2'
-import { useNuxtApp } from '#app'
+import { navigateTo, useNuxtApp } from '#app'
 import { useUserStore } from '~/stores/user'
 import { useImageUrl } from '~/composables/useImageUrl'
 
@@ -28,20 +28,28 @@ export interface PksSubscription {
 export interface Pks {
   id: string
   noPks: string
-  customerId: number
-  customerName: string
+  customerId: number | null
+  customerName: string | null
   description?: string | null
   contractStartDate: string | null
   contractEndDate: string | null
   signingLocation?: string | null
   signingDate?: string | null
   custPic?: string | null
-  telkomPic?: string | null
+  sitePic?: string | null
+  custPicNoTlp?: string | null
+  sitePicNoTlp?: string | null
   approvedAt?: string | null
   rejectedAt?: string | null
   status: 'draft' | 'signed' | 'active' | 'expired' | 'terminated'
   createdAt: string
   updatedAt: string
+  isInternal?: boolean
+  isExternal?: boolean
+  noSurat?: string | null
+  vendorId?: number | null
+  nominal?: number | null
+  purchaseOrderId?: string | null
   customer?: { id: number; name: string }
   pksSubscriptions?: PksSubscription[]
   pksDocuments?: PksDocument[]
@@ -51,6 +59,7 @@ interface PksState {
   pksList: Pks[]
   pks: Pks | null
   loading: boolean
+  saving: boolean
   error: any
   totalRecords: number
   params: {
@@ -65,6 +74,8 @@ interface PksState {
   }
   form: {
     id?: string | null
+    isInternal: boolean
+    isExternal: boolean
     customerId: number | null
     customerName: string
     description: string
@@ -73,9 +84,15 @@ interface PksState {
     signingLocation: string
     signingDate: string | null
     custPic: string
-    telkomPic: string
+    sitePic: string
+    custPicNoTlp: string
+    sitePicNoTlp: string
     approvedAt: string | null
     rejectedAt: string | null
+    noSurat: string
+    vendorId: string | null
+    nominal: string | null
+    purchaseOrderId: string | null
     pksSubscriptions: PksSubscription[]
     pksDocuments: PksDocument[]
   }
@@ -96,7 +113,8 @@ export const usePksStore = defineStore('pks', {
   state: (): PksState => ({
     pksList: [],
     pks: null,
-    loading: true,
+    loading: false,
+    saving: false,
     error: null,
     totalRecords: 0,
     params: {
@@ -111,6 +129,8 @@ export const usePksStore = defineStore('pks', {
     },
     form: {
       id: null,
+      isInternal: true,
+      isExternal: false,
       customerId: null,
       customerName: '',
       description: '',
@@ -119,9 +139,15 @@ export const usePksStore = defineStore('pks', {
       signingLocation: '',
       signingDate: null,
       custPic: '',
-      telkomPic: '',
+      sitePic: '',
+      custPicNoTlp: '',
+      sitePicNoTlp: '',
       approvedAt: null,
       rejectedAt: null,
+      noSurat: '',
+      vendorId: null,
+      nominal: null,
+      purchaseOrderId: null,
       pksSubscriptions: [],
       pksDocuments: [],
     },
@@ -195,7 +221,7 @@ export const usePksStore = defineStore('pks', {
       const { $api } = useNuxtApp()
       try {
         const data = await apiFetch(`${$api.pks()}/${id}`, { headers: { Accept: 'application/json' }, credentials: 'include' })
-        if (data?.data) this.openModal(data.data)
+        if (data?.data) this.openModal(data.data, { noModal: true })
         else throw new Error('Data tidak valid')
       } catch (e: any) {
         this.error = e
@@ -205,60 +231,24 @@ export const usePksStore = defineStore('pks', {
       }
     },
 
-    async savePks() {
+    async savePks(options?: { navigateToList?: boolean }): Promise<boolean> {
       const toast = useToast()
-      this.loading = true
+      this.saving = true
       this.validationErrors = []
       const { $api } = useNuxtApp()
 
-      // Validasi: minimal 1 subscription harus dipilih
-      if (!this.form.pksSubscriptions || this.form.pksSubscriptions.length === 0) {
-        this.loading = false
-        toast.error({ title: 'Validasi', message: 'Minimal 1 subscription harus dipilih', color: 'red', position: 'topRight', layout: 2 })
-        return
-      }
-
-      // Validasi: semua subscription harus memiliki status == 'signed'
-      try {
-        for (const pksSub of this.form.pksSubscriptions) {
-          if (!pksSub.subscriptionId) {
-            this.loading = false
-            toast.error({ title: 'Validasi', message: 'Semua subscription harus dipilih', color: 'red', position: 'topRight', layout: 2 })
-            return
-          }
-          const subRes = await fetch(`${$api.subscription()}/${pksSub.subscriptionId}`, {
-            headers: { Accept: 'application/json' },
-            credentials: 'include'
-          })
-          if (!subRes.ok) {
-            this.loading = false
-            toast.error({ title: 'Validasi', message: `Gagal memverifikasi subscription ${pksSub.subscriptionId}`, color: 'red', position: 'topRight', layout: 2 })
-            return
-          }
-          const subData = await subRes.json()
-          const subscription = subData.data || subData
-          const status = subscription.status
-          if (status !== 'signed') {
-            this.loading = false
-            const noSub = subscription.noSubscription || subscription.no_subscription || pksSub.subscriptionId
-            toast.error({ title: 'Validasi', message: `Subscription ${noSub} belum memiliki status 'signed'. Status saat ini: ${status}`, color: 'red', position: 'topRight', layout: 2 })
-            return
-          }
-        }
-      } catch (e: any) {
-        this.loading = false
-        toast.error({ title: 'Error', message: `Gagal memverifikasi subscription: ${e.message}`, color: 'red', position: 'topRight', layout: 2 })
-        return
-      }
-
-      // Validasi: minimal 1 document harus diisi
-      if (!this.form.pksDocuments || this.form.pksDocuments.length === 0) {
-        this.loading = false
-        toast.error({ title: 'Validasi', message: 'Minimal 1 dokumen harus diisi', color: 'red', position: 'topRight', layout: 2 })
-        return
-      }
-
       const formData = new FormData()
+      let timeoutId: ReturnType<typeof setTimeout> | null = null
+
+      // Mode internal/external (untuk backend menentukan skema validasi + field mana yang dipakai)
+      formData.append('isInternal', String(this.form.isInternal))
+      formData.append('isExternal', String(this.form.isExternal))
+
+      // External fields
+      if (this.form.noSurat) formData.append('noSurat', this.form.noSurat)
+      if (this.form.vendorId != null && this.form.vendorId !== '') formData.append('vendorId', String(this.form.vendorId))
+      if (this.form.nominal != null && this.form.nominal !== '') formData.append('nominal', String(this.form.nominal))
+      if (this.form.purchaseOrderId) formData.append('purchaseOrderId', this.form.purchaseOrderId)
 
       if (this.form.customerId) formData.append('customerId', String(this.form.customerId))
       if (this.form.customerName) formData.append('customerName', this.form.customerName)
@@ -268,17 +258,19 @@ export const usePksStore = defineStore('pks', {
       if (this.form.signingLocation) formData.append('signingLocation', this.form.signingLocation)
       if (this.form.signingDate) formData.append('signingDate', this.form.signingDate)
       if (this.form.custPic) formData.append('custPic', this.form.custPic)
-      if (this.form.telkomPic) formData.append('telkomPic', this.form.telkomPic)
+      if (this.form.sitePic) formData.append('sitePic', this.form.sitePic)
+      if (this.form.custPicNoTlp) formData.append('custPicNoTlp', this.form.custPicNoTlp)
+      if (this.form.sitePicNoTlp) formData.append('sitePicNoTlp', this.form.sitePicNoTlp)
       if (this.form.approvedAt) formData.append('approvedAt', this.form.approvedAt)
       if (this.form.rejectedAt) formData.append('rejectedAt', this.form.rejectedAt)
 
       // Append pksSubscriptions (many-to-many)
-      formData.append('pksSubscriptions', JSON.stringify(this.form.pksSubscriptions.map((s) => ({
+      formData.append('pksSubscriptions', JSON.stringify((this.form.pksSubscriptions || []).filter((s) => !!s.subscriptionId).map((s) => ({
         subscriptionId: s.subscriptionId,
       }))))
 
       // Append pksDocuments dengan file attachments
-      this.form.pksDocuments.forEach((doc, index) => {
+      ;(this.form.pksDocuments || []).forEach((doc, index) => {
         formData.append(`pksDocuments[${index}][docType]`, doc.docType)
         if (doc.attachment instanceof File) {
           formData.append(`pksDocuments[${index}][attachment]`, doc.attachment)
@@ -291,26 +283,43 @@ export const usePksStore = defineStore('pks', {
       const url = this.isEditMode && this.form.id ? `${$api.pks()}/${this.form.id}` : $api.pks()
 
       try {
+        const controller = new AbortController()
+        timeoutId = setTimeout(() => controller.abort(), 30000)
         const res = await fetch(url, {
           method: 'POST',
           headers: { Accept: 'application/json' },
           credentials: 'include',
           body: formData,
+          signal: controller.signal,
         })
         if (!res.ok) {
           const ed = await res.json().catch(() => ({}))
           this.validationErrors = ed.errors || []
           toast.error({ title: 'Error', message: ed.message || (this.isEditMode ? 'Gagal memperbarui PKS' : 'Gagal menyimpan PKS'), color: 'red', position: 'topRight', layout: 2 })
-          return
+          this.saving = false
+          return false
         }
         this.closeModal()
-        await this.fetchPks()
-        await this.fetchStatistics()
+        // Jangan `await` karena jika endpoint refresh macet, spinner tombol bisa terus aktif.
+        // Halaman list biasanya akan fetch ulang saat mount.
+        void this.fetchPks(true)
+        void this.fetchStatistics()
         toast.success({ title: 'Sukses', message: `PKS berhasil ${this.isEditMode ? 'diperbarui' : 'dibuat'}`, color: 'green', position: 'topRight', layout: 2 })
+        if (options?.navigateToList) {
+          await navigateTo('/order-process/pks')
+        }
+        return true
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message || 'Operasi gagal', color: 'red', position: 'topRight', layout: 2 })
+        if (e?.name === 'AbortError') {
+          toast.error({ title: 'Timeout', message: 'Proses simpan terlalu lama. Silakan coba lagi.', color: 'red', position: 'topRight', layout: 2 })
+        } else {
+          toast.error({ title: 'Error', message: e.message || 'Operasi gagal', color: 'red', position: 'topRight', layout: 2 })
+        }
+        this.saving = false
+        return false
       } finally {
-        this.loading = false
+        if (timeoutId) clearTimeout(timeoutId)
+        this.saving = false
       }
     },
 
@@ -356,7 +365,7 @@ export const usePksStore = defineStore('pks', {
       }
     },
 
-    openModal(data: Pks | null = null) {
+    openModal(data: Pks | null = null, opts?: { noModal?: boolean }) {
       this.isEditMode = !!data
       this.validationErrors = []
       if (data) {
@@ -366,6 +375,8 @@ export const usePksStore = defineStore('pks', {
         
         this.form = {
           id: raw.id,
+          isInternal: raw.isInternal ?? raw.is_internal ?? true,
+          isExternal: raw.isExternal ?? raw.is_external ?? false,
           customerId: raw.customerId ?? raw.customer_id ?? raw.customer?.id ?? null,
           customerName: raw.customerName ?? raw.customer_name ?? raw.customer?.name ?? '',
           description: raw.description ?? '',
@@ -374,9 +385,15 @@ export const usePksStore = defineStore('pks', {
           signingLocation: raw.signingLocation ?? raw.signing_location ?? '',
           signingDate: formatDate(raw.signingDate ?? raw.signing_date),
           custPic: raw.custPic ?? raw.cust_pic ?? '',
-          telkomPic: raw.telkomPic ?? raw.telkom_pic ?? '',
+          sitePic: raw.sitePic ?? raw.site_pic ?? '',
+          custPicNoTlp: raw.custPicNoTlp ?? raw.cust_pic_no_tlp ?? '',
+          sitePicNoTlp: raw.sitePicNoTlp ?? raw.site_pic_no_tlp ?? '',
           approvedAt: formatDate(raw.approvedAt ?? raw.approved_at),
           rejectedAt: formatDate(raw.rejectedAt ?? raw.rejected_at),
+          noSurat: raw.noSurat ?? raw.no_surat ?? '',
+          vendorId: (raw.vendorId ?? raw.vendor_id) != null ? String(raw.vendorId ?? raw.vendor_id) : null,
+          nominal: (raw.nominal ?? raw.nominal) != null ? String(raw.nominal ?? raw.nominal) : null,
+          purchaseOrderId: raw.purchaseOrderId ?? raw.purchase_order_id ?? null,
           pksSubscriptions: (raw.pksSubscriptions ?? raw.pks_subscriptions ?? []).map((s: any) => ({
             id: s.id,
             subscriptionId: s.subscriptionId ?? s.subscription_id ?? s.subscription?.id ?? '',
@@ -391,13 +408,12 @@ export const usePksStore = defineStore('pks', {
         }
       } else {
         this.resetForm()
-        this.addSubscription()
-        this.addDocument()
       }
-      this.showModal = true
+      this.showModal = !opts?.noModal
     },
 
     closeModal() {
+      this.loading = false
       this.showModal = false
       this.isEditMode = false
       // Clean up blob URLs
@@ -415,6 +431,8 @@ export const usePksStore = defineStore('pks', {
     resetForm() {
       this.form = {
         id: null,
+        isInternal: true,
+        isExternal: false,
         customerId: null,
         customerName: '',
         description: '',
@@ -423,9 +441,15 @@ export const usePksStore = defineStore('pks', {
         signingLocation: '',
         signingDate: null,
         custPic: '',
-        telkomPic: '',
+        sitePic: '',
+        custPicNoTlp: '',
+        sitePicNoTlp: '',
         approvedAt: null,
         rejectedAt: null,
+        noSurat: '',
+        vendorId: null,
+        nominal: null,
+        purchaseOrderId: null,
         pksSubscriptions: [],
         pksDocuments: [],
       }

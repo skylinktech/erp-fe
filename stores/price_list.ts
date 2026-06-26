@@ -66,6 +66,7 @@ export interface PriceList {
 interface PriceListState {
   priceLists: PriceList[]
   loading: boolean
+  saving: boolean
   error: any
   totalRecords: number
   params: {
@@ -95,6 +96,7 @@ export const usePriceListStore = defineStore('priceList', {
   state: (): PriceListState => ({
     priceLists: [],
     loading: true,
+    saving: false,
     error: null,
     totalRecords: 0,
     params: {
@@ -177,7 +179,7 @@ export const usePriceListStore = defineStore('priceList', {
 
     async savePriceList() {
       const toast = useToast()
-      this.loading = true
+      this.saving = true
       this.validationErrors = []
       const { $api } = useNuxtApp()
 
@@ -243,7 +245,7 @@ export const usePriceListStore = defineStore('priceList', {
           position: 'topRight',
         })
       } finally {
-        this.loading = false
+        this.saving = false
       }
     },
 

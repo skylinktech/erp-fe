@@ -1,6 +1,6 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-p-y">
+    <div class="container-xxl flex-grow-1 container-pt-12">
       <h4 class="mb-1">Subscription</h4>
       <p class="mb-6">Daftar Subscription yang terdaftar di sistem</p>
 
@@ -129,37 +129,28 @@
         </div>
         <div class="col-12">
           <div class="card">
-            <div class="card-header subscription-table-header">
-              <div class="subscription-header-top-row">
-                <div class="d-flex align-items-center subscription-rows-control">
-                  <span class="me-2">Baris:</span>
-                  <Dropdown
-                    v-model="tableControls.rows"
-                    :options="rowsPerPageOptionsArray"
-                    @change="handleRowsChange"
-                    placeholder="Jumlah"
-                    style="width: 8rem;"
-                  />
-                </div>
+            <ListPageTableHeader
+              :rows="Number(tableControls.rows)"
+              :rows-options="rowsPerPageOptionsArray"
+              :search="globalFilterValue"
+              search-placeholder="Cari Subscription..."
+              :export-disabled="loading"
+              @update:rows="onToolbarRows"
+              @update:search="(v) => { globalFilterValue = v }"
+              @export="exportData"
+            >
+              <template #add>
                 <button
                   v-if="userHasRole('superadmin') || userHasPermission('create_subscription')"
-                  @click="subscriptionStore.openModal()"
+                  type="button"
                   class="btn btn-primary subscription-add-button"
+                  @click="navigateTo('/order-process/subscription/form')"
                 >
                   <i class="ri-add-line me-1"></i>
                   Tambah Data
                 </button>
-              </div>
-              <div class="subscription-actions-row">
-                <span class="p-input-icon-left subscription-search-wrap">
-                  <InputText
-                    v-model="globalFilterValue"
-                    placeholder="Cari Subscription..."
-                    class="subscription-search-input"
-                  />
-                </span>
-              </div>
-            </div>
+              </template>
+            </ListPageTableHeader>
             <div class="card-datatable table-responsive py-3 px-3">
               <MyDataTable
                 ref="myDataTableRef"
@@ -190,9 +181,9 @@
                     <a @click="navigateTo(`/sales/quotation/detail/${slotProps.data.quotation.id}`)" class="text-primary text-nowrap" style="cursor:pointer;text-decoration:underline" :title="'View detail'">{{ slotProps.data.quotation?.noQuotation || slotProps.data.quotation?.no_quotation || '-' }}</a>
                   </template>
                 </Column>
-                <Column field="iro.noIro" header="IRO" :sortable="true">
+                <Column field="purchaseRequest.noPurchaseRequest" header="Purchase Request" :sortable="true">
                   <template #body="slotProps">
-                    <a @click="navigateTo(`/order-process/iro/detail/${slotProps.data.iro.id}`)" class="text-primary text-nowrap" style="cursor:pointer;text-decoration:underline" :title="'View detail'">{{ slotProps.data.iro?.noIro || slotProps.data.iro?.no_iro || '-' }}</a>
+                    <a @click="navigateTo(`/purchasing/purchase-request/detail/${slotProps.data.purchaseRequest.id}`)" class="text-primary text-nowrap" style="cursor:pointer;text-decoration:underline" :title="'View detail'">{{ slotProps.data.purchaseRequest?.prNumber || slotProps.data.purchaseRequest?.pr_number || slotProps.data.purchaseRequest?.noPurchaseRequest || '-' }}</a>
                   </template>
                 </Column>
                 <Column field="status" header="Status" :sortable="true">
@@ -215,7 +206,7 @@
                       <a href="javascript:;" class="btn btn-sm btn-text-secondary rounded-pill btn-icon dropdown-toggle hide-arrow" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed"}'><i class="ri-more-2-fill"></i></a>
                       <ul class="dropdown-menu dropdown-menu-end">
                         <li v-if="(userHasRole('superadmin') || userHasPermission('edit_subscription')) && slotProps.data.status === 'draft'">
-                          <a class="dropdown-item" href="javascript:void(0)" @click="subscriptionStore.fetchSubscriptionForEdit(slotProps.data.id)"><i class="ri-edit-box-line me-2"></i> Edit</a>
+                          <a class="dropdown-item" href="javascript:void(0)" @click="navigateTo(`/order-process/subscription/form/${slotProps.data.id}`)"><i class="ri-edit-box-line me-2"></i> Edit</a>
                         </li>
                         <li v-if="(userHasRole('superadmin') || userHasPermission('edit_subscription')) && (slotProps.data.status === 'signed' || slotProps.data.status === 'expired')">
                           <a class="dropdown-item text-success" href="javascript:void(0)" @click="handleActivate(slotProps.data)"><i class="ri-checkbox-circle-line me-2"></i> Aktifkan</a>
@@ -239,12 +230,6 @@
         </div>
       </div>
 
-      <!-- Subscription Form Modal (Reusable Component) -->
-      <SubscriptionFormModal
-        modal-id="SubscriptionModal"
-        @saved="onSubscriptionSaved"
-        @close="onSubscriptionModalClose"
-      />
     </div>
     <div class="content-backdrop fade"></div>
   </div>
@@ -256,12 +241,10 @@ import { storeToRefs } from 'pinia'
 import { useSubscriptionStore } from '~/stores/subscription'
 import { useCustomerStore } from '~/stores/customer'
 import { usePermissions } from '~/composables/usePermissions'
-import SubscriptionFormModal from '~/components/modal/SubscriptionFormModal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
+import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
 import Column from 'primevue/column'
-import Dropdown from 'primevue/dropdown'
-import InputText from 'primevue/inputtext'
 import { useDebounceFn } from '@vueuse/core'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import Swal from 'sweetalert2'
@@ -343,13 +326,84 @@ async function openCancelModal(row) {
   }
 }
 
-const onPage = (e) => { if (e) subscriptionStore.setPagination(e) }
 const handleRowsChange = (v) => { 
   const rowsValue = Number(v) || 10
   params.value.rows = rowsValue
   params.value.first = 0
   subscriptionStore.fetchSubscriptions()
 }
+const onToolbarRows = (v) => {
+  tableControls.value.rows = Number(v) || 10
+  handleRowsChange(v)
+}
+
+async function exportData(format) {
+  const toast = useToast()
+  if (format === 'excel') {
+    try {
+      toast.info({ title: 'Info', message: 'Mempersiapkan export Excel...', color: 'blue', position: 'topRight', layout: 2 })
+      const all = await subscriptionStore.fetchAllSubscriptionsForExport()
+      if (!all?.length) {
+        toast.warning({ title: 'Warning', message: 'Tidak ada data untuk diexport', color: 'orange', position: 'topRight', layout: 2 })
+        return
+      }
+      const XLSX = await import('xlsx').then((m) => m.default || m)
+      const headers = ['No. Subscription', 'Customer', 'Status', 'Contract (bln)', 'Target Activation', 'Tanggal']
+      const rows = all.map((r) => [
+        r.noSubscription || r.no_subscription || '-',
+        r.customer?.name || '-',
+        r.status || '-',
+        r.contractPeriod ?? r.contract_period ?? '-',
+        (r.targetActiveDate || r.target_active_date) ? new Date(r.targetActiveDate || r.target_active_date).toLocaleDateString('id-ID') : '-',
+        r.createdAt ? new Date(r.createdAt).toLocaleDateString('id-ID') : '-',
+      ])
+      const wb = XLSX.utils.book_new()
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...rows])
+      ws['!cols'] = headers.map(() => ({ wch: 18 }))
+      XLSX.utils.book_append_sheet(wb, ws, 'Subscriptions')
+      XLSX.writeFile(wb, 'subscriptions.xlsx')
+      toast.success({ title: 'Success', message: `Excel berisi ${all.length} baris`, color: 'green', position: 'topRight', layout: 2 })
+    } catch (e) {
+      console.error(e)
+      toast.error({ title: 'Error', message: 'Gagal export Excel', color: 'red', position: 'topRight', layout: 2 })
+    }
+    return
+  }
+  if (format === 'pdf') {
+    try {
+      toast.info({ title: 'Info', message: 'Mempersiapkan export PDF...', color: 'blue', position: 'topRight', layout: 2 })
+      const all = await subscriptionStore.fetchAllSubscriptionsForExport()
+      if (!all?.length) {
+        toast.warning({ title: 'Warning', message: 'Tidak ada data untuk diexport', color: 'orange', position: 'topRight', layout: 2 })
+        return
+      }
+      const { default: jsPDF } = await import('jspdf')
+      const { default: autoTable } = await import('jspdf-autotable')
+      const doc = new jsPDF('landscape')
+      doc.setFontSize(14)
+      doc.text('Laporan Subscription', 14, 16)
+      const body = all.map((r) => [
+        r.noSubscription || r.no_subscription || '-',
+        r.customer?.name || '-',
+        r.status || '-',
+        r.createdAt ? new Date(r.createdAt).toLocaleDateString('id-ID') : '-',
+      ])
+      autoTable(doc, {
+        head: [['No. Subscription', 'Customer', 'Status', 'Tanggal']],
+        body,
+        startY: 22,
+        styles: { fontSize: 8 },
+      })
+      doc.save('subscriptions.pdf')
+      toast.success({ title: 'Success', message: `PDF berisi ${all.length} baris`, color: 'green', position: 'topRight', layout: 2 })
+    } catch (e) {
+      console.error(e)
+      toast.error({ title: 'Error', message: 'Gagal export PDF', color: 'red', position: 'topRight', layout: 2 })
+    }
+  }
+}
+
+const onPage = (e) => { if (e) subscriptionStore.setPagination(e) }
 const onSort = (e) => { if (e) subscriptionStore.setSort(e) }
 
 const debouncedSearch = useDebounceFn(() => {
@@ -367,19 +421,8 @@ onMounted(() => {
   tableControls.value.rows = Number(params.value.rows) || 10
   globalFilterValue.value = params.value.search || ''
   const editId = Array.isArray(route.query?.edit) ? route.query.edit[0] : route.query?.edit
-  if (editId) subscriptionStore.fetchSubscriptionForEdit(String(editId))
+  if (editId) navigateTo(`/order-process/subscription/form/${String(editId)}`)
 })
-
-// Modal event handlers
-function onSubscriptionSaved() {
-  // Refresh list after save
-  subscriptionStore.fetchSubscriptions()
-  subscriptionStore.fetchStatistics()
-}
-
-function onSubscriptionModalClose() {
-  // Modal closed - nothing special needed
-}
 
 definePageMeta({
   layout: 'default',
@@ -389,102 +432,8 @@ definePageMeta({
 </script>
 
 <style scoped>
-.subscription-table-header {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.subscription-header-top-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-
-.subscription-rows-control {
-  min-width: 0;
-}
-
 .subscription-add-button {
   flex: 0 0 auto;
-}
-
-.subscription-actions-row {
-  width: 100%;
-}
-
-.subscription-search-wrap {
-  display: block;
-  width: 100%;
-}
-
-.subscription-search-input {
-  width: 100% !important;
-}
-
-@media (min-width: 992px) {
-  .subscription-table-header {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-  }
-
-  .subscription-actions-row {
-    width: auto;
-  }
-
-  .subscription-search-wrap {
-    width: auto;
-  }
-
-  .subscription-search-input {
-    width: 20rem !important;
-  }
-}
-
-@media (min-width: 768px) and (max-width: 991.98px) {
-  .subscription-table-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .subscription-header-top-row {
-    width: 100%;
-    justify-content: flex-start;
-  }
-
-  .subscription-add-button {
-    margin-left: auto;
-  }
-
-  .subscription-actions-row {
-    width: 100%;
-  }
-
-  .subscription-search-wrap {
-    width: 100% !important;
-  }
-
-  .subscription-search-input {
-    width: 100% !important;
-  }
-}
-
-@media (max-width: 767.98px) {
-  .subscription-header-top-row {
-    flex-wrap: wrap;
-    align-items: stretch;
-  }
-
-  .subscription-rows-control {
-    flex: 1 1 auto;
-  }
-
-  .subscription-add-button {
-    flex: 1 1 auto;
-    margin-left: 0;
-  }
+  white-space: nowrap;
 }
 </style>

@@ -15,6 +15,7 @@ interface BankAccountState {
   bankAccounts: BankAccount[]
   selectedBankAccount: BankAccount | null
   loading: boolean
+  saving: boolean
   error: any
   totalRecords: number
   params: {
@@ -37,6 +38,7 @@ export const useBankAccountStore = defineStore('bankAccount', {
     bankAccounts: [],
     selectedBankAccount: null,
     loading: false,
+    saving: false,
     error: null,
     totalRecords: 0,
     params: {
@@ -115,7 +117,7 @@ export const useBankAccountStore = defineStore('bankAccount', {
     },
 
     async saveBankAccount() {
-      this.loading = true
+      this.saving = true
       this.validationErrors = [];
       const { $api } = useNuxtApp()
 
@@ -183,7 +185,7 @@ export const useBankAccountStore = defineStore('bankAccount', {
           });
         }
       } finally {
-        this.loading = false
+        this.saving = false
       }
     },
 

@@ -1,65 +1,59 @@
 <template>
     <div class="content-wrapper">
         <!-- Content -->
-        <div class="container-xxl flex-grow-1 container-p-y">
+        <div class="container-xxl flex-grow-1 container-pt-12">
             <h4 class="mb-1">List Gudang</h4>
             <p class="mb-6">
             List warehouse yang terdaftar di sistem
             </p>
-            <!-- warehouse cards -->
             <div class="row g-6 mb-6">
-                <!-- Card untuk Tambah Pegawai -->                
-                <CardBox
-                    v-if="stats.total !== undefined"
-                    title="Total Gudang"
-                    :total="(stats.total !== undefined ? stats.total + ' Gudang' : 'Memuat...')"
-                    :column-class="cardBoxColumnClass"
-                />
-                <CardBox
-                    v-if="userHasRole('superadmin') || userHasPermission('create_gudang')"
-                    :isAddButtonCard="true"
-                    image-src="/img/illustrations/add-new-role-illustration.png"
-                    image-alt="Tambah Gudang"
-                    button-text="Tambah Gudang"
-                    modal-target="#Modal" 
-                    @button-click="warehouseStore.openModal()"
-                    :column-class="cardBoxColumnClass"
-                />
+                <div v-if="stats.total !== undefined" class="col-xl col-lg-6 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <p class="mb-0">Total Gudang</p>
+                                <div class="avatar">
+                                    <span class="avatar-initial rounded bg-label-primary"><i class="ri-store-2-line"></i></span>
+                                </div>
+                            </div>
+                            <div class="account-heading">
+                                <h5 class="mb-1">{{ stats.total }}</h5>
+                                <span class="text-muted">Gudang terdaftar</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="row g-6">
                 <div class="col-12">
-                    <h4 class="mt-6 mb-1">Total Gudang</h4>
-                    <p class="mb-0">Find all of your company's administrator accounts and their associate Gudang.</p>
+                    <h4 class="mt-6 mb-1">Data Gudang</h4>
+                    <p class="mb-0">Kelola lokasi penyimpanan dan kontak gudang.</p>
                 </div>
                 <div class="col-12">
                     <!-- warehouse Table -->
                     <div class="card">
-                        <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
-                            <div class="d-flex align-items-center me-3 mb-2 mb-md-0">
-                                <span class="me-2">Baris:</span>
-                                <Dropdown v-model="params.rows" :options="rowsPerPageOptionsArray" @change="handleRowsChange" placeholder="Jumlah" style="width: 8rem;" />
-                            </div>
-                            <div class="d-flex align-items-center">
-                                <div class="btn-group me-2">
-                                    <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <i class="ri-upload-2-line me-1"></i> Export
-                                    </button>
-                                    <ul class="dropdown-menu">
-                                        <li><a class="dropdown-item" href="javascript:void(0)" @click="exportData('csv')">CSV</a></li>
-                                        <li><a class="dropdown-item" href="javascript:void(0)" @click="exportData('pdf')">PDF</a></li>
-                                    </ul>
-                                </div>
-                                <div class="input-group">
-                                    <span class="p-input-icon-left">
-                                        <InputText
-                                            v-model="globalFilterValue"
-                                            placeholder="Cari Gudang..."
-                                            class="w-full md:w-20rem"
-                                        />
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
+                        <ListPageTableHeader
+                            :rows="Number(params.rows)"
+                            :rows-options="rowsPerPageOptionsArray"
+                            :search="globalFilterValue"
+                            search-placeholder="Cari Gudang..."
+                            :export-disabled="loading"
+                            @update:rows="onGudangToolbarRows"
+                            @update:search="(v) => { globalFilterValue = v }"
+                            @export="exportData"
+                        >
+                            <template #add>
+                                <button
+                                    v-if="userHasRole('superadmin') || userHasPermission('create_gudang')"
+                                    type="button"
+                                    class="btn btn-primary"
+                                    @click="warehouseStore.openModal()"
+                                >
+                                    <i class="ri-add-line me-1"></i>
+                                    Tambah Gudang
+                                </button>
+                            </template>
+                        </ListPageTableHeader>
                         <div class="card-datatable table-responsive py-3 px-3">
                         <MyDataTable 
                             ref="myDataTableRef"
@@ -195,11 +189,9 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import Modal from '~/components/modal/Modal.vue'
-import CardBox from '~/components/cards/Cards.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
+import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
 import { useWarehouseStore } from '~/stores/warehouse'
-import Dropdown from 'primevue/dropdown'
-import InputText from 'primevue/inputtext'
 import Column from 'primevue/column'
 import { useDebounceFn } from '@vueuse/core'
 import { usePermissions } from '~/composables/usePermissions'
@@ -219,10 +211,6 @@ const userStore = useUserStore()
 const { warehouses, loading, stats, totalRecords, params, form, isEditMode, showModal, validationErrors } = storeToRefs(warehouseStore)
 
 const globalFilterValue = ref('')
-
-const cardBoxColumnClass = computed(() => {
-  return stats.value.total !== undefined ? 'col-6' : 'col-xl-4 col-lg-6 col-md-6';
-});
 
 const rowsPerPageOptionsArray = ref([10, 25, 50, 100]);
 const modalTitle = computed(() => isEditMode.value ? 'Edit Gudang' : 'Tambah Gudang');
@@ -262,13 +250,26 @@ const handleRowsChange = () => {
     warehouseStore.fetchWarehouses();
 };
 
+const onGudangToolbarRows = (v) => {
+    params.value.rows = Number(v) || 10;
+    handleRowsChange();
+};
+
 const onSort = (event) => warehouseStore.setSort(event);
 
 const exportData = (format) => {
-    if (format === 'csv') {
-        myDataTableRef.value.exportCSV();
-    } else if (format === 'pdf') {
-        // Implement PDF export if needed
+    if (format === 'excel' || format === 'csv') {
+        myDataTableRef.value?.exportCSV?.();
+        return;
+    }
+    if (format === 'pdf') {
+        useToast().info({
+            title: 'Info',
+            message: 'Export PDF akan tersedia pada rilis berikutnya.',
+            color: 'blue',
+            position: 'topRight',
+            layout: 2,
+        });
     }
 };
 

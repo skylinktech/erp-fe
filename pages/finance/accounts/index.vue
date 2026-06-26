@@ -393,8 +393,8 @@
                                 <button type="button" class="btn btn-outline-secondary" @click="accountStore.closeModal()">
                                     Tutup
                                 </button>
-                                <button type="submit" class="btn btn-primary" :disabled="loading">
-                                    <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
+                                <button type="submit" class="btn btn-primary" :disabled="saving">
+                                    <span v-if="saving" class="spinner-border spinner-border-sm me-2"></span>
                                     {{ isEditMode ? 'Update' : 'Simpan' }}
                                 </button>
                             </div>
@@ -443,6 +443,7 @@ const rowsPerPageOptionsArray = ref([10, 25, 50, 100])
 
 // Computed values dari store
 const loading = computed(() => accountStore.loading)
+const saving = computed(() => accountStore.saving)
 const totalRecords = computed(() => {
   // Gunakan jumlah top-level parent accounts untuk pagination
   if (!accountStore.accounts || !Array.isArray(accountStore.accounts)) return 0

@@ -1,151 +1,72 @@
 <template>
     <div class="content-wrapper">
         <!-- Content -->
-        <div class="container-xxl flex-grow-1 container-p-y">
+        <div class="container-xxl flex-grow-1 container-pt-12">
             <h4 class="mb-1">List Customer</h4>
             <p class="mb-6">
             List customer yang terdaftar di sistem
             </p>
-            <!-- customer cards -->
             <div class="row g-6 mb-6">
-                <div class="col-xl-4 col-lg-6 col-md-6">
+                <div class="col-xl-3 col-lg-6 col-md-6">
                     <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                        <p class="mb-0">Total 3 users</p>
-                        <ul class="list-unstyled d-flex align-items-center avatar-group mb-0">
-                            <li
-                            data-bs-toggle="tooltip"
-                            data-popup="tooltip-custom"
-                            data-bs-placement="top"
-                            title="Kim Karlos"
-                            class="avatar pull-up">
-                            <img class="rounded-circle" src="/img/avatars/3.png" alt="Avatar" />
-                            </li>
-                            <li
-                            data-bs-toggle="tooltip"
-                            data-popup="tooltip-custom"
-                            data-bs-placement="top"
-                            title="Katy Turner"
-                            class="avatar pull-up">
-                            <img class="rounded-circle" src="/img/avatars/9.png" alt="Avatar" />
-                            </li>
-                            <li
-                            data-bs-toggle="tooltip"
-                            data-popup="tooltip-custom"
-                            data-bs-placement="top"
-                            title="Peter Adward"
-                            class="avatar pull-up">
-                            <img class="rounded-circle" src="/img/avatars/15.png" alt="Avatar" />
-                            </li>
-                            <li class="avatar">
-                            <span
-                                class="avatar-initial rounded-circle pull-up bg-lighter text-body"
-                                data-bs-toggle="tooltip"
-                                data-bs-placement="bottom"
-                                title="3 more"
-                                >+3</span
-                            >
-                            </li>
-                        </ul>
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <p class="mb-0">Total Customer</p>
+                                <div class="avatar">
+                                    <span class="avatar-initial rounded bg-label-primary"><i class="ri-team-line"></i></span>
+                                </div>
+                            </div>
+                            <div class="account-heading">
+                                <h5 class="mb-1">{{ totalRecords }}</h5>
+                                <span class="text-muted">Customer terdaftar</span>
+                            </div>
                         </div>
-                        <div class="d-flex justify-content-between align-items-center">
-                        <div class="pegawai-heading">
-                            <h5 class="mb-1">Support</h5>
-                            <a
-                            href="javascript:;"
-                            data-bs-toggle="modal"
-                            data-bs-target="#PegawaiModal"
-                            class="pegawai-edit-modal">
-                            </a>
-                        </div>
-                        <a href="javascript:void(0);" class="text-secondary"
-                            ><i class="ri-file-copy-line ri-22px"></i
-                        ></a>
-                        </div>
-                    </div>
                     </div>
                 </div>
-                <div class="col-xl-4 col-lg-6 col-md-6">
+                <div class="col-xl-3 col-lg-6 col-md-6">
                     <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                        <p class="mb-0">Total 2 users</p>
-                        <ul class="list-unstyled d-flex align-items-center avatar-group mb-0">
-                            <li
-                            data-bs-toggle="tooltip"
-                            data-popup="tooltip-custom"
-                            data-bs-placement="top"
-                            title="Kim Merchent"
-                            class="avatar pull-up">
-                            <img class="rounded-circle" src="/img/avatars/10.png" alt="Avatar" />
-                            </li>
-                            <li
-                            data-bs-toggle="tooltip"
-                            data-popup="tooltip-custom"
-                            data-bs-placement="top"
-                            title="Sam D'souza"
-                            class="avatar pull-up">
-                            <img class="rounded-circle" src="/img/avatars/13.png" alt="Avatar" />
-                            </li>
-                            <li
-                            data-bs-toggle="tooltip"
-                            data-popup="tooltip-custom"
-                            data-bs-placement="top"
-                            title="Nurvi Karlos"
-                            class="avatar pull-up">
-                            <img class="rounded-circle" src="/img/avatars/15.png" alt="Avatar" />
-                            </li>
-                            <li class="avatar">
-                            <span
-                                class="avatar-initial rounded-circle pull-up bg-lighter text-body"
-                                data-bs-toggle="tooltip"
-                                data-bs-placement="bottom"
-                                title="3 more"
-                                >+3</span
-                            >
-                            </li>
-                        </ul>
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <p class="mb-0">Prospect</p>
+                                <div class="avatar">
+                                    <span class="avatar-initial rounded bg-label-info"><i class="ri-user-search-line"></i></span>
+                                </div>
+                            </div>
+                            <div class="account-heading">
+                                <h5 class="mb-1">{{ customerTypeCounts.prospect }}</h5>
+                                <span class="text-muted">Pada halaman ini</span>
+                            </div>
                         </div>
-                        <div class="d-flex justify-content-between align-items-center">
-                        <div class="pegawai-heading">
-                            <h5 class="mb-1">Restricted User</h5>
-                            <a
-                            href="javascript:;"
-                            data-bs-toggle="modal"
-                            data-bs-target="#PegawaiModal"
-                            class="pegawai-edit-modal">
-                            </a>
-                        </div>
-                        <a href="javascript:void(0);" class="text-secondary"
-                            ><i class="ri-file-copy-line ri-22px"></i
-                        ></a>
-                        </div>
-                    </div>
                     </div>
                 </div>
-                <div class="col-xl-4 col-lg-6 col-md-6">
-                    <div class="card h-100">
-                        <div class="row h-100">
-                            <div class="col-sm-5">
-                            <div class="d-flex align-items-end h-100 justify-content-center">
-                                <img
-                                src="/img/illustrations/add-new-role-illustration.png"
-                                class="img-fluid"
-                                alt="Image"
-                                width="70" />
+                <div class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <p class="mb-0">Regular</p>
+                                <div class="avatar">
+                                    <span class="avatar-initial rounded bg-label-success"><i class="ri-user-follow-line"></i></span>
+                                </div>
                             </div>
+                            <div class="account-heading">
+                                <h5 class="mb-1">{{ customerTypeCounts.regular }}</h5>
+                                <span class="text-muted">Pada halaman ini</span>
                             </div>
-                            <div class="col-sm-7">
-                            <div class="card-body text-sm-end text-center ps-sm-0">
-                                <button
-                                @click="customerStore.openModal()"
-                                class="btn btn-primary mb-2 text-nowrap add-new-role"
-                                >
-                                Tambah Customer
-                                </button>
-                                <p class="mb-0 mt-1">Buat Customer baru</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <p class="mb-0">VIP</p>
+                                <div class="avatar">
+                                    <span class="avatar-initial rounded bg-label-warning"><i class="ri-vip-crown-line"></i></span>
+                                </div>
                             </div>
+                            <div class="account-heading">
+                                <h5 class="mb-1">{{ customerTypeCounts.vip }}</h5>
+                                <span class="text-muted">Pada halaman ini</span>
                             </div>
                         </div>
                     </div>
@@ -154,22 +75,33 @@
 
             <div class="row g-6">
                 <div class="col-12">
-                    <h4 class="mt-6 mb-1">Total Customer</h4>
-                    <p class="mb-0">Find all of your company's administrator accounts and their associate Customer.</p>
+                    <h4 class="mt-6 mb-1">Data Customer</h4>
+                    <p class="mb-0">Kelola daftar customer dan data terkait.</p>
                 </div>
                 <div class="col-12">
                     <!-- customer Table -->
                     <div class="card">
-                        <div class="card-header">
-                            <TableControls
-                                v-model="tableControls"
-                                :rows-per-page-options="rowsPerPageOptionsArray"
-                                search-placeholder="Cari customer..."
-                                @rows-change="handleRowsChange"
-                                @search="handleSearch"
-                                @export="exportData"
-                            />
-                        </div>
+                        <ListPageTableHeader
+                            :rows="Number(tableControls.rows)"
+                            :rows-options="rowsPerPageOptionsArray"
+                            :search="globalFilterValue"
+                            search-placeholder="Cari customer..."
+                            :export-disabled="loading"
+                            @update:rows="onCustomerToolbarRows"
+                            @update:search="(v) => { globalFilterValue = v }"
+                            @export="exportData"
+                        >
+                            <template #add>
+                                <button
+                                    type="button"
+                                    class="btn btn-primary"
+                                    @click="customerStore.openModal()"
+                                >
+                                    <i class="ri-add-line me-1"></i>
+                                    Tambah
+                                </button>
+                            </template>
+                        </ListPageTableHeader>
                         <div class="card-datatable table-responsive py-3 px-3">
                         <MyDataTable 
                             ref="myDataTableRef"
@@ -213,6 +145,11 @@
                                 </Column>
                                 <Column field="address" header="Alamat Customer" :sortable="true"></Column>
                                 <Column field="npwp" header="NPWP Customer" :sortable="true"></Column>
+                                <Column field="ktp" header="KTP Customer" :sortable="true">
+                                    <template #body="slotProps">
+                                        {{ slotProps.data.ktp || '-' }}
+                                    </template>
+                                </Column>
                                 <Column field="email" header="Email Customer" :sortable="true"></Column>
                                 <Column field="phone" header="Phone Customer" :sortable="true"></Column>
                                 <Column header="Actions" :exportable="false" style="min-width:8rem">
@@ -318,6 +255,17 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-floating form-floating-outline">
+                                    <input
+                                    type="text"
+                                    class="form-control"
+                                    v-model="form.ktp"
+                                    placeholder="Masukkan KTP customer"
+                                    >
+                                    <label>KTP Customer <span class="text-muted small">(Opsional)</span></label>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="form-floating form-floating-outline">
                                     <CustomSelect2
                                         v-model="form.type"
                                         :options="customerTypeOptions"
@@ -363,10 +311,8 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia';
 import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
-import TableControls from '~/components/table/TableControls.vue'
+import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
 import { useCustomerStore } from '~/stores/customer'
-import Dropdown from 'primevue/dropdown'
-import InputText from 'primevue/inputtext'
 import vSelect from 'vue-select'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
 import 'vue-select/dist/vue-select.css'
@@ -408,6 +354,15 @@ const getTypeLabel = (type) => {
   const opt = customerTypeOptions.find(o => o.value === type);
   return opt ? opt.label : type || '-';
 };
+
+const customerTypeCounts = computed(() => {
+  const rows = customers.value || []
+  return {
+    prospect: rows.filter((c) => c.type === 'prospect').length,
+    regular: rows.filter((c) => c.type === 'regular').length,
+    vip: rows.filter((c) => c.type === 'vip').length,
+  }
+});
 
 // Table controls data
 const tableControls = ref({
@@ -468,19 +423,26 @@ const handleRowsChange = (value) => {
     customerStore.fetchCustomers();
 };
 
-const handleSearch = (value) => {
-    globalFilterValue.value = value;
-    params.value.first = 0;
-    customerStore.fetchCustomers();
+const onCustomerToolbarRows = (value) => {
+    tableControls.value.rows = Number(value) || 10;
+    handleRowsChange(value);
 };
 
 const onSort = (event) => customerStore.setSort(event);
 
 const exportData = (format) => {
-    if (format === 'csv') {
-        myDataTableRef.value.exportCSV();
-    } else if (format === 'pdf') {
-        // Implement PDF export if needed
+    if (format === 'excel' || format === 'csv') {
+        myDataTableRef.value?.exportCSV?.();
+        return;
+    }
+    if (format === 'pdf') {
+        useToast().info({
+            title: 'Info',
+            message: 'Export PDF akan tersedia pada rilis berikutnya.',
+            color: 'blue',
+            position: 'topRight',
+            layout: 2,
+        });
     }
 };
 

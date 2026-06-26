@@ -1,5 +1,8 @@
 <template>
-  <div class="multi-signature-display">
+  <div
+    class="multi-signature-display"
+    :class="{ 'multi-signature--cuti-print': cutiPrintMode }"
+  >
     <!-- Loading State -->
     <div v-if="loading" class="text-center py-4">
       <ProgressSpinner style="width: 40px; height: 40px" strokeWidth="4" />
@@ -8,8 +11,29 @@
 
     <!-- Signatures Display -->
     <div v-else-if="signatures.length > 0">
-      <!-- Header with Progress (badge disembunyikan saat print) -->
-      <div class="d-flex justify-content-between align-items-center mb-3">
+      <!-- Cetak cuti: chrome atas seperti tampilan biasa, aksen biru -->
+      <div v-if="cutiPrintMode" class="cuti-print-chrome-header mb-3">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <h5 class="mb-0 cuti-print-chrome-title">{{ title }}</h5>
+          <div class="signature-progress">
+            <span
+              class="badge cuti-print-count-badge"
+              :class="isFullySigned ? 'cuti-print-count-badge--done' : 'cuti-print-count-badge--wait'"
+            >
+              {{ signatures.length }}/{{ cutiPrintBadgeDenominator }} Tanda Tangan
+            </span>
+          </div>
+        </div>
+        <div v-if="effectiveRequired > 0" class="progress mt-2 cuti-print-progress-track" style="height: 8px">
+          <div
+            class="progress-bar cuti-print-progress-bar"
+            :style="{ width: `${progressPercentage}%` }"
+          ></div>
+        </div>
+      </div>
+
+      <!-- Header + progress (layar biasa / non-cetak cuti) -->
+      <div v-if="!cutiPrintMode" class="d-flex justify-content-between align-items-center mb-3">
         <h5 class="mb-0">{{ title }}</h5>
         <div class="signature-progress no-print">
           <span class="badge" :class="isFullySigned ? 'bg-success' : 'bg-warning'">
@@ -18,10 +42,9 @@
         </div>
       </div>
 
-      <!-- Progress Bar -->
-      <div v-if="effectiveRequired > 0" class="progress mb-4" style="height: 8px;">
-        <div 
-          class="progress-bar" 
+      <div v-if="!cutiPrintMode && effectiveRequired > 0" class="progress mb-4" style="height: 8px;">
+        <div
+          class="progress-bar"
           :class="isFullySigned ? 'bg-success' : 'bg-primary'"
           :style="{ width: `${progressPercentage}%` }"
         ></div>
@@ -29,14 +52,17 @@
 
       <!-- Signatures Grid; gap minimal antara Prepared by & Approved by -->
       <div class="row signature-grid" :class="[compact ? 'g-0' : 'g-1', { 'justify-content-center': signatures.length === 1 || compact }, compact && 'signature-grid-compact']">
-        <div 
-          v-for="signature in signatures" 
+        <div
+          v-for="(signature, index) in signatures"
           :key="signature.id"
           :class="signatures.length === 1 ? 'col-12 col-md-6 col-lg-4' : columnClass"
         >
           <div class="signature-card">
+            <div v-if="cutiPrintMode" class="cuti-print-sig-kicker">
+              {{ cutiPrintHeader(index, signatures.length) }}
+            </div>
             <!-- Judul di atas QR: Prepared by / Approved by (Approved by bisa disembunyikan via prop, mis. di cetak quotation) -->
-            <div v-if="isPreparedBy(signature)" class="signature-card-label mb-2">Prepared by</div>
+            <div v-else-if="isPreparedBy(signature)" class="signature-card-label mb-2">Prepared by</div>
             <div v-else-if="showApprovedByLabel" class="signature-card-label mb-2 mt-8"></div>
             <!-- QR Code -->
             <div class="qr-wrapper">
@@ -72,23 +98,44 @@
               </div>
 
               <!-- Verification Status (tanpa hairline/label di bawah) -->
-              <div class="verification-status mt-2">
-                <i class="ri-verified-badge-fill text-success me-1"></i>
-                <small class="text-success">Terverifikasi</small>
+              <div
+                class="verification-status mt-2"
+                :class="{ 'verification-status--cuti-print': cutiPrintMode }"
+              >
+                <i
+                  class="ri-verified-badge-fill me-1"
+                  :class="cutiPrintMode ? 'text-cuti-print-accent' : 'text-success'"
+                ></i>
+                <small :class="cutiPrintMode ? 'text-cuti-print-accent' : 'text-success'">Terverifikasi</small>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Pending Signatures (jika belum fully signed) -->
-      <div v-if="!isFullySigned && effectiveRequired > 0" class="alert alert-info mt-3">
+      <!-- Pending / lengkap (disembunyikan di cetak cuti) -->
+      <div v-if="!cutiPrintMode && !isFullySigned && effectiveRequired > 0" class="alert alert-info mt-3">
         <i class="ri-information-line me-2"></i>
         <strong>Status:</strong> Menunggu {{ effectiveRequired - signatures.length }} tanda tangan lagi
       </div>
 
-      <!-- Fully Signed Notice -->
-      <div v-if="isFullySigned && effectiveRequired > 0" class="alert alert-success mt-3">
+      <div v-if="!cutiPrintMode && isFullySigned && effectiveRequired > 0" class="alert alert-success mt-3">
+        <i class="ri-checkbox-circle-line me-2"></i>
+        <strong>Dokumen telah ditandatangani lengkap</strong>
+      </div>
+
+      <!-- Cetak cuti: status bawah (biru, menggantikan alert success hijau) -->
+      <div
+        v-if="cutiPrintMode && !isFullySigned && effectiveRequired > 0"
+        class="cuti-print-doc-pending mt-3"
+      >
+        <i class="ri-information-line me-2"></i>
+        <strong>Status:</strong> Menunggu {{ effectiveRequired - signatures.length }} tanda tangan lagi
+      </div>
+      <div
+        v-if="cutiPrintMode && isFullySigned && effectiveRequired > 0"
+        class="cuti-print-doc-complete mt-3"
+      >
         <i class="ri-checkbox-circle-line me-2"></i>
         <strong>Dokumen telah ditandatangani lengkap</strong>
       </div>
@@ -129,7 +176,18 @@ const props = defineProps({
   documentType: {
     type: String,
     required: true,
-    validator: (value) => ['site-investments', 'quotations', 'iros', 'fdrs', 'purchase-orders', 'sales-invoices', 'surat-jalans', 'stock-transfers'].includes(value),
+    validator: (value) =>
+      [
+        'site-investments',
+        'quotations',
+        'purchase-requests',
+        'fdrs',
+        'purchase-orders',
+        'sales-invoices',
+        'surat-jalans',
+        'stock-transfers',
+        'cuti',
+      ].includes(value),
   },
   documentId: {
     type: [String, Number],
@@ -175,14 +233,27 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
-  /** Mode compact: kurangi jarak antar QR (untuk halaman cetak) */
-  compact: {
+  /** Mode cetak form cuti: chrome biru (judul, badge counter, progress, status bawah) + label di atas QR */
+  cutiPrintMode: {
     type: Boolean,
     default: false,
   },
 })
 
 const emit = defineEmits(['signatures-loaded', 'error'])
+
+const title = computed(() => 'Tanda tangan digital')
+
+/** Keterangan di atas QR untuk cetak cuti. Blok "Diajukan oleh" (pegawai) ada di halaman cetak; di sini hanya label per tanda tangan digital. */
+function cutiPrintHeader(index, total) {
+  const n = Math.max(0, Number(total) || 0)
+  const i = Math.max(0, Number(index) || 0)
+  if (n <= 0) return ''
+  if (n === 1) return 'Disetujui/Tidak Disetujui oleh,'
+  if (n === 2) return i === 0 ? 'Disetujui/Tidak Disetujui oleh,' : 'Diketahui oleh,'
+  if (i === n - 1) return 'Diketahui oleh,'
+  return 'Disetujui/Tidak Disetujui oleh,'
+}
 
 // State
 const loading = ref(false)
@@ -197,6 +268,12 @@ const effectiveRequired = computed(() => {
     return requiredFromApi.value
   }
   return props.requiredCount ?? 1
+})
+
+const cutiPrintBadgeDenominator = computed(() => {
+  const r = Number(effectiveRequired.value) || 0
+  const n = signatures.value.length
+  return Math.max(r, n) || 1
 })
 
 const columnClass = computed(() => {
@@ -467,6 +544,95 @@ watch(
   border-radius: 0.25rem;
 }
 
+/* Cetak form cuti: chrome atas/bawah biru + keterangan di atas QR */
+.multi-signature--cuti-print {
+  padding: 0.15rem 0 0;
+}
+
+.cuti-print-chrome-header {
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
+  border-bottom: 1px solid rgba(66, 117, 246, 0.28);
+}
+
+.cuti-print-chrome-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #222;
+}
+
+.cuti-print-count-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.35em 0.55em;
+}
+
+.cuti-print-count-badge--done {
+  background: #4275f6 !important;
+  color: #fff !important;
+}
+
+.cuti-print-count-badge--wait {
+  background: #5b87f7 !important;
+  color: #fff !important;
+}
+
+.cuti-print-progress-track {
+  background: #e8f0fe;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.cuti-print-progress-bar {
+  background: #4275f6 !important;
+}
+
+.cuti-print-doc-complete,
+.cuti-print-doc-pending {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.cuti-print-doc-complete {
+  background: #e8f0fe;
+  border: 1px solid #4275f6;
+  color: #153e7a;
+}
+
+.cuti-print-doc-pending {
+  background: #f0f5ff;
+  border: 1px solid rgba(66, 117, 246, 0.45);
+  color: #1a3a7a;
+}
+
+.cuti-print-sig-kicker {
+  font-size: 13px;
+  font-weight: 600;
+  color: #222;
+  margin-bottom: 0.65rem;
+  text-align: center;
+  line-height: 1.35;
+}
+
+.multi-signature--cuti-print .verification-status--cuti-print {
+  background: #e8f0fe;
+  border: 1px solid #4275f6;
+  border-radius: 0.25rem;
+}
+
+.multi-signature--cuti-print .signature-separator-hairline {
+  border-top-color: #4275f6;
+  opacity: 0.85;
+}
+
+.text-cuti-print-accent {
+  color: #4275f6 !important;
+}
+
 /* Print styles */
 @media print {
   .no-print {
@@ -505,6 +671,45 @@ watch(
   
   .alert {
     display: none;
+  }
+
+  .multi-signature--cuti-print .verification-status--cuti-print {
+    background: #e8f0fe !important;
+    border: 1pt solid #4275f6 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .multi-signature--cuti-print .signature-separator-hairline {
+    border-top: 1pt solid #4275f6 !important;
+  }
+
+  .cuti-print-chrome-header {
+    border-bottom: 1pt solid rgba(66, 117, 246, 0.35) !important;
+  }
+
+  .cuti-print-count-badge--done,
+  .cuti-print-count-badge--wait {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .cuti-print-progress-track {
+    background: #e8f0fe !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .cuti-print-progress-bar {
+    background: #4275f6 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .cuti-print-doc-complete,
+  .cuti-print-doc-pending {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 }
 

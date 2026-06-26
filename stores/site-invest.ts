@@ -153,6 +153,7 @@ interface SiteInvestState {
   siteInvest: SiteInvest | null
   originalSiteInvest: SiteInvest | null
   loading: boolean
+  saving: boolean
   error: any
   stats: Stats
   totalRecords: number
@@ -181,6 +182,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
     siteInvest: null,
     originalSiteInvest: null,
     loading: true,
+    saving: false,
     error: null,
     totalRecords: 0,
     stats: {
@@ -330,8 +332,8 @@ export const useSiteInvestStore = defineStore('siteInvest', {
       }
     },
 
-    async saveSiteInvest() {
-      this.loading = true
+    async saveSiteInvest(options?: { navigateToList?: boolean }) {
+      this.saving = true
       this.validationErrors = []
       const { $api } = useNuxtApp()
       const userStore = useUserStore()
@@ -347,7 +349,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
         const missingService = formServices.some((item: any) => qty(item) > 0 && plLineId(item) <= 0)
         const missingDid = formDids.some((item: any) => qty(item) > 0 && plLineId(item) <= 0)
         if (missingMaterial || missingService || missingDid) {
-          this.loading = false
+          this.saving = false
           this.validationErrors = [{ priceListLineId: ['Price list harus diisi untuk setiap baris item'] }]
           const toast = useToast()
           toast.error({
@@ -508,6 +510,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
         } else {
           this.closeModal()
           await this.fetchSiteInvests()
+          await this.fetchStats()
           const toast = useToast()
           toast.success({
             title: 'Success',
@@ -516,6 +519,9 @@ export const useSiteInvestStore = defineStore('siteInvest', {
             position: 'topRight',
             layout: 2,
           })
+          if (options?.navigateToList) {
+            await navigateTo('/sales/site-investment')
+          }
           return true
         }
       } catch (error: any) {
@@ -530,7 +536,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
         })
         return false
       } finally {
-        this.loading = false
+        this.saving = false
       }
     },
 
@@ -1002,7 +1008,9 @@ export const useSiteInvestStore = defineStore('siteInvest', {
         formData.siteInvestBudgets = formData.siteInvestBudgets ?? formData.site_invest_budgets ?? []
         const preparedByRaw = fullData.preparedBy ?? fullData.prepared_by ?? []
         formData.preparedByIds = Array.isArray(preparedByRaw)
-          ? preparedByRaw.map((p: any) => p.id_pegawai ?? p.idPegawai ?? p).filter((id: any) => id != null && Number(id) > 0)
+          ? preparedByRaw
+              .map((p: any) => Number(p.id_pegawai ?? p.idPegawai ?? p))
+              .filter((id: number) => Number.isFinite(id) && id > 0)
           : []
 
         // Normalisasi item: pastikan priceListLineId dan subtotal/isPriceOverridden

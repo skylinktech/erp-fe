@@ -104,6 +104,7 @@ interface SuratJalanState {
   selectedSuratJalan  : SuratJalan | null
   originalSuratJalan  : SuratJalan | null
   loading             : boolean
+  saving              : boolean
   error               : any
   totalRecords        : number
   params: {
@@ -136,6 +137,7 @@ export const useSuratJalanStore = defineStore('suratJalan', {
     selectedSuratJalan  : null,
     originalSuratJalan  : null,
     loading             : true,
+    saving              : false,
     error               : null,
     totalRecords        : 0,
     params: {
@@ -252,7 +254,7 @@ export const useSuratJalanStore = defineStore('suratJalan', {
 
     async saveSuratJalan() {
         const toast     = useToast();
-        this.loading = true;
+        this.saving = true;
         this.validationErrors = [];
         const { $api } = useNuxtApp();
         const userStore = useUserStore();
@@ -266,7 +268,7 @@ export const useSuratJalanStore = defineStore('suratJalan', {
 
                     // Validasi wajib pilih product & warehouse
                     if (!item.productId || !item.warehouseId) {
-                        this.loading = false;
+                        this.saving = false;
                         toast.error({
                           title  : 'Form Tidak Lengkap',
                           message: `Produk dan gudang wajib diisi pada baris ${idx + 1}.`,
@@ -296,7 +298,7 @@ export const useSuratJalanStore = defineStore('suratJalan', {
 
                         // Cegah jika qty melebihi stok
                         if (requestedQty > availableQty) {
-                            this.loading = false
+                            this.saving = false
                             const productName = item?.product?.name || `Produk ID ${item.productId}`
                             const warehouseName = item?.warehouse?.name || `Gudang ID ${item.warehouseId}`
                             toast.error({
@@ -310,7 +312,7 @@ export const useSuratJalanStore = defineStore('suratJalan', {
 
                         // Cegah jika tidak ada stok sama sekali
                         if (availableQty < 1) {
-                            this.loading = false
+                            this.saving = false
                             toast.error({
                               title  : 'Stok Tidak Cukup',
                               message: `Produk pada baris ${idx + 1} tidak memiliki stok di gudang terpilih.`,
@@ -320,7 +322,7 @@ export const useSuratJalanStore = defineStore('suratJalan', {
                             return
                         }
                     } catch (e) {
-                        this.loading = false
+                        this.saving = false
                         toast.error({
                           title  : 'Error Stok',
                           message: `Gagal memeriksa stok untuk item ke-${idx + 1}.`,
@@ -387,6 +389,7 @@ export const useSuratJalanStore = defineStore('suratJalan', {
                     color: 'red',
                     position: 'topRight'
                   });
+                  return false;
               } else {
                   throw new Error(errorData.message || 'Gagal menyimpan data suratJalan');
               }
@@ -403,6 +406,7 @@ export const useSuratJalanStore = defineStore('suratJalan', {
                   color: 'green',
                   position: 'topRight'
               });
+              return true;
             }
 
         } catch (error: any) {
@@ -416,8 +420,9 @@ export const useSuratJalanStore = defineStore('suratJalan', {
               color: 'red',
               position: 'topRight'
             });
+            return false;
         } finally {
-            this.loading = false;
+            this.saving = false;
         }
     },
 

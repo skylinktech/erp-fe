@@ -79,7 +79,7 @@
                 <span class="process-arrow text-muted">&gt;</span>
                 <span class="process-pill process-pill-inactive">Customer Approval</span>
                 <span class="process-arrow text-muted">&gt;</span>
-                <span class="process-pill process-pill-inactive">IRO</span>
+                <span class="process-pill process-pill-inactive">Purchase Order</span>
                 <span class="process-arrow text-muted">&gt;</span>
                 <span class="process-pill process-pill-inactive">Implementation</span>
               </div>

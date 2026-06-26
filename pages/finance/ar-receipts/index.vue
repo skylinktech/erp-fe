@@ -426,8 +426,8 @@
                                 <button type="button" class="btn btn-outline-secondary" @click="receiptStore.closeModal()">
                                     Tutup
                                 </button>
-                                <button type="submit" class="btn btn-primary" :disabled="loading">
-                                    <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
+                                <button type="submit" class="btn btn-primary" :disabled="saving">
+                                    <span v-if="saving" class="spinner-border spinner-border-sm me-2"></span>
                                     {{ isEditMode ? 'Update' : 'Simpan' }}
                                 </button>
                             </div>
@@ -476,6 +476,7 @@ const receipts = computed(() => {
   return Array.isArray(receiptStore.receipts) ? receiptStore.receipts : []
 })
 const loading = computed(() => receiptStore.loading)
+const saving = computed(() => receiptStore.saving)
 const totalRecords = computed(() => {
   return typeof receiptStore.totalRecords === 'number' ? receiptStore.totalRecords : 0
 })

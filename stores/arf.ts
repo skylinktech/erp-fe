@@ -5,83 +5,88 @@ import { useNuxtApp } from '#app'
 import { useUserStore } from '~/stores/user'
 import type { ApprovalLogEntry } from '~/types/approval'
 
-interface ArfItem {
-  id?: string
-  arfId?: string
-  productId: number
-  warehouseId: number
-  unitId: number
-  quantity: number
-  price: number
+export type ArfType = 'installation' | 'dismantle' | 'survey'
+
+export interface ArfItemForm {
+  budgetId?: number | null
+  description: string
+  qty: number
+  unit?: string | null
+  unitPrice: number
   subtotal: number
-  description?: string | null
-  additional?: boolean | null
-  product?: any
-  warehouse?: any
-  unit?: any
+  notes?: string | null
+  budget?: { id: number; budgetCode?: string; budget_code?: string; budgetName?: string; budget_name?: string }
 }
 
-interface Stats {
-  total: number | undefined
-  draft: number | undefined
-  submitted: number | undefined
-  approved: number | undefined
-  rejected: number | undefined
-  disbursed: number | undefined
-  settled: number | undefined
-  cancelled: number | undefined
+export interface ArfEmployeeForm {
+  pegawaiId: number | null
+  salaryAmount: number
+  notes?: string | null
+  pegawai?: {
+    id_pegawai?: number
+    idPegawai?: number
+    nm_pegawai?: string
+    nmPegawai?: string
+    nik_pegawai?: string
+    nikPegawai?: string
+  }
+}
+
+export interface ApproverInfo {
+  userId: number
+  fullName?: string
+  email?: string
+  source?: 'role' | 'jabatan' | 'user'
 }
 
 export interface Arf {
-  id: string
-  noArf: string
-  requestDate: string
-  neededDate: string | null
-  siteId: number | null
-  purpose: string
-  estimatedAmount: number
-  currency: string
-  status: 'draft' | 'submitted' | 'approved' | 'rejected' | 'disbursed' | 'settled' | 'cancelled'
-  revision?: number
+  id: number
+  requestNo?: string
+  request_no?: string
+  requestDate?: string
+  request_date?: string
+  siteInvestmentId?: string | null
+  site_investment_id?: string | null
+  requestedBy?: number | null
+  type?: ArfType
+  departmentId?: number | null
+  status: string
+  approvalStatus?: string | null
+  rejectionReason?: string | null
   rejectReason?: string | null
-  reject_reason?: string | null
-  purchaseRequestId: string | null
-  requestorId: number | null
-  costCenterId: number | null
-  approvedBy: number | null
-  rejectedBy: number | null
-  disbursedBy: number | null
-  settledBy: number | null
-  cancelledBy: number | null
-  approvedAt?: string | null
-  rejectedAt?: string | null
-  disbursedAt?: string | null
-  settledAt?: string | null
-  cancelledAt?: string | null
+  totalAmount?: number
+  currency?: string
+  notes?: string | null
+  attachment?: string | null
+  createdBy: number | null
   createdAt: string
   updatedAt: string
-  currentApprovalStep?: number | null
-  currentApprovers?: Array<{ userId: number; fullName?: string; email?: string; source?: string }>
+  arfItems?: ArfItemForm[]
+  arf_items?: ArfItemForm[]
+  arfEmployees?: ArfEmployeeForm[]
+  arf_employees?: ArfEmployeeForm[]
+  requestedByUser?: { id: number; full_name?: string; fullName?: string; email?: string }
+  createdByUser?: { id: number; full_name?: string; fullName?: string; email?: string }
+  approvedByUser?: { id: number; full_name?: string; fullName?: string }
+  department?: { id: number; nm_departemen?: string; nmDepartemen?: string }
+  siteInvestment?: {
+    id: string
+    siNumber?: string
+    si_number?: string
+    name?: string
+    status?: string
+  }
   approvalLogs?: ApprovalLogEntry[]
-  site?: { id: number; name?: string }
-  costCenter?: { id: number; name?: string }
-  purchaseRequest?: { id: string; noPr?: string }
-  requestor?: any
-  approvedByUser?: any
-  rejectedByUser?: any
-  disbursedByUser?: any
-  settledByUser?: any
-  cancelledByUser?: any
-  arfItems?: ArfItem[]
+  currentApprovers?: ApproverInfo[]
+  nextApprovalStep?: number | null
 }
 
 interface ArfState {
   arfs: Arf[]
   arf: Arf | null
-  originalArf: Arf | null
   loading: boolean
+  saving: boolean
   error: any
-  stats: Stats
   totalRecords: number
   params: {
     first: number
@@ -90,37 +95,77 @@ interface ArfState {
     sortOrder: number | null
     draw: number
     search: string
-    siteId?: number | null
-    costCenterId?: number | null
     status?: string | null
-    startDate?: string | null
-    endDate?: string | null
+    type?: string | null
+    departmentId?: number | null
   }
-  form: any
+  form: {
+    id?: number | null
+    status?: string
+    requestDate: string
+    siteInvestmentId: string | null
+    type: ArfType
+    departmentId: number | null
+    currency: string
+    notes: string
+    attachment: string
+    arfItems: ArfItemForm[]
+    arfEmployees: ArfEmployeeForm[]
+  }
   isEditMode: boolean
-  showModal: boolean
-  validationErrors: any[]
-  enableAdditional: boolean
+  statistics: {
+    totalArfs: number
+    approvedArfs: number
+    draftArfs: number
+    pendingArfs: number
+    rejectedArfs: number
+    completedArfs: number
+    totalValue: number
+  }
+}
+
+function recalcItem(d: ArfItemForm) {
+  const qty = Number(d.qty) || 0
+  const unitPrice = Number(d.unitPrice) || 0
+  d.subtotal = qty * unitPrice
+}
+
+function mapEmployeeFromApi(d: any): ArfEmployeeForm {
+  return {
+    pegawaiId: d.pegawaiId ?? d.pegawai_id ?? d.pegawai?.id_pegawai ?? d.pegawai?.idPegawai ?? null,
+    salaryAmount: Number(d.salaryAmount ?? d.salary_amount ?? 0),
+    notes: d.notes ?? null,
+    pegawai: d.pegawai,
+  }
+}
+
+function mapItemFromApi(d: any): ArfItemForm {
+  const qty = Number(d.qty) || 1
+  const unitPrice = Number(d.unitPrice ?? d.unit_price ?? 0)
+  return {
+    budgetId: d.budgetId ?? d.budget_id ?? d.budget?.id ?? null,
+    description: d.description ?? '',
+    qty,
+    unit: d.unit ?? null,
+    unitPrice,
+    subtotal: Number(d.subtotal) || qty * unitPrice,
+    notes: d.notes ?? null,
+    budget: d.budget,
+  }
+}
+
+function todayIso() {
+  return new Date().toISOString().slice(0, 10)
 }
 
 export const useArfStore = defineStore('arf', {
   state: (): ArfState => ({
     arfs: [],
     arf: null,
-    originalArf: null,
-    loading: true,
+    loading: false,
+    saving: false,
     error: null,
     totalRecords: 0,
-    stats: {
-      total: 0,
-      draft: 0,
-      submitted: 0,
-      approved: 0,
-      rejected: 0,
-      disbursed: 0,
-      settled: 0,
-      cancelled: 0,
-    },
     params: {
       first: 0,
       rows: 10,
@@ -128,280 +173,126 @@ export const useArfStore = defineStore('arf', {
       sortOrder: 2,
       draw: 1,
       search: '',
-      siteId: null,
-      costCenterId: null,
       status: null,
-      startDate: null,
-      endDate: null,
+      type: null,
+      departmentId: null,
     },
     form: {
-      requestDate: null,
-      neededDate: null,
-      siteId: null,
-      purpose: '',
-      estimatedAmount: 0,
+      requestDate: todayIso(),
+      siteInvestmentId: null,
+      type: 'installation',
+      departmentId: null,
       currency: 'IDR',
-      status: 'draft',
-      purchaseRequestId: null,
-      requestorId: null,
-      costCenterId: null,
+      notes: '',
+      attachment: '',
       arfItems: [],
+      arfEmployees: [],
     },
     isEditMode: false,
-    showModal: false,
-    validationErrors: [],
-    enableAdditional: false,
+    statistics: {
+      totalArfs: 0,
+      approvedArfs: 0,
+      draftArfs: 0,
+      pendingArfs: 0,
+      rejectedArfs: 0,
+      completedArfs: 0,
+      totalValue: 0,
+    },
   }),
 
+  getters: {
+    formItemsTotal: (state) => state.form.arfItems.reduce((s, d) => s + (Number(d.subtotal) || 0), 0),
+    formEmployeesTotal: (state) =>
+      state.form.arfEmployees.reduce((s, d) => s + (Number(d.salaryAmount) || 0), 0),
+    formGrandTotal: (state) => {
+      const items = state.form.arfItems.reduce((s, d) => s + (Number(d.subtotal) || 0), 0)
+      const employees = state.form.arfEmployees.reduce((s, d) => s + (Number(d.salaryAmount) || 0), 0)
+      return items + employees
+    },
+  },
+
   actions: {
+    apiEndpoints() {
+      const { $api } = useNuxtApp()
+      return {
+        list: () => $api.arf(),
+        details: (id: number | string) => $api.getArfDetails(id),
+        statistics: () => $api.countArfByStatus(),
+        approve: (id: number | string) => $api.approveArf(id),
+        reject: (id: number | string) => $api.rejectArf(id),
+        submit: (id: number | string) => $api.submitArf(id),
+      }
+    },
+
     async fetchArfs(suppressError = false) {
+      const toast = useToast()
       this.loading = true
       this.error = null
-      const { $api } = useNuxtApp()
+      const api = this.apiEndpoints()
       try {
-        const url = new URL($api.arf())
-        const params = new URLSearchParams({
-          page: Math.floor((this.params.first / this.params.rows) + 1).toString(),
-          rows: Math.floor(this.params.rows).toString(),
+        const url = new URL(api.list())
+        const sp = new URLSearchParams({
+          page: String(Math.floor(this.params.first / this.params.rows) + 1),
+          rows: String(this.params.rows),
           sortField: this.params.sortField || '',
-          sortOrder: this.params.sortOrder?.toString() || '',
-          draw: this.params.draw.toString(),
+          sortOrder: String(this.params.sortOrder ?? ''),
+          draw: String(this.params.draw),
           search: this.params.search || '',
-          includeItems: 'true',
         })
+        if (this.params.status) sp.append('status', this.params.status)
+        if (this.params.type) sp.append('type', this.params.type)
+        if (this.params.departmentId) sp.append('departmentId', String(this.params.departmentId))
+        url.search = sp.toString()
 
-        if (this.params.siteId) {
-          params.append('siteId', this.params.siteId.toString())
-        }
-        if (this.params.costCenterId) {
-          params.append('costCenterId', this.params.costCenterId.toString())
-        }
-        if (this.params.status) {
-          params.append('status', this.params.status)
-        }
-        if (this.params.startDate) {
-          params.append('startDate', this.params.startDate)
-        }
-        if (this.params.endDate) {
-          params.append('endDate', this.params.endDate)
-        }
-
-        url.search = params.toString()
-
-        const response = await fetch(url, {
+        const res = await fetch(String(url), {
           method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include'
+          headers: { Accept: 'application/json' },
+          credentials: 'include',
         })
-
-        if (!response.ok) throw new Error('Gagal mengambil data ARF')
-
-        const result = await response.json()
-        this.arfs = result.data
-        this.totalRecords = result.meta.total
+        if (!res.ok) throw new Error('Gagal mengambil data ARF')
+        const json = await res.json()
+        this.arfs = json.data ?? []
+        this.totalRecords = json.meta?.total ?? 0
       } catch (e: any) {
-        console.error('Gagal mengambil data ARF:', e)
         this.error = e
-
         if (!suppressError) {
-          const toast = useToast()
-          toast.error({
-            title: 'Error',
-            message: `Tidak dapat memuat data ARF: ${e?.message || e}`,
-            color: 'red'
-          })
+          toast.error({ title: 'Error', message: e.message, color: 'red', position: 'topRight', layout: 2 })
         }
       } finally {
         this.loading = false
       }
     },
 
-    async fetchStats() {
-      const { $api } = useNuxtApp()
-      const defaultStats = {
-        total: undefined,
-        draft: undefined,
-        submitted: undefined,
-        approved: undefined,
-        rejected: undefined,
-        disbursed: undefined,
-        settled: undefined,
-        cancelled: undefined,
-      }
+    async getArfDetails(id: number | string) {
+      this.loading = true
+      const api = this.apiEndpoints()
       try {
-        const response = await fetch($api.countArfByStatus(), {
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include'
+        const res = await apiFetch(api.details(id), {
+          headers: { Accept: 'application/json' },
+          credentials: 'include',
         })
-
-        if (response.ok) {
-          const result = await response.json()
-          this.stats = result
-        } else {
-          this.stats = defaultStats
-        }
-      } catch (error) {
-        console.error('Gagal mengambil data statistik:', error)
-        this.stats = defaultStats
+        if (res?.data) this.arf = res.data
+        else if (res?.id) this.arf = res
+      } finally {
+        this.loading = false
       }
     },
 
-    async saveArf() {
+    async fetchArfForEdit(id: number | string) {
+      const toast = useToast()
       this.loading = true
-      this.validationErrors = []
-      const { $api } = useNuxtApp()
-      const userStore = useUserStore()
-
+      const api = this.apiEndpoints()
       try {
-        const formData = new FormData()
-
-        const dataToAppend = { ...this.form }
-        delete dataToAppend.arfItems
-        delete dataToAppend.site
-        delete dataToAppend.costCenter
-        delete dataToAppend.purchaseRequest
-        delete dataToAppend.requestor
-        delete dataToAppend.approvedByUser
-        delete dataToAppend.rejectedByUser
-        delete dataToAppend.disbursedByUser
-        delete dataToAppend.settledByUser
-        delete dataToAppend.cancelledByUser
-
-        // Hapus status saat create (default draft di backend)
-        if (!this.isEditMode) {
-          delete dataToAppend.status
-        }
-
-        Object.keys(dataToAppend).forEach(key => {
-          const value = dataToAppend[key]
-          if (value !== null && value !== undefined) {
-            formData.append(key, String(value))
-          }
-        })
-
-        if (!this.isEditMode && userStore.user && userStore.user.id) {
-          formData.append('requestorId', userStore.user.id.toString())
-        }
-
-        // Filter hanya item yang valid dan lengkap
-        const validItems = this.form.arfItems.filter((item: any) => {
-          return item.productId && item.warehouseId && item.unitId && item.quantity && item.quantity > 0
-        })
-
-        if (validItems.length === 0) {
-          throw new Error('Minimal harus ada 1 item yang valid (Product, Warehouse, Unit, dan Quantity harus diisi)')
-        }
-
-        // Calculate estimated amount from valid items
-        let calculatedEstimatedAmount = 0
-        const finalValidItems: any[] = []
-        
-        validItems.forEach((item: any) => {
-          const productId = Number(item.productId)
-          const warehouseId = Number(item.warehouseId)
-          const unitId = Number(item.unitId)
-          const quantity = Number(item.quantity) || 1
-          const price = Number(item.price) || 0
-          const subtotal = Number(item.subtotal) || (quantity * price)
-
-          if (!productId || !warehouseId || !unitId || quantity <= 0) {
-            return
-          }
-
-          calculatedEstimatedAmount += subtotal
-          
-          // Handle additional field
-          let additionalValue = false
-          if (item.additional !== undefined && item.additional !== null) {
-            if (typeof item.additional === 'boolean') {
-              additionalValue = item.additional
-            } else if (typeof item.additional === 'string') {
-              additionalValue = item.additional.toLowerCase() === 'true' || item.additional === '1'
-            } else if (typeof item.additional === 'number') {
-              additionalValue = item.additional === 1
-            }
-          }
-
-          finalValidItems.push({
-            productId,
-            warehouseId,
-            unitId,
-            quantity,
-            price,
-            subtotal,
-            additional: additionalValue,
-            description: item.description || null
-          })
-        })
-
-        // Append items dengan index yang benar
-        finalValidItems.forEach((item: any, i: number) => {
-          formData.append(`arfItems[${i}][productId]`, String(item.productId))
-          formData.append(`arfItems[${i}][warehouseId]`, String(item.warehouseId))
-          formData.append(`arfItems[${i}][unitId]`, String(item.unitId))
-          formData.append(`arfItems[${i}][quantity]`, String(item.quantity))
-          formData.append(`arfItems[${i}][price]`, String(item.price))
-          formData.append(`arfItems[${i}][subtotal]`, String(item.subtotal))
-          formData.append(`arfItems[${i}][additional]`, item.additional ? 'true' : 'false')
-          if (item.description) {
-            formData.append(`arfItems[${i}][description]`, String(item.description))
-          }
-        })
-
-        // Append estimated amount
-        formData.append('estimatedAmount', String(calculatedEstimatedAmount))
-
-        const method = this.isEditMode ? 'POST' : 'POST'
-        const url = this.isEditMode ? `${$api.arf()}/${this.form.id}` : $api.arf()
-        if (this.isEditMode) {
-          formData.append('_method', 'PUT')
-        }
-
-        const response = await fetch(url, {
-          method: method,
-          headers: {
-            'Accept': 'application/json',
-          },
-          body: formData,
+        const data = await apiFetch(api.details(id), {
+          headers: { Accept: 'application/json' },
           credentials: 'include',
         })
-
-        if (!response.ok) {
-          const errorData = await response.json()
-          if (response.status === 422) {
-            this.validationErrors = errorData.errors
-            const toast = useToast()
-            toast.error({
-              title: 'Error',
-              message: 'Gagal Validasi',
-              color: 'red'
-            })
-          } else {
-            throw new Error(errorData.message || 'Gagal menyimpan data ARF')
-          }
-        } else {
-          this.closeModal()
-          await this.fetchArfs()
-          const toast = useToast()
-          toast.success({
-            title: 'Success',
-            message: `ARF berhasil ${this.isEditMode ? 'diperbarui' : 'dibuat'}.`,
-            color: 'green',
-            position: 'topRight',
-            layout: 2,
-          })
-        }
-      } catch (error: any) {
-        this.validationErrors = []
-        const toast = useToast()
+        if (data?.data) this.loadFormFromArf(data.data)
+        else throw new Error('Data tidak valid')
+      } catch {
         toast.error({
           title: 'Error',
-          message: error.message || 'Operasi gagal',
+          message: 'Gagal memuat data untuk edit',
           color: 'red',
           position: 'topRight',
           layout: 2,
@@ -411,486 +302,49 @@ export const useArfStore = defineStore('arf', {
       }
     },
 
-    async deleteArf(id: string) {
-      this.loading = true
-      const { $api } = useNuxtApp()
-
-      const result = await Swal.fire({
-        title: 'Apakah Anda yakin?',
-        text: "Data yang dihapus tidak dapat dikembalikan!",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Ya, hapus!',
-        cancelButtonText: 'Batal'
-      })
-
-      if (!result.isConfirmed) {
-        this.loading = false
-        return
+    loadFormFromArf(arf: Arf) {
+      const items = arf.arfItems ?? arf.arf_items ?? []
+      const employees = arf.arfEmployees ?? arf.arf_employees ?? []
+      this.isEditMode = true
+      this.form = {
+        id: arf.id,
+        status: arf.status,
+        requestDate: (arf.requestDate ?? arf.request_date ?? todayIso()).toString().slice(0, 10),
+        siteInvestmentId: arf.siteInvestmentId ?? arf.site_investment_id ?? null,
+        type: (arf.type as ArfType) || 'installation',
+        departmentId: arf.departmentId ?? null,
+        currency: arf.currency || 'IDR',
+        notes: arf.notes || '',
+        attachment: arf.attachment || '',
+        arfItems: items.map(mapItemFromApi),
+        arfEmployees: employees.map(mapEmployeeFromApi),
       }
-
-      try {
-        const response = await fetch(`${$api.arf()}/${id}`, {
-          method: 'DELETE',
-          headers: {
-            'Accept': 'application/json',
-          },
-          credentials: 'include',
-        })
-
-        if (!response.ok) {
-          const errorData = await response.json()
-          throw new Error(errorData.message || 'Gagal menghapus ARF')
-        }
-
-        await this.fetchArfs()
-        const toast = useToast()
-        toast.success({
-          title: 'Success',
-          message: 'ARF berhasil dihapus.',
-          color: 'green',
-          position: 'topRight',
-          layout: 2,
-        })
-      } catch (error: any) {
-        const toast = useToast()
-        toast.error({
-          title: 'Error',
-          message: error.message || 'Gagal menghapus ARF',
-          color: 'red',
-          position: 'topRight',
-          layout: 2,
-        })
-      } finally {
-        this.loading = false
-      }
-    },
-
-    async submitArf(arfId: string) {
-      this.loading = true
-      this.error = null
-      const { $api } = useNuxtApp()
-      try {
-        const response = await fetch($api.submitArf(arfId), {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          credentials: 'include',
-        })
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: 'Gagal submit ARF' }))
-          throw new Error(errorData.message || 'Gagal submit ARF')
-        }
-
-        await this.fetchArfs()
-        await this.fetchStats()
-        const toast = useToast()
-        toast.success({
-          title: 'Success',
-          message: 'ARF berhasil di-submit.',
-          color: 'green',
-          position: 'topRight',
-          layout: 2,
-        })
-
-        return true
-      } catch (error: any) {
-        console.error('Error submit ARF:', error)
-        const toast = useToast()
-        toast.error({
-          title: 'Error',
-          message: error.message || 'Gagal submit ARF.',
-          color: 'red',
-          position: 'topRight',
-          layout: 2,
-        })
-        return false
-      } finally {
-        this.loading = false
-      }
-    },
-
-    async approveArf(arfId: string) {
-      this.loading = true
-      this.error = null
-      const { $api } = useNuxtApp()
-      try {
-        const response = await fetch($api.approveArf(arfId), {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          credentials: 'include',
-        })
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: 'Gagal mengapprove ARF' }))
-          throw new Error(errorData.message || 'Gagal mengapprove ARF')
-        }
-
-        await this.fetchArfs()
-        const toast = useToast()
-        toast.success({
-          title: 'Success',
-          message: 'ARF berhasil diapprove.',
-          color: 'green',
-          position: 'topRight',
-          layout: 2,
-        })
-
-        return true
-      } catch (error: any) {
-        console.error('Error approving ARF:', error)
-        const toast = useToast()
-        toast.error({
-          title: 'Error',
-          message: error.message || 'Gagal mengapprove ARF.',
-          color: 'red',
-          position: 'topRight',
-          layout: 2,
-        })
-        return false
-      } finally {
-        this.loading = false
-      }
-    },
-
-    async rejectArf(arfId: string, remarks = '') {
-      this.loading = true
-      this.error = null
-      const { $api } = useNuxtApp()
-      try {
-        const response = await fetch($api.rejectArf(arfId), {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          body: JSON.stringify({ remarks, rejectionReason: remarks, reject_reason: remarks }),
-          credentials: 'include',
-        })
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: 'Gagal mereject ARF' }))
-          throw new Error(errorData.message || 'Gagal mereject ARF')
-        }
-
-        await this.fetchArfs()
-        await this.fetchStats()
-        const toast = useToast()
-        toast.success({
-          title: 'Success',
-          message: 'ARF berhasil direject.',
-          color: 'green',
-          position: 'topRight',
-          layout: 2,
-        })
-
-        return true
-      } catch (error: any) {
-        console.error('Error rejecting ARF:', error)
-        const toast = useToast()
-        toast.error({
-          title: 'Error',
-          message: error.message || 'Gagal mereject ARF.',
-          color: 'red',
-          position: 'topRight',
-          layout: 2,
-        })
-        return false
-      } finally {
-        this.loading = false
-      }
-    },
-
-    async disburseArf(arfId: string) {
-      this.loading = true
-      this.error = null
-      const { $api } = useNuxtApp()
-      try {
-        const response = await fetch($api.disburseArf(arfId), {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          credentials: 'include',
-        })
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: 'Gagal mendisburse ARF' }))
-          throw new Error(errorData.message || 'Gagal mendisburse ARF')
-        }
-
-        await this.fetchArfs()
-        const toast = useToast()
-        toast.success({
-          title: 'Success',
-          message: 'ARF berhasil didisburse.',
-          color: 'green',
-          position: 'topRight',
-          layout: 2,
-        })
-
-        return true
-      } catch (error: any) {
-        console.error('Error disbursing ARF:', error)
-        const toast = useToast()
-        toast.error({
-          title: 'Error',
-          message: error.message || 'Gagal mendisburse ARF.',
-          color: 'red',
-          position: 'topRight',
-          layout: 2,
-        })
-        return false
-      } finally {
-        this.loading = false
-      }
-    },
-
-    async settleArf(arfId: string) {
-      this.loading = true
-      this.error = null
-      const { $api } = useNuxtApp()
-      try {
-        const response = await fetch($api.settleArf(arfId), {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          credentials: 'include',
-        })
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: 'Gagal menyettle ARF' }))
-          throw new Error(errorData.message || 'Gagal menyettle ARF')
-        }
-
-        await this.fetchArfs()
-        const toast = useToast()
-        toast.success({
-          title: 'Success',
-          message: 'ARF berhasil disettle.',
-          color: 'green',
-          position: 'topRight',
-          layout: 2,
-        })
-
-        return true
-      } catch (error: any) {
-        console.error('Error settling ARF:', error)
-        const toast = useToast()
-        toast.error({
-          title: 'Error',
-          message: error.message || 'Gagal menyettle ARF.',
-          color: 'red',
-          position: 'topRight',
-          layout: 2,
-        })
-        return false
-      } finally {
-        this.loading = false
-      }
-    },
-
-    async cancelArf(arfId: string) {
-      this.loading = true
-      this.error = null
-      const { $api } = useNuxtApp()
-      try {
-        const response = await fetch($api.cancelArf(arfId), {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          credentials: 'include',
-        })
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: 'Gagal membatalkan ARF' }))
-          throw new Error(errorData.message || 'Gagal membatalkan ARF')
-        }
-
-        await this.fetchArfs()
-        const toast = useToast()
-        toast.success({
-          title: 'Success',
-          message: 'ARF berhasil dibatalkan.',
-          color: 'green',
-          position: 'topRight',
-          layout: 2,
-        })
-
-        return true
-      } catch (error: any) {
-        console.error('Error cancelling ARF:', error)
-        const toast = useToast()
-        toast.error({
-          title: 'Error',
-          message: error.message || 'Gagal membatalkan ARF.',
-          color: 'red',
-          position: 'topRight',
-          layout: 2,
-        })
-        return false
-      } finally {
-        this.loading = false
-      }
-    },
-
-    async getArfDetails(arfId: string) {
-      this.loading = true
-      this.error = null
-      const { $api } = useNuxtApp()
-
-      try {
-        const url = `${$api.arf()}/${arfId}`
-        console.log('Fetching ARF details from:', url)
-        
-        const resData = await apiFetch(url, {
-          headers: {
-            'Accept': 'application/json',
-          },
-          credentials: 'include',
-        })
-
-        console.log('ARF details response:', resData)
-
-        if (resData && resData.data) {
-          this.arf = resData.data
-        } else {
-          throw new Error('Struktur data tidak valid diterima dari API getArfDetails.')
-        }
-      } catch (e: any) {
-        console.error('Error details:', e)
-        console.error('ARF ID:', arfId)
-        this.error = e
-        throw new Error(e.message || 'Gagal mengambil detail ARF')
-      } finally {
-        this.loading = false
-      }
-    },
-
-    async openModal(arfData: Arf | null = null) {
-      this.isEditMode = !!arfData
-      this.validationErrors = []
-
-      if (arfData) {
-        await this.getArfDetails(arfData.id)
-        const fullData = this.arf
-
-        if (!fullData) {
-          const toast = useToast()
-          toast.error({
-            title: 'Error',
-            message: 'Tidak dapat memuat data ARF.',
-            color: 'red',
-            position: 'topRight',
-            layout: 2,
-          })
-          return
-        }
-
-        this.originalArf = JSON.parse(JSON.stringify(fullData))
-        const formatDate = (dateStr: string | null) => dateStr ? new Date(dateStr).toISOString().split('T')[0] : null
-
-        const formData: { [key: string]: any } = {
-          ...JSON.parse(JSON.stringify(fullData)),
-        }
-
-        const dateFields = ['requestDate', 'neededDate', 'approvedAt', 'rejectedAt', 'disbursedAt', 'settledAt', 'cancelledAt']
-        dateFields.forEach(field => {
-          if (formData[field]) {
-            formData[field] = formatDate(formData[field])
-          }
-        })
-
-        // Normalisasi item
-        const nm = (v: any) => (v !== null && v !== undefined && v !== '') ? Number(v) : 0
-        if (Array.isArray(formData.arfItems)) {
-          formData.arfItems.forEach((item: any) => {
-            const q = nm(item.quantity) || 1
-            const p = nm(item.price) || 0
-            item.quantity = q
-            item.price = p
-            item.subtotal = nm(item.subtotal) || q * p
-            if (item.additional === undefined || item.additional === null) {
-              item.additional = false
-            } else {
-              item.additional = item.additional === true || item.additional === 'true' || item.additional === 1
-            }
-          })
-        }
-
-        // Set estimated amount dari data atau hitung dari items
-        if (formData.estimatedAmount) {
-          formData.estimatedAmount = Number(formData.estimatedAmount) || 0
-        } else if (Array.isArray(formData.arfItems)) {
-          formData.estimatedAmount = formData.arfItems.reduce((sum: number, item: any) => sum + (Number(item.subtotal) || 0), 0)
-        } else {
-          formData.estimatedAmount = 0
-        }
-
-        this.form = formData
-
-        if (this.form.arfItems && this.form.arfItems.length === 0) {
-          this.addItem()
-        }
-        this.enableAdditional = false
-      } else {
-        this.resetForm()
-        this.addItem()
-      }
-      this.showModal = true
-    },
-
-    closeModal() {
-      this.showModal = false
-      this.isEditMode = false
-      this.originalArf = null
-      this.resetForm()
-      this.validationErrors = []
     },
 
     resetForm() {
+      this.isEditMode = false
       this.form = {
-        requestDate: null,
-        neededDate: null,
-        siteId: null,
-        purpose: '',
-        estimatedAmount: 0,
+        requestDate: todayIso(),
+        siteInvestmentId: null,
+        type: 'installation',
+        departmentId: null,
         currency: 'IDR',
-        status: 'draft',
-        purchaseRequestId: null,
-        requestorId: null,
-        costCenterId: null,
+        notes: '',
+        attachment: '',
         arfItems: [],
+        arfEmployees: [],
       }
-      this.enableAdditional = false
     },
 
-    addItem(additional: boolean = false) {
-      if (!this.form.arfItems) {
-        this.form.arfItems = []
-      }
+    addItem() {
       this.form.arfItems.push({
-        productId: null,
-        warehouseId: null,
-        unitId: null,
-        quantity: 1,
-        price: 0,
-        subtotal: 0,
-        additional: additional,
+        budgetId: null,
         description: '',
+        qty: 1,
+        unit: '',
+        unitPrice: 0,
+        subtotal: 0,
+        notes: null,
       })
     },
 
@@ -898,33 +352,322 @@ export const useArfStore = defineStore('arf', {
       this.form.arfItems.splice(index, 1)
     },
 
-    setPagination(event: any) {
-      this.params.first = Number(event.first) || 0
-      this.params.rows = Number(event.rows) || 10
-      this.fetchArfs()
+    updateItemField(index: number, field: keyof ArfItemForm, value: unknown) {
+      const item = this.form.arfItems[index]
+      if (!item) return
+      ;(item as Record<string, unknown>)[field] = value
+      if (field === 'qty' || field === 'unitPrice') recalcItem(item)
     },
 
-    setSort(event: any) {
-      this.params.sortField = event.sortField || null
-      this.params.sortOrder = Number(event.sortOrder) || null
-      this.fetchArfs()
+    addEmployee() {
+      this.form.arfEmployees.push({
+        pegawaiId: null,
+        salaryAmount: 0,
+        notes: null,
+      })
     },
 
-    setSearch(value: string) {
-      this.params.search = value
-      this.params.first = 0
-      this.fetchArfs()
+    removeEmployee(index: number) {
+      this.form.arfEmployees.splice(index, 1)
     },
 
-    setFilters(filters: { siteId?: number | null, costCenterId?: number | null, status?: string | null, startDate?: string | null, endDate?: string | null, search?: string }) {
-      this.params.siteId = filters.siteId
-      this.params.costCenterId = filters.costCenterId
-      this.params.status = filters.status
-      this.params.startDate = filters.startDate
-      this.params.endDate = filters.endDate
-      this.params.search = filters.search || ''
-      this.params.first = 0
-      this.fetchArfs()
+    updateEmployeeField(index: number, field: keyof ArfEmployeeForm, value: unknown) {
+      const row = this.form.arfEmployees[index]
+      if (!row) return
+      ;(row as Record<string, unknown>)[field] = value
     },
-  }
+
+    async saveArf(): Promise<boolean> {
+      const toast = useToast()
+      this.saving = true
+      const api = this.apiEndpoints()
+      const userStore = useUserStore()
+
+      const validItems = this.form.arfItems.filter(
+        (d) => d.description?.trim() && (Number(d.qty) || 0) > 0
+      )
+      if (!validItems.length) {
+        this.saving = false
+        toast.error({
+          title: 'Validasi',
+          message: 'Minimal 1 item dengan deskripsi dan qty valid',
+          color: 'red',
+          position: 'topRight',
+          layout: 2,
+        })
+        return false
+      }
+
+      const validEmployees = this.form.arfEmployees.filter(
+        (d) => d.pegawaiId && (Number(d.salaryAmount) || 0) >= 0
+      )
+      const pegawaiSeen = new Set<number>()
+      for (const d of validEmployees) {
+        const pid = Number(d.pegawaiId)
+        if (pegawaiSeen.has(pid)) {
+          this.saving = false
+          toast.error({
+            title: 'Validasi',
+            message: 'Pegawai tidak boleh duplikat',
+            color: 'red',
+            position: 'topRight',
+            layout: 2,
+          })
+          return false
+        }
+        pegawaiSeen.add(pid)
+      }
+
+      const body: Record<string, unknown> = {
+        requestDate: this.form.requestDate || todayIso(),
+        siteInvestmentId: this.form.siteInvestmentId,
+        type: this.form.type,
+        departmentId: this.form.departmentId,
+        currency: this.form.currency || 'IDR',
+        notes: this.form.notes?.trim() || null,
+        attachment: this.form.attachment?.trim() || null,
+        createdBy: this.isEditMode ? undefined : (userStore.user?.id ?? null),
+        arfItems: validItems.map((d) => ({
+          budgetId: d.budgetId,
+          description: d.description.trim(),
+          qty: Number(d.qty) || 1,
+          unit: d.unit?.trim() || null,
+          unitPrice: Number(d.unitPrice) || 0,
+          subtotal: Number(d.subtotal) || 0,
+          notes: d.notes?.trim() || null,
+        })),
+        arfEmployees: validEmployees.map((d) => ({
+          pegawaiId: Number(d.pegawaiId),
+          salaryAmount: Number(d.salaryAmount) || 0,
+          notes: d.notes?.trim() || null,
+        })),
+      }
+
+      const isEdit = this.isEditMode && this.form.id
+      const url = isEdit ? `${api.list()}/${this.form.id}` : api.list()
+      const method = isEdit ? 'PUT' : 'POST'
+
+      try {
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(body),
+        })
+        if (!res.ok) {
+          const ed = await res.json().catch(() => ({}))
+          toast.error({
+            title: 'Error',
+            message: ed.message || 'Gagal menyimpan',
+            color: 'red',
+            position: 'topRight',
+            layout: 2,
+          })
+          return false
+        }
+        const saved = await res.json().catch(() => ({}))
+        const savedId = saved?.data?.id ?? saved?.id
+        if (savedId) this.form.id = savedId
+        await this.fetchArfs()
+        await this.fetchStatistics()
+        toast.success({
+          title: 'Sukses',
+          message: `ARF berhasil ${this.isEditMode ? 'diperbarui' : 'dibuat'}`,
+          color: 'green',
+          position: 'topRight',
+          layout: 2,
+        })
+        return true
+      } catch (e: any) {
+        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'topRight', layout: 2 })
+        return false
+      } finally {
+        this.saving = false
+      }
+    },
+
+    async deleteArf(id: number | string) {
+      const toast = useToast()
+      this.loading = true
+      const api = this.apiEndpoints()
+      const ok = await Swal.fire({
+        title: 'Yakin?',
+        text: 'Data akan dihapus (soft delete).',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Ya, hapus',
+      })
+      if (!ok.isConfirmed) {
+        this.loading = false
+        return
+      }
+      try {
+        const res = await fetch(`${api.list()}/${id}`, {
+          method: 'DELETE',
+          headers: { Accept: 'application/json' },
+          credentials: 'include',
+        })
+        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message)
+        await this.fetchArfs()
+        await this.fetchStatistics()
+        toast.success({
+          title: 'Sukses',
+          message: 'ARF dihapus',
+          color: 'green',
+          position: 'topRight',
+          layout: 2,
+        })
+      } catch (e: any) {
+        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'topRight', layout: 2 })
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async approveArf(id: number | string, remarks?: string) {
+      const toast = useToast()
+      this.loading = true
+      const api = this.apiEndpoints()
+      try {
+        const res = await fetch(api.approve(id), {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ remarks }),
+        })
+        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message)
+        await this.fetchArfs()
+        await this.fetchStatistics()
+        toast.success({
+          title: 'Sukses',
+          message: 'Berhasil diapprove',
+          color: 'green',
+          position: 'topRight',
+          layout: 2,
+        })
+        return true
+      } catch (e: any) {
+        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'topRight', layout: 2 })
+        return false
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async rejectArf(id: number | string, reason?: string) {
+      const toast = useToast()
+      this.loading = true
+      const api = this.apiEndpoints()
+      try {
+        const res = await fetch(api.reject(id), {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ rejection_reason: reason, reject_reason: reason }),
+        })
+        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message)
+        await this.fetchArfs()
+        await this.fetchStatistics()
+        toast.success({
+          title: 'Sukses',
+          message: 'Berhasil direject',
+          color: 'green',
+          position: 'topRight',
+          layout: 2,
+        })
+        return true
+      } catch (e: any) {
+        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'topRight', layout: 2 })
+        return false
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async submitArf(id: number | string) {
+      const toast = useToast()
+      this.loading = true
+      const api = this.apiEndpoints()
+      try {
+        const res = await fetch(api.submit(id), {
+          method: 'PATCH',
+          headers: { Accept: 'application/json' },
+          credentials: 'include',
+        })
+        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message)
+        await this.fetchArfs()
+        await this.fetchStatistics()
+        toast.success({
+          title: 'Sukses',
+          message: 'ARF berhasil di-submit',
+          color: 'green',
+          position: 'topRight',
+          layout: 2,
+        })
+        return true
+      } catch (e: any) {
+        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'topRight', layout: 2 })
+        return false
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async fetchStatistics() {
+      const api = this.apiEndpoints()
+      try {
+        const res = await apiFetch(api.statistics(), {
+          headers: { Accept: 'application/json' },
+          credentials: 'include',
+        })
+        if (res?.data) this.statistics = res.data
+      } catch {
+        /* ignore */
+      }
+    },
+  },
 })
+
+export function getArfRequestNo(arf: Arf | null | undefined): string {
+  if (!arf) return ''
+  return arf.requestNo ?? arf.request_no ?? ''
+}
+
+export function getArfItemsList(arf: Arf | null | undefined): ArfItemForm[] {
+  if (!arf) return []
+  return arf.arfItems ?? arf.arf_items ?? []
+}
+
+export function getArfEmployeesList(arf: Arf | null | undefined): ArfEmployeeForm[] {
+  if (!arf) return []
+  const raw = arf.arfEmployees ?? arf.arf_employees ?? []
+  return raw.map((d) => mapEmployeeFromApi(d))
+}
+
+export function getArfEmployeesTotal(arf: Arf | null | undefined): number {
+  return getArfEmployeesList(arf).reduce((s, d) => s + (Number(d.salaryAmount) || 0), 0)
+}
+
+export function getArfItemsTotal(arf: Arf | null | undefined): number {
+  return getArfItemsList(arf).reduce((s, d) => s + (Number(d.subtotal) || 0), 0)
+}
+
+export function getArfTotal(arf: Arf | null | undefined): number {
+  if (!arf) return 0
+  if (arf.totalAmount != null) return Number(arf.totalAmount)
+  return getArfItemsTotal(arf) + getArfEmployeesTotal(arf)
+}
+
+export const ARF_TYPE_OPTIONS = [
+  { label: 'Installation', value: 'installation' },
+  { label: 'Dismantle', value: 'dismantle' },
+  { label: 'Survey', value: 'survey' },
+] as const
+
+export const ARF_STATUS_OPTIONS = [
+  { label: 'Draft', value: 'draft' },
+  { label: 'Pending', value: 'pending' },
+  { label: 'Approved', value: 'approved' },
+  { label: 'Rejected', value: 'rejected' },
+  { label: 'Completed', value: 'completed' },
+] as const

@@ -125,6 +125,7 @@ interface FdrState {
   fdrs: Fdr[]
   fdr: Fdr | null
   loading: boolean
+  saving: boolean
   error: any
   stats: Stats
   totalRecords: number
@@ -151,7 +152,8 @@ export const useFdrStore = defineStore('fdr', {
   state: (): FdrState => ({
     fdrs        : [],
     fdr         : null,
-    loading     : true,
+    loading     : false,
+    saving      : false,
     error       : null,
     totalRecords: 0,
     stats       : {
@@ -245,6 +247,41 @@ export const useFdrStore = defineStore('fdr', {
       }
     },
 
+    async fetchAllFdrsForExport() {
+      const toast = useToast()
+      const { $api } = useNuxtApp()
+      try {
+        const url = new URL($api.fdr())
+        const params = new URLSearchParams({
+          page: '1',
+          rows: '10000',
+          sortField: this.params.sortField || '',
+          sortOrder: this.params.sortOrder?.toString() || '',
+          draw: '1',
+          search: this.params.search || '',
+          includeItems: 'true',
+        })
+        if (this.params.customerId) params.append('customerId', this.params.customerId.toString())
+        if (this.params.status) params.append('status', this.params.status)
+        if (this.params.priority) params.append('priority', this.params.priority)
+        if (this.params.startDate) params.append('startDate', this.params.startDate)
+        if (this.params.endDate) params.append('endDate', this.params.endDate)
+        url.search = params.toString()
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+          credentials: 'include',
+        })
+        if (!response.ok) throw new Error('Gagal mengambil data FDR untuk export')
+        const result = await response.json()
+        return Array.isArray(result.data) ? result.data : []
+      } catch (e) {
+        console.error(e)
+        toast.error({ title: 'Error', message: 'Gagal mengambil data untuk export', color: 'red' })
+        return []
+      }
+    },
+
     async fetchStats() {
       const { $api } = useNuxtApp()
       const defaultStats = { total: undefined, draft: undefined, pending: undefined, approved: undefined, rejected: undefined, expired: undefined, cancelled: undefined }
@@ -261,8 +298,8 @@ export const useFdrStore = defineStore('fdr', {
       }
     },
 
-    async saveFdr() {
-      this.loading = true
+    async saveFdr(options?: { navigateToList?: boolean }) {
+      this.saving = true
       this.validationErrors = []
       const { $api } = useNuxtApp()
       const userStore = useUserStore()
@@ -277,7 +314,7 @@ export const useFdrStore = defineStore('fdr', {
         const missingService = formServices.some((item: any) => qty(item) > 0 && plLineId(item) <= 0)
         const missingDid = formDids.some((item: any) => qty(item) > 0 && plLineId(item) <= 0)
         if (missingItem || missingService || missingDid) {
-          this.loading = false
+          this.saving = false
           this.validationErrors = [{ priceListLineId: ['Price list harus diisi untuk setiap baris item'] }]
           const toast = useToast()
           toast.error({ title: 'Validasi', message: 'Price list harus diisi untuk setiap baris Material, Service, atau DID.', color: 'red' })
@@ -374,13 +411,16 @@ export const useFdrStore = defineStore('fdr', {
           await this.fetchStats()
           const toast = useToast()
           toast.success({ title: 'Success', message: `FDR berhasil ${this.isEditMode ? 'diperbarui' : 'dibuat'}.`, color: 'green', position: 'topRight', layout: 2 })
+          if (options?.navigateToList) {
+            await navigateTo('/sales/fdr')
+          }
         }
       } catch (error: any) {
         this.validationErrors = []
         const toast = useToast()
         toast.error({ title: 'Error', message: error.message || 'Operasi gagal', color: 'red', position: 'topRight', layout: 2 })
       } finally {
-        this.loading = false
+        this.saving = false
       }
     },
 

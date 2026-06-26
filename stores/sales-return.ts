@@ -78,6 +78,7 @@ interface SalesReturnState {
   originalSalesReturn: SalesReturn | null
   salesOrders        : SalesOrder[]
   loading           : boolean
+  saving            : boolean
   error             : any
   totalRecords      : number
   params: {
@@ -104,6 +105,7 @@ export const useSalesReturnStore = defineStore('salesReturn', {
     originalSalesReturn: null,
     salesOrders        : [],
     loading           : true,
+    saving            : false,
     error             : null,
     totalRecords      : 0,
     params: {
@@ -274,7 +276,7 @@ export const useSalesReturnStore = defineStore('salesReturn', {
 
     async saveSalesReturn() {
         const toast     = useToast();
-        this.loading = true;
+        this.saving = true;
         this.validationErrors = [];
         const { $api } = useNuxtApp();
         const userStore = useUserStore();
@@ -357,6 +359,7 @@ export const useSalesReturnStore = defineStore('salesReturn', {
                       message: errorData.message || 'Terdapat kesalahan validasi data',
                       color: 'red'
                     });
+                    return false;
                 } else {
                     throw new Error(errorData.message || 'Gagal menyimpan data salesReturn');
                 }
@@ -368,6 +371,7 @@ export const useSalesReturnStore = defineStore('salesReturn', {
                   message: `Sales Return berhasil ${this.isEditMode ? 'diperbarui' : 'dibuat'}.`,
                   color: 'green'
                 });
+                return true;
             }
 
 
@@ -379,8 +383,9 @@ export const useSalesReturnStore = defineStore('salesReturn', {
               message: error.message || 'Operasi gagal',
               color: 'red'
             });
+            return false;
         } finally {
-            this.loading = false;
+            this.saving = false;
         }
     },
 

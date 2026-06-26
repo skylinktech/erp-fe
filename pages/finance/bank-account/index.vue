@@ -347,8 +347,8 @@
                         <button type="button" class="btn btn-outline-secondary" @click="bankAccountStore.closeModal()">
                             Tutup
                         </button>
-                        <button type="submit" class="btn btn-primary" :disabled="loading">
-                            <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
+                        <button type="submit" class="btn btn-primary" :disabled="saving">
+                            <span v-if="saving" class="spinner-border spinner-border-sm me-2"></span>
                             {{ isEditMode ? 'Update' : 'Simpan' }}
                         </button>
                     </div>
@@ -394,6 +394,7 @@ const globalFilterValue = ref('')
 // Computed
 const bankAccounts = computed(() => bankAccountStore.bankAccounts || [])
 const loading = computed(() => bankAccountStore.loading || false)
+const saving = computed(() => bankAccountStore.saving || false)
 const totalRecords = computed(() => bankAccountStore.totalRecords || 0)
 const params = computed(() => bankAccountStore.params || {})
 const form = computed(() => bankAccountStore.form || {})

@@ -273,8 +273,8 @@ const mapRecipientToItem = (r: any) => {
         return `Subscription ${payload.noSubscription || payload.no_subscription || payload.id || ''}`.trim()
       case 'pks':
         return `PKS ${payload.noPks || payload.no_pks || payload.id || ''}`.trim()
-      case 'iro':
-        return `IRO ${payload.noIro || payload.no_iro || payload.id || ''}`.trim()
+      case 'purchase_request':
+        return `PR ${payload.prNumber || payload.pr_number || payload.noPurchaseRequest || payload.id || ''}`.trim()
       case 'fdr':
         return `FDR ${payload.fdrNumber || payload.fdr_number || payload.id || ''}`.trim()
       case 'price_adjustment':
@@ -497,7 +497,7 @@ const getTypeBadgeClass = (type: string) => {
       return 'bg-success'
     case 'pks':
       return 'bg-dark'
-    case 'iro':
+    case 'purchase_request':
       return 'bg-warning'
     case 'fdr':
       return 'bg-info'
@@ -528,8 +528,8 @@ const getTypeText = (type: string) => {
       return 'Subscription'
     case 'pks':
       return 'PKS'
-    case 'iro':
-      return 'IRO'
+    case 'purchase_request':
+      return 'Purchase Order'
     case 'fdr':
       return 'FDR'
     default:

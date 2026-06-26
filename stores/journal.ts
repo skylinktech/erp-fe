@@ -30,6 +30,7 @@ interface JournalState {
   journals: Journal[]
   selectedJournal: Journal | null
   loading: boolean
+  saving: boolean
   error: any
   totalRecords: number
   params: {
@@ -53,6 +54,7 @@ export const useJournalStore = defineStore('journal', {
     journals: [],
     selectedJournal: null,
     loading: false,
+    saving: false,
     error: null,
     totalRecords: 0,
     params: {
@@ -178,7 +180,7 @@ export const useJournalStore = defineStore('journal', {
     },
 
     async saveJournal() {
-      this.loading = true
+      this.saving = true
       this.validationErrors = [];
       const { $api } = useNuxtApp()
 
@@ -192,7 +194,7 @@ export const useJournalStore = defineStore('journal', {
             color: 'red',
             position: 'topRight',
           });
-          this.loading = false
+          this.saving = false
           return
         }
 
@@ -205,7 +207,7 @@ export const useJournalStore = defineStore('journal', {
             color: 'red',
             position: 'topRight',
           });
-          this.loading = false
+          this.saving = false
           return
         }
 
@@ -220,7 +222,7 @@ export const useJournalStore = defineStore('journal', {
               color: 'red',
               position: 'topRight',
             });
-            this.loading = false
+            this.saving = false
             return
           }
         }
@@ -239,7 +241,7 @@ export const useJournalStore = defineStore('journal', {
             color: 'red',
             position: 'topRight',
           });
-          this.loading = false
+          this.saving = false
           return
         }
 
@@ -371,7 +373,7 @@ export const useJournalStore = defineStore('journal', {
           });
         }
       } finally {
-        this.loading = false
+        this.saving = false
       }
     },
 

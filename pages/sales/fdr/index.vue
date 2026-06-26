@@ -19,10 +19,14 @@
               <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                   <p class="mb-0">Total FDR</p>
-                  <span class="avatar-initial rounded bg-label-primary"><i class="ri-file-list-3-line"></i></span>
+                  <div class="avatar">
+                    <span class="avatar-initial rounded bg-label-primary"><i class="ri-file-list-3-line"></i></span>
+                  </div>
                 </div>
-                <h5 class="mb-1">{{ stats.total || 0 }}</h5>
-                <span class="text-muted">FDR terdaftar</span>
+                <div class="account-heading">
+                  <h5 class="mb-1">{{ stats.total || 0 }}</h5>
+                  <span class="text-muted">FDR terdaftar</span>
+                </div>
               </div>
             </div>
           </div>
@@ -31,10 +35,14 @@
               <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                   <p class="mb-0">Draft</p>
-                  <span class="avatar-initial rounded bg-label-secondary"><i class="ri-draft-line"></i></span>
+                  <div class="avatar">
+                    <span class="avatar-initial rounded bg-label-secondary"><i class="ri-draft-line"></i></span>
+                  </div>
                 </div>
-                <h5 class="mb-1">{{ stats.draft || 0 }}</h5>
-                <span class="text-muted">Draft</span>
+                <div class="account-heading">
+                  <h5 class="mb-1">{{ stats.draft || 0 }}</h5>
+                  <span class="text-muted">Draft</span>
+                </div>
               </div>
             </div>
           </div>
@@ -43,10 +51,14 @@
               <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                   <p class="mb-0">Pending</p>
-                  <span class="avatar-initial rounded bg-label-warning"><i class="ri-time-line"></i></span>
+                  <div class="avatar">
+                    <span class="avatar-initial rounded bg-label-warning"><i class="ri-time-line"></i></span>
+                  </div>
                 </div>
-                <h5 class="mb-1">{{ stats.pending || 0 }}</h5>
-                <span class="text-muted">Pending</span>
+                <div class="account-heading">
+                  <h5 class="mb-1">{{ stats.pending || 0 }}</h5>
+                  <span class="text-muted">Pending</span>
+                </div>
               </div>
             </div>
           </div>
@@ -55,10 +67,14 @@
               <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                   <p class="mb-0">Approved</p>
-                  <span class="avatar-initial rounded bg-label-success"><i class="ri-checkbox-circle-line"></i></span>
+                  <div class="avatar">
+                    <span class="avatar-initial rounded bg-label-success"><i class="ri-checkbox-circle-line"></i></span>
+                  </div>
                 </div>
-                <h5 class="mb-1">{{ stats.approved || 0 }}</h5>
-                <span class="text-muted">Approved</span>
+                <div class="account-heading">
+                  <h5 class="mb-1">{{ stats.approved || 0 }}</h5>
+                  <span class="text-muted">Approved</span>
+                </div>
               </div>
             </div>
           </div>
@@ -68,6 +84,9 @@
         <div class="row g-6">
           <div class="col-12">
             <h4 class="mt-6 mb-1">Filter FDR</h4>
+            <p class="mb-0">Temukan semua Form Design Request perusahaan Anda</p>
+          </div>
+          <div class="col-12">
             <div class="card">
               <div class="card-body">
                 <div class="row">
@@ -132,40 +151,28 @@
           <!-- Table -->
           <div class="col-12">
             <div class="card">
-              <div class="card-header fdr-table-header">
-                <div class="fdr-header-top-row">
-                  <div class="d-flex align-items-center fdr-rows-control">
-                  <span class="me-2">Baris:</span>
-                  <Dropdown
-                    v-model="tableControls.rows"
-                    :options="rowsPerPageOptionsArray"
-                    @change="handleRowsChange"
-                    placeholder="Jumlah"
-                    style="width: 8rem;"
-                  />
-                </div>
-                <div
-                  v-if="userHasRole('superadmin') || userHasPermission('create_fdr')"
-                  class="fdr-add-button-wrap"
-                >
+              <ListPageTableHeader
+                :rows="Number(tableControls.rows)"
+                :rows-options="rowsPerPageOptionsArray"
+                :search="globalFilterValue"
+                search-placeholder="Cari FDR..."
+                :export-disabled="loading"
+                @update:rows="onToolbarRows"
+                @update:search="(v) => { globalFilterValue = v }"
+                @export="exportData"
+              >
+                <template #add>
                   <button
-                    @click="fdrStore.openModal(null)"
-                    class="btn btn-primary"
+                      v-if="userHasRole('superadmin') || userHasPermission('create_fdr')"
+                      type="button"
+                      class="btn btn-primary fdr-add-button"
+                      @click="navigateTo('/sales/fdr/form')"
                   >
-                    <i class="ri-add-line me-1"></i> Tambah FDR
+                      <i class="ri-add-line me-1"></i>
+                      Tambah
                   </button>
-                </div>
-                </div>
-                <div class="fdr-search-row">
-                  <span class="p-input-icon-left fdr-search-input-wrap">
-                    <InputText
-                      v-model="globalFilterValue"
-                      placeholder="Cari FDR..."
-                      class="fdr-search-input"
-                    />
-                  </span>
-                </div>
-              </div>
+                </template>
+              </ListPageTableHeader>
               <div class="card-datatable table-responsive py-3 px-3">
                 <MyDataTable
                   ref="myDataTableRef"
@@ -241,7 +248,7 @@
                             <a class="dropdown-item" href="javascript:void(0)" @click="fdrStore.rejectFdr(slotProps.data.id)"><i class="ri-close-line me-2"></i> Reject</a>
                           </li>
                           <li v-if="userHasRole('superadmin') || userHasPermission('edit_fdr')">
-                            <a class="dropdown-item" href="javascript:void(0)" @click="fdrStore.openModal(slotProps.data)"><i class="ri-edit-box-line me-2"></i> Edit</a>
+                            <a class="dropdown-item" href="javascript:void(0)" @click="navigateTo(`/sales/fdr/form/${slotProps.data.id}`)"><i class="ri-edit-box-line me-2"></i> Edit</a>
                           </li>
                           <li v-if="userHasRole('superadmin') || userHasPermission('delete_fdr')">
                             <a class="dropdown-item text-danger" href="javascript:void(0)" @click="fdrStore.deleteFdr(slotProps.data.id)"><i class="ri-delete-bin-7-line me-2"></i> Hapus</a>
@@ -256,275 +263,7 @@
           </div>
         </div>
 
-        <!-- Modal -->
-        <Modal
-          id="FdrModal"
-          :title="modalTitle"
-          :description="modalDescription"
-          :validation-errors-from-parent="validationErrors"
-          class="modal-xl"
-        >
-          <template #default>
-            <form @submit.prevent="handleSubmit" novalidate>
-              <div class="row">
-                <div class="col">
-                  <ul class="nav nav-tabs" role="tablist">
-                    <li class="nav-item">
-                      <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#fdr-tabs-info" type="button">Informasi</button>
-                    </li>
-                    <li class="nav-item">
-                      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#fdr-tabs-materials" type="button">Material/Product</button>
-                    </li>
-                    <li class="nav-item">
-                      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#fdr-tabs-services" type="button">Services</button>
-                    </li>
-                    <li class="nav-item">
-                      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#fdr-tabs-dids" type="button">DID</button>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-
-              <div class="tab-content pt-6">
-                <!-- Tab Info -->
-                <div class="tab-pane fade active show" id="fdr-tabs-info">
-                  <div class="row g-4">
-                    <div class="col-md-6">
-                      <div class="form-floating form-floating-outline">
-                        <input type="text" v-model="form.name" class="form-control" placeholder="Nama" required>
-                        <label>Nama Project</label>
-                      </div>
-                    </div>
-                    <div class="col-md-6">
-                      <CustomSelect2 v-model="form.customerId" :options="customers" :get-option-label="getCustomerLabel" :reduce="getCustomerId" placeholder="Pilih Customer" searchable clearable />
-                    </div>
-                    <div class="col-md-6">
-                      <CustomSelect2 v-model="form.siteId" :options="sites" :get-option-label="getSiteLabel" :reduce="getSiteId" placeholder="Pilih Site" searchable clearable @update:modelValue="onSiteChange" />
-                    </div>
-                    <div class="col-md-6">
-                      <CustomSelect2 v-model="form.businessSchemeId" :options="businessSchemes" :get-option-label="getBranchLabel" :reduce="getBranchId" placeholder="Pilih Business Scheme" searchable clearable />
-                    </div>
-                    <div class="col-md-12">
-                      <label class="form-label text-muted">Isi dari Site Investment</label>
-                      <CustomSelect2
-                        v-model="selectedSiteInvestId"
-                        :options="siteInvestOptions"
-                        :get-option-label="getSiteInvestLabel"
-                        :reduce="getSiteInvestId"
-                        placeholder="Pilih Site Investment untuk mengisi data project + Price List"
-                        searchable
-                        clearable
-                        @update:modelValue="onSiteInvestSelect"
-                      />
-                      <small class="text-muted">Pilih Site Investment yang sudah berisi Price List untuk mengisi Material, Service, DID dan data project ke FDR.</small>
-                    </div>
-                    <div class="col-md-12">
-                      <label class="form-label text-muted">Isi dari Price List</label>
-                      <CustomSelect2
-                        v-model="selectedPriceListId"
-                        :options="priceListOptions"
-                        :get-option-label="getPriceListLabel"
-                        :reduce="getPriceListId"
-                        placeholder="Pilih Price List untuk mengisi Material, Service, DID"
-                        searchable
-                        clearable
-                        @update:modelValue="onPriceListSelect"
-                      />
-                      <small class="text-muted">Pilih untuk mengisi tab Material/Product, Services, dan DID secara otomatis.</small>
-                    </div>
-                    <div class="col-md-6">
-                      <div class="form-floating form-floating-outline">
-                        <input type="text" v-model="form.location" class="form-control" placeholder="Lokasi" required>
-                        <label>Lokasi</label>
-                      </div>
-                    </div>
-                    <div class="col-md-3">
-                      <CustomSelect2 v-model="form.priority" :options="priorityOptions" :get-option-label="getOptionLabel" :reduce="getOptionValue" placeholder="Priority" searchable clearable />
-                    </div>
-                    <div class="col-md-3">
-                      <div class="form-floating form-floating-outline">
-                        <input type="number" v-model.number="form.quantity" class="form-control" min="1">
-                        <label>Quantity</label>
-                      </div>
-                    </div>
-                    <div class="col-md-3">
-                      <div class="form-floating form-floating-outline">
-                        <input type="date" v-model="form.fdrDate" class="form-control">
-                        <label>Tanggal FDR</label>
-                      </div>
-                    </div>
-                    <div class="col-md-3">
-                      <div class="form-floating form-floating-outline">
-                        <input type="date" v-model="form.estimatedStartDate" class="form-control">
-                        <label>Estimasi Mulai</label>
-                      </div>
-                    </div>
-                    <div class="col-md-6">
-                      <div class="form-floating form-floating-outline">
-                        <input type="date" v-model="form.estimatedCompletionDate" class="form-control">
-                        <label>Estimasi Selesai</label>
-                      </div>
-                    </div>
-                    <div class="col-md-12">
-                      <div class="form-check form-switch mt-4">
-                        <input class="form-check-input" type="checkbox" v-model="form.pocNeeded" id="pocNeeded">
-                        <label class="form-check-label" for="pocNeeded">POC Needed</label>
-                      </div>
-                    </div>
-                    <div class="col-md-12">
-                      <div class="form-floating form-floating-outline">
-                        <textarea v-model="form.notes" class="form-control" placeholder="Catatan" rows="3"></textarea>
-                        <label>Notes</label>
-                      </div>
-                    </div>
-                    <div class="col-md-12">
-                      <label class="form-label">Attachment</label>
-                      <input type="file" @change="onAttachmentChange" class="form-control" accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx,.csv">
-                    </div>
-
-                    <div class="col-12 mt-5">
-                      <div class="investment-summary-card">
-                        <h6 class="investment-summary-title"><i class="ri-pie-chart-2-line me-2"></i>Ringkasan Total</h6>
-                        <div class="investment-summary-body">
-                          <div class="investment-summary-row"><span class="investment-summary-label">Service</span><span class="investment-summary-value">{{ formatRupiah(serviceSubtotal) }}</span></div>
-                          <div class="investment-summary-row"><span class="investment-summary-label">Material</span><span class="investment-summary-value">{{ formatRupiah(materialSubtotal) }}</span></div>
-                          <div class="investment-summary-row"><span class="investment-summary-label">DID</span><span class="investment-summary-value">{{ formatRupiah(didSubtotal) }}</span></div>
-                          <div class="investment-summary-divider"></div>
-                          <div class="investment-summary-row investment-summary-row-grand"><span class="investment-summary-label">Grand Total</span><span class="investment-summary-value">{{ formatRupiah(totalInvestment) }}</span></div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Tab Materials -->
-                <div class="tab-pane fade" id="fdr-tabs-materials">
-                  <div v-for="(item, index) in form.fdrItems" :key="index" class="repeater-item mb-4">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                      <span class="text-muted fw-medium">Item #{{ index + 1 }}</span>
-                      <button class="btn btn-sm btn-outline-danger" @click.prevent="fdrStore.removeItem(index)" type="button"><i class="ri-delete-bin-line me-1"></i> Hapus</button>
-                    </div>
-                    <div class="row g-3">
-                      <div class="col-md-12 form-check mb-2">
-                        <input class="form-check-input" type="checkbox" v-model="item.isPriceOverridden" :id="'customPriceMat' + index">
-                        <label class="form-check-label" :for="'customPriceMat' + index">Custom Price</label>
-                      </div>
-                      <div class="col-md-6">
-                        <CustomSelect2 v-model="item.priceListLineId" :options="priceListLinesProduct" :get-option-label="getMaterialLineLabel" :reduce="getMaterialLineId" placeholder="Pilih Product" searchable clearable @update:modelValue="onItemLineChange(index, $event)" />
-                      </div>
-                      <div class="col-md-2">
-                        <div class="form-floating form-floating-outline">
-                          <input type="number" v-model.number="item.quantity" @input="calculateItemSubtotal(index)" class="form-control" min="0.01" step="0.01">
-                          <label>Qty</label>
-                        </div>
-                      </div>
-                      <div class="col-md-2">
-                        <div class="form-floating form-floating-outline">
-                          <input type="text" :value="formatRupiah(item.price)" @input="updateItemPriceFromInput(index, $event)" class="form-control" :readonly="!item.isPriceOverridden" :class="item && !item.isPriceOverridden ? 'bg-light' : ''">
-                          <label>Harga</label>
-                        </div>
-                      </div>
-                      <div class="col-md-2">
-                        <div class="form-floating form-floating-outline">
-                          <input type="text" :value="formatRupiah(item.subtotal)" class="form-control" readonly>
-                          <label>Subtotal</label>
-                        </div>
-                      </div>
-                    </div>
-                    <hr class="my-4">
-                  </div>
-                  <button @click.prevent="fdrStore.addItem()" class="btn btn-primary">Tambah Material</button>
-                  <div class="d-flex justify-content-end mt-4"><span class="fw-bold fs-5">Subtotal Material: {{ formatRupiah(materialSubtotal) }}</span></div>
-                </div>
-
-                <!-- Tab Services -->
-                <div class="tab-pane fade" id="fdr-tabs-services">
-                  <div v-for="(item, index) in form.fdrServices" :key="index" class="repeater-item mb-4">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                      <span class="text-muted fw-medium">Item #{{ index + 1 }}</span>
-                      <button class="btn btn-sm btn-outline-danger" @click.prevent="fdrStore.removeService(index)" type="button"><i class="ri-delete-bin-line me-1"></i> Hapus</button>
-                    </div>
-                    <div class="row g-3">
-                      <div class="col-md-12 form-check mb-2">
-                        <input class="form-check-input" type="checkbox" v-model="item.isPriceOverridden" :id="'customPriceSvc' + index">
-                        <label class="form-check-label" :for="'customPriceSvc' + index">Custom Price</label>
-                      </div>
-                      <div class="col-md-6">
-                        <CustomSelect2 v-model="item.priceListLineId" :options="priceListLinesService" :get-option-label="getServiceLineLabel" :reduce="getServiceLineId" placeholder="Pilih Service" searchable clearable @update:modelValue="onServiceLineChange(index, $event)" />
-                      </div>
-                      <div class="col-md-2">
-                        <div class="form-floating form-floating-outline">
-                          <input type="number" v-model.number="item.quantity" @input="calculateServiceSubtotal(index)" class="form-control" min="0.01" step="0.01">
-                          <label>Qty</label>
-                        </div>
-                      </div>
-                      <div class="col-md-2">
-                        <div class="form-floating form-floating-outline">
-                          <input type="text" :value="formatRupiah(item.price)" @input="updateServicePriceFromInput(index, $event)" class="form-control" :readonly="!item.isPriceOverridden" :class="item && !item.isPriceOverridden ? 'bg-light' : ''">
-                          <label>Harga</label>
-                        </div>
-                      </div>
-                      <div class="col-md-2">
-                        <div class="form-floating form-floating-outline">
-                          <input type="text" :value="formatRupiah(item.subtotal)" class="form-control" readonly>
-                          <label>Subtotal</label>
-                        </div>
-                      </div>
-                    </div>
-                    <hr class="my-4">
-                  </div>
-                  <button @click.prevent="fdrStore.addService()" class="btn btn-primary">Tambah Service</button>
-                  <div class="d-flex justify-content-end mt-4"><span class="fw-bold fs-5">Subtotal Service: {{ formatRupiah(serviceSubtotal) }}</span></div>
-                </div>
-
-                <!-- Tab DIDs -->
-                <div class="tab-pane fade" id="fdr-tabs-dids">
-                  <div v-for="(item, index) in form.fdrDids" :key="index" class="repeater-item mb-4">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                      <span class="text-muted fw-medium">Item #{{ index + 1 }}</span>
-                      <button class="btn btn-sm btn-outline-danger" @click.prevent="fdrStore.removeDid(index)" type="button"><i class="ri-delete-bin-line me-1"></i> Hapus</button>
-                    </div>
-                    <div class="row g-3">
-                      <div class="col-md-12 form-check mb-2">
-                        <input class="form-check-input" type="checkbox" v-model="item.isPriceOverridden" :id="'customPriceDid' + index">
-                        <label class="form-check-label" :for="'customPriceDid' + index">Custom Price</label>
-                      </div>
-                      <div class="col-md-6">
-                        <CustomSelect2 v-model="item.priceListLineId" :options="priceListLinesDid" :get-option-label="getDidLineLabel" :reduce="getDidLineId" placeholder="Pilih DID" searchable clearable @update:modelValue="onDidLineChange(index, $event)" />
-                      </div>
-                      <div class="col-md-2">
-                        <div class="form-floating form-floating-outline">
-                          <input type="number" v-model.number="item.quantity" @input="calculateDidSubtotal(index)" class="form-control" min="1">
-                          <label>Qty</label>
-                        </div>
-                      </div>
-                      <div class="col-md-2">
-                        <div class="form-floating form-floating-outline">
-                          <input type="text" :value="formatRupiah(item.price)" @input="updateDidPriceFromInput(index, $event)" class="form-control" :readonly="!item.isPriceOverridden" :class="item && !item.isPriceOverridden ? 'bg-light' : ''">
-                          <label>Harga</label>
-                        </div>
-                      </div>
-                      <div class="col-md-2">
-                        <div class="form-floating form-floating-outline">
-                          <input type="text" :value="formatRupiah(item.subtotal || (item.quantity || 1) * (item.price || 0))" class="form-control" readonly>
-                          <label>Subtotal</label>
-                        </div>
-                      </div>
-                    </div>
-                    <hr class="my-4">
-                  </div>
-                  <button @click.prevent="fdrStore.addDid()" class="btn btn-primary">Tambah DID</button>
-                  <div class="d-flex justify-content-end mt-4"><span class="fw-bold fs-5">Subtotal DID: {{ formatRupiah(didSubtotal) }}</span></div>
-                </div>
-              </div>
-
-              <div class="modal-footer mt-6">
-                <button type="button" class="btn btn-outline-secondary" @click="fdrStore.closeModal()">Tutup</button>
-                <button type="submit" class="btn btn-primary ms-2" :disabled="loading">Simpan</button>
-              </div>
-            </form>
-          </template>
-        </Modal>
+        
       </div>
     </div>
     <div class="content-backdrop fade"></div>
@@ -540,17 +279,14 @@ import { usePermissions } from '~/composables/usePermissions'
 import { useApprovalStatus } from '~/composables/useApprovalStatus'
 import { useImageUrl } from '~/composables/useImageUrl'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
-import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
+import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
 import Column from 'primevue/column'
-import Dropdown from 'primevue/dropdown'
-import InputText from 'primevue/inputtext'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
 import { useDebounceFn } from '@vueuse/core'
 
 const { setListTitle } = useDynamicTitle()
 const route = useRoute()
-const router = useRouter()
 const isInitialLoading = ref(true)
 const fdrStore = useFdrStore()
 const customerStore = useCustomerStore()
@@ -559,7 +295,7 @@ const { userHasPermission, userHasRole } = usePermissions()
 const { getStatusBadge } = useApprovalStatus()
 const { getAttachmentUrl, isImageFile } = useImageUrl()
 
-const { fdrs, loading, totalRecords, params, form, isEditMode, showModal, validationErrors, stats } = storeToRefs(fdrStore)
+const { fdrs, loading, totalRecords, params, stats } = storeToRefs(fdrStore)
 const { customers } = storeToRefs(customerStore)
 
 const priceListLinesProduct = ref([])
@@ -567,14 +303,10 @@ const priceListLinesService = ref([])
 const priceListLinesDid = ref([])
 const selectedPriceListId = ref(null)
 const priceListOptions = ref([])
-const selectedSiteInvestId = ref(null)
-const siteInvestOptions = ref([])
 const sites = ref([])
 const businessSchemes = ref([])
 
 const rowsPerPageOptionsArray = ref([10, 25, 50, 100])
-const modalTitle = computed(() => isEditMode.value ? 'Edit FDR' : 'Tambah FDR')
-const modalDescription = computed(() => isEditMode.value ? 'Ubah data FDR' : 'Isi form untuk menambahkan FDR baru')
 
 const statusOptions = ref([
   { label: 'Draft', value: 'draft' }, { label: 'Pending', value: 'pending' },
@@ -609,8 +341,6 @@ function getBranchLabel(b) { return b ? `${b.code || ''} - ${b.name || ''}` : ''
 function getBranchId(b) { return b ? b.id : null }
 function getPriceListLabel(pl) { return pl ? (pl.name || '') + (pl.type ? ` (${pl.type})` : '') || '—' : '—' }
 function getPriceListId(pl) { return pl ? pl.id : null }
-function getSiteInvestLabel(si) { return si ? `${si.siNumber || si.si_number || ''} - ${si.name || ''}`.trim() || '—' : '—' }
-function getSiteInvestId(si) { return si ? si.id : null }
 function toNum(v) { return (v !== null && v !== undefined && v !== '') ? Number(v) : 0 }
 function getServiceLineEffectivePriceFromLine(line) {
   if (!line) return 0
@@ -734,100 +464,12 @@ const fetchPriceListLines = async () => {
 const fetchPriceListsForSelect = async () => {
   const { $api } = useNuxtApp()
   try {
-    const r = await fetch(`${$api.priceList()}?page=1&rows=500&type=site_investment`, { headers: { Accept: 'application/json' }, credentials: 'include' })
+    const r = await fetch(`${$api.priceList()}?page=1&rows=500`, { headers: { Accept: 'application/json' }, credentials: 'include' })
     if (r.ok) { const j = await r.json(); priceListOptions.value = j.data || [] }
     else priceListOptions.value = []
   } catch (e) {
     console.error('Error fetching price lists for FDR:', e)
     priceListOptions.value = []
-  }
-}
-
-const fetchSiteInvestsForSelect = async () => {
-  const { $api } = useNuxtApp()
-  try {
-    const r = await fetch(`${$api.siteInvestment()}?page=1&rows=500`, { headers: { Accept: 'application/json' }, credentials: 'include' })
-    if (r.ok) { const j = await r.json(); siteInvestOptions.value = j.data || [] }
-    else siteInvestOptions.value = []
-  } catch (e) {
-    console.error('Error fetching site investments for FDR:', e)
-    siteInvestOptions.value = []
-  }
-}
-
-async function onSiteInvestSelect(siId) {
-  if (!form.value || !siId) return
-  const { $api } = useNuxtApp()
-  try {
-    const res = await fetch($api.siteInvestmentShow(siId), { credentials: 'include', headers: { Accept: 'application/json' } })
-    if (!res.ok) return
-    const j = await res.json()
-    const si = j.data || j
-
-    const svcField = (o, key) => o[key] ?? o[key.replace(/([A-Z])/g, '_$1').toLowerCase()]
-
-    form.value.name = si.name || form.value.name
-    form.value.customerId = si.customerId ?? si.customer_id ?? form.value.customerId
-    form.value.siteId = si.siteId ?? si.site_id ?? form.value.siteId
-    form.value.businessSchemeId = si.businessSchemeId ?? si.business_scheme_id ?? form.value.businessSchemeId
-    form.value.priority = si.priority || form.value.priority
-    form.value.location = si.location || form.value.location
-    form.value.fdrDate = si.siDate ? new Date(si.siDate).toISOString().split('T')[0] : si.si_date ? new Date(si.si_date).toISOString().split('T')[0] : form.value.fdrDate
-    form.value.estimatedStartDate = si.estimatedStartDate ? new Date(si.estimatedStartDate).toISOString().split('T')[0] : si.estimated_start_date ? new Date(si.estimated_start_date).toISOString().split('T')[0] : form.value.estimatedStartDate
-    form.value.estimatedCompletionDate = si.estimatedCompletionDate ? new Date(si.estimatedCompletionDate).toISOString().split('T')[0] : si.estimated_completion_date ? new Date(si.estimated_completion_date).toISOString().split('T')[0] : form.value.estimatedCompletionDate
-
-    const mats = si.siteInvestMaterials ?? si.site_invest_materials ?? []
-    const svcs = si.siteInvestServices ?? si.site_invest_services ?? []
-    const dids = si.siteInvestDids ?? si.site_invest_dids ?? []
-
-    form.value.fdrItems = mats.map((m) => {
-      const q = toNum(m.quantity) || 1
-      const p = toNum(m.price) || 0
-      const plId = m.priceListLineId ?? m.price_list_line_id
-      return { priceListLineId: plId, quantity: q, price: p, subtotal: toNum(m.subtotal) || q * p, isPriceOverridden: m.isPriceOverridden ?? m.is_price_overridden ?? false }
-    })
-    form.value.fdrServices = svcs.map((s) => {
-      const q = toNum(s.quantity) || 1
-      const p = toNum(s.price) || 0
-      const plId = s.priceListLineId ?? s.price_list_line_id
-      return {
-        priceListLineId: plId,
-        quantity: q,
-        price: p,
-        subtotal: q * p,
-        isPriceOverridden: s.isPriceOverridden ?? s.is_price_overridden ?? false,
-        terminalKitCount: svcField(s, 'terminalKitCount') != null ? Number(svcField(s, 'terminalKitCount')) : null,
-        quotaPriority: svcField(s, 'quotaPriority') != null ? Number(svcField(s, 'quotaPriority')) : null,
-        newServiceLine: svcField(s, 'newServiceLine') != null ? Number(svcField(s, 'newServiceLine')) : null,
-        additionalData: svcField(s, 'additionalData') != null ? Number(svcField(s, 'additionalData')) : null,
-      }
-    })
-    form.value.fdrDids = dids.map((d) => {
-      const q = toNum(d.quantity) || 1
-      const p = toNum(d.price) || 0
-      const plId = d.priceListLineId ?? d.price_list_line_id
-      return { priceListLineId: plId, quantity: q, price: p, subtotal: toNum(d.subtotal) || q * p, isPriceOverridden: d.isPriceOverridden ?? d.is_price_overridden ?? false }
-    })
-
-    const addIfMissing = (arr, item) => { if (item && !arr.find((x) => x.id === item.id)) arr.push(item) }
-    mats.forEach((m) => { const pl = m.priceListLine ?? m.price_list_line; if (pl) addIfMissing(priceListLinesProduct.value, pl) })
-    svcs.forEach((s) => { const pl = s.priceListLine ?? s.price_list_line; if (pl) addIfMissing(priceListLinesService.value, pl) })
-    dids.forEach((d) => { const pl = d.priceListLine ?? d.price_list_line; if (pl) addIfMissing(priceListLinesDid.value, pl) })
-
-    const firstPlId = mats[0]?.priceListLine?.price_list_id ?? mats[0]?.priceListLine?.priceList?.id ?? mats[0]?.price_list_line?.price_list_id ?? svcs[0]?.priceListLine?.price_list_id ?? dids[0]?.priceListLine?.price_list_id
-    if (firstPlId) selectedPriceListId.value = firstPlId
-
-    if (form.value.fdrItems.length === 0) fdrStore.addItem()
-    if (form.value.fdrServices.length === 0) fdrStore.addService()
-    if (form.value.fdrDids.length === 0) fdrStore.addDid()
-
-    const siteId = form.value.siteId
-    if (siteId) {
-      const s = sites.value.find((x) => x.id === siteId)
-      if (s) form.value.location = s.address || form.value.location
-    }
-  } catch (e) {
-    console.error('Error filling FDR from Site Investment:', e)
   }
 }
 
@@ -927,39 +569,89 @@ const { isLoading: isDataLoading } = usePageData({
 
 watch(isDataLoading, (v) => { isInitialLoading.value = v })
 
-let modalInstance = null
 onMounted(() => {
-  const el = document.getElementById('FdrModal')
-  if (el) modalInstance = new bootstrap.Modal(el)
   tableControls.value.rows = Number(params.value.rows) || 10
   const editId = route.query.edit
-  if (editId && typeof editId === 'string') nextTick(() => fdrStore.openModal({ id: editId }))
+  if (editId && typeof editId === 'string') nextTick(() => navigateTo(`/sales/fdr/form/${editId}`))
 })
 
 watch(() => params.value.rows, (v) => { tableControls.value.rows = Number(v) || 10 })
 watch(globalFilterValue, useDebounceFn(() => fdrStore.setSearch(globalFilterValue.value), 500))
 watch(filters, (f) => { fdrStore.setFilters({ ...f, search: params.value.search || globalFilterValue.value }) }, { deep: true })
 
-watch(showModal, async (v) => {
-  if (v) {
-    await Promise.all([fetchPriceListLines(), fetchPriceListsForSelect(), fetchSiteInvestsForSelect()])
-    if (!isEditMode.value) {
-      selectedPriceListId.value = null
-      selectedSiteInvestId.value = null
-    }
-    nextTick(() => {
-      const el = document.getElementById('FdrModal')
-      if (el && !modalInstance) modalInstance = new bootstrap.Modal(el)
-      modalInstance?.show()
-    })
-  } else {
-    modalInstance?.hide()
-    if (route.query.edit) { const q = { ...route.query }; delete q.edit; router.replace({ path: route.path, query: q }) }
-  }
-})
-
 const onPage = (e) => { if (e) fdrStore.setPagination({ first: Number(e.first) || 0, rows: Number(e.rows) || 10, page: Number(e.page) || 0 }) }
 const handleRowsChange = (v) => { params.value.rows = Number(v) || 10; params.value.first = 0; fdrStore.fetchFdrs() }
+const onToolbarRows = (v) => { tableControls.value.rows = Number(v) || 10; handleRowsChange(v) }
+
+async function exportData(format) {
+  const toast = useToast()
+  if (format === 'excel') {
+    try {
+      toast.info({ title: 'Info', message: 'Mempersiapkan export Excel...', color: 'blue' })
+      const allData = await fdrStore.fetchAllFdrsForExport()
+      if (!allData?.length) {
+        toast.warning({ title: 'Warning', message: 'Tidak ada data untuk diexport', color: 'orange', position: 'topRight', layout: 2 })
+        return
+      }
+      const XLSX = await import('xlsx').then((m) => m.default || m)
+      const headers = ['FDR Number', 'Project Name', 'Customer', 'Lokasi', 'Skema', 'Priority', 'Status', 'Total', 'Tanggal']
+      const rows = allData.map((r) => [
+        r.fdrNumber || '-',
+        r.name || '-',
+        r.customer?.name || '-',
+        r.location || '-',
+        r.businessScheme?.name || '-',
+        r.priority || '-',
+        r.status || '-',
+        r.grandTotal != null ? Number(r.grandTotal) : '-',
+        r.fdrDate ? new Date(r.fdrDate).toLocaleDateString('id-ID') : '-',
+      ])
+      const wb = XLSX.utils.book_new()
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...rows])
+      ws['!cols'] = headers.map(() => ({ wch: 16 }))
+      XLSX.utils.book_append_sheet(wb, ws, 'FDR')
+      XLSX.writeFile(wb, 'fdr.xlsx')
+      toast.success({ title: 'Success', message: `Excel berisi ${allData.length} baris`, color: 'green', position: 'topRight', layout: 2 })
+    } catch (e) {
+      console.error(e)
+      toast.error({ title: 'Error', message: 'Gagal export Excel', color: 'red', position: 'topRight', layout: 2 })
+    }
+    return
+  }
+  if (format === 'pdf') {
+    try {
+      toast.info({ title: 'Info', message: 'Mempersiapkan export PDF...', color: 'blue' })
+      const allData = await fdrStore.fetchAllFdrsForExport()
+      if (!allData?.length) {
+        toast.warning({ title: 'Warning', message: 'Tidak ada data untuk diexport', color: 'orange', position: 'topRight', layout: 2 })
+        return
+      }
+      const { default: jsPDF } = await import('jspdf')
+      const { default: autoTable } = await import('jspdf-autotable')
+      const doc = new jsPDF('landscape')
+      doc.setFontSize(14)
+      doc.text('Laporan FDR', 14, 16)
+      const body = allData.map((r) => [
+        r.fdrNumber || '-',
+        r.name || '-',
+        r.customer?.name || '-',
+        r.status || '-',
+        r.fdrDate ? new Date(r.fdrDate).toLocaleDateString('id-ID') : '-',
+      ])
+      autoTable(doc, {
+        head: [['FDR Number', 'Nama Proyek', 'Customer', 'Status', 'Tanggal']],
+        body,
+        startY: 22,
+        styles: { fontSize: 8 },
+      })
+      doc.save('fdr.pdf')
+      toast.success({ title: 'Success', message: `PDF berisi ${allData.length} baris`, color: 'green', position: 'topRight', layout: 2 })
+    } catch (e) {
+      console.error(e)
+      toast.error({ title: 'Error', message: 'Gagal export PDF', color: 'red', position: 'topRight', layout: 2 })
+    }
+  }
+}
 const onSort = (e) => { if (e) fdrStore.setSort(e) }
 
 definePageMeta({
@@ -982,65 +674,6 @@ definePageMeta({
 .investment-summary-row-grand { padding-top: 12px; margin-top: 2px; }
 .investment-summary-row-grand .investment-summary-label { font-size: 1rem; font-weight: 700; color: #334155; }
 .investment-summary-row-grand .investment-summary-value { font-size: 1.15rem; font-weight: 800; color: #4f46e5; }
-
-.fdr-table-header {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.fdr-header-top-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-
-.fdr-rows-control {
-  min-width: 0;
-}
-
-.fdr-add-button-wrap {
-  flex: 0 0 auto;
-}
-
-.fdr-search-row {
-  width: 100%;
-}
-
-.fdr-search-input-wrap {
-  display: block;
-  width: 100%;
-}
-
-.fdr-search-input {
-  width: 100% !important;
-}
-
-@media (min-width: 768px) {
-  .fdr-table-header {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-  }
-
-  .fdr-header-top-row {
-    flex: 0 0 auto;
-  }
-
-  .fdr-search-row {
-    width: auto;
-  }
-
-  .fdr-search-input-wrap {
-    width: auto;
-  }
-
-  .fdr-search-input {
-    width: 20rem !important;
-  }
-}
 
 @media (max-width: 767.98px) {
   .fdr-reset-filter-btn {

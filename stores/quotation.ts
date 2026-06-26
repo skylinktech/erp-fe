@@ -114,6 +114,7 @@ interface QuotationState {
   quotations  : Quotation[]
   quotation   : Quotation | null
   loading     : boolean
+  saving      : boolean
   error       : any
   totalRecords: number
   params      : {
@@ -145,6 +146,7 @@ export const useQuotationStore = defineStore('quotation', {
     quotations: [],
     quotation : null,
     loading       : true,
+    saving        : false,
     error         : null,
     totalRecords  : 0,
     params        : {
@@ -254,9 +256,9 @@ export const useQuotationStore = defineStore('quotation', {
       }
     },
 
-    async saveQuotation() {
+    async saveQuotation(options?: { navigateToList?: boolean }) {
       const toast     = useToast();
-        this.loading = true;
+        this.saving = true;
         this.validationErrors = [];
         const { $api } = useNuxtApp();
         const userStore = useUserStore();
@@ -458,6 +460,9 @@ export const useQuotationStore = defineStore('quotation', {
                   position: 'topRight',
                   layout: 2,
                 });
+                if (options?.navigateToList) {
+                  await navigateTo('/sales/quotation')
+                }
             }
 
 
@@ -473,7 +478,7 @@ export const useQuotationStore = defineStore('quotation', {
               layout: 2,
             });
         } finally {
-            this.loading = false;
+            this.saving = false;
         }
     },
 

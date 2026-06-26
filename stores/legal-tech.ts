@@ -6,8 +6,9 @@ import { useUserStore } from '~/stores/user'
 
 export interface LeTechReviewForm {
   id?: number | null
-  iroId: string | null
+  purchaseRequestId: string | null
   quotationId: string | null
+  purchaseOrderId: string | null
   noLr?: string | null
   legalDocMatch: boolean
   installVerif: boolean
@@ -24,8 +25,9 @@ export interface LeTechReviewForm {
 
 export interface LeTechReview {
   id: number
-  iroId: string | null
+  purchaseRequestId: string | null
   quotationId: string
+  purchaseOrderId: string | null
   noLr: string
   legalDocMatch: boolean
   installVerif: boolean
@@ -47,6 +49,7 @@ export interface LeTechReview {
   currentApprovers?: Array<{ userId: number; fullName?: string; email?: string; source?: string }>
   approvalLogs?: ApprovalLogEntry[]
   quotation?: { id: string; noQuotation?: string; customerId?: number; customer?: { id: number; name?: string } }
+  purchaseOrder?: { id: string; noPo?: string; poType?: string; status?: string; date?: string; vendor?: { id: number; name?: string } }
   createdByUser?: { id: number; full_name?: string; fullName?: string }
   approvedByUser?: { id: number; full_name?: string; fullName?: string }
   rejectedByUser?: { id: number; full_name?: string; fullName?: string }
@@ -55,6 +58,7 @@ export interface LeTechReview {
 interface LeTechState {
   reviews: LeTechReview[]
   loading: boolean
+  saving: boolean
   error: any
   totalRecords: number
   params: {
@@ -82,8 +86,9 @@ interface LeTechState {
 
 const emptyForm = (): LeTechReviewForm => ({
   id: null,
-  iroId: null,
+  purchaseRequestId: null,
   quotationId: null,
+  purchaseOrderId: null,
   legalDocMatch: false,
   installVerif: false,
   serviceEligi: false,
@@ -101,6 +106,7 @@ export const useLegalTechStore = defineStore('legal-tech', {
   state: (): LeTechState => ({
     reviews: [],
     loading: true,
+    saving: false,
     error: null,
     totalRecords: 0,
     params: {
@@ -282,13 +288,13 @@ export const useLegalTechStore = defineStore('legal-tech', {
 
     async saveLeTechReview() {
       const toast = useToast()
-      this.loading = true
+      this.saving = true
       this.validationErrors = []
       const { $api } = useNuxtApp()
       const userStore = useUserStore()
 
       if (!this.form.quotationId) {
-        this.loading = false
+        this.saving = false
         toast.error({ title: 'Validasi', message: 'Quotation wajib dipilih', color: 'red', position: 'topRight', layout: 2 })
         return
       }
@@ -296,10 +302,13 @@ export const useLegalTechStore = defineStore('legal-tech', {
       const hasFiles = this.form.attachments && this.form.attachments.length > 0
       const hasExisting = this.form.existingAttachments && this.form.existingAttachments.length > 0
       const formData = new FormData()
-      if (this.form.iroId) {
-        formData.append('iroId', String(this.form.iroId))
+      if (this.form.purchaseRequestId) {
+        formData.append('purchaseRequestId', String(this.form.purchaseRequestId))
       }
       formData.append('quotationId', String(this.form.quotationId))
+      if (this.form.purchaseOrderId) {
+        formData.append('purchaseOrderId', String(this.form.purchaseOrderId))
+      }
       formData.append('legalDocMatch', String(this.form.legalDocMatch))
       formData.append('installVerif', String(this.form.installVerif))
       formData.append('serviceEligi', String(this.form.serviceEligi))
@@ -343,7 +352,7 @@ export const useLegalTechStore = defineStore('legal-tech', {
       } catch (e: any) {
         toast.error({ title: 'Error', message: e.message || 'Operasi gagal', color: 'red', position: 'topRight', layout: 2 })
       } finally {
-        this.loading = false
+        this.saving = false
       }
     },
 
@@ -454,8 +463,9 @@ export const useLegalTechStore = defineStore('legal-tech', {
         }
         this.form = {
           id: r.id,
-          iroId: r.iroId ?? r.iro_id ?? null,
+          purchaseRequestId: r.purchaseRequestId ?? r.purchase_request_id ?? null,
           quotationId: r.quotationId ?? r.quotation_id ?? r.quotation?.id ?? null,
+          purchaseOrderId: r.purchaseOrderId ?? r.purchase_order_id ?? r.purchaseOrder?.id ?? null,
           noLr: r.noLr ?? r.no_lr ?? '',
           legalDocMatch: !!(r.legalDocMatch ?? r.legal_doc_match ?? false),
           installVerif: !!(r.installVerif ?? r.install_verif ?? false),

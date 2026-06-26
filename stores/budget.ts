@@ -50,6 +50,7 @@ interface BudgetState {
   budgets: Budget[]
   selectedBudget: Budget | null
   loading: boolean
+  saving: boolean
   error: any
   totalRecords: number
   params: {
@@ -76,6 +77,7 @@ export const useBudgetStore = defineStore('budget', {
     budgets: [],
     selectedBudget: null,
     loading: false,
+    saving: false,
     error: null,
     totalRecords: 0,
     params: {
@@ -209,7 +211,7 @@ export const useBudgetStore = defineStore('budget', {
     },
 
     async saveBudget() {
-      this.loading = true
+      this.saving = true
       this.validationErrors = []
       const { $api } = useNuxtApp()
       const toast = useToast()
@@ -282,7 +284,7 @@ export const useBudgetStore = defineStore('budget', {
           })
         }
       } finally {
-        this.loading = false
+        this.saving = false
       }
     },
 

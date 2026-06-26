@@ -10,6 +10,7 @@ export interface Customer {
   email: string
   phone: string
   npwp: string
+  ktp: string
   type?: 'prospect' | 'regular' | 'vip'
   logo: string | File
 }
@@ -53,6 +54,7 @@ export const useCustomerStore = defineStore('customer', {
       email: '',
       phone: '',
       npwp: '',
+      ktp: '',
       type: '' as '' | 'prospect' | 'regular' | 'vip',
       logo: '',
     },
@@ -122,7 +124,7 @@ export const useCustomerStore = defineStore('customer', {
         const formData = new FormData()
         
         // Hanya kirim field yang diperlukan untuk backend (code digenerate otomatis di backend)
-        const fieldsToSend = ['name', 'address', 'email', 'phone', 'npwp', 'type'];
+        const fieldsToSend = ['name', 'address', 'email', 'phone', 'npwp', 'ktp', 'type'];
         fieldsToSend.forEach(key => {
             const value = this.form[key as keyof typeof this.form];
             if (value !== null && value !== undefined) {
@@ -322,6 +324,7 @@ export const useCustomerStore = defineStore('customer', {
                 email: '',
                 phone: '',
                 npwp: '',
+                ktp: '',
                 type: '',
                 logo: '',
             };
@@ -338,6 +341,7 @@ export const useCustomerStore = defineStore('customer', {
             email: '',
             phone: '',
             npwp: '',
+            ktp: '',
             type: '',
             logo: '',
         };

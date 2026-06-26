@@ -29,19 +29,19 @@ export interface ApprovalWorkflow {
 }
 
 const ENTITY_TYPES = [
-  { value: 'iro', label: 'IRO' },
+  { value: 'purchase_request', label: 'Purchase Request' },
   { value: 'quotation', label: 'Quotation' },
   { value: 'purchase_order', label: 'Purchase Order' },
   { value: 'sales_order', label: 'Sales Order' },
   { value: 'site_investment', label: 'Site Investment' },
+  { value: 'arf', label: 'ARF (Advanced Request Form)' },
   { value: 'fdr', label: 'Form Design Request' },
   { value: 'price_adjustment_request', label: 'Price Adjustment Request' },
-  { value: 'mgrf', label: 'MGRF' },
   { value: 'sales_return', label: 'Sales Return' },
-  { value: 'purchase_request', label: 'Purchase Request' },
-  { value: 'arf', label: 'ARF' },
   { value: 'le_tech_review', label: 'Legal-Tech Review' },
   { value: 'access_request', label: 'Access Request' },
+  { value: 'pegawai_kontrak', label: 'Kontrak Pegawai (HR)' },
+  { value: 'cuti', label: 'Pengajuan Cuti / Izin / Sakit (HR)' },
 ]
 
 export const useApprovalWorkflowsStore = defineStore('approval-workflows', {

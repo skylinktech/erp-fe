@@ -181,6 +181,7 @@ interface SalesInvoiceState {
   selectedSalesInvoice  : SalesInvoice | null
   originalSalesInvoice  : SalesInvoice | null
   loading             : boolean
+  saving              : boolean
   error               : any
   totalRecords        : number
   // ✅ NEW: Tambahkan state untuk statistik
@@ -228,6 +229,7 @@ export const useSalesInvoiceStore = defineStore('salesInvoice', {
     selectedSalesInvoice  : null,
     originalSalesInvoice  : null,
     loading             : true,
+    saving              : false,
     error               : null,
     totalRecords        : 0,
     // ✅ NEW: Tambahkan state untuk statistik
@@ -392,7 +394,7 @@ export const useSalesInvoiceStore = defineStore('salesInvoice', {
 
     async saveSalesInvoice() {
       const toast     = useToast();
-        this.loading = true;
+        this.saving = true;
         this.validationErrors = [];
         const { $api } = useNuxtApp();
         const userStore = useUserStore();
@@ -426,8 +428,8 @@ export const useSalesInvoiceStore = defineStore('salesInvoice', {
                 message: 'Perusahaan harus dipilih atau pilih Sales Order yang memiliki perusahaan',
                 color: 'red'
               });
-              this.loading = false;
-              return;
+              this.saving = false;
+              return false;
             }
             
             formData.append('perusahaanId', perusahaanIdToSend.toString());
@@ -609,6 +611,7 @@ export const useSalesInvoiceStore = defineStore('salesInvoice', {
                       color: 'red',
                       duration: 5000 // Tampilkan lebih lama untuk error validasi
                     });
+                    return false;
                 } else {
                     throw new Error(errorData.message || 'Gagal menyimpan data salesInvoice');
                 }
@@ -620,6 +623,7 @@ export const useSalesInvoiceStore = defineStore('salesInvoice', {
                   message: `Sales Invoice berhasil ${this.isEditMode ? 'diperbarui' : 'dibuat'}.`,
                   color: 'green'
                 });
+                return true;
             }
 
         } catch (error: any) {
@@ -630,8 +634,9 @@ export const useSalesInvoiceStore = defineStore('salesInvoice', {
               message: error.message || 'Operasi gagal',
               color: 'red'
             });
+            return false;
         } finally {
-            this.loading = false;
+            this.saving = false;
         }
     },
 

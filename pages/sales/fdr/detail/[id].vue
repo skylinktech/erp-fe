@@ -43,15 +43,6 @@
               </span>
             </div>
             <div class="d-flex flex-wrap gap-2">
-              <!-- Proceed to SI Button -->
-              <button
-                v-if="fdr.status === 'approved' && (userHasRole('superadmin') || userHasPermission('create_site_investment'))"
-                @click="openSiteInvestmentModal"
-                class="btn btn-success btn-sm"
-              >
-                <i class="ri-file-add-line me-1"></i>
-                Proceed to SI
-              </button>
               <div class="btn-group" role="group">
                 <button id="btnGroupDrop1" type="button" class="btn btn-outline-secondary dropdown-toggle btn-sm" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="d-none d-sm-block">Actions</span></button>
                 <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
@@ -64,16 +55,13 @@
                   <a v-if="fdr.status === 'pending' && (userHasRole('superadmin') || userHasPermission('reject_fdr'))" class="dropdown-item" href="javascript:void(0)" @click="onReject">
                     <i class="ri-close-line me-2"></i> Reject
                   </a>
-                  <a v-if="fdr.status === 'approved' && (userHasRole('superadmin') || userHasPermission('create_site_investment'))" class="dropdown-item" href="javascript:void(0)" @click="openSiteInvestmentModal">
-                    <i class="ri-file-add-line me-2"></i> Proceed to SI
-                  </a>
                   <a v-if="fdr.status !== 'cancelled' && (userHasRole('superadmin') || userHasPermission('approve_fdr'))" class="dropdown-item" href="javascript:void(0)" @click="onCancel">
                     <i class="ri-close-circle-line me-2"></i> Cancel
                   </a>
                   <a class="dropdown-item" href="javascript:void(0)" @click="onPrintFdr">
                     <i class="ri-printer-line me-2"></i> Cetak
                   </a>
-                  <a v-if="(userHasRole('superadmin') || userHasPermission('edit_fdr'))" class="dropdown-item" href="javascript:void(0)" @click="navigateTo('/sales/fdr?edit=' + fdr.id)">
+                  <a v-if="(userHasRole('superadmin') || userHasPermission('edit_fdr'))" class="dropdown-item" href="javascript:void(0)" @click="navigateTo('/sales/fdr/form/' + fdr.id)">
                     <i class="ri-edit-box-line me-2"></i> Edit
                   </a>
                   <a v-if="userHasRole('superadmin') || userHasPermission('delete_fdr')" class="dropdown-item text-danger" href="javascript:void(0)" @click="handleDelete">
@@ -101,7 +89,7 @@
                 <span class="process-arrow text-muted">&gt;</span>
                 <span class="process-pill process-pill-inactive">Customer Approval</span>
                 <span class="process-arrow text-muted">&gt;</span>
-                <span class="process-pill process-pill-inactive">IRO</span>
+                <span class="process-pill process-pill-inactive">Purchase Order</span>
                 <span class="process-arrow text-muted">&gt;</span>
                 <span class="process-pill process-pill-inactive">Implementation</span>
               </div>
@@ -430,12 +418,6 @@
     </div>
     <div class="content-backdrop fade"></div>
   </div>
-  <SiteInvestFormModal
-    modal-id="FdrSiteInvestModal"
-    :prefilled-fdr-id="fdr?.id"
-    @saved="onSiteInvestSaved"
-    @close="onSiteInvestClose"
-  />
   </div>
 </template>
 
@@ -443,15 +425,12 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useFdrStore } from '~/stores/fdr'
-import { useSiteInvestStore } from '~/stores/site-invest'
-import SiteInvestFormModal from '~/components/modal/SiteInvestFormModal.vue'
 import { usePermissions } from '~/composables/usePermissions'
 import { useImageUrl } from '~/composables/useImageUrl'
 import { useApprovalStatus } from '~/composables/useApprovalStatus'
 
 const route = useRoute()
 const fdrStore = useFdrStore()
-const siteInvestStore = useSiteInvestStore()
 const { userHasPermission, userHasRole } = usePermissions()
 const { getAttachmentUrl, getFileIcon, isImageFile } = useImageUrl()
 const { getStatusBadge, getApprovalStepJabatan } = useApprovalStatus()
@@ -657,25 +636,9 @@ async function handleDelete() {
   if (deleted) navigateTo('/sales/fdr')
 }
 
-function openSiteInvestmentModal() {
-  if (!fdr.value) return
-  siteInvestStore.openModalFromFdr(fdr.value.id)
-}
-
 function onPrintFdr() {
   if (!fdr.value?.id) return
   navigateTo({ path: '/sales/cetak-fdr', query: { id: fdr.value.id, print: 'true' } })
-}
-
-function onSiteInvestSaved() {
-  const toast = useToast()
-  toast.success({ title: 'Sukses', message: 'Site Investment berhasil dibuat dari FDR', color: 'green', position: 'topRight', layout: 2 })
-  load()
-  navigateTo('/sales/site-investment')
-}
-
-function onSiteInvestClose() {
-  // Modal closed
 }
 
 onMounted(() => load())

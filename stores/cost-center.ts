@@ -15,6 +15,7 @@ interface CostCenterState {
   costCenters: CostCenter[]
   selectedCostCenter: CostCenter | null
   loading: boolean
+  saving: boolean
   error: any
   totalRecords: number
   params: {
@@ -35,6 +36,7 @@ export const useCostCenterStore = defineStore('cost-center', {
     costCenters: [],
     selectedCostCenter: null,
     loading: false,
+    saving: false,
     error: null,
     totalRecords: 0,
     params: {
@@ -119,7 +121,7 @@ export const useCostCenterStore = defineStore('cost-center', {
     },
 
     async saveCostCenter() {
-      this.loading = true
+      this.saving = true
       this.validationErrors = []
       const { $api } = useNuxtApp()
       const toast = useToast()
@@ -189,7 +191,7 @@ export const useCostCenterStore = defineStore('cost-center', {
           })
         }
       } finally {
-        this.loading = false
+        this.saving = false
       }
     },
 

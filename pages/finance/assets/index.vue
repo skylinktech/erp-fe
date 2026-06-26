@@ -487,8 +487,8 @@
                         <button type="button" class="btn btn-outline-secondary" @click="assetStore.closeModal()">
                             Tutup
                         </button>
-                        <button type="submit" class="btn btn-primary" :disabled="loading">
-                            <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
+                        <button type="submit" class="btn btn-primary" :disabled="saving">
+                            <span v-if="saving" class="spinner-border spinner-border-sm me-2"></span>
                             {{ isEditMode ? 'Update' : 'Simpan' }}
                         </button>
                     </div>
@@ -554,6 +554,7 @@ const { userHasRole, userHasPermission } = usePermissions();
 // Computed
 const assets = computed(() => assetStore.assets)
 const loading = computed(() => assetStore.loading)
+const saving = computed(() => assetStore.saving)
 const totalRecords = computed(() => assetStore.totalRecords)
 const params = computed(() => assetStore.params)
 const form = computed(() => assetStore.form)

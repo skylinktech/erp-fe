@@ -260,8 +260,8 @@
                 <button type="button" class="btn btn-outline-secondary" @click="costCenterStore.closeModal()">
                   Tutup
                 </button>
-                <button type="submit" class="btn btn-primary" :disabled="loading">
-                  <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
+                <button type="submit" class="btn btn-primary" :disabled="saving">
+                  <span v-if="saving" class="spinner-border spinner-border-sm me-2"></span>
                   {{ isEditMode ? 'Update' : 'Simpan' }}
                 </button>
               </div>
@@ -306,6 +306,7 @@ const rowsPerPageOptionsArray = ref([10, 25, 50, 100])
 
 // Computed dari store
 const loading = computed(() => costCenterStore.loading)
+const saving = computed(() => costCenterStore.saving)
 const costCenters = computed(() => costCenterStore.costCenters || [])
 const totalRecords = computed(() => costCenterStore.totalRecords || 0)
 const totalCostCenters = computed(() => totalRecords.value)

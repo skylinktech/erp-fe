@@ -49,6 +49,8 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       '/hrd/departemen': 'view_department',
       '/hrd/divisi': 'view_divisi',
       '/hrd/jabatan': 'view_jabatan',
+      '/hrd/cuti': 'view_cuti',
+      '/hrd/cetak-cuti': 'view_cuti',
       '/company/perusahaan': 'view_perusahaan',
       '/company/cabang': 'view_cabang',
       '/admin/roles': 'view_role',
@@ -67,6 +69,26 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
     let requiredPermission = routePermissionMap[to.path]
     
     // Handle dynamic routes yang menggunakan pattern matching
+    if (!requiredPermission) {
+      if (/^\/hrd\/pegawai\/form(\/.*)?$/.test(to.path)) {
+        requiredPermission = 'view_pegawai'
+      } else if (/^\/hrd\/pegawai\/profile(\/.*)?$/.test(to.path)) {
+        requiredPermission = 'view_pegawai'
+      } else if (/^\/hrd\/cuti\/form(\/.*)?$/.test(to.path)) {
+        requiredPermission = 'create_cuti'
+      } else if (/^\/purchasing\/purchase-order\/form(\/.*)?$/.test(to.path)) {
+        requiredPermission = 'view_purchase_order'
+      } else if (/^\/implementation\/arf\/form(\/.*)?$/.test(to.path)) {
+        requiredPermission = 'access_arf'
+      } else if (/^\/implementation\/progress-tracker\/form(\/.*)?$/.test(to.path)) {
+        requiredPermission = 'access_progress_tracker'
+      } else if (/^\/purchasing\/purchase-request\/form(\/.*)?$/.test(to.path)) {
+        requiredPermission = 'access_purchase_request'
+      } else if (/^\/purchasing\/purchase-invoice\/form(\/.*)?$/.test(to.path)) {
+        requiredPermission = 'view_purchase_invoice'
+      }
+    }
+
     if (!requiredPermission) {
       // Cek untuk route yang menggunakan pattern matching
       for (const [routePattern, permission] of Object.entries(routePermissionMap)) {

@@ -51,7 +51,7 @@
                             </div>
                             <div class="col-sm-7">
                                 <div class="card-body text-sm-end text-center ps-sm-0">
-                                    <button v-if="userHasRole('superadmin') || userHasPermission('create_sales_return')" @click="salesReturnStore.openModal(null)" class="btn btn-primary mb-2 text-wrap add-new-role">
+                                    <button v-if="userHasRole('superadmin') || userHasPermission('create_sales_return')" @click="navigateTo('/sales/sales-return/form')" class="btn btn-primary mb-2 text-wrap add-new-role">
                                         Tambah Sales Return
                                     </button>
                                     <p class="mb-0 mt-1">Buat Sales Return baru</p>
@@ -215,7 +215,7 @@
                                                         </a>
                                                     </li>
                                                     <li v-if="userHasRole('superadmin') || (userHasPermission('edit_sales_return') && slotProps.data.status == 'draft')">
-                                                        <a class="dropdown-item" href="javascript:void(0)" @click="salesReturnStore.openModal(slotProps.data)">
+                                                        <a class="dropdown-item" href="javascript:void(0)" @click="navigateTo(`/sales/sales-return/form/${slotProps.data.id}`)">
                                                             <i class="ri-edit-box-line me-2"></i> Edit
                                                         </a>
                                                     </li>

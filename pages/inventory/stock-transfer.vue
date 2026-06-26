@@ -1,78 +1,111 @@
 <template>
 <div class="page-wrapper">
     <div class="content-wrapper">
-        <div class="container-xxl flex-grow-1 container-p-y">
+        <div class="container-xxl flex-grow-1 container-pt-12">
             <h4 class="mb-1">List Stock Transfer</h4>
             <p class="mb-6">
             List stock transfer yang terdaftar di sistem
             </p>
-            <!-- Stock Transfer cards -->
-            <div class="row g-6 mb-6">
-                <CardBox
-                    v-if="stats.total !== undefined"
-                    title="Total Stock Transfer"
-                    :total="stats.total + ' Stock Transfer'"
-                />
-                <CardBox
-                    v-if="stats.draft !== undefined"
-                    title="Total Stock Transfer Draft"
-                    :total="stats.draft + ' Stock Transfer'"
-                />
-                <CardBox
-                    v-if="stats.approved !== undefined"
-                    title="Total Stock Transfer Approved"
-                    :total="stats.approved + ' Stock Transfer'"
-                />
-                <CardBox
-                    v-if="stats.rejected !== undefined"
-                    title="Total Stock Transfer Rejected"
-                    :total="stats.rejected + ' Stock Transfer'"
-                />
-                <CardBox
-                    v-if="userHasRole('superadmin') || userHasPermission('create_stock_transfer')"
-                    :isAddButtonCard="true"
-                    image-src="/img/illustrations/add-new-role-illustration.png"
-                    image-alt="Tambah Stock Transfer"
-                    button-text="Tambah Stock Transfer"
-                    modal-target="#Modal" 
-                    @button-click="stockTransferStore.openModal()"
-                />
+                        <div class="row g-6 mb-6">
+                <div v-if="stats.total !== undefined" class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <p class="mb-0">Total</p>
+                                <div class="avatar">
+                                    <span class="avatar-initial rounded bg-label-primary"><i class="ri-exchange-line"></i></span>
+                                </div>
+                            </div>
+                            <div class="account-heading">
+                                <h5 class="mb-1">{{ stats.total }}</h5>
+                                <span class="text-muted">Stock transfer</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div v-if="stats.draft !== undefined" class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <p class="mb-0">Draft</p>
+                                <div class="avatar">
+                                    <span class="avatar-initial rounded bg-label-secondary"><i class="ri-draft-line"></i></span>
+                                </div>
+                            </div>
+                            <div class="account-heading">
+                                <h5 class="mb-1">{{ stats.draft }}</h5>
+                                <span class="text-muted">Draft</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div v-if="stats.approved !== undefined" class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <p class="mb-0">Approved</p>
+                                <div class="avatar">
+                                    <span class="avatar-initial rounded bg-label-success"><i class="ri-checkbox-circle-line"></i></span>
+                                </div>
+                            </div>
+                            <div class="account-heading">
+                                <h5 class="mb-1">{{ stats.approved }}</h5>
+                                <span class="text-muted">Approved</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div v-if="stats.rejected !== undefined" class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <p class="mb-0">Rejected</p>
+                                <div class="avatar">
+                                    <span class="avatar-initial rounded bg-label-danger"><i class="ri-close-circle-line"></i></span>
+                                </div>
+                            </div>
+                            <div class="account-heading">
+                                <h5 class="mb-1">{{ stats.rejected }}</h5>
+                                <span class="text-muted">Rejected</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="row g-6">
                 <div class="col-12">
-                    <h4 class="mt-6 mb-1">Total Stock Transfer</h4>
-                    <p class="mb-0">Find all of your company's administrator accounts and their associate Stock Transfer.</p>
+                    <h4 class="mt-6 mb-1">Data Stock Transfer</h4>
+                    <p class="mb-0">Kelola perpindahan stok antar gudang.</p>
                 </div>
                 <div class="col-12">
-                    <!-- stock transfer Table -->
-                    <div class="card">
-                        <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
-                            <div class="d-flex align-items-center me-3 mb-2 mb-md-0">
-                                <span class="me-2">Baris:</span>
-                                <Dropdown v-model="params.rows" :options="rowsPerPageOptionsArray" @change="stockTransferStore.handleRowsChange" placeholder="Jumlah" style="width: 8rem;" />
-                            </div>
-                            <div class="d-flex align-items-center">
-                                <div class="btn-group me-2">
-                                    <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <i class="ri-upload-2-line me-1"></i> Export
-                                    </button>
-                                    <ul class="dropdown-menu">
-                                        <li><a class="dropdown-item" href="javascript:void(0)" @click="exportData('csv')">CSV</a></li>
-                                        <li><a class="dropdown-item" href="javascript:void(0)" @click="exportData('pdf')">PDF</a></li>
-                                    </ul>
-                                </div>
-                                <div class="input-group">
-                                    <span class="p-input-icon-left">
-                                        <InputText
-                                            v-model="globalFilterValue"
-                                            placeholder="Cari Stock Transfer..."
-                                            class="w-full md:w-20rem"
-                                        />
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card-datatable table-responsive py-3 px-3">
+                                        <div class="card">
+                        <ListPageTableHeader
+                            :rows="Number(tableControls.rows)"
+                            :rows-options="rowsPerPageOptionsArray"
+                            :search="globalFilterValue"
+                            search-placeholder="Cari Stock Transfer..."
+                            :export-disabled="loading"
+                            :export-items="[
+                                { value: 'excel', label: 'Excel' },
+                                { value: 'pdf', label: 'PDF' },
+                            ]"
+                            @update:rows="onStockTransferToolbarRows"
+                            @update:search="(v) => { globalFilterValue = v }"
+                            @export="exportData"
+                        >
+                            <template #add>
+                                <button
+                                    v-if="userHasRole('superadmin') || userHasPermission('create_stock_transfer')"
+                                    type="button"
+                                    class="btn btn-primary"
+                                    @click="stockTransferStore.openModal()"
+                                >
+                                    <i class="ri-add-line me-1"></i>
+                                    Tambah Stock Transfer
+                                </button>
+                            </template>
+                        </ListPageTableHeader>
+<div class="card-datatable table-responsive py-3 px-3">
                         <MyDataTable 
                             ref="myDataTableRef"
                             :data="stockTransfers" 
@@ -373,11 +406,9 @@ import { useWarehouseStore } from '~/stores/warehouse'
 import { usePerusahaanStore } from '~/stores/perusahaan'
 import { useCabangStore } from '~/stores/cabang'
 import Modal from '~/components/modal/Modal.vue'
-import CardBox from '~/components/cards/Cards.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
+import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
 import Swal from 'sweetalert2'
-import Dropdown from 'primevue/dropdown'
-import InputText from 'primevue/inputtext'
 import vSelect from 'vue-select'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
 import 'vue-select/dist/vue-select.css'
@@ -415,6 +446,23 @@ const status       = ref([
 
 const rowsPerPageOptionsArray = ref([10, 25, 50, 100]);
 
+const tableControls = ref({
+    rows: 10,
+    search: '',
+});
+
+const handleRowsChange = (value) => {
+    const rowsValue = Number(value) || 10;
+    params.value.rows = rowsValue;
+    params.value.first = 0;
+    stockTransferStore.handleRowsChange();
+};
+
+const onStockTransferToolbarRows = (value) => {
+    tableControls.value.rows = Number(value) || 10;
+    handleRowsChange(value);
+};
+
 const modalTitle = computed(() => isEditMode.value ? 'Edit Stock Transfer' : 'Tambah Stock Transfer');
 const modalDescription = computed(() => isEditMode.value ? 'Silakan ubah data Stock Transfer di bawah ini.' : 'Silakan isi form di bawah ini untuk menambahkan Stock Transfer baru.');
 
@@ -432,6 +480,10 @@ watch(showModal, (newValue) => {
 });
 
 let searchDebounceTimer = null;
+watch(() => params.value.rows, (newValue) => {
+    tableControls.value.rows = Number(newValue) || 10;
+});
+
 watch(globalFilterValue, (newValue) => {
     if (searchDebounceTimer) {
         clearTimeout(searchDebounceTimer);
@@ -559,6 +611,9 @@ const loadLazyData = async () => {
 };
 
 onMounted(async () => {
+    tableControls.value.rows = Number(params.value.rows) || 10;
+    tableControls.value.search = globalFilterValue.value;
+
     permissionStore.fetchPermissions();
     userStore.loadUser();
     loadLazyData();
@@ -1153,7 +1208,6 @@ definePageMeta({
 });
 </script>
 
-<style scoped>
 <style scoped>
 
 /* Responsive adjustments */

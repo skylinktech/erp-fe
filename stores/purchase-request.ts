@@ -3,74 +3,79 @@ import { apiFetch } from '~/utils/apiFetch'
 import Swal from 'sweetalert2'
 import { useNuxtApp } from '#app'
 import { useUserStore } from '~/stores/user'
-import { useImageUrl } from '~/composables/useImageUrl'
 import type { ApprovalLogEntry } from '~/types/approval'
 
-interface PurchaseRequestItem {
-  id?: string
-  purchaseRequestId?: string
-  productId: number
-  warehouseId: number
-  unitId: number
-  quantity: number
-  price: number
+export interface PurchaseRequestItemForm {
+  productType: 'product' | 'service'
+  productName: string
+  specification?: string | null
+  productId?: number | null
+  warehouseId?: number | null
+  qty: number
+  uomId?: number | null
+  estimatedPrice: number
   subtotal: number
-  description?: string | null
-  additional?: boolean | null
-  product?: any
-  warehouse?: any
-  unit?: any
+  neededDate?: string | null
+  remarks?: string | null
+  product?: { id: number; name: string; sku?: string; priceSell?: number; unitId?: number }
+  warehouse?: { id: number; name: string; code?: string }
+  uom?: { id: number; name: string; symbol?: string }
 }
 
-interface Stats {
-  total: number | undefined
-  draft: number | undefined
-  pending: number | undefined
-  approved: number | undefined
-  rejected: number | undefined
-  received: number | undefined
+export interface ApproverInfo {
+  userId: number
+  fullName?: string
+  email?: string
+  source?: 'role' | 'jabatan' | 'user'
 }
 
 export interface PurchaseRequest {
-  id: string
-  mgrfId: string
-  vendorId: number | null
-  noPr: string
-  revision?: number
+  id: number
+  prNumber?: string
+  pr_number?: string
+  noPurchaseRequest?: string
+  requestDate?: string
+  request_date?: string
+  requestedBy?: number | null
+  departmentId?: number | null
+  budgetId?: number | null
+  warehouseId?: number | null
+  priority?: string
+  status: string
+  purpose?: string | null
+  neededDate?: string | null
+  approvalStatus?: string | null
+  rejectionReason?: string | null
   rejectReason?: string | null
-  reject_reason?: string | null
-  status: 'draft' | 'approved' | 'rejected' | 'received' | 'pending'
-  description?: string | null
+  totalAmount?: number
+  grandTotal?: number
+  currency?: string
+  notes?: string | null
   attachment?: string | null
-  total: number
   createdBy: number | null
-  approvedBy: number | null
-  rejectedBy: number | null
-  receivedBy: number | null
-  approvedAt?: string | null
-  rejectedAt?: string | null
-  receivedAt?: string | null
   createdAt: string
   updatedAt: string
-  currentApprovalStep?: number | null
-  currentApprovers?: Array<{ userId: number; fullName?: string; email?: string; source?: string }>
+  purchaseRequestItems?: PurchaseRequestItemForm[]
+  purchase_request_items?: PurchaseRequestItemForm[]
+  purchaseRequestDetails?: PurchaseRequestItemForm[]
+  requestedByUser?: { id: number; full_name?: string; fullName?: string; email?: string }
+  createdByUser?: { id: number; full_name?: string; fullName?: string; email?: string }
+  approvedByUser?: { id: number; full_name?: string; fullName?: string }
+  department?: { id: number; nm_departemen?: string; nmDepartemen?: string }
+  budget?: { id: number; budgetCode?: string; budget_code?: string; budgetName?: string; budget_name?: string }
+  warehouse?: { id: number; name: string; code?: string }
   approvalLogs?: ApprovalLogEntry[]
-  mgrf?: { id: number; noMgrf?: string }
-  vendor?: { id: number; name?: string }
-  createdByUser?: any
-  approvedByUser?: any
-  rejectedByUser?: any
-  receivedByUser?: any
-  purchaseRequestItems?: PurchaseRequestItem[]
+  currentApprovers?: ApproverInfo[]
+  signatureProgress?: { count: number; required: number }
+  nextApprovalStep?: number | null
 }
 
 interface PurchaseRequestState {
   purchaseRequests: PurchaseRequest[]
   purchaseRequest: PurchaseRequest | null
-  originalPurchaseRequest: PurchaseRequest | null
   loading: boolean
+  saving: boolean
   error: any
-  stats: Stats
   totalRecords: number
   params: {
     first: number
@@ -79,35 +84,77 @@ interface PurchaseRequestState {
     sortOrder: number | null
     draw: number
     search: string
-    mgrfId?: number | null
-    vendorId?: number | null
     status?: string | null
-    startDate?: string | null
-    endDate?: string | null
+    priority?: string | null
+    departmentId?: number | null
   }
-  form: any
+  form: {
+    id?: number | null
+    status?: string
+    requestDate: string
+    departmentId: number | null
+    budgetId: number | null
+    warehouseId: number | null
+    priority: string
+    purpose: string
+    neededDate: string
+    currency: string
+    notes: string
+    purchaseRequestItems: PurchaseRequestItemForm[]
+  }
   isEditMode: boolean
   showModal: boolean
   validationErrors: any[]
-  enableAdditional: boolean
+  statistics: {
+    totalPurchaseRequests: number
+    approvedPurchaseRequests: number
+    draftPurchaseRequests: number
+    pendingPurchaseRequests: number
+    rejectedPurchaseRequests: number
+    completedPurchaseRequests: number
+    totalValue: number
+  }
+}
+
+function recalcItem(d: PurchaseRequestItemForm) {
+  const qty = Number(d.qty) || 0
+  const estimatedPrice = Number(d.estimatedPrice) || 0
+  d.subtotal = qty * estimatedPrice
+}
+
+function mapItemFromApi(d: any): PurchaseRequestItemForm {
+  const qty = Number(d.qty ?? d.quantity) || 1
+  const estimatedPrice = Number(d.estimatedPrice ?? d.estimated_price ?? d.unitPrice ?? d.unit_price ?? 0)
+  return {
+    productType: d.productType ?? d.product_type ?? 'product',
+    productName: d.productName ?? d.product_name ?? d.product?.name ?? '',
+    specification: d.specification ?? null,
+    productId: d.productId ?? d.product_id ?? d.product?.id ?? null,
+    warehouseId: d.warehouseId ?? d.warehouse_id ?? d.warehouse?.id ?? null,
+    qty,
+    uomId: d.uomId ?? d.uom_id ?? d.uom?.id ?? null,
+    estimatedPrice,
+    subtotal: Number(d.subtotal) || qty * estimatedPrice,
+    neededDate: d.neededDate ?? d.needed_date ?? null,
+    remarks: d.remarks ?? d.notes ?? null,
+    product: d.product,
+    warehouse: d.warehouse,
+    uom: d.uom,
+  }
+}
+
+function todayIso() {
+  return new Date().toISOString().slice(0, 10)
 }
 
 export const usePurchaseRequestStore = defineStore('purchaseRequest', {
   state: (): PurchaseRequestState => ({
     purchaseRequests: [],
     purchaseRequest: null,
-    originalPurchaseRequest: null,
-    loading: true,
+    loading: false,
+    saving: false,
     error: null,
     totalRecords: 0,
-    stats: {
-      total: 0,
-      draft: 0,
-      pending: 0,
-      approved: 0,
-      rejected: 0,
-      received: 0,
-    },
     params: {
       first: 0,
       rows: 10,
@@ -115,628 +162,295 @@ export const usePurchaseRequestStore = defineStore('purchaseRequest', {
       sortOrder: 2,
       draw: 1,
       search: '',
-      mgrfId: null,
-      vendorId: null,
       status: null,
-      startDate: null,
-      endDate: null,
+      priority: null,
+      departmentId: null,
     },
     form: {
-      mgrfId: null,
-      vendorId: null,
-      description: '',
-      status: 'draft',
-      total: 0,
-      attachment: null,
-      attachmentPreview: null,
+      requestDate: todayIso(),
+      departmentId: null,
+      budgetId: null,
+      warehouseId: null,
+      priority: 'normal',
+      purpose: '',
+      neededDate: '',
+      currency: 'IDR',
+      notes: '',
       purchaseRequestItems: [],
     },
     isEditMode: false,
     showModal: false,
     validationErrors: [],
-    enableAdditional: false,
+    statistics: {
+      totalPurchaseRequests: 0,
+      approvedPurchaseRequests: 0,
+      draftPurchaseRequests: 0,
+      pendingPurchaseRequests: 0,
+      rejectedPurchaseRequests: 0,
+      completedPurchaseRequests: 0,
+      totalValue: 0,
+    },
   }),
 
+  getters: {
+    formGrandTotal: (state) =>
+      state.form.purchaseRequestItems.reduce((s, d) => s + (Number(d.subtotal) || 0), 0),
+  },
+
   actions: {
+    apiEndpoints() {
+      const { $api } = useNuxtApp()
+      return {
+        list: () => $api.purchaseRequest(),
+        details: (id: number | string) => $api.getPurchaseRequestDetails(id),
+        statistics: () => $api.purchaseRequestStatistics(),
+        approve: (id: number | string) => $api.approvePurchaseRequest(id),
+        reject: (id: number | string) => $api.rejectPurchaseRequest(id),
+        submit: (id: number | string) => $api.submitPurchaseRequest(id),
+      }
+    },
+
     async fetchPurchaseRequests(suppressError = false) {
+      const toast = useToast()
       this.loading = true
       this.error = null
-      const { $api } = useNuxtApp()
+      const api = this.apiEndpoints()
       try {
-        const url = new URL($api.purchaseRequest())
-        const params = new URLSearchParams({
-          page: Math.floor((this.params.first / this.params.rows) + 1).toString(),
-          rows: Math.floor(this.params.rows).toString(),
+        const url = new URL(api.list())
+        const sp = new URLSearchParams({
+          page: String(Math.floor(this.params.first / this.params.rows) + 1),
+          rows: String(this.params.rows),
           sortField: this.params.sortField || '',
-          sortOrder: this.params.sortOrder?.toString() || '',
-          draw: this.params.draw.toString(),
+          sortOrder: String(this.params.sortOrder ?? ''),
+          draw: String(this.params.draw),
           search: this.params.search || '',
           includeItems: 'true',
         })
+        if (this.params.status) sp.append('status', this.params.status)
+        if (this.params.priority) sp.append('priority', this.params.priority)
+        if (this.params.departmentId) sp.append('departmentId', String(this.params.departmentId))
+        url.search = sp.toString()
 
-        if (this.params.mgrfId) {
-          params.append('mgrfId', this.params.mgrfId.toString())
-        }
-        if (this.params.vendorId) {
-          params.append('vendorId', this.params.vendorId.toString())
-        }
-        if (this.params.status) {
-          params.append('status', this.params.status)
-        }
-        if (this.params.startDate) {
-          params.append('startDate', this.params.startDate)
-        }
-        if (this.params.endDate) {
-          params.append('endDate', this.params.endDate)
-        }
-
-        url.search = params.toString()
-
-        const response = await fetch(url, {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include'
-        })
-
-        if (!response.ok) throw new Error('Gagal mengambil data Purchase Request')
-
-        const result = await response.json()
-        this.purchaseRequests = result.data
-        this.totalRecords = result.meta.total
+        const res = await fetch(String(url), { method: 'GET', headers: { Accept: 'application/json' }, credentials: 'include' })
+        if (!res.ok) throw new Error('Gagal mengambil data Purchase Request')
+        const json = await res.json()
+        this.purchaseRequests = json.data ?? []
+        this.totalRecords = json.meta?.total ?? 0
       } catch (e: any) {
-        console.error('Gagal mengambil data Purchase Request:', e)
         this.error = e
-
         if (!suppressError) {
-          const toast = useToast()
-          toast.error({
-            title: 'Error',
-            message: `Tidak dapat memuat data Purchase Request: ${e?.message || e}`,
-            color: 'red'
-          })
+          toast.error({ title: 'Error', message: e.message, color: 'red', position: 'topRight', layout: 2 })
         }
       } finally {
         this.loading = false
       }
     },
 
-    async fetchStats() {
-      const { $api } = useNuxtApp()
-      const defaultStats = {
-        total: undefined,
-        draft: undefined,
-        pending: undefined,
-        approved: undefined,
-        rejected: undefined,
-        received: undefined,
-      }
+    async getPurchaseRequestDetails(id: number | string) {
+      this.loading = true
+      const api = this.apiEndpoints()
       try {
-        const response = await fetch($api.countPurchaseRequestByStatus(), {
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include'
-        })
-
-        if (response.ok) {
-          const result = await response.json()
-          this.stats = result
-        } else {
-          this.stats = defaultStats
-        }
-      } catch (error) {
-        console.error('Gagal mengambil data statistik:', error)
-        this.stats = defaultStats
+        const res = await apiFetch(api.details(id), { headers: { Accept: 'application/json' }, credentials: 'include' })
+        if (res?.data) this.purchaseRequest = res.data
+        else if (res?.id) this.purchaseRequest = res
+      } finally {
+        this.loading = false
       }
     },
 
-    async savePurchaseRequest() {
+    async fetchPurchaseRequestForEdit(id: number | string) {
+      const toast = useToast()
       this.loading = true
-      this.validationErrors = []
-      const { $api } = useNuxtApp()
+      const api = this.apiEndpoints()
+      try {
+        const data = await apiFetch(api.details(id), { headers: { Accept: 'application/json' }, credentials: 'include' })
+        if (data?.data) this.openModal(data.data)
+        else throw new Error('Data tidak valid')
+      } catch (e: any) {
+        toast.error({ title: 'Error', message: 'Gagal memuat data untuk edit', color: 'red', position: 'topRight', layout: 2 })
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async savePurchaseRequest(): Promise<boolean> {
+      const toast = useToast()
+      this.saving = true
+      const api = this.apiEndpoints()
       const userStore = useUserStore()
 
-      try {
-        const formData = new FormData()
-
-        const dataToAppend = { ...this.form }
-        delete dataToAppend.purchaseRequestItems
-        delete dataToAppend.mgrf
-        delete dataToAppend.vendor
-        delete dataToAppend.createdByUser
-        delete dataToAppend.approvedByUser
-        delete dataToAppend.rejectedByUser
-        delete dataToAppend.receivedByUser
-        delete dataToAppend.attachment
-        delete dataToAppend.attachmentPreview
-
-        Object.keys(dataToAppend).forEach(key => {
-          const value = dataToAppend[key]
-          if (value !== null && value !== undefined) {
-            formData.append(key, String(value))
-          }
-        })
-
-        if (!this.isEditMode && userStore.user && userStore.user.id) {
-          formData.append('createdBy', userStore.user.id.toString())
-        }
-
-        // Filter hanya item yang valid dan lengkap
-        const validItems = this.form.purchaseRequestItems.filter((item: any) => {
-          return item.productId && item.warehouseId && item.unitId && item.quantity && item.quantity > 0
-        })
-
-        if (validItems.length === 0) {
-          throw new Error('Minimal harus ada 1 item yang valid (Product, Warehouse, Unit, dan Quantity harus diisi)')
-        }
-
-        // Calculate total from valid items
-        let calculatedTotal = 0
-        const finalValidItems: any[] = []
-        
-        validItems.forEach((item: any) => {
-          const productId = Number(item.productId)
-          const warehouseId = Number(item.warehouseId)
-          const unitId = Number(item.unitId)
-          const quantity = Number(item.quantity) || 1
-          const price = Number(item.price) || 0
-          const subtotal = Number(item.subtotal) || (quantity * price)
-
-          if (!productId || !warehouseId || !unitId || quantity <= 0) {
-            return
-          }
-
-          let additionalValue = false
-          if (item.additional !== undefined && item.additional !== null) {
-            if (typeof item.additional === 'boolean') {
-              additionalValue = item.additional
-            } else if (typeof item.additional === 'string') {
-              additionalValue = item.additional.toLowerCase() === 'true' || item.additional === '1'
-            } else if (typeof item.additional === 'number') {
-              additionalValue = item.additional === 1
-            }
-          }
-
-          calculatedTotal += subtotal
-          finalValidItems.push({
-            productId,
-            warehouseId,
-            unitId,
-            quantity,
-            price,
-            subtotal,
-            additional: additionalValue,
-            description: item.description || null
-          })
-        })
-
-        // Append items dengan index yang benar
-        finalValidItems.forEach((item: any, i: number) => {
-          formData.append(`purchaseRequestItems[${i}][productId]`, String(item.productId))
-          formData.append(`purchaseRequestItems[${i}][warehouseId]`, String(item.warehouseId))
-          formData.append(`purchaseRequestItems[${i}][unitId]`, String(item.unitId))
-          formData.append(`purchaseRequestItems[${i}][quantity]`, String(item.quantity))
-          formData.append(`purchaseRequestItems[${i}][price]`, String(item.price))
-          formData.append(`purchaseRequestItems[${i}][subtotal]`, String(item.subtotal))
-          formData.append(`purchaseRequestItems[${i}][additional]`, item.additional ? 'true' : 'false')
-          if (item.description) {
-            formData.append(`purchaseRequestItems[${i}][description]`, String(item.description))
-          }
-        })
-
-        // Append total
-        formData.append('total', String(calculatedTotal))
-
-        if (this.form.attachment instanceof File) {
-          formData.append('attachment', this.form.attachment)
-        }
-
-        const method = this.isEditMode ? 'PUT' : 'POST'
-        const url = this.isEditMode ? `${$api.purchaseRequest()}/${this.form.id}` : $api.purchaseRequest()
-
-        const response = await fetch(url, {
-          method,
-          headers: {
-            'Accept': 'application/json',
-          },
-          body: formData,
-          credentials: 'include',
-        })
-
-        if (!response.ok) {
-          const errorData = await response.json()
-          if (response.status === 422) {
-            this.validationErrors = errorData.errors
-            const toast = useToast()
-            toast.error({
-              title: 'Error',
-              message: 'Gagal Validasi',
-              color: 'red'
-            })
-          } else {
-            throw new Error(errorData.message || 'Gagal menyimpan data Purchase Request')
-          }
-        } else {
-          this.closeModal()
-          await this.fetchPurchaseRequests()
-          const toast = useToast()
-          toast.success({
-            title: 'Success',
-            message: `Purchase Request berhasil ${this.isEditMode ? 'diperbarui' : 'dibuat'}.`,
-            color: 'green',
-            position: 'topRight',
-            layout: 2,
-          })
-        }
-      } catch (error: any) {
-        this.validationErrors = []
-        const toast = useToast()
-        toast.error({
-          title: 'Error',
-          message: error.message || 'Operasi gagal',
-          color: 'red',
-          position: 'topRight',
-          layout: 2,
-        })
-      } finally {
-        this.loading = false
-      }
-    },
-
-    async deletePurchaseRequest(id: string) {
-      this.loading = true
-      const { $api } = useNuxtApp()
-
-      const result = await Swal.fire({
-        title: 'Apakah Anda yakin?',
-        text: "Data yang dihapus tidak dapat dikembalikan!",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Ya, hapus!',
-        cancelButtonText: 'Batal'
-      })
-
-      if (!result.isConfirmed) {
-        this.loading = false
-        return
-      }
-
-      try {
-        const response = await fetch(`${$api.purchaseRequest()}/${id}`, {
-          method: 'DELETE',
-          headers: {
-            'Accept': 'application/json',
-          },
-          credentials: 'include',
-        })
-
-        if (!response.ok) {
-          const errorData = await response.json()
-          throw new Error(errorData.message || 'Gagal menghapus Purchase Request')
-        }
-
-        await this.fetchPurchaseRequests()
-        const toast = useToast()
-        toast.success({
-          title: 'Success',
-          message: 'Purchase Request berhasil dihapus.',
-          color: 'green',
-          position: 'topRight',
-          layout: 2,
-        })
-      } catch (error: any) {
-        const toast = useToast()
-        toast.error({
-          title: 'Error',
-          message: error.message || 'Gagal menghapus Purchase Request',
-          color: 'red',
-          position: 'topRight',
-          layout: 2,
-        })
-      } finally {
-        this.loading = false
-      }
-    },
-
-    async approvePurchaseRequest(prId: string, remarks?: string, skipConfirm = false) {
-      this.loading = true
-      this.error = null
-      const { $api } = useNuxtApp()
-      const toast = useToast()
-      try {
-        if (!skipConfirm) {
-          const result = await Swal.fire({
-            title: 'Approve Purchase Request',
-            text: 'Apakah Anda yakin akan menyetujui Purchase Request ini?',
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Ya, Approve',
-            cancelButtonText: 'Batal',
-          })
-          if (!result.isConfirmed) {
-            this.loading = false
-            return false
-          }
-        }
-
-        const response = await fetch($api.approvePurchaseRequest(prId), {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify({ remarks: remarks ?? undefined }),
-        })
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: 'Gagal mengapprove Purchase Request' }))
-          throw new Error(errorData.message || 'Gagal mengapprove Purchase Request')
-        }
-
-        await this.fetchPurchaseRequests()
-        toast.success({
-          title: 'Success',
-          message: 'Purchase Request berhasil diapprove.',
-          color: 'green',
-          position: 'topRight',
-          layout: 2,
-        })
-
-        return true
-      } catch (error: any) {
-        console.error('Error approving Purchase Request:', error)
-        toast.error({
-          title: 'Error',
-          message: error.message || 'Gagal mengapprove Purchase Request.',
-          color: 'red',
-          position: 'topRight',
-          layout: 2,
-        })
+      const validItems = this.form.purchaseRequestItems.filter(
+        (d) => d.productName?.trim() && (Number(d.qty) || 0) > 0
+      )
+      if (!validItems.length) {
+        this.saving = false
+        toast.error({ title: 'Validasi', message: 'Minimal 1 item dengan nama barang dan qty valid', color: 'red', position: 'topRight', layout: 2 })
         return false
-      } finally {
-        this.loading = false
       }
-    },
 
-    async rejectPurchaseRequest(prId: string, rejectReason?: string) {
-      this.loading = true
-      this.error = null
-      const { $api } = useNuxtApp()
-      const toast = useToast()
-      let reason = rejectReason
-      if (reason === undefined) {
-        const result = await Swal.fire({
-          title: 'Reject Purchase Request',
-          html: `
-            <p class="mb-4" style="text-align: center;">Apakah Anda yakin akan menolak Purchase Request ini?</p>
-            <div class="swal-reject-form" style="text-align: left; max-width: 100%;">
-              <label for="swal-reject-reason" class="d-block mb-2 fw-medium" style="font-size: 0.9375rem;">Alasan penolakan <span class="text-danger">*</span></label>
-              <textarea id="swal-reject-reason" class="form-control" rows="4" placeholder="Masukkan alasan penolakan..." style="width: 100%; padding: 0.5rem 0.75rem; border: 1px solid #d9dee3; border-radius: 0.375rem; resize: vertical; font-size: 0.9375rem;" required></textarea>
-            </div>
-          `,
-          icon: 'warning',
-          showCancelButton: true,
-          confirmButtonColor: '#d33',
-          cancelButtonColor: '#6c757d',
-          confirmButtonText: 'Ya, Reject',
-          cancelButtonText: 'Batal',
-          preConfirm: () => {
-            const el = document.getElementById('swal-reject-reason') as HTMLTextAreaElement
-            const val = el?.value?.trim() || ''
-            if (!val) {
-              Swal.showValidationMessage('Alasan penolakan wajib diisi')
-              return false
-            }
-            return val
-          },
+      const body: Record<string, any> = {
+        requestDate: this.form.requestDate || todayIso(),
+        departmentId: this.form.departmentId,
+        budgetId: this.form.budgetId,
+        warehouseId: this.form.warehouseId,
+        priority: this.form.priority || 'normal',
+        purpose: this.form.purpose?.trim() || null,
+        neededDate: this.form.neededDate || null,
+        currency: this.form.currency || 'IDR',
+        notes: this.form.notes?.trim() || null,
+        createdBy: this.isEditMode ? undefined : (userStore.user?.id ?? null),
+        purchaseRequestItems: validItems.map((d) => ({
+          productType: d.productType || 'product',
+          productName: d.productName.trim(),
+          specification: d.specification?.trim() || null,
+          productId: d.productId,
+          warehouseId: d.warehouseId,
+          qty: Number(d.qty) || 1,
+          uomId: d.uomId,
+          estimatedPrice: Number(d.estimatedPrice) || 0,
+          subtotal: Number(d.subtotal) || 0,
+          neededDate: d.neededDate || null,
+          remarks: d.remarks?.trim() || null,
+        })),
+      }
+
+      const isEdit = this.isEditMode && this.form.id
+      const url = isEdit ? `${api.list()}/${this.form.id}` : api.list()
+      const method = isEdit ? 'PUT' : 'POST'
+
+      try {
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(body),
         })
-        if (!result.isConfirmed || typeof result.value !== 'string') {
-          this.loading = false
+        if (!res.ok) {
+          const ed = await res.json().catch(() => ({}))
+          toast.error({ title: 'Error', message: ed.message || 'Gagal menyimpan', color: 'red', position: 'topRight', layout: 2 })
           return false
         }
-        reason = result.value
-      }
-      try {
-        const response = await fetch($api.rejectPurchaseRequest(prId), {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify({ reject_reason: reason || '' }),
-        })
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: 'Gagal mereject Purchase Request' }))
-          throw new Error(errorData.message || 'Gagal mereject Purchase Request')
-        }
-
+        this.closeModal()
         await this.fetchPurchaseRequests()
-        toast.success({
-          title: 'Success',
-          message: 'Purchase Request berhasil direject.',
-          color: 'green',
-          position: 'topRight',
-          layout: 2,
-        })
-
+        await this.fetchStatistics()
+        toast.success({ title: 'Sukses', message: `Purchase Request berhasil ${this.isEditMode ? 'diperbarui' : 'dibuat'}`, color: 'green', position: 'topRight', layout: 2 })
         return true
-      } catch (error: any) {
-        console.error('Error rejecting Purchase Request:', error)
-        toast.error({
-          title: 'Error',
-          message: error.message || 'Gagal mereject Purchase Request.',
-          color: 'red',
-          position: 'topRight',
-          layout: 2,
-        })
-        return false
-      } finally {
-        this.loading = false
-      }
-    },
-
-    async submitPurchaseRequest(prId: string) {
-      this.loading = true
-      this.error = null
-      const { $api } = useNuxtApp()
-      try {
-        const response = await fetch($api.submitPurchaseRequest(prId), {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          credentials: 'include',
-        })
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: 'Gagal submit Purchase Request' }))
-          throw new Error(errorData.message || 'Gagal submit Purchase Request')
-        }
-
-        await this.fetchPurchaseRequests()
-        await this.fetchStats()
-        const toast = useToast()
-        toast.success({
-          title: 'Success',
-          message: 'Purchase Request berhasil di-submit (status: pending).',
-          color: 'green',
-          position: 'topRight',
-          layout: 2,
-        })
-
-        return true
-      } catch (error: any) {
-        console.error('Error submit Purchase Request:', error)
-        const toast = useToast()
-        toast.error({
-          title: 'Error',
-          message: error.message || 'Gagal submit Purchase Request.',
-          color: 'red',
-          position: 'topRight',
-          layout: 2,
-        })
-        return false
-      } finally {
-        this.loading = false
-      }
-    },
-
-    async getPurchaseRequestDetails(prId: string) {
-      this.loading = true
-      this.error = null
-      const { $api } = useNuxtApp()
-
-      try {
-        const url = `${$api.purchaseRequest()}/${prId}`
-        console.log('Fetching Purchase Request details from:', url)
-        
-        const resData = await apiFetch(url, {
-          headers: {
-            'Accept': 'application/json',
-          },
-          credentials: 'include',
-        })
-
-        console.log('Purchase Request details response:', resData)
-
-        if (resData && resData.data) {
-          this.purchaseRequest = resData.data
-        } else {
-          throw new Error('Struktur data tidak valid diterima dari API getPurchaseRequestDetails.')
-        }
       } catch (e: any) {
-        console.error('Error details:', e)
-        console.error('Purchase Request ID:', prId)
-        this.error = e
-        throw new Error(e.message || 'Gagal mengambil detail Purchase Request')
+        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'topRight', layout: 2 })
+        return false
+      } finally {
+        this.saving = false
+      }
+    },
+
+    async deletePurchaseRequest(id: number | string) {
+      const toast = useToast()
+      this.loading = true
+      const api = this.apiEndpoints()
+      const ok = await Swal.fire({ title: 'Yakin?', text: 'Data akan dihapus (soft delete).', icon: 'warning', showCancelButton: true, confirmButtonText: 'Ya, hapus' })
+      if (!ok.isConfirmed) { this.loading = false; return }
+      try {
+        const res = await fetch(`${api.list()}/${id}`, { method: 'DELETE', headers: { Accept: 'application/json' }, credentials: 'include' })
+        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message)
+        await this.fetchPurchaseRequests()
+        await this.fetchStatistics()
+        toast.success({ title: 'Sukses', message: 'Purchase Request dihapus', color: 'green', position: 'topRight', layout: 2 })
+      } catch (e: any) {
+        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'topRight', layout: 2 })
       } finally {
         this.loading = false
       }
     },
 
-    async openModal(prData: PurchaseRequest | null = null) {
-      this.isEditMode = !!prData
-      this.validationErrors = []
+    async approvePurchaseRequest(id: number | string, remarks?: string) {
+      const toast = useToast()
+      this.loading = true
+      const api = this.apiEndpoints()
+      try {
+        const res = await fetch(api.approve(id), { method: 'PATCH', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, credentials: 'include', body: JSON.stringify({ remarks }) })
+        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message)
+        await this.fetchPurchaseRequests()
+        await this.fetchStatistics()
+        toast.success({ title: 'Sukses', message: 'Berhasil diapprove', color: 'green', position: 'topRight', layout: 2 })
+        return true
+      } catch (e: any) {
+        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'topRight', layout: 2 })
+        return false
+      } finally {
+        this.loading = false
+      }
+    },
 
-      if (prData) {
-        await this.getPurchaseRequestDetails(prData.id)
-        const fullData = this.purchaseRequest
+    async rejectPurchaseRequest(id: number | string, reason?: string) {
+      const toast = useToast()
+      this.loading = true
+      const api = this.apiEndpoints()
+      try {
+        const res = await fetch(api.reject(id), { method: 'PATCH', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, credentials: 'include', body: JSON.stringify({ rejection_reason: reason, reject_reason: reason }) })
+        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message)
+        await this.fetchPurchaseRequests()
+        await this.fetchStatistics()
+        toast.success({ title: 'Sukses', message: 'Berhasil direject', color: 'green', position: 'topRight', layout: 2 })
+        return true
+      } catch (e: any) {
+        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'topRight', layout: 2 })
+        return false
+      } finally {
+        this.loading = false
+      }
+    },
 
-        if (!fullData) {
-          const toast = useToast()
-          toast.error({
-            title: 'Error',
-            message: 'Tidak dapat memuat data Purchase Request.',
-            color: 'red',
-            position: 'topRight',
-            layout: 2,
-          })
-          return
+    async submitPurchaseRequest(id: number | string) {
+      const toast = useToast()
+      const api = this.apiEndpoints()
+      try {
+        const res = await fetch(api.submit(id), { method: 'PATCH', headers: { Accept: 'application/json' }, credentials: 'include' })
+        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message)
+        await this.fetchPurchaseRequests()
+        await this.fetchStatistics()
+        toast.success({ title: 'Sukses', message: 'Berhasil di-submit', color: 'green', position: 'topRight', layout: 2 })
+        return true
+      } catch (e: any) {
+        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'topRight', layout: 2 })
+        return false
+      }
+    },
+
+    openModal(data: PurchaseRequest | null = null) {
+      this.loading = false
+      this.saving = false
+      this.isEditMode = !!data
+      if (data) {
+        const raw = data as any
+        const items = raw.purchaseRequestItems ?? raw.purchase_request_items ?? raw.purchaseRequestDetails ?? []
+        this.form = {
+          id: raw.id,
+          status: raw.status ?? 'draft',
+          requestDate: (raw.requestDate ?? raw.request_date ?? todayIso()).toString().slice(0, 10),
+          departmentId: raw.departmentId ?? raw.department_id ?? null,
+          budgetId: raw.budgetId ?? raw.budget_id ?? null,
+          warehouseId: raw.warehouseId ?? raw.warehouse_id ?? null,
+          priority: raw.priority ?? 'normal',
+          purpose: raw.purpose ?? raw.description ?? '',
+          neededDate: (raw.neededDate ?? raw.needed_date ?? '')?.toString?.()?.slice(0, 10) ?? '',
+          currency: raw.currency ?? 'IDR',
+          notes: raw.notes ?? '',
+          purchaseRequestItems: items.map(mapItemFromApi),
         }
-
-        this.originalPurchaseRequest = JSON.parse(JSON.stringify(fullData))
-        const formatDate = (dateStr: string | null) => dateStr ? new Date(dateStr).toISOString().split('T')[0] : null
-
-        const formData: { [key: string]: any } = {
-          ...JSON.parse(JSON.stringify(fullData)),
-        }
-
-        const dateFields = ['approvedAt', 'rejectedAt', 'receivedAt']
-        dateFields.forEach(field => {
-          if (formData[field]) {
-            formData[field] = formatDate(formData[field])
-          }
-        })
-
-        // Normalisasi item
-        const nm = (v: any) => (v !== null && v !== undefined && v !== '') ? Number(v) : 0
-        if (Array.isArray(formData.purchaseRequestItems)) {
-          formData.purchaseRequestItems.forEach((item: any) => {
-            const q = nm(item.quantity) || 1
-            const p = nm(item.price) || 0
-            item.quantity = q
-            item.price = p
-            item.subtotal = nm(item.subtotal) || q * p
-            if (item.additional === undefined || item.additional === null) {
-              item.additional = false
-            } else {
-              item.additional = item.additional === true || item.additional === 'true' || item.additional === 1
-            }
-          })
-        }
-
-        // Set total dari data atau hitung dari items
-        if (formData.total) {
-          formData.total = Number(formData.total) || 0
-        } else if (Array.isArray(formData.purchaseRequestItems)) {
-          formData.total = formData.purchaseRequestItems.reduce((sum: number, item: any) => sum + (Number(item.subtotal) || 0), 0)
-        } else {
-          formData.total = 0
-        }
-
-        this.form = formData
-        this.form.attachment = null
-        const { getAttachmentUrl } = useImageUrl()
-        this.form.attachmentPreview = fullData.attachment ? getAttachmentUrl(fullData.attachment) : null
-
-        if (this.form.purchaseRequestItems && this.form.purchaseRequestItems.length === 0) {
-          this.addItem()
-        }
-        this.enableAdditional = false
       } else {
-        this.resetForm()
-        this.addItem()
+        this.form = {
+          status: 'draft',
+          requestDate: todayIso(),
+          departmentId: null,
+          budgetId: null,
+          warehouseId: null,
+          priority: 'normal',
+          purpose: '',
+          neededDate: '',
+          currency: 'IDR',
+          notes: '',
+          purchaseRequestItems: [],
+        }
       }
       this.showModal = true
     },
@@ -744,72 +458,130 @@ export const usePurchaseRequestStore = defineStore('purchaseRequest', {
     closeModal() {
       this.showModal = false
       this.isEditMode = false
-      this.originalPurchaseRequest = null
-      this.resetForm()
-      this.validationErrors = []
-    },
-
-    resetForm() {
+      this.saving = false
+      this.loading = false
       this.form = {
-        mgrfId: null,
-        vendorId: null,
-        description: '',
         status: 'draft',
-        total: 0,
-        attachment: null,
-        attachmentPreview: null,
+        requestDate: todayIso(),
+        departmentId: null,
+        budgetId: null,
+        warehouseId: null,
+        priority: 'normal',
+        purpose: '',
+        neededDate: '',
+        currency: 'IDR',
+        notes: '',
         purchaseRequestItems: [],
       }
-      this.enableAdditional = false
     },
 
-    addItem(additional: boolean = false) {
-      if (!this.form.purchaseRequestItems) {
-        this.form.purchaseRequestItems = []
-      }
+    addItem() {
       this.form.purchaseRequestItems.push({
+        productType: 'product',
+        productName: '',
         productId: null,
-        warehouseId: null,
-        unitId: null,
-        quantity: 1,
-        price: 0,
+        warehouseId: this.form.warehouseId,
+        qty: 1,
+        uomId: null,
+        estimatedPrice: 0,
         subtotal: 0,
-        additional: additional,
-        description: '',
+        remarks: '',
       })
     },
 
-    removeItem(index: number) {
+    removeDetail(index: number) {
       this.form.purchaseRequestItems.splice(index, 1)
     },
 
-    setPagination(event: any) {
-      this.params.first = Number(event.first) || 0
-      this.params.rows = Number(event.rows) || 10
+    onProductChange(index: number, product: any) {
+      const row = this.form.purchaseRequestItems[index]
+      if (!row) return
+      row.product = product
+      row.productId = product?.id ?? null
+      row.productName = product?.name ?? row.productName
+      row.productType = 'product'
+      row.uomId = product?.unitId ?? product?.unit_id ?? row.uomId
+      const price = Number(product?.priceSell ?? product?.price_sell ?? product?.price ?? 0)
+      if (price > 0) row.estimatedPrice = price
+      recalcItem(row)
+    },
+
+    onQtyOrPriceChange(index: number) {
+      const row = this.form.purchaseRequestItems[index]
+      if (row) recalcItem(row)
+    },
+
+    setPagination(e: any) {
+      this.params.first = Number(e?.first) || 0
+      this.params.rows = Number(e?.rows) || 10
       this.fetchPurchaseRequests()
     },
 
-    setSort(event: any) {
-      this.params.sortField = event.sortField || null
-      this.params.sortOrder = Number(event.sortOrder) || null
+    setSort(e: any) {
+      this.params.sortField = e?.sortField ?? null
+      this.params.sortOrder = e?.sortOrder ?? null
       this.fetchPurchaseRequests()
     },
 
-    setSearch(value: string) {
-      this.params.search = value
+    setSearch(v: string) {
+      this.params.search = v || ''
       this.params.first = 0
       this.fetchPurchaseRequests()
     },
 
-    setFilters(filters: { mgrfId?: number | null, vendorId?: number | null, status?: string | null, startDate?: string | null, endDate?: string | null, search?: string }) {
-      this.params.mgrfId = filters.mgrfId
-      this.params.vendorId = filters.vendorId
-      this.params.status = filters.status
-      this.params.startDate = filters.startDate
-      this.params.endDate = filters.endDate
-      this.params.search = filters.search || ''
+    setFilters(f: { status?: string | null; priority?: string | null; departmentId?: number | null; search?: string }) {
+      if (f.status !== undefined) this.params.status = f.status
+      if (f.priority !== undefined) this.params.priority = f.priority
+      if (f.departmentId !== undefined) this.params.departmentId = f.departmentId
+      if (f.search !== undefined) this.params.search = f.search
       this.params.first = 0
       this.fetchPurchaseRequests()
     },
-  }
+
+    async fetchStatistics() {
+      const api = this.apiEndpoints()
+      try {
+        const res = await fetch(api.statistics(), { headers: { Accept: 'application/json' }, credentials: 'include' })
+        if (!res.ok) return
+        const json = await res.json()
+        const d = json.data ?? {}
+        this.statistics = {
+          totalPurchaseRequests: d.totalPurchaseRequests ?? 0,
+          approvedPurchaseRequests: d.approvedPurchaseRequests ?? 0,
+          draftPurchaseRequests: d.draftPurchaseRequests ?? 0,
+          pendingPurchaseRequests: d.pendingPurchaseRequests ?? 0,
+          rejectedPurchaseRequests: d.rejectedPurchaseRequests ?? 0,
+          completedPurchaseRequests: d.completedPurchaseRequests ?? 0,
+          totalValue: d.totalValue ?? 0,
+        }
+      } catch (e) {
+        console.error(e)
+      }
+    },
+  },
 })
+
+export function getPurchaseRequestNo(pr: PurchaseRequest | null | undefined): string {
+  if (!pr) return ''
+  return pr.prNumber ?? pr.pr_number ?? pr.noPurchaseRequest ?? pr.no_purchase_request ?? ''
+}
+
+export function getPurchaseRequestTotal(pr: PurchaseRequest | null | undefined): number {
+  if (!pr) return 0
+  return Number(pr.totalAmount ?? pr.grandTotal ?? 0)
+}
+
+export function getPurchaseRequestItemsList(pr: PurchaseRequest | null | undefined): PurchaseRequestItemForm[] {
+  if (!pr) return []
+  return (
+    pr.purchaseRequestItems ??
+    pr.purchase_request_items ??
+    pr.purchaseRequestDetails ??
+    []
+  )
+}
+
+/** @deprecated use getPurchaseRequestItemsList */
+export function getPurchaseRequestDetailsList(pr: PurchaseRequest | null | undefined): PurchaseRequestItemForm[] {
+  return getPurchaseRequestItemsList(pr)
+}

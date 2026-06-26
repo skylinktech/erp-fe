@@ -133,6 +133,7 @@ interface PurchaseInvoiceState {
   selectedPurchaseInvoice: PurchaseInvoice | null
   originalPurchaseInvoice: PurchaseInvoice | null
   loading                : boolean
+  saving                 : boolean
   error                  : any
   totalRecords           : number
   // ✅ NEW: Tambahkan state untuk statistik
@@ -180,6 +181,7 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
     selectedPurchaseInvoice: null,
     originalPurchaseInvoice: null,
     loading                : true,
+    saving                 : false,
     error                  : null,
     totalRecords           : 0,
       // ✅ NEW: Tambahkan state untuk statistik
@@ -349,7 +351,7 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
 
     async savePurchaseInvoice() {
       const toast     = useToast();
-        this.loading = true;
+        this.saving = true;
         this.validationErrors = [];
         const { $api } = useNuxtApp();
         const userStore = useUserStore();
@@ -442,6 +444,7 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
                       position: 'topRight',
                       layout: 2
                     });
+                    return false;
                 } else {
                     throw new Error(errorData.message || 'Gagal menyimpan data Purchase Invoice');
                 }
@@ -455,6 +458,7 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
                   position: 'topRight',
                   layout: 2
                 });
+                return true;
             }
 
         } catch (error: any) {
@@ -467,8 +471,9 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
               position: 'topRight',
               layout: 2
             });
+            return false;
         } finally {
-            this.loading = false;
+            this.saving = false;
         }
     },
 

@@ -6,36 +6,71 @@
         Kelola permintaan akses pegawai terhadap modul dan menu aplikasi
       </p>
 
-      <!-- Stats cards -->
       <div class="row g-6 mb-6">
-        <CardBox
-          v-if="stats.draft !== undefined"
-          title="Draft"
-          :total="stats.draft + ' Request'"
-        />
-        <CardBox
-          v-if="stats.pending !== undefined"
-          title="Pending"
-          :total="stats.pending + ' Request'"
-        />
-        <CardBox
-          v-if="stats.approved !== undefined"
-          title="Approved"
-          :total="stats.approved + ' Request'"
-        />
-        <CardBox
-          v-if="stats.rejected !== undefined"
-          title="Rejected"
-          :total="stats.rejected + ' Request'"
-        />
-        <CardBox
-          v-if="userHasRole('superadmin') || userHasRole('admin')"
-          :isAddButtonCard="true"
-          image-src="/img/illustrations/add-new-role-illustration.png"
-          image-alt="Tambah Permintaan"
-          button-text="Tambah Permintaan"
-          @button-click="store.openModal()"
-        />
+        <div v-if="stats.draft !== undefined" class="col-xl col-lg-6 col-md-6">
+          <div class="card">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-4">
+                <p class="mb-0">Draft</p>
+                <div class="avatar">
+                  <span class="avatar-initial rounded bg-label-secondary"><i class="ri-draft-line"></i></span>
+                </div>
+              </div>
+              <div class="account-heading">
+                <h5 class="mb-1">{{ stats.draft }}</h5>
+                <span class="text-muted">Permintaan</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div v-if="stats.pending !== undefined" class="col-xl col-lg-6 col-md-6">
+          <div class="card">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-4">
+                <p class="mb-0">Pending</p>
+                <div class="avatar">
+                  <span class="avatar-initial rounded bg-label-warning"><i class="ri-time-line"></i></span>
+                </div>
+              </div>
+              <div class="account-heading">
+                <h5 class="mb-1">{{ stats.pending }}</h5>
+                <span class="text-muted">Permintaan</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div v-if="stats.approved !== undefined" class="col-xl col-lg-6 col-md-6">
+          <div class="card">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-4">
+                <p class="mb-0">Approved</p>
+                <div class="avatar">
+                  <span class="avatar-initial rounded bg-label-success"><i class="ri-checkbox-circle-line"></i></span>
+                </div>
+              </div>
+              <div class="account-heading">
+                <h5 class="mb-1">{{ stats.approved }}</h5>
+                <span class="text-muted">Permintaan</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div v-if="stats.rejected !== undefined" class="col-xl col-lg-6 col-md-6">
+          <div class="card">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-4">
+                <p class="mb-0">Rejected</p>
+                <div class="avatar">
+                  <span class="avatar-initial rounded bg-label-danger"><i class="ri-close-circle-line"></i></span>
+                </div>
+              </div>
+              <div class="account-heading">
+                <h5 class="mb-1">{{ stats.rejected }}</h5>
+                <span class="text-muted">Permintaan</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Table -->
@@ -46,11 +81,29 @@
         </div>
         <div class="col-12">
           <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center flex-wrap access-request-filter-row">
-              <div class="d-flex align-items-center me-3 mb-2 mb-md-0 gap-2">
-                <span class="me-2">Baris:</span>
-                <Dropdown v-model="params.rows" :options="rowsPerPageOptionsArray" @change="handleRowsChange" placeholder="Jumlah" class="access-request-dropdown" />
-                <select v-model="params.status" @change="store.setStatusFilter(params.status)" class="form-select access-request-dropdown">
+            <ListPageTableHeader
+              :rows="Number(params.rows)"
+              :rows-options="rowsPerPageOptionsArray"
+              :search="globalFilterValue"
+              search-placeholder="Cari pegawai, deskripsi..."
+              :show-export="false"
+              :export-disabled="store.loading"
+              @update:rows="onAccessRequestToolbarRows"
+              @update:search="(v) => { globalFilterValue = v }"
+            >
+              <template #add>
+                <button
+                  v-if="userHasRole('superadmin') || userHasRole('admin')"
+                  type="button"
+                  class="btn btn-primary"
+                  @click="store.openModal()"
+                >
+                  <i class="ri-add-line me-1"></i>
+                  Tambah Permintaan
+                </button>
+              </template>
+              <template #toolbar-extra>
+                <select v-model="params.status" class="form-select access-request-dropdown" @change="onAccessStatusChange">
                   <option value="">Semua Status</option>
                   <option value="draft">Draft</option>
                   <option value="pending">Pending</option>
@@ -58,14 +111,8 @@
                   <option value="rejected">Rejected</option>
                   <option value="cancelled">Cancelled</option>
                 </select>
-              </div>
-              <div class="input-group access-request-search" style="max-width: 20rem;">
-                <InputText v-model="globalFilterValue" placeholder="Cari pegawai, deskripsi..." class="form-control" @keyup.enter="store.setSearch(globalFilterValue)" />
-                <button class="btn btn-primary" type="button" @click="store.setSearch(globalFilterValue)">
-                  <i class="ri-search-line"></i>
-                </button>
-              </div>
-            </div>
+              </template>
+            </ListPageTableHeader>
             <div class="card-datatable table-responsive py-3 px-3">
               <MyDataTable
                 ref="myDataTableRef"
@@ -264,9 +311,8 @@ import { storeToRefs } from 'pinia'
 import { useAccessRequestStore } from '~/stores/access-request'
 import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
-import CardBox from '~/components/cards/Cards.vue'
+import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
-import Dropdown from 'primevue/dropdown'
 import InputText from 'primevue/inputtext'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
@@ -436,6 +482,15 @@ watch(globalFilterValue, debouncedSearch)
 const handleRowsChange = () => {
   params.value.first = 0
   store.fetchAccessRequests()
+}
+
+function onAccessRequestToolbarRows(v) {
+  params.value.rows = Number(v) || 10
+  handleRowsChange()
+}
+
+function onAccessStatusChange() {
+  store.setStatusFilter(params.value.status)
 }
 
 let modalInstance = null

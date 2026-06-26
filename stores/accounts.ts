@@ -19,6 +19,7 @@ interface AccountState {
   accounts: Account[]
   selectedAccount: Account | null
   loading: boolean
+  saving: boolean
   error: any
   totalRecords: number
   params: {
@@ -42,6 +43,7 @@ export const useAccountStore = defineStore('account', {
     accounts: [],
     selectedAccount: null,
     loading: false,
+    saving: false,
     error: null,
     totalRecords: 0,
     params: {
@@ -216,7 +218,7 @@ export const useAccountStore = defineStore('account', {
     },
 
     async saveAccount() {
-      this.loading = true
+      this.saving = true
       this.validationErrors = [];
       const { $api } = useNuxtApp()
       const toast = useToast();
@@ -290,7 +292,7 @@ export const useAccountStore = defineStore('account', {
           });
         }
       } finally {
-        this.loading = false
+        this.saving = false
       }
     },
 

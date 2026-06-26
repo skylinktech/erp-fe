@@ -27,6 +27,7 @@ interface AssetState {
   assets: Asset[]
   selectedAsset: Asset | null
   loading: boolean
+  saving: boolean
   error: any
   totalRecords: number
   params: {
@@ -50,6 +51,7 @@ export const useAssetStore = defineStore('asset', {
     assets: [],
     selectedAsset: null,
     loading: false,
+    saving: false,
     error: null,
     totalRecords: 0,
     params: {
@@ -170,7 +172,7 @@ export const useAssetStore = defineStore('asset', {
     },
 
     async saveAsset() {
-      this.loading = true
+      this.saving = true
       this.validationErrors = [];
       const { $api } = useNuxtApp()
       const toast = useToast();
@@ -248,7 +250,7 @@ export const useAssetStore = defineStore('asset', {
           });
         }
       } finally {
-        this.loading = false
+        this.saving = false
       }
     },
 

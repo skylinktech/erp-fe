@@ -1,159 +1,96 @@
 <template>
     <div class="content-wrapper">
         <!-- Content -->
-        <div class="container-xxl flex-grow-1 container-p-y">
+        <div class="container-xxl flex-grow-1 container-pt-12">
             <h4 class="mb-1">List Stock In</h4>
             <p class="mb-6">
             List stock in yang terdaftar di sistem
             </p>
-            <!-- stock in cards -->
-            <div class="row g-6 mb-6">
-                <CardBox
-                    v-if="stats.total !== undefined"
-                    title="Total Stock In"
-                    :total="stats.total + ' Stock In'"
-                />
-                <CardBox
-                    v-if="stats.draft !== undefined"
-                    title="Total Stock In Draft"
-                    :total="stats.draft + ' Stock In'"
-                />
-                <CardBox
-                    v-if="stats.posted !== undefined"
-                    title="Total Stock In Posted"
-                    :total="stats.posted + ' Stock In'"
-                />
+                        <div class="row g-6 mb-6">
+                <div v-if="stats.total !== undefined" class="col-xl-4 col-lg-6 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <p class="mb-0">Total Stock In</p>
+                                <div class="avatar">
+                                    <span class="avatar-initial rounded bg-label-primary"><i class="ri-inbox-archive-line"></i></span>
+                                </div>
+                            </div>
+                            <div class="account-heading">
+                                <h5 class="mb-1">{{ stats.total }}</h5>
+                                <span class="text-muted">Stock in terdaftar</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div v-if="stats.draft !== undefined" class="col-xl-4 col-lg-6 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <p class="mb-0">Draft</p>
+                                <div class="avatar">
+                                    <span class="avatar-initial rounded bg-label-secondary"><i class="ri-draft-line"></i></span>
+                                </div>
+                            </div>
+                            <div class="account-heading">
+                                <h5 class="mb-1">{{ stats.draft }}</h5>
+                                <span class="text-muted">Stock in draft</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div v-if="stats.posted !== undefined" class="col-xl-4 col-lg-6 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <p class="mb-0">Posted</p>
+                                <div class="avatar">
+                                    <span class="avatar-initial rounded bg-label-success"><i class="ri-checkbox-circle-line"></i></span>
+                                </div>
+                            </div>
+                            <div class="account-heading">
+                                <h5 class="mb-1">{{ stats.posted }}</h5>
+                                <span class="text-muted">Stock in posted</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="row g-6">
                 <div class="col-12">
-                    <h4 class="mt-6 mb-1">Total Stock In</h4>
-                    <p class="mb-0">Find all of your company's administrator accounts and their associate Stock In.</p>
+                    <h4 class="mt-6 mb-1">Data Stock In</h4>
+                    <p class="mb-0">Kelola penerimaan stok dan posting transaksi stock in.</p>
                 </div>
                 <div class="col-12">
-                    <!-- stock in Table -->
-                    <div class="card">
-                        <div class="card-header">
-                            <!-- Mobile: Post All button di atas TableControls -->
-                            <div class="d-md-none mb-3">
-                                <button 
-                                    class="btn btn-dark w-100" 
-                                    type="button" 
+                                        <div class="card">
+                        <ListPageTableHeader
+                            :rows="Number(tableControls.rows)"
+                            :rows-options="rowsPerPageOptionsArray"
+                            :search="globalFilterValue"
+                            search-placeholder="Cari Stock In..."
+                            :export-disabled="loading"
+                            :export-items="[
+                                { value: 'csv', label: 'CSV (dengan Detail Item)' },
+                                { value: 'excel', label: 'Excel' },
+                                { value: 'pdf', label: 'PDF' },
+                            ]"
+                            @update:rows="onStockInToolbarRows"
+                            @update:search="(v) => { globalFilterValue = v }"
+                            @export="exportData"
+                        >
+                            <template #toolbar-extra>
+                                <button
+                                    class="btn btn-dark btn-sm"
+                                    type="button"
                                     @click="postAllSelectedStockIn"
                                     :disabled="!Array.isArray(selectedStockIns) || selectedStockIns.length === 0"
                                     title="Post semua stock in yang dipilih"
                                 >
                                     <i class="ri-upload-2-line me-1"></i> Post All ({{ Array.isArray(selectedStockIns) ? selectedStockIns.length : 0 }})
                                 </button>
-                            </div>
-                            
-                            <!-- Desktop & Mobile: TableControls -->
-                            <div class="d-flex justify-content-between align-items-center flex-wrap">
-                                <!-- TableControls dengan custom export -->
-                                <div class="flex-grow-1">
-                                    <div class="table-controls-custom">
-                                        <!-- Desktop: Baris di kiri, Export & Post All di tengah, Search di kanan -->
-                                        <div class="d-none d-md-flex justify-content-between align-items-center">
-                                            <div class="d-flex align-items-center me-3">
-                                                <span class="me-2">Baris:</span>
-                                                <Dropdown 
-                                                    v-model="tableControls.rows" 
-                                                    :options="rowsPerPageOptionsArray" 
-                                                    @change="handleRowsChange" 
-                                                    placeholder="Jumlah" 
-                                                    style="width: 8rem;"
-                                                    :showClear="false"
-                                                />
-                                            </div>
-                                            <div class="d-flex align-items-center">
-                                                <div class="btn-group me-2">
-                                                    <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                        <i class="ri-upload-2-line me-1"></i> Export
-                                                    </button>
-                                                    <ul class="dropdown-menu">
-                                                        <li><a class="dropdown-item" href="javascript:void(0)" @click="exportData('csv')">
-                                                            <i class="ri-file-excel-line me-2"></i> CSV (dengan Detail Item)
-                                                        </a></li>
-                                                        <li><a class="dropdown-item" href="javascript:void(0)" @click="exportData('excel')">
-                                                            <i class="ri-file-excel-line me-2"></i> Excel
-                                                        </a></li>
-                                                        <li><a class="dropdown-item" href="javascript:void(0)" @click="exportData('pdf')">
-                                                            <i class="ri-file-pdf-line me-2"></i> PDF
-                                                        </a></li>
-                                                    </ul>
-                                                </div>
-                                                <div class="btn-group me-2">
-                                                    <button 
-                                                        class="btn btn-dark btn-sm" 
-                                                        type="button" 
-                                                        @click="postAllSelectedStockIn"
-                                                        :disabled="!Array.isArray(selectedStockIns) || selectedStockIns.length === 0"
-                                                        title="Post semua stock in yang dipilih"
-                                                        style="min-width: 150px; min-height: 38px;"
-                                                    >
-                                                        <i class="ri-upload-2-line me-1"></i> Post All ({{ Array.isArray(selectedStockIns) ? selectedStockIns.length : 0 }})
-                                                    </button>
-                                                </div>
-                                                <div class="input-group">
-                                                    <span class="p-input-icon-left">
-                                                        <InputText
-                                                            v-model="tableControls.search"
-                                                            placeholder="Cari Stock In..."
-                                                            class="w-full md:w-20rem"
-                                                            @input="(e) => handleSearch(e.target.value)"
-                                                        />
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        
-                                        <!-- Mobile: Rows, Search, dan Export -->
-                                        <div class="d-md-none">
-                                            <div class="mb-3">
-                                                <div class="d-flex align-items-center">
-                                                    <span class="me-2" style="font-weight: 500; white-space: nowrap; color: #6c757d;">Baris:</span>
-                                                    <Dropdown 
-                                                        v-model="tableControls.rows" 
-                                                        :options="rowsPerPageOptionsArray" 
-                                                        @change="handleRowsChange" 
-                                                        placeholder="Jumlah" 
-                                                        class="flex-grow-1"
-                                                        :showClear="false"
-                                                    />
-                                                </div>
-                                            </div>
-                                            <div class="mb-3">
-                                                <InputText
-                                                    v-model="tableControls.search"
-                                                    placeholder="Cari Stock In..."
-                                                    class="w-100"
-                                                    style="height: 38px; border-radius: 6px;"
-                                                    @input="(e) => handleSearch(e.target.value)"
-                                                />
-                                            </div>
-                                            <div class="mb-3">
-                                                <div class="btn-group w-100">
-                                                    <button class="btn btn-secondary dropdown-toggle w-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                        <i class="ri-upload-2-line me-1"></i> Export
-                                                    </button>
-                                                    <ul class="dropdown-menu">
-                                                        <li><a class="dropdown-item" href="javascript:void(0)" @click="exportData('csv')">
-                                                            <i class="ri-file-excel-line me-2"></i> CSV (dengan Detail Item)
-                                                        </a></li>
-                                                        <li><a class="dropdown-item" href="javascript:void(0)" @click="exportData('excel')">
-                                                            <i class="ri-file-excel-line me-2"></i> Excel
-                                                        </a></li>
-                                                        <li><a class="dropdown-item" href="javascript:void(0)" @click="exportData('pdf')">
-                                                            <i class="ri-file-pdf-line me-2"></i> PDF
-                                                        </a></li>
-                                                    </ul>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card-datatable table-responsive py-3 px-3">
+                            </template>
+                        </ListPageTableHeader>
+<div class="card-datatable table-responsive py-3 px-3">
                                                 <MyDataTable 
                             ref="myDataTableRef"
                             :data="stockIns" 
@@ -288,11 +225,9 @@ import { storeToRefs } from 'pinia'
 import { useUserStore } from '~/stores/user'
 import { useStockStore } from '~/stores/stockin'
 import { useWarehouseStore } from '~/stores/warehouse'
-import CardBox from '~/components/cards/Cards.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
+import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
 import Swal from 'sweetalert2'
-import InputText from 'primevue/inputtext'
-import Dropdown from 'primevue/dropdown'
 import 'vue-select/dist/vue-select.css'
 import { useRouter } from 'vue-router'
 import { usePermissions } from '~/composables/usePermissions'
@@ -430,6 +365,11 @@ const tableControls = ref({
 let searchDebounceTimer = null;
 
 // Handler untuk rows change
+const onStockInToolbarRows = (value) => {
+    tableControls.value.rows = Number(value) || 10;
+    handleRowsChange(value);
+};
+
 const handleRowsChange = (value) => {
     const rowsValue = Number(value) || 10;
     params.value.rows = rowsValue;

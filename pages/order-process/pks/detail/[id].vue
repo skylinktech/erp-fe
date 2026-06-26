@@ -1,7 +1,7 @@
 <template>
   <div class="page-wrapper">
     <div class="content-wrapper">
-      <div class="container-xxl flex-grow-1 container pt-12">
+      <div class="container-xxl flex-grow-1 container pt-1">
         <!-- Loading -->
         <div v-if="loading" class="d-flex justify-content-center align-items-center" style="min-height: 400px;">
           <div class="text-center">
@@ -53,7 +53,7 @@
                     v-if="(userHasRole('superadmin') || userHasPermission('edit_pks')) && (pks as any).status === 'draft'"
                     class="dropdown-item"
                     href="javascript:void(0)"
-                    @click="navigateTo('/order-process/pks?edit=' + (pks as any).id)"
+                    @click="navigateTo('/order-process/pks/form/' + (pks as any).id)"
                   >
                     <i class="ri-edit-box-line me-2"></i> Edit
                   </a>
@@ -140,8 +140,16 @@
                       <p class="mb-0">{{ (pks as any).custPic || (pks as any).cust_pic || '—' }}</p>
                     </div>
                     <div class="col-md-6">
-                      <label class="form-label text-muted medium">Telkom PIC</label>
-                      <p class="mb-0">{{ (pks as any).telkomPic || (pks as any).telkom_pic || '—' }}</p>
+                      <label class="form-label text-muted medium">No. Tlp Customer PIC</label>
+                      <p class="mb-0">{{ (pks as any).custPicNoTlp || (pks as any).cust_pic_no_tlp || '—' }}</p>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label text-muted medium">Site PIC</label>
+                      <p class="mb-0">{{ (pks as any).sitePic || (pks as any).site_pic || '—' }}</p>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label text-muted medium">No. Tlp Site PIC</label>
+                      <p class="mb-0">{{ (pks as any).sitePicNoTlp || (pks as any).site_pic_no_tlp || '—' }}</p>
                     </div>
                     <div class="col-md-6" v-if="(pks as any).approvedAt || (pks as any).approved_at">
                       <label class="form-label text-muted medium">Approved At</label>

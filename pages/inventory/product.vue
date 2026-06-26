@@ -1,7 +1,7 @@
 <template>
     <div class="content-wrapper">
         <!-- Content -->
-        <div class="container-xxl flex-grow-1 container-p-y">
+        <div class="container-xxl flex-grow-1 container-pt-12">
             <div v-if="loading" class="text-center py-8">
                 <ProgressSpinner 
                     style="width: 50px; height: 50px" 
@@ -20,52 +20,19 @@
                             - Menampilkan {{ totalRecords }} hasil untuk "{{ globalFilterValue }}"
                         </span>
                     </p>
-                    <div class="row g-6 mb-6">
-                        <!-- Total Products Card -->
-                        <div class="col-6">
-                            <div class="card h-100">
-                                <div class="row h-100">
-                                    <div class="col-sm-5">
-                                        <div class="d-flex align-items-end h-100 justify-content-center">
-                                            <i class="ri-bar-chart-line text-primary" style="font-size: 3rem;"></i>
+                                        <div class="row g-6 mb-6">
+                        <div class="col-xl-3 col-lg-6 col-md-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center mb-4">
+                                        <p class="mb-0">Total Product</p>
+                                        <div class="avatar">
+                                            <span class="avatar-initial rounded bg-label-primary"><i class="ri-box-3-line"></i></span>
                                         </div>
                                     </div>
-                                    <div class="col-sm-7">
-                                        <div class="card-body text-sm-end text-center ps-sm-0">
-                                            <h4 class="mb-1">
-                                                <span v-if="loading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                                <span v-else>{{ totalProducts }}</span>
-                                            </h4>
-                                            <p class="mb-0 mt-1">Total Product</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Add Product Card -->
-                        <div class="col-6">
-                            <div class="card h-100">
-                                <div class="row h-100">
-                                    <div class="col-sm-5">
-                                        <div class="d-flex align-items-end h-100 justify-content-center">
-                                            <img
-                                                src="/img/illustrations/add-new-role-illustration.png"
-                                                class="img-fluid"
-                                                alt="Image"
-                                                width="70" />
-                                        </div>
-                                    </div>
-                                    <div class="col-sm-7">
-                                        <div class="card-body text-sm-end text-center ps-sm-0">
-                                            <button v-if="userHasRole('superadmin') || userHasPermission('create_product')"
-                                                @click="productStore.openModal()"
-                                                class="btn btn-primary mb-2 text-nowrap add-new-role"
-                                            >
-                                                Tambah Product
-                                            </button>
-                                            <p class="mb-0 mt-1">Buat Product baru</p>
-                                        </div>
+                                    <div class="account-heading">
+                                        <h5 class="mb-1">{{ totalProducts }}</h5>
+                                        <span class="text-muted">Product terdaftar</span>
                                     </div>
                                 </div>
                             </div>
@@ -74,105 +41,48 @@
 
                     <div class="row g-6">
                         <div class="col-12">
-                            <!-- product Table -->
-                            <div class="card">
-                                <div class="card-header">
-                                    <!-- Mobile: Import Excel button di atas TableControls -->
-                                    <div class="d-md-none mb-3" v-if="userHasRole('superadmin')">
-                                        <NuxtLink to="/inventory/import-product" class="btn btn-dark w-100">
+                            <h4 class="mt-6 mb-1">Data Product</h4>
+                            <p class="mb-0">Kelola master data produk dan komponen kit.</p>
+                        </div>
+                        <div class="col-12">
+                                                        <div class="card">
+                                <ListPageTableHeader
+                                    :rows="Number(tableControls.rows)"
+                                    :rows-options="rowsPerPageOptionsArray"
+                                    :search="globalFilterValue"
+                                    search-placeholder="Cari berdasarkan nama, atau part number..."
+                                    :export-disabled="loading"
+                                    :export-items="[
+                                        { value: 'csv', label: 'CSV' },
+                                        { value: 'excel', label: 'Excel' },
+                                        { value: 'pdf', label: 'PDF' },
+                                    ]"
+                                    @update:rows="onProductToolbarRows"
+                                    @update:search="(v) => { globalFilterValue = v }"
+                                    @export="exportData"
+                                >
+                                    <template #add>
+                                        <button
+                                            v-if="userHasRole('superadmin') || userHasPermission('create_product')"
+                                            type="button"
+                                            class="btn btn-primary"
+                                            @click="productStore.openModal()"
+                                        >
+                                            <i class="ri-add-line me-1"></i>
+                                            Tambah Product
+                                        </button>
+                                    </template>
+                                    <template #toolbar-extra>
+                                        <NuxtLink
+                                            v-if="userHasRole('superadmin')"
+                                            to="/inventory/import-product"
+                                            class="btn btn-dark btn-sm"
+                                        >
                                             <i class="ri-download-line me-1"></i> Import Excel
                                         </NuxtLink>
-                                    </div>
-                                    
-                                    <!-- Desktop & Mobile: TableControls -->
-                                    <div class="d-flex justify-content-between align-items-center flex-wrap">
-                                        <!-- TableControls dengan custom export -->
-                                        <div class="flex-grow-1">
-                                            <div class="table-controls-custom">
-                                                <!-- Desktop: Baris di kiri, Export & Import di tengah, Search di kanan -->
-                                                <div class="d-none d-md-flex justify-content-between align-items-center">
-                                                    <div class="d-flex align-items-center me-3">
-                                                        <span class="me-2">Baris:</span>
-                                                        <Dropdown 
-                                                            v-model="tableControls.rows" 
-                                                            :options="rowsPerPageOptionsArray" 
-                                                            @change="handleRowsChange" 
-                                                            placeholder="Jumlah" 
-                                                            style="width: 8rem;"
-                                                            :showClear="false"
-                                                        />
-                                                    </div>
-                                                    <div class="d-flex align-items-center">
-                                                        <div class="btn-group me-2">
-                                                            <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                                <i class="ri-upload-2-line me-1"></i> Export
-                                                            </button>
-                                                            <ul class="dropdown-menu">
-                                                                <li><a class="dropdown-item" href="javascript:void(0)" @click="exportData('csv')">CSV</a></li>
-                                                                <li><a class="dropdown-item" href="javascript:void(0)" @click="exportData('excel')">Excel</a></li>
-                                                                <li><a class="dropdown-item" href="javascript:void(0)" @click="exportData('pdf')">PDF</a></li>
-                                                            </ul>
-                                                        </div>
-                                                        <div class="btn-group me-2" v-if="userHasRole('superadmin')">
-                                                            <NuxtLink to="/inventory/import-product" class="btn btn-dark btn-sm" style="min-width: 150px; min-height: 38px;">
-                                                                <i class="ri-download-line me-1"></i> Import Excel
-                                                            </NuxtLink>
-                                                        </div>
-                                                        <div class="input-group">
-                                                            <span class="p-input-icon-left">
-                                                                <InputText
-                                                                    v-model="tableControls.search"
-                                                                    placeholder="Cari berdasarkan nama, atau part number..."
-                                                                    class="w-full md:w-20rem"
-                                                                    @input="(e) => handleSearch(e.target.value)"
-                                                                />
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                
-                                                <!-- Mobile: Rows, Search, dan Export -->
-                                                <div class="d-md-none">
-                                                    <div class="mb-3">
-                                                        <div class="d-flex align-items-center">
-                                                            <span class="me-2" style="font-weight: 500; white-space: nowrap; color: #6c757d;">Baris:</span>
-                                                            <Dropdown 
-                                                                v-model="tableControls.rows" 
-                                                                :options="rowsPerPageOptionsArray" 
-                                                                @change="handleRowsChange" 
-                                                                placeholder="Jumlah" 
-                                                                class="flex-grow-1"
-                                                                :showClear="false"
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                    <div class="mb-3">
-                                                        <InputText
-                                                            v-model="tableControls.search"
-                                                            placeholder="Cari berdasarkan nama, atau part number..."
-                                                            class="w-100"
-                                                            style="height: 38px; border-radius: 6px;"
-                                                            @input="(e) => handleSearch(e.target.value)"
-                                                        />
-                                                    </div>
-                                                    <div class="mb-3">
-                                                        <div class="btn-group w-100">
-                                                            <button class="btn btn-secondary dropdown-toggle w-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                                <i class="ri-upload-2-line me-1"></i> Export
-                                                            </button>
-                                                            <ul class="dropdown-menu">
-                                                                <li><a class="dropdown-item" href="javascript:void(0)" @click="exportData('csv')">CSV</a></li>
-                                                                <li><a class="dropdown-item" href="javascript:void(0)" @click="exportData('excel')">Excel</a></li>
-                                                                <li><a class="dropdown-item" href="javascript:void(0)" @click="exportData('pdf')">PDF</a></li>
-                                                            </ul>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="card-datatable table-responsive py-3 px-3">
+                                    </template>
+                                </ListPageTableHeader>
+<div class="card-datatable table-responsive py-3 px-3">
                                 <MyDataTable 
                                     ref="myDataTableRef"
                                     :data="products" 
@@ -189,7 +99,10 @@
                                     responsiveLayout="scroll"
                                     paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink"
                                     currentPageReportTemplate="Menampilkan {first} sampai {last} dari {totalRecords} data"
+                                    :expandedRows="expandedRows"
+                                    @row-toggle="onRowToggle"
                                     >
+                                    <Column :expander="true" headerStyle="width: 3rem" />
                                     <Column header="#" :sortable="false">
                                         <template #body="slotProps">
                                             {{ params.first + slotProps.index + 1 }}
@@ -231,9 +144,31 @@
                                             </span>
                                         </template>
                                     </Column>
+                                    <Column field="isKit" header="Kit" :sortable="true">
+                                        <template #body="slotProps">
+                                            <span :class="getStatusBadge(slotProps.data.isKit).class">
+                                                {{ getStatusBadge(slotProps.data.isKit).text }}
+                                            </span>
+                                        </template>
+                                    </Column>
                                     <Column field="billingType" header="Tipe Tagihan" :sortable="true">
                                         <template #body="slotProps">
                                             {{ slotProps.data.billingType === 'recurring' ? 'Recurring' : 'One Time' }}
+                                        </template>
+                                    </Column>
+                                    <Column field="condition" header="Condition" :sortable="true">
+                                        <template #body="slotProps">
+                                            {{
+                                              slotProps.data.condition === 'good'
+                                                ? 'Good'
+                                                : slotProps.data.condition === 'bad'
+                                                  ? 'Bad'
+                                                  : slotProps.data.condition === 'reject'
+                                                    ? 'Reject'
+                                                    : slotProps.data.condition === 'damaged'
+                                                      ? 'Damaged'
+                                                      : '-'
+                                            }}
                                         </template>
                                     </Column>
                                     <Column header="Kategori" field="category.name" :sortable="true">
@@ -268,6 +203,36 @@
                                             </div>
                                         </template>
                                     </Column>
+                                    <template #expansion="slotProps">
+                                        <div class="p-3 bg-light">
+                                            <h6 class="mb-3">Komponen Kit</h6>
+                                            <div v-if="slotProps.data.isKit && slotProps.data.productKits?.length">
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm table-bordered mb-0">
+                                                        <thead>
+                                                            <tr>
+                                                                <th style="width: 60px">#</th>
+                                                                <th>Name</th>
+                                                                <th>Serial Number</th>
+                                                                <th>Type</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr v-for="(kit, index) in slotProps.data.productKits" :key="kit.id || `kit-${index}`">
+                                                                <td>{{ index + 1 }}</td>
+                                                                <td>{{ kit.name || '-' }}</td>
+                                                                <td>{{ kit.serialNumber || kit.serial_number || '-' }}</td>
+                                                                <td class="text-capitalize">{{ kit.type || '-' }}</td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                            <div v-else class="text-muted">
+                                                Product ini tidak memiliki komponen kit.
+                                            </div>
+                                        </div>
+                                    </template>
                                 </MyDataTable>
                                 </div>
                             </div>
@@ -286,104 +251,143 @@
             >
                 <template #default>
                     <form @submit.prevent="productStore.saveProduct()">
-                        <div class="row g-4">
+                        <ul class="nav nav-tabs mb-4" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button
+                                    class="nav-link"
+                                    :class="{ active: activeProductModalTab === 'product-info' }"
+                                    type="button"
+                                    @click="activeProductModalTab = 'product-info'"
+                                >
+                                    Informasi Produk
+                                </button>
+                            </li>
+                            <li v-if="form.isKit" class="nav-item" role="presentation">
+                                <button
+                                    class="nav-link"
+                                    :class="{ active: activeProductModalTab === 'product-kit' }"
+                                    type="button"
+                                    @click="activeProductModalTab = 'product-kit'"
+                                >
+                                    Product Kit
+                                </button>
+                            </li>
+                        </ul>
+                        <div v-show="activeProductModalTab === 'product-info'" class="row g-4">
                             <div class="col-md-6">
                                 <label class="form-label">Part Number</label>
-                                <input 
-                                    type="text" 
-                                    class="form-control"
-                                    v-model="form.sku" 
-                                    placeholder="Masukkan part number"
-                                    id="sku"
-                                >
+                                <input type="text" class="form-control" v-model="form.sku" placeholder="Masukkan part number" id="sku">
                                 <div v-if="hasFieldError('sku')" class="invalid-feedback">
                                     {{ getFieldError('sku') }}
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Nama Barang</label>
-                                <input 
-                                    type="text" 
-                                    class="form-control"
-                                    v-model="form.name" 
-                                    placeholder="Masukkan nama barang"
-                                    id="name"
-                                    @input="form.name = $event.target.value.toUpperCase()"
-                                >
+                                <input type="text" class="form-control" v-model="form.name" placeholder="Masukkan nama barang" id="name" @input="form.name = $event.target.value.toUpperCase()">
                                 <div v-if="hasFieldError('name')" class="invalid-feedback">
                                     {{ getFieldError('name') }}
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Satuan</label>
-                                <CustomSelect2 v-model="form.unitId" :options="units"
-                                    :get-option-label="option => option.name"
-                                    :reduce="option => option.id" searchable clearable
+                                <CustomSelect2
+                                    v-model="form.unitId"
+                                    :options="units"
+                                    :get-option-label="option => option?.name || ''"
+                                    :reduce="option => option?.id"
+                                    searchable
+                                    clearable
                                     placeholder="-- Pilih Satuan --"
                                     class="unit"
                                     id="unitId"
                                 />
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-6">
                                 <label class="form-label">Kategori</label>
-                                <CustomSelect2 v-model="form.categoryId" :options="kategori"
-                                    :get-option-label="option => option.name"
-                                    :reduce="option => option.id" searchable clearable
+                                <CustomSelect2
+                                    v-model="form.categoryId"
+                                    :options="kategori"
+                                    :get-option-label="option => option?.name || ''"
+                                    :reduce="option => option?.id"
+                                    searchable
+                                    clearable
                                     placeholder="-- Pilih Kategori --"
                                     class="kategori"
                                     id="categoryId"
-                                />  
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Jenis / Type KIT</label>
-                                <input 
-                                    type="text" 
-                                    class="form-control"
-                                    v-model="form.productType" 
-                                    placeholder="e.g. Flat Standard-V4, Standard Actuated-V3"
-                                    id="productType"
-                                >
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Tipe Tagihan</label>
-                                <CustomSelect2 v-model="form.billingType" :options="billingTypeOptions"
-                                    :get-option-label="option => option.label"
-                                    :reduce="option => option.value" searchable clearable
-                                    :get-option-key="option => option.value"
-                                    placeholder="-- Pilih Tipe Tagihan --"
-                                    id="billingType"
-                                    class="select-billing-type"
                                 />
                             </div>
                             <div class="col-md-6">
+                                <label class="form-label">Jenis / Type KIT</label>
+                                <input type="text" class="form-control" v-model="form.productType" placeholder="e.g. Flat Standard-V4, Standard Actuated-V3" id="productType">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Tipe Tagihan</label>
+                                <CustomSelect2 v-model="form.billingType" :options="billingTypeOptions" :get-option-label="option => option.label" :reduce="option => option.value" searchable clearable :get-option-key="option => option.value" placeholder="-- Pilih Tipe Tagihan --" id="billingType" class="select-billing-type" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Condition</label>
+                                <CustomSelect2 v-model="form.condition" :options="conditionOptions" :get-option-label="option => option.label" :reduce="option => option.value" searchable :clearable="false" placeholder="-- Pilih Condition --" id="condition" />
+                            </div>
+                            <div class="col-md-6">
                                 <label class="form-label">Gambar</label>
-                                <input 
-                                    type="file" 
-                                    class="form-control"
-                                    @change="onImageChange"
-                                    accept="image/*"
-                                    id="image"
-                                >
-                                
+                                <input type="file" class="form-control" @change="onImageChange" accept="image/*" id="image">
                                 <div v-if="form.imagePreview" class="mt-2">
-                                    <img 
-                                        :src="form.imagePreview" 
-                                        alt="Image Preview" 
-                                        class="image-preview"
-                                        style="height: 60px; max-width: 120px; object-fit: contain; border: 2px solid #ddd; border-radius: 8px;"
-                                        @error="(e) => handleImageError(e, '/img/default-product-image.png')"
-                                    />
+                                    <img :src="form.imagePreview" alt="Image Preview" class="image-preview" style="height: 60px; max-width: 120px; object-fit: contain; border: 2px solid #ddd; border-radius: 8px;" @error="(e) => handleImageError(e, '/img/default-product-image.png')" />
                                     <a :href="form.imagePreview" target="_blank" rel="noopener noreferrer" class="d-block mt-1">Lihat Gambar</a>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="form-check form-switch mt-3 d-flex align-items-center">
-                                    <input class="form-check-input me-2" type="checkbox" v-model="form.isDevice" />
-                                    <label class="form-check-label mb-0">
-                                        Is Device?
-                                    </label>
+                                <div class="d-flex align-items-center gap-4 mt-3 flex-wrap">
+                                    <div class="form-check form-switch d-flex align-items-center mb-0">
+                                        <input class="form-check-input me-2" type="checkbox" v-model="form.isDevice" />
+                                        <label class="form-check-label mb-0">Is Device?</label>
+                                    </div>
+                                    <div class="form-check form-switch d-flex align-items-center mb-0">
+                                        <input class="form-check-input me-2" type="checkbox" v-model="form.isKit" @change="onKitToggle" />
+                                        <label class="form-check-label mb-0">Is Kit?</label>
+                                    </div>
                                 </div>
                             </div>
+                        </div>
+
+                        <div v-if="form.isKit && activeProductModalTab === 'product-kit'" class="mt-2">
+                            <div class="alert alert-secondary mb-4">
+                                Tambahkan komponen kit di bawah ini.
+                            </div>
+                            <div v-for="(item, index) in form.productKits" :key="`kit-${index}`" class="repeater-item mb-4">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="text-muted fw-medium">Kit Item #{{ index + 1 }}</span>
+                                    <button class="btn btn-sm btn-outline-danger" @click.prevent="productStore.removeProductKit(index)" type="button">
+                                        <i class="ri-delete-bin-line me-1"></i> Hapus
+                                    </button>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Name</label>
+                                        <input type="text" class="form-control" v-model="item.name" placeholder="Nama komponen kit">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Serial Number</label>
+                                        <input type="text" class="form-control" v-model="item.serialNumber" placeholder="Serial number">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Type</label>
+                                        <CustomSelect2
+                                            v-model="item.type"
+                                            :options="productKitTypeOptions"
+                                            :get-option-label="option => option.label"
+                                            :reduce="option => option.value"
+                                            :get-option-key="option => option.value"
+                                            :clearable="false"
+                                            placeholder="-- Pilih Type --"
+                                        />
+                                    </div>
+                                </div>
+                                <hr class="my-4">
+                            </div>
+                            <button type="button" class="btn btn-outline-primary" @click="productStore.addProductKit()">
+                                Tambah Item Kit
+                            </button>
                         </div>
                         <div class="modal-footer mt-6">
                             <button type="button" class="btn btn-outline-secondary" @click="productStore.closeModal()">Tutup</button>
@@ -411,11 +415,10 @@ import { useUserStore } from '~/stores/user'
 import { useUnitStore } from '~/stores/unit'
 import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
+import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
 import vSelect from 'vue-select'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
 import 'vue-select/dist/vue-select.css'
-import Dropdown from 'primevue/dropdown'
-import InputText from 'primevue/inputtext'
 import Column from 'primevue/column'
 import { useDebounceFn } from '@vueuse/core'
 import { useFormatRupiah } from '~/composables/formatRupiah';
@@ -445,6 +448,8 @@ const { units } = storeToRefs(unitStore)
 
 const globalFilterValue = ref('')
 const rowsPerPageOptionsArray = ref([10, 25, 50, 100]);
+const activeProductModalTab = ref('product-info')
+const expandedRows = ref({})
 
 // Table controls state
 const tableControls = ref({
@@ -459,6 +464,18 @@ const modalDescription = computed(() => isEditMode.value ? 'Silakan ubah data pr
 const billingTypeOptions = [
     { label: 'One Time', value: 'one_time' },
     { label: 'Recurring', value: 'recurring' }
+];
+
+const conditionOptions = [
+    { label: 'Good', value: 'good' },
+    { label: 'Bad', value: 'bad' },
+    { label: 'Reject', value: 'reject' },
+    { label: 'Damaged', value: 'damaged' },
+];
+const productKitTypeOptions = [
+    { label: 'Router', value: 'router' },
+    { label: 'Adaptor', value: 'adaptor' },
+    { label: 'Cable', value: 'cable' },
 ];
 
 const config = useRuntimeConfig();
@@ -484,13 +501,31 @@ onMounted(() => {
 
 watch(showModal, (newValue) => {
     if (newValue) {
+        activeProductModalTab.value = 'product-info'
         modalInstance?.show()
     } else {
         modalInstance?.hide()
     }
 })
 
+const onKitToggle = () => {
+    if (form.value.isKit) {
+        if (!Array.isArray(form.value.productKits) || form.value.productKits.length === 0) {
+            productStore.addProductKit()
+        }
+        activeProductModalTab.value = 'product-kit'
+    } else {
+        form.value.productKits = []
+        activeProductModalTab.value = 'product-info'
+    }
+}
+
 // Handler untuk rows change
+const onProductToolbarRows = (value) => {
+    tableControls.value.rows = Number(value) || 10;
+    handleRowsChange(value);
+};
+
 const handleRowsChange = (value) => {
     const rowsValue = Number(value) || 10;
     params.value.rows = rowsValue;
@@ -526,6 +561,9 @@ watch(globalFilterValue, debouncedSearch);
 const onPage = (event) => productStore.setPagination(event);
 
 const onSort = (event) => productStore.setSort(event);
+const onRowToggle = (event) => {
+    expandedRows.value = event.data;
+};
 
 const exportData = async (format) => {
     const toast     = useToast();

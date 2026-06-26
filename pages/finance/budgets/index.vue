@@ -440,8 +440,8 @@
                   Tutup
                 </button>
                 <!-- Biarkan user tetap bisa menyimpan walaupun alokasi > budget, hanya tampilkan alert -->
-                <button type="submit" class="btn btn-primary" :disabled="loading">
-                  <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
+                <button type="submit" class="btn btn-primary" :disabled="saving">
+                  <span v-if="saving" class="spinner-border spinner-border-sm me-2"></span>
                   {{ isEditMode ? 'Update' : 'Simpan' }}
                 </button>
               </div>
@@ -488,6 +488,7 @@ const rowsPerPageOptionsArray = ref([10, 25, 50, 100])
 
 // Computed dari store
 const loading = computed(() => budgetStore.loading)
+const saving = computed(() => budgetStore.saving)
 const budgets = computed(() => budgetStore.budgets || [])
 const totalRecords = computed(() => budgetStore.totalRecords || 0)
 const params = computed(() => budgetStore.params)

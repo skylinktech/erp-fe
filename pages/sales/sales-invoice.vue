@@ -2,127 +2,88 @@
 <template>
     <div class="content-wrapper">
         <!-- Content -->
-        <div class="container-xxl flex-grow-1 container-p-y">
+        <div class="container-xxl flex-grow-1 container-pt-12">
             <h4 class="mb-1">List Sales Invoice</h4>
             <p class="mb-6">
             List salesInvoice yang terdaftar di sistem
             </p>
-            <!-- salesInvoice cards -->
             <div class="row g-6 mb-6">
-                <!-- Dynamic cards for invoice statistics -->
-                <div class="col-xl-3 col-lg-6 col-md-6">
+                <div class="col-xl col-lg-6 col-md-6">
                     <div class="card">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-4">
-                                <h5 class="mb-1">Total Invoices</h5>
-                                <span class="badge bg-label-primary rounded-pill">All Time</span>
-                            </div>
-                            <div class="d-flex align-items-center">
-                                <h1 class="mb-0 display-4">{{ statistics?.counts?.total || 0 }}</h1>
-                                <div class="ms-2">
-                                    <div class="d-flex align-items-center">
-                                        <i class="ri-file-list-3-line ri-24px text-primary"></i>
-                                    </div>
+                                <p class="mb-0">Total Invoice</p>
+                                <div class="avatar">
+                                    <span class="avatar-initial rounded bg-label-primary"><i class="ri-file-list-3-line"></i></span>
                                 </div>
                             </div>
-                            <p class="mb-0 mt-2">Total invoice yang dibuat</p>
+                            <div class="account-heading">
+                                <h5 class="mb-1">{{ statistics?.counts?.total || 0 }}</h5>
+                                <span class="text-muted">Invoice terdaftar</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-xl-3 col-lg-6 col-md-6">
+                <div class="col-xl col-lg-6 col-md-6">
                     <div class="card">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-4">
-                                <h5 class="mb-1">Unpaid Invoices</h5>
-                                <span class="badge bg-label-danger rounded-pill">{{ statistics?.percentages?.unpaid || 0 }}%</span>
-                            </div>
-                            <div class="d-flex align-items-center">
-                                <h1 class="mb-0 display-4">{{ statistics?.counts?.unpaid || 0 }}</h1>
-                                <div class="ms-2">
-                                    <div class="d-flex align-items-center">
-                                        <i class="ri-close-circle-line ri-24px text-danger"></i>
-                                    </div>
+                                <p class="mb-0">Unpaid</p>
+                                <div class="avatar">
+                                    <span class="avatar-initial rounded bg-label-danger"><i class="ri-close-circle-line"></i></span>
                                 </div>
                             </div>
-                            <p class="mb-0 mt-2"> {{ formatRupiah(statistics?.amounts?.unpaid || 0) }}</p>
+                            <div class="account-heading">
+                                <h5 class="mb-1">{{ statistics?.counts?.unpaid || 0 }}</h5>
+                                <span class="text-muted">{{ statistics?.percentages?.unpaid || 0 }}% · {{ formatRupiah(statistics?.amounts?.unpaid || 0) }}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-xl-3 col-lg-6 col-md-6">
+                <div class="col-xl col-lg-6 col-md-6">
                     <div class="card">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-4">
-                                <h5 class="mb-1">Partial Invoices</h5>
-                                <span class="badge bg-label-warning rounded-pill">{{ statistics?.percentages?.partial || 0 }}%</span>
-                            </div>
-                            <div class="d-flex align-items-center">
-                                <h1 class="mb-0 display-4">{{ statistics?.counts?.partial || 0 }}</h1>
-                                <div class="ms-2">
-                                    <div class="d-flex align-items-center">
-                                        <i class="ri-time-line ri-24px text-warning"></i>
-                                    </div>
+                                <p class="mb-0">Partial</p>
+                                <div class="avatar">
+                                    <span class="avatar-initial rounded bg-label-warning"><i class="ri-time-line"></i></span>
                                 </div>
                             </div>
-                            <p class="mb-0 mt-2"> {{ formatRupiah(statistics?.amounts?.partial || 0) }}</p>
+                            <div class="account-heading">
+                                <h5 class="mb-1">{{ statistics?.counts?.partial || 0 }}</h5>
+                                <span class="text-muted">{{ statistics?.percentages?.partial || 0 }}% · {{ formatRupiah(statistics?.amounts?.partial || 0) }}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-xl-3 col-lg-6 col-md-6">
+                <div class="col-xl col-lg-6 col-md-6">
                     <div class="card">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-4">
-                                <h5 class="mb-1">Paid Invoices</h5>
-                                <span class="badge bg-label-success rounded-pill">{{ statistics?.percentages?.paid || 0 }}%</span>
-                            </div>
-                            <div class="d-flex align-items-center">
-                                <h1 class="mb-0 display-4">{{ statistics?.counts?.paid || 0 }}</h1>
-                                <div class="ms-2">
-                                    <div class="d-flex align-items-center">
-                                        <i class="ri-checkbox-circle-line ri-24px text-success"></i>
-                                    </div>
+                                <p class="mb-0">Paid</p>
+                                <div class="avatar">
+                                    <span class="avatar-initial rounded bg-label-success"><i class="ri-checkbox-circle-line"></i></span>
                                 </div>
                             </div>
-                            <p class="mb-0 mt-2"> {{ formatRupiah(statistics?.amounts?.paid || 0) }}</p>
+                            <div class="account-heading">
+                                <h5 class="mb-1">{{ statistics?.counts?.paid || 0 }}</h5>
+                                <span class="text-muted">{{ statistics?.percentages?.paid || 0 }}% · {{ formatRupiah(statistics?.amounts?.paid || 0) }}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Outstanding Amount Card -->
-            <div class="row g-6 mb-6">
-                <div class="col-6">
+                <div class="col-xl col-lg-6 col-md-6">
                     <div class="card border-warning">
                         <div class="card-body">
-                            <div class="row align-items-center">
-                                <div class="col-md-8">
-                                    <h5 class="mb-1 text-warning">
-                                        <i class="ri-alert-line me-2"></i>
-                                        Total Outstanding
-                                    </h5>
-                                    <p class="mb-0 text-muted">Total invoice yang belum lunas (unpaid + partial)</p>
-                                </div>
-                                <div class="col-md-4 text-end">
-                                    <h4 class="mb-0 text-warning"> {{ formatRupiah(statistics?.amounts?.outstanding || 0) }}</h4>
-                                    <small class="text-muted">{{ (statistics?.counts?.unpaid || 0) + (statistics?.counts?.partial || 0) }} invoices</small>
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <p class="mb-0 text-warning"><i class="ri-alert-line me-1"></i> Outstanding</p>
+                                <div class="avatar">
+                                    <span class="avatar-initial rounded bg-label-warning"><i class="ri-money-dollar-circle-line"></i></span>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="row align-items-center">
-                                <div class="col-md-8">
-                                    <h5 class="mb-1">Buat Sales Invoice Baru</h5>
-                                    <p class="mb-0 text-muted">Tambahkan invoice baru untuk customer Anda</p>
-                                </div>
-                                <div class="col-md-4 text-end">
-                                    <button v-if="userHasRole('superadmin') || userHasPermission('create_sales_invoice')" @click="salesInvoiceStore.openModal(null, 'admin')" class="btn btn-primary btn-sm me-2">
-                                        <i class="ri-add-line me-2"></i>
-                                        Tambah Sales Invoice
-                                    </button>
-                                </div>
+                            <div class="account-heading">
+                                <h5 class="mb-1">{{ formatRupiah(statistics?.amounts?.outstanding || 0) }}</h5>
+                                <span class="text-muted">{{ (statistics?.counts?.unpaid || 0) + (statistics?.counts?.partial || 0) }} invoice belum lunas</span>
                             </div>
                         </div>
                     </div>
@@ -131,8 +92,8 @@
 
             <div class="row g-6">
                 <div class="col-12">
-                    <h4 class="mt-6 mb-1">Total & Filter Sales Invoice</h4>
-                    <p class="mb-0">Temukan semua akun administrator perusahaan Anda dan Sales Invoice terkait.</p>
+                    <h4 class="mt-6 mb-1">Filter Sales Invoice</h4>
+                    <p class="mb-0">Saring invoice berdasarkan customer dan status.</p>
                 </div>
                 <div class="col-12">
                     <div class="card">
@@ -169,16 +130,28 @@
                 <div class="col-12">
                     <!-- salesInvoice Table -->
                     <div class="card">
-                        <div class="card-header">
-                            <TableControls
-                                v-model="tableControls"
-                                :rows-per-page-options="rowsPerPageOptionsArray"
-                                search-placeholder="Cari Sales Order..."
-                                @rows-change="handleRowsChange"
-                                @search="handleSearch"
-                                @export="exportData"
-                            />
-                        </div>
+                        <ListPageTableHeader
+                            :rows="Number(tableControls.rows)"
+                            :rows-options="rowsPerPageOptionsArray"
+                            :search="globalFilterValue"
+                            search-placeholder="Cari Sales Invoice..."
+                            :export-disabled="loading"
+                            @update:rows="onSalesInvoiceToolbarRows"
+                            @update:search="(v) => { globalFilterValue = v }"
+                            @export="exportData"
+                        >
+                            <template #add>
+                                <button
+                                    v-if="userHasRole('superadmin') || userHasPermission('create_sales_invoice')"
+                                    type="button"
+                                    class="btn btn-primary"
+                                    @click="navigateTo('/sales/sales-invoice/form')"
+                                >
+                                    <i class="ri-add-line me-1"></i>
+                                    Tambah Sales Invoice
+                                </button>
+                            </template>
+                        </ListPageTableHeader>
                         <div class="card-datatable table-responsive py-3 px-3">
                             <MyDataTable 
                                 ref="myDataTableRef"
@@ -283,7 +256,7 @@
                                                         </a>
                                                     </li>
                                                     <li v-if="userHasRole('superadmin') || (userHasPermission('edit_sales_invoice') && (slotProps.data.status == 'unpaid' || slotProps.data.status == 'partial'))">
-                                                        <a class="dropdown-item" href="javascript:void(0)" @click="salesInvoiceStore.openModal(slotProps.data, 'admin')">
+                                                        <a class="dropdown-item" href="javascript:void(0)" @click="navigateTo(`/sales/sales-invoice/form/${slotProps.data.id}`)">
                                                             <i class="ri-edit-box-line me-2"></i> Edit
                                                         </a>
                                                     </li>
@@ -852,8 +825,8 @@
                         </div>
                         <div class="modal-footer mt-6">
                              <button type="button" class="btn btn-outline-secondary" @click="salesInvoiceStore.closeModal()">Tutup</button>
-                            <button type="submit" class="btn btn-primary" :disabled="loading">
-                                <span v-if="loading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            <button type="submit" class="btn btn-primary" :disabled="saving">
+                                <span v-if="saving" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                                 Simpan
                             </button>
                         </div>
@@ -881,12 +854,10 @@ import { usePermissions } from '~/composables/usePermissions'
 import { useSalesOrderStore } from '~/stores/sales-order'
 import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
-import TableControls from '~/components/table/TableControls.vue'
+import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
 import vSelect from 'vue-select'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
-import Dropdown from 'primevue/dropdown'
 import Column from 'primevue/column'
-import InputText from 'primevue/inputtext'
 import 'vue-select/dist/vue-select.css'
 import { useDebounceFn } from '@vueuse/core'
 import { useRouter } from 'vue-router'
@@ -915,7 +886,7 @@ const { userHasPermission, userHasRole } = usePermissions();
 const permissionStore       = usePermissionsStore()
 const salesOrderStore       = useSalesOrderStore()
 
-const { salesInvoices, loading, totalRecords, params, form, isEditMode, showModal, validationErrors, statistics } = storeToRefs(salesInvoiceStore)
+const { salesInvoices, loading, saving, totalRecords, params, form, isEditMode, showModal, validationErrors, statistics } = storeToRefs(salesInvoiceStore)
 const { customers }   = storeToRefs(customerStore)
 const { salesOrdersForSelect, customerProducts: rawCustomerProducts } = storeToRefs(salesOrderStore)
 const { warehouses }  = storeToRefs(warehouseStore)
@@ -1739,10 +1710,9 @@ const handleRowsChange = (value) => {
     salesInvoiceStore.fetchSalesInvoices();
 };
 
-const handleSearch = (value) => {
-    globalFilterValue.value = value;
-    params.value.first = 0;
-    salesInvoiceStore.fetchSalesInvoices();
+const onSalesInvoiceToolbarRows = (value) => {
+    tableControls.value.rows = Number(value) || 10;
+    handleRowsChange(value);
 };
 
 const onSort = (event) => {

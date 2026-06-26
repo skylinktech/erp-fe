@@ -40,7 +40,8 @@
                 <div class="col-md-6">
                   <ul class="list-unstyled">
                     <li class="mb-2"><strong>Alamat:</strong> {{ customer.address }}</li>
-                    <li class="mb-2"><strong>NPWP:</strong> {{ customer.npwp }}</li>
+                    <li class="mb-2"><strong>NPWP:</strong> {{ customer.npwp || '-' }}</li>
+                    <li class="mb-2"><strong>KTP:</strong> {{ customer.ktp || '-' }}</li>
                   </ul>
                 </div>
               </div>

@@ -18,55 +18,104 @@
             <p class="mb-6">
             List salesOrder yang terdaftar di sistem
             </p>
-            <!-- salesOrder cards -->
+            <!-- Statistics Cards (layout konsisten dengan Quotation) -->
             <div class="row g-6 mb-6">
-                <!-- Card untuk Tambah Pegawai -->                
-                <CardBox
-                    v-if="stats.total !== undefined"
-                    title="Total Sales Order"
-                    :total="(stats.total !== undefined ? stats.total + ' Sales Order' : 'Memuat...')"
-                    :column-class="cardBoxColumnClass"
-                />
-                <CardBox
-                    v-if="stats.approved !== undefined"
-                    title="Total Sales Order Approved"
-                    :total="(stats.approved !== undefined ? stats.approved + ' Sales Order' : 'Memuat...')"
-                    :column-class="cardBoxColumnClass"
-                />
-                <CardBox
-                    v-if="stats.rejected !== undefined"
-                    title="Total Sales Order Rejected"
-                    :total="(stats.rejected !== undefined ? stats.rejected + ' Sales Order' : 'Memuat...')"
-                    :column-class="cardBoxColumnClass"
-                />
-                <CardBox
-                    v-if="stats.partial !== undefined"
-                    title="Total Sales Order Partial"
-                    :total="(stats.partial !== undefined ? stats.partial + ' Sales Order' : 'Memuat...')"
-                    :column-class="cardBoxColumnClass"
-                />
-                <CardBox
-                    v-if="stats.delivered !== undefined"
-                    title="Total Sales Order Delivered"
-                    :total="(stats.delivered !== undefined ? stats.delivered + ' Sales Order' : 'Memuat...')"
-                    :column-class="cardBoxColumnClass"
-                />
-                <CardBox
-                    v-if="userHasRole('superadmin') || userHasPermission('create_sales_order')"
-                    :isAddButtonCard="true"
-                    image-src="/img/illustrations/add-new-role-illustration.png"
-                    image-alt="Tambah Sales Order"
-                    button-text="Tambah Sales Order"
-                    modal-target="#SalesOrderModal" 
-                    @button-click="salesOrderStore.openModal(null, 'admin')"
-                    :column-class="cardBoxColumnClass"
-                />
+                <div class="col-xl col-lg-6 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <p class="mb-0">Total Sales Order</p>
+                                <div class="avatar">
+                                    <span class="avatar-initial rounded bg-label-primary">
+                                        <i class="ri-file-list-3-line"></i>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="account-heading">
+                                <h5 class="mb-1">{{ stats?.total ?? 0 }}</h5>
+                                <span class="text-muted">Sales Order terdaftar</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl col-lg-6 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <p class="mb-0">Approved</p>
+                                <div class="avatar">
+                                    <span class="avatar-initial rounded bg-label-success">
+                                        <i class="ri-checkbox-circle-line"></i>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="account-heading">
+                                <h5 class="mb-1">{{ stats?.approved ?? 0 }}</h5>
+                                <span class="text-muted">Approved</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl col-lg-6 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <p class="mb-0">Rejected</p>
+                                <div class="avatar">
+                                    <span class="avatar-initial rounded bg-label-danger">
+                                        <i class="ri-close-circle-line"></i>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="account-heading">
+                                <h5 class="mb-1">{{ stats?.rejected ?? 0 }}</h5>
+                                <span class="text-muted">Rejected</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl col-lg-6 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <p class="mb-0">Partial</p>
+                                <div class="avatar">
+                                    <span class="avatar-initial rounded bg-label-warning">
+                                        <i class="ri-percent-line"></i>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="account-heading">
+                                <h5 class="mb-1">{{ stats?.partial ?? 0 }}</h5>
+                                <span class="text-muted">Partial</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl col-lg-6 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <p class="mb-0">Delivered</p>
+                                <div class="avatar">
+                                    <span class="avatar-initial rounded bg-label-info">
+                                        <i class="ri-truck-line"></i>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="account-heading">
+                                <h5 class="mb-1">{{ stats?.delivered ?? 0 }}</h5>
+                                <span class="text-muted">Delivered</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="row g-6">
                 <div class="col-12">
-                    <h4 class="mt-6 mb-1">Total & Filter Sales Order</h4>
-                    <p class="mb-0">Temukan semua akun administrator perusahaan Anda dan Sales Order terkait.</p>
+                    <h4 class="mt-6 mb-1">Filter Sales Order</h4>
+                    <p class="mb-0">Temukan semua sales order perusahaan Anda</p>
                 </div>
                 <div class="col-12">
                     <div class="card">
@@ -137,16 +186,28 @@
                 <div class="col-12">
                     <!-- salesOrder Table -->
                     <div class="card">
-                        <div class="card-header">
-                            <TableControls
-                                v-model="tableControls"
-                                :rows-per-page-options="rowsPerPageOptionsArray"
-                                search-placeholder="Cari Sales Order..."
-                                @rows-change="handleRowsChange"
-                                @search="handleSearch"
-                                @export="exportData"
-                            />
-                        </div>
+                        <ListPageTableHeader
+                            :rows="Number(tableControls.rows)"
+                            :rows-options="rowsPerPageOptionsArray"
+                            :search="globalFilterValue"
+                            search-placeholder="Cari Sales Order..."
+                            :export-disabled="loading"
+                            @update:rows="onToolbarRows"
+                            @update:search="(v) => { globalFilterValue = v }"
+                            @export="exportData"
+                        >
+                            <template #add>
+                                <button
+                                    v-if="userHasRole('superadmin') || userHasPermission('create_sales_order')"
+                                    type="button"
+                                    class="btn btn-primary"
+                                    @click="navigateTo('/sales/sales-order/form')"
+                                >
+                                    <i class="ri-add-line me-1"></i>
+                                    Tambah Sales Order
+                                </button>
+                            </template>
+                        </ListPageTableHeader>
                         <div class="card-datatable table-responsive py-3 px-3">
                             <MyDataTable 
                                 ref="myDataTableRef"
@@ -288,7 +349,7 @@
                                                         </a>
                                                     </li>
                                                     <li v-if="userHasRole('superadmin') || (userHasPermission('edit_sales_order') && slotProps.data.status == 'draft')">
-                                                        <a class="dropdown-item" href="javascript:void(0)" @click="salesOrderStore.openModal(slotProps.data, 'admin')">
+                                                        <a class="dropdown-item" href="javascript:void(0)" @click="navigateTo(`/sales/sales-order/form/${slotProps.data.id}`)">
                                                             <i class="ri-edit-box-line me-2"></i> Edit
                                                         </a>
                                                     </li>
@@ -602,8 +663,8 @@
                         </div>
                         <div class="modal-footer mt-6">
                              <button type="button" class="btn btn-outline-secondary" @click="salesOrderStore.closeModal()">Tutup</button>
-                            <button type="submit" class="btn btn-primary" :disabled="loading">
-                                <span v-if="loading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            <button type="submit" class="btn btn-primary" :disabled="saving">
+                                <span v-if="saving" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                                 Simpan
                             </button>
                         </div>
@@ -631,9 +692,8 @@ import { useUserStore } from '~/stores/user'
 import { usePermissionsStore } from '~/stores/permissions'
 import { usePermissions } from '~/composables/usePermissions'
 import Modal from '~/components/modal/Modal.vue'
-import CardBox from '~/components/cards/Cards.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
-import TableControls from '~/components/table/TableControls.vue'
+import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
 import SalesOrderExpandedRow from '~/components/table/SalesOrderExpandedRow.vue'
 import vSelect from 'vue-select'
 import Dropdown from 'primevue/dropdown'
@@ -670,7 +730,7 @@ const formatRupiah          = useFormatRupiah()
 const { userHasPermission, userHasRole } = usePermissions();
 const permissionStore       = usePermissionsStore()
 
-const { salesOrders, loading, totalRecords, params, form, isEditMode, showModal, validationErrors, customerProducts, stats } = storeToRefs(salesOrderStore)
+const { salesOrders, loading, saving, totalRecords, params, form, isEditMode, showModal, validationErrors, customerProducts, stats } = storeToRefs(salesOrderStore)
 const { quotations } = storeToRefs(quotationStore)
 const { customers }   = storeToRefs(customerStore)
 const { perusahaans } = storeToRefs(perusahaanStore)
@@ -696,10 +756,6 @@ const expandedRows = ref({});
 const tableControls = ref({
   rows: 10,
   search: ''
-});
-
-const cardBoxColumnClass = computed(() => {
-  return stats.value.total !== undefined ? 'col-6' : 'col-xl-4 col-lg-6 col-md-6';
 });
 
 const rowsPerPageOptionsArray = ref([10, 25, 50, 100]);
@@ -1022,6 +1078,11 @@ const handleRowsChange = (value) => {
     salesOrderStore.fetchSalesOrders();
 };
 
+const onToolbarRows = (value) => {
+    tableControls.value.rows = Number(value) || 10;
+    handleRowsChange(value);
+};
+
 const handleSearch = (value) => {
     globalFilterValue.value = value;
     params.value.first = 0;
@@ -1036,10 +1097,50 @@ const onSort = (event) => {
 
 const exportData = async (format) => {
     const toast = useToast();
-    
-    if (format === 'csv') {
-        myDataTableRef.value.exportCSV();
-    } else if (format === 'pdf') {
+
+    if (format === 'excel' || format === 'csv') {
+        try {
+            const hasFilters = filters.value.customerId || filters.value.source || filters.value.status || filters.value.startDate || filters.value.endDate || filters.value.search;
+            toast.info({
+                title: 'Info',
+                message: hasFilters
+                    ? 'Sedang mempersiapkan data sesuai filter untuk export Excel...'
+                    : 'Sedang mempersiapkan semua data untuk export Excel...',
+                color: 'blue',
+            });
+            const allData = await salesOrderStore.fetchAllSalesOrdersForExport();
+            if (allData && allData.length > 0) {
+                await exportSalesOrderExcel(allData);
+                toast.success({
+                    title: 'Success',
+                    message: `Excel berhasil dibuat dengan ${allData.length} data Sales Order${hasFilters ? ' sesuai filter' : ''}`,
+                    color: 'green',
+                    position: 'topRight',
+                    layout: 2,
+                });
+            } else {
+                toast.warning({
+                    title: 'Warning',
+                    message: 'Tidak ada data untuk diexport',
+                    color: 'orange',
+                    position: 'topRight',
+                    layout: 2,
+                });
+            }
+        } catch (error) {
+            console.error('Error exporting Excel:', error);
+            toast.error({
+                title: 'Error',
+                message: 'Gagal membuat Excel',
+                color: 'red',
+                position: 'topRight',
+                layout: 2,
+            });
+        }
+        return;
+    }
+
+    if (format === 'pdf') {
         try {
             // Cek apakah ada filter yang diterapkan
             const hasFilters = filters.value.customerId || filters.value.source || filters.value.status || filters.value.search;
@@ -1425,6 +1526,49 @@ function onFileChange(e) {
     form.value.attachment = null;
     form.value.attachmentPreview = null;
   }
+}
+
+// Export Excel Sales Order (satu fetch batch, konsisten dengan Quotation)
+const exportSalesOrderExcel = async (dataToExport) => {
+    const XLSX = await import('xlsx').then((m) => m.default || m)
+    const headers = [
+        'No. SO',
+        'No. PO',
+        'Customer',
+        'Metode Pembayaran',
+        'Status',
+        'Tanggal SO',
+        'Jatuh Tempo',
+        'Perusahaan',
+        'Cabang',
+        'Total',
+    ]
+    const rows = (dataToExport || []).map((row) => {
+        const pay = row.paymentMethod
+        const payLabel = { cash: 'Cash', transfer: 'Transfer', qris: 'QRIS', card: 'Card' }[pay] || pay || '-'
+        const st = row.status
+        const stLabel = { draft: 'Draft', approved: 'Approved', delivered: 'Delivered', rejected: 'Rejected', partial: 'Partial' }[st] || st || '-'
+        const fmtDate = (v) => (v ? new Date(v).toLocaleDateString('id-ID') : '-')
+        const total = row.total != null ? Number(row.total) : 0
+        return [
+            row.noSo || '-',
+            row.noPo || '-',
+            row.customer?.name || '-',
+            payLabel,
+            stLabel,
+            fmtDate(row.date),
+            fmtDate(row.dueDate),
+            row.perusahaan?.nmPerusahaan || '-',
+            row.cabang?.nmCabang || '-',
+            Number.isFinite(total) ? total : '-',
+        ]
+    })
+    const sheetData = [headers, ...rows]
+    const wb = XLSX.utils.book_new()
+    const ws = XLSX.utils.aoa_to_sheet(sheetData)
+    ws['!cols'] = headers.map(() => ({ wch: 18 }))
+    XLSX.utils.book_append_sheet(wb, ws, 'Sales Orders')
+    XLSX.writeFile(wb, 'sales-orders.xlsx')
 }
 
 // Fungsi export PDF khusus untuk Sales Order

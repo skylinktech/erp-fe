@@ -28,6 +28,7 @@ export interface ARReceipt {
 interface ARReceiptState {
   receipts: ARReceipt[]
   loading: boolean
+  saving: boolean
   error: any
   totalRecords: number
   params: {
@@ -53,6 +54,7 @@ export const useARReceiptStore = defineStore('arReceipt', {
   state: (): ARReceiptState => ({
     receipts: [],
     loading: false,
+    saving: false,
     error: null,
     totalRecords: 0,
     params: {
@@ -230,7 +232,7 @@ export const useARReceiptStore = defineStore('arReceipt', {
     },
 
     async saveReceipt() {
-      this.loading = true
+      this.saving = true
       this.validationErrors = [];
       const { $api } = useNuxtApp()
       const toast = useToast();
@@ -305,7 +307,7 @@ export const useARReceiptStore = defineStore('arReceipt', {
           });
         }
       } finally {
-        this.loading = false
+        this.saving = false
       }
     },
 

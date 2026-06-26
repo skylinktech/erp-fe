@@ -1,49 +1,93 @@
 <template>
     <div class="content-wrapper">
         <!-- Content -->
-        <div class="container-xxl flex-grow-1 container-p-y">
+        <div class="container-xxl flex-grow-1 container-pt-12">
             <h4 class="mb-1">List User</h4>
             <p class="mb-6">
             List User yang terdaftar di sistem
             </p>
-            <!-- User cards -->
             <div class="row g-6 mb-6">
-                <!-- Card untuk Tambah Pegawai -->
-                    <!-- Cards untuk Statistik Pegawai -->
-                <CardBox
-                    v-if="stats.total !== undefined"
-                    title="Total User"
-                    :total="stats.total + ' User'"
-                />
-                <CardBox
-                    v-if="stats.aktif !== undefined"
-                    title="User Aktif"
-                    :total="stats.aktif + ' User'"
-                />
-                <CardBox
-                    v-if="stats.tidakAktif !== undefined"
-                    title="User Tidak Aktif"
-                    :total="stats.tidakAktif + ' User'"
-                />
-                <CardBox
-                    v-if="stats.totalSuperadmin !== undefined"
-                    title="User Superadmin"
-                    :total="stats.totalSuperadmin + ' User'"
-                />
-                <CardBox
-                    v-if="stats.totalAdmin !== undefined"
-                    title="User Admin"
-                    :total="stats.totalAdmin + ' User'"
-                />
-                <CardBox
-                    :isAddButtonCard="true"
-                    image-src="/img/illustrations/add-new-role-illustration.png"
-                    image-alt="Tambah User"
-                    button-text="Tambah User"
-                    @button-click="userStore.openModal()"
-                />
+                <div v-if="stats.total !== undefined" class="col-xl col-lg-6 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <p class="mb-0">Total User</p>
+                                <div class="avatar">
+                                    <span class="avatar-initial rounded bg-label-primary"><i class="ri-team-line"></i></span>
+                                </div>
+                            </div>
+                            <div class="account-heading">
+                                <h5 class="mb-1">{{ stats.total }}</h5>
+                                <span class="text-muted">Akun terdaftar</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div v-if="stats.aktif !== undefined" class="col-xl col-lg-6 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <p class="mb-0">Aktif</p>
+                                <div class="avatar">
+                                    <span class="avatar-initial rounded bg-label-success"><i class="ri-user-follow-line"></i></span>
+                                </div>
+                            </div>
+                            <div class="account-heading">
+                                <h5 class="mb-1">{{ stats.aktif }}</h5>
+                                <span class="text-muted">User aktif</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div v-if="stats.tidakAktif !== undefined" class="col-xl col-lg-6 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <p class="mb-0">Tidak Aktif</p>
+                                <div class="avatar">
+                                    <span class="avatar-initial rounded bg-label-danger"><i class="ri-user-forbid-line"></i></span>
+                                </div>
+                            </div>
+                            <div class="account-heading">
+                                <h5 class="mb-1">{{ stats.tidakAktif }}</h5>
+                                <span class="text-muted">User nonaktif</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div v-if="stats.totalSuperadmin !== undefined" class="col-xl col-lg-6 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <p class="mb-0">Superadmin</p>
+                                <div class="avatar">
+                                    <span class="avatar-initial rounded bg-label-warning"><i class="ri-shield-star-line"></i></span>
+                                </div>
+                            </div>
+                            <div class="account-heading">
+                                <h5 class="mb-1">{{ stats.totalSuperadmin }}</h5>
+                                <span class="text-muted">User</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div v-if="stats.totalAdmin !== undefined" class="col-xl col-lg-6 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <p class="mb-0">Admin</p>
+                                <div class="avatar">
+                                    <span class="avatar-initial rounded bg-label-info"><i class="ri-admin-line"></i></span>
+                                </div>
+                            </div>
+                            <div class="account-heading">
+                                <h5 class="mb-1">{{ stats.totalAdmin }}</h5>
+                                <span class="text-muted">User</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <!--/ user cards -->
 
             <div class="row g-6">
                 <div class="col-12">
@@ -53,32 +97,23 @@
                 <div class="col-12">
                     <!-- user Table -->
                     <div class="card">
-                        <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
-                            <div class="d-flex align-items-center me-3 mb-2 mb-md-0">
-                                <span class="me-2">Baris:</span>
-                                <Dropdown v-model="params.rows" :options="rowsPerPageOptionsArray" @change="handleRowsChange" placeholder="Jumlah" style="width: 8rem;" />
-                            </div>
-                            <div class="d-flex align-items-center">
-                                <div class="btn-group me-2">
-                                    <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <i class="ri-upload-2-line me-1"></i> Export
-                                    </button>
-                                    <ul class="dropdown-menu">
-                                        <li><a class="dropdown-item" href="javascript:void(0)" @click="exportData('csv')">CSV</a></li>
-                                        <li><a class="dropdown-item" href="javascript:void(0)" @click="exportData('pdf')">PDF</a></li>
-                                    </ul>
-                                </div>
-                                <div class="input-group">
-                                    <span class="p-input-icon-left">
-                                        <InputText
-                                            v-model="globalFilterValue"
-                                            placeholder="Cari user..."
-                                            class="w-full md:w-20rem"
-                                        />
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
+                        <ListPageTableHeader
+                            :rows="Number(params.rows)"
+                            :rows-options="rowsPerPageOptionsArray"
+                            :search="globalFilterValue"
+                            search-placeholder="Cari user..."
+                            :export-disabled="loading"
+                            @update:rows="onUserToolbarRows"
+                            @update:search="(v) => { globalFilterValue = v }"
+                            @export="exportData"
+                        >
+                            <template #add>
+                                <button type="button" class="btn btn-primary" @click="userStore.openModal()">
+                                    <i class="ri-add-line me-1"></i>
+                                    Tambah User
+                                </button>
+                            </template>
+                        </ListPageTableHeader>
                         <div class="card-datatable table-responsive py-3 px-3">
                         <MyDataTable 
                             ref="myDataTableRef"
@@ -282,13 +317,11 @@ import { ref, computed, onMounted, watch, onBeforeUnmount } from 'vue'
 import { storeToRefs } from 'pinia'
 import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
-import CardBox from '~/components/cards/Cards.vue'
+import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
 import { useUserManagementStore } from '~/stores/userManagement'
 import vSelect from 'vue-select'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
 import 'vue-select/dist/vue-select.css'
-import Dropdown from 'primevue/dropdown'
-import InputText from 'primevue/inputtext'
 import { useDebounceFn } from '@vueuse/core'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 
@@ -353,11 +386,26 @@ const handleRowsChange = () => {
     userStore.fetchUsers();
 };
 
+const onUserToolbarRows = (v) => {
+    params.value.rows = Number(v) || 10;
+    handleRowsChange();
+};
+
 const onSort = (event) => userStore.setSort(event);
 
 const exportData = (format) => {
-    if (format === 'csv') {
-        myDataTableRef.value.exportCSV();
+    if (format === 'excel' || format === 'csv') {
+        myDataTableRef.value?.exportCSV?.();
+        return;
+    }
+    if (format === 'pdf') {
+        useToast().info({
+            title: 'Info',
+            message: 'Export PDF akan tersedia pada rilis berikutnya.',
+            color: 'blue',
+            position: 'topRight',
+            layout: 2,
+        });
     }
 };
 
@@ -385,8 +433,6 @@ definePageMeta({
 </script>
 
 <style scoped>
-<style scoped>
-
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .card-body {

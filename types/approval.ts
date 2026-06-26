@@ -1,5 +1,5 @@
 /**
- * Shared ApprovalLogEntry interface - used by ARF, IRO, Legal Tech, MGRF, Purchase Request
+ * Shared ApprovalLogEntry interface for approval-enabled modules
  */
 export interface ApprovalLogEntry {
   id: number

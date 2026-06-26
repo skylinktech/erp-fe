@@ -145,41 +145,28 @@
         </div>
         <div class="col-12">
           <div class="card">
-            <div class="card-header legal-table-header">
-              <div class="legal-header-top-row">
-                <div class="d-flex align-items-center legal-rows-control">
-                  <span class="me-2">Baris:</span>
-                  <Dropdown
-                    v-model="tableControls.rows"
-                    :options="rowsPerPageOptionsArray"
-                    @change="handleRowsChange"
-                    placeholder="Jumlah"
-                    style="width: 8rem;"
-                  />
-                </div>
+            <ListPageTableHeader
+              :rows="Number(tableControls.rows)"
+              :rows-options="rowsPerPageOptionsArray"
+              :search="globalFilterValue"
+              search-placeholder="Cari Legal-Tech Review..."
+              :export-disabled="loading"
+              @update:rows="onToolbarRows"
+              @update:search="(v) => { globalFilterValue = v }"
+              @export="exportData"
+            >
+              <template #add>
                 <button
                   v-if="userHasRole('superadmin') || userHasPermission('create_quotation')"
-                  @click="ltStore.openModal()"
+                  type="button"
                   class="btn btn-primary legal-add-button"
+                  @click="ltStore.openModal()"
                 >
                   <i class="ri-add-line me-1"></i>
                   Tambah Data
                 </button>
-                <button @click="exportData()" class="btn btn-outline-secondary legal-export-button" :disabled="loading">
-                  <i class="ri-download-line me-1"></i>
-                  Export
-                </button>
-              </div>
-              <div class="legal-actions-row">
-                <span class="p-input-icon-left legal-search-wrap">
-                  <InputText
-                    v-model="globalFilterValue"
-                    placeholder="Cari Legal-Tech Review..."
-                    class="legal-search-input"
-                  />
-                </span>
-              </div>
-            </div>
+              </template>
+            </ListPageTableHeader>
             <div class="card-datatable table-responsive py-3 px-3">
               <MyDataTable
                 ref="myDataTableRef"
@@ -214,14 +201,19 @@
                         </a>
                     </template>
                 </Column>
-                <Column field="iro.noIro" header="No. IRO" :sortable="true" class="text-nowrap">
+                <Column field="purchaseRequest.noPurchaseRequest" header="No. Purchase Request" :sortable="true" class="text-nowrap">
                   <template #body="slotProps">
-                    <a @click="navigateTo(`/order-process/iro/detail/${slotProps.data.iro.id}`)" class="text-primary text-nowrap" style="cursor:pointer;text-decoration:underline" :title="'View detail'">{{ slotProps.data.iro?.noIro || slotProps.data.iro?.no_iro || '-' }}</a>
+                    <a @click="navigateTo(`/purchasing/purchase-request/detail/${slotProps.data.purchaseRequest.id}`)" class="text-primary text-nowrap" style="cursor:pointer;text-decoration:underline" :title="'View detail'">{{ slotProps.data.purchaseRequest?.prNumber || slotProps.data.purchaseRequest?.pr_number || slotProps.data.purchaseRequest?.noPurchaseRequest || '-' }}</a>
                   </template>
                 </Column>
                 <Column field="quotation.noQuotation" header="No. Quotation" :sortable="true" class="text-nowrap">
                   <template #body="slotProps">
                     <a @click="navigateTo(`/sales/quotation/detail/${slotProps.data.quotation.id}`)" class="text-primary text-nowrap" style="cursor:pointer;text-decoration:underline" :title="'View detail'">{{ slotProps.data.quotation?.noQuotation || slotProps.data.quotation?.no_quotation || '-' }}</a>
+                  </template>
+                </Column>
+                <Column field="purchaseOrder.noPo" header="No. PO External" :sortable="false" class="text-nowrap">
+                  <template #body="slotProps">
+                    <span>{{ slotProps.data.purchaseOrder?.noPo || slotProps.data.purchaseOrder?.no_po || '-' }}</span>
                   </template>
                 </Column>
                 <Column field="quotation.customer.name" header="Customer" :sortable="true" class="text-nowrap">
@@ -283,17 +275,17 @@
                 <input type="text" :value="form.noLr || '-'" class="form-control" disabled readonly />
               </div>
               <div class="col-6">
-                <label class="form-label text-muted">IRO</label>
+                <label class="form-label text-muted">Purchase Request</label>
                 <CustomSelect2
-                  v-model="form.iroId"
-                  :options="irosForSelect"
-                  :get-option-label="(o) => (o ? (o.noIro || o.no_iro || '') + ' - ' + (o.customer?.name || '') : '')"
+                  v-model="form.purchaseRequestId"
+                  :options="purchaseRequestsForSelect"
+                  :get-option-label="(o) => (o ? (o.prNumber || o.pr_number || o.noPurchaseRequest || o.id) : '')"
                   :reduce="(o) => o?.id"
                   searchable
                   clearable
-                  placeholder="Pilih IRO"
+                  placeholder="Pilih Purchase Request"
                   :disabled="isEditMode || isViewMode"
-                  @update:modelValue="onIroChange"
+                  @update:modelValue="onPurchaseRequestChange"
                 />
               </div>
               <div class="col-6">
@@ -306,7 +298,20 @@
                   searchable
                   clearable
                   placeholder="Pilih Quotation"
-                  :disabled="isEditMode || isViewMode || !!form.iroId"
+                  :disabled="isEditMode || isViewMode"
+                />
+              </div>
+              <div class="col-12">
+                <label class="form-label text-muted">Purchase Order (External)</label>
+                <CustomSelect2
+                  v-model="form.purchaseOrderId"
+                  :options="externalPurchaseOrders"
+                  :get-option-label="(o) => (o ? `${o.noPo || o.no_po || ''} - ${o.vendor?.name || '-'}` : '')"
+                  :reduce="(o) => o?.id"
+                  searchable
+                  clearable
+                  placeholder="Pilih Purchase Order External"
+                  :disabled="isViewMode"
                 />
               </div>
               <div class="col-12">
@@ -347,7 +352,7 @@
             </div>
             <div class="modal-footer mt-4">
               <button type="button" class="btn btn-outline-secondary" @click="ltStore.closeModal()">Tutup</button>
-              <button v-if="!isViewMode && (!isEditMode || form.status === 'draft')" type="submit" class="btn btn-primary" :disabled="loading">Simpan</button>
+              <button v-if="!isViewMode && (!isEditMode || form.status === 'draft')" type="submit" class="btn btn-primary" :disabled="saving">Simpan</button>
             </div>
           </form>
         </template>
@@ -367,9 +372,8 @@ import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import LeTechReviewExpandedRow from '~/components/table/LeTechReviewExpandedRow.vue'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
+import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
 import Column from 'primevue/column'
-import Dropdown from 'primevue/dropdown'
-import InputText from 'primevue/inputtext'
 import { useDebounceFn } from '@vueuse/core'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import { useImageUrl } from '~/composables/useImageUrl'
@@ -380,11 +384,12 @@ const { userHasPermission, userHasRole } = usePermissions()
 const { getStatusBadge } = useApprovalStatus()
 const { getAttachmentUrl } = useImageUrl()
 
-const { reviews, loading, totalRecords, params, form, isEditMode, isViewMode, showModal, validationErrors, statistics } = storeToRefs(ltStore)
+const { reviews, loading, saving, totalRecords, params, form, isEditMode, isViewMode, showModal, validationErrors, statistics } = storeToRefs(ltStore)
 
 const quotationsForSelect = ref([])
 const quotationsForFilter = ref([])
-const irosForSelect = ref([])
+const purchaseRequestsForSelect = ref([])
+const externalPurchaseOrders = ref([])
 const expandedRows = ref({})
 const tableControls = ref({ rows: 10, search: '' })
 const filters = ref({ quotationId: null, status: null })
@@ -423,6 +428,23 @@ const handleRowsChange = (v) => {
   params.value.first = 0
   ltStore.fetchLeTechReviews()
 }
+const onToolbarRows = (v) => {
+  tableControls.value.rows = Number(v) || 10
+  handleRowsChange(v)
+}
+
+function exportData(format) {
+  const toast = useToast()
+  if (format === 'excel' || format === 'pdf') {
+    toast.info({
+      title: 'Info',
+      message: `Export ${format === 'excel' ? 'Excel' : 'PDF'} akan tersedia pada rilis berikutnya.`,
+      color: 'blue',
+      position: 'topRight',
+      layout: 2,
+    })
+  }
+}
 const handleSearch = (v) => { 
   globalFilterValue.value = v
   params.value.first = 0
@@ -434,10 +456,6 @@ const debouncedSearch = useDebounceFn(() => {
 watch(globalFilterValue, debouncedSearch)
 const onSort = (e) => { if (e) ltStore.setSort(e) }
 const onRowToggle = (e) => { expandedRows.value = e.data }
-
-function exportData() {
-  useToast().info({ title: 'Info', message: 'Export akan tersedia pada rilis berikutnya.', color: 'blue', position: 'topRight', layout: 2 })
-}
 
 /** Fetch quotations once - filter approved for select, use full list for filter (avoids 2x API calls) */
 async function fetchQuotations() {
@@ -455,67 +473,47 @@ async function fetchQuotations() {
   }
 }
 
-async function fetchIros() {
+async function fetchPurchaseRequestsForSelect() {
   const { $api } = useNuxtApp()
   try {
-    const r = await fetch(`${$api.iro()}?page=1&rows=500&status=approved`, { headers: { Accept: 'application/json' }, credentials: 'include' })
+    const r = await fetch(`${$api.purchaseRequest()}?page=1&rows=500&status=approved`, { headers: { Accept: 'application/json' }, credentials: 'include' })
     if (r.ok) {
       const j = await r.json()
-      irosForSelect.value = j.data || []
+      purchaseRequestsForSelect.value = j.data || []
     }
   } catch (e) {
-    console.error('Error fetching IROs:', e)
+    console.error('Error fetching Purchase Requests:', e)
   }
 }
 
-async function onIroChange(iroId) {
-  if (!iroId) {
-    form.value.quotationId = null
-    return
-  }
-  // Cari dari list dulu
-  let selectedIro = irosForSelect.value.find(i => i.id === iroId)
-  
-  // Jika tidak ada atau tidak ada quotationId, fetch detail
-  if (!selectedIro || !selectedIro.quotationId) {
-    try {
-      const { $api } = useNuxtApp()
-      const r = await fetch(`${$api.iro()}/${iroId}`, { headers: { Accept: 'application/json' }, credentials: 'include' })
-      if (r.ok) {
-        const j = await r.json()
-        selectedIro = j.data || j
-        // Update di list jika belum ada
-        const existingIdx = irosForSelect.value.findIndex(i => i.id === iroId)
-        if (existingIdx >= 0) {
-          irosForSelect.value[existingIdx] = selectedIro
-        } else {
-          irosForSelect.value.push(selectedIro)
-        }
-      }
-    } catch (e) {
-      console.error('Error fetching IRO detail:', e)
-      useToast().error({ title: 'Error', message: 'Gagal mengambil data IRO', color: 'red', position: 'topRight', layout: 2 })
-      return
+async function fetchExternalPurchaseOrders() {
+  const { $api } = useNuxtApp()
+  try {
+    const r = await fetch(`${$api.leTechReviewExternalPurchaseOrders()}?rows=500`, {
+      headers: { Accept: 'application/json' },
+      credentials: 'include',
+    })
+    if (r.ok) {
+      const j = await r.json()
+      externalPurchaseOrders.value = Array.isArray(j.data) ? j.data : []
     }
+  } catch (e) {
+    console.error('fetchExternalPurchaseOrders:', e)
   }
-  
-  if (selectedIro && selectedIro.quotationId) {
-    form.value.quotationId = selectedIro.quotationId
-    // Pastikan quotation ada di list
-    if (!quotationsForSelect.value.find(q => q.id === selectedIro.quotationId)) {
-      // Fetch quotation detail jika belum ada
-      try {
-        const { $api } = useNuxtApp()
-        const r = await fetch(`${$api.quotation()}/${selectedIro.quotationId}`, { headers: { Accept: 'application/json' }, credentials: 'include' })
-        if (r.ok) {
-          const j = await r.json()
-          const q = j.data || j
-          quotationsForSelect.value.push(q)
-        }
-      } catch (e) {
-        console.error('Error fetching quotation detail:', e)
-      }
+}
+
+async function onPurchaseRequestChange(purchaseRequestId) {
+  if (!purchaseRequestId) return
+  if (purchaseRequestsForSelect.value.some((i) => i.id === purchaseRequestId)) return
+  try {
+    const { $api } = useNuxtApp()
+    const r = await fetch($api.purchaseRequestShow(purchaseRequestId), { headers: { Accept: 'application/json' }, credentials: 'include' })
+    if (r.ok) {
+      const j = await r.json()
+      purchaseRequestsForSelect.value.push(j.data || j)
     }
+  } catch (e) {
+    console.error('Error fetching Purchase Request detail:', e)
   }
 }
 
@@ -593,7 +591,8 @@ onMounted(() => {
   ltStore.fetchLeTechReviews()
   ltStore.fetchStatistics()
   fetchQuotations()
-  fetchIros()
+  fetchPurchaseRequestsForSelect()
+  fetchExternalPurchaseOrders()
   setListTitle('Legal-Tech Review', reviews.value?.length ?? 0)
   tableControls.value.rows = Number(params.value.rows) || 10
   globalFilterValue.value = params.value.search || ''
@@ -609,9 +608,9 @@ watch(showModal, (v) => {
         const q = { id: form.value.quotationId, noQuotation: '-', customer: { id: 0, name: '-' } }
         quotationsForSelect.value = [q, ...quotationsForSelect.value]
       }
-      if (isEditMode.value && form.value?.iroId && !irosForSelect.value.some((i) => (i.id || i) === (form.value.iroId || form.value.iro_id))) {
-        const i = { id: form.value.iroId, noIro: '-', customer: { id: 0, name: '-' } }
-        irosForSelect.value = [i, ...irosForSelect.value]
+      if (isEditMode.value && form.value?.purchaseRequestId && !purchaseRequestsForSelect.value.some((i) => (i.id || i) === (form.value.purchaseRequestId || form.value.purchase_request_id))) {
+        const i = { id: form.value.purchaseRequestId, noPurchaseRequest: '-', customer: { id: 0, name: '-' } }
+        purchaseRequestsForSelect.value = [i, ...purchaseRequestsForSelect.value]
       }
     })
   } else modalInstance?.hide()
@@ -632,137 +631,8 @@ definePageMeta({
   border: 1px solid #e9ecef;
 }
 
-.legal-table-header {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.legal-header-top-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-
-.legal-rows-control {
-  min-width: 0;
-}
-
 .legal-add-button {
   flex: 0 0 auto;
-}
-
-.legal-export-button {
-  margin-left: 0.5rem;
-}
-
-.legal-actions-row {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  width: 100%;
-}
-
-.legal-search-wrap {
-  display: block;
-  width: 100%;
-}
-
-.legal-search-input {
-  width: 100% !important;
-}
-
-@media (min-width: 768px) {
-  .legal-table-header {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-  }
-
-  .legal-header-top-row {
-    flex: 0 0 auto;
-  }
-
-  .legal-actions-row {
-    width: auto;
-  }
-
-  .legal-search-wrap {
-    width: auto;
-  }
-
-  .legal-search-input {
-    width: 20rem !important;
-  }
-}
-
-@media (min-width: 768px) and (max-width: 991.98px) {
-  .legal-table-header {
-    flex-direction: column;
-    align-items: stretch;
-    justify-content: flex-start;
-    gap: 0.75rem;
-  }
-
-  .legal-header-top-row {
-    width: 100%;
-    justify-content: flex-start;
-  }
-
-  .legal-add-button {
-    margin-left: auto;
-  }
-
-  .legal-export-button {
-    width: auto;
-  }
-
-  .legal-actions-row {
-    width: 100%;
-    flex-wrap: nowrap;
-    justify-content: flex-start;
-  }
-
-  .legal-search-wrap {
-    width: 100% !important;
-    flex-basis: 100%;
-  }
-
-  .legal-search-input {
-    width: 100% !important;
-  }
-}
-
-@media (max-width: 767.98px) {
-  .legal-header-top-row {
-    flex-wrap: wrap;
-    align-items: stretch;
-  }
-
-  .legal-rows-control {
-    flex: 1 1 auto;
-  }
-
-  .legal-add-button {
-    flex: 1 1 auto;
-    margin-left: 0;
-  }
-
-  .legal-export-button {
-    order: 3;
-    width: 100%;
-    margin-left: 0;
-  }
-
-  .legal-actions-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .legal-search-wrap {
-    width: 100%;
-  }
+  white-space: nowrap;
 }
 </style>

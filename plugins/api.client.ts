@@ -57,6 +57,7 @@ export default defineNuxtPlugin(() => {
 
     // Menu
     menuGroups : () => `${apiBase}/menu-groups`,
+    menuGroupsOptions: () => `${apiBase}/menu-groups/options`,
     menuGroupsAll: () => `${apiBase}/menu-groups-all`,
     menuDetails: () => `${apiBase}/menu-details`,
 
@@ -85,11 +86,37 @@ export default defineNuxtPlugin(() => {
     divisi               : () => `${apiBase}/divisi`,
     departemen           : () => `${apiBase}/departemen`,
     cuti                 : () => `${apiBase}/cuti`,
+    cutiShow             : (id: number | string) => `${apiBase}/cuti/${id}`,
+    cutiCetak            : (id: number | string) => `${apiBase}/cuti/${id}/cetak`,
+    cutiStore            : () => `${apiBase}/cuti`,
+    cutiUpdate           : (id: number | string) => `${apiBase}/cuti/${id}`,
+    cutiDelete           : (id: number | string) => `${apiBase}/cuti/${id}`,
+    cutiByPegawai        : (pegawaiId: number | string) => `${apiBase}/pegawai/${pegawaiId}/cuti`,
+    cutiSubmitApproval   : (id: number | string) => `${apiBase}/cuti/${id}/submit-for-approval`,
+    cutiApprove          : (id: number | string) => `${apiBase}/cuti/${id}/approve`,
+    cutiReject           : (id: number | string) => `${apiBase}/cuti/${id}/reject`,
+    cutiCancelPending    : (id: number | string) => `${apiBase}/cuti/${id}/cancel-pending`,
+    cutiCancel           : (id: number | string) => `${apiBase}/cuti/${id}/cancel`,
+    cutiBalance          : (pegawaiId: number | string) => `${apiBase}/cuti/balance/${pegawaiId}`,
+    cutiTypes            : () => `${apiBase}/cuti/type`,
+    cutiStats            : () => `${apiBase}/cuti/stats`,
     pegawai              : () => `${apiBase}/pegawai`,
+    pegawaiShow          : (id: number | string) => `${apiBase}/pegawai/${id}`,
+    pegawaiProfile       : (id: number | string) => `${apiBase}/pegawai/${id}/profile`,
     pegawaiUpdate        : (id: number | string) => `${apiBase}/pegawai/update/${id}`,
     pegawaiDelete        : (id: number | string) => `${apiBase}/pegawai/delete/${id}`,
     pegawaiCountByStatus : () => `${apiBase}/pegawai/countByStatus`,
     pegawaiAvailableUsers: () => `${apiBase}/pegawai/available-users`,
+    pegawaiKontrakList: (pegawaiId: number | string) => `${apiBase}/pegawai/${pegawaiId}/kontrak`,
+    pegawaiKontrakStore: (pegawaiId: number | string) => `${apiBase}/pegawai/${pegawaiId}/kontrak`,
+    pegawaiKontrakUpdate: (id: number | string) => `${apiBase}/pegawai-kontrak/${id}/update`,
+    pegawaiKontrakActivate: (id: number | string) => `${apiBase}/pegawai-kontrak/${id}/activate`,
+    pegawaiKontrakCancel: (id: number | string) => `${apiBase}/pegawai-kontrak/${id}/cancel`,
+    pegawaiKontrakSubmitApproval: (id: number | string) => `${apiBase}/pegawai-kontrak/${id}/submit-for-approval`,
+    pegawaiKontrakApprove: (id: number | string) => `${apiBase}/pegawai-kontrak/${id}/approve`,
+    pegawaiKontrakReject: (id: number | string) => `${apiBase}/pegawai-kontrak/${id}/reject`,
+    pegawaiKontrakCancelPending: (id: number | string) => `${apiBase}/pegawai-kontrak/${id}/cancel-pending`,
+    pegawaiKontrakDelete: (id: number | string) => `${apiBase}/pegawai-kontrak/${id}`,
 
     // Purchase Order
     purchaseOrder          : () => `${apiBase}/purchase-order`,
@@ -107,20 +134,35 @@ export default defineNuxtPlugin(() => {
     
     // Purchase Request
     purchaseRequest: () => `${apiBase}/purchase-request`,
+    purchaseRequestShow: (id: number | string) => `${apiBase}/purchase-request/${id}`,
+    getPurchaseRequestDetails: (id: number | string) => `${apiBase}/purchase-request/getPurchaseRequestDetails/${id}`,
+    purchaseRequestStockAvailability: (id: number | string) => `${apiBase}/purchase-request/${id}/stock-availability`,
     countPurchaseRequestByStatus: () => `${apiBase}/purchase-request/countByStatus`,
+    purchaseRequestStatistics: () => `${apiBase}/purchase-request/countByStatus`,
     approvePurchaseRequest: (id: number | string) => `${apiBase}/purchase-request/${id}/approvePurchaseRequest`,
     rejectPurchaseRequest: (id: number | string) => `${apiBase}/purchase-request/${id}/rejectPurchaseRequest`,
     submitPurchaseRequest: (id: number | string) => `${apiBase}/purchase-request/${id}/submitPurchaseRequest`,
-    
-    // ARF (Asset Request Form)
+
+    // ARF (Advanced Request Form) — Implementation
     arf: () => `${apiBase}/arf`,
+    arfShow: (id: number | string) => `${apiBase}/arf/${id}`,
+    getArfDetails: (id: number | string) => `${apiBase}/arf/getArfDetails/${id}`,
     countArfByStatus: () => `${apiBase}/arf/countByStatus`,
-    submitArf: (id: number | string) => `${apiBase}/arf/${id}/submitArf`,
     approveArf: (id: number | string) => `${apiBase}/arf/${id}/approveArf`,
     rejectArf: (id: number | string) => `${apiBase}/arf/${id}/rejectArf`,
-    disburseArf: (id: number | string) => `${apiBase}/arf/${id}/disburseArf`,
-    settleArf: (id: number | string) => `${apiBase}/arf/${id}/settleArf`,
-    cancelArf: (id: number | string) => `${apiBase}/arf/${id}/cancelArf`,
+    submitArf: (id: number | string) => `${apiBase}/arf/${id}/submitArf`,
+
+    // Progress Tracker — Implementation
+    progressTracker: () => `${apiBase}/progress-tracker`,
+    progressTrackerShow: (id: string) => `${apiBase}/progress-tracker/${id}`,
+    getProgressTrackerDetails: (id: string) => `${apiBase}/progress-tracker/getDetails/${id}`,
+    countProgressTrackerByStatus: () => `${apiBase}/progress-tracker/countByStatus`,
+    updateProgressTrackerNodeStatus: (nodeId: string) =>
+      `${apiBase}/progress-tracker/nodes/${nodeId}/updateStatus`,
+    uploadProgressTrackerAttachments: (nodeId: string) =>
+      `${apiBase}/progress-tracker/nodes/${nodeId}/attachments`,
+    deleteProgressTrackerAttachment: (attachmentId: string) =>
+      `${apiBase}/progress-tracker/attachments/${attachmentId}`,
     
     // Purchase Order Item
     purchaseOrderItemUpdateStatusPartial: (id: number | string) => `${apiBase}/purchase-order-item/updateStatusPartial/${id}`,
@@ -367,25 +409,11 @@ export default defineNuxtPlugin(() => {
     submitQuotation: (id: number | string) => `${apiBase}/quotation/submitQuotation/${id}`,
     getQuotationDetails: (id: number | string) => `${apiBase}/quotation/getQuotationDetails/${id}`,
 
-    // IRO (Installation Request Order)
-    iro: () => `${apiBase}/iro`,
-    getIroDetails: (id: string) => `${apiBase}/iro/getIroDetails/${id}`,
-    iroStatistics: () => `${apiBase}/iro/statistics`,
-    approveIro: (id: string) => `${apiBase}/iro/approveIro/${id}`,
-    rejectIro: (id: string) => `${apiBase}/iro/rejectIro/${id}`,
-    submitIro: (id: string) => `${apiBase}/iro/submitIro/${id}`,
-
-    // MGRF (Material Good Request Form)
-    mgrf: () => `${apiBase}/mgrf`,
-    countMgrfByStatus: () => `${apiBase}/mgrf/countByStatus`,
-    approveMgrf: (id: string) => `${apiBase}/mgrf/approveMgrf/${id}`,
-    rejectMgrf: (id: string) => `${apiBase}/mgrf/rejectMgrf/${id}`,
-    submitMgrf: (id: string) => `${apiBase}/mgrf/submitMgrf/${id}`,
-
     // Legal-Tech Review
     leTechReview: () => `${apiBase}/le-tech-review`,
     leTechReviewShow: (id: number | string) => `${apiBase}/le-tech-review/${id}`,
     leTechReviewStatistics: () => `${apiBase}/le-tech-review/statistics`,
+    leTechReviewExternalPurchaseOrders: () => `${apiBase}/le-tech-review/external-purchase-orders`,
     submitLeTechReview: (id: number | string) => `${apiBase}/le-tech-review/submitLeTechReview/${id}`,
     approveLeTechReview: (id: number | string) => `${apiBase}/le-tech-review/approveLeTechReview/${id}`,
     rejectLeTechReview: (id: number | string) => `${apiBase}/le-tech-review/rejectLeTechReview/${id}`,
@@ -409,6 +437,7 @@ export default defineNuxtPlugin(() => {
     // Site Investment
     siteInvestment: () => `${apiBase}/site-investment`,
     siteInvestmentShow: (id: string) => `${apiBase}/site-investment/${id}`,
+    siteInvestmentPreparedByOptions: () => `${apiBase}/site-investment/prepared-by-options`,
     siteInvestmentPriceListLines: (priceableType: string) => `${apiBase}/site-investment/price-list-lines?priceableType=${priceableType}`,
     countSiteInvestByStatus: () => `${apiBase}/site-investment/countByStatus`,
     approveSiteInvestment: (id: string) => `${apiBase}/site-investment/approveSiteInvestment/${id}`,
@@ -441,8 +470,8 @@ export default defineNuxtPlugin(() => {
     customerVerif: () => `${apiBase}/customer-verif`,
     customerVerifShow: (id: number | string) => `${apiBase}/customer-verif/${id}`,
     customerVerifCountByStatus: () => `${apiBase}/customer-verif/countByStatus`,
-    customerVerifApprovedIros: () => `${apiBase}/customer-verif/approved-iros`,
-    customerVerifIroCustomer: (iroId: string) => `${apiBase}/customer-verif/iro/${iroId}/customer`,
+    customerVerifApprovedPurchaseRequests: () => `${apiBase}/customer-verif/approved-purchase-requests`,
+    customerVerifPurchaseRequestCustomer: (purchaseRequestId: string) => `${apiBase}/customer-verif/purchase-request/${purchaseRequestId}/customer`,
     submitCustomerVerif: (id: number | string) => `${apiBase}/customer-verif/submitCustomerVerif/${id}`,
     verifyCustomerVerif: (id: number | string) => `${apiBase}/customer-verif/verifyCustomerVerif/${id}`,
     unverifyCustomerVerif: (id: number | string) => `${apiBase}/customer-verif/unverifyCustomerVerif/${id}`,
@@ -455,6 +484,13 @@ export default defineNuxtPlugin(() => {
     dataCustomer: () => `${apiBase}/data/customer`,
     dataVendor: () => `${apiBase}/data/vendor`,
     dataDepartemen: () => `${apiBase}/data/departemen`,
+    dataBudget: () => `${apiBase}/data/budget`,
+    dataPegawai: (statusPegawai?: number | string) => {
+      const url = `${apiBase}/data/pegawai`
+      if (statusPegawai === undefined || statusPegawai === null || statusPegawai === '') return url
+      return `${url}?status_pegawai=${encodeURIComponent(String(statusPegawai))}`
+    },
+    dataStock: () => `${apiBase}/data/stock`,
 
     // User Sessions
     userSessionsActiveUsers: () => `${apiBase}/user-sessions/active-users`,

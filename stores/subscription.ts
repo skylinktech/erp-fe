@@ -41,7 +41,7 @@ export interface SubscriptionContact {
 export interface Subscription {
   id: string
   noSubscription: string
-  iroId: string
+  purchaseRequestId: string
   quotationId: string
   customerId: number
   customerName: string
@@ -60,7 +60,7 @@ export interface Subscription {
   createdAt: string
   updatedAt: string
   canceledByUser?: { id: number; fullName?: string; full_name?: string; email?: string } | null
-  iro?: { id: string; noIro?: string }
+  purchaseRequest?: { id: number; prNumber?: string; noPurchaseRequest?: string }
   quotation?: { id: string; noQuotation?: string }
   customer?: { id: number; name: string }
   subscriptionServices?: SubscriptionService[]
@@ -73,6 +73,7 @@ interface SubscriptionState {
   subscriptions: Subscription[]
   subscription: Subscription | null
   loading: boolean
+  saving: boolean
   error: any
   totalRecords: number
   params: {
@@ -87,7 +88,7 @@ interface SubscriptionState {
   }
   form: {
     id?: string | null
-    iroId: string | null
+    purchaseRequestId: string | null
     quotationId: string | null
     customerId: number | null
     customerName: string
@@ -124,6 +125,7 @@ export const useSubscriptionStore = defineStore('subscription', {
     subscriptions: [],
     subscription: null,
     loading: false,
+    saving: false,
     error: null,
     totalRecords: 0,
     params: {
@@ -137,7 +139,7 @@ export const useSubscriptionStore = defineStore('subscription', {
       status: null,
     },
     form: {
-      iroId: null,
+      purchaseRequestId: null,
       quotationId: null,
       customerId: null,
       customerName: '',
@@ -239,25 +241,25 @@ export const useSubscriptionStore = defineStore('subscription', {
     async saveSubscription() {
       console.log('saveSubscription: START')
       const toast = useToast()
-      this.loading = true
+      this.saving = true
       this.validationErrors = []
       const { $api } = useNuxtApp()
       const userStore = useUserStore()
 
       if (!this.form.quotationId || !this.form.customerId) {
-        this.loading = false
+        this.saving = false
         toast.error({ title: 'Validasi', message: 'Quotation dan Customer wajib diisi', color: 'red', position: 'topRight', layout: 2 })
         return false
       }
 
       if (!this.form.contractPeriod || this.form.contractPeriod <= 0) {
-        this.loading = false
+        this.saving = false
         toast.error({ title: 'Validasi', message: 'Contract Period harus lebih dari 0', color: 'red', position: 'topRight', layout: 2 })
         return false
       }
 
       if (this.form.subscriptionServices.length === 0) {
-        this.loading = false
+        this.saving = false
         console.error('Validation failed: subscriptionServices is empty', this.form)
         toast.error({ title: 'Validasi', message: 'Minimal 1 service harus diisi. Pastikan Quotation sudah memiliki services.', color: 'red', position: 'topRight', layout: 2 })
         return false
@@ -271,7 +273,7 @@ export const useSubscriptionStore = defineStore('subscription', {
           if (s.servicePlan && s.servicePlan.trim() !== '') {
             s.planName = s.servicePlan
           } else {
-            this.loading = false
+            this.saving = false
             toast.error({ title: 'Validasi', message: `Plan Name untuk service ${i + 1} wajib diisi`, color: 'red', position: 'topRight', layout: 2 })
             return false
           }
@@ -279,7 +281,7 @@ export const useSubscriptionStore = defineStore('subscription', {
       }
 
       if (this.form.subscriptionInstallations.length === 0) {
-        this.loading = false
+        this.saving = false
         toast.error({ title: 'Validasi', message: 'Minimal 1 installation address harus diisi', color: 'red', position: 'topRight', layout: 2 })
         return false
       }
@@ -288,7 +290,7 @@ export const useSubscriptionStore = defineStore('subscription', {
       const hasExisting = this.form.existingAttachments && this.form.existingAttachments.length > 0
       const formData = new FormData()
 
-      formData.append('iroId', this.form.iroId || '')
+      formData.append('purchaseRequestId', this.form.purchaseRequestId || '')
       formData.append('quotationId', String(this.form.quotationId))
       formData.append('customerId', String(this.form.customerId))
       formData.append('customerName', this.form.customerName)
@@ -354,7 +356,7 @@ export const useSubscriptionStore = defineStore('subscription', {
           const errorMessage = responseData.message || (this.isEditMode ? 'Gagal memperbarui Subscription' : 'Gagal menyimpan Subscription')
           toast.error({ title: 'Error', message: errorMessage, color: 'red', position: 'topRight', layout: 2 })
           console.log('saveSubscription: Returning false (not ok)')
-          this.loading = false
+          this.saving = false
           return false
         }
         
@@ -370,8 +372,8 @@ export const useSubscriptionStore = defineStore('subscription', {
         toast.error({ title: 'Error', message: e.message || 'Operasi gagal', color: 'red', position: 'topRight', layout: 2 })
         return false
       } finally {
-        console.log('saveSubscription: Finally block, setting loading to false')
-        this.loading = false
+        console.log('saveSubscription: Finally block, setting saving to false')
+        this.saving = false
       }
     },
 
@@ -457,7 +459,7 @@ export const useSubscriptionStore = defineStore('subscription', {
       // Reset form with default values
       this.form = {
         id: null,
-        iroId: leTechReview.iroId ?? leTechReview.iro_id ?? leTechReview.iro?.id ?? null,
+        purchaseRequestId: leTechReview.purchaseRequestId ?? leTechReview.purchase_request_id ?? leTechReview.purchaseRequest?.id ?? null,
         quotationId: leTechReview.quotationId ?? leTechReview.quotation_id ?? leTechReview.quotation?.id ?? null,
         customerId: leTechReview.quotation?.customerId ?? leTechReview.quotation?.customer_id ?? leTechReview.quotation?.customer?.id ?? null,
         customerName: leTechReview.quotation?.customer?.name ?? leTechReview.quotation?.customerName ?? '',
@@ -489,7 +491,7 @@ export const useSubscriptionStore = defineStore('subscription', {
         const raw = data as any
         this.form = {
           id: raw.id,
-          iroId: raw.iroId ?? raw.iro_id ?? raw.iro?.id ?? null,
+          purchaseRequestId: raw.purchaseRequestId ?? raw.purchase_request_id ?? raw.purchaseRequest?.id ?? null,
           quotationId: raw.quotationId ?? raw.quotation_id ?? raw.quotation?.id ?? null,
           customerId: raw.customerId ?? raw.customer_id ?? raw.customer?.id ?? null,
           customerName: raw.customerName ?? raw.customer_name ?? raw.customer?.name ?? '',
@@ -545,7 +547,7 @@ export const useSubscriptionStore = defineStore('subscription', {
       } else {
         this.form = {
           id: null,
-          iroId: null,
+          purchaseRequestId: null,
           quotationId: null,
           customerId: null,
           customerName: '',
@@ -578,7 +580,7 @@ export const useSubscriptionStore = defineStore('subscription', {
       }
       this.form = {
         id: null,
-        iroId: null,
+        purchaseRequestId: null,
         quotationId: null,
         customerId: null,
         customerName: '',
@@ -669,6 +671,33 @@ export const useSubscriptionStore = defineStore('subscription', {
       if (f.search !== undefined) this.params.search = f.search
       this.params.first = 0
       this.fetchSubscriptions()
+    },
+
+    async fetchAllSubscriptionsForExport() {
+      const toast = useToast()
+      const { $api } = useNuxtApp()
+      try {
+        const url = new URL($api.subscription())
+        const sp = new URLSearchParams({
+          page: '1',
+          rows: '10000',
+          sortField: this.params.sortField || '',
+          sortOrder: String(this.params.sortOrder ?? ''),
+          draw: '1',
+          search: this.params.search || '',
+        })
+        if (this.params.customerId != null) sp.append('customerId', String(this.params.customerId))
+        if (this.params.status) sp.append('status', this.params.status)
+        url.search = sp.toString()
+        const res = await fetch(String(url), { method: 'GET', headers: { Accept: 'application/json' }, credentials: 'include' })
+        if (!res.ok) throw new Error('Gagal mengambil data Subscription untuk export')
+        const json = await res.json()
+        return Array.isArray(json.data) ? json.data : []
+      } catch (e) {
+        console.error(e)
+        toast.error({ title: 'Error', message: 'Gagal mengambil data untuk export', color: 'red', position: 'topRight', layout: 2 })
+        return []
+      }
     },
 
     async fetchStatistics() {

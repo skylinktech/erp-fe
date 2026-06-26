@@ -55,7 +55,7 @@
                   <a class="dropdown-item" href="javascript:void(0)" @click="onCancel">
                     <i class="ri-close-circle-line me-2"></i> Cancel
                   </a>
-                  <a v-if="canEditSiteInvest(siteInvest)" class="dropdown-item" href="javascript:void(0)" @click="navigateTo('/sales/site-investment?edit=' + siteInvest.id)">
+                  <a v-if="canEditSiteInvest(siteInvest)" class="dropdown-item" href="javascript:void(0)" @click="navigateTo('/sales/site-investment/form/' + siteInvest.id)">
                     <i class="ri-edit-box-line me-2"></i> Edit
                   </a>
                   <a v-if="siteInvest.status === 'approved'" class="dropdown-item" href="javascript:void(0)" @click="onPrintSI">
@@ -86,7 +86,7 @@
                 <span class="process-arrow text-muted">&gt;</span>
                 <span class="process-pill process-pill-inactive">Customer Approval</span>
                 <span class="process-arrow text-muted">&gt;</span>
-                <span class="process-pill process-pill-inactive">IRO</span>
+                <span class="process-pill process-pill-inactive">Purchase Order</span>
                 <span class="process-arrow text-muted">&gt;</span>
                 <span class="process-pill process-pill-inactive">Implementation</span>
               </div>

@@ -157,13 +157,13 @@
                                         />
                                     </div>
                                     <div class="col-md-4 mb-3">
-                                        <label class="form-label text-muted mb-2">Filter IRO</label>
+                                        <label class="form-label text-muted mb-2">Filter Purchase Order</label>
                                         <CustomSelect2
-                                            v-model="filters.iroId"
-                                            :options="approvedIros"
-                                            :get-option-label="iro => iro.noIro || `IRO-${iro.id}`"
-                                            :reduce="iro => iro.id"
-                                            placeholder="Pilih IRO"
+                                            v-model="filters.purchaseRequestId"
+                                            :options="approvedPurchaseRequests"
+                                            :get-option-label="formatPurchaseOrderOptionLabel"
+                                            :reduce="po => po.id"
+                                            placeholder="Pilih Purchase Order"
                                             searchable
                                             clearable
                                         />
@@ -235,9 +235,9 @@
                                             <span class="fw-semibold">{{ slotProps.data.noVerif || '-' }}</span>
                                         </template>
                                     </Column>
-                                    <Column field="iro.noIro" header="IRO" :sortable="true" class="text-nowrap">
+                                    <Column field="purchaseRequest.noPurchaseRequest" header="Purchase Order" :sortable="true" class="text-nowrap">
                                         <template #body="slotProps">
-                                            <a @click="navigateTo(`/order-process/iro/detail/${slotProps.data.iro.id}`)" class="text-primary" style="cursor:pointer;text-decoration:underline" :title="'View detail'">{{ slotProps.data.iro?.noIro || '-' }}</a>
+                                            <a @click="navigateTo(`/purchasing/purchase-request/detail/${slotProps.data.purchaseRequest.id}`)" class="text-primary" style="cursor:pointer;text-decoration:underline" :title="'View detail'">{{ slotProps.data.purchaseRequest?.prNumber || slotProps.data.purchaseRequest?.pr_number || slotProps.data.purchaseRequest?.noPurchaseRequest || '-' }}</a>
                                         </template>
                                     </Column>
                                     <Column field="customerName" header="Customer Name" :sortable="true" class="text-nowrap fw-semibold"></Column>
@@ -339,20 +339,20 @@
                                 <div class="tab-pane fade active show" id="form-tabs-info" role="tabpanel">
                                     <div class="row g-4">
                                         <div class="col-md-12">
-                                            <label class="form-label text-muted mb-2">Pilih IRO (Status: Approved)</label>
+                                            <label class="form-label text-muted mb-2">Pilih Purchase Order (Status: Approved)</label>
                                             <CustomSelect2
-                                                v-model="form.iroId"
-                                                :options="approvedIros"
-                                                :get-option-label="iro => iro.noIro || `IRO-${iro.id}`"
-                                                :reduce="iro => iro.id"
-                                                placeholder="Pilih IRO"
+                                                v-model="form.purchaseRequestId"
+                                                :options="approvedPurchaseRequests"
+                                                :get-option-label="formatPurchaseOrderOptionLabel"
+                                                :reduce="po => po.id"
+                                                placeholder="Pilih Purchase Order"
                                                 searchable
                                                 clearable
-                                                :loading="loadingIros"
-                                                loading-text="Memuat IRO..."
-                                                @update:modelValue="onIroChange"
+                                                :loading="loadingPurchaseRequests"
+                                                loading-text="Memuat Purchase Order..."
+                                                @update:modelValue="onPurchaseRequestChange"
                                             />
-                                            <small class="text-muted d-block mt-1">Hanya IRO dengan status 'approved' yang dapat dipilih</small>
+                                            <small class="text-muted d-block mt-1">Hanya Purchase Order dengan status 'approved' yang dapat dipilih</small>
                                         </div>
                                         <div class="col-md-6">
                                             <div class="form-floating form-floating-outline">
@@ -372,10 +372,16 @@
                                                 <label>Phone Customer <span class="text-danger">*</span></label>
                                             </div>
                                         </div>
-                                        <div class="col-md-6">
+                                        <div class="col-md-3">
                                             <div class="form-floating form-floating-outline">
                                                 <input type="text" v-model="form.customerNpwp" class="form-control" placeholder="NPWP Customer" required>
                                                 <label>NPWP Customer <span class="text-danger">*</span></label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-floating form-floating-outline">
+                                                <input type="text" v-model="form.customerKtp" class="form-control" placeholder="KTP Customer">
+                                                <label>KTP Customer <span class="text-muted small">(Opsional)</span></label>
                                             </div>
                                         </div>
                                         <div class="col-12">
@@ -459,6 +465,14 @@
                                                                 </label>
                                                             </div>
                                                         </div>
+                                                        <div class="col-md-6">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox" v-model="doc.skKemenhum" :id="`skKemenhum-${index}`">
+                                                                <label class="form-check-label" :for="`skKemenhum-${index}`">
+                                                                    SK Kemenhum
+                                                                </label>
+                                                            </div>
+                                                        </div>
                                                         <div class="col-md-6 d-flex justify-content-end">
                                                             <button v-if="form.customerVerifDocs.length > 1" @click.prevent="customerVerifStore.removeCustomerVerifDoc(index)" class="btn btn-outline-danger">Hapus</button>
                                                         </div>
@@ -476,8 +490,8 @@
 
                             <div class="modal-footer mt-6">
                                 <button type="button" class="btn btn-outline-secondary" @click="customerVerifStore.closeModal()">Tutup</button>
-                                <button type="submit" class="btn btn-primary ms-2" :disabled="loading">
-                                    <span v-if="loading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                <button type="submit" class="btn btn-primary ms-2" :disabled="saving">
+                                    <span v-if="saving" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                                     Simpan
                                 </button>
                             </div>
@@ -506,6 +520,7 @@ import InputText from 'primevue/inputtext'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
 import { useDebounceFn } from '@vueuse/core'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
+import { formatPurchaseOrderOptionLabel } from '~/constants/labels/purchasing'
 
 const { setListTitle } = useDynamicTitle()
 const route = useRoute()
@@ -518,19 +533,19 @@ const permissionStore = usePermissionsStore()
 const { userHasPermission, userHasRole } = usePermissions()
 const { getAttachmentUrl, isImageFile } = useImageUrl()
 
-const { customerVerifs, loading, totalRecords, params, form, isEditMode, showModal, validationErrors, approvedIros, stats } = storeToRefs(customerVerifStore)
+const { customerVerifs, loading, saving, totalRecords, params, form, isEditMode, showModal, validationErrors, approvedPurchaseRequests, stats } = storeToRefs(customerVerifStore)
 const { customers } = storeToRefs(customerStore)
 const { permissions } = storeToRefs(permissionStore)
 
 const myDataTableRef = ref(null)
 const filters = ref({
     status: null,
-    iroId: null,
+    purchaseRequestId: null,
     customerId: null,
     search: '',
 })
 const globalFilterValue = ref('')
-const loadingIros = ref(false)
+const loadingPurchaseRequests = ref(false)
 
 const tableControls = ref({
     rows: 10,
@@ -553,7 +568,7 @@ const { isLoading: isDataLoading, error: dataError } = usePageData({
     loaders: [
         () => permissionStore.fetchPermissions(),
         () => customerStore.fetchCustomers(),
-        () => customerVerifStore.fetchApprovedIros(),
+        () => customerVerifStore.fetchApprovedPurchaseRequests(),
         () => customerVerifStore.fetchStats(),
         () => customerVerifStore.fetchCustomerVerifs(),
     ],
@@ -594,10 +609,10 @@ watch(() => globalFilterValue.value, (newValue) => {
 
 watch(showModal, async (newValue) => {
     if (newValue) {
-        // Refresh approved IROs when modal opens
-        loadingIros.value = true
-        await customerVerifStore.fetchApprovedIros()
-        loadingIros.value = false
+        // Refresh daftar Purchase Order approved saat modal dibuka
+        loadingPurchaseRequests.value = true
+        await customerVerifStore.fetchApprovedPurchaseRequests()
+        loadingPurchaseRequests.value = false
 
         nextTick(() => {
             const modalElement = document.getElementById('CustomerVerifModal')
@@ -702,9 +717,9 @@ const handleSubmit = () => {
     customerVerifStore.saveCustomerVerif()
 }
 
-const onIroChange = async (iroId) => {
-    if (iroId) {
-        await customerVerifStore.onIroChange(iroId)
+const onPurchaseRequestChange = async (purchaseRequestId) => {
+    if (purchaseRequestId) {
+        await customerVerifStore.onPurchaseRequestChange(purchaseRequestId)
     }
 }
 

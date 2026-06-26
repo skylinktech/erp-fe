@@ -71,6 +71,7 @@ interface PurchaseOrderState {
   purchaseOrders: PurchaseOrder[]
   purchaseOrder : PurchaseOrder | null
   loading       : boolean
+  saving        : boolean
   error         : any
   totalRecords  : number
   params        : {
@@ -96,6 +97,7 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
     purchaseOrders: [] as PurchaseOrder[], // Explicitly type as array
     purchaseOrder : null,
     loading       : true,
+    saving        : false,
     error         : null,
     totalRecords  : 0,
     params        : {
@@ -211,7 +213,7 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
 
     async savePurchaseOrder() {
       const toast     = useToast();
-        this.loading = true;
+        this.saving = true;
         this.validationErrors = [];
         const { $api } = useNuxtApp();
         const userStore = useUserStore();
@@ -350,6 +352,7 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
                       position: 'topRight',
                       layout: 2,
                     });
+                    return false;
                 } else {
                     // Tampilkan detail error jika ada
                     let errorMessage = errorData.message || 'Gagal menyimpan data purchaseOrder';
@@ -375,6 +378,7 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
                   color: 'green',
                   position: 'topRight',
                 });
+                return true;
             }
 
 
@@ -388,8 +392,9 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
               color: 'red',
               position: 'topRight',
             });
+            return false;
         } finally {
-            this.loading = false;
+            this.saving = false;
         }
     },
 
@@ -764,9 +769,9 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
             
             const response = await fetch(url, {
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json',
-                }
+                },
+                credentials: 'include',
             });
             
             if (response.ok) {

@@ -3,59 +3,41 @@
   <div class="page-wrapper">
   <div class="content-wrapper">
       <!-- Content -->
-      <div class="container-xxl flex-grow-1 container-p-y">
+      <div class="container-xxl flex-grow-1 container-pt-12">
           <h4 class="mb-1">List Surat Jalan</h4>
           <p class="mb-6">
           List suratJalan yang terdaftar di sistem
           </p>
           <!-- suratJalan cards -->
           <div class="row g-6 mb-6">
-              <!-- Static cards for display, can be made dynamic later -->
-              <div class="col-xl-4 col-lg-6 col-md-6">
+              <div class="col-xl col-lg-6 col-md-6">
                   <div class="card">
                       <div class="card-body">
                           <div class="d-flex justify-content-between align-items-center mb-4">
-                              <h5 class="mb-1">Total Surat Jalan</h5>
-                              <span class="badge bg-label-primary rounded-pill">Total</span>
+                              <p class="mb-0">Total Surat Jalan</p>
+                              <div class="avatar">
+                                  <span class="avatar-initial rounded bg-label-primary"><i class="ri-truck-line"></i></span>
+                              </div>
                           </div>
-                          <div class="d-flex align-items-center">
-                              <h1 class="mb-0 display-4">{{ statistics?.totalSuratJalans || 0 }}</h1>
-                              <i class="ri-truck-line ri-24px text-primary ms-2"></i>
+                          <div class="account-heading">
+                              <h5 class="mb-1">{{ statistics?.totalSuratJalans || 0 }}</h5>
+                              <span class="text-muted">Surat jalan terdaftar</span>
                           </div>
-                          <p class="mb-0 mt-2">Total semua surat jalan dalam sistem</p>
                       </div>
                   </div>
               </div>
-              <div class="col-xl-4 col-lg-6 col-md-6">
+              <div class="col-xl col-lg-6 col-md-6">
                   <div class="card">
                       <div class="card-body">
                           <div class="d-flex justify-content-between align-items-center mb-4">
-                              <h5 class="mb-1">From Delivered SO</h5>
-                              <span class="badge bg-label-success rounded-pill">Delivered</span>
-                          </div>
-                          <div class="d-flex align-items-center">
-                              <h1 class="mb-0 display-4">{{ statistics?.withDeliveredSO || 0 }}</h1>
-                              <i class="ri-check-line ri-24px text-success ms-2"></i>
-                          </div>
-                          <p class="mb-0 mt-2">Surat jalan dari SO delivered</p>
-                      </div>
-                  </div>
-              </div>
-              <div class="col-xl-4 col-lg-6 col-md-6">
-                  <div class="card h-100">
-                      <div class="row h-100">
-                          <div class="col-sm-5">
-                              <div class="d-flex align-items-end h-100 justify-content-center">
-                                  <img src="/img/illustrations/add-new-role-illustration.png" class="img-fluid" alt="Image" width="70">
+                              <p class="mb-0">From Delivered SO</p>
+                              <div class="avatar">
+                                  <span class="avatar-initial rounded bg-label-success"><i class="ri-checkbox-circle-line"></i></span>
                               </div>
                           </div>
-                          <div class="col-sm-7">
-                              <div class="card-body text-sm-end text-center ps-sm-0">
-                                  <button v-if="userHasRole('superadmin') || userHasPermission('create_surat_jalan')" @click="suratJalanStore.openModal(null)" class="btn btn-primary mb-2 text-wrap add-new-role">
-                                      Tambah Surat Jalan
-                                  </button>
-                                  <p class="mb-0 mt-1">Buat Surat Jalan baru</p>
-                              </div>
+                          <div class="account-heading">
+                              <h5 class="mb-1">{{ statistics?.withDeliveredSO || 0 }}</h5>
+                              <span class="text-muted">Dari SO delivered</span>
                           </div>
                       </div>
                   </div>
@@ -64,8 +46,8 @@
 
           <div class="row g-6">
               <div class="col-12">
-                  <h4 class="mt-6 mb-1">Total & Filter Surat Jalan</h4>
-                  <p class="mb-0">Temukan semua akun administrator perusahaan Anda dan Surat Jalan terkait.</p>
+                  <h4 class="mt-6 mb-1">Filter Surat Jalan</h4>
+                  <p class="mb-0">Saring surat jalan berdasarkan Sales Order</p>
               </div>
               <div class="col-12">
                   <div class="card">
@@ -88,8 +70,7 @@
               </div>
               <div class="col-12">
                   <!-- suratJalan Table -->
-                  <div class="card">
-                      <div class="card-header">
+                      <div class="card">
                           <TableControls
                               v-model="tableControls"
                               :rows-per-page-options="rowsPerPageOptionsArray"
@@ -97,8 +78,19 @@
                               @rows-change="handleRowsChange"
                               @search="handleSearch"
                               @export="exportData"
-                          />
-                      </div>
+                          >
+                              <template #add>
+                                  <button
+                                      v-if="userHasRole('superadmin') || userHasPermission('create_surat_jalan')"
+                                      type="button"
+                                      class="btn btn-primary"
+                                      @click="navigateTo('/sales/surat-jalan/form')"
+                                  >
+                                      <i class="ri-add-line me-1"></i>
+                                      Tambah Surat Jalan
+                                  </button>
+                              </template>
+                          </TableControls>
                       <div class="card-datatable table-responsive py-3 px-3">
                           <MyDataTable 
                               ref="myDataTableRef"
@@ -186,7 +178,7 @@
                                                       </a>
                                                   </li>
                                                   <li v-if="userHasRole('superadmin') || userHasPermission('edit_surat_jalan')">
-                                                      <a class="dropdown-item" href="javascript:void(0)" @click="suratJalanStore.openModal(slotProps.data)">
+                                                      <a class="dropdown-item" href="javascript:void(0)" @click="navigateTo(`/sales/surat-jalan/form/${slotProps.data.id}`)">
                                                           <i class="ri-edit-box-line me-2"></i> Edit
                                                       </a>
                                                   </li>
@@ -203,7 +195,7 @@
                                   </Column>
                           </MyDataTable>
                       </div>
-                  </div>
+                      </div>
                   <!--/ suratJalan Table -->
               </div>
           </div>
@@ -826,8 +818,20 @@ const onSort = (event) => {
 };
 
 const exportData = (format) => {
-  if (format === 'csv') myDataTableRef.value.exportCSV();
-};
+  if (format === 'excel' || format === 'csv') {
+    myDataTableRef.value?.exportCSV?.()
+    return
+  }
+  if (format === 'pdf') {
+    useToast().info({
+      title: 'Info',
+      message: 'Export PDF akan tersedia pada rilis berikutnya.',
+      color: 'blue',
+      position: 'topRight',
+      layout: 2,
+    })
+  }
+}
 
 // ✅ NEW: Function untuk menangani perubahan produk pada suratJalan items
 const onProductChange = (index) => {

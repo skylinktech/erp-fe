@@ -21,6 +21,7 @@ interface TaxState {
   taxes: Tax[]
   selectedTax: Tax | null
   loading: boolean
+  saving: boolean
   error: any
   totalRecords: number
   params: {
@@ -42,6 +43,7 @@ export const useTaxStore = defineStore('tax', {
     taxes: [],
     selectedTax: null,
     loading: false,
+    saving: false,
     error: null,
     totalRecords: 0,
     params: {
@@ -114,7 +116,7 @@ export const useTaxStore = defineStore('tax', {
     },
 
     async saveTax() {
-      this.loading = true
+      this.saving = true
       this.validationErrors = [];
       const { $api } = useNuxtApp()
       const toast = useToast()
@@ -196,7 +198,7 @@ export const useTaxStore = defineStore('tax', {
           });
         }
       } finally {
-        this.loading = false
+        this.saving = false
       }
     },
 

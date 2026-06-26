@@ -380,8 +380,8 @@
                         <button type="button" class="btn btn-outline-secondary" @click="expenseStore.closeModal()">
                             Tutup
                         </button>
-                        <button type="submit" class="btn btn-primary" :disabled="loading">
-                            <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
+                        <button type="submit" class="btn btn-primary" :disabled="saving">
+                            <span v-if="saving" class="spinner-border spinner-border-sm me-2"></span>
                             {{ isEditMode ? 'Update' : 'Simpan' }}
                         </button>
                     </div>
@@ -433,6 +433,7 @@ const expenses = computed(() => {
   return []
 })
 const loading = computed(() => expenseStore.loading || false)
+const saving = computed(() => expenseStore.saving || false)
 const totalRecords = computed(() => expenseStore.totalRecords || 0)
 const params = computed(() => expenseStore.params || {})
 const form = computed(() => expenseStore.form || {})

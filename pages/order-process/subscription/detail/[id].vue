@@ -104,11 +104,11 @@
                         <span v-else>{{ subscription.quotation?.noQuotation || '—' }}</span>
                       </p>
                     </div>
-                    <div class="col-md-6" v-if="subscription.iro">
-                      <label class="form-label text-muted medium">IRO</label>
+                    <div class="col-md-6" v-if="subscription.purchaseRequest">
+                      <label class="form-label text-muted medium">Purchase Order</label>
                       <p class="mb-0 fw-medium">
-                        <NuxtLink v-if="subscription.iro?.id" :to="'/order-process/iro/detail/' + subscription.iro.id" class="text-primary">{{ subscription.iro?.noIro || subscription.iro?.no_iro || '—' }}</NuxtLink>
-                        <span v-else>{{ subscription.iro?.noIro || subscription.iro?.no_iro || '—' }}</span>
+                        <NuxtLink v-if="subscription.purchaseRequest?.id" :to="'/purchasing/purchase-request/detail/' + subscription.purchaseRequest.id" class="text-primary">{{ subscription.purchaseRequest?.prNumber || subscription.purchaseRequest?.pr_number || subscription.purchaseRequest?.noPurchaseRequest || '—' }}</NuxtLink>
+                        <span v-else>{{ subscription.purchaseRequest?.prNumber || subscription.purchaseRequest?.pr_number || subscription.purchaseRequest?.noPurchaseRequest || '—' }}</span>
                       </p>
                     </div>
                     <div class="col-md-6">

@@ -13,7 +13,9 @@ export interface Product {
   name: string
   unitId: number
   isDevice: boolean
+  isKit: boolean
   billingType: 'one_time' | 'recurring'
+  condition?: 'good' | 'bad' | 'reject' | 'damaged'
   categoryId: number
   productType?: string | null
   image: string | File
@@ -26,6 +28,14 @@ export interface Product {
   stocks?: Stock[]
   imagePreview?: string
   createdByUser?: { id: number; fullName: string; email: string }
+  productKits?: ProductKit[]
+}
+
+export interface ProductKit {
+  id?: number
+  name: string
+  serialNumber: string
+  type: 'router' | 'adaptor' | 'cable'
 }
 
 interface ProductState {
@@ -72,16 +82,65 @@ export const useProductStore = defineStore('product', {
       sku: '',
       unitId: undefined,
       isDevice: false,
+      isKit: false,
       billingType: 'one_time' as 'one_time' | 'recurring',
+      condition: 'good' as 'good' | 'bad' | 'reject' | 'damaged',
       productType: null as string | null,
       image: '',
       categoryId: undefined,
+      productKits: [] as ProductKit[],
     },
     isEditMode: false,
     showModal: false,
     validationErrors: [],
   }),
   actions: {
+    normalizeId(value: unknown): number | undefined {
+      if (value === null || value === undefined || value === '') return undefined;
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : undefined;
+    },
+
+    normalizeProductKits(input: unknown): ProductKit[] {
+      if (!Array.isArray(input)) return [];
+
+      return input
+        .map((item: any) => {
+          const name = String(item?.name ?? '').trim();
+          const serialNumber = String(item?.serialNumber ?? item?.serial_number ?? '').trim();
+
+          // Support bentuk type string atau object { label, value }
+          const rawType = typeof item?.type === 'object'
+            ? String(item?.type?.value ?? item?.type?.label ?? '')
+            : String(item?.type ?? '');
+
+          const normalizedType = rawType.trim().toLowerCase();
+          const type = normalizedType === 'adapter' ? 'adaptor' : normalizedType;
+
+          // Buang row repeater kosong total
+          if (!name && !serialNumber && !type) {
+            return null;
+          }
+
+          return {
+            name,
+            serialNumber,
+            type: (['router', 'adaptor', 'cable'].includes(type) ? type : 'router') as ProductKit['type'],
+          };
+        })
+        .filter((item): item is ProductKit => item !== null);
+    },
+
+    validateProductKitsBeforeSubmit(productKits: ProductKit[]): string | null {
+      for (let i = 0; i < productKits.length; i += 1) {
+        const row = productKits[i];
+        if (!row.name || !String(row.name).trim()) {
+          return `Nama kit pada baris ${i + 1} wajib diisi`;
+        }
+      }
+      return null;
+    },
+
     async fetchProducts(suppressError = false) {
       const toast     = useToast();
       this.loading = true
@@ -241,16 +300,40 @@ export const useProductStore = defineStore('product', {
 
       try {
           const formData = new FormData();
-          Object.keys(this.form).forEach(key => {
+          const allowedKeys = [
+            'id',
+            'name',
+            'sku',
+            'unitId',
+            'categoryId',
+            'isDevice',
+            'isKit',
+            'billingType',
+            'condition',
+            'productType',
+            'createdBy',
+            'productKits',
+            'image',
+          ] as const;
+
+          allowedKeys.forEach((key) => {
             const value = this.form[key as keyof typeof this.form];
-             if (key === 'isDevice') {
-                formData.append(key, value ? 'true' : 'false');
+            if (key === 'isDevice' || key === 'isKit') {
+              formData.append(key, value ? 'true' : 'false');
+            } else if (key === 'productKits') {
+              const productKits = this.normalizeProductKits(value);
+              if (this.form.isKit) {
+                const kitValidationError = this.validateProductKitsBeforeSubmit(productKits);
+                if (kitValidationError) {
+                  throw new Error(kitValidationError);
+                }
+              }
+              formData.append(key, JSON.stringify(productKits));
             } else if (key === 'image' && value instanceof File) {
-                formData.append(key, value);
-            } else if (key !== 'image' && key !== 'imagePreview') {
-                // Kirim semua field termasuk yang null/undefined, tapi konversi null/undefined ke string kosong
-                const stringValue = value === null || value === undefined ? '' : String(value);
-                formData.append(key, stringValue);
+              formData.append(key, value);
+            } else if (key !== 'image') {
+              const stringValue = value === null || value === undefined ? '' : String(value);
+              formData.append(key, stringValue);
             }
           });
           
@@ -391,18 +474,33 @@ export const useProductStore = defineStore('product', {
       }
     },
 
-    openModal(product: Product | null = null) {
+    async openModal(product: Product | null = null) {
         this.isEditMode = !!product;
         this.validationErrors = [];
         if (product) {
+            const detail = await this.fetchProductDetail(product.id);
+            const source: any = detail || product;
             this.form = { 
-              ...product,
+              ...source,
+              unitId: this.normalizeId(source.unitId ?? source.unit_id ?? source.unit?.id ?? product.unitId),
+              categoryId: this.normalizeId(source.categoryId ?? source.category_id ?? source.category?.id ?? product.categoryId),
+              productType: source.productType ?? source.product_type ?? product.productType ?? null,
+              billingType: source.billingType ?? source.billing_type ?? product.billingType ?? 'one_time',
+              isDevice: source.isDevice ?? source.is_device ?? product.isDevice ?? false,
+              isKit: source.isKit ?? source.is_kit ?? false,
+              condition: source.condition ?? 'good',
+              productKits: (source.productKits || []).map((kit) => ({
+                id: kit.id,
+                name: kit.name || '',
+                serialNumber: kit.serialNumber || kit.serial_number || '',
+                type: ((String(kit.type || 'router').toLowerCase() === 'adapter' ? 'adaptor' : String(kit.type || 'router').toLowerCase()) || 'router') as 'router' | 'adaptor' | 'cable',
+              })),
             };
             
             // Set image preview jika ada
-            if (product.image && typeof product.image === 'string') {
+            if (source.image && typeof source.image === 'string') {
                 const { getProductImage } = useImageUrl();
-                this.form.imagePreview = getProductImage(product.image);
+                this.form.imagePreview = getProductImage(source.image);
             } else {
                 this.form.imagePreview = '';
             }
@@ -412,11 +510,14 @@ export const useProductStore = defineStore('product', {
                 sku: '',
                 unitId: undefined,
                 isDevice: false,
+                isKit: false,
                 billingType: 'one_time',
+                condition: 'good',
                 productType: null,
                 image: '',
                 imagePreview: '',
                 categoryId: undefined,
+                productKits: [],
             };
         }
         this.showModal = true;
@@ -430,13 +531,54 @@ export const useProductStore = defineStore('product', {
             sku: '',
             unitId: undefined,
             isDevice: false,
+            isKit: false,
             billingType: 'one_time',
+            condition: 'good',
             productType: null,
             image: '',
             imagePreview: '',
             categoryId: undefined,
+            productKits: [],
         }
         this.validationErrors = []
+    },
+
+    async fetchProductDetail(id: number) {
+      const { $api } = useNuxtApp();
+      try {
+        const response = await fetch(`${$api.product()}/${id}`, {
+          headers: {
+            'Accept': 'application/json',
+          },
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          return null;
+        }
+
+        return await response.json();
+      } catch (_error: any) {
+        return null;
+      }
+    },
+
+    addProductKit() {
+      if (!Array.isArray(this.form.productKits)) {
+        this.form.productKits = [];
+      }
+      this.form.productKits.push({
+        name: '',
+        serialNumber: '',
+        type: 'router',
+      });
+    },
+
+    removeProductKit(index: number) {
+      if (!Array.isArray(this.form.productKits)) {
+        return;
+      }
+      this.form.productKits.splice(index, 1);
     },
 
     setPagination(event: any) {
