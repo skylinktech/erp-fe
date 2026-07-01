@@ -152,6 +152,16 @@ export default defineNuxtPlugin(() => {
     rejectArf: (id: number | string) => `${apiBase}/arf/${id}/rejectArf`,
     submitArf: (id: number | string) => `${apiBase}/arf/${id}/submitArf`,
 
+    // Work Order Request — Operations
+    workOrderRequest: () => `${apiBase}/work-order-request`,
+    workOrderRequestShow: (id: number | string) => `${apiBase}/work-order-request/${id}`,
+    getWorkOrderRequestDetails: (id: number | string) => `${apiBase}/work-order-request/getDetails/${id}`,
+    workOrderRequestStatistics: () => `${apiBase}/work-order-request/statistics`,
+    submitWorkOrderRequest: (id: number | string) => `${apiBase}/work-order-request/${id}/submit`,
+    approveWorkOrderRequest: (id: number | string) => `${apiBase}/work-order-request/${id}/approve`,
+    rejectWorkOrderRequest: (id: number | string) => `${apiBase}/work-order-request/${id}/reject`,
+    completeWorkOrderRequest: (id: number | string) => `${apiBase}/work-order-request/${id}/complete`,
+
     // Progress Tracker — Implementation
     progressTracker: () => `${apiBase}/progress-tracker`,
     progressTrackerShow: (id: string) => `${apiBase}/progress-tracker/${id}`,
@@ -172,6 +182,12 @@ export default defineNuxtPlugin(() => {
     financeDashboard: () => `${apiBase}/finance/dashboard`,
     financeCashFlow: () => `${apiBase}/finance/cash-flow`,
     financeTaxReport: () => `${apiBase}/finance/tax-report`,
+
+    // Finance Invoices (billing perangkat aktif — Finance module)
+    financeInvoices             : () => `${apiBase}/finance/invoices`,
+    financeInvoicesShow         : (id: string) => `${apiBase}/finance/invoices/${id}`,
+    financeInvoicesStatistics   : () => `${apiBase}/finance/invoices/statistics`,
+    financeInvoicesBillableItems: () => `${apiBase}/finance/invoices/billable-items`,
 
     // Bank Accounts
     bankAccounts: () => `${apiBase}/accounting/bank-accounts`,

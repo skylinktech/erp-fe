@@ -86,6 +86,8 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
         requiredPermission = 'access_purchase_request'
       } else if (/^\/purchasing\/purchase-invoice\/form(\/.*)?$/.test(to.path)) {
         requiredPermission = 'view_purchase_invoice'
+      } else if (/^\/sales\/sales-invoice\/form(\/.*)?$/.test(to.path)) {
+        requiredPermission = 'create_sales_invoice'
       }
     }
 

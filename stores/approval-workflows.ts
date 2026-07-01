@@ -35,6 +35,7 @@ const ENTITY_TYPES = [
   { value: 'sales_order', label: 'Sales Order' },
   { value: 'site_investment', label: 'Site Investment' },
   { value: 'arf', label: 'ARF (Advanced Request Form)' },
+  { value: 'work_order_request', label: 'Work Order Request' },
   { value: 'fdr', label: 'Form Design Request' },
   { value: 'price_adjustment_request', label: 'Price Adjustment Request' },
   { value: 'sales_return', label: 'Sales Return' },
