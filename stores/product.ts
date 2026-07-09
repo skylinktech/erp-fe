@@ -15,7 +15,7 @@ export interface Product {
   isDevice: boolean
   isKit: boolean
   billingType: 'one_time' | 'recurring'
-  condition?: 'good' | 'bad' | 'reject' | 'damaged'
+  condition?: 'baru' | 'bekas' | 'rusak'
   categoryId: number
   productType?: string | null
   image: string | File
@@ -84,7 +84,7 @@ export const useProductStore = defineStore('product', {
       isDevice: false,
       isKit: false,
       billingType: 'one_time' as 'one_time' | 'recurring',
-      condition: 'good' as 'good' | 'bad' | 'reject' | 'damaged',
+      condition: 'baru' as 'baru' | 'bekas' | 'rusak',
       productType: null as string | null,
       image: '',
       categoryId: undefined,
@@ -488,7 +488,7 @@ export const useProductStore = defineStore('product', {
               billingType: source.billingType ?? source.billing_type ?? product.billingType ?? 'one_time',
               isDevice: source.isDevice ?? source.is_device ?? product.isDevice ?? false,
               isKit: source.isKit ?? source.is_kit ?? false,
-              condition: source.condition ?? 'good',
+              condition: source.condition ?? 'baru',
               productKits: (source.productKits || []).map((kit) => ({
                 id: kit.id,
                 name: kit.name || '',
@@ -512,7 +512,7 @@ export const useProductStore = defineStore('product', {
                 isDevice: false,
                 isKit: false,
                 billingType: 'one_time',
-                condition: 'good',
+                condition: 'baru',
                 productType: null,
                 image: '',
                 imagePreview: '',
@@ -533,7 +533,7 @@ export const useProductStore = defineStore('product', {
             isDevice: false,
             isKit: false,
             billingType: 'one_time',
-            condition: 'good',
+            condition: 'baru',
             productType: null,
             image: '',
             imagePreview: '',

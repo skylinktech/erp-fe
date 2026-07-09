@@ -226,8 +226,8 @@
                         <tr v-for="(m, i) in ((siteInvest.siteInvestMaterials ?? siteInvest.site_invest_materials) || [])" :key="m.id || i">
                           <td>{{ m.priceListLine?.product?.name || m.priceListLine?.product?.sku || '—' }}</td>
                           <td class="text-center">{{ m.quantity ?? 0 }}</td>
-                          <td class="text-end">{{ formatRupiah(m.price) }}</td>
-                          <td class="text-end fw-medium">{{ formatRupiah(m.subtotal) }}</td>
+                          <td class="text-end">{{ formatRupiah(getMaterialPrice(m)) }}</td>
+                          <td class="text-end fw-medium">{{ formatRupiah(getMaterialSubtotal(m)) }}</td>
                         </tr>
                       </tbody>
                     </table>
@@ -300,8 +300,8 @@
                         <tr v-for="(d, i) in ((siteInvest.siteInvestDids ?? siteInvest.site_invest_dids) || [])" :key="d.id || i">
                           <td>{{ d.priceListLine?.did?.code || d.priceListLine?.did?.name || '—' }}</td>
                           <td class="text-center">{{ d.quantity ?? 1 }}</td>
-                          <td class="text-end">{{ formatRupiah(d.price) }}</td>
-                          <td class="text-end fw-medium">{{ formatRupiah(d.subtotal) }}</td>
+                          <td class="text-end">{{ formatRupiah(getDidPrice(d)) }}</td>
+                          <td class="text-end fw-medium">{{ formatRupiah(getDidSubtotal(d)) }}</td>
                         </tr>
                       </tbody>
                     </table>
@@ -310,33 +310,7 @@
                 </div>
               </div>
 
-              <!-- Budget -->
-              <div class="card mb-4 shadow-sm border-0" v-if="(siteInvest.siteInvestBudgets || []).length">
-                <div class="card-header border-0 bg-transparent px-5 py-4">
-                  <h5 class="card-title mb-0 d-flex align-items-center">
-                    <i class="ri-money-dollar-circle-line me-2 text-primary"></i>
-                    Alokasi Budget
-                  </h5>
-                </div>
-                <div class="card-body px-5 pt-4 pb-4">
-                  <div class="table-responsive">
-                    <table class="table table-sm table-hover align-middle">
-                      <thead>
-                        <tr>
-                          <th>Sumber Budget</th>
-                          <th>Budget Holder (Penanggung Jawab)</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr v-for="(b, i) in (siteInvest.siteInvestBudgets || [])" :key="b.id || i">
-                          <td>{{ (b.budgetSource?.budgetCode || b.budgetSource?.budget_code || '') + ' - ' + (b.budgetSource?.budgetName || b.budgetSource?.budget_name || '—') }}</td>
-                          <td>{{ b.budgetHolder?.fullName || b.budgetHolder?.email || '—' }}</td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
+              <!-- Sidebar starts in next column -->
             </div>
 
             <!-- Sidebar: Ringkasan Keuangan + Meta -->
@@ -510,6 +484,35 @@ function getBusinessSchemeBadgeClass (businessSchemeId: number | null | undefine
     case 4: return 'bg-label-success'
     default: return 'bg-label-light'
   }
+}
+
+/** Normalisasi angka dari API (hindari string desimal "3325000.00" salah format) */
+function toItemAmount (value: unknown): number {
+  if (value === null || value === undefined || value === '') return 0
+  const n = Number(value)
+  return Number.isNaN(n) ? 0 : n
+}
+
+function getMaterialPrice (m: any): number {
+  return toItemAmount(m?.price)
+}
+
+function getMaterialSubtotal (m: any): number {
+  const st = toItemAmount(m?.subtotal)
+  if (st > 0) return st
+  const qty = toItemAmount(m?.quantity) || 1
+  return qty * getMaterialPrice(m)
+}
+
+function getDidPrice (d: any): number {
+  return toItemAmount(d?.price)
+}
+
+function getDidSubtotal (d: any): number {
+  const st = toItemAmount(d?.subtotal)
+  if (st > 0) return st
+  const qty = toItemAmount(d?.quantity) || 1
+  return qty * getDidPrice(d)
 }
 
 /** Harga satuan service: murni dari API (tidak hitung ulang) */

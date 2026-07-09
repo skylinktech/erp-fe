@@ -35,6 +35,7 @@ interface SiteInvestMaterial {
   price: number
   subtotal: number
   isPriceOverridden?: boolean
+  priceReason?: string
   priceListLine?: SiteInvestPriceListLineOption
 }
 
@@ -46,6 +47,7 @@ interface SiteInvestService {
   price: number
   subtotal: number
   isPriceOverridden?: boolean
+  priceReason?: string
   terminalKitCount?: number | null
   quotaPriority?: number | null
   newServiceLine?: number | null
@@ -61,16 +63,8 @@ interface SiteInvestDid {
   price: number
   subtotal: number
   isPriceOverridden: boolean
+  priceReason?: string
   priceListLine?: SiteInvestPriceListLineOption
-}
-
-interface SiteInvestBudget {
-  id?: number
-  siteInvestmentId?: string
-  budgetSourceId: number
-  budgetHolderId: number
-  budgetSource?: any
-  budgetHolder?: any
 }
 
 interface Stats {
@@ -130,7 +124,6 @@ export interface SiteInvest {
   rejectedByUser?: User
   siteInvestMaterials?: SiteInvestMaterial[]
   siteInvestServices?: SiteInvestService[]
-  siteInvestBudgets?: SiteInvestBudget[]
   notes?: string | null
   attachment?: string | null
   preparedBy?: Array<{ id_pegawai: number; nm_pegawai: string }>
@@ -228,7 +221,6 @@ export const useSiteInvestStore = defineStore('siteInvest', {
       siteInvestMaterials: [],
       siteInvestServices: [],
       siteInvestDids: [],
-      siteInvestBudgets: [],
       preparedByIds: [] as number[],
     },
     isEditMode: false,
@@ -366,7 +358,6 @@ export const useSiteInvestStore = defineStore('siteInvest', {
         delete dataToAppend.siteInvestMaterials
         delete dataToAppend.siteInvestServices
         delete dataToAppend.siteInvestDids
-        delete dataToAppend.siteInvestBudgets
         delete dataToAppend.customer
         delete dataToAppend.site
         delete dataToAppend.fdr
@@ -408,8 +399,8 @@ export const useSiteInvestStore = defineStore('siteInvest', {
           formData.append('createdBy', userStore.user.id.toString())
         }
 
-        const materialKeys = ['priceListLineId', 'quantity', 'price', 'subtotal', 'isPriceOverridden']
-        const materialKeysToSnake: Record<string, string> = { priceListLineId: 'price_list_line_id', quantity: 'quantity', price: 'price', subtotal: 'subtotal', isPriceOverridden: 'is_price_overridden' }
+        const materialKeys = ['priceListLineId', 'quantity', 'price', 'subtotal', 'isPriceOverridden', 'priceReason']
+        const materialKeysToSnake: Record<string, string> = { priceListLineId: 'price_list_line_id', quantity: 'quantity', price: 'price', subtotal: 'subtotal', isPriceOverridden: 'is_price_overridden', priceReason: 'price_reason' }
         const materials = this.form.siteInvestMaterials ?? []
         materials.forEach((item: any, i: number) => {
           const plLineId = Number(item?.priceListLineId ?? item?.price_list_line_id ?? 0)
@@ -424,8 +415,8 @@ export const useSiteInvestStore = defineStore('siteInvest', {
           }
         })
 
-        const serviceKeys = ['priceListLineId', 'quantity', 'price', 'subtotal', 'isPriceOverridden', 'terminalKitCount', 'quotaPriority', 'newServiceLine', 'additionalData']
-        const serviceKeysToSnake: Record<string, string> = { priceListLineId: 'price_list_line_id', quantity: 'quantity', price: 'price', subtotal: 'subtotal', isPriceOverridden: 'is_price_overridden', terminalKitCount: 'terminal_kit_count', quotaPriority: 'quota_priority', newServiceLine: 'new_service_line', additionalData: 'additional_data' }
+        const serviceKeys = ['priceListLineId', 'quantity', 'price', 'subtotal', 'isPriceOverridden', 'priceReason', 'terminalKitCount', 'quotaPriority', 'newServiceLine', 'additionalData']
+        const serviceKeysToSnake: Record<string, string> = { priceListLineId: 'price_list_line_id', quantity: 'quantity', price: 'price', subtotal: 'subtotal', isPriceOverridden: 'is_price_overridden', priceReason: 'price_reason', terminalKitCount: 'terminal_kit_count', quotaPriority: 'quota_priority', newServiceLine: 'new_service_line', additionalData: 'additional_data' }
         const services = this.form.siteInvestServices ?? []
         services.forEach((item: any, i: number) => {
           const plLineId = Number(item?.priceListLineId ?? item?.price_list_line_id ?? 0)
@@ -440,8 +431,8 @@ export const useSiteInvestStore = defineStore('siteInvest', {
           }
         })
 
-        const didKeys = ['priceListLineId', 'quantity', 'price', 'subtotal', 'isPriceOverridden']
-        const didKeysToSnake: Record<string, string> = { priceListLineId: 'price_list_line_id', quantity: 'quantity', price: 'price', subtotal: 'subtotal', isPriceOverridden: 'is_price_overridden' }
+        const didKeys = ['priceListLineId', 'quantity', 'price', 'subtotal', 'isPriceOverridden', 'priceReason']
+        const didKeysToSnake: Record<string, string> = { priceListLineId: 'price_list_line_id', quantity: 'quantity', price: 'price', subtotal: 'subtotal', isPriceOverridden: 'is_price_overridden', priceReason: 'price_reason' }
         const dids = this.form.siteInvestDids ?? []
         dids.forEach((item: any, i: number) => {
           const plLineId = Number(item?.priceListLineId ?? item?.price_list_line_id ?? 0)
@@ -452,13 +443,6 @@ export const useSiteInvestStore = defineStore('siteInvest', {
                 formData.append(`siteInvestDids[${i}][${itemKey}]`, String(value))
               }
             })
-          }
-        })
-
-        ;(this.form.siteInvestBudgets || []).forEach((item: any, i: number) => {
-          if (item.budgetSourceId && item.budgetHolderId) {
-            formData.append(`siteInvestBudgets[${i}][budgetSourceId]`, item.budgetSourceId)
-            formData.append(`siteInvestBudgets[${i}][budgetHolderId]`, item.budgetHolderId)
           }
         })
 
@@ -1005,7 +989,6 @@ export const useSiteInvestStore = defineStore('siteInvest', {
         formData.siteInvestMaterials = formData.siteInvestMaterials ?? formData.site_invest_materials ?? []
         formData.siteInvestServices = formData.siteInvestServices ?? formData.site_invest_services ?? []
         formData.siteInvestDids = formData.siteInvestDids ?? formData.site_invest_dids ?? []
-        formData.siteInvestBudgets = formData.siteInvestBudgets ?? formData.site_invest_budgets ?? []
         const preparedByRaw = fullData.preparedBy ?? fullData.prepared_by ?? []
         formData.preparedByIds = Array.isArray(preparedByRaw)
           ? preparedByRaw
@@ -1024,6 +1007,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
             m.price = p
             m.subtotal = nm(m.subtotal) || q * p
             m.isPriceOverridden = m.isPriceOverridden ?? m.is_price_overridden ?? false
+            m.priceReason = m.priceReason ?? m.price_reason ?? ''
           })
         }
         if (Array.isArray(formData.siteInvestServices)) {
@@ -1035,6 +1019,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
             s.price = p
             s.subtotal = nm(s.subtotal) || q * p
             s.isPriceOverridden = s.isPriceOverridden ?? s.is_price_overridden ?? false
+            s.priceReason = s.priceReason ?? s.price_reason ?? ''
             s.terminalKitCount = s.terminalKitCount ?? s.terminal_kit_count ?? null
             s.quotaPriority = s.quotaPriority ?? s.quota_priority ?? null
             s.newServiceLine = s.newServiceLine ?? s.new_service_line ?? null
@@ -1050,6 +1035,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
             d.price = p
             d.subtotal = nm(d.subtotal) || q * p
             d.isPriceOverridden = d.isPriceOverridden ?? d.is_price_overridden ?? false
+            d.priceReason = d.priceReason ?? d.price_reason ?? ''
           })
         }
 
@@ -1067,36 +1053,14 @@ export const useSiteInvestStore = defineStore('siteInvest', {
         if (this.form.siteInvestDids && this.form.siteInvestDids.length === 0) {
           this.addDidItem()
         }
-        if (!this.form.siteInvestBudgets) {
-          this.form.siteInvestBudgets = []
-        }
-        if (this.form.siteInvestBudgets.length === 0) {
-          this.addBudgetItem()
-        }
       } else {
         this.resetForm()
         this.addMaterialItem()
         this.addServiceItem()
         this.addDidItem()
-        this.addBudgetItem()
       }
       this.loading = false
       this.showModal = true
-    },
-
-    addBudgetItem() {
-      if (!this.form.siteInvestBudgets) {
-        this.form.siteInvestBudgets = []
-      }
-      this.form.siteInvestBudgets.push({
-        budgetSourceId: null,
-        budgetHolderId: null,
-      })
-    },
-
-    removeBudgetItem(index: number) {
-      if (!this.form.siteInvestBudgets) return
-      this.form.siteInvestBudgets.splice(index, 1)
     },
 
     /** Open modal with prefilled FDR (e.g. from FDR detail "Proceed to SI" flow) */
@@ -1136,7 +1100,6 @@ export const useSiteInvestStore = defineStore('siteInvest', {
         siteInvestMaterials: [],
         siteInvestServices: [],
         siteInvestDids: [],
-        siteInvestBudgets: [],
         preparedByIds: [],
         notes: '',
         attachment: null,
@@ -1154,6 +1117,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
         price: 0,
         subtotal: 0,
         isPriceOverridden: false,
+        priceReason: '',
       })
     },
 
@@ -1171,6 +1135,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
         price: 0,
         subtotal: 0,
         isPriceOverridden: false,
+        priceReason: '',
         terminalKitCount: null,
         quotaPriority: null,
         newServiceLine: null,
@@ -1192,6 +1157,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
         price: 0,
         subtotal: 0,
         isPriceOverridden: false,
+        priceReason: '',
       })
     },
 
@@ -1201,6 +1167,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
 
     async fetchPriceListLines(priceableType: 'product' | 'service' | 'did') {
       const { $api } = useNuxtApp()
+      const { parsePriceListLinesResponse, normalizePriceListLine } = await import('~/utils/priceListLines')
       const url = $api.siteInvestmentPriceListLines(priceableType)
       const response = await fetch(url, {
         method: 'GET',
@@ -1209,7 +1176,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
       })
       if (!response.ok) return []
       const data = await response.json()
-      return Array.isArray(data) ? data : []
+      return parsePriceListLinesResponse(data).map((line) => normalizePriceListLine(line))
     },
 
     /**

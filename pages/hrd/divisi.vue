@@ -66,22 +66,15 @@
                             <Column field="nmDivisi" header="Nama Divisi" :sortable="true"></Column>
                             <Column header="Actions" :exportable="false" style="min-width:8rem">
                                 <template #body="slotProps">
-                                    <div class="d-inline-block">
-                                        <a href="javascript:;" class="btn btn-sm btn-text-secondary rounded-pill btn-icon dropdown-toggle hide-arrow" data-bs-toggle="dropdown"><i class="ri-more-2-fill"></i>
-                                        </a>
-                                        <ul class="dropdown-menu">
-                                            <li v-if="userHasRole('superadmin') || userHasPermission('edit_divisi')">
-                                                <a class="dropdown-item" href="javascript:void(0)" @click="divisiStore.openModal(slotProps.data, 'admin')">
-                                                    <i class="ri-edit-box-line me-2"></i> Edit
-                                                </a>
-                                            </li>
-                                            <li v-if="userHasRole('superadmin') || userHasPermission('delete_divisi')">
-                                                <a class="dropdown-item text-danger" href="javascript:void(0)" @click="divisiStore.deleteDivisi(slotProps.data.id)">
-                                                    <i class="ri-delete-bin-7-line me-2"></i> Hapus
-                                                </a>
-                                            </li>
-                                        </ul>
-                                    </div>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-text-secondary rounded-pill btn-icon"
+                                        aria-haspopup="true"
+                                        aria-controls="divisi-actions-menu"
+                                        @click.stop="toggleActions($event, slotProps.data)"
+                                    >
+                                        <i class="ri-more-2-fill"></i>
+                                    </button>
                                 </template>
                             </Column>
                         </MyDataTable>
@@ -91,6 +84,14 @@
                 </div>
             </div>
             <!--/ divisi cards -->
+
+            <Menu
+                id="divisi-actions-menu"
+                ref="actionsMenuRef"
+                :model="actionMenuItems"
+                :popup="true"
+                append-to="body"
+            />
 
             <!-- Placeholder untuk DivisiModal component -->
             <Modal 
@@ -119,7 +120,7 @@
                             <button type="button" class="btn btn-outline-secondary" @click="divisiStore.closeModal()">Tutup</button>
                             <button type="submit" class="btn btn-primary" :disabled="loading">
                                 <span v-if="loading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                Simpan
+                                {{ isEditMode ? 'Update' : 'Simpan' }}
                             </button>
                         </div>
                     </form>
@@ -133,7 +134,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { storeToRefs } from 'pinia';
 import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
@@ -142,6 +143,7 @@ import { usePermissionsStore } from '~/stores/permissions'
 import { usePermissions } from '~/composables/usePermissions'
 import Dropdown from 'primevue/dropdown'
 import Column from 'primevue/column'
+import Menu from 'primevue/menu'
 import InputText from 'primevue/inputtext'
 import { useDebounceFn } from '@vueuse/core'
 import { useUserStore } from '~/stores/user'
@@ -163,6 +165,39 @@ const rowsPerPageOptionsArray = ref([10, 25, 50, 100]);
 
 const modalTitle = computed(() => isEditMode.value ? 'Edit Divisi' : 'Tambah Divisi');
 const modalDescription = computed(() => isEditMode.value ? 'Ubah detail divisi.' : 'Isi untuk menambah divisi baru.');
+
+const actionsMenuRef = ref(null)
+const activeRow = ref(null)
+
+const actionMenuItems = computed(() => {
+    const row = activeRow.value
+    if (!row) return []
+    const items = []
+
+    if (userHasRole('superadmin') || userHasPermission('edit_divisi')) {
+        items.push({
+            label: 'Edit',
+            icon: 'ri ri-edit-box-line',
+            command: () => divisiStore.openModal(row, 'admin'),
+        })
+    }
+    if (userHasRole('superadmin') || userHasPermission('delete_divisi')) {
+        if (items.length) items.push({ separator: true })
+        items.push({
+            label: 'Hapus',
+            icon: 'ri ri-delete-bin-7-line',
+            class: 'hrd-menu-danger',
+            command: () => divisiStore.deleteDivisi(row.id),
+        })
+    }
+
+    return items
+})
+
+function toggleActions(event, row) {
+    activeRow.value = row
+    nextTick(() => actionsMenuRef.value?.toggle(event))
+}
 
 let modalInstance = null
 onMounted(() => {
@@ -211,3 +246,9 @@ definePageMeta({
   viewport: 'width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0'
 });
 </script>
+
+<style scoped>
+:deep(.hrd-menu-danger .p-menuitem-link) {
+  color: var(--bs-danger) !important;
+}
+</style>

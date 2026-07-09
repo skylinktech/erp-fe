@@ -299,7 +299,13 @@
                           <div class="row mb-3">
                             <label class="col-sm-3 col-form-label">Harga</label>
                             <div class="col-sm-9 col-md-6">
-                              <input type="text" class="form-control bg-lighter" :value="formatRupiah(row.price)" readonly tabindex="-1" />
+                              <input
+                                type="text"
+                                class="form-control"
+                                :value="formatRupiah(row.price)"
+                                placeholder="0"
+                                @input="onPriceInput(idx, $event)"
+                              />
                             </div>
                           </div>
                           <div class="row mb-0">
@@ -353,7 +359,7 @@
                     <ul class="mb-0 ps-3">
                       <li><strong>Internal</strong>: pilih perusahaan &amp; cabang grup.</li>
                       <li><strong>External</strong>: isi nama perusahaan pihak ketiga.</li>
-                      <li>Harga produk diambil dari harga beli katalog.</li>
+                      <li>Harga otomatis terisi dari harga beli katalog, dapat disesuaikan manual.</li>
                     </ul>
                   </div>
                 </div>
@@ -521,6 +527,14 @@ function onProductChange(index: number) {
 }
 
 function onQuantityChange(index: number) {
+  calculateSubtotal(index)
+}
+
+function onPriceInput(index: number, e: Event) {
+  const raw = (e.target as HTMLInputElement).value.replace(/[^\d]/g, '')
+  const item = form.value.purchaseOrderItems[index]
+  if (!item) return
+  item.price = Number(raw) || 0
   calculateSubtotal(index)
 }
 

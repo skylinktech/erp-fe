@@ -5,6 +5,7 @@ import Swal from 'sweetalert2'
 export interface Jabatan {
   id: number
   nmJabatan: string
+  level: number
   createdAt: string
   updatedAt: string
 }
@@ -30,7 +31,7 @@ interface JabatanState {
     sortOrder: number | null
     search: string
   }
-  form: Partial<Jabatan> & { nmJabatan?: string }
+  form: Partial<Jabatan> & { nmJabatan?: string; level?: number }
   isEditMode: boolean
   showModal: boolean
   validationErrors: any[]
@@ -57,7 +58,8 @@ export const useJabatanStore = defineStore('jabatan', {
         search: '',
     },
     form: {
-        nmJabatan: ''
+        nmJabatan: '',
+        level: 5,
     },
     isEditMode: false,
     showModal: false,
@@ -88,6 +90,7 @@ export const useJabatanStore = defineStore('jabatan', {
         this.jabatans = (result.data || []).map((item: any) => ({
           id       : item.idJabatan,
           nmJabatan: item.nmJabatan,
+          level    : item.level ?? 5,
           createdAt: item.createdAt,
           updatedAt: item.updatedAt,
         }))
@@ -153,7 +156,7 @@ export const useJabatanStore = defineStore('jabatan', {
                     'Accept': 'application/json',
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ nm_jabatan: this.form.nmJabatan }),
+                body: JSON.stringify({ nm_jabatan: this.form.nmJabatan, level: this.form.level ?? 5 }),
                 credentials: 'include', // Cookie-based auth
             });
 
@@ -247,10 +250,11 @@ export const useJabatanStore = defineStore('jabatan', {
         this.isEditMode = !!jabatan;
         this.validationErrors = [];
         if (jabatan) {
-            this.form = { id: jabatan.id, nmJabatan: jabatan.nmJabatan };
+            this.form = { id: jabatan.id, nmJabatan: jabatan.nmJabatan, level: jabatan.level ?? 5 };
         } else {
             this.form = {
-                nmJabatan: ''
+                nmJabatan: '',
+                level: 5,
             };
         }
         this.showModal = true;
@@ -258,7 +262,7 @@ export const useJabatanStore = defineStore('jabatan', {
     closeModal() {
         this.showModal = false;
         this.isEditMode = false;
-        this.form = { nmJabatan: '' };
+        this.form = { nmJabatan: '', level: 5 };
         this.validationErrors = [];
     },
     setPagination(event: any) {

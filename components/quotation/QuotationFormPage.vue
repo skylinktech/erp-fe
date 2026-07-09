@@ -57,56 +57,150 @@
             <div class="tab-content pt-4">
               <div class="tab-pane fade show active" id="quotation-tab-info" role="tabpanel">
                 <div class="row g-3">
-                  <div class="col-md-3"><label class="form-label">Site Investment</label><CustomSelect2 v-model="form.siteInvestId" :options="siteInvests" :get-option-label="s => s ? `${s.siNumber || ''} - ${s.name || ''}` : ''" :reduce="s => s?.id" searchable clearable placeholder="Pilih Site Investment" /></div>
+                  <div class="col-md-3"><label class="form-label">Site Investment</label><CustomSelect2 v-model="form.siteInvestId" :options="siteInvests" :get-option-label="s => s ? `${s.siNumber || ''} - ${s.name || ''}` : ''" :reduce="s => s?.id" searchable clearable placeholder="Pilih Site Investment" @update:model-value="onSiteInvestChange" /></div>
                   <div class="col-md-3"><label class="form-label">Customer</label><CustomSelect2 v-model="form.customerId" :options="customers || []" :get-option-label="c => c?.name || ''" :reduce="c => c?.id" searchable clearable placeholder="Pilih Customer" /></div>
                   <div class="col-md-3"><label class="form-label">Site</label><CustomSelect2 v-model="form.siteId" :options="sites" :get-option-label="s => s ? `${s.code || ''} - ${s.name || ''}` : ''" :reduce="s => s?.id" searchable clearable placeholder="Pilih Site" /></div>
                   <div class="col-md-3"><label class="form-label">Cost Center</label><CustomSelect2 v-model="form.costCenterId" :options="costCenters" :get-option-label="c => c ? `${c.code || ''} - ${c.name || ''}` : ''" :reduce="c => c?.id" searchable clearable placeholder="Pilih Cost Center" /></div>
                   <div class="col-md-3"><label class="form-label">UP</label><input v-model="form.up" class="form-control" type="text" /></div>
-                  <div class="col-md-3"><label class="form-label">Ref PO</label><input v-model="form.refPo" class="form-control" type="text" maxlength="100" /></div>
                   <div class="col-md-3"><label class="form-label">Tanggal Quotation</label><input v-model="form.date" class="form-control" type="date" /></div>
                   <div class="col-md-3"><label class="form-label">Valid Until</label><input v-model="form.validUntil" class="form-control" type="date" /></div>
                   <div class="col-md-3"><label class="form-label">Terms of Payment</label><CustomSelect2 v-model="form.termsOfPayment" :options="termsOfPaymentOptions" :get-option-label="o => o.label" :reduce="o => o.value" /></div>
                   <div class="col-md-3"><label class="form-label">Discount (%)</label><input v-model.number="form.discountPercent" class="form-control" type="number" /></div>
-                  <div class="col-md-3"><label class="form-label">Tax (%)</label><input v-model.number="form.taxPercent" class="form-control" type="number" /></div>
+                  <div class="col-md-3"><label class="form-label">PPN (%)</label><input v-model.number="form.taxPercent" class="form-control" type="number" /></div>
+                  <div class="col-md-3">
+                    <label class="form-label d-block">PPH</label>
+                    <div class="form-check mt-2">
+                      <input id="quotationHasPph" v-model="form.hasPph" class="form-check-input" type="checkbox">
+                      <label class="form-check-label" for="quotationHasPph">Gunakan PPH</label>
+                    </div>
+                  </div>
+                  <div v-if="form.hasPph" class="col-md-3"><label class="form-label">PPH (%)</label><input v-model.number="form.pphPercent" class="form-control" type="number" /></div>
                   <div class="col-12"><label class="form-label">Deskripsi</label><Editor v-model="form.description" editor-style="min-height: 180px" /></div>
                 </div>
               </div>
 
+              <!-- ── TAB PRODUK ── -->
               <div class="tab-pane fade" id="quotation-tab-product" role="tabpanel">
-                <div class="mb-2"><h6 class="mb-0">Products</h6></div>
-                <div v-for="(item, idx) in form.quotationItems" :key="'p-'+idx" class="row g-2 mb-2">
-                  <div class="col-md-5"><CustomSelect2 v-model="item.productId" :options="customerProducts || []" :get-option-label="p => `${p?.sku || ''} | ${p?.name || ''}`" :reduce="p => p?.id" searchable clearable placeholder="Produk" /></div>
-                  <div class="col-md-2"><input v-model.number="item.quantity" type="number" min="1" class="form-control" placeholder="Qty" /></div>
-                  <div class="col-md-3"><input v-model.number="item.price" type="number" min="0" class="form-control" placeholder="Harga" /></div>
-                  <div class="col-md-2"><button type="button" class="btn btn-outline-danger w-100" @click="quotationStore.removeItem(idx)">Hapus</button></div>
-                </div>
-                <button type="button" class="btn btn-primary w-100 mt-2" @click="quotationStore.addItem()">Tambah Item</button>
-              </div>
-
-              <div class="tab-pane fade" id="quotation-tab-services" role="tabpanel">
-                <div class="mb-2"><h6 class="mb-0">Services</h6></div>
-                <div v-for="(item, idx) in form.quotationServices" :key="'s-'+idx" class="row g-2 mb-2">
-                  <div class="col-md-4"><CustomSelect2 v-model="item.serviceId" :options="services || []" :get-option-label="s => s?.name || ''" :reduce="s => s?.id" searchable clearable placeholder="Service" /></div>
-                  <div class="col-md-2"><CustomSelect2 v-model="item.unitId" :options="units" :get-option-label="u => u?.symbol || u?.name || ''" :reduce="u => u?.id" searchable clearable placeholder="Unit" /></div>
-                  <div class="col-md-2"><input v-model.number="item.quantity" type="number" min="1" class="form-control" placeholder="Qty" /></div>
-                  <div class="col-md-2"><input v-model.number="item.price" type="number" min="0" class="form-control" placeholder="Harga" /></div>
-                  <div class="col-md-2"><button type="button" class="btn btn-outline-danger w-100" @click="quotationStore.removeServiceItem(idx)">Hapus</button></div>
-                </div>
-                <button type="button" class="btn btn-primary w-100 mt-2" @click="quotationStore.addServiceItem()">Tambah Service</button>
-              </div>
-
-              <div class="tab-pane fade" id="quotation-tab-did" role="tabpanel">
-                <div class="mb-2"><h6 class="mb-0">DID (Delivery / Installation)</h6></div>
-                <div v-for="(item, idx) in form.quotationDids" :key="'d-'+idx" class="row g-2 mb-2">
-                  <div class="col-md-4">
-                    <CustomSelect2 v-model="item.priceListLineId" :options="didPriceListLines" :get-option-label="line => line ? ((line.did?.code || '') + ' - ' + (line.did?.name || line.priceList?.name || `Line #${line.id}`)) : ''" :reduce="line => line?.id" searchable clearable placeholder="Pilih DID" />
+                <div class="repeater-table">
+                  <div class="repeater-table-head d-none d-md-grid repeater-cols-4">
+                    <span>Produk (SKU | Nama)</span><span>Qty</span><span>Harga Satuan</span><span>Subtotal</span>
                   </div>
-                  <div class="col-md-2"><input v-model.number="item.quantity" type="number" min="1" class="form-control" placeholder="Qty" /></div>
-                  <div class="col-md-2"><input v-model.number="item.price" type="number" min="0" class="form-control" placeholder="Harga" /></div>
-                  <div class="col-md-2"><input :value="formatRupiah((Number(item.quantity) || 0) * (Number(item.price) || 0))" type="text" class="form-control" readonly /></div>
-                  <div class="col-md-2"><button type="button" class="btn btn-outline-danger w-100" @click="quotationStore.removeDidItem(idx)">Hapus</button></div>
+                  <div v-for="(item, idx) in form.quotationItems" :key="'p-'+idx" class="repeater-table-row">
+                    <div class="repeater-cell repeater-cell-main">
+                      <span class="repeater-cell-label d-md-none">Produk</span>
+                      <CustomSelect2 v-model="item.productId" :options="productSelectOptions" :get-option-label="p => `${p?.sku || ''} | ${p?.name || ''}`" :reduce="p => p?.id != null ? Number(p.id) : null" searchable clearable placeholder="Pilih Produk" />
+                    </div>
+                    <div class="repeater-cell">
+                      <span class="repeater-cell-label d-md-none">Qty</span>
+                      <input v-model.number="item.quantity" type="number" min="1" class="form-control" placeholder="Qty" />
+                    </div>
+                    <div class="repeater-cell">
+                      <span class="repeater-cell-label d-md-none">
+                        Harga Satuan
+                        <span v-if="item.isPriceOverridden" class="badge bg-warning text-dark ms-1 py-0 px-1 badge-custom">Custom</span>
+                      </span>
+                      <div class="price-input-wrapper" :class="{ 'price-override-active': item.isPriceOverridden }">
+                        <input type="text" :value="formatRupiah(item.price)" @input="updateItemPriceFromInput(idx, $event)" class="form-control price-field" :class="{ 'price-overridden': item.isPriceOverridden }" :readonly="!item.isPriceOverridden" :tabindex="item.isPriceOverridden ? 0 : -1" placeholder="Harga" />
+                        <button type="button" class="btn-price-lock" :class="{ 'is-overridden': item.isPriceOverridden }" @click="toggleItemOverride(idx)" :title="item.isPriceOverridden ? 'Kunci: kembalikan ke harga standar' : 'Klik untuk atur custom price'"><i :class="item.isPriceOverridden ? 'ri-lock-unlock-line' : 'ri-lock-line'"></i></button>
+                      </div>
+                    </div>
+                    <div class="repeater-cell repeater-cell-subtotal">
+                      <span class="repeater-cell-label d-md-none">Subtotal</span>
+                      <input :value="formatRupiah(lineSubtotal(item))" type="text" class="form-control repeater-subtotal" readonly disabled tabindex="-1" />
+                      <button type="button" class="repeater-delete-btn" @click="quotationStore.removeItem(idx)" title="Hapus"><i class="ri-delete-bin-6-line"></i></button>
+                    </div>
+                    <div v-if="item.isPriceOverridden" class="repeater-cell-reason">
+                      <i class="ri-information-line me-1 text-warning"></i>
+                      <input v-model="item.priceReason" type="text" class="form-control form-control-sm price-reason-input" placeholder="Alasan perubahan harga (opsional)" />
+                    </div>
+                  </div>
+                  <div v-if="!form.quotationItems?.length" class="repeater-empty">Belum ada item.</div>
                 </div>
-                <button type="button" class="btn btn-primary w-100 mt-2" @click="quotationStore.addDidItem(true)">Tambah DID</button>
+                <button type="button" class="btn btn-outline-primary btn-sm mt-3" @click="quotationStore.addItem()"><i class="ri-add-line me-1"></i>Tambah Item</button>
+              </div>
+
+              <!-- ── TAB SERVICE ── -->
+              <div class="tab-pane fade" id="quotation-tab-services" role="tabpanel">
+                <div class="repeater-table">
+                  <div class="repeater-table-head d-none d-md-grid repeater-cols-5">
+                    <span>Service</span><span>Unit</span><span>Qty</span><span>Harga Satuan</span><span>Subtotal</span>
+                  </div>
+                  <div v-for="(item, idx) in form.quotationServices" :key="'s-'+idx" class="repeater-table-row">
+                    <div class="repeater-cell repeater-cell-main">
+                      <span class="repeater-cell-label d-md-none">Service</span>
+                      <CustomSelect2 v-model="item.serviceId" :options="services || []" :get-option-label="s => s?.name || ''" :reduce="s => s?.id" searchable clearable placeholder="Pilih Service" />
+                    </div>
+                    <div class="repeater-cell">
+                      <span class="repeater-cell-label d-md-none">Unit</span>
+                      <CustomSelect2 v-model="item.unitId" :options="units" :get-option-label="u => u?.symbol || u?.name || ''" :reduce="u => u?.id" searchable clearable placeholder="Unit" />
+                    </div>
+                    <div class="repeater-cell">
+                      <span class="repeater-cell-label d-md-none">Qty</span>
+                      <input v-model.number="item.quantity" type="number" min="1" class="form-control" placeholder="Qty" />
+                    </div>
+                    <div class="repeater-cell">
+                      <span class="repeater-cell-label d-md-none">
+                        Harga Satuan
+                        <span v-if="item.isPriceOverridden" class="badge bg-warning text-dark ms-1 py-0 px-1 badge-custom">Custom</span>
+                      </span>
+                      <div class="price-input-wrapper" :class="{ 'price-override-active': item.isPriceOverridden }">
+                        <input type="text" :value="formatRupiah(item.price)" @input="updateServicePriceFromInput(idx, $event)" class="form-control price-field" :class="{ 'price-overridden': item.isPriceOverridden }" :readonly="!item.isPriceOverridden" :tabindex="item.isPriceOverridden ? 0 : -1" placeholder="Harga" />
+                        <button type="button" class="btn-price-lock" :class="{ 'is-overridden': item.isPriceOverridden }" @click="toggleServiceOverride(idx)" :title="item.isPriceOverridden ? 'Kunci: kembalikan ke harga standar' : 'Klik untuk atur custom price'"><i :class="item.isPriceOverridden ? 'ri-lock-unlock-line' : 'ri-lock-line'"></i></button>
+                      </div>
+                    </div>
+                    <div class="repeater-cell repeater-cell-subtotal">
+                      <span class="repeater-cell-label d-md-none">Subtotal</span>
+                      <input :value="formatRupiah(lineSubtotal(item))" type="text" class="form-control repeater-subtotal" readonly disabled tabindex="-1" />
+                      <button type="button" class="repeater-delete-btn" @click="quotationStore.removeServiceItem(idx)" title="Hapus"><i class="ri-delete-bin-6-line"></i></button>
+                    </div>
+                    <div v-if="item.isPriceOverridden" class="repeater-cell-reason">
+                      <i class="ri-information-line me-1 text-warning"></i>
+                      <input v-model="item.priceReason" type="text" class="form-control form-control-sm price-reason-input" placeholder="Alasan perubahan harga (opsional)" />
+                    </div>
+                  </div>
+                  <div v-if="!form.quotationServices?.length" class="repeater-empty">Belum ada item.</div>
+                </div>
+                <button type="button" class="btn btn-outline-primary btn-sm mt-3" @click="quotationStore.addServiceItem()"><i class="ri-add-line me-1"></i>Tambah Service</button>
+              </div>
+
+              <!-- ── TAB DID ── -->
+              <div class="tab-pane fade" id="quotation-tab-did" role="tabpanel">
+                <div class="repeater-table">
+                  <div class="repeater-table-head d-none d-md-grid repeater-cols-4">
+                    <span>DID (Delivery / Installation)</span><span>Qty</span><span>Harga Satuan</span><span>Subtotal</span>
+                  </div>
+                  <div v-for="(item, idx) in form.quotationDids" :key="'d-'+idx" class="repeater-table-row">
+                    <div class="repeater-cell repeater-cell-main">
+                      <span class="repeater-cell-label d-md-none">DID</span>
+                      <CustomSelect2 v-model="item.priceListLineId" :options="didPriceListLines" :get-option-label="line => line ? ((line.did?.code || '') + ' - ' + (line.did?.name || line.priceList?.name || `Line #${line.id}`)) : ''" :reduce="line => line?.id" searchable clearable placeholder="Pilih DID" />
+                    </div>
+                    <div class="repeater-cell">
+                      <span class="repeater-cell-label d-md-none">Qty</span>
+                      <input v-model.number="item.quantity" type="number" min="1" class="form-control" placeholder="Qty" />
+                    </div>
+                    <div class="repeater-cell">
+                      <span class="repeater-cell-label d-md-none">
+                        Harga Satuan
+                        <span v-if="item.isPriceOverridden" class="badge bg-warning text-dark ms-1 py-0 px-1 badge-custom">Custom</span>
+                      </span>
+                      <div class="price-input-wrapper" :class="{ 'price-override-active': item.isPriceOverridden }">
+                        <input type="text" :value="formatRupiah(item.price)" @input="updateDidPriceFromInput(idx, $event)" class="form-control price-field" :class="{ 'price-overridden': item.isPriceOverridden }" :readonly="!item.isPriceOverridden" :tabindex="item.isPriceOverridden ? 0 : -1" placeholder="Harga" />
+                        <button type="button" class="btn-price-lock" :class="{ 'is-overridden': item.isPriceOverridden }" @click="toggleDidOverride(idx)" :title="item.isPriceOverridden ? 'Kunci: kembalikan ke harga standar' : 'Klik untuk atur custom price'"><i :class="item.isPriceOverridden ? 'ri-lock-unlock-line' : 'ri-lock-line'"></i></button>
+                      </div>
+                    </div>
+                    <div class="repeater-cell repeater-cell-subtotal">
+                      <span class="repeater-cell-label d-md-none">Subtotal</span>
+                      <input :value="formatRupiah(lineSubtotal(item))" type="text" class="form-control repeater-subtotal" readonly disabled tabindex="-1" />
+                      <button type="button" class="repeater-delete-btn" @click="quotationStore.removeDidItem(idx)" title="Hapus"><i class="ri-delete-bin-6-line"></i></button>
+                    </div>
+                    <div v-if="item.isPriceOverridden" class="repeater-cell-reason">
+                      <i class="ri-information-line me-1 text-warning"></i>
+                      <input v-model="item.priceReason" type="text" class="form-control form-control-sm price-reason-input" placeholder="Alasan perubahan harga (opsional)" />
+                    </div>
+                  </div>
+                  <div v-if="!form.quotationDids?.length" class="repeater-empty">Belum ada item.</div>
+                </div>
+                <button type="button" class="btn btn-outline-primary btn-sm mt-3" @click="quotationStore.addDidItem(true)"><i class="ri-add-line me-1"></i>Tambah DID</button>
               </div>
             </div>
 
@@ -152,6 +246,147 @@
   </div>
 </template>
 
+<style scoped>
+/* ── Repeater table container ── */
+.repeater-table {
+  border: 1px solid #dee2e6;
+  border-radius: 10px;
+}
+.repeater-table-head {
+  background: #f1f3f5;
+  border-bottom: 1px solid #dee2e6;
+  border-radius: 10px 10px 0 0;
+  padding: 8px 16px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6c757d;
+  gap: 12px;
+  align-items: center;
+}
+.repeater-table-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  align-items: flex-end;
+  transition: background 0.12s;
+}
+.repeater-table-row:last-child { border-bottom: none; }
+.repeater-table-row:hover { background: #fafbfc; }
+.repeater-cell {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 120px;
+  min-width: 0;
+}
+.repeater-cell-main { flex: 3 1 240px; }
+.repeater-cell-subtotal {
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 8px;
+}
+.repeater-cell-subtotal .form-control { flex: 1 1 0; min-width: 0; }
+.repeater-cell-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6c757d;
+  margin-bottom: 4px;
+  display: block;
+}
+.repeater-cols-4 { grid-template-columns: 3fr 1fr 1.5fr 1.8fr; }
+.repeater-cols-5 { grid-template-columns: 2.5fr 1fr 1fr 1.5fr 1.8fr; }
+.repeater-subtotal {
+  background: #e9ecef !important;
+  color: #495057 !important;
+  font-weight: 600;
+  cursor: default;
+}
+.repeater-delete-btn {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid #f1aeb5;
+  border-radius: 6px;
+  color: #dc3545;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  line-height: 1;
+}
+.repeater-delete-btn:hover {
+  background: #dc3545;
+  color: #fff;
+  border-color: #dc3545;
+}
+.repeater-empty {
+  padding: 20px 16px;
+  text-align: center;
+  color: #adb5bd;
+  font-size: 0.875rem;
+}
+
+/* ── Price override / lock ── */
+.price-input-wrapper {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+}
+.price-input-wrapper .price-field { flex: 1; min-width: 0; }
+.btn-price-lock {
+  flex-shrink: 0;
+  width: 34px;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  background: #f8f9fa;
+  color: #adb5bd;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  padding: 0;
+  font-size: 0.85rem;
+}
+.btn-price-lock:hover { border-color: #6c757d; color: #495057; background: #e9ecef; }
+.btn-price-lock.is-overridden { border-color: #fd7e14; color: #fd7e14; background: #fff3e0; }
+.btn-price-lock.is-overridden:hover { background: #fd7e14; color: #fff; border-color: #fd7e14; }
+.price-input-wrapper.price-override-active .price-field {
+  border-color: #fd7e14 !important;
+  box-shadow: 0 0 0 0.15rem rgba(253, 126, 20, 0.15) !important;
+}
+.price-field:not(.price-overridden) { background: #f8f9fa !important; color: #6c757d !important; cursor: default; }
+.badge-custom { font-size: 0.6rem; vertical-align: middle; }
+
+/* ── Full-width reason row ── */
+.repeater-cell-reason {
+  flex: 1 1 100%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0 2px;
+  border-top: 1px dashed #ffe69c;
+  margin-top: 4px;
+}
+.repeater-cell-reason .ri-information-line { flex-shrink: 0; font-size: 0.9rem; }
+.price-reason-input {
+  flex: 1;
+  font-size: 0.78rem;
+  border-color: #ffc107 !important;
+  background: #fffef5 !important;
+  color: #856404;
+}
+.price-reason-input::placeholder { color: #c8a800; }
+</style>
+
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
@@ -159,6 +394,8 @@ import { useQuotationStore } from '~/stores/quotation'
 import { useCustomerStore } from '~/stores/customer'
 import { useServiceStore } from '~/stores/service'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
+import { parseRupiahToNumber } from '~/composables/formatRupiah'
+import { lineSubtotal } from '~/utils/lineSubtotal'
 
 const route = useRoute()
 const formatRupiah = useFormatRupiah()
@@ -168,11 +405,35 @@ const serviceStore = useServiceStore()
 const { form, saving, validationErrors, customerProducts } = storeToRefs(quotationStore)
 const { customers } = storeToRefs(customerStore)
 const { services } = storeToRefs(serviceStore)
+
+const productSelectOptions = computed(() => {
+  const map = new Map<number, any>()
+  for (const p of customerProducts.value || []) {
+    const id = Number(p?.id)
+    if (id) map.set(id, p)
+  }
+  for (const item of form.value?.quotationItems || []) {
+    const id = Number(item?.productId)
+    if (!id || map.has(id)) continue
+    const p = item.product
+    if (p?.id || p?.name || p?.sku) {
+      map.set(id, {
+        id,
+        sku: p.sku ?? '',
+        name: p.name ?? '',
+        noInterchange: p.noInterchange ?? '',
+      })
+    }
+  }
+  return [...map.values()]
+})
 const siteInvests = ref<any[]>([])
 const sites = ref<any[]>([])
 const costCenters = ref<any[]>([])
 const units = ref<any[]>([])
 const didPriceListLines = ref<any[]>([])
+const skipSiteInvestPrefill = ref(true)
+let siteInvestPrefillRequest = 0
 
 const quotationId = computed(() => {
   const raw = route.params.id
@@ -191,6 +452,45 @@ const moduleNavItems = computed(() => [
 
 function isModuleNavActive(to: string) {
   return route.path === to || route.path.startsWith(`${to}/`)
+}
+
+function updateItemPriceFromInput(idx: number, e: Event) {
+  const item = form.value?.quotationItems?.[idx]
+  if (!item) return
+  item.price = parseRupiahToNumber((e.target as HTMLInputElement)?.value)
+}
+
+function updateServicePriceFromInput(idx: number, e: Event) {
+  const item = form.value?.quotationServices?.[idx]
+  if (!item) return
+  item.price = parseRupiahToNumber((e.target as HTMLInputElement)?.value)
+}
+
+function updateDidPriceFromInput(idx: number, e: Event) {
+  const item = form.value?.quotationDids?.[idx]
+  if (!item) return
+  item.price = parseRupiahToNumber((e.target as HTMLInputElement)?.value)
+}
+
+function toggleItemOverride(idx: number) {
+  const item = form.value?.quotationItems?.[idx]
+  if (!item) return
+  item.isPriceOverridden = !item.isPriceOverridden
+  if (!item.isPriceOverridden) item.priceReason = ''
+}
+
+function toggleServiceOverride(idx: number) {
+  const item = form.value?.quotationServices?.[idx]
+  if (!item) return
+  item.isPriceOverridden = !item.isPriceOverridden
+  if (!item.isPriceOverridden) item.priceReason = ''
+}
+
+function toggleDidOverride(idx: number) {
+  const item = form.value?.quotationDids?.[idx]
+  if (!item) return
+  item.isPriceOverridden = !item.isPriceOverridden
+  if (!item.isPriceOverridden) item.priceReason = ''
 }
 
 async function loadMasters() {
@@ -212,8 +512,38 @@ async function loadMasters() {
   } else didPriceListLines.value = []
 }
 
+async function onSiteInvestChange(siteInvestId: string | null) {
+  if (skipSiteInvestPrefill.value) return
+
+  if (!siteInvestId) return
+
+  const requestId = ++siteInvestPrefillRequest
+  const prefill = await quotationStore.applySiteInvestmentPrefill(siteInvestId)
+  if (requestId !== siteInvestPrefillRequest || !prefill) return
+
+  mergePrefillMasterOptions(prefill)
+}
+
+function mergePrefillMasterOptions(prefill: any) {
+  if (prefill?.customer?.id) {
+    const exists = (customers.value || []).some((c: any) => c.id === prefill.customer.id)
+    if (!exists) {
+      customerStore.customers = [...(customers.value || []), prefill.customer]
+    }
+  }
+  if (prefill?.site?.id) {
+    const exists = sites.value.some((s: any) => s.id === prefill.site.id)
+    if (!exists) sites.value = [...sites.value, prefill.site]
+  }
+  if (prefill?.costCenter?.id) {
+    const exists = costCenters.value.some((c: any) => c.id === prefill.costCenter.id)
+    if (!exists) costCenters.value = [...costCenters.value, prefill.costCenter]
+  }
+}
+
 async function loadForm() {
   quotationStore.closeModal()
+  skipSiteInvestPrefill.value = true
   await Promise.all([customerStore.fetchCustomers(), serviceStore.fetchServices(), loadMasters()])
   if (quotationId.value) {
     await quotationStore.fetchQuotationForEdit(quotationId.value)
@@ -227,12 +557,23 @@ async function loadForm() {
   if (!Array.isArray(form.value?.quotationDids) || form.value.quotationDids.length === 0) {
     quotationStore.addDidItem(true)
   }
+
+  skipSiteInvestPrefill.value = false
 }
 
 async function onSubmit() {
   await quotationStore.saveQuotation({ navigateToList: true })
 }
 
-watch(() => form.value?.customerId, async (customerId) => { if (customerId) await quotationStore.fetchProductsForCustomer(customerId) }, { immediate: true })
+watch(() => form.value?.customerId, async (customerId) => {
+  if (customerId) await quotationStore.fetchProductsForCustomer(customerId, { merge: true })
+}, { immediate: true })
+
+watch(() => form.value?.hasPph, (enabled) => {
+  if (!enabled && form.value) {
+    form.value.pphPercent = 0
+  }
+})
+
 onMounted(loadForm)
 </script>

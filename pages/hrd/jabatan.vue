@@ -136,24 +136,24 @@
                             >
                             <Column field="id" header="#" :sortable="true"></Column> 
                             <Column field="nmJabatan" header="Nama Jabatan" :sortable="true"></Column>
+                            <Column header="Level" :sortable="true" style="width:10rem">
+                                <template #body="{ data }">
+                                    <span :class="['badge rounded-pill', getJabatanLevelBadgeClass(data.level)]">
+                                        {{ getJabatanLevelShort(data.level) }}
+                                    </span>
+                                </template>
+                            </Column>
                             <Column header="Actions" :exportable="false" style="min-width:8rem">
                                 <template #body="slotProps">
-                                    <div class="d-inline-block">
-                                        <a href="javascript:;" class="btn btn-sm btn-text-secondary rounded-pill btn-icon dropdown-toggle hide-arrow" data-bs-toggle="dropdown"><i class="ri-more-2-fill"></i>
-                                        </a>
-                                        <ul class="dropdown-menu">
-                                            <li v-if="userHasRole('superadmin') || userHasPermission('edit_jabatan')">
-                                                <a class="dropdown-item" href="javascript:void(0)" @click="jabatanStore.openModal(slotProps.data, 'admin')">
-                                                    <i class="ri-edit-box-line me-2"></i> Edit
-                                                </a>
-                                            </li>
-                                            <li v-if="userHasRole('superadmin') || userHasPermission('delete_jabatan')">
-                                                <a class="dropdown-item text-danger" href="javascript:void(0)" @click="jabatanStore.deleteJabatan(slotProps.data.id)">
-                                                    <i class="ri-delete-bin-7-line me-2"></i> Hapus
-                                                </a>
-                                            </li>
-                                        </ul>
-                                    </div>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-text-secondary rounded-pill btn-icon"
+                                        aria-haspopup="true"
+                                        aria-controls="jabatan-actions-menu"
+                                        @click.stop="toggleActions($event, slotProps.data)"
+                                    >
+                                        <i class="ri-more-2-fill"></i>
+                                    </button>
                                 </template>
                             </Column>
                         </MyDataTable>
@@ -163,6 +163,14 @@
                 </div>
             </div>
             <!--/ jabatan cards -->
+
+            <Menu
+                id="jabatan-actions-menu"
+                ref="actionsMenuRef"
+                :model="actionMenuItems"
+                :popup="true"
+                append-to="body"
+            />
 
             <!-- Placeholder untuk JabatanModal component -->
             <Modal 
@@ -187,6 +195,15 @@
                                     <label for="name">Nama Jabatan</label>
                                 </div>
                             </div>
+                            <div class="col-md-12">
+                                <label class="form-label" for="jabatan-level">Level Organisasi</label>
+                                <select id="jabatan-level" v-model.number="form.level" class="form-select" required>
+                                    <option v-for="opt in JABATAN_LEVEL_OPTIONS" :key="opt.value" :value="opt.value">
+                                        {{ opt.label }}
+                                    </option>
+                                </select>
+                                <small class="text-muted">Level 1 = tertinggi (direksi), Level 5 = terendah (staff).</small>
+                            </div>
                             <div class="d-flex justify-content-end mt-6">
                                 <button type="button" class="btn btn-outline-secondary me-2" @click="jabatanStore.closeModal()">Tutup</button>
                                 <button
@@ -210,7 +227,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
@@ -219,9 +236,15 @@ import { useJabatanStore } from '~/stores/jabatan'
 import { usePermissionsStore } from '~/stores/permissions'
 import { usePermissions } from '~/composables/usePermissions'
 import Column from 'primevue/column'
+import Menu from 'primevue/menu'
 import { useDebounceFn } from '@vueuse/core'
 import { useUserStore } from '~/stores/user'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
+import {
+  JABATAN_LEVEL_OPTIONS,
+  getJabatanLevelBadgeClass,
+  getJabatanLevelShort,
+} from '~/constants/hrd/jabatan'
 
 // Composables
 const { setListTitle, setFormTitle } = useDynamicTitle()
@@ -239,6 +262,39 @@ const rowsPerPageOptionsArray = ref([10, 25, 50, 100]);
 
 const modalTitle = computed(() => isEditMode.value ? 'Edit Jabatan' : 'Tambah Jabatan');
 const modalDescription = computed(() => isEditMode.value ? 'Silakan ubah data jabatan di bawah ini.' : 'Silakan isi form di bawah ini untuk menambahkan jabatan baru.');
+
+const actionsMenuRef = ref(null)
+const activeRow = ref(null)
+
+const actionMenuItems = computed(() => {
+    const row = activeRow.value
+    if (!row) return []
+    const items = []
+
+    if (userHasRole('superadmin') || userHasPermission('edit_jabatan')) {
+        items.push({
+            label: 'Edit',
+            icon: 'ri ri-edit-box-line',
+            command: () => jabatanStore.openModal(row, 'admin'),
+        })
+    }
+    if (userHasRole('superadmin') || userHasPermission('delete_jabatan')) {
+        if (items.length) items.push({ separator: true })
+        items.push({
+            label: 'Hapus',
+            icon: 'ri ri-delete-bin-7-line',
+            class: 'hrd-menu-danger',
+            command: () => jabatanStore.deleteJabatan(row.id),
+        })
+    }
+
+    return items
+})
+
+function toggleActions(event, row) {
+    activeRow.value = row
+    nextTick(() => actionsMenuRef.value?.toggle(event))
+}
 
 let modalInstance = null
 onMounted(() => {
@@ -309,3 +365,9 @@ definePageMeta({
 });
 
 </script>
+
+<style scoped>
+:deep(.hrd-menu-danger .p-menuitem-link) {
+  color: var(--bs-danger) !important;
+}
+</style>

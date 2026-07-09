@@ -53,12 +53,6 @@
                       <span class="d-sm-none ri-phone-line"></span>
                     </button>
                   </li>
-                  <li class="nav-item">
-                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#si-tab-budgets" role="tab" type="button">
-                      <span class="d-none d-sm-block">Budget</span>
-                      <span class="d-sm-none ri-money-dollar-circle-line"></span>
-                    </button>
-                  </li>
                 </ul>
               </div>
             </div>
@@ -182,62 +176,133 @@
                 </div>
               </div>
 
+              <!-- ── TAB MATERIAL ── -->
               <div id="si-tab-materials" class="tab-pane fade" role="tabpanel">
-                <div v-if="uiErrors.siteInvestMaterials" class="alert alert-danger py-2 mb-3">
-                  <i class="ri-error-warning-line me-1"></i>{{ uiErrors.siteInvestMaterials }}
+                <div v-if="uiErrors.siteInvestMaterials" class="alert alert-danger py-2 mb-3"><i class="ri-error-warning-line me-1"></i>{{ uiErrors.siteInvestMaterials }}</div>
+                <div class="repeater-table">
+                  <div class="repeater-table-head d-none d-md-grid repeater-cols-4">
+                    <span>Product / Material</span><span>Qty</span><span>Harga Satuan</span><span>Subtotal</span>
+                  </div>
+                  <div v-for="(item, index) in form.siteInvestMaterials" :key="'m-'+index" class="repeater-table-row">
+                    <div class="repeater-cell repeater-cell-main">
+                      <span class="repeater-cell-label d-md-none">Product / Material</span>
+                      <CustomSelect2 v-model="item.priceListLineId" :options="priceListLinesProduct" :get-option-label="getMaterialLineLabel" :reduce="getMaterialLineId" placeholder="Pilih Material" @update:modelValue="onMaterialLineChange(index, $event)" />
+                    </div>
+                    <div class="repeater-cell">
+                      <span class="repeater-cell-label d-md-none">Qty</span>
+                      <input type="number" v-model.number="item.quantity" @input="calculateMaterialSubtotal(index)" class="form-control" min="0.01" placeholder="Qty">
+                    </div>
+                    <div class="repeater-cell">
+                      <span class="repeater-cell-label d-md-none">
+                        Harga Satuan
+                        <span v-if="item.isPriceOverridden" class="badge bg-warning text-dark ms-1 py-0 px-1 badge-custom">Custom</span>
+                      </span>
+                      <div class="price-input-wrapper" :class="{ 'price-override-active': item.isPriceOverridden }">
+                        <input :value="formatRupiah(item.price)" @input="updateMaterialPriceFromInput(index, $event)" class="form-control price-field" :class="{ 'price-overridden': item.isPriceOverridden }" :readonly="!item.isPriceOverridden" :tabindex="item.isPriceOverridden ? 0 : -1" placeholder="Harga">
+                        <button type="button" class="btn-price-lock" :class="{ 'is-overridden': item.isPriceOverridden }" @click="toggleMaterialOverride(index)" :title="item.isPriceOverridden ? 'Kunci: kembalikan ke harga price list' : 'Klik untuk atur custom price'"><i :class="item.isPriceOverridden ? 'ri-lock-unlock-line' : 'ri-lock-line'"></i></button>
+                      </div>
+                    </div>
+                    <div class="repeater-cell repeater-cell-subtotal">
+                      <span class="repeater-cell-label d-md-none">Subtotal</span>
+                      <input :value="formatRupiah(lineSubtotal(item))" class="form-control repeater-subtotal" readonly disabled tabindex="-1">
+                      <button type="button" class="repeater-delete-btn" @click="siteInvestStore.removeMaterialItem(index)" title="Hapus"><i class="ri-delete-bin-6-line"></i></button>
+                    </div>
+                    <div v-if="item.isPriceOverridden" class="repeater-cell-reason">
+                      <i class="ri-information-line me-1 text-warning"></i>
+                      <input v-model="item.priceReason" type="text" class="form-control form-control-sm price-reason-input" placeholder="Alasan perubahan harga (opsional)">
+                    </div>
+                  </div>
+                  <div v-if="!form.siteInvestMaterials?.length" class="repeater-empty">Belum ada item.</div>
                 </div>
-                <div v-for="(item, index) in form.siteInvestMaterials" :key="'m-'+index" class="row g-2 mb-2">
-                  <div class="col-md-6"><CustomSelect2 v-model="item.priceListLineId" :options="priceListLinesProduct" :get-option-label="getMaterialLineLabel" :reduce="getMaterialLineId" placeholder="Pilih Material" @update:modelValue="onMaterialLineChange(index, $event)" /></div>
-                  <div class="col-md-2"><input type="number" v-model.number="item.quantity" @input="calculateMaterialSubtotal(index)" class="form-control" min="0.01"></div>
-                  <div class="col-md-2"><input :value="formatRupiah(item.price)" @input="updateMaterialPriceFromInput(index, $event)" class="form-control"></div>
-                  <div class="col-md-1"><input :value="formatRupiah(item.subtotal)" class="form-control" readonly></div>
-                  <div class="col-md-1"><button type="button" class="btn btn-outline-danger w-100" @click="siteInvestStore.removeMaterialItem(index)">Hapus</button></div>
-                </div>
-                <button type="button" class="btn btn-primary w-100 mt-2" @click="siteInvestStore.addMaterialItem()">Tambah Material</button>
+                <button type="button" class="btn btn-outline-primary btn-sm mt-3" @click="siteInvestStore.addMaterialItem()"><i class="ri-add-line me-1"></i>Tambah Material</button>
               </div>
 
+              <!-- ── TAB SERVICE ── -->
               <div id="si-tab-services" class="tab-pane fade" role="tabpanel">
-                <div v-if="uiErrors.siteInvestServices" class="alert alert-danger py-2 mb-3">
-                  <i class="ri-error-warning-line me-1"></i>{{ uiErrors.siteInvestServices }}
+                <div v-if="uiErrors.siteInvestServices" class="alert alert-danger py-2 mb-3"><i class="ri-error-warning-line me-1"></i>{{ uiErrors.siteInvestServices }}</div>
+                <div class="repeater-table">
+                  <div class="repeater-table-head d-none d-md-grid repeater-cols-4">
+                    <span>Service</span><span>Qty</span><span>Harga Satuan</span><span>Subtotal</span>
+                  </div>
+                  <div v-for="(item, index) in form.siteInvestServices" :key="'s-'+index" class="repeater-table-row">
+                    <div class="repeater-cell repeater-cell-main">
+                      <span class="repeater-cell-label d-md-none">Service</span>
+                      <CustomSelect2 v-model="item.priceListLineId" :options="priceListLinesService" :get-option-label="getServiceLineLabel" :reduce="getServiceLineId" placeholder="Pilih Service" @update:modelValue="onServiceLineChange(index, $event)" />
+                    </div>
+                    <div class="repeater-cell">
+                      <span class="repeater-cell-label d-md-none">Qty</span>
+                      <input type="number" v-model.number="item.quantity" @input="calculateServiceSubtotal(index)" class="form-control" min="0.01" placeholder="Qty">
+                    </div>
+                    <div class="repeater-cell">
+                      <span class="repeater-cell-label d-md-none">
+                        Harga Satuan
+                        <span v-if="item.isPriceOverridden" class="badge bg-warning text-dark ms-1 py-0 px-1 badge-custom">Custom</span>
+                      </span>
+                      <div class="price-input-wrapper" :class="{ 'price-override-active': item.isPriceOverridden }">
+                        <input :value="formatRupiah(item.price)" @input="updateServicePriceFromInput(index, $event)" class="form-control price-field" :class="{ 'price-overridden': item.isPriceOverridden }" :readonly="!item.isPriceOverridden" :tabindex="item.isPriceOverridden ? 0 : -1" placeholder="Harga">
+                        <button type="button" class="btn-price-lock" :class="{ 'is-overridden': item.isPriceOverridden }" @click="toggleServiceOverride(index)" :title="item.isPriceOverridden ? 'Kunci: kembalikan ke harga price list' : 'Klik untuk atur custom price'"><i :class="item.isPriceOverridden ? 'ri-lock-unlock-line' : 'ri-lock-line'"></i></button>
+                      </div>
+                    </div>
+                    <div class="repeater-cell repeater-cell-subtotal">
+                      <span class="repeater-cell-label d-md-none">Subtotal</span>
+                      <input :value="formatRupiah(lineSubtotal(item))" class="form-control repeater-subtotal" readonly disabled tabindex="-1">
+                      <button type="button" class="repeater-delete-btn" @click="siteInvestStore.removeServiceItem(index)" title="Hapus"><i class="ri-delete-bin-6-line"></i></button>
+                    </div>
+                    <div v-if="item.isPriceOverridden" class="repeater-cell-reason">
+                      <i class="ri-information-line me-1 text-warning"></i>
+                      <input v-model="item.priceReason" type="text" class="form-control form-control-sm price-reason-input" placeholder="Alasan perubahan harga (opsional)">
+                    </div>
+                  </div>
+                  <div v-if="!form.siteInvestServices?.length" class="repeater-empty">Belum ada item.</div>
                 </div>
-                <div v-for="(item, index) in form.siteInvestServices" :key="'s-'+index" class="row g-2 mb-2">
-                  <div class="col-md-6"><CustomSelect2 v-model="item.priceListLineId" :options="priceListLinesService" :get-option-label="getServiceLineLabel" :reduce="getServiceLineId" placeholder="Pilih Service" @update:modelValue="onServiceLineChange(index, $event)" /></div>
-                  <div class="col-md-2"><input type="number" v-model.number="item.quantity" @input="calculateServiceSubtotal(index)" class="form-control" min="0.01"></div>
-                  <div class="col-md-2"><input :value="formatRupiah(item.price)" @input="updateServicePriceFromInput(index, $event)" class="form-control"></div>
-                  <div class="col-md-1"><input :value="formatRupiah(item.subtotal)" class="form-control" readonly></div>
-                  <div class="col-md-1"><button type="button" class="btn btn-outline-danger w-100" @click="siteInvestStore.removeServiceItem(index)">Hapus</button></div>
-                </div>
-                <button type="button" class="btn btn-primary w-100 mt-2" @click="siteInvestStore.addServiceItem()">Tambah Service</button>
+                <button type="button" class="btn btn-outline-primary btn-sm mt-3" @click="siteInvestStore.addServiceItem()"><i class="ri-add-line me-1"></i>Tambah Service</button>
               </div>
 
+              <!-- ── TAB DID ── -->
               <div id="si-tab-dids" class="tab-pane fade" role="tabpanel">
-                <div v-if="uiErrors.siteInvestDids" class="alert alert-danger py-2 mb-3">
-                  <i class="ri-error-warning-line me-1"></i>{{ uiErrors.siteInvestDids }}
-                </div>
+                <div v-if="uiErrors.siteInvestDids" class="alert alert-danger py-2 mb-3"><i class="ri-error-warning-line me-1"></i>{{ uiErrors.siteInvestDids }}</div>
                 <div class="mb-3">
-                  <CustomSelect2 v-model="selectedDidPriceListId" :options="priceListOptionsDid" :get-option-label="getDidPriceListLabel" :reduce="getDidPriceListId" placeholder="Pilih Price List DID" @update:modelValue="onDidPriceListSelect" />
+                  <label class="form-label fw-semibold text-muted small text-uppercase">Filter Price List DID</label>
+                  <CustomSelect2 v-model="selectedDidPriceListId" :options="priceListOptionsDid" :get-option-label="getDidPriceListLabel" :reduce="getDidPriceListId" placeholder="Pilih Price List DID (opsional)" @update:modelValue="onDidPriceListSelect" />
                 </div>
-                <div v-for="(item, index) in form.siteInvestDids" :key="'d-'+index" class="row g-2 mb-2">
-                  <div class="col-md-6"><input :value="getDidLineLabel(item)" class="form-control" readonly></div>
-                  <div class="col-md-2"><input type="number" v-model.number="item.quantity" @input="calculateDidSubtotal(index)" class="form-control" min="1"></div>
-                  <div class="col-md-2"><input :value="formatRupiah(item.price)" @input="updateDidPriceFromInput(index, $event)" class="form-control"></div>
-                  <div class="col-md-1"><input :value="formatRupiah(item.subtotal)" class="form-control" readonly></div>
-                  <div class="col-md-1"><button type="button" class="btn btn-outline-danger w-100" @click="siteInvestStore.removeDidItem(index)">Hapus</button></div>
+                <div class="repeater-table">
+                  <div class="repeater-table-head d-none d-md-grid repeater-cols-4">
+                    <span>DID</span><span>Qty</span><span>Harga Satuan</span><span>Subtotal</span>
+                  </div>
+                  <div v-for="(item, index) in form.siteInvestDids" :key="'d-'+index" class="repeater-table-row">
+                    <div class="repeater-cell repeater-cell-main">
+                      <span class="repeater-cell-label d-md-none">DID</span>
+                      <CustomSelect2 v-model="item.priceListLineId" :options="didLineSelectOptions" :get-option-label="getDidLineLabel" :reduce="getDidLineId" placeholder="Pilih DID" searchable clearable @update:modelValue="onDidLineChange(index, $event)" />
+                    </div>
+                    <div class="repeater-cell">
+                      <span class="repeater-cell-label d-md-none">Qty</span>
+                      <input type="number" v-model.number="item.quantity" @input="calculateDidSubtotal(index)" class="form-control" min="1" placeholder="Qty">
+                    </div>
+                    <div class="repeater-cell">
+                      <span class="repeater-cell-label d-md-none">
+                        Harga Satuan
+                        <span v-if="item.isPriceOverridden" class="badge bg-warning text-dark ms-1 py-0 px-1 badge-custom">Custom</span>
+                      </span>
+                      <div class="price-input-wrapper" :class="{ 'price-override-active': item.isPriceOverridden }">
+                        <input :value="formatRupiah(item.price)" @input="updateDidPriceFromInput(index, $event)" class="form-control price-field" :class="{ 'price-overridden': item.isPriceOverridden }" :readonly="!item.isPriceOverridden" :tabindex="item.isPriceOverridden ? 0 : -1" placeholder="Harga">
+                        <button type="button" class="btn-price-lock" :class="{ 'is-overridden': item.isPriceOverridden }" @click="toggleDidOverride(index)" :title="item.isPriceOverridden ? 'Kunci: kembalikan ke harga price list' : 'Klik untuk atur custom price'"><i :class="item.isPriceOverridden ? 'ri-lock-unlock-line' : 'ri-lock-line'"></i></button>
+                      </div>
+                    </div>
+                    <div class="repeater-cell repeater-cell-subtotal">
+                      <span class="repeater-cell-label d-md-none">Subtotal</span>
+                      <input :value="formatRupiah(lineSubtotal(item))" class="form-control repeater-subtotal" readonly disabled tabindex="-1">
+                      <button type="button" class="repeater-delete-btn" @click="siteInvestStore.removeDidItem(index)" title="Hapus"><i class="ri-delete-bin-6-line"></i></button>
+                    </div>
+                    <div v-if="item.isPriceOverridden" class="repeater-cell-reason">
+                      <i class="ri-information-line me-1 text-warning"></i>
+                      <input v-model="item.priceReason" type="text" class="form-control form-control-sm price-reason-input" placeholder="Alasan perubahan harga (opsional)">
+                    </div>
+                  </div>
+                  <div v-if="!form.siteInvestDids?.length" class="repeater-empty">Belum ada item.</div>
                 </div>
-                <button type="button" class="btn btn-primary w-100 mt-2" @click="siteInvestStore.addDidItem()">Tambah DID</button>
+                <button type="button" class="btn btn-outline-primary btn-sm mt-3" @click="siteInvestStore.addDidItem()"><i class="ri-add-line me-1"></i>Tambah DID</button>
               </div>
 
-              <div id="si-tab-budgets" class="tab-pane fade" role="tabpanel">
-                <div v-if="uiErrors.siteInvestBudgets" class="alert alert-danger py-2 mb-3">
-                  <i class="ri-error-warning-line me-1"></i>{{ uiErrors.siteInvestBudgets }}
-                </div>
-                <div v-for="(item, index) in (form.siteInvestBudgets || [])" :key="'b-'+index" class="row g-2 mb-2">
-                  <div class="col-md-5"><CustomSelect2 v-model="item.budgetSourceId" :options="approvedBudgets || []" :get-option-label="getBudgetLabel" :reduce="getBudgetId" placeholder="Sumber Budget" /></div>
-                  <div class="col-md-5"><CustomSelect2 v-model="item.budgetHolderId" :options="usersForBudget" :get-option-label="getUserLabel" :reduce="getUserId" placeholder="Budget Holder" /></div>
-                  <div class="col-md-2"><button type="button" class="btn btn-outline-danger w-100" @click="removeBudgetItem(index)">Hapus</button></div>
-                </div>
-                <button type="button" class="btn btn-primary w-100 mt-2" @click="addBudgetItem()">Tambah Budget</button>
-              </div>
             </div>
 
                 <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
@@ -283,26 +348,30 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useSiteInvestStore } from '~/stores/site-invest'
 import { useFdrStore } from '~/stores/fdr'
 import { useCustomerStore } from '~/stores/customer'
-import { useBudgetStore } from '~/stores/budget'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
+import {
+  getLinePriceListId,
+  getDidLineLabel,
+  mergePriceListLine,
+  filterLinesByPriceListId,
+} from '~/utils/priceListLines'
+import { lineSubtotal } from '~/utils/lineSubtotal'
 
 const route = useRoute()
 const siteInvestStore = useSiteInvestStore()
 const fdrStore = useFdrStore()
 const customerStore = useCustomerStore()
-const budgetStore = useBudgetStore()
 const formatRupiah = useFormatRupiah()
 const toast = useToast()
 const uiErrors = ref({})
 
 const { loading, saving, form, isEditMode, validationErrors } = storeToRefs(siteInvestStore)
 const { customers } = storeToRefs(customerStore)
-const { budgets } = storeToRefs(budgetStore)
 
 const quotationId = computed(() => route.params.id ? String(route.params.id) : null)
 const pageTitle = computed(() => (quotationId.value ? 'Edit Site Investment' : 'Tambah Site Investment'))
@@ -322,11 +391,9 @@ const selectedPriceListId = ref(null)
 const selectedDidPriceListId = ref(null)
 const sites = ref([])
 const businessSchemes = ref([])
-const usersForBudget = ref([])
 const pegawaiOptions = ref([])
 const priceListOptions = ref([])
 
-const approvedBudgets = computed(() => (budgets.value || []).filter((b) => b.status === 'approved'))
 const materialSubtotal = computed(() => {
   if (!form.value?.siteInvestMaterials) return 0
   return form.value.siteInvestMaterials.reduce((sum, item) => sum + (Number(item?.subtotal) || 0), 0)
@@ -342,17 +409,27 @@ const didSubtotal = computed(() => {
 const totalInvestment = computed(() => materialSubtotal.value + serviceSubtotal.value + didSubtotal.value)
 const marketingFeeAmount = computed(() => Number(form.value?.marketingFee ?? form.value?.marketing_fee ?? 0) || 0)
 const grandTotal = computed(() => totalInvestment.value + marketingFeeAmount.value)
+
 const priceListOptionsDid = computed(() => {
-  const seen = new Set()
-  const options = []
-  for (const line of priceListLinesDid.value || []) {
-    const id = line.price_list_id ?? line.priceList?.id
-    if (id != null && !seen.has(id)) {
-      seen.add(id)
-      options.push({ id, name: line.price_list?.name ?? line.priceList?.name ?? `Price List #${id}` })
-    }
+  const seen = new Map()
+  const add = (id, name) => {
+    const n = Number(id)
+    if (!n) return
+    if (!seen.has(n)) seen.set(n, name || `Price List #${n}`)
   }
-  return options
+  for (const line of priceListLinesDid.value || []) {
+    add(getLinePriceListId(line), line.price_list?.name ?? line.priceList?.name)
+  }
+  for (const pl of priceListOptions.value || []) {
+    add(pl.id, pl.name)
+  }
+  const selectedId = Number(selectedDidPriceListId.value ?? selectedPriceListId.value)
+  if (selectedId) add(selectedId, null)
+  return [...seen.entries()].map(([id, name]) => ({ id, name }))
+})
+const didLineSelectOptions = computed(() => {
+  const plId = Number(selectedDidPriceListId.value ?? selectedPriceListId.value)
+  return filterLinesByPriceListId(priceListLinesDid.value || [], plId || null)
 })
 
 const getCustomerLabel = (c) => c ? c.name : ''
@@ -371,12 +448,9 @@ const getMaterialLineLabel = (line) => line?.product ? `${line.product.name} (${
 const getMaterialLineId = (line) => line ? line.id : null
 const getServiceLineLabel = (line) => line?.service?.name || `Line #${line?.id || '—'}`
 const getServiceLineId = (line) => line ? line.id : null
+const getDidLineId = (line) => line ? line.id : null
 const getDidPriceListLabel = (pl) => pl ? pl.name : '—'
 const getDidPriceListId = (pl) => pl ? pl.id : null
-const getBudgetLabel = (b) => b ? `${b.budgetCode || b.budget_code || ''} - ${b.budgetName || b.budget_name || ''}` : '—'
-const getBudgetId = (b) => b ? b.id : null
-const getUserLabel = (u) => u ? (u.fullName || u.email || '') : ''
-const getUserId = (u) => u ? u.id : null
 const getPegawaiLabel = (p) => p ? (p.nm_pegawai || p.nmPegawai || '') : ''
 const getPegawaiId = (p) => {
   const id = p?.id_pegawai ?? p?.idPegawai ?? null
@@ -427,8 +501,6 @@ function validateBeforeSubmit() {
   const materials = Array.isArray(form.value?.siteInvestMaterials) ? form.value.siteInvestMaterials : []
   const services = Array.isArray(form.value?.siteInvestServices) ? form.value.siteInvestServices : []
   const dids = Array.isArray(form.value?.siteInvestDids) ? form.value.siteInvestDids : []
-  const budgets = Array.isArray(form.value?.siteInvestBudgets) ? form.value.siteInvestBudgets : []
-
   const materialInvalid = materials.some((item) => (Number(item?.quantity) || 0) > 0 && Number(item?.priceListLineId || 0) <= 0)
   if (materialInvalid) {
     errors.push({ field: 'siteInvestMaterials', message: 'Material dengan quantity > 0 wajib memilih price list line' })
@@ -453,21 +525,9 @@ function validateBeforeSubmit() {
     return errors
   }
 
-  const budgetInvalid = budgets.some((item) => {
-    const src = Number(item?.budgetSourceId || 0)
-    const holder = Number(item?.budgetHolderId || 0)
-    return (src > 0 && holder <= 0) || (holder > 0 && src <= 0)
-  })
-  if (budgetInvalid) {
-    errors.push({ field: 'siteInvestBudgets', message: 'Budget Source dan Budget Holder harus diisi berpasangan' })
-    uiErrors.value.siteInvestBudgets = 'Budget Source dan Budget Holder harus diisi berpasangan'
-    activateTab('si-tab-budgets')
-    return errors
-  }
-
-  if (materials.length === 0 && services.length === 0 && dids.length === 0 && budgets.length === 0) {
-    errors.push({ field: 'items', message: 'Minimal isi satu item Material/Service/DID/Budget' })
-    uiErrors.value.siteInvestMaterials = 'Minimal isi satu item Material/Service/DID/Budget'
+  if (materials.length === 0 && services.length === 0 && dids.length === 0) {
+    errors.push({ field: 'items', message: 'Minimal isi satu item Material/Service/DID' })
+    uiErrors.value.siteInvestMaterials = 'Minimal isi satu item Material/Service/DID'
     activateTab('si-tab-materials')
     return errors
   }
@@ -490,11 +550,6 @@ function onAttachmentChange(e) {
   e.target.value = ''
 }
 
-function addBudgetItem() {
-  if (!form.value.siteInvestBudgets) form.value.siteInvestBudgets = []
-  form.value.siteInvestBudgets.push({ budgetSourceId: null, budgetHolderId: null })
-}
-function removeBudgetItem(index) { form.value.siteInvestBudgets?.splice(index, 1) }
 
 function onSiteChange(siteId) {
   const s = sites.value.find((x) => x.id === siteId)
@@ -524,12 +579,54 @@ const updateMaterialPriceFromInput = (index, event) => { form.value.siteInvestMa
 const updateServicePriceFromInput = (index, event) => { form.value.siteInvestServices[index].price = Math.round(parseRupiahToNumber(event.target?.value || '')); calculateServiceSubtotal(index) }
 const updateDidPriceFromInput = (index, event) => { form.value.siteInvestDids[index].price = Math.round(parseRupiahToNumber(event.target?.value || '')); calculateDidSubtotal(index) }
 
+function toggleMaterialOverride(index) {
+  const item = form.value?.siteInvestMaterials?.[index]
+  if (!item) return
+  if (item.isPriceOverridden) {
+    const line = priceListLinesProduct.value.find((l) => Number(l.id) === Number(item.priceListLineId))
+    if (line) item.price = Number(line.price) || 0
+    item.isPriceOverridden = false
+    item.priceReason = ''
+    calculateMaterialSubtotal(index)
+  } else {
+    item.isPriceOverridden = true
+  }
+}
+function toggleServiceOverride(index) {
+  const item = form.value?.siteInvestServices?.[index]
+  if (!item) return
+  if (item.isPriceOverridden) {
+    const line = priceListLinesService.value.find((l) => Number(l.id) === Number(item.priceListLineId))
+    if (line) item.price = getServiceLineEffectivePrice(line)
+    item.isPriceOverridden = false
+    item.priceReason = ''
+    calculateServiceSubtotal(index)
+  } else {
+    item.isPriceOverridden = true
+  }
+}
+function toggleDidOverride(index) {
+  const item = form.value?.siteInvestDids?.[index]
+  if (!item) return
+  if (item.isPriceOverridden) {
+    const line = priceListLinesDid.value.find((l) => Number(l.id) === Number(item.priceListLineId))
+    if (line) item.price = Number(line.price) || 0
+    item.isPriceOverridden = false
+    item.priceReason = ''
+    calculateDidSubtotal(index)
+  } else {
+    item.isPriceOverridden = true
+  }
+}
+
 const onMaterialLineChange = (index, lineId) => {
   const line = priceListLinesProduct.value.find((l) => l.id === lineId)
   const item = form.value?.siteInvestMaterials?.[index]
   if (!line || !item) return
   item.price = Number(line.price) || 0
   item.quantity = Number(line.quantity) || 1
+  item.isPriceOverridden = false
+  item.priceReason = ''
   item.subtotal = item.quantity * item.price
 }
 const onServiceLineChange = (index, lineId) => {
@@ -538,39 +635,210 @@ const onServiceLineChange = (index, lineId) => {
   if (!line || !item) return
   item.price = getServiceLineEffectivePrice(line)
   item.quantity = Number(line.quantity) || 1
+  item.isPriceOverridden = false
+  item.priceReason = ''
+  item.subtotal = item.quantity * item.price
+}
+const onDidLineChange = (index, lineId) => {
+  const line = priceListLinesDid.value.find((l) => Number(l.id) === Number(lineId))
+  const item = form.value?.siteInvestDids?.[index]
+  if (!line || !item) return
+  item.price = Number(line.price) || 0
+  item.quantity = Number(line.quantity) || 1
+  item.isPriceOverridden = false
+  item.priceReason = ''
   item.subtotal = item.quantity * item.price
 }
 
-function getDidLineLabel(item) {
-  if (!item?.priceListLineId) return '—'
-  const line = priceListLinesDid.value.find((l) => l.id === item.priceListLineId)
-  if (!line) return '—'
-  return line.did ? `${line.did.code || ''} - ${line.did.name || ''}`.trim() : `Line #${line.id}`
+function mergePriceListLineLocal(cache, fullLine, fallbackPriceListId, fallbackPriceListName) {
+  mergePriceListLine(cache, fullLine, fallbackPriceListId, fallbackPriceListName)
 }
 
-function onDidPriceListSelect(priceListId) {
+async function enrichPriceListLinesFromPriceList(priceListId) {
+  const id = Number(priceListId)
+  if (!id) return
+  const { $api } = useNuxtApp()
+  try {
+    const res = await fetch(`${$api.priceListShow(id)}?includeLines=true`, {
+      credentials: 'include',
+      headers: { Accept: 'application/json' },
+    })
+    if (!res.ok) return
+    const priceList = await res.json()
+    const lines = priceList.lines || []
+    const pt = (l) => l.priceableType ?? l.priceable_type
+    lines.filter((l) => pt(l) === 'product').forEach((l) => mergePriceListLineLocal(priceListLinesProduct.value, l, id, priceList.name))
+    lines.filter((l) => pt(l) === 'service').forEach((l) => mergePriceListLineLocal(priceListLinesService.value, l, id, priceList.name))
+    lines.filter((l) => pt(l) === 'did').forEach((l) => mergePriceListLineLocal(priceListLinesDid.value, l, id, priceList.name))
+  } catch (e) {
+    console.error('Error enriching price list lines:', e)
+  }
+}
+
+async function ensureDidLinesForSelectedPriceList() {
+  const plId = Number(selectedDidPriceListId.value ?? selectedPriceListId.value)
+  if (!plId) return
+  const hasLines = filterLinesByPriceListId(priceListLinesDid.value || [], plId).length > 0
+  if (!hasLines) await enrichPriceListLinesFromPriceList(plId)
+}
+
+function mergeFdrPriceListLinesIntoCache(fdr) {
+  const rows = [
+    ...(fdr?.fdrItems ?? fdr?.fdr_items ?? []),
+    ...(fdr?.fdrServices ?? fdr?.fdr_services ?? []),
+    ...(fdr?.fdrDids ?? fdr?.fdr_dids ?? []),
+  ]
+  for (const row of rows) {
+    const plLine = row?.priceListLine ?? row?.price_list_line
+    if (!plLine?.id) continue
+    const type = plLine.priceableType ?? plLine.priceable_type
+    const plId = getLinePriceListId(plLine)
+    if (type === 'product') mergePriceListLineLocal(priceListLinesProduct.value, plLine, plId)
+    else if (type === 'service') mergePriceListLineLocal(priceListLinesService.value, plLine, plId)
+    else if (type === 'did') mergePriceListLineLocal(priceListLinesDid.value, plLine, plId)
+  }
+}
+
+function mergeSiteInvestFormLinesIntoCache() {
+  const mergeRows = (rows, cache) => {
+    for (const row of rows || []) {
+      const plLine = row?.priceListLine ?? row?.price_list_line
+      if (plLine?.id) mergePriceListLineLocal(cache, plLine, getLinePriceListId(plLine))
+    }
+  }
+  mergeRows(form.value?.siteInvestMaterials, priceListLinesProduct.value)
+  mergeRows(form.value?.siteInvestServices, priceListLinesService.value)
+  mergeRows(form.value?.siteInvestDids, priceListLinesDid.value)
+}
+
+function findPriceListLineById(lineId) {
+  const id = Number(lineId)
+  if (!id) return null
+  return [...priceListLinesProduct.value, ...priceListLinesService.value, ...priceListLinesDid.value]
+    .find((l) => Number(l.id) === id) ?? null
+}
+
+function getPriceListMetaFromLine(plLine) {
+  if (!plLine) return { id: null, name: null }
+  const id = plLine.priceListId ?? plLine.price_list_id ?? plLine.priceList?.id ?? plLine.price_list?.id ?? null
+  const name = plLine.priceList?.name ?? plLine.price_list?.name ?? null
+  return { id: id != null ? Number(id) : null, name }
+}
+
+function resolvePriceListIdFromRows(rows) {
+  const counts = new Map()
+  let fallbackName = null
+
+  for (const row of rows || []) {
+    const plLine = row?.priceListLine ?? row?.price_list_line
+    let { id, name } = getPriceListMetaFromLine(plLine)
+
+    if (!id) {
+      const lineId = Number(row?.priceListLineId ?? row?.price_list_line_id)
+      const cached = findPriceListLineById(lineId)
+      if (cached) {
+        id = getLinePriceListId(cached)
+        name = cached.price_list?.name ?? cached.priceList?.name ?? name
+      }
+    }
+
+    if (id) {
+      counts.set(id, (counts.get(id) || 0) + 1)
+      if (!fallbackName && name) fallbackName = name
+    }
+  }
+
+  let bestId = null
+  let max = 0
+  for (const [id, count] of counts) {
+    if (count > max) {
+      max = count
+      bestId = id
+    }
+  }
+
+  return { id: bestId, name: fallbackName }
+}
+
+function ensurePriceListOption(priceListId, name) {
+  const id = Number(priceListId)
+  if (!id) return
+  const exists = priceListOptions.value.some((pl) => Number(pl.id) === id)
+  if (!exists) {
+    priceListOptions.value = [...priceListOptions.value, { id, name: name || `Price List #${id}` }]
+  }
+}
+
+function applyPriceListSelection(priceListId, priceListName) {
+  const id = Number(priceListId)
+  if (!id) {
+    selectedPriceListId.value = null
+    selectedDidPriceListId.value = null
+    return
+  }
+  const name = priceListName
+    ?? priceListOptions.value.find((pl) => Number(pl.id) === id)?.name
+    ?? undefined
+  ensurePriceListOption(id, name)
+  selectedPriceListId.value = id
+  selectedDidPriceListId.value = id
+}
+
+function syncPriceListSelectionFromForm() {
+  const rows = [
+    ...(form.value?.siteInvestMaterials || []),
+    ...(form.value?.siteInvestServices || []),
+    ...(form.value?.siteInvestDids || []),
+  ]
+  const { id, name } = resolvePriceListIdFromRows(rows)
+  if (id) applyPriceListSelection(id, name)
+}
+
+function syncPriceListSelectionFromFdr(fdr) {
+  const rows = [
+    ...(fdr?.fdrItems ?? fdr?.fdr_items ?? []),
+    ...(fdr?.fdrServices ?? fdr?.fdr_services ?? []),
+    ...(fdr?.fdrDids ?? fdr?.fdr_dids ?? []),
+  ]
+  const { id, name } = resolvePriceListIdFromRows(rows)
+  if (id) applyPriceListSelection(id, name)
+}
+
+async function onDidPriceListSelect(priceListId) {
   if (!form.value) return
   if (!priceListId) { form.value.siteInvestDids = []; return }
-  const lines = (priceListLinesDid.value || []).filter((l) => (l.price_list_id ?? l.priceList?.id) === priceListId)
-  form.value.siteInvestDids = lines.map((line) => ({ priceListLineId: line.id, quantity: Number(line.quantity) || 1, price: Number(line.price) || 0, subtotal: (Number(line.quantity) || 1) * (Number(line.price) || 0), isPriceOverridden: false }))
+  const plId = Number(priceListId)
+  await ensureDidLinesForSelectedPriceList()
+  const lines = filterLinesByPriceListId(priceListLinesDid.value || [], plId)
+  form.value.siteInvestDids = lines.map((line) => ({ priceListLineId: line.id, quantity: Number(line.quantity) || 1, price: Number(line.price) || 0, subtotal: (Number(line.quantity) || 1) * (Number(line.price) || 0), isPriceOverridden: false, priceReason: '' }))
+  if (!form.value.siteInvestDids.length) siteInvestStore.addDidItem()
 }
 
 async function onPriceListSelect(priceListId) {
   if (!form.value || !priceListId) return
+  const plId = Number(priceListId)
   const { $api } = useNuxtApp()
-  const res = await fetch(`${$api.priceListShow(priceListId)}?includeLines=true`, { credentials: 'include', headers: { Accept: 'application/json' } })
+  const res = await fetch(`${$api.priceListShow(plId)}?includeLines=true`, { credentials: 'include', headers: { Accept: 'application/json' } })
   if (!res.ok) return
   const priceList = await res.json()
   const lines = priceList.lines || []
   const pt = (l) => l.priceableType ?? l.priceable_type
-  form.value.siteInvestMaterials = lines.filter((l) => pt(l) === 'product').map((l) => ({ priceListLineId: l.id, quantity: toNum(l.quantity) || 1, price: toNum(l.price) || 0, subtotal: toNum(l.subtotal) || (toNum(l.quantity) || 1) * (toNum(l.price) || 0), isPriceOverridden: false }))
-  form.value.siteInvestServices = lines.filter((l) => pt(l) === 'service').map((l) => ({ priceListLineId: l.id, quantity: toNum(l.quantity) || 1, price: getServiceLineEffectivePrice(l), subtotal: (toNum(l.quantity) || 1) * getServiceLineEffectivePrice(l), isPriceOverridden: false }))
-  form.value.siteInvestDids = lines.filter((l) => pt(l) === 'did').map((l) => ({ priceListLineId: l.id, quantity: toNum(l.quantity) || 1, price: toNum(l.price) || 0, subtotal: toNum(l.subtotal) || (toNum(l.quantity) || 1) * (toNum(l.price) || 0), isPriceOverridden: false }))
-  selectedDidPriceListId.value = priceList.id
+  form.value.siteInvestMaterials = lines.filter((l) => pt(l) === 'product').map((l) => ({ priceListLineId: l.id, quantity: toNum(l.quantity) || 1, price: toNum(l.price) || 0, subtotal: toNum(l.subtotal) || (toNum(l.quantity) || 1) * (toNum(l.price) || 0), isPriceOverridden: false, priceReason: '' }))
+  form.value.siteInvestServices = lines.filter((l) => pt(l) === 'service').map((l) => ({ priceListLineId: l.id, quantity: toNum(l.quantity) || 1, price: getServiceLineEffectivePrice(l), subtotal: (toNum(l.quantity) || 1) * getServiceLineEffectivePrice(l), isPriceOverridden: false, priceReason: '' }))
+  form.value.siteInvestDids = lines.filter((l) => pt(l) === 'did').map((l) => ({ priceListLineId: l.id, quantity: toNum(l.quantity) || 1, price: toNum(l.price) || 0, subtotal: toNum(l.subtotal) || (toNum(l.quantity) || 1) * (toNum(l.price) || 0), isPriceOverridden: false, priceReason: '' }))
+  selectedDidPriceListId.value = plId
+  lines.filter((l) => pt(l) === 'product').forEach((l) => mergePriceListLineLocal(priceListLinesProduct.value, l, plId, priceList.name))
+  lines.filter((l) => pt(l) === 'service').forEach((l) => mergePriceListLineLocal(priceListLinesService.value, l, plId, priceList.name))
+  lines.filter((l) => pt(l) === 'did').forEach((l) => mergePriceListLineLocal(priceListLinesDid.value, l, plId, priceList.name))
+  if (!form.value.siteInvestDids.length) siteInvestStore.addDidItem()
 }
 
 async function onFdrSelect(fdrId) {
-  if (!fdrId || !form.value) return
+  if (!form.value) return
+  if (!fdrId) {
+    applyPriceListSelection(null)
+    return
+  }
   await fdrStore.getFdrDetails(fdrId)
   const fdr = fdrStore.fdr
   if (!fdr) return
@@ -581,31 +849,34 @@ async function onFdrSelect(fdrId) {
   form.value.businessSchemeId = fdr.businessSchemeId ?? fdr.business_scheme_id ?? null
   form.value.priority = fdr.priority || 'medium'
   form.value.location = fdr.location || form.value.location
-  form.value.siteInvestMaterials = (fdr.fdrItems ?? fdr.fdr_items ?? []).map((i) => ({ priceListLineId: i.priceListLineId ?? i.price_list_line_id ?? 0, quantity: Number(i.quantity) || 1, price: Number(i.price) || 0, subtotal: Number(i.subtotal) || 0, isPriceOverridden: false }))
-  form.value.siteInvestServices = (fdr.fdrServices ?? fdr.fdr_services ?? []).map((s) => ({ priceListLineId: s.priceListLineId ?? s.price_list_line_id ?? 0, quantity: Number(s.quantity) || 1, price: Number(s.price) || 0, subtotal: Number(s.subtotal) || 0, isPriceOverridden: false }))
-  form.value.siteInvestDids = (fdr.fdrDids ?? fdr.fdr_dids ?? []).map((d) => ({ priceListLineId: d.priceListLineId ?? d.price_list_line_id ?? 0, quantity: Number(d.quantity) || 1, price: Number(d.price) || 0, subtotal: Number(d.subtotal) || 0, isPriceOverridden: false }))
+  form.value.siteInvestMaterials = (fdr.fdrItems ?? fdr.fdr_items ?? []).map((i) => ({ priceListLineId: i.priceListLineId ?? i.price_list_line_id ?? 0, quantity: Number(i.quantity) || 1, price: Number(i.price) || 0, subtotal: Number(i.subtotal) || 0, isPriceOverridden: false, priceReason: '' }))
+  form.value.siteInvestServices = (fdr.fdrServices ?? fdr.fdr_services ?? []).map((s) => ({ priceListLineId: s.priceListLineId ?? s.price_list_line_id ?? 0, quantity: Number(s.quantity) || 1, price: Number(s.price) || 0, subtotal: Number(s.subtotal) || 0, isPriceOverridden: false, priceReason: '' }))
+  form.value.siteInvestDids = (fdr.fdrDids ?? fdr.fdr_dids ?? []).map((d) => ({ priceListLineId: d.priceListLineId ?? d.price_list_line_id ?? 0, quantity: Number(d.quantity) || 1, price: Number(d.price) || 0, subtotal: Number(d.subtotal) || 0, isPriceOverridden: false, priceReason: '' }))
+  syncPriceListSelectionFromFdr(fdr)
+  mergeFdrPriceListLinesIntoCache(fdr)
+  const plId = selectedPriceListId.value
+  if (plId) await enrichPriceListLinesFromPriceList(plId)
+  if (!form.value.siteInvestDids.length) siteInvestStore.addDidItem()
 }
 
 async function fetchMasters() {
   const { $api } = useNuxtApp()
-  const [fdrRes, priceListRes, siteRes, bsRes, usersRes, preparedByRes] = await Promise.all([
+  const [fdrRes, priceListRes, siteRes, bsRes, preparedByRes] = await Promise.all([
     fetch(`${$api.fdr()}?page=1&rows=500&includeItems=false`, { headers: { Accept: 'application/json' }, credentials: 'include' }),
     fetch(`${$api.priceList()}?page=1&rows=500&isActive=true`, { headers: { Accept: 'application/json' }, credentials: 'include' }),
     fetch(`${$api.sites()}?page=1&rows=500`, { headers: { Accept: 'application/json' }, credentials: 'include' }),
     fetch(`${$api.businessSchemes()}?page=1&rows=500`, { headers: { Accept: 'application/json' }, credentials: 'include' }),
-    fetch(`${$api.users()}?page=1&rows=500`, { headers: { Accept: 'application/json' }, credentials: 'include' }),
     fetch($api.siteInvestmentPreparedByOptions(), { headers: { Accept: 'application/json' }, credentials: 'include' }),
   ])
   if (fdrRes.ok) fdrsForSelect.value = (await fdrRes.json()).data || []
   if (priceListRes.ok) priceListOptions.value = (await priceListRes.json()).data || []
   if (siteRes.ok) sites.value = (await siteRes.json()).data || []
   if (bsRes.ok) businessSchemes.value = (await bsRes.json()).data || []
-  if (usersRes.ok) usersForBudget.value = (await usersRes.json()).data || []
   if (preparedByRes.ok) {
     const j = await preparedByRes.json()
     pegawaiOptions.value = mapPegawaiToOptions(j.data ?? j)
   }
-  await Promise.all([customerStore.fetchCustomers(), budgetStore.fetchBudgets(true)])
+  await customerStore.fetchCustomers()
   const [productLines, serviceLines, didLines] = await Promise.all([
     siteInvestStore.fetchPriceListLines('product'),
     siteInvestStore.fetchPriceListLines('service'),
@@ -629,8 +900,14 @@ async function initForm() {
   if (!Array.isArray(form.value.siteInvestMaterials) || form.value.siteInvestMaterials.length === 0) siteInvestStore.addMaterialItem()
   if (!Array.isArray(form.value.siteInvestServices) || form.value.siteInvestServices.length === 0) siteInvestStore.addServiceItem()
   if (!Array.isArray(form.value.siteInvestDids) || form.value.siteInvestDids.length === 0) siteInvestStore.addDidItem()
-  if (!Array.isArray(form.value.siteInvestBudgets) || form.value.siteInvestBudgets.length === 0) addBudgetItem()
+  mergeSiteInvestFormLinesIntoCache()
   if (route.query.fromFdr && typeof route.query.fromFdr === 'string') await onFdrSelect(route.query.fromFdr)
+  else {
+    syncPriceListSelectionFromForm()
+    const plId = selectedPriceListId.value
+    if (plId) await enrichPriceListLinesFromPriceList(plId)
+  }
+  await ensureDidLinesForSelectedPriceList()
 }
 
 async function handleSubmit() {
@@ -655,9 +932,153 @@ onMounted(async () => {
   await initForm()
   await nextTick()
 })
+
+watch([selectedDidPriceListId, selectedPriceListId], async () => {
+  await ensureDidLinesForSelectedPriceList()
+})
 </script>
 
 <style scoped>
+/* ── Repeater table container ── */
+.repeater-table {
+  border: 1px solid #dee2e6;
+  border-radius: 10px;
+}
+.repeater-table-head {
+  background: #f1f3f5;
+  border-bottom: 1px solid #dee2e6;
+  border-radius: 10px 10px 0 0;
+  padding: 8px 16px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6c757d;
+  gap: 12px;
+  align-items: center;
+}
+.repeater-table-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  align-items: flex-end;
+  transition: background 0.12s;
+}
+.repeater-table-row:last-child { border-bottom: none; }
+.repeater-table-row:hover { background: #fafbfc; }
+.repeater-cell {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 120px;
+  min-width: 0;
+}
+.repeater-cell-main { flex: 3 1 240px; }
+.repeater-cell-subtotal {
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 8px;
+}
+.repeater-cell-subtotal .form-control { flex: 1 1 0; min-width: 0; }
+.repeater-cell-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6c757d;
+  margin-bottom: 4px;
+  display: block;
+}
+.repeater-cols-4 {
+  grid-template-columns: 3fr 1fr 1.5fr 1.8fr;
+}
+.repeater-subtotal {
+  background: #e9ecef !important;
+  color: #495057 !important;
+  font-weight: 600;
+  cursor: default;
+}
+.repeater-delete-btn {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid #f1aeb5;
+  border-radius: 6px;
+  color: #dc3545;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  line-height: 1;
+}
+.repeater-delete-btn:hover {
+  background: #dc3545;
+  color: #fff;
+  border-color: #dc3545;
+}
+.repeater-empty {
+  padding: 20px 16px;
+  text-align: center;
+  color: #adb5bd;
+  font-size: 0.875rem;
+}
+
+/* ── Price override / lock ── */
+.price-input-wrapper {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+}
+.price-input-wrapper .price-field { flex: 1; min-width: 0; }
+.btn-price-lock {
+  flex-shrink: 0;
+  width: 34px;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  background: #f8f9fa;
+  color: #adb5bd;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  padding: 0;
+  font-size: 0.85rem;
+}
+.btn-price-lock:hover { border-color: #6c757d; color: #495057; background: #e9ecef; }
+.btn-price-lock.is-overridden { border-color: #fd7e14; color: #fd7e14; background: #fff3e0; }
+.btn-price-lock.is-overridden:hover { background: #fd7e14; color: #fff; border-color: #fd7e14; }
+.price-input-wrapper.price-override-active .price-field {
+  border-color: #fd7e14 !important;
+  box-shadow: 0 0 0 0.15rem rgba(253, 126, 20, 0.15) !important;
+}
+.price-field:not(.price-overridden) { background: #f8f9fa !important; color: #6c757d !important; cursor: default; }
+.badge-custom { font-size: 0.6rem; vertical-align: middle; }
+
+/* ── Full-width reason row ── */
+.repeater-cell-reason {
+  flex: 1 1 100%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0 2px;
+  border-top: 1px dashed #ffe69c;
+  margin-top: 4px;
+}
+.repeater-cell-reason .ri-information-line { flex-shrink: 0; font-size: 0.9rem; }
+.price-reason-input {
+  flex: 1;
+  font-size: 0.78rem;
+  border-color: #ffc107 !important;
+  background: #fffef5 !important;
+  color: #856404;
+}
+.price-reason-input::placeholder { color: #c8a800; }
+
 .investment-summary-card {
   background: linear-gradient(135deg, #f8faff 0%, #f0f4ff 100%);
   border: 1px solid #e0e7ff;

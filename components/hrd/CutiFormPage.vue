@@ -158,7 +158,7 @@
                   <div class="mb-3">
                     <label class="form-label">
                       Lampiran
-                      <span v-if="isSakitSelected" class="text-danger"
+                      <span v-if="requiresDoctorNote" class="text-danger"
                         >* (Surat dokter wajib)</span
                       >
                     </label>
@@ -236,7 +236,34 @@
                   <dd v-if="selectedType?.jatahCuti" class="col-7">
                     {{ selectedType.jatahCuti }} hari / tahun
                   </dd>
+
+                  <template v-if="isCutiTahunanSelected && ctBalanceSummary">
+                    <dt class="col-5 text-muted">Sisa Cuti Tahunan</dt>
+                    <dd class="col-7">
+                      <strong>{{ ctBalanceSummary.sisa }}</strong> hari
+                      <span v-if="store.balancesLoading" class="text-muted"> (memuat…)</span>
+                    </dd>
+                    <dt v-if="ctBalanceSummary.cutiBersama > 0" class="col-5 text-muted">Cuti Bersama</dt>
+                    <dd v-if="ctBalanceSummary.cutiBersama > 0" class="col-7">
+                      -{{ ctBalanceSummary.cutiBersama }} hari
+                    </dd>
+                  </template>
                 </dl>
+              </div>
+            </div>
+
+            <div v-if="isCutiTahunanSelected && ctBalanceSummary" class="card border-info mb-4">
+              <div class="card-body small">
+                <strong class="text-info">
+                  <i class="ri-information-line me-1"></i>Saldo Cuti Tahunan
+                </strong>
+                <p class="mb-0 mt-2">
+                  Jatah {{ ctBalanceSummary.jatah }} hari/tahun.
+                  <span v-if="ctBalanceSummary.cutiBersama > 0">
+                    Sudah dipotong cuti bersama {{ ctBalanceSummary.cutiBersama }} hari.
+                  </span>
+                  Sisa yang dapat diajukan: <strong>{{ ctBalanceSummary.sisa }} hari</strong>.
+                </p>
               </div>
             </div>
 
@@ -247,7 +274,8 @@
                 </strong>
                 <ul class="mb-0 ps-3 mt-2">
                   <li>Boleh diajukan backdated maksimum 7 hari terakhir.</li>
-                  <li>Wajib lampirkan surat dokter / keterangan sakit.</li>
+                  <li>Cuti sakit 1–2 hari: lampiran opsional.</li>
+                  <li>Cuti sakit lebih dari 2 hari: wajib lampirkan surat dokter / keterangan sakit.</li>
                 </ul>
               </div>
             </div>
@@ -259,17 +287,20 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter, navigateTo } from '#app'
 import { useCutiStore, type CutiTypeRow } from '~/stores/cuti'
 import {
   KODE_CUTI_IZIN,
   KODE_CUTI_SAKIT,
+  KODE_CUTI_TAHUNAN,
   MAX_BACKDATE_SAKIT_DAYS,
   MIN_LEAD_TIME_DAYS_CUTI,
   formatDurasiCuti,
   formatRangeTanggal,
   minTanggalMulaiByKode,
+  computeKonsumsiSaldo,
+  requiresSakitDoctorNote,
 } from '~/constants/hrd/cutiForm'
 
 const route = useRoute()
@@ -300,6 +331,38 @@ const selectedType = computed<CutiTypeRow | null>(
 )
 const isIzinSelected = computed(() => selectedType.value?.kodeCuti === KODE_CUTI_IZIN)
 const isSakitSelected = computed(() => selectedType.value?.kodeCuti === KODE_CUTI_SAKIT)
+const isCutiTahunanSelected = computed(() => selectedType.value?.kodeCuti === KODE_CUTI_TAHUNAN)
+
+const ctBalanceSummary = computed(() => {
+  const row = store.balances.find((b) => b.cuti_type.kodeCuti === KODE_CUTI_TAHUNAN)
+  if (!row) return null
+  return {
+    jatah: row.cuti_type.jatahCuti,
+    sisa: row.balance.sisa_jatah_cuti,
+    cutiBersama: row.cuti_bersama_total ?? 0,
+  }
+})
+
+async function refreshBalanceForForm() {
+  const tahun = store.form.tanggalMulai
+    ? new Date(store.form.tanggalMulai).getFullYear()
+    : new Date().getFullYear()
+
+  if (store.form.pegawai_id) {
+    await store.fetchBalances(store.form.pegawai_id, tahun)
+  } else {
+    await store.fetchMyBalances(tahun)
+  }
+}
+
+watch(
+  () => [store.form.cuti_type_id, store.form.tanggalMulai, store.form.pegawai_id] as const,
+  () => {
+    if (isCutiTahunanSelected.value) {
+      void refreshBalanceForForm()
+    }
+  }
+)
 
 /**
  * Minimum tanggal untuk input `<input type="date">` start.
@@ -372,14 +435,17 @@ const durasiJamComputed = computed(() => {
   return +((end - start) / 60).toFixed(2)
 })
 
-const lamaHariComputed = computed(() => {
-  if (store.form.is_per_jam) return 0
-  if (!store.form.tanggalMulai || !store.form.tanggalSelesai) return 0
-  const a = new Date(store.form.tanggalMulai)
-  const b = new Date(store.form.tanggalSelesai)
-  if (Number.isNaN(a.getTime()) || Number.isNaN(b.getTime()) || b < a) return 0
-  return Math.floor((b.getTime() - a.getTime()) / 86400000) + 1
-})
+const lamaHariComputed = computed(() =>
+  computeKonsumsiSaldo({
+    is_per_jam: store.form.is_per_jam,
+    tanggalMulai: store.form.tanggalMulai,
+    tanggalSelesai: store.form.tanggalSelesai,
+  })
+)
+
+const requiresDoctorNote = computed(
+  () => isSakitSelected.value && requiresSakitDoctorNote(lamaHariComputed.value)
+)
 
 function syncTanggalSelesaiIfPerJam() {
   if (store.form.is_per_jam && store.form.tanggalMulai) {
@@ -404,6 +470,14 @@ async function handleSubmit() {
 
   syncTanggalSelesaiIfPerJam()
 
+  if (requiresDoctorNote.value) {
+    const hasFile = store.form.attachment instanceof File
+    const hasExisting = !!store.form.attachmentUrl
+    if (!hasFile && !hasExisting) {
+      return alertErr('Cuti sakit lebih dari 2 hari wajib melampirkan surat dokter')
+    }
+  }
+
   const saved = await store.save()
   if (saved) await navigateTo('/hrd/cuti')
 }
@@ -425,6 +499,12 @@ onMounted(async () => {
       const data = await res.json()
       if (res.ok && data?.data) {
         store.openEdit(data.data)
+        if (data.data.cutiType?.kodeCuti === KODE_CUTI_TAHUNAN || data.data.cutiTypeId) {
+          const ctType = store.cutiTypes.find(
+            (t) => t.id === data.data.cutiTypeId && t.kodeCuti === KODE_CUTI_TAHUNAN
+          )
+          if (ctType) await refreshBalanceForForm()
+        }
       } else {
         useToast().error({
           title: 'Error',
@@ -444,6 +524,14 @@ onMounted(async () => {
   } else {
     store.openCreate()
   }
+
+  if (store.form.cuti_type_id) {
+    const selected = store.cutiTypes.find((t) => t.id === store.form.cuti_type_id)
+    if (selected?.kodeCuti === KODE_CUTI_TAHUNAN) {
+      await refreshBalanceForForm()
+    }
+  }
+
   initializing.value = false
 })
 </script>

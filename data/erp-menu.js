@@ -31,6 +31,41 @@ export const erpMenuItems = [
     type: "main"
   },
   {
+    name: "Lembur",
+    path: "/hrd/lembur",
+    icon: "ri-time-line",
+    category: "HRD",
+    type: "main"
+  },
+  {
+    name: "Perjalanan Dinas",
+    path: "/hrd/perjalanan-dinas",
+    icon: "ri-flight-takeoff-line",
+    category: "HRD",
+    type: "main"
+  },
+  {
+    name: "Saldo Cuti",
+    path: "/hrd/saldo-cuti",
+    icon: "ri-wallet-3-line",
+    category: "HRD",
+    type: "main"
+  },
+  {
+    name: "Struktur Organisasi",
+    path: "/hrd/struktur-organisasi",
+    icon: "ri-organization-chart",
+    category: "HRD",
+    type: "main"
+  },
+  {
+    name: "Kalender",
+    path: "/hrd/kalender",
+    icon: "ri-calendar-line",
+    category: "HRD",
+    type: "main"
+  },
+  {
     name: "Departemen",
     path: "/hrd/departemen",
     icon: "ri-building-line",

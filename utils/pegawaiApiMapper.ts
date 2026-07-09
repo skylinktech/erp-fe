@@ -21,6 +21,7 @@ const PEGAWAI_SNAKE_KEYS = [
   'istri_suami_pegawai',
   'anak_1',
   'anak_2',
+  'anak_3',
   'avatar',
   'cv_attachment',
   'kk_attachment',
@@ -81,7 +82,15 @@ export function mapPegawaiShowResponseToListRow(raw: Record<string, unknown>): R
     (normalized.pegawai_histories as unknown[]) ??
     []
   const histories = Array.isArray(rawHist) ? rawHist : []
-  const history = histories[0] as Record<string, unknown> | undefined
+  const history = histories
+    .slice()
+    .sort((a, b) => {
+      const aRec = a as Record<string, unknown>
+      const bRec = b as Record<string, unknown>
+      const da = new Date(String(aRec.created_at ?? aRec.createdAt ?? 0)).getTime()
+      const db = new Date(String(bRec.created_at ?? bRec.createdAt ?? 0)).getTime()
+      return db - da
+    })[0] as Record<string, unknown> | undefined
 
   if (history) {
     const jb = history.jabatan as Record<string, unknown> | undefined

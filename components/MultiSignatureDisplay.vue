@@ -187,6 +187,9 @@ const props = defineProps({
         'surat-jalans',
         'stock-transfers',
         'cuti',
+        'lembur',
+        'perjalanan-dinas',
+        'work-order-requests',
       ].includes(value),
   },
   documentId: {

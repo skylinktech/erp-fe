@@ -684,6 +684,7 @@ interface PegawaiProfileResponse {
     istri_suami_pegawai: string | null
     anak_1: string | null
     anak_2: string | null
+    anak_3: string | null
     avatar: string | null
     cv_attachment: string | null
     kk_attachment: string | null
@@ -979,6 +980,7 @@ const keluargaFields = computed<FieldDef[]>(() => {
     { label: 'Istri / Suami', value: p.istri_suami_pegawai },
     { label: 'Anak 1', value: p.anak_1 },
     { label: 'Anak 2', value: p.anak_2 },
+    { label: 'Anak 3', value: p.anak_3 },
     { label: 'No. Tlp Keluarga', value: p.no_tlp_keluarga },
   ]
 })

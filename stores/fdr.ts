@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { apiFetch } from '~/utils/apiFetch'
+import { resolveSiteFormState, resolveSitePayload } from '~/utils/fdrSiteSelect'
 import Swal from 'sweetalert2'
 import { useNuxtApp } from '#app'
 import { useUserStore } from '~/stores/user'
@@ -39,6 +40,7 @@ interface FdrItem {
   price: number
   subtotal: number
   isPriceOverridden?: boolean
+  priceReason?: string
   priceListLine?: FdrPriceListLineOption
 }
 
@@ -50,6 +52,7 @@ interface FdrService {
   price: number
   subtotal: number
   isPriceOverridden?: boolean
+  priceReason?: string
   terminalKitCount?: number | null
   quotaPriority?: number | null
   newServiceLine?: number | null
@@ -65,6 +68,7 @@ interface FdrDid {
   price: number
   subtotal: number
   isPriceOverridden?: boolean
+  priceReason?: string
   priceListLine?: FdrPriceListLineOption
 }
 
@@ -98,6 +102,7 @@ export interface Fdr {
   status: 'draft' | 'pending' | 'approved' | 'rejected' | 'expired' | 'cancelled'
   pocNeeded: boolean
   siteId?: number | null
+  siteName?: string | null
   site?: { id: number; code?: string; name?: string; address?: string | null }
   businessSchemeId?: number | null
   businessScheme?: { id: number; code?: string; name?: string }
@@ -182,6 +187,7 @@ export const useFdrStore = defineStore('fdr', {
       name                   : '',
       customerId             : null,
       siteId                 : null,
+      siteName               : '',
       businessSchemeId       : null,
       priority               : 'medium',
       quantity               : 1,
@@ -335,7 +341,11 @@ export const useFdrStore = defineStore('fdr', {
         delete dataToAppend.attachment
         delete dataToAppend.attachmentPreview
 
-        const nullableFields = ['customerId', 'siteId', 'businessSchemeId', 'notes']
+        const sitePayload = resolveSitePayload(this.form.siteId, this.form.siteName)
+        dataToAppend.siteId = sitePayload.siteId
+        dataToAppend.siteName = sitePayload.siteName
+
+        const nullableFields = ['customerId', 'siteId', 'siteName', 'businessSchemeId', 'notes']
         Object.keys(dataToAppend).forEach((key) => {
           const value = dataToAppend[key]
           if (nullableFields.includes(key)) {
@@ -349,8 +359,8 @@ export const useFdrStore = defineStore('fdr', {
           formData.append('createdBy', userStore.user.id.toString())
         }
 
-        const itemKeys = ['priceListLineId', 'quantity', 'price', 'subtotal', 'isPriceOverridden']
-        const itemKeysToSnake: Record<string, string> = { priceListLineId: 'price_list_line_id', quantity: 'quantity', price: 'price', subtotal: 'subtotal', isPriceOverridden: 'is_price_overridden' }
+        const itemKeys = ['priceListLineId', 'quantity', 'price', 'subtotal', 'isPriceOverridden', 'priceReason']
+        const itemKeysToSnake: Record<string, string> = { priceListLineId: 'price_list_line_id', quantity: 'quantity', price: 'price', subtotal: 'subtotal', isPriceOverridden: 'is_price_overridden', priceReason: 'price_reason' }
         ;(this.form.fdrItems ?? []).forEach((item: any, i: number) => {
           const plLineId = Number(item?.priceListLineId ?? item?.price_list_line_id ?? 0)
           const qty = Number(item?.quantity ?? 0)
@@ -362,8 +372,8 @@ export const useFdrStore = defineStore('fdr', {
           }
         })
 
-        const serviceKeys = ['priceListLineId', 'quantity', 'price', 'subtotal', 'isPriceOverridden', 'terminalKitCount', 'quotaPriority', 'newServiceLine', 'additionalData']
-        const serviceKeysToSnake: Record<string, string> = { priceListLineId: 'price_list_line_id', quantity: 'quantity', price: 'price', subtotal: 'subtotal', isPriceOverridden: 'is_price_overridden', terminalKitCount: 'terminal_kit_count', quotaPriority: 'quota_priority', newServiceLine: 'new_service_line', additionalData: 'additional_data' }
+        const serviceKeys = ['priceListLineId', 'quantity', 'price', 'subtotal', 'isPriceOverridden', 'priceReason', 'terminalKitCount', 'quotaPriority', 'newServiceLine', 'additionalData']
+        const serviceKeysToSnake: Record<string, string> = { priceListLineId: 'price_list_line_id', quantity: 'quantity', price: 'price', subtotal: 'subtotal', isPriceOverridden: 'is_price_overridden', priceReason: 'price_reason', terminalKitCount: 'terminal_kit_count', quotaPriority: 'quota_priority', newServiceLine: 'new_service_line', additionalData: 'additional_data' }
         ;(this.form.fdrServices ?? []).forEach((item: any, i: number) => {
           const plLineId = Number(item?.priceListLineId ?? item?.price_list_line_id ?? 0)
           const qty = Number(item?.quantity ?? 0)
@@ -375,8 +385,8 @@ export const useFdrStore = defineStore('fdr', {
           }
         })
 
-        const didKeys = ['priceListLineId', 'quantity', 'price', 'subtotal', 'isPriceOverridden']
-        const didKeysToSnake: Record<string, string> = { priceListLineId: 'price_list_line_id', quantity: 'quantity', price: 'price', subtotal: 'subtotal', isPriceOverridden: 'is_price_overridden' }
+        const didKeys = ['priceListLineId', 'quantity', 'price', 'subtotal', 'isPriceOverridden', 'priceReason']
+        const didKeysToSnake: Record<string, string> = { priceListLineId: 'price_list_line_id', quantity: 'quantity', price: 'price', subtotal: 'subtotal', isPriceOverridden: 'is_price_overridden', priceReason: 'price_reason' }
         ;(this.form.fdrDids ?? []).forEach((item: any, i: number) => {
           const plLineId = Number(item?.priceListLineId ?? item?.price_list_line_id ?? 0)
           if (plLineId) {
@@ -620,6 +630,7 @@ export const useFdrStore = defineStore('fdr', {
           m.price = p
           m.subtotal = nm(m.subtotal) || q * p
           m.isPriceOverridden = m.isPriceOverridden ?? m.is_price_overridden ?? false
+          m.priceReason = m.priceReason ?? m.price_reason ?? ''
         })
         ;(formData.fdrServices || []).forEach((s: any) => {
           s.priceListLineId = s.priceListLineId ?? s.price_list_line_id ?? 0
@@ -629,6 +640,7 @@ export const useFdrStore = defineStore('fdr', {
           s.price = p
           s.subtotal = nm(s.subtotal) || q * p
           s.isPriceOverridden = s.isPriceOverridden ?? s.is_price_overridden ?? false
+          s.priceReason = s.priceReason ?? s.price_reason ?? ''
           s.terminalKitCount = s.terminalKitCount ?? s.terminal_kit_count ?? null
           s.quotaPriority = s.quotaPriority ?? s.quota_priority ?? null
           s.newServiceLine = s.newServiceLine ?? s.new_service_line ?? null
@@ -642,9 +654,13 @@ export const useFdrStore = defineStore('fdr', {
           d.price = p
           d.subtotal = nm(d.subtotal) || q * p
           d.isPriceOverridden = d.isPriceOverridden ?? d.is_price_overridden ?? false
+          d.priceReason = d.priceReason ?? d.price_reason ?? ''
         })
 
         this.form = formData
+        const siteState = resolveSiteFormState(formData)
+        this.form.siteId = siteState.siteId
+        this.form.siteName = siteState.siteName
         this.form.attachment = null
         const { getAttachmentUrl } = useImageUrl()
         this.form.attachmentPreview = fullData.attachment ? getAttachmentUrl(fullData.attachment) : null
@@ -673,6 +689,7 @@ export const useFdrStore = defineStore('fdr', {
         name: '',
         customerId: null,
         siteId: null,
+        siteName: '',
         businessSchemeId: null,
         priority: 'medium',
         quantity: 1,
@@ -693,7 +710,7 @@ export const useFdrStore = defineStore('fdr', {
 
     addItem() {
       if (!this.form.fdrItems) this.form.fdrItems = []
-      this.form.fdrItems.push({ priceListLineId: 0, quantity: 1, price: 0, subtotal: 0, isPriceOverridden: false })
+      this.form.fdrItems.push({ priceListLineId: 0, quantity: 1, price: 0, subtotal: 0, isPriceOverridden: false, priceReason: '' })
     },
     removeItem(index: number) {
       this.form.fdrItems?.splice(index, 1)
@@ -701,7 +718,7 @@ export const useFdrStore = defineStore('fdr', {
 
     addService() {
       if (!this.form.fdrServices) this.form.fdrServices = []
-      this.form.fdrServices.push({ priceListLineId: 0, quantity: 1, price: 0, subtotal: 0, isPriceOverridden: false, terminalKitCount: null, quotaPriority: null, newServiceLine: null, additionalData: null })
+      this.form.fdrServices.push({ priceListLineId: 0, quantity: 1, price: 0, subtotal: 0, isPriceOverridden: false, priceReason: '', terminalKitCount: null, quotaPriority: null, newServiceLine: null, additionalData: null })
     },
     removeService(index: number) {
       this.form.fdrServices?.splice(index, 1)
@@ -709,7 +726,7 @@ export const useFdrStore = defineStore('fdr', {
 
     addDid() {
       if (!this.form.fdrDids) this.form.fdrDids = []
-      this.form.fdrDids.push({ priceListLineId: 0, quantity: 1, price: 0, subtotal: 0, isPriceOverridden: false })
+      this.form.fdrDids.push({ priceListLineId: 0, quantity: 1, price: 0, subtotal: 0, isPriceOverridden: false, priceReason: '' })
     },
     removeDid(index: number) {
       this.form.fdrDids?.splice(index, 1)
@@ -717,11 +734,12 @@ export const useFdrStore = defineStore('fdr', {
 
     async fetchPriceListLines(priceableType: 'product' | 'service' | 'did') {
       const { $api } = useNuxtApp()
+      const { parsePriceListLinesResponse, normalizePriceListLine } = await import('~/utils/priceListLines')
       const url = $api.fdrPriceListLines(priceableType)
       const response = await fetch(url, { method: 'GET', headers: { Accept: 'application/json' }, credentials: 'include' })
       if (!response.ok) return []
       const data = await response.json()
-      return Array.isArray(data) ? data : []
+      return parsePriceListLinesResponse(data).map((line) => normalizePriceListLine(line))
     },
 
     async fetchProductStock(productId: number): Promise<{ quantity: number } | null> {

@@ -486,30 +486,9 @@ const tableControls = ref({
     search: ''
 })
 
-const usersForBudget = ref([])
 const sites = ref([])
 const businessSchemes = ref([])
 const pegawaiOptions = ref([])
-
-const fetchBudgetsAndUsers_REMOVED = async () => {
-    const prevRows = 10 // budgetStore was removed
-    budgetStore.params.rows = 500
-    await budgetStore.fetchBudgets(true)
-    budgetStore.params.rows = prevRows
-    const { $api } = useNuxtApp()
-    try {
-        const r = await fetch(`${$api.users()}?page=1&rows=500`, {
-            headers: { 'Accept': 'application/json' },
-            credentials: 'include'
-        })
-        if (r.ok) {
-            const j = await r.json()
-            usersForBudget.value = j.data || []
-        }
-    } catch (e) {
-        console.error('Error fetching users for budget holder:', e)
-    }
-}
 
 function mapPegawaiToOptions(raw) {
     const list = Array.isArray(raw) ? raw : []
@@ -540,17 +519,6 @@ const fetchPegawaiForPreparedBy = async () => {
         console.error('Error fetching pegawai for prepared by:', e)
         pegawaiOptions.value = []
     }
-}
-
-function addBudgetItem() {
-    const f = siteInvestStore.form
-    if (!f.siteInvestBudgets) f.siteInvestBudgets = []
-    f.siteInvestBudgets.push({ budgetSourceId: null, budgetHolderId: null })
-}
-function removeBudgetItem(index) {
-    const f = siteInvestStore.form
-    if (!f.siteInvestBudgets) return
-    f.siteInvestBudgets.splice(index, 1)
 }
 
 const fetchPriceListsForSelect = async () => {

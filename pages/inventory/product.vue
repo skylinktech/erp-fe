@@ -156,19 +156,9 @@
                                             {{ slotProps.data.billingType === 'recurring' ? 'Recurring' : 'One Time' }}
                                         </template>
                                     </Column>
-                                    <Column field="condition" header="Condition" :sortable="true">
+                                    <Column field="condition" header="Kondisi" :sortable="true">
                                         <template #body="slotProps">
-                                            {{
-                                              slotProps.data.condition === 'good'
-                                                ? 'Good'
-                                                : slotProps.data.condition === 'bad'
-                                                  ? 'Bad'
-                                                  : slotProps.data.condition === 'reject'
-                                                    ? 'Reject'
-                                                    : slotProps.data.condition === 'damaged'
-                                                      ? 'Damaged'
-                                                      : '-'
-                                            }}
+                                            {{ conditionLabel(slotProps.data.condition) }}
                                         </template>
                                     </Column>
                                     <Column header="Kategori" field="category.name" :sortable="true">
@@ -325,8 +315,8 @@
                                 <CustomSelect2 v-model="form.billingType" :options="billingTypeOptions" :get-option-label="option => option.label" :reduce="option => option.value" searchable clearable :get-option-key="option => option.value" placeholder="-- Pilih Tipe Tagihan --" id="billingType" class="select-billing-type" />
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Condition</label>
-                                <CustomSelect2 v-model="form.condition" :options="conditionOptions" :get-option-label="option => option.label" :reduce="option => option.value" searchable :clearable="false" placeholder="-- Pilih Condition --" id="condition" />
+                                <label class="form-label">Kondisi</label>
+                                <CustomSelect2 v-model="form.condition" :options="conditionOptions" :get-option-label="option => option.label" :reduce="option => option.value" searchable :clearable="false" placeholder="-- Pilih Kondisi --" id="condition" />
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Gambar</label>
@@ -467,11 +457,25 @@ const billingTypeOptions = [
 ];
 
 const conditionOptions = [
-    { label: 'Good', value: 'good' },
-    { label: 'Bad', value: 'bad' },
-    { label: 'Reject', value: 'reject' },
-    { label: 'Damaged', value: 'damaged' },
+    { label: 'Baru', value: 'baru' },
+    { label: 'Bekas', value: 'bekas' },
+    { label: 'Rusak', value: 'rusak' },
 ];
+
+const conditionLabels = {
+    baru: 'Baru',
+    bekas: 'Bekas',
+    rusak: 'Rusak',
+    good: 'Baru',
+    bad: 'Bekas',
+    reject: 'Bekas',
+    damaged: 'Rusak',
+};
+
+function conditionLabel(value) {
+    if (!value) return '-';
+    return conditionLabels[value] ?? '-';
+}
 const productKitTypeOptions = [
     { label: 'Router', value: 'router' },
     { label: 'Adaptor', value: 'adaptor' },

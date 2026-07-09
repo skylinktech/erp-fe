@@ -67,6 +67,27 @@ export interface CutiBalanceRow {
     sisa_cuti_tahun_lalu: number
     valid_sampai: string | null
   }
+  cuti_bersama_total?: number
+}
+
+export interface CutiBersamaBreakdownItem {
+  hr_calendar_event_id: number
+  nama: string
+  tanggal_mulai: string
+  tanggal_selesai: string
+  hari: number
+}
+
+export interface CutiTahunanSummary {
+  pegawai_id: number
+  nm_pegawai: string | null
+  tahun: number
+  jatah_tahunan: number
+  sisa_jatah_cuti: number
+  cuti_terpakai: number
+  cuti_bersama_total: number
+  cuti_pengajuan_terpakai: number
+  breakdown: CutiBersamaBreakdownItem[]
 }
 
 /* ------------------------------------------------------------------
@@ -136,6 +157,9 @@ interface CutiState {
   cutiTypesLoading: boolean
   balances: CutiBalanceRow[]
   balancesLoading: boolean
+  cutiTahunanSummary: CutiTahunanSummary | null
+  cutiTahunanSummaryLoading: boolean
+  cutiTahunanSummaryTahun: number
   stats: CutiStats
   statsLoading: boolean
   form: CutiFormModel
@@ -168,6 +192,9 @@ export const useCutiStore = defineStore('cuti', {
     cutiTypesLoading: false,
     balances: [],
     balancesLoading: false,
+    cutiTahunanSummary: null,
+    cutiTahunanSummaryLoading: false,
+    cutiTahunanSummaryTahun: new Date().getFullYear(),
     stats: {
       total: 0,
       approved: 0,
@@ -304,6 +331,45 @@ export const useCutiStore = defineStore('cuti', {
         this.balances = []
       } finally {
         this.balancesLoading = false
+      }
+    },
+
+    async fetchMyBalances(tahun?: number) {
+      const { $api } = useNuxtApp()
+      this.balancesLoading = true
+      try {
+        const qs = tahun ? `?tahun=${tahun}` : ''
+        const res = await apiFetch<{ data: CutiBalanceRow[]; tahun: number; pegawai_id?: number }>(
+          `${$api.cutiBalanceMe()}${qs}`,
+          { credentials: 'include' }
+        )
+        this.balances = res.data || []
+        if (res.pegawai_id && !this.form.pegawai_id) {
+          this.form.pegawai_id = res.pegawai_id
+        }
+      } catch (e) {
+        this.balances = []
+      } finally {
+        this.balancesLoading = false
+      }
+    },
+
+    async fetchCutiTahunanSummary(tahun?: number, pegawaiId?: number | null) {
+      const { $api } = useNuxtApp()
+      const targetYear = tahun ?? this.cutiTahunanSummaryTahun
+      this.cutiTahunanSummaryTahun = targetYear
+      this.cutiTahunanSummaryLoading = true
+      try {
+        const qs = `?tahun=${targetYear}`
+        const url = pegawaiId
+          ? `${$api.cutiTahunanSummary(pegawaiId)}${qs}`
+          : `${$api.cutiTahunanSummaryMe()}${qs}`
+        const res = await apiFetch<{ data: CutiTahunanSummary }>(url, { credentials: 'include' })
+        this.cutiTahunanSummary = res.data ?? null
+      } catch {
+        this.cutiTahunanSummary = null
+      } finally {
+        this.cutiTahunanSummaryLoading = false
       }
     },
 

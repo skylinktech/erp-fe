@@ -99,7 +99,7 @@ export const useDivisiStore = defineStore('divisi', {
         let method = 'POST';
         
         const body = JSON.stringify({
-            nmDivisi: this.form.nmDivisi,
+            nm_divisi: this.form.nmDivisi,
         });
 
         if (this.isEditMode && this.form.id) {

@@ -469,8 +469,10 @@ const pctMarginDisplay = computed(() => {
   const income = grandTotalIncome.value
   if (!income || income <= 0) return '-'
   const less = incomeLessExpenses.value
-  const pct = Math.round((less / income) * 100)
-  return pct + '%'
+  const pct = (less / income) * 100
+  if (!Number.isFinite(pct)) return '-'
+  // Tampilkan desimal agar PCT MARGIN terbaca lebih presisi saat cetak
+  return pct.toFixed(2) + '%'
 })
 
 // Tampilkan section tanda tangan jika dokumen approved atau ada prepared_by (TTD otomatis tanpa approval)

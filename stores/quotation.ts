@@ -63,7 +63,6 @@ export interface QuotationDidItem {
 export interface Quotation {
   id                 : string
   noQuotation        : string
-  refPo?             : string | null
   up                 : string
   siteInvestId       : string
   customerId         : number
@@ -80,6 +79,8 @@ export interface Quotation {
   grandTotal?        : number | string
   discountPercent    : number | string
   taxPercent         : number | string
+  hasPph             : boolean
+  pphPercent         : number | string
   dpPercent          : number | string
   slaGuarantee       : boolean
   support            : boolean
@@ -161,7 +162,6 @@ export const useQuotationStore = defineStore('quotation', {
     },
     form: {
         noQuotation: '',
-        refPo: '',
         up: '',
         siteInvestId: null,
         customerId: null,
@@ -172,6 +172,8 @@ export const useQuotationStore = defineStore('quotation', {
         termsOfPayment: 'postpaid',
         discountPercent: 0, 
         taxPercent: 0, 
+        hasPph: false,
+        pphPercent: 0,
         dpPercent: 0,
         slaGuarantee: false,
         support: false,
@@ -267,6 +269,8 @@ export const useQuotationStore = defineStore('quotation', {
             const formData = new FormData()
 
             const dataToAppend = { ...this.form };
+            dataToAppend.hasPph = !!dataToAppend.hasPph;
+            dataToAppend.pphPercent = dataToAppend.hasPph ? (Number(dataToAppend.pphPercent) || 0) : 0;
             delete dataToAppend.quotationItems;
             delete dataToAppend.quotationServices;
             delete dataToAppend.quotationDids;
@@ -762,9 +766,10 @@ export const useQuotationStore = defineStore('quotation', {
                 site,
                 costCenter,
                 customer,
-                refPo: raw.refPo ?? raw.ref_po ?? '',
                 up: raw.up ?? raw.untuk_perhatian ?? '',
                 description: raw.description ?? raw.deskripsi ?? '',
+                hasPph: raw.hasPph ?? raw.has_pph ?? false,
+                pphPercent: Number(raw.pphPercent ?? raw.pph_percent ?? 0),
             };
             // Hapus duplikat snake_case agar tidak mengganggu
             delete formData.site_invest_id;
@@ -776,17 +781,21 @@ export const useQuotationStore = defineStore('quotation', {
             delete formData.quotation_dids;
             delete formData.site_invest;
             delete formData.cost_center;
+            if (!formData.hasPph) {
+                formData.pphPercent = 0;
+            }
 
             // Normalisasi tiap quotationItems: productId
             formData.quotationItems = (formData.quotationItems || []).map((i: any) => ({
                 ...i,
-                productId: i.productId ?? i.product_id,
+                productId: Number(i.productId ?? i.product_id) || null,
                 quantity: Number(i.quantity) || 0,
                 price: Number(i.price) || 0,
                 subtotal: Number(i.subtotal) || (Number(i.quantity) || 0) * (Number(i.price) || 0),
                 description: i.description ?? null,
                 isPriceOverridden: i.isPriceOverridden ?? false,
                 priceReason: i.priceReason ?? '',
+                product: i.product ?? undefined,
             }));
             // Normalisasi tiap quotationServices: pertahankan subtotal dari API saat edit; jangan hitung ulang kecuali tidak ada
             formData.quotationServices = (formData.quotationServices || []).map((s: any) => {
@@ -839,6 +848,8 @@ export const useQuotationStore = defineStore('quotation', {
 
             this.form = formData;
 
+            this.syncCustomerProductsFromFormItems();
+
             if (!this.form.quotationItems || this.form.quotationItems.length === 0) {
                 this.form.quotationItems = [];
                 this.addItem();
@@ -859,12 +870,11 @@ export const useQuotationStore = defineStore('quotation', {
                 this.form.attachmentPreview = quotationData.attachment;
             }
             if (this.form.customerId) {
-                this.fetchProductsForCustomer(this.form.customerId);
+                this.fetchProductsForCustomer(this.form.customerId, { merge: true });
             }
         } else {
             this.form = {
                 noQuotation: '',
-                refPo: '',
                 up: '',
                 siteInvestId: null,
                 customerId: null,
@@ -875,6 +885,8 @@ export const useQuotationStore = defineStore('quotation', {
                 termsOfPayment: 'postpaid',
                 discountPercent: 0, 
                 taxPercent: 0, 
+                hasPph: false,
+                pphPercent: 0,
                 dpPercent: 0,
                 slaGuarantee: false,
                 support: false,
@@ -898,7 +910,6 @@ export const useQuotationStore = defineStore('quotation', {
         this.isEditMode = false;
         this.form = {
             noQuotation: '',
-            refPo: '',
             up: '',
             siteInvestId: null,
             customerId: null,
@@ -909,6 +920,8 @@ export const useQuotationStore = defineStore('quotation', {
             termsOfPayment: 'postpaid',
             discountPercent: 0, 
             taxPercent: 0, 
+            hasPph: false,
+            pphPercent: 0,
             dpPercent: 0,
             slaGuarantee: false,
             support: false,
@@ -922,6 +935,70 @@ export const useQuotationStore = defineStore('quotation', {
             useDidFromSiteInvest: null,
         };
         this.validationErrors = [];
+    },
+
+    normalizeCustomerProductOption(raw: any) {
+      if (!raw) return null;
+      if (raw.product) {
+        const p = raw.product;
+        const id = Number(p.id ?? raw.productId ?? raw.id);
+        if (!id) return null;
+        return {
+          id,
+          sku: p.sku ?? raw.sku ?? '',
+          name: p.name ?? raw.name ?? '',
+          noInterchange: p.noInterchange ?? raw.noInterchange ?? '',
+          unit: p.unit ?? raw.unit ?? undefined,
+          priceSell: raw.priceSell ?? p.priceSell ?? 0,
+        };
+      }
+      const id = Number(raw.id ?? raw.productId);
+      if (!id) return null;
+      return {
+        id,
+        sku: raw.sku ?? '',
+        name: raw.name ?? '',
+        noInterchange: raw.noInterchange ?? '',
+        unit: raw.unit ?? undefined,
+        priceSell: raw.priceSell ?? 0,
+      };
+    },
+
+    mergeCustomerProductOptions(extra: any[]) {
+      const map = new Map<number, CustomerProduct>();
+      for (const item of this.customerProducts || []) {
+        const normalized = this.normalizeCustomerProductOption(item);
+        if (normalized) map.set(normalized.id, normalized);
+      }
+      for (const item of extra || []) {
+        const normalized = this.normalizeCustomerProductOption(item);
+        if (normalized) {
+          const existing = map.get(normalized.id);
+          map.set(normalized.id, existing ? { ...existing, ...normalized } : normalized);
+        }
+      }
+      this.customerProducts = [...map.values()];
+    },
+
+    syncCustomerProductsFromFormItems() {
+      const extras = (this.form.quotationItems || [])
+        .map((item: any) => {
+          const id = Number(item.productId ?? item.product_id);
+          if (!id) return null;
+          const p = item.product;
+          return {
+            id,
+            sku: p?.sku ?? item.sku ?? '',
+            name: p?.name ?? item.name ?? '',
+            noInterchange: p?.noInterchange ?? item.noInterchange ?? '',
+            unit: p?.unit ?? undefined,
+            priceSell: item.price ?? p?.priceSell ?? 0,
+          };
+        })
+        .filter(Boolean);
+      if (extras.length > 0) {
+        this.mergeCustomerProductOptions(extras);
+      }
     },
 
     addItem() {
@@ -1001,6 +1078,90 @@ export const useQuotationStore = defineStore('quotation', {
         if (this.form.quotationDids.length === 0) {
             this.addDidItem(false);
         }
+    },
+
+    async applySiteInvestmentPrefill(siteInvestId: string) {
+      const toast = useToast();
+      const { $api } = useNuxtApp();
+      if (!siteInvestId || siteInvestId === 'undefined' || siteInvestId === 'null') {
+        return null;
+      }
+
+      try {
+        const resData = await apiFetch($api.quotationPrefillFromSiteInvestment(siteInvestId), {
+          headers: { Accept: 'application/json' },
+          credentials: 'include',
+        });
+
+        const data = resData?.data;
+        if (!data) {
+          throw new Error('Data prefill tidak valid');
+        }
+
+        this.form.customerId = data.customerId ?? null;
+        this.form.siteId = data.siteId ?? null;
+        this.form.costCenterId = data.costCenterId ?? null;
+
+        const items = Array.isArray(data.quotationItems) ? data.quotationItems : [];
+        const services = Array.isArray(data.quotationServices) ? data.quotationServices : [];
+        const dids = Array.isArray(data.quotationDids) ? data.quotationDids : [];
+
+        this.form.quotationItems = items.map((item: any) => ({
+          productId: Number(item.productId ?? item.product_id) || null,
+          quantity: Number(item.quantity) || 1,
+          price: Number(item.price) || 0,
+          subtotal: Number(item.subtotal) || (Number(item.quantity) || 1) * (Number(item.price) || 0),
+          description: item.description ?? '',
+          isPriceOverridden: !!(item.isPriceOverridden ?? item.is_price_overridden),
+          priceReason: item.priceReason ?? item.price_reason ?? '',
+          product: item.product ?? null,
+        }));
+        if (this.form.quotationItems.length === 0) {
+          this.addItem();
+        }
+
+        this.syncCustomerProductsFromFormItems();
+
+        this.form.quotationServices = services.map((s: any) => ({
+          serviceId: s.serviceId ?? s.service_id ?? null,
+          servicePlanId: s.servicePlanId ?? s.service_plan_id ?? null,
+          unitId: s.unitId ?? s.unit_id ?? null,
+          quantity: Number(s.quantity) || 1,
+          price: Number(s.price) || 0,
+          subtotal: Number(s.subtotal) || (Number(s.quantity) || 1) * (Number(s.price) || 0),
+          isPriceOverridden: !!(s.isPriceOverridden ?? s.is_price_overridden),
+          priceReason: s.priceReason ?? s.price_reason ?? '',
+          terminalKitCount: s.terminalKitCount ?? s.terminal_kit_count ?? null,
+          quotaPriority: s.quotaPriority ?? s.quota_priority ?? null,
+          newServiceLine: s.newServiceLine ?? s.new_service_line ?? null,
+          additionalData: s.additionalData ?? s.additional_data ?? null,
+        }));
+        if (this.form.quotationServices.length === 0) {
+          this.addServiceItem();
+        }
+
+        this.setQuotationDidsFromSiteInvest(dids);
+        this.form.useDidFromSiteInvest = dids.length > 0 && dids.every((d: any) => d.priceListLineId ?? d.price_list_line_id)
+          ? true
+          : (dids.length > 0 ? false : null);
+
+        if (this.form.customerId) {
+          await this.fetchProductsForCustomer(this.form.customerId, { merge: true });
+          this.syncCustomerProductsFromFormItems();
+        }
+
+        return data;
+      } catch (error: any) {
+        console.error('applySiteInvestmentPrefill error:', error);
+        toast.error({
+          title: 'Error',
+          message: error?.message || 'Gagal memuat data dari Site Investment',
+          color: 'red',
+          position: 'topRight',
+          layout: 2,
+        });
+        return null;
+      }
     },
 
     removeDidItem(index: number) {
@@ -1096,7 +1257,7 @@ export const useQuotationStore = defineStore('quotation', {
                 
                 // ✅ NEW: Fetch products untuk customer jika ada customerId
                 if (resData.data.customerId) {
-                    this.fetchProductsForCustomer(resData.data.customerId);
+                    this.fetchProductsForCustomer(resData.data.customerId, { merge: true });
                 }
             } else {
                 console.error('Invalid data structure received:', resData);
@@ -1117,13 +1278,18 @@ export const useQuotationStore = defineStore('quotation', {
         }
     },
 
-    async fetchProductsForCustomer(customerId: number) {
+    async fetchProductsForCustomer(customerId: number, options?: { merge?: boolean }) {
       this.loading = true;
       this.error = null;
       const { $api } = useNuxtApp();
       if (!customerId) {
-        this.customerProducts = []
-        return
+        if (options?.merge) {
+          this.syncCustomerProductsFromFormItems();
+        } else {
+          this.customerProducts = [];
+        }
+        this.loading = false;
+        return;
       }
       try {
         const response = await fetch($api.customer() + '/' + customerId, {
@@ -1136,31 +1302,16 @@ export const useQuotationStore = defineStore('quotation', {
         const result = await response.json()
         const rawCustomerProducts = result.data?.customerProducts || []
         
-        // Normalisasi data agar field noInterchange, sku, name selalu tersedia pada root item
-        this.customerProducts = rawCustomerProducts.map((item: any) => {
-          // Jika bentuknya ProductCustomer dengan relasi product
-          if (item && item.product) {
-            const p = item.product || {}
-            return {
-              // utamakan field dari product
-              id: p.id ?? item.productId ?? item.id,
-              sku: p.sku ?? item.sku ?? '',
-              name: p.name ?? item.name ?? '',
-              noInterchange: p.noInterchange ?? item.noInterchange ?? '',
-              unit: p.unit ?? item.unit ?? undefined,
-              priceSell: item.priceSell ?? p.priceSell ?? 0,
-            }
-          }
-          // Jika sudah flatten, pastikan properti kunci tersedia
-          return {
-            id: item.id ?? item.productId,
-            sku: item.sku ?? '',
-            name: item.name ?? '',
-            noInterchange: item.noInterchange ?? '',
-            unit: item.unit ?? undefined,
-            priceSell: item.priceSell ?? 0,
-          }
-        })
+        const fetched = rawCustomerProducts
+          .map((item: any) => this.normalizeCustomerProductOption(item))
+          .filter(Boolean) as CustomerProduct[];
+
+        if (options?.merge) {
+          this.mergeCustomerProductOptions(fetched);
+          this.syncCustomerProductsFromFormItems();
+        } else {
+          this.customerProducts = fetched;
+        }
       } catch (error) {
         console.error('Error fetching products for customer:', error)
         const toast = useToast();

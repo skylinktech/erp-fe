@@ -92,6 +92,11 @@
           </div>
         </div>
 
+        <!-- Saldo CT & breakdown cuti bersama -->
+        <div class="row g-6 mb-6">
+          <CutiBersamaBreakdownCard />
+        </div>
+
         <!-- Workflow warning -->
         <div v-if="!loading && !workflowConfigured" class="alert alert-warning d-flex align-items-start gap-2 mb-4">
           <i class="ri-error-warning-line ri-22px"></i>
@@ -470,6 +475,7 @@ import {
 } from '~/constants/hrd/cutiForm'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
+import CutiBersamaBreakdownCard from '~/components/hrd/CutiBersamaBreakdownCard.vue'
 import Column from 'primevue/column'
 import Menu from 'primevue/menu'
 import Swal from 'sweetalert2'

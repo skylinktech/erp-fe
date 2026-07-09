@@ -46,11 +46,19 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       '/accounting/ap-payments/': 'view_ap_payment',
       '/accounting/ar-receipts/': 'view_ar_receipt',
       '/hrd/pegawai': 'view_pegawai',
-      '/hrd/departemen': 'view_department',
+      '/hrd/departemen': 'view_departemen',
       '/hrd/divisi': 'view_divisi',
       '/hrd/jabatan': 'view_jabatan',
       '/hrd/cuti': 'view_cuti',
+      '/hrd/lembur': 'view_lembur',
+      '/hrd/perjalanan-dinas': 'view_perjalanan_dinas',
+      '/hrd/saldo-cuti': 'view_saldo_cuti',
+      '/hrd/struktur-organisasi': 'view_struktur_organisasi',
+      '/hrd/cetak-struktur-organisasi': 'view_struktur_organisasi',
+      '/hrd/kalender': 'view_kalender',
       '/hrd/cetak-cuti': 'view_cuti',
+      '/hrd/cetak-lembur': 'view_lembur',
+      '/hrd/cetak-perjalanan-dinas': 'view_perjalanan_dinas',
       '/company/perusahaan': 'view_perusahaan',
       '/company/cabang': 'view_cabang',
       '/admin/roles': 'view_role',
@@ -76,6 +84,10 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
         requiredPermission = 'view_pegawai'
       } else if (/^\/hrd\/cuti\/form(\/.*)?$/.test(to.path)) {
         requiredPermission = 'create_cuti'
+      } else if (/^\/hrd\/perjalanan-dinas\/form(\/.*)?$/.test(to.path)) {
+        requiredPermission = 'create_perjalanan_dinas'
+      } else if (/^\/hrd\/perjalanan-dinas\/detail\/.+$/.test(to.path)) {
+        requiredPermission = 'show_perjalanan_dinas'
       } else if (/^\/purchasing\/purchase-order\/form(\/.*)?$/.test(to.path)) {
         requiredPermission = 'view_purchase_order'
       } else if (/^\/implementation\/arf\/form(\/.*)?$/.test(to.path)) {

@@ -19,36 +19,49 @@ export interface ApprovalWorkflowStepItem {
   user?: { id: number; full_name: string; email: string }
 }
 
+export interface ApprovalWorkflowEntity {
+  id: number
+  code: string
+  name: string
+  description: string | null
+  module: string | null
+  aliases: string[]
+  sortOrder: number
+  isActive: boolean
+}
+
 export interface ApprovalWorkflow {
   id: number
   name: string
-  entityType: string
+  approvalWorkflowEntityId: number
+  entityType?: string
+  entity?: ApprovalWorkflowEntity
   description: string | null
   isActive: boolean
   steps?: ApprovalWorkflowStepItem[]
 }
 
-const ENTITY_TYPES = [
-  { value: 'purchase_request', label: 'Purchase Request' },
-  { value: 'quotation', label: 'Quotation' },
-  { value: 'purchase_order', label: 'Purchase Order' },
-  { value: 'sales_order', label: 'Sales Order' },
-  { value: 'site_investment', label: 'Site Investment' },
-  { value: 'arf', label: 'ARF (Advanced Request Form)' },
-  { value: 'work_order_request', label: 'Work Order Request' },
-  { value: 'fdr', label: 'Form Design Request' },
-  { value: 'price_adjustment_request', label: 'Price Adjustment Request' },
-  { value: 'sales_return', label: 'Sales Return' },
-  { value: 'le_tech_review', label: 'Legal-Tech Review' },
-  { value: 'access_request', label: 'Access Request' },
-  { value: 'pegawai_kontrak', label: 'Kontrak Pegawai (HR)' },
-  { value: 'cuti', label: 'Pengajuan Cuti / Izin / Sakit (HR)' },
-]
+export interface ApprovalWorkflowStats {
+  total: number
+  aktif: number
+  nonaktif: number
+  entities: number
+  total_steps: number
+}
 
 export const useApprovalWorkflowsStore = defineStore('approval-workflows', {
   state: () => ({
     workflows: [] as ApprovalWorkflow[],
     workflow: null as ApprovalWorkflow | null,
+    entities: [] as ApprovalWorkflowEntity[],
+    entitiesLoading: false,
+    stats: {
+      total: 0,
+      aktif: 0,
+      nonaktif: 0,
+      entities: 0,
+      total_steps: 0,
+    } as ApprovalWorkflowStats,
     loading: false,
     error: null as string | null,
     totalRecords: 0,
@@ -61,7 +74,7 @@ export const useApprovalWorkflowsStore = defineStore('approval-workflows', {
     },
     form: {
       name: '',
-      entityType: '',
+      approvalWorkflowEntityId: null as number | null,
       description: '',
       isActive: true,
     } as Partial<ApprovalWorkflow>,
@@ -71,10 +84,50 @@ export const useApprovalWorkflowsStore = defineStore('approval-workflows', {
   }),
 
   getters: {
-    entityTypeOptions: () => ENTITY_TYPES,
+    entityTypeOptions: (state) =>
+      state.entities.map((e) => ({
+        value: e.id,
+        label: e.name,
+        code: e.code,
+        module: e.module,
+      })),
   },
 
   actions: {
+    async fetchStats() {
+      const { $api } = useNuxtApp()
+      try {
+        const res = await apiFetch($api.approvalWorkflowStats(), { credentials: 'include' })
+        this.stats = {
+          total: res.total ?? 0,
+          aktif: res.aktif ?? 0,
+          nonaktif: res.nonaktif ?? 0,
+          entities: res.entities ?? 0,
+          total_steps: res.total_steps ?? 0,
+        }
+      } catch {
+        // stats opsional — tidak blokir halaman
+      }
+    },
+
+    async fetchEntities(force = false) {
+      if (this.entities.length > 0 && !force) return this.entities
+      this.entitiesLoading = true
+      const { $api } = useNuxtApp()
+      try {
+        const res = await apiFetch(`${$api.approvalWorkflowEntities()}?activeOnly=true`, {
+          credentials: 'include',
+        })
+        this.entities = res.data || []
+        return this.entities
+      } catch (e: any) {
+        this.error = e.message || 'Gagal memuat entity types'
+        return []
+      } finally {
+        this.entitiesLoading = false
+      }
+    },
+
     async fetchWorkflows() {
       this.loading = true
       this.error = null
@@ -129,7 +182,7 @@ export const useApprovalWorkflowsStore = defineStore('approval-workflows', {
     resetForm() {
       this.form = {
         name: '',
-        entityType: '',
+        approvalWorkflowEntityId: null,
         description: '',
         isActive: true,
       }
@@ -144,7 +197,7 @@ export const useApprovalWorkflowsStore = defineStore('approval-workflows', {
         this.form = {
           id: data.id,
           name: data.name,
-          entityType: data.entityType,
+          approvalWorkflowEntityId: data.approvalWorkflowEntityId ?? data.entity?.id ?? null,
           description: data.description ?? '',
           isActive: data.isActive,
         }
@@ -164,7 +217,7 @@ export const useApprovalWorkflowsStore = defineStore('approval-workflows', {
       const { $api } = useNuxtApp()
       const payload = {
         name: this.form.name,
-        entityType: this.form.entityType,
+        approvalWorkflowEntityId: this.form.approvalWorkflowEntityId,
         description: this.form.description || null,
         isActive: this.form.isActive ?? true,
       }
@@ -186,7 +239,7 @@ export const useApprovalWorkflowsStore = defineStore('approval-workflows', {
         }
         toast.success({ title: 'Berhasil', message: this.isEditMode ? 'Workflow berhasil diupdate' : 'Workflow berhasil dibuat', color: 'green', position: 'topRight' })
         this.closeModal()
-        await this.fetchWorkflows()
+        await Promise.all([this.fetchWorkflows(), this.fetchStats()])
       } catch (e: any) {
         const errData = e?.data || e
         this.validationErrors = errData?.errors ? Object.values(errData.errors).flat() as string[] : [errData?.message || e.message || 'Gagal menyimpan']
@@ -216,7 +269,7 @@ export const useApprovalWorkflowsStore = defineStore('approval-workflows', {
         })
         if (!res.ok) throw new Error((await res.json()).message || 'Gagal menghapus')
         toast.success({ title: 'Berhasil', message: 'Workflow berhasil dihapus', color: 'green', position: 'topRight' })
-        await this.fetchWorkflows()
+        await Promise.all([this.fetchWorkflows(), this.fetchStats()])
       } catch (e: any) {
         toast.error({ title: 'Error', message: e.message || 'Gagal menghapus', color: 'red', position: 'topRight' })
       }

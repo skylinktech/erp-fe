@@ -67,22 +67,15 @@
                             <Column field="divisi.nmDivisi" header="Divisi" :sortable="true"></Column>
                             <Column header="Actions" :exportable="false" style="min-width:8rem">
                                 <template #body="slotProps">
-                                    <div class="d-inline-block">
-                                        <a href="javascript:;" class="btn btn-sm btn-text-secondary rounded-pill btn-icon dropdown-toggle hide-arrow" data-bs-toggle="dropdown"><i class="ri-more-2-fill"></i>
-                                        </a>
-                                        <ul class="dropdown-menu">
-                                            <li v-if="userHasRole('superadmin') || userHasPermission('edit_departemen')">
-                                                <a class="dropdown-item" href="javascript:void(0)" @click="departemenStore.openModal(slotProps.data, 'admin')">
-                                                    <i class="ri-edit-box-line me-2"></i> Edit
-                                                </a>
-                                            </li>
-                                            <li v-if="userHasRole('superadmin') || userHasPermission('delete_departemen')">
-                                                <a class="dropdown-item text-danger" href="javascript:void(0)" @click="departemenStore.deleteDepartemen(slotProps.data.id)">
-                                                    <i class="ri-delete-bin-7-line me-2"></i> Hapus
-                                                </a>
-                                            </li>
-                                        </ul>
-                                    </div>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-text-secondary rounded-pill btn-icon"
+                                        aria-haspopup="true"
+                                        aria-controls="departemen-actions-menu"
+                                        @click.stop="toggleActions($event, slotProps.data)"
+                                    >
+                                        <i class="ri-more-2-fill"></i>
+                                    </button>
                                 </template>
                             </Column>
                         </MyDataTable>
@@ -92,6 +85,14 @@
                 </div>
             </div>
             <!--/ departemen cards -->
+
+            <Menu
+                id="departemen-actions-menu"
+                ref="actionsMenuRef"
+                :model="actionMenuItems"
+                :popup="true"
+                append-to="body"
+            />
 
             <!-- Placeholder untuk DepartemenModal component -->
             <Modal 
@@ -130,7 +131,7 @@
                             <button type="button" class="btn btn-outline-secondary" @click="departemenStore.closeModal()">Tutup</button>
                             <button type="submit" class="btn btn-primary" :disabled="loading">
                                 <span v-if="loading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                Simpan
+                                {{ isEditMode ? 'Update' : 'Simpan' }}
                             </button>
                         </div>
                     </form>
@@ -144,18 +145,17 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { storeToRefs } from 'pinia';
 import { useDepartemenStore } from '~/stores/departemen'
 import { usePermissionsStore } from '~/stores/permissions'
 import { usePermissions } from '~/composables/usePermissions'
 import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
-import vSelect from 'vue-select'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
-import 'vue-select/dist/vue-select.css'
 import Dropdown from 'primevue/dropdown'
 import Column from 'primevue/column'
+import Menu from 'primevue/menu'
 import InputText from 'primevue/inputtext'
 import { useDebounceFn } from '@vueuse/core'
 import { useUserStore } from '~/stores/user'
@@ -177,6 +177,39 @@ const rowsPerPageOptionsArray = ref([10, 25, 50, 100]);
 
 const modalTitle = computed(() => isEditMode.value ? 'Edit Departemen' : 'Tambah Departemen');
 const modalDescription = computed(() => isEditMode.value ? 'Ubah detail departemen.' : 'Isi untuk menambah departemen baru.');
+
+const actionsMenuRef = ref(null)
+const activeRow = ref(null)
+
+const actionMenuItems = computed(() => {
+    const row = activeRow.value
+    if (!row) return []
+    const items = []
+
+    if (userHasRole('superadmin') || userHasPermission('edit_departemen')) {
+        items.push({
+            label: 'Edit',
+            icon: 'ri ri-edit-box-line',
+            command: () => departemenStore.openModal(row, 'admin'),
+        })
+    }
+    if (userHasRole('superadmin') || userHasPermission('delete_departemen')) {
+        if (items.length) items.push({ separator: true })
+        items.push({
+            label: 'Hapus',
+            icon: 'ri ri-delete-bin-7-line',
+            class: 'hrd-menu-danger',
+            command: () => departemenStore.deleteDepartemen(row.id),
+        })
+    }
+
+    return items
+})
+
+function toggleActions(event, row) {
+    activeRow.value = row
+    nextTick(() => actionsMenuRef.value?.toggle(event))
+}
 
 let modalInstance = null
 onMounted(() => {
@@ -226,7 +259,9 @@ definePageMeta({
 </script>
 
 <style scoped>
-<style scoped>
+:deep(.hrd-menu-danger .p-menuitem-link) {
+  color: var(--bs-danger) !important;
+}
 
 /* Responsive adjustments */
 @media (max-width: 768px) {

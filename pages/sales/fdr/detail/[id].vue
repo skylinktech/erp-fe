@@ -118,9 +118,9 @@
                       <label class="form-label text-muted medium">Customer</label>
                       <p class="mb-0 fw-medium">{{ fdr.customer?.name || '—' }}</p>
                     </div>
-                    <div class="col-md-6" v-if="fdr.site">
+                    <div class="col-md-6" v-if="fdr.site || fdr.siteName || fdr.site_name">
                       <label class="form-label text-muted medium">Site</label>
-                      <p class="mb-0 fw-medium">{{ (fdr.site?.code || '') + ' - ' + (fdr.site?.name || '—') }}</p>
+                      <p class="mb-0 fw-medium">{{ displaySiteName }}</p>
                     </div>
                     <div class="col-md-6" v-if="fdr.businessSchemeId">
                       <label class="form-label text-muted medium">Skema</label>
@@ -201,8 +201,8 @@
                         <tr v-for="(m, i) in ((fdr.fdrItems ?? fdr.fdr_items) || [])" :key="m.id || i">
                           <td>{{ m.priceListLine?.product?.name || m.priceListLine?.product?.sku || m.price_list_line?.product?.name || '—' }}</td>
                           <td class="text-center">{{ m.quantity ?? 0 }}</td>
-                          <td class="text-end">{{ formatRupiah(m.price) }}</td>
-                          <td class="text-end fw-medium">{{ formatRupiah(m.subtotal) }}</td>
+                          <td class="text-end">{{ formatRupiah(getMaterialPrice(m)) }}</td>
+                          <td class="text-end fw-medium">{{ formatRupiah(getMaterialSubtotal(m)) }}</td>
                         </tr>
                       </tbody>
                     </table>
@@ -284,7 +284,7 @@
                         </div>
                         <div class="d-flex align-items-center gap-4">
                           <span class="text-muted">Qty: {{ group.totalQty }}</span>
-                          <span class="fw-medium">{{ formatRupiah(group.totalSubtotal) }}</span>
+                          <span class="fw-medium">{{ formatRupiah(toItemAmount(group.totalSubtotal)) }}</span>
                         </div>
                       </div>
                       <!-- Child: Services table (muncul saat expand) -->
@@ -309,7 +309,7 @@
                                   {{ getDidCategoryLabel(svc.category) }}
                                 </span>
                               </td>
-                              <td class="text-end">{{ formatRupiah(svc.price) }}</td>
+                              <td class="text-end">{{ formatRupiah(toItemAmount(svc.price)) }}</td>
                             </tr>
                           </tbody>
                         </table>
@@ -440,6 +440,17 @@ const { fdr, loading, error } = storeToRefs(fdrStore)
 
 const id = computed(() => String(route.params.id || ''))
 
+const displaySiteName = computed(() => {
+  const data = fdr.value
+  if (!data) return '—'
+  if (data.site) {
+    const code = data.site.code || ''
+    const name = data.site.name || '—'
+    return code ? `${code} - ${name}` : name
+  }
+  return data.siteName || data.site_name || '—'
+})
+
 const expandedDidIds = ref<Set<string | number>>(new Set())
 
 function toggleDidExpanded(key: string | number) {
@@ -468,16 +479,16 @@ const groupedFdrDids = computed(() => {
     if (map.has(didId)) {
       const g = map.get(didId)!
       g.items.push(d)
-      g.totalQty += Number(d.quantity ?? 1)
-      g.totalSubtotal += Number(d.subtotal ?? 0)
+      g.totalQty += toItemAmount(d.quantity) || 1
+      g.totalSubtotal += toItemAmount(d.subtotal)
     } else {
       map.set(didId, {
         didKey: didId,
         didName,
         services: svcList,
         items: [d],
-        totalQty: Number(d.quantity ?? 1),
-        totalSubtotal: Number(d.subtotal ?? 0),
+        totalQty: toItemAmount(d.quantity) || 1,
+        totalSubtotal: toItemAmount(d.subtotal),
       })
     }
   }
@@ -485,8 +496,8 @@ const groupedFdrDids = computed(() => {
   return Array.from(map.values()).map((g) => {
     const servicesWithPrice = (g.services || []).map((svc: any, i: number) => {
       const it = g.items[i]
-      const price = it?.price ?? it?.priceListLine?.price ?? it?.price_list_line?.price ?? (svc?.price ?? 0)
-      return { ...svc, price: Number(price) || 0 }
+      const price = toItemAmount(it?.price ?? it?.priceListLine?.price ?? it?.price_list_line?.price ?? svc?.price)
+      return { ...svc, price }
     })
     return { ...g, services: servicesWithPrice }
   })
@@ -541,23 +552,35 @@ function getBusinessSchemeBadgeClass(businessSchemeId: number | null | undefined
   }
 }
 
+/** Normalisasi angka dari API (hindari string desimal "3325000.00" salah format) */
+function toItemAmount(value: unknown): number {
+  if (value === null || value === undefined || value === '') return 0
+  const n = Number(value)
+  return Number.isNaN(n) ? 0 : n
+}
+
+function getMaterialPrice(m: any): number {
+  return toItemAmount(m?.price)
+}
+
+function getMaterialSubtotal(m: any): number {
+  const st = toItemAmount(m?.subtotal)
+  if (st > 0) return st
+  const qty = toItemAmount(m?.quantity) || 1
+  return qty * getMaterialPrice(m)
+}
+
 function getServicePrice(s: any): number {
   if (!s) return 0
-  const p = s.price ?? (s as any).price
-  const n = Number(p)
-  return Number.isNaN(n) ? 0 : n
+  return toItemAmount(s.price ?? (s as any).price)
 }
 
 function getServiceSubtotal(s: any): number {
   if (!s) return 0
-  const st = s.subtotal ?? (s as any).subtotal
-  if (st !== undefined && st !== null && st !== '') {
-    const n = Number(st)
-    if (!Number.isNaN(n)) return n
-  }
-  const qty = Number(s.quantity ?? (s as any).quantity) || 1
-  const price = getServicePrice(s)
-  return qty * price
+  const st = toItemAmount(s.subtotal ?? (s as any).subtotal)
+  if (st > 0) return st
+  const qty = toItemAmount(s.quantity ?? (s as any).quantity) || 1
+  return qty * getServicePrice(s)
 }
 
 function fromApiNum(si: any, ...keys: string[]): number {

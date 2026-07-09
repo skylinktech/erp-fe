@@ -101,14 +101,46 @@
             </tr>
           </template>
 
-          <!-- Grand Total -->
-          <tr v-if="hasTableItems" class="fw-bold cetak-qo-grand-total">
-            <td colspan="5" class="text-end">Grand Total</td>
-            <td class="text-end">{{ formatRupiahNum(grandTotalTable) }}</td>
+          <!-- Subtotal item (sebelum PPN/PPH) -->
+          <tr v-if="hasTableItems" class="fw-medium">
+            <td colspan="5" class="text-end">Subtotal Item</td>
+            <td class="text-end">{{ formatRupiahNum(itemsSubtotal) }}</td>
           </tr>
 
           <tr v-if="!otcItems.length && !mrcItems.length">
             <td colspan="6" class="text-center py-4 text-muted">Tidak ada item</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Ringkasan finansial: Subtotal, Diskon, PPN, PPH, Grand Total -->
+    <div v-if="quotation && totals.subtotal > 0" class="cetak-qo-summary mb-4">
+      <table class="table table-sm table-borderless cetak-qo-summary-table m-0 ms-auto" style="font-size: 12px; max-width: 360px;">
+        <tbody>
+          <tr>
+            <td class="text-end text-muted">Subtotal</td>
+            <td class="text-end fw-medium" style="width: 140px;">{{ formatRupiahNum(totals.subtotal) }}</td>
+          </tr>
+          <tr v-if="totals.discountPercent > 0 || totals.discountAmount > 0">
+            <td class="text-end text-muted">Diskon ({{ totals.discountPercent }}%)</td>
+            <td class="text-end fw-medium">-{{ formatRupiahNum(totals.discountAmount) }}</td>
+          </tr>
+          <tr v-if="totals.discountPercent > 0 || totals.discountAmount > 0">
+            <td class="text-end text-muted">Setelah Diskon</td>
+            <td class="text-end fw-medium">{{ formatRupiahNum(totals.afterDiscount) }}</td>
+          </tr>
+          <tr v-if="totals.ppnPercent > 0 || totals.ppnAmount > 0">
+            <td class="text-end text-muted">PPN ({{ totals.ppnPercent }}%)</td>
+            <td class="text-end fw-medium">{{ formatRupiahNum(totals.ppnAmount) }}</td>
+          </tr>
+          <tr v-if="totals.hasPph">
+            <td class="text-end text-muted">PPH ({{ totals.pphPercent }}%)</td>
+            <td class="text-end fw-medium">-{{ formatRupiahNum(totals.pphAmount) }}</td>
+          </tr>
+          <tr class="cetak-qo-summary-grand">
+            <td class="text-end fw-bold">Grand Total</td>
+            <td class="text-end fw-bold">{{ formatRupiahNum(totals.grandTotal) }}</td>
           </tr>
         </tbody>
       </table>
@@ -162,6 +194,7 @@ import { useRoute } from 'vue-router'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import { useImageUrl } from '~/composables/useImageUrl'
 import MultiSignatureDisplay from '~/components/MultiSignatureDisplay.vue'
+import { computeQuotationTotals } from '~/utils/quotationTotals'
 
 const { setDetailTitle } = useDynamicTitle()
 const { getCompanyLogo, handleImageError } = useImageUrl()
@@ -293,11 +326,13 @@ function mrcUnitOfDay (m) {
   return m.quantity ?? 1
 }
 
-const grandTotalTable = computed(() => {
+const itemsSubtotal = computed(() => {
   const otc = otcItems.value.reduce((s, m) => s + otcAmount(m), 0)
   const mrc = mrcItems.value.reduce((s, m) => s + mrcTotal(m), 0)
   return otc + mrc
 })
+
+const totals = computed(() => computeQuotationTotals(quotation.value))
 
 const hasTableItems = computed(() => otcItems.value.length + mrcItems.value.length > 0)
 
@@ -367,6 +402,16 @@ onMounted(async () => {
 .cetak-qo-grand-total td {
   background-color: #4275f6;
   color: #fff !important;
+}
+.cetak-qo-summary-table td {
+  padding: 4px 8px;
+  vertical-align: middle;
+}
+.cetak-qo-summary-grand td {
+  border-top: 2px solid #4275f6;
+  padding-top: 8px !important;
+  color: #4275f6;
+  font-size: 13px;
 }
 .cetak-qo-terms-header {
   background-color: #4275f6;
@@ -470,6 +515,12 @@ onMounted(async () => {
   .cetak-qo-grand-total td {
     background-color: #4275f6 !important;
     color: #fff !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .cetak-qo-summary-grand td {
+    border-top: 1pt solid #4275f6 !important;
+    color: #4275f6 !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }

@@ -105,10 +105,6 @@
                       <p class="mb-0 fw-medium">{{ quotation.noQuotation || '—' }}</p>
                     </div>
                     <div class="col-md-6">
-                      <label class="form-label text-muted medium">Ref. PO</label>
-                      <p class="mb-0 fw-medium">{{ quotation.refPo || quotation.ref_po || '—' }}</p>
-                    </div>
-                    <div class="col-md-6">
                       <label class="form-label text-muted medium">UP / PIC</label>
                       <p class="mb-0 fw-medium">{{ quotation.up || '—' }}</p>
                     </div>
@@ -316,24 +312,28 @@
                   </div>
                   <div class="d-flex justify-content-between py-1">
                     <label class="form-label text-muted medium mb-0">Subtotal</label>
-                    <p class="mb-0 fw-medium">{{ formatRupiah(computedSubtotal) }}</p>
+                    <p class="mb-0 fw-medium">{{ formatRupiah(totals.subtotal) }}</p>
                   </div>
                   <div class="d-flex justify-content-between py-1">
-                    <label class="form-label text-muted medium mb-0">Discount ({{ quotation.discountPercent ?? 0 }}%)</label>
-                    <p class="mb-0 fw-medium">{{ formatRupiah(computedDiscount) }}</p>
+                    <label class="form-label text-muted medium mb-0">Discount ({{ totals.discountPercent }}%)</label>
+                    <p class="mb-0 fw-medium">{{ formatRupiah(totals.discountAmount) }}</p>
                   </div>
                   <div class="d-flex justify-content-between py-1">
                     <label class="form-label text-muted medium mb-0">Setelah Diskon</label>
-                    <p class="mb-0 fw-medium">{{ formatRupiah(computedAfterDiscount) }}</p>
+                    <p class="mb-0 fw-medium">{{ formatRupiah(totals.afterDiscount) }}</p>
                   </div>
-                  <div class="d-flex justify-content-between py-1">
-                    <label class="form-label text-muted medium mb-0">Pajak ({{ quotation.taxPercent ?? 0 }}%)</label>
-                    <p class="mb-0 fw-medium">{{ formatRupiah(computedTax) }}</p>
+                  <div v-if="totals.ppnPercent > 0 || totals.ppnAmount > 0" class="d-flex justify-content-between py-1">
+                    <label class="form-label text-muted medium mb-0">PPN ({{ totals.ppnPercent }}%)</label>
+                    <p class="mb-0 fw-medium">{{ formatRupiah(totals.ppnAmount) }}</p>
+                  </div>
+                  <div v-if="totals.hasPph" class="d-flex justify-content-between py-1">
+                    <label class="form-label text-muted medium mb-0">PPH ({{ totals.pphPercent }}%)</label>
+                    <p class="mb-0 fw-medium">-{{ formatRupiah(totals.pphAmount) }}</p>
                   </div>
                   <hr class="my-2" />
                   <div class="d-flex justify-content-between py-1">
                     <label class="form-label text-muted medium mb-0">Grand Total</label>
-                    <p class="mb-0 fw-medium fs-5 text-primary">{{ formatRupiah(computedGrandTotal) }}</p>
+                    <p class="mb-0 fw-medium fs-5 text-primary">{{ formatRupiah(totals.grandTotal) }}</p>
                   </div>
                 </div>
               </div>
@@ -393,6 +393,7 @@ import { useImageUrl } from '~/composables/useImageUrl'
 import { usePermissions } from '~/composables/usePermissions'
 import { useUserStore } from '~/stores/user'
 import Swal from 'sweetalert2'
+import { computeQuotationTotals } from '~/utils/quotationTotals'
 
 const route = useRoute()
 const quotationStore = useQuotationStore()
@@ -481,7 +482,7 @@ function didSubtotalItem (d: any): number {
   return qty * price
 }
 
-const computedSubtotal = computed(() => displayProductSubtotal.value + displayServiceSubtotal.value + displayDidSubtotal.value)
+const totals = computed(() => computeQuotationTotals(quotation.value as Record<string, unknown> | null))
 
 function getServiceItemName (s: any): string {
   const svc = s.service ?? s
@@ -600,24 +601,6 @@ function mrcItemUnitLabel (m: any): string {
 
 const subtotalOtc = computed(() => otcItems.value.reduce((s, i) => s + otcAmount(i), 0))
 const subtotalMrc = computed(() => mrcItems.value.reduce((s, i) => s + mrcTotal(i), 0))
-
-const computedDiscount = computed(() => {
-  const pct = Number(quotation.value?.discountPercent) || 0
-  return computedSubtotal.value * (pct / 100)
-})
-
-const computedAfterDiscount = computed(() => computedSubtotal.value - computedDiscount.value)
-
-const computedTax = computed(() => {
-  const pct = Number(quotation.value?.taxPercent) || 0
-  return computedAfterDiscount.value * (pct / 100)
-})
-
-const computedGrandTotal = computed(() => {
-  const fromApi = fromApiNum(quotation.value, 'grandTotal', 'grand_total')
-  if (fromApi > 0) return fromApi
-  return computedAfterDiscount.value + computedTax.value
-})
 
 async function load () {
   if (!id.value) return

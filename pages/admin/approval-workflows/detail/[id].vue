@@ -1,6 +1,6 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-p-y">
+    <div class="container-xxl flex-grow-1 container-pt-10">
       <div v-if="loading && !workflow" class="text-center py-8">
         <div class="spinner-border text-primary" role="status"></div>
         <p class="mt-3 text-muted">Memuat workflow...</p>
@@ -14,7 +14,8 @@
             </NuxtLink>
             <h4 class="mb-1 mt-5">{{ workflow.name }}</h4>
             <p class="text-muted mb-0">
-              <code>{{ workflow.entityType }}</code>
+              <span class="fw-medium">{{ workflow.entity?.name || workflow.entityType }}</span>
+              <code class="ms-2">{{ workflow.entity?.code || workflow.entityType }}</code>
               <span :class="workflow.isActive ? 'badge bg-success ms-2' : 'badge bg-secondary ms-2'">
                 {{ workflow.isActive ? 'Aktif' : 'Nonaktif' }}
               </span>

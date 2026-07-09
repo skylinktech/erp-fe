@@ -246,7 +246,8 @@ const selectedOption = computed(() => {
   return validOptions.find(option => {
     try {
       const reducedOption = props.reduce(option)
-      return reducedOption === props.modelValue
+      if (reducedOption == null || props.modelValue == null || props.modelValue === '') return false
+      return String(reducedOption) === String(props.modelValue)
     } catch (error) {
       console.warn('Error in reduce function:', error, option)
       return false
@@ -263,7 +264,7 @@ const selectedOptions = computed(() => {
   return validOptions.filter(option => {
     try {
       const reducedOption = props.reduce(option)
-      return props.modelValue.includes(reducedOption)
+      return props.modelValue.some((v) => String(v) === String(reducedOption))
     } catch (error) {
       console.warn('Error in reduce function:', error, option)
       return false

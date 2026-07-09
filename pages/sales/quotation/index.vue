@@ -171,11 +171,6 @@
                                             </a>
                                         </template>
                                   </Column>
-                                    <Column field="refPo" header="Ref. PO" :sortable="true" class="text-nowrap">
-                                        <template #body="slotProps">
-                                            {{ slotProps.data.refPo || slotProps.data.ref_po || '—' }}
-                                        </template>
-                                    </Column>
                                     <Column field="customer.name" header="Customer" :sortable="true"></Column>
                                     <Column field="status" header="Status" :sortable="true">
                                         <template #body="slotProps">

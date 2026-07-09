@@ -212,14 +212,14 @@
               <input type="text" class="form-control" :value="selectedPegawaiDept" readonly placeholder="-" />
             </div>
             <div class="col-6">
-              <label class="form-label">Jabatan</label>
-              <input type="text" class="form-control" :value="selectedPegawaiJabatan" readonly placeholder="-" />
+              <label class="form-label">Divisi</label>
+              <input type="text" class="form-control" :value="selectedPegawaiDivisi" readonly placeholder="-" />
             </div>
             <div class="col-12">
               <label class="form-label">Deskripsi/Alasan</label>
               <textarea v-model="store.form.description" class="form-control" rows="3" placeholder="Alasan permintaan akses..."></textarea>
             </div>
-            <div class="col-6">
+            <div class="col-4">
               <label class="form-label">Workflow Approval</label>
               <CustomSelect2
                 v-model="store.form.workflowId"
@@ -231,7 +231,7 @@
                 placeholder="-- Pilih Workflow (opsional) --"
               />
             </div>
-            <div class="col-6">
+            <div class="col-4">
               <label class="form-label">Prioritas</label>
               <select v-model="store.form.priority" class="form-select">
                 <option value="low">Low</option>
@@ -239,7 +239,7 @@
                 <option value="high">High</option>
               </select>
             </div>
-            <div class="col-6">
+            <div class="col-4">
               <label class="form-label">Periode Akses</label>
               <select v-model="store.form.accessPeriod" class="form-select">
                 <option value="permanent">Permanen</option>
@@ -253,43 +253,45 @@
 
             <!-- Permission checkbox (seperti Roles) -->
             <div class="col-12">
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="mb-0">Permission</h5>
-                <InputText v-model="permissionSearch" placeholder="Cari Menu..." class="form-control" style="max-width: 12rem;" />
-              </div>
-              <div class="form-check mb-2">
-                <input class="form-check-input" type="checkbox" id="selectAllPerm" v-model="selectAllPerm" />
-                <label class="form-check-label" for="selectAllPerm">Pilih Semua</label>
-              </div>
-              <DataTable
-                :value="filteredMenuDetails"
-                :rows="8"
-                paginator
-                responsiveLayout="scroll"
-                class="p-datatable-sm"
-                paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink"
-                currentPageReportTemplate="Menampilkan {first} sampai {last} dari {totalRecords} menu"
-              >
-                <Column field="name" header="Menu" style="min-width: 12rem;" />
-                <Column v-for="permName in masterPermissionNames" :key="permName" style="min-width: 5rem;">
-                  <template #header>
-                    <div class="text-center w-100 small fw-bold">{{ permName }}</div>
+              <div class="permission-picker-panel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <h5 class="mb-0">Permission</h5>
+                  <InputText v-model="permissionSearch" placeholder="Cari Menu..." class="form-control" style="max-width: 12rem;" />
+                </div>
+                <div class="form-check mb-2">
+                  <input class="form-check-input" type="checkbox" id="selectAllPerm" v-model="selectAllPerm" />
+                  <label class="form-check-label" for="selectAllPerm">Pilih Semua</label>
+                </div>
+                <DataTable
+                  :value="filteredMenuDetails"
+                  :rows="8"
+                  paginator
+                  responsiveLayout="scroll"
+                  class="p-datatable-sm permission-picker-table"
+                  paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink"
+                  currentPageReportTemplate="Menampilkan {first} sampai {last} dari {totalRecords} menu"
+                >
+                  <Column field="name" header="Menu" style="min-width: 12rem;" />
+                  <Column v-for="permName in masterPermissionNames" :key="permName" style="min-width: 5rem;">
+                    <template #header>
+                      <div class="text-center w-100 small fw-bold">{{ permName }}</div>
+                    </template>
+                    <template #body="{ data }">
+                      <div v-if="getPermission(data, permName)" class="form-check d-flex justify-content-center">
+                        <input
+                          class="form-check-input"
+                          type="checkbox"
+                          :value="getPermission(data, permName).id"
+                          v-model="store.form.permissionIds"
+                        />
+                      </div>
+                    </template>
+                  </Column>
+                  <template #empty>
+                    <div class="text-center p-4">Tidak ada data permission.</div>
                   </template>
-                  <template #body="{ data }">
-                    <div v-if="getPermission(data, permName)" class="form-check d-flex justify-content-center">
-                      <input
-                        class="form-check-input"
-                        type="checkbox"
-                        :value="getPermission(data, permName).id"
-                        v-model="store.form.permissionIds"
-                      />
-                    </div>
-                  </template>
-                </Column>
-                <template #empty>
-                  <div class="text-center p-4">Tidak ada data permission.</div>
-                </template>
-              </DataTable>
+                </DataTable>
+              </div>
             </div>
           </div>
           <div class="modal-footer mt-4">
@@ -317,6 +319,7 @@ import InputText from 'primevue/inputtext'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import { useDebounceFn } from '@vueuse/core'
+import { mapPegawaiShowResponseToListRow } from '~/utils/pegawaiApiMapper'
 
 const { $api } = useNuxtApp()
 const { userHasRole } = usePermissions()
@@ -339,10 +342,56 @@ const selectedPegawaiDept = computed(() => {
   const h = selectedPegawaiData.value?.history
   return h?.departemen?.nama || h?.departemen?.nm_departemen || '-'
 })
-const selectedPegawaiJabatan = computed(() => {
+const selectedPegawaiDivisi = computed(() => {
   const h = selectedPegawaiData.value?.history
-  return h?.jabatan?.nama || h?.jabatan?.nm_jabatan || '-'
+  return h?.divisi?.nama || h?.divisi?.nm_divisi || '-'
 })
+
+function findPegawaiOption(pegawaiId) {
+  if (pegawaiId == null || pegawaiId === '') return null
+  return pegawaiOptions.value.find((x) => String(x.id_pegawai) === String(pegawaiId)) ?? null
+}
+
+function hasOrgHistory(row) {
+  const h = row?.history
+  return !!(h?.departemen?.nama || h?.departemen?.nm_departemen || h?.divisi?.nama || h?.divisi?.nm_divisi)
+}
+
+async function resolveSelectedPegawai(pegawaiId) {
+  if (!pegawaiId) {
+    selectedPegawaiData.value = null
+    return
+  }
+
+  const cached = findPegawaiOption(pegawaiId)
+  if (cached && hasOrgHistory(cached)) {
+    selectedPegawaiData.value = cached
+    return
+  }
+
+  try {
+    const r = await fetch($api.pegawaiShow(pegawaiId), {
+      headers: { Accept: 'application/json' },
+      credentials: 'include',
+    })
+    if (r.ok) {
+      const raw = await r.json()
+      const mapped = mapPegawaiShowResponseToListRow(raw)
+      const idx = pegawaiOptions.value.findIndex((x) => String(x.id_pegawai) === String(pegawaiId))
+      if (idx >= 0) {
+        pegawaiOptions.value[idx] = { ...pegawaiOptions.value[idx], history: mapped.history }
+        selectedPegawaiData.value = pegawaiOptions.value[idx]
+      } else {
+        selectedPegawaiData.value = mapped
+      }
+      return
+    }
+  } catch {
+    // fallback ke data cache
+  }
+
+  selectedPegawaiData.value = cached
+}
 
 const menuDetailsWithPermissions = computed(() => {
   const result = {}
@@ -416,12 +465,7 @@ function getPermission(menu, permName) {
 }
 
 async function onPegawaiSelect(pegawaiId) {
-  if (!pegawaiId) {
-    selectedPegawaiData.value = null
-    return
-  }
-  const p = pegawaiOptions.value.find((x) => x.id_pegawai === pegawaiId)
-  selectedPegawaiData.value = p
+  await resolveSelectedPegawai(pegawaiId)
 }
 
 async function handleSubmit(id) {
@@ -452,7 +496,9 @@ async function fetchWorkflows() {
     })
     if (r.ok) {
       const data = await r.json()
-      workflowOptions.value = (data.data || data || []).filter((w) => w.entityType === 'access_request')
+      workflowOptions.value = (data.data || data || []).filter(
+        (w) => (w.entity?.code || w.entityType) === 'access_request'
+      )
     }
   } catch (e) {
     workflowOptions.value = []
@@ -511,16 +557,19 @@ watch(
 )
 
 watch(
+  () => store.form.pegawaiId,
+  (pegawaiId) => {
+    void resolveSelectedPegawai(pegawaiId)
+  }
+)
+
+watch(
   () => store.showModal,
   (show) => {
     if (show) {
-      const pegawaiId = store.form.pegawaiId
-      if (pegawaiId) {
-        const p = pegawaiOptions.value.find((x) => x.id_pegawai === pegawaiId)
-        selectedPegawaiData.value = p
-      } else {
-        selectedPegawaiData.value = null
-      }
+      void resolveSelectedPegawai(store.form.pegawaiId)
+    } else {
+      selectedPegawaiData.value = null
     }
   }
 )
@@ -583,5 +632,34 @@ select.access-request-dropdown {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.permission-picker-panel {
+  border: 1px solid #d9dee3;
+  border-radius: 0.5rem;
+  padding: 1rem 1.25rem;
+  background-color: #fff;
+  box-shadow: 0 1px 2px rgba(67, 89, 113, 0.06);
+}
+
+.permission-picker-table :deep(.p-datatable-table) {
+  border: 1px solid #e7e9ed;
+  border-radius: 0.375rem;
+  overflow: hidden;
+}
+
+.permission-picker-table :deep(.p-datatable-thead > tr > th) {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e7e9ed;
+}
+
+.permission-picker-table :deep(.p-datatable-tbody > tr > td) {
+  border-bottom: 1px solid #f0f2f4;
+}
+
+.permission-picker-table :deep(.p-paginator) {
+  border-top: 1px solid #e7e9ed;
+  padding-top: 0.75rem;
+  margin-top: 0.25rem;
 }
 </style>

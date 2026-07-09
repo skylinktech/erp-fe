@@ -427,22 +427,28 @@
 
                     <div id="pegawai-fp-tab-social" class="tab-pane fade" role="tabpanel">
                       <div class="row g-3">
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                           <div class="form-floating form-floating-outline">
                             <input id="pegawai-fp-pasangan" v-model="form.istri_suami_pegawai" type="text" class="form-control" />
                             <label for="pegawai-fp-pasangan">Istri/Suami Pegawai</label>
                           </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                           <div class="form-floating form-floating-outline">
                             <input id="pegawai-fp-anak1" v-model="form.anak_1" type="text" class="form-control" />
                             <label for="pegawai-fp-anak1">Anak 1</label>
                           </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                           <div class="form-floating form-floating-outline">
                             <input id="pegawai-fp-anak2" v-model="form.anak_2" type="text" class="form-control" />
                             <label for="pegawai-fp-anak2">Anak 2</label>
+                          </div>
+                        </div>
+                        <div class="col-md-3">
+                          <div class="form-floating form-floating-outline">
+                            <input id="pegawai-fp-anak3" v-model="form.anak_3" type="text" class="form-control" />
+                            <label for="pegawai-fp-anak3">Anak 3</label>
                           </div>
                         </div>
                         <div class="col-md-12">

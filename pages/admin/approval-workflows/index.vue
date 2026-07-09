@@ -1,27 +1,31 @@
 <template>
   <div class="content-wrapper">
     <div class="container-xxl flex-grow-1 container-p-y">
-      <h4 class="mb-1">Approval Workflows</h4>
+      <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-1">
+        <h4 class="mb-0">Approval Workflows</h4>
+        <NuxtLink to="/admin/approval-workflow-entities" class="btn btn-sm btn-outline-primary">
+          <i class="ri-node-tree me-1"></i> Kelola Entity Types
+        </NuxtLink>
+      </div>
       <p class="mb-6">
         Kelola konfigurasi workflow approval berjenjang untuk berbagai entitas (Purchase Order, Purchase Request, Quotation, Sales Order, Kontrak Pegawai, dll).
       </p>
 
       <div class="row g-6 mb-6">
-        <div class="col-xl-4 col-lg-6 col-md-6">
+        <div v-for="card in statCards" :key="card.label" class="col-xl-3 col-lg-6 col-md-6">
           <div class="card h-100">
-            <div class="row h-100">
-              <div class="col-sm-5">
-                <div class="d-flex align-items-end h-100 justify-content-center">
-                  <img src="/img/illustrations/add-new-role-illustration.png" class="img-fluid" alt="Add" width="70">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-4">
+                <p class="mb-0">{{ card.label }}</p>
+                <div class="avatar">
+                  <span :class="['avatar-initial rounded', card.iconClass]">
+                    <i :class="card.icon"></i>
+                  </span>
                 </div>
               </div>
-              <div class="col-sm-7">
-                <div class="card-body text-sm-end text-center ps-sm-0">
-                  <button @click="wfStore.openModal()" class="btn btn-primary mb-2 text-nowrap">
-                    Tambah Workflow
-                  </button>
-                  <p class="mb-0 mt-1">Buat workflow approval baru</p>
-                </div>
+              <div class="account-heading">
+                <h5 class="mb-1">{{ card.value }}</h5>
+                <span class="text-muted small">{{ card.subtitle }}</span>
               </div>
             </div>
           </div>
@@ -30,36 +34,40 @@
 
       <div class="row g-6">
         <div class="col-12">
+          <h4 class="mt-2 mb-1">Daftar Workflow</h4>
+          <p class="mb-4">Kelola workflow approval dan langkah-langkah persetujuannya.</p>
+        </div>
+        <div class="col-12">
           <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-              <div class="d-flex align-items-center gap-2">
-                <span class="me-2">Baris:</span>
-                <select v-model="wfStore.params.rows" class="form-select form-select-sm" style="width: 5rem;" @change="onRowsChange">
-                  <option :value="5">5</option>
-                  <option :value="10">10</option>
-                  <option :value="25">25</option>
-                  <option :value="50">50</option>
-                </select>
-                <select v-model="wfStore.params.isActive" class="form-select form-select-sm" style="width: 8rem;" @change="load">
+            <ListPageTableHeader
+              :rows="Number(wfStore.params.rows)"
+              :rows-options="[5, 10, 25, 50]"
+              :search="globalFilterValue"
+              search-placeholder="Cari nama / entity..."
+              :show-export="false"
+              :export-disabled="wfStore.loading"
+              @update:rows="onToolbarRows"
+              @update:search="(v) => { globalFilterValue = v }"
+            >
+              <template #add>
+                <button type="button" class="btn btn-primary" @click="wfStore.openModal()">
+                  <i class="ri-add-line me-1"></i>
+                  Tambah Workflow
+                </button>
+              </template>
+              <template #toolbar-extra>
+                <select
+                  v-model="wfStore.params.isActive"
+                  class="form-select form-select-sm"
+                  style="width: 9rem;"
+                  @change="load"
+                >
                   <option value="">Semua Status</option>
                   <option value="true">Aktif</option>
                   <option value="false">Nonaktif</option>
                 </select>
-              </div>
-              <div class="d-flex align-items-center gap-2">
-                <input
-                  v-model="wfStore.params.search"
-                  type="text"
-                  class="form-control form-control-sm"
-                  placeholder="Cari nama / entity..."
-                  style="width: 12rem;"
-                  @keyup.enter="load"
-                >
-                <button class="btn btn-sm btn-outline-primary" @click="load">
-                  <i class="ri-search-line me-1"></i> Cari
-                </button>
-              </div>
-            </div>
+              </template>
+            </ListPageTableHeader>
             <div class="card-datatable table-responsive py-3 px-3">
               <table class="table table-hover">
                 <thead>
@@ -87,7 +95,11 @@
                   <tr v-else v-for="w in wfStore.workflows" :key="w.id">
                     <td>{{ w.id }}</td>
                     <td class="fw-medium">{{ w.name }}</td>
-                    <td><code>{{ w.entityType }}</code></td>
+                    <td>
+                      <span class="fw-medium">{{ w.entity?.name || w.entityType }}</span>
+                      <br>
+                      <code class="small">{{ w.entity?.code || w.entityType }}</code>
+                    </td>
                     <td>{{ (w.steps || []).length }} step</td>
                     <td>
                       <span :class="w.isActive ? 'badge bg-success' : 'badge bg-secondary'">
@@ -179,11 +191,20 @@
                 </div>
                 <div class="mb-3">
                   <label class="form-label">Entity Type <span class="text-danger">*</span></label>
-                  <select v-model="wfStore.form.entityType" class="form-select" required :disabled="wfStore.isEditMode">
-                    <option value="">Pilih entity...</option>
-                    <option v-for="opt in wfStore.entityTypeOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+                  <select
+                    v-model.number="wfStore.form.approvalWorkflowEntityId"
+                    class="form-select"
+                    required
+                    :disabled="wfStore.isEditMode || wfStore.entitiesLoading"
+                  >
+                    <option :value="null">Pilih entity...</option>
+                    <option v-for="opt in wfStore.entityTypeOptions" :key="opt.value" :value="opt.value">
+                      {{ opt.label }}
+                      <template v-if="opt.module"> ({{ opt.module }})</template>
+                    </option>
                   </select>
                   <small v-if="wfStore.isEditMode" class="text-muted">Entity type tidak dapat diubah setelah dibuat</small>
+                  <small v-else-if="wfStore.entitiesLoading" class="text-muted">Memuat daftar entity...</small>
                 </div>
                 <div class="mb-3">
                   <label class="form-label">Deskripsi</label>
@@ -209,21 +230,70 @@
 </template>
 
 <script setup lang="ts">
+import { useDebounceFn } from '@vueuse/core'
+import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
+
 definePageMeta({
   layout: 'default',
   middleware: ['auth', 'check-permission'],
 })
 
 const wfStore = useApprovalWorkflowsStore()
+const { stats } = storeToRefs(wfStore)
+
+const globalFilterValue = ref('')
+
+const statCards = computed(() => [
+  {
+    label: 'Total Workflow',
+    value: stats.value.total || 0,
+    subtitle: 'Workflow terdaftar',
+    icon: 'ri-git-branch-line',
+    iconClass: 'bg-label-primary',
+  },
+  {
+    label: 'Aktif',
+    value: stats.value.aktif || 0,
+    subtitle: 'Workflow aktif',
+    icon: 'ri-checkbox-circle-line',
+    iconClass: 'bg-label-success',
+  },
+  {
+    label: 'Nonaktif',
+    value: stats.value.nonaktif || 0,
+    subtitle: 'Workflow nonaktif',
+    icon: 'ri-close-circle-line',
+    iconClass: 'bg-label-secondary',
+  },
+  {
+    label: 'Entity Types',
+    value: stats.value.entities || 0,
+    subtitle: `${stats.value.total_steps || 0} total step`,
+    icon: 'ri-node-tree',
+    iconClass: 'bg-label-info',
+  },
+])
 
 async function load() {
   await wfStore.fetchWorkflows()
 }
 
-function onRowsChange() {
+function onToolbarRows(rows: number) {
+  wfStore.params.rows = rows
   wfStore.params.page = 1
   load()
 }
 
-onMounted(() => load())
+const debouncedSearch = useDebounceFn(() => {
+  wfStore.params.search = globalFilterValue.value
+  wfStore.params.page = 1
+  load()
+}, 400)
+
+watch(globalFilterValue, () => debouncedSearch())
+
+onMounted(async () => {
+  await Promise.all([wfStore.fetchEntities(), wfStore.fetchStats()])
+  await load()
+})
 </script>

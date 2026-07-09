@@ -58,6 +58,17 @@ export const KODE_CUTI_TAHUNAN = 'CT'
 /** Cuti Sakit boleh backdated paling lama 7 hari. */
 export const MAX_BACKDATE_SAKIT_DAYS = 7
 
+/** Cuti sakit lebih dari 2 hari wajib melampirkan surat dokter. */
+export function requiresSakitDoctorNote(lamaHari: number | null | undefined): boolean {
+  return (lamaHari ?? 0) > 2
+}
+
+/** 1 hari kerja = 8 jam (batas maksimum durasi izin per jam dalam sehari). */
+export const JAM_KERJA_PER_HARI = 8
+
+/** Konsumsi saldo untuk setiap pengajuan izin per jam (selalu 1 hari penuh). */
+export const LAMA_HARI_IZIN_PER_JAM = 1
+
 /**
  * Lead time minimum (hari) untuk cuti yang harus direncanakan
  * — sinkron dengan rule di backend `CutiService`.
@@ -93,7 +104,26 @@ export function minTanggalMulaiByKode(kode: string | null | undefined, now: Date
   return `${yyyy}-${mm}-${dd}`
 }
 
-/** Format durasi pengajuan: "2 hari" atau "3 jam (07:00 – 10:00)". */
+/**
+ * Hitung konsumsi saldo cuti (selalu bilangan bulat).
+ * Izin per jam selalu dihitung 1 hari penuh — selaras dengan backend `CutiService`.
+ */
+export function computeKonsumsiSaldo(opts: {
+  isPerJam?: boolean
+  is_per_jam?: boolean
+  tanggalMulai?: string | null
+  tanggalSelesai?: string | null
+}): number {
+  const perJam = opts.isPerJam ?? opts.is_per_jam ?? false
+  if (perJam) return LAMA_HARI_IZIN_PER_JAM
+  if (!opts.tanggalMulai || !opts.tanggalSelesai) return 0
+  const a = new Date(opts.tanggalMulai)
+  const b = new Date(opts.tanggalSelesai)
+  if (Number.isNaN(a.getTime()) || Number.isNaN(b.getTime()) || b < a) return 0
+  return Math.floor((b.getTime() - a.getTime()) / 86400000) + 1
+}
+
+/** Format durasi pengajuan: "2 hari" atau "3 jam (07:00 – 10:00) · potong 1 hari saldo". */
 export function formatDurasiCuti(row: {
   isPerJam?: boolean
   is_per_jam?: boolean
@@ -112,7 +142,7 @@ export function formatDurasiCuti(row: {
     const mulai = (row.jamMulai ?? row.jam_mulai ?? '').slice(0, 5)
     const selesai = (row.jamSelesai ?? row.jam_selesai ?? '').slice(0, 5)
     const range = mulai && selesai ? ` (${mulai} – ${selesai})` : ''
-    return `${jam} jam${range}`
+    return `${jam} jam${range} · potong ${LAMA_HARI_IZIN_PER_JAM} hari saldo`
   }
   const hari = row.lamaCuti ?? row.lama_cuti ?? 0
   return `${hari} hari`

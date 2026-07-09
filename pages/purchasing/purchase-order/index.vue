@@ -632,7 +632,7 @@
                                         </div>
                                         <div class="col-md-3">
                                             <div class="form-floating form-floating-outline">
-                                                <input type="text" :value="formatRupiah(item.price)" class="form-control" placeholder="Harga" readonly>
+                                                <input type="text" :value="formatRupiah(item.price)" class="form-control" placeholder="Harga" @input="onPriceInput(index, $event)">
                                                 <label>Harga</label>
                                             </div>
                                         </div>
@@ -1196,6 +1196,15 @@ const onProductChange = (index) => {
 
 const onQuantityChange = (index) => {
   if (!form.value || !form.value.purchaseOrderItems) return;
+  calculateSubtotal(index);
+};
+
+const onPriceInput = (index, e) => {
+  if (!form.value || !form.value.purchaseOrderItems) return;
+  const raw = e.target.value.replace(/[^\d]/g, '');
+  const item = form.value.purchaseOrderItems[index];
+  if (!item) return;
+  item.price = Number(raw) || 0;
   calculateSubtotal(index);
 };
 
