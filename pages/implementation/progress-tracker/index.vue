@@ -4,6 +4,11 @@
       <h4 class="mb-1">Progress Tracker</h4>
       <p class="mb-6">Lacak progress project implementation per node/network</p>
 
+      <div v-if="!loading && !workflowConfigured" class="alert alert-warning mb-4">
+        Approval workflow entitas <code>progress_tracker</code> belum dikonfigurasi.
+        <NuxtLink to="/admin/approval-workflows">Atur di Approval Workflows</NuxtLink>.
+      </div>
+
       <div class="row g-6 mb-6">
         <div
           v-for="card in summaryCards"
@@ -29,30 +34,49 @@
         </div>
       </div>
 
-      <div class="row g-6 mb-7">
-        <div class="col-12">
-          <h4 class="mt-2 mb-1">Filter</h4>
-        </div>
-        <div class="col-12">
-          <div class="card">
-            <div class="card-body">
-              <div class="row g-2">
-                <div class="col-md-12">
-                  <CustomSelect2
-                    v-model="filters.status"
-                    :options="PROJECT_STATUS_OPTIONS"
-                    :get-option-label="(o) => o.label"
-                    :reduce="(o) => o.value"
-                    searchable
-                    clearable
-                    placeholder="Status project"
-                  />
-                </div>
-              </div>
-            </div>
+      <CollapsibleFilterCard
+        title="Filter Progress Tracker"
+        :has-active-filters="hasActiveFilters"
+        :show-reset="false"
+        @reset="resetFilters"
+      >
+        <div class="row g-4">
+          <div class="col-md-6">
+            <FilterField>
+              <label class="form-label">Status project</label>
+              <CustomSelect2
+                v-model="filters.status"
+                :options="PROJECT_STATUS_OPTIONS"
+                :get-option-label="(o) => o.label"
+                :reduce="(o) => o.value"
+                searchable
+                clearable
+                placeholder="Status project"
+              />
+            </FilterField>
+          </div>
+          <div class="col-md-6">
+            <FilterField>
+              <label class="form-label">Status approval</label>
+              <CustomSelect2
+                v-model="filters.approvalStatus"
+                :options="PROGRESS_TRACKER_APPROVAL_STATUS_OPTIONS"
+                :get-option-label="(o) => o.label"
+                :reduce="(o) => o.value"
+                searchable
+                clearable
+                placeholder="Status approval"
+              />
+            </FilterField>
+          </div>
+          <div class="col-md-6 offset-md-6 d-flex justify-content-end mt-4">
+            <button type="button" class="btn btn-outline-secondary btn-sm" @click="resetFilters">
+              <i class="ri-refresh-line me-1"></i>
+              Reset Filter
+            </button>
           </div>
         </div>
-      </div>
+      </CollapsibleFilterCard>
 
       <div class="card">
         <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
@@ -108,10 +132,17 @@
                 {{ slotProps.data.nodesCount ?? slotProps.data.nodes_count ?? 0 }}
               </template>
             </Column>
-            <Column field="status" header="Status">
+            <Column field="status" header="Status Project">
               <template #body="slotProps">
                 <span :class="getProjectStatusBadge(slotProps.data.status).class">
                   {{ getProjectStatusBadge(slotProps.data.status).text }}
+                </span>
+              </template>
+            </Column>
+            <Column header="Approval">
+              <template #body="slotProps">
+                <span :class="getApprovalStatusBadge(approvalBadgeRow(slotProps.data)).class">
+                  {{ getApprovalStatusBadge(approvalBadgeRow(slotProps.data)).text }}
                 </span>
               </template>
             </Column>
@@ -156,10 +187,15 @@ import {
   type ProgressTrackerProject,
 } from '~/stores/progress-tracker'
 import { usePermissions } from '~/composables/usePermissions'
+import { useProgressTrackerApproval } from '~/composables/useProgressTrackerApproval'
+import { useApprovalStatus } from '~/composables/useApprovalStatus'
 import {
   PROJECT_STATUS_OPTIONS,
+  PROGRESS_TRACKER_APPROVAL_STATUS_OPTIONS,
   getProjectStatusBadge,
+  getProjectApprovalStatus,
 } from '~/constants/implementation/progressTrackerStatuses'
+import Swal from 'sweetalert2'
 
 definePageMeta({
   layout: 'default',
@@ -168,10 +204,24 @@ definePageMeta({
 })
 
 const store = useProgressTrackerStore()
-const { projects, loading, totalRecords, params, statistics } = storeToRefs(store)
+const { projects, loading, totalRecords, params, statistics, workflowConfigured } =
+  storeToRefs(store)
 const { userHasRole, userHasPermission } = usePermissions()
+const {
+  canApproveProgressTracker,
+  canRejectProgressTracker,
+  canSubmitProgressTracker,
+} = useProgressTrackerApproval()
+const { getStatusBadge: getApprovalStatusBadge } = useApprovalStatus()
 
-const filters = ref({ status: null as string | null })
+const filters = ref({ status: null as string | null, approvalStatus: null as string | null })
+
+const hasActiveFilters = computed(() => !!filters.value.status || !!filters.value.approvalStatus)
+
+function resetFilters() {
+  filters.value.status = null
+  filters.value.approvalStatus = null
+}
 const globalFilter = ref('')
 const tableControls = ref({ rows: 10 })
 
@@ -181,6 +231,18 @@ const canEdit = computed(
     userHasPermission('edit_progress_tracker') ||
     userHasPermission('create_progress_tracker')
 )
+
+function canEditRow(row: ProgressTrackerProject) {
+  const approvalStatus = getProjectApprovalStatus(row)
+  return (
+    (approvalStatus === 'draft' || approvalStatus === 'rejected') &&
+    canEdit.value
+  )
+}
+
+function approvalBadgeRow(row: ProgressTrackerProject) {
+  return { ...row, status: getProjectApprovalStatus(row) }
+}
 
 const canDelete = computed(
   () => userHasRole('superadmin') || userHasPermission('delete_progress_tracker')
@@ -242,14 +304,35 @@ const actionMenuItems = computed(() => {
       command: () => navigateTo(`/implementation/progress-tracker/detail/${row.id}`),
     },
   ]
-  if (canEdit.value) {
+  if (canSubmitProgressTracker(row)) {
+    items.push({
+      label: getProjectApprovalStatus(row) === 'rejected' ? 'Submit Revisi' : 'Submit untuk Approval',
+      icon: 'ri-send-plane-line',
+      command: () => onSubmitRow(row),
+    })
+  }
+  if (canApproveProgressTracker(row)) {
+    items.push({
+      label: 'Approve',
+      icon: 'ri-check-line',
+      command: () => onApproveRow(row),
+    })
+  }
+  if (canRejectProgressTracker(row)) {
+    items.push({
+      label: 'Reject',
+      icon: 'ri-close-line',
+      command: () => onRejectRow(row),
+    })
+  }
+  if (canEditRow(row)) {
     items.push({
       label: 'Edit',
       icon: 'ri-edit-box-line',
       command: () => navigateTo(`/implementation/progress-tracker/form/${row.id}`),
     })
   }
-  if (canDelete.value) {
+  if (canDelete.value && getProjectApprovalStatus(row) === 'draft') {
     items.push({
       label: 'Hapus',
       icon: 'ri-delete-bin-7-line',
@@ -273,8 +356,65 @@ async function onDeleteRow(row: ProgressTrackerProject) {
   }
 }
 
+async function onSubmitRow(row: ProgressTrackerProject) {
+  if (!row.id) return
+  const ok = await store.submitForApproval(row.id)
+  if (ok) {
+    await store.fetchStatistics()
+    await store.fetchProjects()
+  }
+}
+
+async function onApproveRow(row: ProgressTrackerProject) {
+  if (!row.id) return
+  const { value: remarks, isConfirmed } = await Swal.fire({
+    title: 'Approve Project',
+    input: 'textarea',
+    inputLabel: 'Catatan approval (opsional)',
+    inputPlaceholder: 'Catatan...',
+    showCancelButton: true,
+    confirmButtonText: 'Approve',
+    cancelButtonText: 'Batal',
+    customClass: {
+      confirmButton: 'btn btn-success',
+      cancelButton: 'btn btn-label-secondary',
+    },
+  })
+  if (!isConfirmed) return
+  const ok = await store.approve(row.id, remarks?.trim() || undefined)
+  if (ok) {
+    await store.fetchStatistics()
+    await store.fetchProjects()
+  }
+}
+
+async function onRejectRow(row: ProgressTrackerProject) {
+  if (!row.id) return
+  const { value: remarks, isConfirmed } = await Swal.fire({
+    title: 'Reject Project',
+    input: 'textarea',
+    inputLabel: 'Alasan penolakan (wajib)',
+    inputPlaceholder: 'Alasan...',
+    inputValidator: (v) => (!v?.trim() ? 'Alasan wajib diisi' : undefined),
+    showCancelButton: true,
+    confirmButtonText: 'Reject',
+    cancelButtonText: 'Batal',
+    customClass: {
+      confirmButton: 'btn btn-danger',
+      cancelButton: 'btn btn-label-secondary',
+    },
+  })
+  if (!isConfirmed || !remarks?.trim()) return
+  const ok = await store.reject(row.id, remarks.trim())
+  if (ok) {
+    await store.fetchStatistics()
+    await store.fetchProjects()
+  }
+}
+
 watch(filters, () => {
   params.value.status = filters.value.status
+  params.value.approvalStatus = filters.value.approvalStatus
   params.value.first = 0
   store.fetchProjects()
 }, { deep: true })

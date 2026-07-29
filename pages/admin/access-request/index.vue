@@ -80,6 +80,27 @@
           <p class="mb-0">Filter dan kelola permintaan akses modul/menu.</p>
         </div>
         <div class="col-12">
+          <CollapsibleFilterCard
+            title="Filter Permintaan Akses"
+            :has-active-filters="hasActiveFilters"
+            @reset="resetFilters"
+          >
+            <FilterFieldsRow>
+              <FilterField>
+                <label class="form-label">Status</label>
+                <select v-model="params.status" class="form-select" @change="onAccessStatusChange">
+                  <option value="">Semua Status</option>
+                  <option value="draft">Draft</option>
+                  <option value="pending">Pending</option>
+                  <option value="approved">Approved</option>
+                  <option value="rejected">Rejected</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </FilterField>
+            </FilterFieldsRow>
+          </CollapsibleFilterCard>
+        </div>
+        <div class="col-12">
           <div class="card">
             <ListPageTableHeader
               :rows="Number(params.rows)"
@@ -101,16 +122,6 @@
                   <i class="ri-add-line me-1"></i>
                   Tambah Permintaan
                 </button>
-              </template>
-              <template #toolbar-extra>
-                <select v-model="params.status" class="form-select access-request-dropdown" @change="onAccessStatusChange">
-                  <option value="">Semua Status</option>
-                  <option value="draft">Draft</option>
-                  <option value="pending">Pending</option>
-                  <option value="approved">Approved</option>
-                  <option value="rejected">Rejected</option>
-                  <option value="cancelled">Cancelled</option>
-                </select>
               </template>
             </ListPageTableHeader>
             <div class="card-datatable table-responsive py-3 px-3">
@@ -337,6 +348,13 @@ const selectedPegawaiData = ref(null)
 
 const rowsPerPageOptionsArray = ref([10, 25, 50, 100])
 const masterPermissionNames = ['View', 'Create', 'Edit', 'Delete', 'Show', 'Approve', 'Reject', 'Access']
+
+const hasActiveFilters = computed(() => !!params.value.status)
+
+function resetFilters() {
+  params.value.status = ''
+  store.setStatusFilter('')
+}
 
 const selectedPegawaiDept = computed(() => {
   const h = selectedPegawaiData.value?.history

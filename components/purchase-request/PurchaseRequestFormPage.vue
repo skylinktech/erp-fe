@@ -108,11 +108,15 @@
                     </div>
 
                     <div id="pr-tab-items" class="tab-pane fade">
-                      <div class="d-flex justify-content-between align-items-center mb-4">
-                        <p class="mb-0 text-muted small">
+                      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+                        <p class="mb-0 text-muted small flex-grow-1" style="min-width: 0">
                           Isi nama barang/jasa, qty, satuan, dan harga estimasi. Untuk tipe <strong>Barang</strong> dengan produk katalog, stok dicek per gudang.
                         </p>
-                        <button type="button" class="btn btn-sm btn-primary" @click="purchaseRequestStore.addItem()">
+                        <button
+                          type="button"
+                          class="btn btn-primary btn-sm text-nowrap flex-shrink-0"
+                          @click="purchaseRequestStore.addItem()"
+                        >
                           <i class="ri-add-line me-1"></i>Tambah Item
                         </button>
                       </div>
@@ -586,7 +590,7 @@ async function loadMasterData() {
   const { $api } = useNuxtApp()
   const headers = { Accept: 'application/json' }
   const [prodRes, whRes, depRes, budRes, unitRes] = await Promise.all([
-    fetch($api.dataProduct(), { headers, credentials: 'include' }),
+    fetch($api.dataProduct('internal'), { headers, credentials: 'include' }),
     fetch($api.dataWarehouse(), { headers, credentials: 'include' }),
     fetch($api.dataDepartemen(), { headers, credentials: 'include' }),
     fetch($api.dataBudget(), { headers, credentials: 'include' }),

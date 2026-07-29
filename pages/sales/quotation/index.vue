@@ -93,22 +93,23 @@
 
             <div class="row g-6">
                 <div class="col-12">
-                    <h4 class="mt-6 mb-1">Filter Quotation</h4>
-                    <p class="mb-0">Temukan semua quotation perusahaan Anda</p>
-                </div>
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-6 mb-2">
-                                    <CustomSelect2 v-model="filters.customerId" :options="customers || []" :get-option-label="option => option.name" :reduce="option => option.id" searchable clearable placeholder="Pilih Customer" />
-                                </div>
-                                <div class="col-md-6 mb-2">
-                                    <CustomSelect2 v-model="filters.status" :options="statusOptions" :get-option-label="option => option.label" :reduce="option => option.value" searchable clearable placeholder="Pilih Status" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <CollapsibleFilterCard
+                        title="Filter Quotation"
+                        description="Temukan semua quotation perusahaan Anda"
+                        :has-active-filters="hasActiveFilters"
+                        @reset="resetFilters"
+                    >
+                        <FilterFieldsRow>
+                            <FilterField>
+                                <label class="form-label">Customer</label>
+                                <CustomSelect2 v-model="filters.customerId" :options="customers || []" :get-option-label="option => option.name" :reduce="option => option.id" searchable clearable placeholder="Pilih Customer" />
+                            </FilterField>
+                            <FilterField>
+                                <label class="form-label">Status</label>
+                                <CustomSelect2 v-model="filters.status" :options="statusOptions" :get-option-label="option => option.label" :reduce="option => option.value" searchable clearable placeholder="Pilih Status" />
+                            </FilterField>
+                        </FilterFieldsRow>
+                    </CollapsibleFilterCard>
                 </div>
                 <div class="col-12">
                     <!-- quotation Table -->
@@ -281,7 +282,7 @@
   </template>
 
   <script setup>
-  import { ref, onMounted, watch } from 'vue'
+  import { ref, computed, onMounted, watch } from 'vue'
   import { storeToRefs } from 'pinia'
   import { useQuotationStore } from '~/stores/quotation'
   import { useCustomerStore } from '~/stores/customer'
@@ -324,6 +325,15 @@ const filters = ref({
     customerId: null,
     status: null,
 });
+
+const hasActiveFilters = computed(
+    () => !!filters.value.customerId || !!filters.value.status
+)
+
+function resetFilters() {
+    filters.value.customerId = null
+    filters.value.status = null
+}
 
   const rowsPerPageOptionsArray = ref([10, 25, 50, 100]);
   const statusOptions = ref([

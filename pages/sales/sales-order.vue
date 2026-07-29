@@ -114,74 +114,57 @@
 
             <div class="row g-6">
                 <div class="col-12">
-                    <h4 class="mt-6 mb-1">Filter Sales Order</h4>
-                    <p class="mb-0">Temukan semua sales order perusahaan Anda</p>
-                </div>
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-4 mb-3">
-                                    <label class="form-label text-muted mb-2">Filter Customer</label>
-                                    <CustomSelect2 
-                                        v-model="filters.customerId" 
-                                        :options="customers" 
-                                        :get-option-label="c => c.name" 
-                                        :reduce="c => c.id" 
-                                        placeholder="Pilih Customer"
-                                        searchable
-                                        clearable
-                                        :loading="customerStore.loading"
-                                        loading-text="Memuat customer..."
-                                        
-                                    />
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <label class="form-label text-muted mb-2">Filter Source</label>
-                                    <CustomSelect2 
-                                        v-model="filters.source" 
-                                        :options="sourceOptions" 
-                                        :get-option-label="option => option.label" 
-                                        :reduce="option => option.value" 
-                                        placeholder="Pilih Source"
-                                        searchable
-                                        clearable
-                                    />
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <label class="form-label text-muted mb-2">Filter Status</label>
-                                    <CustomSelect2 
-                                        v-model="filters.status" 
-                                        :options="statusOptions" 
-                                        :get-option-label="option => option.label" 
-                                        :reduce="option => option.value" 
-                                        placeholder="Pilih Status"
-                                        searchable
-                                        clearable
-                                    />
-                                </div>
-                            </div>
-                            <div class="row mt-5">
-                                <div class="col-md-4 mb-3">
-                                    <div class="form-floating form-floating-outline">
-                                        <input type="date" v-model="filters.startDate" class="form-control" placeholder="Tanggal Mulai" @change="onDateChange">
-                                        <label>Tanggal Mulai</label>
-                                    </div>
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <div class="form-floating form-floating-outline">
-                                        <input type="date" v-model="filters.endDate" class="form-control" placeholder="Tanggal Akhir" @change="onDateChange">
-                                        <label>Tanggal Akhir</label>
-                                    </div>
-                                </div>
-                                <div class="col-md-4 mb-3 reset-filter-button">
-                                    <button @click="clearDateFilters" class="btn btn-outline-secondary me-2 so-reset-filter-btn">
-                                        <i class="ri-refresh-line me-1"></i> Reset Filter
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <CollapsibleFilterCard title="Filter Sales Order" :has-active-filters="hasActiveFilters" @reset="resetFilters">
+                        <FilterFieldsRow>
+                            <FilterField>
+                                <label class="form-label">Filter Customer</label>
+                                <CustomSelect2 
+                                    v-model="filters.customerId" 
+                                    :options="customers" 
+                                    :get-option-label="c => c.name" 
+                                    :reduce="c => c.id" 
+                                    placeholder="Pilih Customer"
+                                    searchable
+                                    clearable
+                                    :loading="customerStore.loading"
+                                    loading-text="Memuat customer..."
+                                    
+                                />
+                            </FilterField>
+                            <FilterField>
+                                <label class="form-label">Filter Source</label>
+                                <CustomSelect2 
+                                    v-model="filters.source" 
+                                    :options="sourceOptions" 
+                                    :get-option-label="option => option.label" 
+                                    :reduce="option => option.value" 
+                                    placeholder="Pilih Source"
+                                    searchable
+                                    clearable
+                                />
+                            </FilterField>
+                            <FilterField>
+                                <label class="form-label">Filter Status</label>
+                                <CustomSelect2 
+                                    v-model="filters.status" 
+                                    :options="statusOptions" 
+                                    :get-option-label="option => option.label" 
+                                    :reduce="option => option.value" 
+                                    placeholder="Pilih Status"
+                                    searchable
+                                    clearable
+                                />
+                            </FilterField>
+                            <FilterField>
+                                <label class="form-label">Tanggal Mulai</label>
+                                <input type="date" v-model="filters.startDate" class="form-control" @change="onDateChange">
+                            </FilterField>
+                            <FilterField>
+                                <label class="form-label">Tanggal Akhir</label>
+                                <input type="date" v-model="filters.endDate" class="form-control" @change="onDateChange">
+                            </FilterField>
+                        </FilterFieldsRow>
+                    </CollapsibleFilterCard>
                 </div>
                 <div class="col-12">
                     <!-- salesOrder Table -->
@@ -751,6 +734,23 @@ const filters = ref({
 });
 const globalFilterValue = ref('');
 const expandedRows = ref({});
+
+const hasActiveFilters = computed(
+  () =>
+    !!filters.value.customerId ||
+    !!filters.value.source ||
+    !!filters.value.status ||
+    !!filters.value.startDate ||
+    !!filters.value.endDate
+)
+
+function resetFilters() {
+  filters.value.customerId = null
+  filters.value.source = null
+  filters.value.status = null
+  filters.value.startDate = null
+  filters.value.endDate = null
+}
 
 // Table controls data
 const tableControls = ref({
@@ -1465,11 +1465,9 @@ const getStockDisplay = (stock) => {
     return Math.floor(stock.quantity);
 };
 
-const clearDateFilters = () => {
-    filters.value.startDate = null;
-    filters.value.endDate = null;
-    salesOrderStore.setFilters(filters.value);
-};
+function onDateChange() {
+  salesOrderStore.setFilters(filters.value);
+}
 
 function onFileChange(e) {
   if (!form.value) return;

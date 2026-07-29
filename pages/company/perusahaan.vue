@@ -226,6 +226,16 @@
                                 <Column field="tlpPerusahaan" header="No. Telp Perusahaan" :sortable="true"></Column>
                                 <Column field="emailPerusahaan" header="Email Perusahaan" :sortable="true"></Column>
                                 <Column field="npwpPerusahaan" header="NPWP Perusahaan" :sortable="true"></Column>
+                                <Column field="namaBankPerusahaan" header="Nama Bank" :sortable="true">
+                                    <template #body="slotProps">
+                                        {{ slotProps.data.namaBankPerusahaan || slotProps.data.nama_bank_perusahaan || '—' }}
+                                    </template>
+                                </Column>
+                                <Column field="nomorRekeningPerusahaan" header="No. Rekening" :sortable="true">
+                                    <template #body="slotProps">
+                                        {{ slotProps.data.nomorRekeningPerusahaan || slotProps.data.nomor_rekening_perusahaan || '—' }}
+                                    </template>
+                                </Column>
                                 <Column header="Actions" :exportable="false" style="min-width:8rem">
                                 <template #body="slotProps">
                                     <div class="d-inline-block">
@@ -303,13 +313,13 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-floating form-floating-outline">
-                                    <input 
-                                        type="text" 
-                                        
-                                        id="nmPerusahaan" 
-                                        v-model="form.nmPerusahaan" 
+                                    <input
+                                        type="text"
+                                        class="form-control"
+                                        id="nmPerusahaan"
+                                        v-model="form.nmPerusahaan"
                                         placeholder="Masukkan nama perusahaan"
-                                        
+                                        :class="{ 'is-invalid': hasFieldError('nmPerusahaan') }"
                                     >
                                     <label for="nmPerusahaan">Nama Perusahaan</label>
                                     <div v-if="hasFieldError('nmPerusahaan')" class="invalid-feedback">
@@ -319,26 +329,25 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-floating form-floating-outline">
-                                    <input 
-                                        type="text" 
-                                        class="form-control" 
-                                        id="tlpPerusahaan" 
-                                        v-model="form.tlpPerusahaan" 
+                                    <input
+                                        type="text"
+                                        class="form-control"
+                                        id="tlpPerusahaan"
+                                        v-model="form.tlpPerusahaan"
                                         placeholder="Masukkan no telp perusahaan"
-                                        
                                     >
                                     <label for="tlpPerusahaan">No. Telp Perusahaan</label>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-floating form-floating-outline">
-                                    <input 
-                                    type="text" 
-                                    
-                                    id="emailPerusahaan" 
-                                    v-model="form.emailPerusahaan" 
-                                    placeholder="Masukkan email perusahaan"
-                                    
+                                    <input
+                                        type="email"
+                                        class="form-control"
+                                        id="emailPerusahaan"
+                                        v-model="form.emailPerusahaan"
+                                        placeholder="Masukkan email perusahaan"
+                                        :class="{ 'is-invalid': hasFieldError('emailPerusahaan') }"
                                     >
                                     <label for="emailPerusahaan">Email Perusahaan</label>
                                     <div v-if="hasFieldError('emailPerusahaan')" class="invalid-feedback">
@@ -357,6 +366,32 @@
                                     
                                     >
                                     <label for="npwpPerusahaan">NPWP Perusahaan</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating form-floating-outline">
+                                    <input
+                                        type="text"
+                                        class="form-control"
+                                        id="namaBankPerusahaan"
+                                        v-model="form.namaBankPerusahaan"
+                                        placeholder="Masukkan nama bank"
+                                        maxlength="100"
+                                    >
+                                    <label for="namaBankPerusahaan">Nama Bank</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating form-floating-outline">
+                                    <input
+                                        type="text"
+                                        class="form-control"
+                                        id="nomorRekeningPerusahaan"
+                                        v-model="form.nomorRekeningPerusahaan"
+                                        placeholder="Masukkan nomor rekening"
+                                        maxlength="50"
+                                    >
+                                    <label for="nomorRekeningPerusahaan">No. Rekening</label>
                                 </div>
                             </div>
                             <div class="col-md-12">

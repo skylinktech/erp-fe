@@ -1,257 +1,278 @@
-  <template>
-    <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme" @mouseenter="handleMouseEnter" @mouseleave="handleMouseLeave">
-      <div class="app-brand demo">
-        <a href="index.html" class="app-brand-link">
-          <span class="app-brand-logo demo">
-            <img src="/img/branding/logo.png" alt="" height="40" />
-          </span>
-          <span class="app-brand-text demo menu-text fw-semibold ms-2">Skylink ERP</span>
-        </a>
-        <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto" @click="toggleSidebar">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path
-              d="M8.47365 11.7183C8.11707 12.0749 8.11707 12.6531 8.47365 13.0097L12.071 16.607C12.4615 16.9975 12.4615 17.6305 12.071 18.021C11.6805 18.4115 11.0475 18.4115 10.657 18.021L5.83009 13.1941C5.37164 12.7356 5.37164 11.9924 5.83009 11.5339L10.657 6.707C11.0475 6.31653 11.6805 6.31653 12.071 6.707C12.4615 7.09747 12.4615 7.73053 12.071 8.121L8.47365 11.7183Z"
-              fill-opacity="0.9" />
-            <path
-              d="M14.3584 11.8336C14.0654 12.1266 14.0654 12.6014 14.3584 12.8944L18.071 16.607C18.4615 16.9975 18.4615 17.6305 18.071 18.021C17.6805 18.4115 17.0475 18.4115 16.657 18.021L11.6819 13.0459C11.3053 12.6693 11.3053 12.0587 11.6819 11.6821L16.657 6.707C17.0475 6.31653 17.6805 6.31653 18.071 6.707C18.4615 7.09747 18.4615 7.73053 18.071 8.121L14.3584 11.8336Z"
-              fill-opacity="0.4" />
-          </svg>
-        </a>
-      </div>
+<template>
+  <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme" @mouseenter="handleMouseEnter" @mouseleave="handleMouseLeave">
+    <div class="app-brand demo">
+      <a href="index.html" class="app-brand-link">
+        <span class="app-brand-logo demo">
+          <img src="/img/branding/logo.png" alt="" height="40" />
+        </span>
+        <span class="app-brand-text demo menu-text fw-semibold ms-2">Skylink ERP</span>
+      </a>
+      <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto" @click="toggleSidebar">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path
+            d="M8.47365 11.7183C8.11707 12.0749 8.11707 12.6531 8.47365 13.0097L12.071 16.607C12.4615 16.9975 12.4615 17.6305 12.071 18.021C11.6805 18.4115 11.0475 18.4115 10.657 18.021L5.83009 13.1941C5.37164 12.7356 5.37164 11.9924 5.83009 11.5339L10.657 6.707C11.0475 6.31653 11.6805 6.31653 12.071 6.707C12.4615 7.09747 12.4615 7.73053 12.071 8.121L8.47365 11.7183Z"
+            fill-opacity="0.9" />
+          <path
+            d="M14.3584 11.8336C14.0654 12.1266 14.0654 12.6014 14.3584 12.8944L18.071 16.607C18.4615 16.9975 18.4615 17.6305 18.071 18.021C17.6805 18.4115 17.0475 18.4115 16.657 18.021L11.6819 13.0459C11.3053 12.6693 11.3053 12.0587 11.6819 11.6821L16.657 6.707C17.0475 6.31653 17.6805 6.31653 18.071 6.707C18.4615 7.09747 18.4615 7.73053 18.071 8.121L14.3584 11.8336Z"
+            fill-opacity="0.4" />
+        </svg>
+      </a>
+    </div>
 
-      <div class="menu-inner-shadow"></div>
+    <div class="menu-inner-shadow"></div>
 
-      <ul class="menu-inner py-7">
-        <!-- Dashboards -->
-        <li class="menu-item" :class="{ active: $route.path === '/dashboard' }">
-          <a href="/dashboard" class="menu-link" @click="handleMenuClick">
-            <i class="menu-icon tf-icons ri-home-smile-line"></i>
-            <div data-i18n="Dashboards">Dashboards</div>
+    <ul class="menu-inner py-7">
+      <li class="menu-item" :class="{ active: $route.path === '/dashboard' }">
+        <a href="/dashboard" class="menu-link" @click="handleMenuClick">
+          <i class="menu-icon tf-icons ri-home-smile-line"></i>
+          <div data-i18n="Dashboards">Dashboards</div>
+        </a>
+      </li>
+
+      <li class="menu-header mt-5">
+        <span class="menu-header-text" data-i18n="Apps & Pages">Apps &amp; Pages</span>
+      </li>
+
+      <template v-if="filteredAndSortedMenuGroups.length">
+        <li
+          class="menu-item"
+          v-for="group in filteredAndSortedMenuGroups"
+          :key="group.id"
+          :class="{
+            open: isGroupOpen(group),
+            active: isGroupActive(group)
+          }"
+        >
+          <a href="javascript:void(0);" class="menu-link menu-toggle" @click="toggleGroup(group.id)">
+            <i :class="['menu-icon', 'tf-icons', group.icon]"></i>
+            <div>{{ group.name }}</div>
           </a>
-        </li>
-
-        <!-- Apps & Pages -->
-        <li class="menu-header mt-5">
-          <span class="menu-header-text" data-i18n="Apps & Pages">Apps &amp; Pages</span>
-        </li>
-        <template v-if="filteredAndSortedMenuGroups.length">
-          <li
-            class="menu-item"
-            v-for="group in filteredAndSortedMenuGroups"
-            :key="group.id"
-            :class="{
-              open: isGroupOpen(group),
-              active: isGroupActive(group)
-            }"
+          <transition
+            name="menu-expand"
+            @before-enter="beforeEnter"
+            @enter="enter"
+            @after-enter="afterEnter"
+            @before-leave="beforeLeave"
+            @leave="leave"
           >
-            <a href="javascript:void(0);" class="menu-link menu-toggle" @click="toggleGroup(group.id)">
-              <i :class="['menu-icon', 'tf-icons', group.icon]"></i>
-              <div>{{ group.name }}</div>
-            </a>
-            <transition
-              name="menu-expand"
-              @before-enter="beforeEnter"
-              @enter="enter"
-              @after-enter="afterEnter"
-              @before-leave="beforeLeave"
-              @leave="leave"
-            >
-              <ul class="menu-sub" v-show="isGroupOpen(group)" v-if="group.menuDetails && group.menuDetails.length">
-                <li
-                  class="menu-item"
-                  v-for="detail in [...group.menuDetails].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))"
-                  :key="detail.id"
-                  :class="{ active: detail.route === $route.path }"
-                  @mouseenter="handlePrefetch(detail.route)"
-                >
-                  <NuxtLink :to="detail.route" class="menu-link" @click="handleMenuClick">
-                    <div>{{ detail.name }}</div>
-                  </NuxtLink>
-                </li>
-              </ul>
-            </transition>
-          </li>
-        </template>
-      </ul>
-    </aside>
-  </template>
+            <ul class="menu-sub" v-show="isGroupOpen(group)" v-if="group.menuDetails && group.menuDetails.length">
+              <SidebarMenuNode
+                v-for="detail in sortedRoots(group.menuDetails)"
+                :key="detail.id"
+                :item="detail"
+                :open-ids="openDetailIds"
+                :current-path="$route.path"
+                @toggle="toggleDetail"
+                @navigate="handleMenuClick"
+                @prefetch="handlePrefetch"
+              />
+            </ul>
+          </transition>
+        </li>
+      </template>
+    </ul>
+  </aside>
+</template>
 
-  <script setup>
-    import { useMenuGroupStore } from '~/stores/menu-group';
-    import { useMenuDetailStore } from '~/stores/menu-detail';
-    import { useCustomerStore } from '~/stores/customer';
-    import { ref, onMounted, watch, computed } from 'vue';
-    import { useRoute } from 'vue-router';
-    import { useLayoutStore } from '~/stores/layout';
-    import { useUserStore } from '~/stores/user';
+<script setup>
+import { useMenuGroupStore } from '~/stores/menu-group';
+import { useCustomerStore } from '~/stores/customer';
+import { ref, onMounted, watch, computed } from 'vue';
+import { useRoute } from 'vue-router';
+import { useLayoutStore } from '~/stores/layout';
+import { useUserStore } from '~/stores/user';
+import SidebarMenuNode from '~/components/SidebarMenuNode.vue';
 
-    const menuGroupsStore = useMenuGroupStore();
-    const menuDetailsStore = useMenuDetailStore();
-    const route = useRoute();
-    const layoutStore = useLayoutStore();
-    const customerStore = useCustomerStore();
-    const userStore = useUserStore();
+const menuGroupsStore = useMenuGroupStore();
+const route = useRoute();
+const layoutStore = useLayoutStore();
+const customerStore = useCustomerStore();
+const userStore = useUserStore();
 
-    const openGroupIds = ref(new Set());
-    const isNavigatingFromMenu = ref(false);
+const openGroupIds = ref(new Set());
+const openDetailIds = ref(new Set());
+const isNavigatingFromMenu = ref(false);
 
-    const isSuperAdmin = computed(() => {
-      return userStore.user?.roles.some(role => role.name === 'superadmin');
-    });
+const filteredAndSortedMenuGroups = computed(() => {
+  const filteredGroups = menuGroupsStore.filteredMenuGroups;
+  if (!filteredGroups || filteredGroups.length === 0) return [];
+  return filteredGroups.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+});
 
-    const filteredAndSortedMenuGroups = computed(() => {
-      // Gunakan filteredMenuGroups dari store yang sudah memfilter berdasarkan permission di backend
-      const filteredGroups = menuGroupsStore.filteredMenuGroups;
-      
-      if (!filteredGroups || filteredGroups.length === 0) return [];
+const prefetchMap = {
+  '/master/customer': () => customerStore.prefetchCustomers(),
+  '/admin/menu-group': () => menuGroupsStore.prefetchMenuGroups(),
+};
 
-      return filteredGroups.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-    });
+const handlePrefetch = (routePath) => {
+  if (prefetchMap[routePath]) {
+    prefetchMap[routePath]();
+  }
+};
 
-    const prefetchMap = {
-      '/master/customer': () => customerStore.prefetchCustomers(),
-      '/admin/menu-group': () => menuGroupsStore.prefetchMenuGroups(),
-    };
+const handleMenuClick = () => {
+  isNavigatingFromMenu.value = true;
+  if (layoutStore.isSidebarExpanded) {
+    layoutStore.toggleSidebar();
+  }
+  setTimeout(() => {
+    isNavigatingFromMenu.value = false;
+  }, 200);
+};
 
-    const handlePrefetch = (route) => {
-      if (prefetchMap[route]) {
-        prefetchMap[route]();
+const handleMouseEnter = () => {
+  layoutStore.setSidebarHovered(true);
+};
+
+const handleMouseLeave = () => {
+  layoutStore.setSidebarHovered(false);
+};
+
+const toggleGroup = (groupId) => {
+  if (openGroupIds.value.has(groupId)) {
+    openGroupIds.value.delete(groupId);
+  } else {
+    openGroupIds.value.clear();
+    openGroupIds.value.add(groupId);
+  }
+};
+
+const toggleDetail = (detailId) => {
+  const next = new Set(openDetailIds.value);
+  if (next.has(detailId)) {
+    next.delete(detailId);
+  } else {
+    next.add(detailId);
+  }
+  openDetailIds.value = next;
+};
+
+function isNodeActive(node, path) {
+  if (node.route && node.route === path) return true;
+  if (!Array.isArray(node.children)) return false;
+  return node.children.some((child) => isNodeActive(child, path));
+}
+
+function collectActiveAncestorIds(nodes, path, acc = []) {
+  for (const node of nodes) {
+    if (isNodeActive(node, path)) {
+      if (Array.isArray(node.children) && node.children.length > 0) {
+        acc.push(node.id);
+        collectActiveAncestorIds(node.children, path, acc);
       }
-    };
-
-    const handleMenuClick = () => {
-      // Set flag bahwa navigasi berasal dari menu
-      isNavigatingFromMenu.value = true;
-      // Tutup sidebar ketika menu diklik
-      if (layoutStore.isSidebarExpanded) {
-        layoutStore.toggleSidebar();
-      }
-      // Reset flag setelah delay singkat
-      setTimeout(() => {
-        isNavigatingFromMenu.value = false;
-      }, 200);
-    };
-
-    const handleMouseEnter = () => {
-      layoutStore.setSidebarHovered(true);
-    };
-
-    const handleMouseLeave = () => {
-      layoutStore.setSidebarHovered(false);
-    };
-
-    const toggleGroup = (groupId) => {
-      if (openGroupIds.value.has(groupId)) {
-        openGroupIds.value.delete(groupId);
-      } else {
-        openGroupIds.value.clear();
-        openGroupIds.value.add(groupId);
-      }
-    };
-
-    const isGroupActive = (group) => {
-      return group.menuDetails?.some(detail => detail.route === route.path);
-    };
-
-    const isGroupOpen = (group) => {
-      return openGroupIds.value.has(group.id);
-    };
-
-    function toggleSidebar() {
-      layoutStore.toggleSidebar();
+      return acc;
     }
+  }
+  return acc;
+}
 
-    const setActiveGroup = () => {
-      const activeGroup = filteredAndSortedMenuGroups.value.find(isGroupActive);
-      if (activeGroup) {
-        if (!openGroupIds.value.has(activeGroup.id)) {
-          openGroupIds.value.clear();
-          openGroupIds.value.add(activeGroup.id);
-        }
-      }
-    };
+const isGroupActive = (group) => {
+  return (group.menuDetails || []).some((detail) => isNodeActive(detail, route.path));
+};
 
-    onMounted(async () => {
-      await userStore.loadUser();
-      // Pastikan user sudah loaded sebelum fetch menu groups
-      if (userStore.user) {
-        await menuGroupsStore.fetchAllMenuGroups();
-        setActiveGroup();
-      }
-    });
+const isGroupOpen = (group) => {
+  return openGroupIds.value.has(group.id);
+};
 
-    // Watch untuk user store agar menu groups di-refresh ketika user berubah
-    watch(() => userStore.user, async (newUser, oldUser) => {
-      // Hanya fetch ulang jika user benar-benar berubah (bukan dari null ke user)
-      if (newUser && newUser !== oldUser) {
-        await menuGroupsStore.fetchAllMenuGroups();
-        setActiveGroup();
-      }
-    });
+const sortedRoots = (details) => {
+  return [...(details || [])].sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || a.id - b.id);
+};
 
-    watch(() => route.path, () => {
-      setActiveGroup();
-      // Tutup sidebar otomatis ketika berpindah halaman (hanya jika bukan dari klik menu)
-      if (!isNavigatingFromMenu.value && layoutStore.isSidebarExpanded) {
-        layoutStore.toggleSidebar();
-      }
-    });
+function toggleSidebar() {
+  layoutStore.toggleSidebar();
+}
 
-    // --- Transition Hooks for smooth animation ---
-    const beforeEnter = (el) => {
+const setActiveGroup = () => {
+  const activeGroup = filteredAndSortedMenuGroups.value.find(isGroupActive);
+  if (activeGroup) {
+    if (!openGroupIds.value.has(activeGroup.id)) {
+      openGroupIds.value.clear();
+      openGroupIds.value.add(activeGroup.id);
+    }
+    const ancestorIds = collectActiveAncestorIds(activeGroup.menuDetails || [], route.path);
+    const next = new Set(openDetailIds.value);
+    for (const id of ancestorIds) {
+      next.add(id);
+    }
+    openDetailIds.value = next;
+  }
+};
+
+onMounted(async () => {
+  await userStore.loadUser();
+  if (userStore.user) {
+    await menuGroupsStore.fetchAllMenuGroups();
+    setActiveGroup();
+  }
+});
+
+watch(() => userStore.user, async (newUser, oldUser) => {
+  if (newUser && newUser !== oldUser) {
+    await menuGroupsStore.fetchAllMenuGroups();
+    setActiveGroup();
+  }
+});
+
+watch(() => route.path, () => {
+  setActiveGroup();
+  if (!isNavigatingFromMenu.value && layoutStore.isSidebarExpanded) {
+    layoutStore.toggleSidebar();
+  }
+});
+
+const beforeEnter = (el) => {
+  el.style.height = '0';
+  el.style.overflow = 'hidden';
+};
+
+const enter = (el, done) => {
+  el.style.height = el.scrollHeight + 'px';
+  el.addEventListener('transitionend', done, { once: true });
+};
+
+const afterEnter = (el) => {
+  el.style.height = 'auto';
+};
+
+const beforeLeave = (el) => {
+  el.style.height = el.scrollHeight + 'px';
+  el.style.overflow = 'hidden';
+};
+
+const leave = (el, done) => {
+  getComputedStyle(el).height;
+  requestAnimationFrame(() => {
       el.style.height = '0';
-      el.style.overflow = 'hidden';
-    };
+  });
+  el.addEventListener('transitionend', done, { once: true });
+};
+</script>
 
-    const enter = (el, done) => {
-      el.style.height = el.scrollHeight + 'px';
-      el.addEventListener('transitionend', done, { once: true });
-    };
+<style>
+.layout-menu {
+  transition: width 0.25s ease-in-out;
+}
 
-    const afterEnter = (el) => {
-      el.style.height = 'auto';
-    };
+html:not(.layout-menu-collapsed) .layout-menu {
+    width: 260px;
+}
 
-    const beforeLeave = (el) => {
-      el.style.height = el.scrollHeight + 'px';
-      el.style.overflow = 'hidden';
-    };
+html.layout-menu-collapsed .layout-menu {
+    width: 82px;
+}
 
-    const leave = (el, done) => {
-      // Force repaint before starting the transition
-      getComputedStyle(el).height;
-      requestAnimationFrame(() => {
-          el.style.height = '0';
-      });
-      el.addEventListener('transitionend', done, { once: true });
-    };
-  </script>
+html.layout-menu-collapsed.layout-menu-hover .layout-menu {
+    width: 260px;
+}
 
-  <style>
-    .layout-menu {
-      transition: width 0.25s ease-in-out;
-    }
-
-    html:not(.layout-menu-collapsed) .layout-menu {
-        width: 260px;
-    }
-
-    html.layout-menu-collapsed .layout-menu {
-        width: 82px;
-    }
-
-    html.layout-menu-collapsed.layout-menu-hover .layout-menu {
-        width: 260px;
-    }
-
-    #layout-menu {
-      padding-top: 1rem;
-    }
-    .menu-sub {
-      transition: height 0.3s ease-in-out;
-      overflow: hidden;
-    }
-    .menu-inner {
-      overflow-y: auto;
-    }
-  </style>
+#layout-menu {
+  padding-top: 1rem;
+}
+.menu-sub {
+  transition: height 0.3s ease-in-out;
+  overflow: hidden;
+}
+.menu-inner {
+  overflow-y: auto;
+}
+</style>

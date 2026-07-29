@@ -92,40 +92,39 @@
 
             <div class="row g-6">
                 <div class="col-12">
-                    <h4 class="mt-6 mb-1">Filter Sales Invoice</h4>
-                    <p class="mb-0">Saring invoice berdasarkan customer dan status.</p>
-                </div>
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label text-muted mb-2">Filter Customer</label>
-                                    <CustomSelect2 
-                                        v-model="filters.customerId" 
-                                        :options="customers" 
-                                        :get-option-label="c => c.name" 
-                                        :reduce="c => c.id" 
-                                        placeholder="Pilih Customer"
-                                        searchable
-                                        clearable
-                                    />
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label text-muted mb-2">Filter Status</label>
-                                    <CustomSelect2 
-                                        v-model="filters.status" 
-                                        :options="statusOptions" 
-                                        :get-option-label="option => option.label" 
-                                        :reduce="option => option.value" 
-                                        placeholder="Pilih Status"
-                                        searchable
-                                        clearable
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <CollapsibleFilterCard
+                        title="Filter Sales Invoice"
+                        description="Saring invoice berdasarkan customer dan status."
+                        :has-active-filters="hasActiveFilters"
+                        @reset="resetFilters"
+                    >
+                        <FilterFieldsRow>
+                            <FilterField>
+                                <label class="form-label">Filter Customer</label>
+                                <CustomSelect2 
+                                    v-model="filters.customerId" 
+                                    :options="customers" 
+                                    :get-option-label="c => c.name" 
+                                    :reduce="c => c.id" 
+                                    placeholder="Pilih Customer"
+                                    searchable
+                                    clearable
+                                />
+                            </FilterField>
+                            <FilterField>
+                                <label class="form-label">Filter Status</label>
+                                <CustomSelect2 
+                                    v-model="filters.status" 
+                                    :options="statusOptions" 
+                                    :get-option-label="option => option.label" 
+                                    :reduce="option => option.value" 
+                                    placeholder="Pilih Status"
+                                    searchable
+                                    clearable
+                                />
+                            </FilterField>
+                        </FilterFieldsRow>
+                    </CollapsibleFilterCard>
                 </div>
                 <div class="col-12">
                     <!-- salesInvoice Table -->
@@ -914,6 +913,16 @@ const filters = ref({
   status: null,
   search: '',
 });
+
+const hasActiveFilters = computed(
+  () => !!filters.value.customerId || !!filters.value.status
+)
+
+function resetFilters() {
+  filters.value.customerId = null
+  filters.value.status = null
+}
+
 const globalFilterValue = ref('');
 const attachmentPreview = ref(null);
 

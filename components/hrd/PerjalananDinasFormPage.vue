@@ -212,11 +212,11 @@
                     </label>
                   </div>
 
-                  <div class="d-flex gap-2">
+                  <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                    <NuxtLink to="/hrd/perjalanan-dinas" class="btn btn-outline-secondary">Batal</NuxtLink>
                     <button type="submit" class="btn btn-primary" :disabled="store.saving">
                       {{ store.saving ? 'Menyimpan...' : store.isEditMode ? 'Perbarui' : 'Simpan' }}
                     </button>
-                    <NuxtLink to="/hrd/perjalanan-dinas" class="btn btn-outline-secondary">Batal</NuxtLink>
                   </div>
                 </form>
               </div>

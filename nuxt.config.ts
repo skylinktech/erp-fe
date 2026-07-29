@@ -1,5 +1,12 @@
 // nuxt.config.ts
+import { readFileSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { defineNuxtConfig } from 'nuxt/config'
+
+const packageJson = JSON.parse(
+  readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'package.json'), 'utf-8')
+) as { version?: string }
 
 export default defineNuxtConfig({
   devtools: {
@@ -50,17 +57,33 @@ export default defineNuxtConfig({
   },
   routeRules: {
     '/inventory/cetak-stock-transfer/**': { ssr: false },
+    '/notifications': { redirect: '/' },
+    '/notifications/**': { redirect: '/' },
   },
   modules: [
     '@pinia/nuxt',
     'nuxt-toast',
   ],
+  components: {
+    dirs: [
+      {
+        path: '~/components/list',
+        pathPrefix: false,
+      },
+      {
+        path: '~/components',
+        ignore: ['list/**'],
+      },
+    ],
+  },
   build: {
     transpile: ['primevue'],
   },
 
   runtimeConfig: {
     public: {
+      appVersion: process.env.NUXT_PUBLIC_APP_VERSION || packageJson.version || '0.0.0',
+      appName: 'skylink-erp-fe',
       apiBase: process.env.NUXT_PUBLIC_API_BASE,
       authBase: process.env.NUXT_PUBLIC_AUTH_BASE,
       storageBase: process.env.NUXT_PUBLIC_STORAGE_BASE,
@@ -87,6 +110,7 @@ export default defineNuxtConfig({
     '~/plugins/cors-fix.client.ts',
   ],
   css: [
+    '~/assets/css/list-filter.css',
     '~/public/vendor/libs/select2/select2.css',
   ],
   app: {

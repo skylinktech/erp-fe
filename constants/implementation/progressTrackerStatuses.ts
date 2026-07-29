@@ -32,6 +32,31 @@ export const PROJECT_STATUS_OPTIONS = [
   { value: 'cancelled', label: 'Cancelled' },
 ]
 
+export const PROGRESS_TRACKER_APPROVAL_STATUSES = [
+  'draft',
+  'pending',
+  'approved',
+  'rejected',
+] as const
+
+export type ProgressTrackerApprovalStatus = (typeof PROGRESS_TRACKER_APPROVAL_STATUSES)[number]
+
+export const PROGRESS_TRACKER_APPROVAL_STATUS_OPTIONS = [
+  { value: 'draft', label: 'Draft' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'approved', label: 'Approved' },
+  { value: 'rejected', label: 'Rejected' },
+]
+
+export function getProjectApprovalStatus(
+  project: { approvalStatus?: string; approval_status?: string } | null | undefined
+): ProgressTrackerApprovalStatus {
+  const raw = project?.approvalStatus ?? project?.approval_status ?? 'draft'
+  return PROGRESS_TRACKER_APPROVAL_STATUSES.includes(raw as ProgressTrackerApprovalStatus)
+    ? (raw as ProgressTrackerApprovalStatus)
+    : 'draft'
+}
+
 /** Alias status lama dari API (mor/mod/…) */
 const LEGACY_STATUS_ALIASES: Record<string, ProgressTrackerStatus> = {
   mor: 'material_readiness',

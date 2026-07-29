@@ -29,40 +29,37 @@
         </div>
       </div>
 
-      <div class="card mb-4">
-        <div class="card-body">
-          <div class="row g-3 align-items-end">
-            <div class="col-md-4">
-              <label class="form-label small text-muted">Cari Pegawai</label>
-              <input
-                v-model="searchInput"
-                type="search"
-                class="form-control"
-                placeholder="Nama atau NIK..."
-              />
-            </div>
-            <div class="col-md-3">
-              <label class="form-label small text-muted">Divisi</label>
-              <select v-model.number="filters.divisi_id" class="form-select" @change="reload">
-                <option :value="null">Semua divisi</option>
-                <option v-for="d in divisiOptions" :key="d.id" :value="d.id">{{ d.label }}</option>
-              </select>
-            </div>
-            <div class="col-md-3">
-              <label class="form-label small text-muted">Departemen</label>
-              <select v-model.number="filters.departemen_id" class="form-select" @change="reload">
-                <option :value="null">Semua departemen</option>
-                <option v-for="d in departemenOptions" :key="d.id" :value="d.id">{{ d.label }}</option>
-              </select>
-            </div>
-            <div class="col-md-2">
-              <button type="button" class="btn btn-outline-secondary w-100" @click="resetFilters">
-                Reset
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <CollapsibleFilterCard
+        title="Filter Struktur Organisasi"
+        :has-active-filters="hasActiveFilters"
+        @reset="resetFilters"
+      >
+        <FilterFieldsRow>
+          <FilterField>
+            <label class="form-label">Cari Pegawai</label>
+            <input
+              v-model="searchInput"
+              type="search"
+              class="form-control"
+              placeholder="Nama atau NIK..."
+            />
+          </FilterField>
+          <FilterField>
+            <label class="form-label">Divisi</label>
+            <select v-model.number="filters.divisi_id" class="form-select" @change="reload">
+              <option :value="null">Semua divisi</option>
+              <option v-for="d in divisiOptions" :key="d.id" :value="d.id">{{ d.label }}</option>
+            </select>
+          </FilterField>
+          <FilterField>
+            <label class="form-label">Departemen</label>
+            <select v-model.number="filters.departemen_id" class="form-select" @change="reload">
+              <option :value="null">Semua departemen</option>
+              <option v-for="d in departemenOptions" :key="d.id" :value="d.id">{{ d.label }}</option>
+            </select>
+          </FilterField>
+        </FilterFieldsRow>
+      </CollapsibleFilterCard>
 
       <div v-if="meta" class="row g-3 mb-4">
         <div class="col-md-4">
@@ -198,6 +195,13 @@ const searchInput = ref('')
 
 const canManageJabatan = computed(
   () => userHasRole('superadmin') || userHasPermission('edit_jabatan')
+)
+
+const hasActiveFilters = computed(
+  () =>
+    !!searchInput.value.trim() ||
+    filters.value.divisi_id != null ||
+    filters.value.departemen_id != null
 )
 
 setListTitle('Struktur Organisasi', 0)

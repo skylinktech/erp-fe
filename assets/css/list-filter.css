@@ -1,0 +1,93 @@
+/* Shared list-page filter layout (CollapsibleFilterCard + FilterFieldsRow) */
+
+.filter-fields-row {
+  display: grid;
+  /* auto-fit: empty tracks collapse so fields stretch full width */
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 1rem 1.5rem;
+  width: 100%;
+  align-items: start;
+}
+
+.filter-field {
+  min-width: 0;
+}
+
+.filter-field .form-label,
+.collapsible-filter-card__fields .form-label {
+  display: block;
+  margin-bottom: 0.375rem;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  color: #697a8d;
+}
+
+.filter-field .form-control,
+.filter-field .form-select,
+.collapsible-filter-card__fields .form-control,
+.collapsible-filter-card__fields .form-select {
+  width: 100%;
+  min-height: 2.375rem;
+  font-size: 0.9375rem;
+}
+
+.filter-field .v-select,
+.collapsible-filter-card__fields .v-select,
+.filter-field .p-inputtext,
+.collapsible-filter-card__fields .p-inputtext {
+  width: 100%;
+}
+
+.filter-field .vs__dropdown-toggle,
+.collapsible-filter-card__fields .vs__dropdown-toggle {
+  min-height: 2.375rem;
+  border-color: #d9dee3;
+}
+
+.filter-fields-row--cols-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.filter-fields-row--cols-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.filter-field input[type='date'],
+.filter-field input[type='month'],
+.collapsible-filter-card__fields input[type='date'],
+.collapsible-filter-card__fields input[type='month'] {
+  width: 100%;
+}
+
+/* Bootstrap row fallback inside filter card */
+.collapsible-filter-card__fields > .row {
+  --bs-gutter-x: 1.5rem;
+  --bs-gutter-y: 0;
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  margin-right: calc(-0.5 * var(--bs-gutter-x));
+  margin-left: calc(-0.5 * var(--bs-gutter-x));
+}
+
+.collapsible-filter-card__fields > .row > [class*='col-'] {
+  padding-right: calc(var(--bs-gutter-x) * 0.5);
+  padding-left: calc(var(--bs-gutter-x) * 0.5);
+}
+
+@media (max-width: 767.98px) {
+  .filter-fields-row {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-fields-row--cols-2,
+  .filter-fields-row--cols-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .filter-fields-row--cols-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

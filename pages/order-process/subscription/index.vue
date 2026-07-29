@@ -110,22 +110,18 @@
 
       <div class="row g-6">
         <div class="col-12">
-          <h4 class="mt-6 mb-1">Filter Subscription</h4>
-          <p class="mb-0">Filter Subscription berdasarkan Customer dan Status.</p>
-        </div>
-        <div class="col-12">
-          <div class="card">
-            <div class="card-body">
-              <div class="row">
-                <div class="col-md-6 mb-2">
-                  <CustomSelect2 v-model="filters.customerId" :options="customers || []" :get-option-label="o => o?.name ?? ''" :reduce="o => o?.id" searchable clearable placeholder="Pilih Customer" />
-                </div>
-                <div class="col-md-6 mb-2">
-                  <CustomSelect2 v-model="filters.status" :options="statusOptions" :get-option-label="o => o.label" :reduce="o => o.value" searchable clearable placeholder="Pilih Status" />
-                </div>
-              </div>
-            </div>
-          </div>
+          <CollapsibleFilterCard title="Filter Subscription" :has-active-filters="hasActiveFilters" @reset="resetFilters">
+            <FilterFieldsRow :columns="2">
+              <FilterField>
+                <label class="form-label">Customer</label>
+                <CustomSelect2 v-model="filters.customerId" :options="customers || []" :get-option-label="o => o?.name ?? ''" :reduce="o => o?.id" searchable clearable placeholder="Pilih Customer" />
+              </FilterField>
+              <FilterField>
+                <label class="form-label">Status</label>
+                <CustomSelect2 v-model="filters.status" :options="statusOptions" :get-option-label="o => o.label" :reduce="o => o.value" searchable clearable placeholder="Pilih Status" />
+              </FilterField>
+            </FilterFieldsRow>
+          </CollapsibleFilterCard>
         </div>
         <div class="col-12">
           <div class="card">
@@ -181,11 +177,6 @@
                     <a @click="navigateTo(`/sales/quotation/detail/${slotProps.data.quotation.id}`)" class="text-primary text-nowrap" style="cursor:pointer;text-decoration:underline" :title="'View detail'">{{ slotProps.data.quotation?.noQuotation || slotProps.data.quotation?.no_quotation || '-' }}</a>
                   </template>
                 </Column>
-                <Column field="purchaseRequest.noPurchaseRequest" header="Purchase Request" :sortable="true">
-                  <template #body="slotProps">
-                    <a @click="navigateTo(`/purchasing/purchase-request/detail/${slotProps.data.purchaseRequest.id}`)" class="text-primary text-nowrap" style="cursor:pointer;text-decoration:underline" :title="'View detail'">{{ slotProps.data.purchaseRequest?.prNumber || slotProps.data.purchaseRequest?.pr_number || slotProps.data.purchaseRequest?.noPurchaseRequest || '-' }}</a>
-                  </template>
-                </Column>
                 <Column field="status" header="Status" :sortable="true">
                   <template #body="slotProps">
                     <span :class="getStatusBadge(slotProps.data.status).class">{{ getStatusBadge(slotProps.data.status).text }}</span>
@@ -236,7 +227,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useSubscriptionStore } from '~/stores/subscription'
 import { useCustomerStore } from '~/stores/customer'
@@ -259,6 +250,15 @@ const { customers } = storeToRefs(customerStore)
 
 const tableControls = ref({ rows: 10, search: '' })
 const filters = ref({ search: '', customerId: null, status: null })
+
+const hasActiveFilters = computed(
+  () => !!filters.value.customerId || !!filters.value.status
+)
+
+function resetFilters() {
+  filters.value.customerId = null
+  filters.value.status = null
+}
 const globalFilterValue = ref('')
 const rowsPerPageOptionsArray = ref([10, 25, 50, 100])
 

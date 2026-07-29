@@ -58,6 +58,44 @@ export interface ProgressTrackerNode {
   attachments?: ProgressTrackerAttachment[]
 }
 
+export interface ProgressTrackerSiteInvestmentLine {
+  id?: string
+  quantity?: number
+  price?: number
+  subtotal?: number
+  priceListLine?: {
+    product?: { id?: number; name?: string; sku?: string }
+    service?: { id?: number; name?: string; code?: string }
+    did?: { id?: number; name?: string; code?: string }
+  }
+  price_list_line?: ProgressTrackerSiteInvestmentLine['priceListLine']
+}
+
+export interface ProgressTrackerSiteInvestment {
+  id: string
+  siNumber?: string
+  si_number?: string
+  name?: string
+  status?: string
+  materialSubtotal?: number
+  material_subtotal?: number
+  serviceSubtotal?: number
+  service_subtotal?: number
+  didSubtotal?: number
+  did_subtotal?: number
+  total?: number
+  grandTotal?: number
+  grand_total?: number
+  marketingFee?: number
+  marketing_fee?: number
+  siteInvestMaterials?: ProgressTrackerSiteInvestmentLine[]
+  site_invest_materials?: ProgressTrackerSiteInvestmentLine[]
+  siteInvestServices?: ProgressTrackerSiteInvestmentLine[]
+  site_invest_services?: ProgressTrackerSiteInvestmentLine[]
+  siteInvestDids?: ProgressTrackerSiteInvestmentLine[]
+  site_invest_dids?: ProgressTrackerSiteInvestmentLine[]
+}
+
 export interface ProgressTrackerProject {
   id: string
   projectCode?: string
@@ -71,17 +109,34 @@ export interface ProgressTrackerProject {
   siteId?: number | null
   site_id?: number | null
   status: string
+  approvalStatus?: string
+  approval_status?: string
+  currentApprovalStep?: number | null
+  current_approval_step?: number | null
+  submittedAt?: string | null
+  submitted_at?: string | null
+  rejectionReason?: string | null
+  rejection_reason?: string | null
+  approvedByUser?: { id: number; fullName?: string; full_name?: string }
   nodesCount?: number
   nodes_count?: number
   customer?: { id: number; customerName?: string; customer_name?: string }
   site?: { id: number; siteName?: string; site_name?: string }
-  siteInvestment?: {
-    id: string
-    siNumber?: string
-    si_number?: string
-    name?: string
-  }
+  siteInvestment?: ProgressTrackerSiteInvestment
   nodes?: ProgressTrackerNode[]
+  approvalLogs?: Array<Record<string, unknown>>
+  approval_logs?: Array<Record<string, unknown>>
+  currentApprovers?: Array<{
+    userId?: number
+    user_id?: number
+    fullName?: string
+    full_name?: string
+    email?: string
+    source?: string
+  }>
+  current_approvers?: Array<Record<string, unknown>>
+  nextApprovalStep?: number | null
+  next_approval_step?: number | null
   createdAt?: string
   created_at?: string
 }
@@ -112,6 +167,7 @@ interface ProgressTrackerState {
     draw: number
     search: string
     status?: string | null
+    approvalStatus?: string | null
     customerId?: number | null
     siteInvestmentId?: string | null
   }
@@ -135,6 +191,7 @@ interface ProgressTrackerState {
     nodesByStatus: Record<string, number>
   }
   statusOptions: { value: string; label: string }[]
+  workflowConfigured: boolean
 }
 
 function emptyNode(index: number): ProgressTrackerNodeForm {
@@ -181,6 +238,7 @@ export const useProgressTrackerStore = defineStore('progressTracker', {
       draw: 0,
       search: '',
       status: null,
+      approvalStatus: null,
       customerId: null,
       siteInvestmentId: null,
     },
@@ -204,6 +262,7 @@ export const useProgressTrackerStore = defineStore('progressTracker', {
       nodesByStatus: {},
     },
     statusOptions: [],
+    workflowConfigured: false,
   }),
 
   actions: {
@@ -266,6 +325,7 @@ export const useProgressTrackerStore = defineStore('progressTracker', {
         if (this.params.sortField) qs.set('sortField', this.params.sortField)
         if (this.params.sortOrder != null) qs.set('sortOrder', String(this.params.sortOrder))
         if (this.params.status) qs.set('status', this.params.status)
+        if (this.params.approvalStatus) qs.set('approvalStatus', this.params.approvalStatus)
         if (this.params.customerId) qs.set('customerId', String(this.params.customerId))
         if (this.params.siteInvestmentId) qs.set('siteInvestmentId', this.params.siteInvestmentId)
 
@@ -273,6 +333,7 @@ export const useProgressTrackerStore = defineStore('progressTracker', {
         const body = res as any
         this.projects = body.data ?? []
         this.totalRecords = body.meta?.total ?? body.meta?.total ?? this.projects.length
+        this.workflowConfigured = body.workflowConfigured ?? body.workflow_configured ?? false
       } catch (e: any) {
         this.error = e
         this.projects = []
@@ -290,6 +351,7 @@ export const useProgressTrackerStore = defineStore('progressTracker', {
         const body = res as any
         this.project = body.data ?? null
         this.statusOptions = body.statusOptions ?? []
+        this.workflowConfigured = body.workflowConfigured ?? body.workflow_configured ?? false
         return this.project
       } catch (e: any) {
         this.error = e
@@ -417,6 +479,91 @@ export const useProgressTrackerStore = defineStore('progressTracker', {
     async deleteAttachment(attachmentId: string) {
       const { $api } = useNuxtApp()
       await apiFetch($api.deleteProgressTrackerAttachment(attachmentId), { method: 'DELETE' })
+    },
+
+    async _workflowAction(
+      action: 'submit' | 'approve' | 'reject',
+      id: string,
+      payload?: { remarks?: string }
+    ) {
+      const { $api } = useNuxtApp()
+      const url =
+        action === 'submit'
+          ? $api.submitProgressTracker(id)
+          : action === 'approve'
+            ? $api.approveProgressTracker(id)
+            : $api.rejectProgressTracker(id)
+
+      const res = await apiFetch(url, {
+        method: 'PATCH',
+        body: payload ?? {},
+      })
+      const data = (res as any)?.data
+      if (data) this.project = data
+      return res
+    },
+
+    async submitForApproval(id: string) {
+      try {
+        await this._workflowAction('submit', id)
+        await Swal.fire({
+          icon: 'success',
+          title: 'Berhasil',
+          text: 'Project diajukan untuk persetujuan',
+          timer: 2000,
+          showConfirmButton: false,
+        })
+        return true
+      } catch (e: any) {
+        await Swal.fire({
+          icon: 'error',
+          title: 'Gagal',
+          text: e?.data?.message || e?.message || 'Gagal mengajukan persetujuan',
+        })
+        return false
+      }
+    },
+
+    async approve(id: string, remarks?: string) {
+      try {
+        await this._workflowAction('approve', id, { remarks })
+        await Swal.fire({
+          icon: 'success',
+          title: 'Berhasil',
+          text: 'Project disetujui',
+          timer: 2000,
+          showConfirmButton: false,
+        })
+        return true
+      } catch (e: any) {
+        await Swal.fire({
+          icon: 'error',
+          title: 'Gagal',
+          text: e?.data?.message || e?.message || 'Gagal approve project',
+        })
+        return false
+      }
+    },
+
+    async reject(id: string, remarks: string) {
+      try {
+        await this._workflowAction('reject', id, { remarks })
+        await Swal.fire({
+          icon: 'success',
+          title: 'Berhasil',
+          text: 'Project ditolak',
+          timer: 2000,
+          showConfirmButton: false,
+        })
+        return true
+      } catch (e: any) {
+        await Swal.fire({
+          icon: 'error',
+          title: 'Gagal',
+          text: e?.data?.message || e?.message || 'Gagal reject project',
+        })
+        return false
+      }
     },
   },
 })

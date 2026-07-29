@@ -83,7 +83,16 @@
                                     >
                                         <Column field="id" header="#" :sortable="true"></Column> 
                                         <Column field="name" header="Nama Menu Detail" :sortable="true"></Column>
-                                        <Column field="route" header="Route" :sortable="true"></Column>
+                                        <Column field="route" header="Route" :sortable="true">
+                                            <template #body="slotProps">
+                                                <span>{{ slotProps.data.route || '—' }}</span>
+                                            </template>
+                                        </Column>
+                                        <Column field="parentId" header="Parent" :sortable="true">
+                                            <template #body="slotProps">
+                                                <span>{{ slotProps.data.parent?.name || '—' }}</span>
+                                            </template>
+                                        </Column>
                                         <Column field="order" header="Order" :sortable="true"></Column>
                                         <Column field="status" header="Status" :sortable="true">
                                             <template #body="slotProps">
@@ -164,9 +173,9 @@
                                     type="text" 
                                     class="form-control" 
                                     v-model="form.route" 
-                                    placeholder="Masukkan nama route"
+                                    placeholder="Kosongkan jika folder (punya submenu)"
                                     >
-                                    <label>Route</label>
+                                    <label>Route (kosong = folder)</label>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -203,6 +212,22 @@
                                         class="select-menu-group"
                                     />   
                                     <p v-if="menuGroups.length === 0" class="small text-muted">Memuat data menu group....</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating form-floating-outline">
+                                    <CustomSelect2
+                                        v-model="form.parentId"
+                                        :options="parentOptions || []"
+                                        :get-option-label="option => option?.label ?? option?.name ?? ''"
+                                        :reduce="option => option?.id"
+                                        searchable
+                                        clearable
+                                        placeholder="-- Parent (opsional) --"
+                                        class="select-parent"
+                                        :disabled="!form.menuGroupId"
+                                    />
+                                    <p class="small text-muted mb-0">Kosongkan untuk menempatkan langsung di bawah Menu Group.</p>
                                 </div>
                             </div>
                             <div class="col-md-6" v-if="isReferenceable">
@@ -271,7 +296,7 @@ const { setListTitle, setFormTitle } = useDynamicTitle()
 
 const myDataTableRef = ref(null)
 const menuDetailStore = useMenuDetailStore()
-const { menuDetails, menuGroups, loading, totalRecords, params, form, isEditMode, showModal, validationErrors } = storeToRefs(menuDetailStore)
+const { menuDetails, menuGroups, parentOptions, loading, totalRecords, params, form, isEditMode, showModal, validationErrors } = storeToRefs(menuDetailStore)
 const { userHasPermission, userHasRole } = usePermissions();
 const { user } = useUserStore();
 
@@ -328,6 +353,21 @@ watch(showModal, (newValue) => {
     }
 });
 
+watch(
+  () => form.value?.menuGroupId,
+  async (groupId, oldGroupId) => {
+    if (!showModal.value) return
+    if (groupId === oldGroupId) return
+    if (oldGroupId != null && groupId !== oldGroupId) {
+      form.value.parentId = null
+    }
+    await menuDetailStore.fetchParentOptions(
+      groupId,
+      isEditMode.value ? form.value?.id ?? null : null
+    )
+  }
+)
+
 const debouncedSearch = useDebounceFn(() => {
     menuDetailStore.setSearch(globalFilterValue.value)
 }, 500)
@@ -354,7 +394,6 @@ const getStatusBadge = (status) => {
 };
 </script>
 
-<style scoped>
 <style scoped>
 
 /* Responsive adjustments */

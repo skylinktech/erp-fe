@@ -104,13 +104,6 @@
                         <span v-else>{{ subscription.quotation?.noQuotation || '—' }}</span>
                       </p>
                     </div>
-                    <div class="col-md-6" v-if="subscription.purchaseRequest">
-                      <label class="form-label text-muted medium">Purchase Order</label>
-                      <p class="mb-0 fw-medium">
-                        <NuxtLink v-if="subscription.purchaseRequest?.id" :to="'/purchasing/purchase-request/detail/' + subscription.purchaseRequest.id" class="text-primary">{{ subscription.purchaseRequest?.prNumber || subscription.purchaseRequest?.pr_number || subscription.purchaseRequest?.noPurchaseRequest || '—' }}</NuxtLink>
-                        <span v-else>{{ subscription.purchaseRequest?.prNumber || subscription.purchaseRequest?.pr_number || subscription.purchaseRequest?.noPurchaseRequest || '—' }}</span>
-                      </p>
-                    </div>
                     <div class="col-md-6">
                       <label class="form-label text-muted medium">Customer</label>
                       <p class="mb-0 fw-medium">{{ subscription.customerName || subscription.customer?.name || '—' }}</p>
@@ -138,6 +131,18 @@
                     <div class="col-md-6">
                       <label class="form-label text-muted medium">Term of Payment</label>
                       <p class="mb-0">{{ subscription.termOfPayment || '—' }}</p>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label text-muted medium">PO Reference</label>
+                      <p class="mb-0 fw-medium">{{ subscription.poReference || (subscription as any).po_reference || '—' }}</p>
+                    </div>
+                    <div class="col-md-6" v-if="subscriptionPoAttachment">
+                      <label class="form-label text-muted medium">PO Attachment</label>
+                      <p class="mb-0">
+                        <a :href="getAttachmentUrl(subscriptionPoAttachment)" target="_blank" rel="noopener noreferrer" class="text-primary text-decoration-none">
+                          <i class="ri-attachment-2 me-1"></i>{{ getFileNameFromUrl(subscriptionPoAttachment) }}
+                        </a>
+                      </p>
                     </div>
                     <div class="col-md-6" v-if="subscription.leTechReview">
                       <label class="form-label text-muted medium">Legal Tech Review</label>
@@ -510,6 +515,11 @@ const subscriptionAttachments = computed(() => {
   } catch (e) {
     return [attachmentStr]
   }
+})
+
+const subscriptionPoAttachment = computed(() => {
+  if (!subscription.value) return null
+  return (subscription.value as any).poAttachment ?? (subscription.value as any).po_attachment ?? null
 })
 
 function getFileNameFromUrl(url: string) {

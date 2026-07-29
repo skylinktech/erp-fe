@@ -110,38 +110,34 @@
 
       <div class="row g-6">
         <div class="col-12">
-          <h4 class="mt-6 mb-1">Filter Legal-Tech Review</h4>
-          <p class="mb-0">Filter berdasarkan Quotation dan Status.</p>
-        </div>
-        <div class="col-12">
-          <div class="card">
-            <div class="card-body">
-              <div class="row">
-                <div class="col-md-6 mb-2">
-                  <CustomSelect2
-                    v-model="filters.quotationId"
-                    :options="quotationsForFilter"
-                    :get-option-label="(o) => (o ? (o.noQuotation || o.no_quotation || '') + ' - ' + (o.customer?.name || '') : '')"
-                    :reduce="(o) => o?.id"
-                    searchable
-                    clearable
-                    placeholder="Pilih Quotation"
-                  />
-                </div>
-                <div class="col-md-6 mb-2">
-                  <CustomSelect2
-                    v-model="filters.status"
-                    :options="statusOptions"
-                    :get-option-label="(o) => o.label"
-                    :reduce="(o) => o.value"
-                    searchable
-                    clearable
-                    placeholder="Pilih Status"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
+          <CollapsibleFilterCard title="Filter Legal-Tech Review" :has-active-filters="hasActiveFilters" @reset="resetFilters">
+            <FilterFieldsRow>
+              <FilterField>
+                <label class="form-label">Quotation</label>
+                <CustomSelect2
+                  v-model="filters.quotationId"
+                  :options="quotationsForFilter"
+                  :get-option-label="(o) => (o ? (o.noQuotation || o.no_quotation || '') + ' - ' + (o.customer?.name || '') : '')"
+                  :reduce="(o) => o?.id"
+                  searchable
+                  clearable
+                  placeholder="Pilih Quotation"
+                />
+              </FilterField>
+              <FilterField>
+                <label class="form-label">Status</label>
+                <CustomSelect2
+                  v-model="filters.status"
+                  :options="statusOptions"
+                  :get-option-label="(o) => o.label"
+                  :reduce="(o) => o.value"
+                  searchable
+                  clearable
+                  placeholder="Pilih Status"
+                />
+              </FilterField>
+            </FilterFieldsRow>
+          </CollapsibleFilterCard>
         </div>
         <div class="col-12">
           <div class="card">
@@ -393,6 +389,15 @@ const externalPurchaseOrders = ref([])
 const expandedRows = ref({})
 const tableControls = ref({ rows: 10, search: '' })
 const filters = ref({ quotationId: null, status: null })
+
+const hasActiveFilters = computed(
+  () => !!filters.value.quotationId || !!filters.value.status
+)
+
+function resetFilters() {
+  filters.value.quotationId = null
+  filters.value.status = null
+}
 const globalFilterValue = ref('')
 const rowsPerPageOptionsArray = ref([10, 25, 50, 100])
 

@@ -14,6 +14,7 @@ export interface Product {
   unitId: number
   isDevice: boolean
   isKit: boolean
+  isInternal?: boolean | null
   billingType: 'one_time' | 'recurring'
   condition?: 'baru' | 'bekas' | 'rusak'
   categoryId: number
@@ -38,13 +39,23 @@ export interface ProductKit {
   type: 'router' | 'adaptor' | 'cable'
 }
 
+export interface ProductStatistics {
+  total: number
+  internal: number
+  external: number
+  both: number
+  device: number
+  kit: number
+}
+
 interface ProductState {
   products: Product[]
-  allProducts: Product[] // ✅ NEW: Untuk menyimpan semua produk untuk select dropdown
+  allProducts: Product[]
   loading: boolean
   error: any
   totalRecords: number
   totalProducts: number
+  statistics: ProductStatistics
   params: {
     first: number
     rows: number
@@ -53,6 +64,12 @@ interface ProductState {
     search: string
     warehouseId?: number | null
     customerId?: number | null
+    categoryId?: number | null
+    isInternal?: 'true' | 'false' | 'null' | null
+    isDevice?: 'true' | 'false' | null
+    isKit?: 'true' | 'false' | null
+    billingType?: 'one_time' | 'recurring' | null
+    condition?: 'baru' | 'bekas' | 'rusak' | null
   }
   form: Partial<Product>
   isEditMode: boolean
@@ -68,6 +85,14 @@ export const useProductStore = defineStore('product', {
     error: null,
     totalRecords: 0,
     totalProducts: 0,
+    statistics: {
+      total: 0,
+      internal: 0,
+      external: 0,
+      both: 0,
+      device: 0,
+      kit: 0,
+    },
     params: {
       first: 0,
       rows: 10,
@@ -76,6 +101,12 @@ export const useProductStore = defineStore('product', {
       search: '',
       warehouseId: null,
       customerId: null,
+      categoryId: null,
+      isInternal: null,
+      isDevice: null,
+      isKit: null,
+      billingType: null,
+      condition: null,
     },
     form: {
       name: '',
@@ -83,6 +114,7 @@ export const useProductStore = defineStore('product', {
       unitId: undefined,
       isDevice: false,
       isKit: false,
+      isInternal: null as boolean | null,
       billingType: 'one_time' as 'one_time' | 'recurring',
       condition: 'baru' as 'baru' | 'bekas' | 'rusak',
       productType: null as string | null,
@@ -95,6 +127,19 @@ export const useProductStore = defineStore('product', {
     validationErrors: [],
   }),
   actions: {
+    normalizeNullableBoolean(value: unknown): boolean | null {
+      if (value === null || value === undefined || value === '') {
+        return null;
+      }
+      if (value === true || value === 'true' || value === 1 || value === '1') {
+        return true;
+      }
+      if (value === false || value === 'false' || value === 0 || value === '0') {
+        return false;
+      }
+      return null;
+    },
+
     normalizeId(value: unknown): number | undefined {
       if (value === null || value === undefined || value === '') return undefined;
       const parsed = Number(value);
@@ -141,6 +186,36 @@ export const useProductStore = defineStore('product', {
       return null;
     },
 
+    appendProductFilters(params: URLSearchParams) {
+      const {
+        categoryId,
+        isInternal,
+        isDevice,
+        isKit,
+        billingType,
+        condition,
+      } = this.params;
+
+      if (categoryId) {
+        params.append('categoryId', String(categoryId));
+      }
+      if (isInternal) {
+        params.append('isInternal', isInternal);
+      }
+      if (isDevice) {
+        params.append('isDevice', isDevice);
+      }
+      if (isKit) {
+        params.append('isKit', isKit);
+      }
+      if (billingType) {
+        params.append('billingType', billingType);
+      }
+      if (condition) {
+        params.append('condition', condition);
+      }
+    },
+
     async fetchProducts(suppressError = false) {
       const toast     = useToast();
       this.loading = true
@@ -160,9 +235,10 @@ export const useProductStore = defineStore('product', {
           params.append('warehouseId', this.params.warehouseId.toString());
           params.append('includeStocks', 'true');
         } else {
-          // Include stocks without warehouse filter to show total stock across all warehouses
           params.append('includeStocks', 'true');
         }
+
+        this.appendProductFilters(params);
 
         const response = await fetch(`${$api.product()}?${params.toString()}`, {
             headers: {
@@ -308,6 +384,7 @@ export const useProductStore = defineStore('product', {
             'categoryId',
             'isDevice',
             'isKit',
+            'isInternal',
             'billingType',
             'condition',
             'productType',
@@ -320,6 +397,12 @@ export const useProductStore = defineStore('product', {
             const value = this.form[key as keyof typeof this.form];
             if (key === 'isDevice' || key === 'isKit') {
               formData.append(key, value ? 'true' : 'false');
+            } else if (key === 'isInternal') {
+              if (value === null || value === undefined) {
+                formData.append(key, '');
+              } else {
+                formData.append(key, value ? 'true' : 'false');
+              }
             } else if (key === 'productKits') {
               const productKits = this.normalizeProductKits(value);
               if (this.form.isKit) {
@@ -394,8 +477,8 @@ export const useProductStore = defineStore('product', {
           
           this.closeModal();
           await this.fetchProducts();
-          await this.fetchTotalProducts();
-          await this.refreshAllProducts(); // ✅ Refresh allProducts untuk select dropdown
+          await this.fetchStatistics();
+          await this.refreshAllProducts();
           toast.success({
             title: 'Success',
             message: `Produk berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
@@ -453,8 +536,8 @@ export const useProductStore = defineStore('product', {
           }
 
           await this.fetchProducts();
-          await this.fetchTotalProducts();
-          await this.refreshAllProducts(); // ✅ Refresh allProducts untuk select dropdown
+          await this.fetchStatistics();
+          await this.refreshAllProducts();
           toast.success({
             title: 'Success',
             message: 'Produk berhasil dihapus.',
@@ -488,6 +571,7 @@ export const useProductStore = defineStore('product', {
               billingType: source.billingType ?? source.billing_type ?? product.billingType ?? 'one_time',
               isDevice: source.isDevice ?? source.is_device ?? product.isDevice ?? false,
               isKit: source.isKit ?? source.is_kit ?? false,
+              isInternal: this.normalizeNullableBoolean(source.isInternal ?? source.is_internal),
               condition: source.condition ?? 'baru',
               productKits: (source.productKits || []).map((kit) => ({
                 id: kit.id,
@@ -511,6 +595,7 @@ export const useProductStore = defineStore('product', {
                 unitId: undefined,
                 isDevice: false,
                 isKit: false,
+                isInternal: null,
                 billingType: 'one_time',
                 condition: 'baru',
                 productType: null,
@@ -532,6 +617,7 @@ export const useProductStore = defineStore('product', {
             unitId: undefined,
             isDevice: false,
             isKit: false,
+            isInternal: null,
             billingType: 'one_time',
             condition: 'baru',
             productType: null,
@@ -665,6 +751,51 @@ export const useProductStore = defineStore('product', {
         }
     },
 
+    async fetchStatistics() {
+      const { $api } = useNuxtApp();
+      try {
+        const response = await fetch($api.productStatistics(), {
+          headers: {
+            Accept: 'application/json',
+          },
+          credentials: 'include',
+        });
+
+        const result = await response.json().catch(() => null);
+
+        if (response.ok) {
+          const data = result?.data ?? result;
+          if (data && typeof data === 'object') {
+            this.statistics = {
+              total: Number(data.total) || 0,
+              internal: Number(data.internal) || 0,
+              external: Number(data.external) || 0,
+              both: Number(data.both) || 0,
+              device: Number(data.device) || 0,
+              kit: Number(data.kit) || 0,
+            };
+            this.totalProducts = this.statistics.total;
+            return;
+          }
+        }
+
+        await this.fetchTotalProducts();
+        this.statistics = {
+          ...this.statistics,
+          total: this.totalProducts,
+          both: this.totalProducts,
+        };
+      } catch (error: any) {
+        console.error('Error fetching product statistics:', error);
+        await this.fetchTotalProducts();
+        this.statistics = {
+          ...this.statistics,
+          total: this.totalProducts,
+          both: this.totalProducts,
+        };
+      }
+    },
+
     async fetchTotalProducts() {
       const toast     = useToast();
         const { $api } = useNuxtApp()
@@ -682,7 +813,7 @@ export const useProductStore = defineStore('product', {
             }
             
             const result = await response.json()
-            this.totalProducts = result.total
+            this.totalProducts = Number(result.total) || 0
         } catch (error: any) {
             console.error('Error fetching total products:', error)
             toast.error({
@@ -706,6 +837,8 @@ export const useProductStore = defineStore('product', {
                 params.append('warehouseId', this.params.warehouseId.toString());
                 params.append('includeStocks', 'true');
             }
+
+            this.appendProductFilters(params);
 
             const response = await fetch(`${$api.productExportExcel()}?${params.toString()}`, {
                 headers: {

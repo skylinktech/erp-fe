@@ -6,6 +6,7 @@
 
       <div class="layout-page">
         <Navbar />
+        <NotificationPermissionPrompt />
         <div class="content-wrapper">
           <div class="container-xxl flex-grow-1 container-p-y">
             <slot />
@@ -55,6 +56,7 @@ const closeSidebar = () => {
 import Sidebar from '~/components/Sidebar.vue';
 import Navbar from '~/components/Navbar.vue';
 import Footer from '~/components/Footer.vue';
+import NotificationPermissionPrompt from '~/components/NotificationPermissionPrompt.vue';
 
 </script>
 

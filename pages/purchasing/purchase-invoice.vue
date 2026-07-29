@@ -91,22 +91,18 @@
 
             <div class="row g-6">
                 <div class="col-12">
-                    <h4 class="mt-6 mb-1">Filter Purchase Invoice</h4>
-                    <p class="mb-0">Saring invoice berdasarkan vendor dan status.</p>
-                </div>
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <CustomSelect2 v-model="filters.vendorId" :options="vendors" :get-option-label="option => option.name" :reduce="option => option.id" searchable clearable placeholder="Pilih Vendor" />
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <CustomSelect2 v-model="filters.status" :options="statusOptions" :get-option-label="option => option?.label || 'Unknown Status'" :reduce="option => option.value" searchable clearable placeholder="Pilih Status" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <CollapsibleFilterCard title="Filter Purchase Invoice" :has-active-filters="hasActiveFilters" @reset="resetFilters">
+                        <FilterFieldsRow>
+                            <FilterField>
+                                <label class="form-label">Vendor</label>
+                                <CustomSelect2 v-model="filters.vendorId" :options="vendors" :get-option-label="option => option.name" :reduce="option => option.id" searchable clearable placeholder="Pilih Vendor" />
+                            </FilterField>
+                            <FilterField>
+                                <label class="form-label">Status</label>
+                                <CustomSelect2 v-model="filters.status" :options="statusOptions" :get-option-label="option => option?.label || 'Unknown Status'" :reduce="option => option.value" searchable clearable placeholder="Pilih Status" />
+                            </FilterField>
+                        </FilterFieldsRow>
+                    </CollapsibleFilterCard>
                 </div>
                 <div class="col-12">
                     <!-- purchaseInvoice Table -->
@@ -700,6 +696,15 @@ const filters = ref({
   status: null,
   search: '',
 });
+
+const hasActiveFilters = computed(
+  () => !!filters.value.vendorId || !!filters.value.status
+)
+
+function resetFilters() {
+  filters.value.vendorId = null
+  filters.value.status = null
+}
 const globalFilterValue = ref('');
 const attachmentPreview = ref(null);
 

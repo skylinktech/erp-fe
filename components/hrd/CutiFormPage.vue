@@ -192,7 +192,7 @@
                   </div>
 
                   <!-- Actions -->
-                  <div class="d-flex justify-content-end gap-2">
+                  <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
                     <NuxtLink to="/hrd/cuti" class="btn btn-outline-secondary">
                       Batal
                     </NuxtLink>

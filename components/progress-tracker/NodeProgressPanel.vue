@@ -1,21 +1,24 @@
 <template>
-  <div class="card shadow-sm border-0 mb-4">
-    <div class="card-header border-0 bg-transparent d-flex flex-wrap justify-content-between align-items-center gap-2 py-3">
-      <div>
-        <h6 class="mb-0 fw-semibold">{{ node.name }}</h6>
-        <small class="text-muted">
-          {{ node.nodeCode || node.node_code }}
-          <span v-if="node.networkIdentifier || node.network_identifier">
-            · {{ node.networkIdentifier || node.network_identifier }}
+  <div class="node-progress-panel pt-1">
+    <CollapsibleSectionCard title="Informasi Node" icon="ri-information-line" :default-open="true">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="small text-muted">Kode Node</div>
+          <div class="fw-medium">{{ node.nodeCode || node.node_code || '—' }}</div>
+        </div>
+        <div class="col-md-6">
+          <div class="small text-muted">Network Identifier</div>
+          <div class="fw-medium">{{ node.networkIdentifier || node.network_identifier || '—' }}</div>
+        </div>
+        <div class="col-12">
+          <div class="small text-muted">Status Saat Ini</div>
+          <span :class="getProgressStatusBadge(getNodeStatus(node)).class">
+            {{ getProgressStatusBadge(getNodeStatus(node)).text }}
           </span>
-        </small>
+        </div>
       </div>
-      <span :class="getProgressStatusBadge(getNodeStatus(node)).class">
-        {{ getProgressStatusBadge(getNodeStatus(node)).text }}
-      </span>
-    </div>
-    <div class="card-body pt-0">
-      <div v-if="node.arf" class="mb-3 p-3 rounded bg-light">
+
+      <div v-if="node.arf" class="mt-3 p-3 rounded bg-light">
         <div class="small text-muted mb-1">Pengajuan Dana (ARF)</div>
         <NuxtLink
           :to="`/implementation/arf/detail/${node.arf.id}`"
@@ -25,7 +28,9 @@
         </NuxtLink>
         <span class="ms-2 badge bg-label-secondary text-capitalize">{{ node.arf.status }}</span>
       </div>
+    </CollapsibleSectionCard>
 
+    <CollapsibleSectionCard title="Progress & Perbarui Status" icon="ri-route-line" :default-open="true">
       <ProgressStatusStepper
         v-if="canEdit"
         :model-value="draftStatus"
@@ -58,11 +63,20 @@
           Simpan Status
         </button>
       </div>
+    </CollapsibleSectionCard>
 
-      <div v-if="attachments.length" class="mt-4">
-        <h6 class="small text-muted mb-2">Lampiran</h6>
+    <CollapsibleSectionCard
+      title="Lampiran"
+      icon="ri-attachment-2"
+      :default-open="attachments.length > 0"
+    >
+      <template #badge>
+        <span v-if="attachments.length" class="badge bg-label-primary ms-1">{{ attachments.length }}</span>
+      </template>
+
+      <div v-if="attachments.length">
         <ul class="list-unstyled mb-0">
-          <li v-for="att in attachments" :key="att.id" class="d-flex align-items-center gap-2 mb-1">
+          <li v-for="att in attachments" :key="att.id" class="d-flex align-items-center gap-2 mb-2">
             <a :href="attachmentUrl(att)" target="_blank" rel="noopener" class="small">
               <i class="ri-attachment-2 me-1"></i>{{ att.fileName || att.file_name }}
             </a>
@@ -77,28 +91,38 @@
           </li>
         </ul>
       </div>
+      <p v-else class="text-muted small mb-0">Belum ada lampiran.</p>
+    </CollapsibleSectionCard>
 
-      <div v-if="logs.length" class="mt-4">
-        <h6 class="small text-muted mb-2">Riwayat Status</h6>
-        <div class="timeline-sm">
-          <div v-for="log in logs" :key="log.id" class="border-start ps-3 mb-2 pb-2">
-            <div class="small fw-medium">
-              {{ formatLogTransition(log) }}
-            </div>
-            <div class="text-muted" style="font-size: 0.75rem">
-              {{ formatDateTime(log.changedAt || log.changed_at) }}
-              · {{ log.changedByUser?.fullName || log.changedByUser?.full_name || 'System' }}
-            </div>
-            <p v-if="log.notes" class="mb-0 small">{{ log.notes }}</p>
+    <CollapsibleSectionCard
+      title="Riwayat Status"
+      icon="ri-history-line"
+      :default-open="logs.length > 0"
+    >
+      <template #badge>
+        <span v-if="logs.length" class="badge bg-label-secondary ms-1">{{ logs.length }}</span>
+      </template>
+
+      <div v-if="logs.length" class="timeline-sm">
+        <div v-for="log in logs" :key="log.id" class="border-start ps-3 mb-2 pb-2">
+          <div class="small fw-medium">
+            {{ formatLogTransition(log) }}
           </div>
+          <div class="text-muted" style="font-size: 0.75rem">
+            {{ formatDateTime(log.changedAt || log.changed_at) }}
+            · {{ log.changedByUser?.fullName || log.changedByUser?.full_name || 'System' }}
+          </div>
+          <p v-if="log.notes" class="mb-0 small">{{ log.notes }}</p>
         </div>
       </div>
-    </div>
+      <p v-else class="text-muted small mb-0">Belum ada riwayat perubahan status.</p>
+    </CollapsibleSectionCard>
   </div>
 </template>
 
 <script setup lang="ts">
 import Swal from 'sweetalert2'
+import CollapsibleSectionCard from '~/components/ui/CollapsibleSectionCard.vue'
 import ProgressStatusStepper from '~/components/progress-tracker/ProgressStatusStepper.vue'
 import {
   getProgressStatusBadge,
@@ -119,6 +143,7 @@ import { useImageUrl } from '~/composables/useImageUrl'
 const props = defineProps<{
   node: ProgressTrackerNode
   projectId: string
+  approvalStatus?: string
 }>()
 
 const emit = defineEmits<{ updated: [] }>()
@@ -135,9 +160,10 @@ const fileInput = ref<HTMLInputElement | null>(null)
 
 const canEdit = computed(
   () =>
-    userHasRole('superadmin') ||
-    userHasPermission('edit_progress_tracker') ||
-    userHasPermission('create_progress_tracker')
+    props.approvalStatus === 'approved' &&
+    (userHasRole('superadmin') ||
+      userHasPermission('edit_progress_tracker') ||
+      userHasPermission('create_progress_tracker'))
 )
 
 const logs = computed(() => getNodeStatusLogs(props.node))

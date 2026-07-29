@@ -73,103 +73,7 @@
     
             <ul class="navbar-nav flex-row align-items-center ms-auto">
 
-                <!-- Notification: Stock notifications -->
-                <li class="nav-item dropdown-notifications navbar-dropdown dropdown me-4 me-xl-1" ref="notificationDropdownRef">
-                    <a
-                    class="nav-link btn btn-text-secondary rounded-pill btn-icon dropdown-toggle hide-arrow notification-bell-wrapper"
-                    href="javascript:void(0);"
-                    @click.prevent="isNotificationDropdownOpen = !isNotificationDropdownOpen"
-                    >
-                    <div class="notification-bell-container">
-                        <i class="ri-notification-line ri-22px notification-bell-icon"></i>
-                        <span
-                            v-if="notificationsStore.unreadCount > 0"
-                            class="notification-badge"
-                        >
-                            {{ notificationsStore.unreadCount > 99 ? '99+' : notificationsStore.unreadCount }}
-                        </span>
-                    </div>
-                    </a>
-                    <!-- Dropdown content here -->
-                    <ul class="dropdown-menu dropdown-menu-end py-0 mt-3" :class="{show: isNotificationDropdownOpen}">
-                        <li class="dropdown-menu-header border-bottom py-50">
-                            <div class="dropdown-header d-flex align-items-center py-2">
-                            <h6 class="mb-0 me-auto">Notifikasi</h6>
-                            <div class="d-flex align-items-center h6 mb-0">
-                                <span v-if="notificationsStore.unreadCount > 0" class="badge rounded-pill bg-label-primary fs-xsmall me-2">{{ notificationsStore.unreadCount }} New</span>
-                                <a href="javascript:void(0)" class="dropdown-notifications-all p-2" @click="markAllNotificationsAsRead" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Mark all as read" data-bs-original-title="Mark all as read"><i class="icon-base ri ri-mail-open-line text-heading"></i></a>
-                            </div>
-                            </div>
-                        </li>
-                        <li class="dropdown-notifications-list">
-                            <ul class="list-group list-group-flush">
-                                <!-- Loading state -->
-                                <li v-if="notificationsStore.loading" class="list-group-item text-center py-3">
-                                    <div class="spinner-border spinner-border-sm" role="status">
-                                        <span class="visually-hidden">Loading...</span>
-                                    </div>
-                                    <small class="text-muted ms-2">Memuat notifikasi...</small>
-                                </li>
-                                
-                                <!-- No notifications -->
-                                <li v-else-if="notificationsStore.navbarNotifications.length === 0" class="list-group-item text-center py-3">
-                                    <i class="ri-checkbox-circle-line ri-24px text-success mb-2"></i>
-                                    <p class="text-muted mb-0">Tidak ada notifikasi</p>
-                                    <small class="text-muted">Semua sudah di-posting</small>
-                                </li>
-                                
-                                <!-- All notifications -->
-                                <li 
-                                    v-for="notification in notificationsStore.navbarNotifications" 
-                                    :key="notification.id"
-                                    class="list-group-item list-group-item-action dropdown-notifications-item waves-effect"
-                                    @click="handleNotificationClick(notification)"
-                                >
-                                    <div class="d-flex">
-                                        <div class="flex-shrink-0 me-3">
-                                            <div class="avatar">
-                                                <span 
-                                                    class="avatar-initial rounded-circle"
-                                                    :class="getNotificationBadgeClass(notification.type)"
-                                                >
-                                                    <i 
-                                                        class="icon-base"
-                                                        :class="getNotificationIcon(notification.type)"
-                                                    ></i>
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <div class="flex-grow-1">
-                                            <h6 class="small mb-1">
-                                                {{ getNotificationTitle(notification) }}
-                                            </h6>
-                                            <small class="mb-1 d-block text-body">
-                                                {{ getNotificationSubtitle(notification) }}
-                                            </small>
-                                            <small class="text-body-secondary">
-                                                {{ notificationsStore.formatTimeAgo(notification.createdAt) }} • 
-                                                {{ notification.createdByName }}
-                                            </small>
-                                        </div>
-                                        <div class="flex-shrink-0 dropdown-notifications-actions">
-                                            <a href="javascript:void(0)" class="dropdown-notifications-read" @click.stop="markNotificationAsRead(notification.id)">
-                                                <span class="badge badge-dot"></span>
-                                            </a>
-                                        </div>
-                                    </div>
-                                </li>
-                            </ul>
-                        </li>
-                        <li class="border-top">
-                            <div class="d-grid p-4">
-                                <a class="btn btn-primary btn-sm d-flex waves-effect waves-light" href="javascript:void(0);" @click="viewAllNotifications">
-                                    <small class="align-middle">Lihat semua notifikasi</small>
-                                </a>
-                            </div>
-                        </li>
-                        </ul>
-                </li>
-                <!--/ Notification -->
+                <NotificationDropdown />
 
                 <!-- User -->
                 <li class="nav-item navbar-dropdown dropdown-user dropdown" ref="avatarDropdownRef">
@@ -234,6 +138,7 @@
     import { useQuotationStore } from '~/stores/quotation'
     import { useVendorStore } from '~/stores/vendor'
     import { useNotificationsStore } from '~/stores/notifications'
+    import NotificationDropdown from '~/components/NotificationDropdown.vue'
     import { usePermissions } from '~/composables/usePermissions'
 
     const { $api }    = useNuxtApp()
@@ -683,198 +588,9 @@
     };
     // --- End Avatar Dropdown Logic ---
 
-    // --- Notification Dropdown Logic ---
-    const isNotificationDropdownOpen = ref(false);
-    const notificationDropdownRef = ref(null);
-
-    const handleNotificationClickOutside = (event) => {
-        if (notificationDropdownRef.value && !notificationDropdownRef.value.contains(event.target)) {
-            isNotificationDropdownOpen.value = false;
-        }
-    };
-
-    const markNotificationAsRead = async (notificationId) => {
-        await notificationsStore.markAsRead(notificationId);
-    };
-
-    const markAllNotificationsAsRead = async () => {
-        try {
-            await notificationsStore.markAllAsRead();
-            
-            // Show success toast
-            const toast = useToast();
-            toast.success({
-                title: 'Berhasil',
-                message: 'Semua notifikasi telah ditandai sebagai dibaca',
-                color: 'green',
-                position: 'topRight'
-            });
-            
-            // Close dropdown after marking as read
-            isNotificationDropdownOpen.value = false;
-        } catch (error) {
-            console.error('Error marking notifications as read:', error);
-            const toast = useToast();
-            toast.error({
-                title: 'Error',
-                message: 'Gagal menandai notifikasi sebagai dibaca',
-                color: 'red',
-                position: 'topRight'
-            });
-        }
-    };
-
-    const handleNotificationClick = (notification) => {
-        // Navigate to appropriate page based on notification type
-        switch (notification.type) {
-            case 'stock_in':
-                router.push('/inventory/stock-in');
-                break;
-            case 'stock_out':
-                router.push('/inventory/stock-out');
-                break;
-            case 'purchase_order':
-                router.push('/purchasing/purchase-order');
-                break;
-            case 'sales_order':
-                router.push('/sales/sales-order');
-                break;
-            case 'quotation':
-                router.push('/sales/quotation');
-                break;
-            case 'quotation_expiring':
-                if (notification.quotationId) {
-                    router.push(`/sales/quotation/detail/${notification.quotationId}`);
-                } else {
-                    router.push('/sales/quotation');
-                }
-                break;
-            case 'price_adjustment':
-                router.push('/price-adjustment');
-                break;
-        }
-        isNotificationDropdownOpen.value = false;
-    };
-
-    const viewAllNotifications = () => {
-        router.push('/notifications');
-        isNotificationDropdownOpen.value = false;
-    };
-
-    // Helper functions for notifications
-    const getNotificationBadgeClass = (type) => {
-        switch (type) {
-            case 'stock_in':
-                return 'bg-label-warning'
-            case 'stock_out':
-                return 'bg-label-danger'
-            case 'purchase_order':
-                return 'bg-label-info'
-            case 'sales_order':
-                return 'bg-label-success'
-            case 'quotation':
-                return 'bg-label-primary'
-            case 'quotation_expiring':
-                return 'bg-label-warning'
-            case 'price_adjustment':
-                return 'bg-label-secondary'
-            default:
-                return 'bg-label-secondary'
-        }
-    }
-
-    const getNotificationIcon = (type) => {
-        switch (type) {
-            case 'stock_in':
-                return 'ri-arrow-down-line'
-            case 'stock_out':
-                return 'ri-stock-line'
-            case 'purchase_order':
-                return 'ri-shopping-bag-4-line'
-            case 'sales_order':
-                return 'ri-file-list-3-line'
-            case 'quotation':
-                return 'ri-file-text-line'
-            case 'quotation_expiring':
-                return 'ri-calendar-event-line'
-            case 'price_adjustment':
-                return 'ri-price-tag-3-line'
-            default:
-                return 'ri-notification-line'
-        }
-    }
-
-    const getNotificationTitle = (notification) => {
-        switch (notification.type) {
-            case 'stock_in':
-                return `Stock In ${notification.noSi || '-'} belum di-posting`
-            case 'stock_out':
-                return `Stock Out ${notification.noSo || '-'} belum di-posting`
-            case 'purchase_order':
-                return `Purchase Order ${notification.noPo || '-'} membutuhkan approval`
-            case 'sales_order':
-                return `Sales Order ${notification.noSo || '-'} membutuhkan approval`
-            case 'quotation':
-                return `Quotation dengan nomor ${notification.noQuotation || notification.description?.replace?.(/^Quotation\s+/i, '') || '-'} membutuhkan approval`
-            case 'quotation_expiring':
-                return `Quotation ${notification.noQuotation || '-'} akan expired dalam 1 minggu`
-            case 'price_adjustment':
-                return notification.description
-                    ? `Permintaan price adjustment membutuhkan approval`
-                    : 'Permintaan price adjustment membutuhkan approval'
-            default:
-                return notification.description || 'Notifikasi'
-        }
-    }
-
-    const getNotificationSubtitle = (notification) => {
-        switch (notification.type) {
-            case 'stock_in':
-            case 'stock_out':
-                return `Quantity: ${notification.quantity ?? '-'} | ${notification.warehouseName ?? '-'}`
-            case 'purchase_order':
-                return `Vendor: ${notification.vendorName ?? '-'} | Total: ${formatCurrency(notification.total ?? 0)}`
-            case 'sales_order':
-                return `Customer: ${notification.customerName ?? '-'} | Total: ${formatCurrency(notification.total ?? 0)}`
-            case 'quotation':
-                return notification.customerName
-                    ? `Customer: ${notification.customerName} | Total: ${formatCurrency(notification.total ?? 0)}`
-                    : (notification.description || '')
-            case 'quotation_expiring':
-                const validStr = notification.validUntil
-                    ? new Date(notification.validUntil).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
-                    : ''
-                return notification.customerName
-                    ? `Berlaku hingga: ${validStr} | Customer: ${notification.customerName}`
-                    : (validStr ? `Berlaku hingga: ${validStr}` : (notification.description || ''))
-            case 'price_adjustment':
-                return notification.customerName
-                    ? `Customer: ${notification.customerName}`
-                    : (notification.description || '')
-            default:
-                return notification.description || ''
-        }
-    }
-
-    const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('id-ID', {
-            style: 'currency',
-            currency: 'IDR',
-            minimumFractionDigits: 0
-        }).format(amount)
-    }
-    // --- End Notification Dropdown Logic ---
-
     onMounted(async () => {
         userStore.loadUser()
-        
-        // Load notifications
-        await notificationsStore.fetchNotifications()
-        
-        // Set up polling for notifications every 30 seconds
-        const notificationInterval = setInterval(async () => {
-            await notificationsStore.fetchNotifications()
-        }, 30000)
+        await notificationsStore.initRealtime()
         
         // Pre-load data untuk search (jika belum ada)
         try {
@@ -922,21 +638,11 @@
         
         window.addEventListener('keydown', handleKeydown);
         document.addEventListener('click', handleClickOutside);
-        document.addEventListener('click', handleNotificationClickOutside);
-        
-        // Store interval for cleanup
-        window.notificationInterval = notificationInterval
     })
 
     onUnmounted(() => {
         window.removeEventListener('keydown', handleKeydown);
         document.removeEventListener('click', handleClickOutside);
-        document.removeEventListener('click', handleNotificationClickOutside);
-        
-        // Clear notification polling interval
-        if (window.notificationInterval) {
-            clearInterval(window.notificationInterval);
-        }
     });
 
     const toggleSidebar = () => {

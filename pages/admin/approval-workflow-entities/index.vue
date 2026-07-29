@@ -38,6 +38,39 @@
           <p class="mb-4">Entity type yang dapat dikaitkan dengan workflow approval.</p>
         </div>
         <div class="col-12">
+          <CollapsibleFilterCard
+            title="Filter Entity"
+            :has-active-filters="hasActiveFilters"
+            @reset="resetFilters"
+          >
+            <FilterFieldsRow>
+              <FilterField>
+                <label class="form-label">Modul</label>
+                <select
+                  v-model="entityStore.params.module"
+                  class="form-select"
+                  @change="reload"
+                >
+                  <option value="">Semua Modul</option>
+                  <option v-for="m in moduleOptions" :key="m" :value="m">{{ m }}</option>
+                </select>
+              </FilterField>
+              <FilterField>
+                <label class="form-label">Status</label>
+                <select
+                  v-model="entityStore.params.activeOnly"
+                  class="form-select"
+                  @change="reload"
+                >
+                  <option value="">Semua</option>
+                  <option value="true">Aktif</option>
+                  <option value="false">Nonaktif</option>
+                </select>
+              </FilterField>
+            </FilterFieldsRow>
+          </CollapsibleFilterCard>
+        </div>
+        <div class="col-12">
           <div class="card">
             <ListPageTableHeader
               :rows="Number(entityStore.params.rows)"
@@ -54,27 +87,6 @@
                   <i class="ri-add-line me-1"></i>
                   Tambah Entity
                 </button>
-              </template>
-              <template #toolbar-extra>
-                <select
-                  v-model="entityStore.params.module"
-                  class="form-select form-select-sm"
-                  style="width: 9rem;"
-                  @change="reload"
-                >
-                  <option value="">Semua Modul</option>
-                  <option v-for="m in moduleOptions" :key="m" :value="m">{{ m }}</option>
-                </select>
-                <select
-                  v-model="entityStore.params.activeOnly"
-                  class="form-select form-select-sm"
-                  style="width: 8rem;"
-                  @change="reload"
-                >
-                  <option value="">Semua</option>
-                  <option value="true">Aktif</option>
-                  <option value="false">Nonaktif</option>
-                </select>
               </template>
             </ListPageTableHeader>
             <div class="card-datatable table-responsive py-3 px-3">
@@ -278,6 +290,17 @@ const { stats } = storeToRefs(entityStore)
 const globalFilterValue = ref('')
 
 const moduleOptions = ['procurement', 'sales', 'operations', 'hr', 'admin', 'legal']
+
+const hasActiveFilters = computed(
+  () => entityStore.params.module !== '' || entityStore.params.activeOnly !== ''
+)
+
+function resetFilters() {
+  entityStore.params.module = ''
+  entityStore.params.activeOnly = ''
+  entityStore.params.page = 1
+  reload()
+}
 
 const statCards = computed(() => [
   {

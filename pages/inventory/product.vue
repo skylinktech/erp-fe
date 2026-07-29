@@ -1,241 +1,316 @@
 <template>
     <div class="content-wrapper">
-        <!-- Content -->
         <div class="container-xxl flex-grow-1 container-pt-12">
-            <div v-if="loading" class="text-center py-8">
-                <ProgressSpinner 
-                    style="width: 50px; height: 50px" 
-                    strokeWidth="4"
-                    fill="transparent"
-                    animationDuration="1s"
-                />
-                <div class="mt-3 text-muted">Memuat data...</div>
-            </div>
-            <template v-else>
-                <div>
-                    <h4 class="mb-1">List Product</h4>
-                    <p class="mb-6">
-                        List product yang terdaftar di sistem
-                        <span v-if="globalFilterValue" class="text-muted">
-                            - Menampilkan {{ totalRecords }} hasil untuk "{{ globalFilterValue }}"
-                        </span>
-                    </p>
-                                        <div class="row g-6 mb-6">
-                        <div class="col-xl-3 col-lg-6 col-md-6">
-                            <div class="card">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-center mb-4">
-                                        <p class="mb-0">Total Product</p>
-                                        <div class="avatar">
-                                            <span class="avatar-initial rounded bg-label-primary"><i class="ri-box-3-line"></i></span>
-                                        </div>
-                                    </div>
-                                    <div class="account-heading">
-                                        <h5 class="mb-1">{{ totalProducts }}</h5>
-                                        <span class="text-muted">Product terdaftar</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+            <h4 class="mb-1">List Product</h4>
+            <p class="mb-6">Kelola master data produk dan komponen kit.</p>
 
-                    <div class="row g-6">
-                        <div class="col-12">
-                            <h4 class="mt-6 mb-1">Data Product</h4>
-                            <p class="mb-0">Kelola master data produk dan komponen kit.</p>
-                        </div>
-                        <div class="col-12">
-                                                        <div class="card">
-                                <ListPageTableHeader
-                                    :rows="Number(tableControls.rows)"
-                                    :rows-options="rowsPerPageOptionsArray"
-                                    :search="globalFilterValue"
-                                    search-placeholder="Cari berdasarkan nama, atau part number..."
-                                    :export-disabled="loading"
-                                    :export-items="[
-                                        { value: 'csv', label: 'CSV' },
-                                        { value: 'excel', label: 'Excel' },
-                                        { value: 'pdf', label: 'PDF' },
-                                    ]"
-                                    @update:rows="onProductToolbarRows"
-                                    @update:search="(v) => { globalFilterValue = v }"
-                                    @export="exportData"
-                                >
-                                    <template #add>
-                                        <button
-                                            v-if="userHasRole('superadmin') || userHasPermission('create_product')"
-                                            type="button"
-                                            class="btn btn-primary"
-                                            @click="productStore.openModal()"
-                                        >
-                                            <i class="ri-add-line me-1"></i>
-                                            Tambah Product
-                                        </button>
-                                    </template>
-                                    <template #toolbar-extra>
-                                        <NuxtLink
-                                            v-if="userHasRole('superadmin')"
-                                            to="/inventory/import-product"
-                                            class="btn btn-dark btn-sm"
-                                        >
-                                            <i class="ri-download-line me-1"></i> Import Excel
-                                        </NuxtLink>
-                                    </template>
-                                </ListPageTableHeader>
-<div class="card-datatable table-responsive py-3 px-3">
-                                <MyDataTable 
-                                    ref="myDataTableRef"
-                                    :data="products" 
-                                    :rows="Number(params.rows)" 
-                                    :loading="loading"
-                                    :totalRecords="totalRecords"
-                                    :first="params.first"
-                                    :lazy="true"
-                                    :sort-field="params.sortField"
-                                    :sort-order="params.sortOrder"
-                                    sort-mode="single"
-                                    @page="onPage($event)"
-                                    @sort="onSort($event)"
-                                    responsiveLayout="scroll"
-                                    paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink"
-                                    currentPageReportTemplate="Menampilkan {first} sampai {last} dari {totalRecords} data"
-                                    :expandedRows="expandedRows"
-                                    @row-toggle="onRowToggle"
-                                    >
-                                    <Column :expander="true" headerStyle="width: 3rem" />
-                                    <Column header="#" :sortable="false">
-                                        <template #body="slotProps">
-                                            {{ params.first + slotProps.index + 1 }}
-                                        </template>
-                                    </Column>
-                                    <Column field="image" header="Gambar" :sortable="true">
-                                        <template #body="slotProps">
-                                            <div v-if="slotProps.data.image">
-                                                <img 
-                                                    :src="getProductImage(slotProps.data.image)" 
-                                                    alt="Gambar Produk" 
-                                                    style="height: 40px; max-width: 80px; object-fit: contain; cursor: pointer;" 
-                                                    @error="(e) => handleImageError(e, '/img/default-product-image.png')"
-                                                    @click="productStore.openImageInNewTab(slotProps.data.image)"
-                                                    @load="debugImageUrl(slotProps.data.image)"
-                                                    title="Klik untuk melihat gambar lengkap"
-                                                />
-                                            </div>
-                                            <div v-else>
-                                                <img 
-                                                    src="/img/default-product-image.png" 
-                                                    alt="Default Image" 
-                                                    style="height: 40px; max-width: 80px; object-fit: contain;"
-                                                />
-                                            </div>
-                                        </template>
-                                    </Column>
-                                    <Column field="sku" header="No. Product" :sortable="true"></Column>
-                                    <Column field="name" header="Nama Product" :sortable="true"></Column>
-                                    <Column field="productType" header="Jenis / Type KIT" :sortable="true">
-                                        <template #body="slotProps">
-                                            {{ slotProps.data.productType || '-' }}
-                                        </template>
-                                    </Column>
-                                    <Column field="isDevice" header="Device" :sortable="true">
-                                        <template #body="slotProps">
-                                            <span :class="getStatusBadge(slotProps.data.isDevice).class">
-                                                {{ getStatusBadge(slotProps.data.isDevice).text }}
-                                            </span>
-                                        </template>
-                                    </Column>
-                                    <Column field="isKit" header="Kit" :sortable="true">
-                                        <template #body="slotProps">
-                                            <span :class="getStatusBadge(slotProps.data.isKit).class">
-                                                {{ getStatusBadge(slotProps.data.isKit).text }}
-                                            </span>
-                                        </template>
-                                    </Column>
-                                    <Column field="billingType" header="Tipe Tagihan" :sortable="true">
-                                        <template #body="slotProps">
-                                            {{ slotProps.data.billingType === 'recurring' ? 'Recurring' : 'One Time' }}
-                                        </template>
-                                    </Column>
-                                    <Column field="condition" header="Kondisi" :sortable="true">
-                                        <template #body="slotProps">
-                                            {{ conditionLabel(slotProps.data.condition) }}
-                                        </template>
-                                    </Column>
-                                    <Column header="Kategori" field="category.name" :sortable="true">
-                                        <template #body="slotProps">
-                                            {{ slotProps.data.category && slotProps.data.category.name ? slotProps.data.category.name : '-' }}
-                                        </template>
-                                    </Column>
-                                    <Column field="createdByUser.fullName" header="Dibuat Oleh" :sortable="true">
-                                        <template #body="slotProps">
-                                            <span>
-                                                {{ slotProps.data.createdByUser?.fullName || '-' }}
-                                            </span>
-                                        </template>
-                                    </Column>
-                                    <Column header="Actions" :exportable="false" style="min-width:8rem">
-                                        <template #body="slotProps">
-                                            <div class="d-inline-block">
-                                                <a href="javascript:;" class="btn btn-sm btn-text-secondary rounded-pill btn-icon dropdown-toggle hide-arrow" data-bs-toggle="dropdown"><i class="ri-more-2-fill"></i>
-                                                </a>
-                                                <ul class="dropdown-menu">
-                                                    <li v-if="userHasRole('superadmin') || (userHasPermission('edit_product'))">
-                                                        <a class="dropdown-item" href="javascript:void(0)" @click="productStore.openModal(slotProps.data)">
-                                                            <i class="ri-edit-box-line me-2"></i> Edit
-                                                        </a>
-                                                    </li>
-                                                    <li v-if="userHasRole('superadmin') || (userHasPermission('delete_product'))">
-                                                        <a class="dropdown-item text-danger" href="javascript:void(0)" @click="productStore.deleteProduct(slotProps.data.id)">
-                                                            <i class="ri-delete-bin-7-line me-2"></i> Hapus
-                                                        </a>
-                                                    </li>
-                                                </ul>
-                                            </div>
-                                        </template>
-                                    </Column>
-                                    <template #expansion="slotProps">
-                                        <div class="p-3 bg-light">
-                                            <h6 class="mb-3">Komponen Kit</h6>
-                                            <div v-if="slotProps.data.isKit && slotProps.data.productKits?.length">
-                                                <div class="table-responsive">
-                                                    <table class="table table-sm table-bordered mb-0">
-                                                        <thead>
-                                                            <tr>
-                                                                <th style="width: 60px">#</th>
-                                                                <th>Name</th>
-                                                                <th>Serial Number</th>
-                                                                <th>Type</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            <tr v-for="(kit, index) in slotProps.data.productKits" :key="kit.id || `kit-${index}`">
-                                                                <td>{{ index + 1 }}</td>
-                                                                <td>{{ kit.name || '-' }}</td>
-                                                                <td>{{ kit.serialNumber || kit.serial_number || '-' }}</td>
-                                                                <td class="text-capitalize">{{ kit.type || '-' }}</td>
-                                                            </tr>
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            </div>
-                                            <div v-else class="text-muted">
-                                                Product ini tidak memiliki komponen kit.
-                                            </div>
-                                        </div>
-                                    </template>
-                                </MyDataTable>
+            <div class="row g-6 mb-6">
+                <div v-for="card in statCards" :key="card.label" class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <p class="mb-0">{{ card.label }}</p>
+                                <div class="avatar">
+                                    <span :class="['avatar-initial rounded', card.iconClass]">
+                                        <i :class="card.icon"></i>
+                                    </span>
                                 </div>
                             </div>
-                            <!--/ product Table -->
+                            <div class="account-heading">
+                                <h5 class="mb-1">{{ card.value }}</h5>
+                                <span class="text-muted small">{{ card.subtitle }}</span>
+                            </div>
                         </div>
                     </div>
-                    <!--/ product cards -->
                 </div>
-            </template>
-            <!-- Placeholder untuk MenuModal component -->
-            <Modal 
+            </div>
+
+            <CollapsibleFilterCard
+                title="Filter Product"
+                :has-active-filters="hasActiveFilters"
+                :show-reset="false"
+                @reset="resetFilters"
+            >
+                <FilterFieldsRow :columns="3">
+                    <FilterField>
+                        <label class="form-label">Kategori</label>
+                        <CustomSelect2
+                            v-model="filters.categoryId"
+                            :options="kategori"
+                            :get-option-label="option => option?.name || ''"
+                            :reduce="option => option?.id"
+                            searchable
+                            clearable
+                            placeholder="Semua kategori"
+                        />
+                    </FilterField>
+                    <FilterField>
+                        <label class="form-label">Scope Penggunaan</label>
+                        <CustomSelect2
+                            v-model="filters.isInternal"
+                            :options="scopeFilterOptions"
+                            :get-option-label="option => option.label"
+                            :reduce="option => option.value"
+                            :get-option-key="option => option.value"
+                            searchable
+                            clearable
+                            placeholder="Semua scope"
+                        />
+                    </FilterField>
+                    <FilterField>
+                        <label class="form-label">Device</label>
+                        <CustomSelect2
+                            v-model="filters.isDevice"
+                            :options="booleanFilterOptions"
+                            :get-option-label="option => option.label"
+                            :reduce="option => option.value"
+                            :get-option-key="option => option.value"
+                            searchable
+                            clearable
+                            placeholder="Semua"
+                        />
+                    </FilterField>
+                    <FilterField>
+                        <label class="form-label">Kit</label>
+                        <CustomSelect2
+                            v-model="filters.isKit"
+                            :options="booleanFilterOptions"
+                            :get-option-label="option => option.label"
+                            :reduce="option => option.value"
+                            :get-option-key="option => option.value"
+                            searchable
+                            clearable
+                            placeholder="Semua"
+                        />
+                    </FilterField>
+                    <FilterField>
+                        <label class="form-label">Tipe Tagihan</label>
+                        <CustomSelect2
+                            v-model="filters.billingType"
+                            :options="billingTypeOptions"
+                            :get-option-label="option => option.label"
+                            :reduce="option => option.value"
+                            :get-option-key="option => option.value"
+                            searchable
+                            clearable
+                            placeholder="Semua tipe tagihan"
+                        />
+                    </FilterField>
+                    <FilterField>
+                        <label class="form-label">Kondisi</label>
+                        <CustomSelect2
+                            v-model="filters.condition"
+                            :options="conditionOptions"
+                            :get-option-label="option => option.label"
+                            :reduce="option => option.value"
+                            :get-option-key="option => option.value"
+                            searchable
+                            clearable
+                            placeholder="Semua kondisi"
+                        />
+                    </FilterField>
+                </FilterFieldsRow>
+                <div class="col-12 d-flex justify-content-end mt-4">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" @click="resetFilters">
+                        <i class="ri-refresh-line me-1"></i>
+                        Reset Filter
+                    </button>
+                </div>
+            </CollapsibleFilterCard>
+
+            <div class="col-12">
+                <div class="card">
+                    <ListPageTableHeader
+                        :rows="Number(tableControls.rows)"
+                        :rows-options="rowsPerPageOptionsArray"
+                        :search="globalFilterValue"
+                        search-placeholder="Cari berdasarkan nama, atau part number..."
+                        :export-disabled="loading"
+                        :export-items="[
+                            { value: 'csv', label: 'CSV' },
+                            { value: 'excel', label: 'Excel' },
+                            { value: 'pdf', label: 'PDF' },
+                        ]"
+                        @update:rows="onProductToolbarRows"
+                        @update:search="(v) => { globalFilterValue = v }"
+                        @export="exportData"
+                    >
+                        <template #add>
+                            <button
+                                v-if="userHasRole('superadmin') || userHasPermission('create_product')"
+                                type="button"
+                                class="btn btn-primary"
+                                @click="productStore.openModal()"
+                            >
+                                <i class="ri-add-line me-1"></i>
+                                Tambah Product
+                            </button>
+                        </template>
+                        <template #toolbar-extra>
+                            <NuxtLink
+                                v-if="userHasRole('superadmin')"
+                                to="/inventory/import-product"
+                                class="btn btn-dark"
+                            >
+                                <i class="ri-download-line me-1"></i> Import Excel
+                            </NuxtLink>
+                        </template>
+                    </ListPageTableHeader>
+                    <div class="card-datatable table-responsive py-3 px-3">
+                        <MyDataTable
+                            ref="myDataTableRef"
+                            :data="products"
+                            :rows="Number(params.rows)"
+                            :loading="loading"
+                            :totalRecords="totalRecords"
+                            :first="params.first"
+                            :lazy="true"
+                            :sort-field="params.sortField"
+                            :sort-order="params.sortOrder"
+                            sort-mode="single"
+                            @page="onPage($event)"
+                            @sort="onSort($event)"
+                            responsiveLayout="scroll"
+                            paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink"
+                            currentPageReportTemplate="Menampilkan {first} sampai {last} dari {totalRecords} data"
+                            :expandedRows="expandedRows"
+                            @row-toggle="onRowToggle"
+                        >
+                            <Column :expander="true" headerStyle="width: 3rem" />
+                            <Column header="#" :sortable="false">
+                                <template #body="slotProps">
+                                    {{ params.first + slotProps.index + 1 }}
+                                </template>
+                            </Column>
+                            <Column field="image" header="Gambar" :sortable="true">
+                                <template #body="slotProps">
+                                    <div v-if="slotProps.data.image">
+                                        <img
+                                            :src="getProductImage(slotProps.data.image)"
+                                            alt="Gambar Produk"
+                                            style="height: 40px; max-width: 80px; object-fit: contain; cursor: pointer;"
+                                            @error="(e) => handleImageError(e, '/img/default-product-image.png')"
+                                            @click="productStore.openImageInNewTab(slotProps.data.image)"
+                                            @load="debugImageUrl(slotProps.data.image)"
+                                            title="Klik untuk melihat gambar lengkap"
+                                        />
+                                    </div>
+                                    <div v-else>
+                                        <img
+                                            src="/img/default-product-image.png"
+                                            alt="Default Image"
+                                            style="height: 40px; max-width: 80px; object-fit: contain;"
+                                        />
+                                    </div>
+                                </template>
+                            </Column>
+                            <Column field="sku" header="No. Product" :sortable="true"></Column>
+                            <Column field="name" header="Nama Product" :sortable="true"></Column>
+                            <Column field="productType" header="Jenis / Type KIT" :sortable="true">
+                                <template #body="slotProps">
+                                    {{ slotProps.data.productType || '-' }}
+                                </template>
+                            </Column>
+                            <Column field="isDevice" header="Device" :sortable="true">
+                                <template #body="slotProps">
+                                    <span :class="getStatusBadge(slotProps.data.isDevice).class">
+                                        {{ getStatusBadge(slotProps.data.isDevice).text }}
+                                    </span>
+                                </template>
+                            </Column>
+                            <Column field="isKit" header="Kit" :sortable="true">
+                                <template #body="slotProps">
+                                    <span :class="getStatusBadge(slotProps.data.isKit).class">
+                                        {{ getStatusBadge(slotProps.data.isKit).text }}
+                                    </span>
+                                </template>
+                            </Column>
+                            <Column field="isInternal" header="Scope" :sortable="true">
+                                <template #body="slotProps">
+                                    <span :class="getInternalScopeBadge(slotProps.data.isInternal).class">
+                                        {{ getInternalScopeBadge(slotProps.data.isInternal).text }}
+                                    </span>
+                                </template>
+                            </Column>
+                            <Column field="billingType" header="Tipe Tagihan" :sortable="true">
+                                <template #body="slotProps">
+                                    {{ slotProps.data.billingType === 'recurring' ? 'Recurring' : 'One Time' }}
+                                </template>
+                            </Column>
+                            <Column field="condition" header="Kondisi" :sortable="true">
+                                <template #body="slotProps">
+                                    {{ conditionLabel(slotProps.data.condition) }}
+                                </template>
+                            </Column>
+                            <Column header="Kategori" field="category.name" :sortable="true">
+                                <template #body="slotProps">
+                                    {{ slotProps.data.category?.name || '-' }}
+                                </template>
+                            </Column>
+                            <Column field="createdByUser.fullName" header="Dibuat Oleh" :sortable="true">
+                                <template #body="slotProps">
+                                    {{ slotProps.data.createdByUser?.fullName || '-' }}
+                                </template>
+                            </Column>
+                            <Column header="Actions" :exportable="false" style="min-width:8rem">
+                                <template #body="slotProps">
+                                    <div class="d-inline-block">
+                                        <a href="javascript:;" class="btn btn-sm btn-text-secondary rounded-pill btn-icon dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
+                                            <i class="ri-more-2-fill"></i>
+                                        </a>
+                                        <ul class="dropdown-menu">
+                                            <li v-if="userHasRole('superadmin') || userHasPermission('edit_product')">
+                                                <a class="dropdown-item" href="javascript:void(0)" @click="productStore.openModal(slotProps.data)">
+                                                    <i class="ri-edit-box-line me-2"></i> Edit
+                                                </a>
+                                            </li>
+                                            <li v-if="userHasRole('superadmin') || userHasPermission('delete_product')">
+                                                <a class="dropdown-item text-danger" href="javascript:void(0)" @click="productStore.deleteProduct(slotProps.data.id)">
+                                                    <i class="ri-delete-bin-7-line me-2"></i> Hapus
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </template>
+                            </Column>
+                            <template #expansion="slotProps">
+                                <div class="p-3 bg-light">
+                                    <h6 class="mb-3">Komponen Kit</h6>
+                                    <div v-if="slotProps.data.isKit && slotProps.data.productKits?.length">
+                                        <div class="table-responsive">
+                                            <table class="table table-sm table-bordered mb-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th style="width: 60px">#</th>
+                                                        <th>Name</th>
+                                                        <th>Serial Number</th>
+                                                        <th>Type</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr v-for="(kit, index) in slotProps.data.productKits" :key="kit.id || `kit-${index}`">
+                                                        <td>{{ index + 1 }}</td>
+                                                        <td>{{ kit.name || '-' }}</td>
+                                                        <td>{{ kit.serialNumber || kit.serial_number || '-' }}</td>
+                                                        <td class="text-capitalize">{{ kit.type || '-' }}</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <div v-else class="text-muted">
+                                        Product ini tidak memiliki komponen kit.
+                                    </div>
+                                </div>
+                            </template>
+                        </MyDataTable>
+                    </div>
+                </div>
+            </div>
+
+            <Modal
                 id="ProductModal"
-                :title="modalTitle" 
+                :title="modalTitle"
                 :description="modalDescription"
                 :validationErrorsFromParent="validationErrors"
             >
@@ -327,6 +402,21 @@
                                 </div>
                             </div>
                             <div class="col-md-6">
+                                <label class="form-label">Scope Penggunaan</label>
+                                <CustomSelect2
+                                    v-model="isInternalSelect"
+                                    :options="isInternalOptions"
+                                    :get-option-label="option => option.label"
+                                    :reduce="option => option.value"
+                                    :get-option-key="option => option.value"
+                                    searchable
+                                    clearable
+                                    placeholder="-- Pilih Scope --"
+                                    id="isInternal"
+                                />
+                                <small class="text-muted">Kosongkan untuk produk yang bisa dipakai internal maupun eksternal.</small>
+                            </div>
+                            <div class="col-md-6">
                                 <div class="d-flex align-items-center gap-4 mt-3 flex-wrap">
                                     <div class="form-check form-switch d-flex align-items-center mb-0">
                                         <input class="form-check-input me-2" type="checkbox" v-model="form.isDevice" />
@@ -390,15 +480,13 @@
                 </template>
             </Modal>
         </div>
-         <!-- / Content -->
- 
-         <div class="content-backdrop fade"></div>
+        <div class="content-backdrop fade"></div>
     </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import { storeToRefs } from 'pinia';
+import { storeToRefs } from 'pinia'
 import { useProductStore } from '~/stores/product'
 import { useKategoriStore } from '~/stores/kategori'
 import { useUserStore } from '~/stores/user'
@@ -406,61 +494,115 @@ import { useUnitStore } from '~/stores/unit'
 import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
-import vSelect from 'vue-select'
+import CollapsibleFilterCard from '~/components/list/CollapsibleFilterCard.vue'
+import FilterFieldsRow from '~/components/list/FilterFieldsRow.vue'
+import FilterField from '~/components/list/FilterField.vue'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
-import 'vue-select/dist/vue-select.css'
 import Column from 'primevue/column'
 import { useDebounceFn } from '@vueuse/core'
-import { useFormatRupiah } from '~/composables/formatRupiah';
 import { usePermissions } from '~/composables/usePermissions'
 import { usePermissionsStore } from '~/stores/permissions'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import { useImageUrl } from '~/composables/useImageUrl'
 
-// Composables
-const { setListTitle, setFormTitle } = useDynamicTitle()
+const { setListTitle } = useDynamicTitle()
 const { getProductImage, handleImageError, debugImageUrl } = useImageUrl()
+const { userHasPermission, userHasRole } = usePermissions()
 
-const { userHasPermission, userHasRole } = usePermissions();
+const myDataTableRef = ref(null)
+const productStore = useProductStore()
+const kategoriStore = useKategoriStore()
+const unitStore = useUnitStore()
+const permissionStore = usePermissionsStore()
+const userStore = useUserStore()
 
-const formatRupiah = useFormatRupiah()
-
-const myDataTableRef    = ref(null)
-const productStore      = useProductStore()
-const kategoriStore     = useKategoriStore()
-const unitStore         = useUnitStore()
-const permissionStore   = usePermissionsStore()
-const userStore         = useUserStore()
-
-const { products, loading, totalRecords, totalProducts, params, form, isEditMode, showModal, validationErrors } = storeToRefs(productStore)
+const { products, loading, totalRecords, params, statistics, form, isEditMode, showModal, validationErrors } = storeToRefs(productStore)
 const { kategori } = storeToRefs(kategoriStore)
 const { units } = storeToRefs(unitStore)
 
 const globalFilterValue = ref('')
-const rowsPerPageOptionsArray = ref([10, 25, 50, 100]);
+const rowsPerPageOptionsArray = [10, 25, 50, 100]
 const activeProductModalTab = ref('product-info')
 const expandedRows = ref({})
+const tableControls = ref({ rows: 10, search: '' })
 
-// Table controls state
-const tableControls = ref({
-    rows: 10,
-    search: '',
-});
+const filters = ref({
+    categoryId: null,
+    isInternal: null,
+    isDevice: null,
+    isKit: null,
+    billingType: null,
+    condition: null,
+})
 
-const modalTitle = computed(() => isEditMode.value ? 'Edit Product' : 'Tambah Product');
-const modalDescription = computed(() => isEditMode.value ? 'Silakan ubah data product di bawah ini.' : 'Silakan isi form di bawah ini untuk menambahkan product baru.');
+const modalTitle = computed(() => (isEditMode.value ? 'Edit Product' : 'Tambah Product'))
+const modalDescription = computed(() =>
+    isEditMode.value
+        ? 'Silakan ubah data product di bawah ini.'
+        : 'Silakan isi form di bawah ini untuk menambahkan product baru.'
+)
 
+const statCards = computed(() => [
+    {
+        label: 'Total Product',
+        value: statistics.value.total || 0,
+        subtitle: 'Product terdaftar',
+        icon: 'ri-box-3-line',
+        iconClass: 'bg-label-primary',
+    },
+    {
+        label: 'Internal',
+        value: statistics.value.internal || 0,
+        subtitle: 'Khusus penggunaan internal',
+        icon: 'ri-building-line',
+        iconClass: 'bg-label-info',
+    },
+    {
+        label: 'Eksternal',
+        value: statistics.value.external || 0,
+        subtitle: 'Khusus client / eksternal',
+        icon: 'ri-user-star-line',
+        iconClass: 'bg-label-warning',
+    },
+    {
+        label: 'Keduanya',
+        value: statistics.value.both || 0,
+        subtitle: 'Internal & eksternal',
+        icon: 'ri-exchange-line',
+        iconClass: 'bg-label-secondary',
+    },
+])
+
+const hasActiveFilters = computed(() =>
+    filters.value.categoryId != null
+    || filters.value.isInternal != null
+    || filters.value.isDevice != null
+    || filters.value.isKit != null
+    || filters.value.billingType != null
+    || filters.value.condition != null
+)
 
 const billingTypeOptions = [
     { label: 'One Time', value: 'one_time' },
-    { label: 'Recurring', value: 'recurring' }
-];
+    { label: 'Recurring', value: 'recurring' },
+]
 
 const conditionOptions = [
     { label: 'Baru', value: 'baru' },
     { label: 'Bekas', value: 'bekas' },
     { label: 'Rusak', value: 'rusak' },
-];
+]
+
+const scopeFilterOptions = [
+    { label: 'Internal', value: 'true' },
+    { label: 'Eksternal (Client)', value: 'false' },
+    { label: 'Internal & Eksternal', value: 'null' },
+]
+
+const booleanFilterOptions = [
+    { label: 'Ya', value: 'true' },
+    { label: 'Tidak', value: 'false' },
+]
 
 const conditionLabels = {
     baru: 'Baru',
@@ -470,38 +612,77 @@ const conditionLabels = {
     bad: 'Bekas',
     reject: 'Bekas',
     damaged: 'Rusak',
-};
+}
 
 function conditionLabel(value) {
-    if (!value) return '-';
-    return conditionLabels[value] ?? '-';
+    if (!value) return '-'
+    return conditionLabels[value] ?? '-'
 }
+
 const productKitTypeOptions = [
     { label: 'Router', value: 'router' },
     { label: 'Adaptor', value: 'adaptor' },
     { label: 'Cable', value: 'cable' },
-];
+]
 
-const config = useRuntimeConfig();
+const isInternalOptions = [
+    { label: 'Internal & Eksternal', value: '' },
+    { label: 'Internal', value: 'true' },
+    { label: 'Eksternal (Client)', value: 'false' },
+]
+
+const isInternalSelect = computed({
+    get() {
+        if (form.value.isInternal === true) return 'true'
+        if (form.value.isInternal === false) return 'false'
+        return ''
+    },
+    set(value) {
+        if (value === 'true') {
+            form.value.isInternal = true
+        } else if (value === 'false') {
+            form.value.isInternal = false
+        } else {
+            form.value.isInternal = null
+        }
+    },
+})
 
 let modalInstance = null
-onMounted(() => {
-    // Initialize table controls
-    tableControls.value.rows = Number(params.value.rows) || 10;
-    tableControls.value.search = globalFilterValue.value;
-    
-    productStore.fetchProducts();
-    productStore.fetchTotalProducts();
-    kategoriStore.fetchKategori();
-    unitStore.fetchUnit();
+
+function resetFilters() {
+    filters.value = {
+        categoryId: null,
+        isInternal: null,
+        isDevice: null,
+        isKit: null,
+        billingType: null,
+        condition: null,
+    }
+}
+
+function reload() {
+    params.value.first = 0
+    productStore.fetchProducts()
+}
+
+onMounted(async () => {
+    tableControls.value.rows = Number(params.value.rows) || 10
+    tableControls.value.search = globalFilterValue.value
+
+    await productStore.fetchStatistics()
+    await productStore.fetchProducts()
+    kategoriStore.fetchKategori()
+    unitStore.fetchUnit()
     permissionStore.fetchPermissions()
     userStore.loadUser()
+
     const modalElement = document.getElementById('ProductModal')
     if (modalElement) {
         modalInstance = new bootstrap.Modal(modalElement)
     }
-    setListTitle('Product', products.value.length)
-});
+    setListTitle('Product', statistics.value.total)
+})
 
 watch(showModal, (newValue) => {
     if (newValue) {
@@ -511,6 +692,20 @@ watch(showModal, (newValue) => {
         modalInstance?.hide()
     }
 })
+
+watch(
+    filters,
+    () => {
+        params.value.categoryId = filters.value.categoryId
+        params.value.isInternal = filters.value.isInternal
+        params.value.isDevice = filters.value.isDevice
+        params.value.isKit = filters.value.isKit
+        params.value.billingType = filters.value.billingType
+        params.value.condition = filters.value.condition
+        reload()
+    },
+    { deep: true }
+)
 
 const onKitToggle = () => {
     if (form.value.isKit) {
@@ -524,176 +719,165 @@ const onKitToggle = () => {
     }
 }
 
-// Handler untuk rows change
 const onProductToolbarRows = (value) => {
-    tableControls.value.rows = Number(value) || 10;
-    handleRowsChange(value);
-};
+    tableControls.value.rows = Number(value) || 10
+    handleRowsChange(value)
+}
 
 const handleRowsChange = (value) => {
-    const rowsValue = Number(value) || 10;
-    params.value.rows = rowsValue;
-    params.value.first = 0;
-    productStore.fetchProducts();
-};
+    params.value.rows = Number(value) || 10
+    params.value.first = 0
+    productStore.fetchProducts()
+}
 
-// Handler untuk search
-const handleSearch = (value) => {
-    globalFilterValue.value = value;
-    tableControls.value.search = value;
-    params.value.first = 0;
-    // Debounce akan di-handle oleh watch globalFilterValue
-};
-
-// Watch untuk sinkronisasi table controls dengan params
 watch(() => params.value.rows, (newValue) => {
-    tableControls.value.rows = Number(newValue) || 10;
-});
+    tableControls.value.rows = Number(newValue) || 10
+})
 
 watch(() => params.value.search, (newValue) => {
     if (newValue !== globalFilterValue.value) {
-        globalFilterValue.value = newValue;
-        tableControls.value.search = newValue;
+        globalFilterValue.value = newValue
+        tableControls.value.search = newValue
     }
-});
+})
 
 const debouncedSearch = useDebounceFn(() => {
     productStore.setSearch(globalFilterValue.value)
 }, 500)
-watch(globalFilterValue, debouncedSearch);
+watch(globalFilterValue, debouncedSearch)
 
-const onPage = (event) => productStore.setPagination(event);
-
-const onSort = (event) => productStore.setSort(event);
+const onPage = (event) => productStore.setPagination(event)
+const onSort = (event) => productStore.setSort(event)
 const onRowToggle = (event) => {
-    expandedRows.value = event.data;
-};
+    expandedRows.value = event.data
+}
 
 const exportData = async (format) => {
-    const toast     = useToast();
+    const toast = useToast()
     try {
         if (format === 'csv') {
             myDataTableRef.value.exportCSV({
                 title: 'Data Produk',
-                border: true
-            });
+                border: true,
+            })
         } else if (format === 'excel') {
-            // Ambil data dari API untuk export Excel
-            const exportResult = await productStore.fetchProductsForExport();
+            const exportResult = await productStore.fetchProductsForExport()
             myDataTableRef.value.exportExcel({
                 title: `Data Produk ${exportResult.nmPerusahaan}`,
-                data: exportResult.data
-            });
-        } else if (format === 'pdf') {
-            // Implement PDF export if needed
+                data: exportResult.data,
+            })
         }
     } catch (error) {
-        console.error('Export error:', error);
+        console.error('Export error:', error)
         toast.error({
-          title: 'Error',
-          message: 'Gagal melakukan export data',
-          color: 'red',
-          position: 'topRight',
-        });
+            title: 'Error',
+            message: 'Gagal melakukan export data',
+            color: 'red',
+            position: 'topRight',
+        })
     }
-};
+}
 
 function onImageChange(e) {
-  const file = e.target.files[0];
-  if (file) {
-    productStore.handleImageChange(file);
-  }
+    const file = e.target.files[0]
+    if (file) {
+        productStore.handleImageChange(file)
+    }
 }
 
 const getStatusBadge = (status) => {
     switch (status) {
         case true:
-            return { text: 'Ya', class: 'badge rounded-pill bg-label-primary' };
+            return { text: 'Ya', class: 'badge rounded-pill bg-label-primary' }
         case false:
-            return { text: 'Tidak', class: 'badge rounded-pill bg-label-danger' };
+            return { text: 'Tidak', class: 'badge rounded-pill bg-label-danger' }
         default:
-            return { text: '-', class: 'badge rounded-pill bg-label-light' };
+            return { text: '-', class: 'badge rounded-pill bg-label-light' }
     }
-};
+}
 
-// Helper function to check if field has validation error
+const getInternalScopeBadge = (value) => {
+    if (value === true) {
+        return { text: 'Internal', class: 'badge rounded-pill bg-label-primary' }
+    }
+    if (value === false) {
+        return { text: 'Eksternal', class: 'badge rounded-pill bg-label-info' }
+    }
+    return { text: 'Keduanya', class: 'badge rounded-pill bg-label-secondary' }
+}
+
 const hasFieldError = (fieldName) => {
-    if (!validationErrors.value || !Array.isArray(validationErrors.value)) return false;
-    return validationErrors.value.some(error => {
-        if (typeof error === 'string') return false;
-        return error.field === fieldName || error.rule === fieldName;
-    });
-};
+    if (!validationErrors.value || !Array.isArray(validationErrors.value)) return false
+    return validationErrors.value.some((error) => {
+        if (typeof error === 'string') return false
+        return error.field === fieldName || error.rule === fieldName
+    })
+}
 
-// Helper function to get field error message
 const getFieldError = (fieldName) => {
-    if (!validationErrors.value || !Array.isArray(validationErrors.value)) return '';
-    const error = validationErrors.value.find(error => {
-        if (typeof error === 'string') return false;
-        return error.field === fieldName || error.rule === fieldName;
-    });
-    return error ? error.message : '';
-};
+    if (!validationErrors.value || !Array.isArray(validationErrors.value)) return ''
+    const error = validationErrors.value.find((error) => {
+        if (typeof error === 'string') return false
+        return error.field === fieldName || error.rule === fieldName
+    })
+    return error ? error.message : ''
+}
 
 definePageMeta({
-  layout: 'default',
-  middleware: ['auth', 'check-permission'],
-  title: 'Product',
-  description: 'Product Management',
-  keywords: 'Product, Inventory, Sinergi Innovate Pratama',
-  author: 'Sinergi Innovate Pratama',
-  robots: 'index, follow',
-  viewport: 'width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0'
-});
-
+    layout: 'default',
+    middleware: ['auth', 'check-permission'],
+    title: 'Product',
+    description: 'Product Management',
+    keywords: 'Product, Inventory, Sinergi Innovate Pratama',
+    author: 'Sinergi Innovate Pratama',
+    robots: 'index, follow',
+    viewport: 'width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0',
+})
 </script>
 
 <style scoped>
-/* Form styling */
 .form-label {
-  font-weight: 500;
-  color: #374151;
-  margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 0.5rem;
 }
 
 .form-control {
-  border-radius: 0.375rem;
-  border: 1px solid #d1d5db;
-  padding: 0.75rem;
-  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    border-radius: 0.375rem;
+    border: 1px solid #d1d5db;
+    padding: 0.75rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
 
 .form-control:focus {
-  border-color: #696cff;
-  box-shadow: 0 0 0 0.2rem rgba(105, 108, 255, 0.25);
-  outline: 0;
+    border-color: #696cff;
+    box-shadow: 0 0 0 0.2rem rgba(105, 108, 255, 0.25);
+    outline: 0;
 }
 
-/* Image preview styling */
 .image-preview {
-  transition: all 0.3s ease;
+    transition: all 0.3s ease;
 }
 
 .image-preview:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-/* Responsive adjustments */
 @media (max-width: 768px) {
-  .card-body {
-    padding: 16px;
-  }
-  
-  .form-label {
-    font-size: 13px;
-    margin-bottom: 6px;
-  }
+    .card-body {
+        padding: 16px;
+    }
+
+    .form-label {
+        font-size: 13px;
+        margin-bottom: 6px;
+    }
 }
 
 @media (max-width: 576px) {
-  .card-body {
-    padding: 12px;
-  }
+    .card-body {
+        padding: 12px;
+    }
 }
 </style>

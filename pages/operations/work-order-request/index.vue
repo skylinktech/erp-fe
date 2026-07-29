@@ -45,41 +45,44 @@
       </div>
 
       <div class="row g-6">
-        <!-- Filter -->
-        <div class="col-12"><h4 class="mt-2 mb-1">Filter</h4></div>
         <div class="col-12">
-          <div class="card"><div class="card-body"><div class="row g-2">
-            <div class="col-md-4">
-              <CustomSelect2
-                v-model="filters.status"
-                :options="statusOptions"
-                :get-option-label="o => o.label"
-                :reduce="o => o.value"
-                searchable clearable
-                placeholder="Status"
-              />
-            </div>
-            <div class="col-md-4">
-              <CustomSelect2
-                v-model="filters.jobType"
-                :options="jobTypeOptions"
-                :get-option-label="o => o.label"
-                :reduce="o => o.value"
-                searchable clearable
-                placeholder="Jenis Pekerjaan"
-              />
-            </div>
-            <div class="col-md-4">
-              <CustomSelect2
-                v-model="filters.urgencyLevel"
-                :options="urgencyOptions"
-                :get-option-label="o => o.label"
-                :reduce="o => o.value"
-                searchable clearable
-                placeholder="Tingkat Urgency"
-              />
-            </div>
-          </div></div></div>
+          <CollapsibleFilterCard title="Filter Work Order Request" :has-active-filters="hasActiveFilters" @reset="resetFilters">
+            <FilterFieldsRow>
+              <FilterField>
+                <label class="form-label">Status</label>
+                <CustomSelect2
+                  v-model="filters.status"
+                  :options="statusOptions"
+                  :get-option-label="o => o.label"
+                  :reduce="o => o.value"
+                  searchable clearable
+                  placeholder="Status"
+                />
+              </FilterField>
+              <FilterField>
+                <label class="form-label">Jenis Pekerjaan</label>
+                <CustomSelect2
+                  v-model="filters.jobType"
+                  :options="jobTypeOptions"
+                  :get-option-label="o => o.label"
+                  :reduce="o => o.value"
+                  searchable clearable
+                  placeholder="Jenis Pekerjaan"
+                />
+              </FilterField>
+              <FilterField>
+                <label class="form-label">Tingkat Urgency</label>
+                <CustomSelect2
+                  v-model="filters.urgencyLevel"
+                  :options="urgencyOptions"
+                  :get-option-label="o => o.label"
+                  :reduce="o => o.value"
+                  searchable clearable
+                  placeholder="Tingkat Urgency"
+                />
+              </FilterField>
+            </FilterFieldsRow>
+          </CollapsibleFilterCard>
         </div>
 
         <!-- Table -->
@@ -212,6 +215,16 @@ const { getStatusBadge } = useApprovalStatus()
 
 const tableControls = ref({ rows: 10 })
 const filters = ref({ status: null as string | null, jobType: null as string | null, urgencyLevel: null as string | null })
+
+const hasActiveFilters = computed(
+  () => !!filters.value.status || !!filters.value.jobType || !!filters.value.urgencyLevel
+)
+
+function resetFilters() {
+  filters.value.status = null
+  filters.value.jobType = null
+  filters.value.urgencyLevel = null
+}
 const globalFilterValue = ref('')
 const rowsPerPageOptions = ref([10, 25, 50, 100])
 

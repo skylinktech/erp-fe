@@ -46,27 +46,21 @@
 
           <div class="row g-6">
               <div class="col-12">
-                  <h4 class="mt-6 mb-1">Filter Surat Jalan</h4>
-                  <p class="mb-0">Saring surat jalan berdasarkan Sales Order</p>
-              </div>
-              <div class="col-12">
-                  <div class="card">
-                      <div class="card-body">
-                          <div class="row">
-                              <div class="col-md-12">
-                                  <CustomSelect2 
-                                      v-model="filters.salesOrderId" 
-                                      :options="filteredSalesOrders" 
-                                      :get-option-label="getSalesOrderLabel" 
-                                      :reduce="option => option?.id" 
-                                      searchable 
-                                      clearable 
-                                      placeholder="Pilih Sales Order" 
-                                  />
-                              </div>
-                          </div>
-                      </div>
-                  </div>
+                  <CollapsibleFilterCard title="Filter Surat Jalan" :has-active-filters="hasActiveFilters" @reset="resetFilters">
+                      <FilterFieldsRow>
+                          <FilterField>
+                              <CustomSelect2 
+                                  v-model="filters.salesOrderId" 
+                                  :options="filteredSalesOrders" 
+                                  :get-option-label="getSalesOrderLabel" 
+                                  :reduce="option => option?.id" 
+                                  searchable 
+                                  clearable 
+                                  placeholder="Pilih Sales Order" 
+                              />
+                          </FilterField>
+                      </FilterFieldsRow>
+                  </CollapsibleFilterCard>
               </div>
               <div class="col-12">
                   <!-- suratJalan Table -->
@@ -503,6 +497,12 @@ const filters = ref({
 salesOrderId: null,
 search: '',
 });
+
+const hasActiveFilters = computed(() => !!filters.value.salesOrderId)
+
+function resetFilters() {
+  filters.value.salesOrderId = null
+}
 
 const globalFilterValue = ref('');
 const alamatSamaDenganCustomer = ref(false)

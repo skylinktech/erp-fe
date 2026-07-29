@@ -1,18 +1,23 @@
 <template>
   <div class="progress-status-stepper">
-    <div class="d-flex flex-wrap gap-2 mb-3">
-      <button
-        v-for="(step, idx) in statusOptions"
-        :key="step.value"
-        type="button"
-        class="btn btn-sm"
-        :class="stepButtonClass(step.value, idx)"
-        :disabled="readonly"
-        @click="selectStatus(step.value)"
-      >
-        <span class="step-index me-1">{{ idx + 1 }}</span>
-        {{ step.label }}
-      </button>
+    <div class="progress-status-stepper__steps d-flex flex-wrap align-items-center mb-3">
+      <template v-for="(step, idx) in statusOptions" :key="step.value">
+        <span
+          v-if="idx > 0"
+          class="progress-status-stepper__separator"
+          aria-hidden="true"
+        >|</span>
+        <button
+          type="button"
+          class="btn btn-sm"
+          :class="stepButtonClass(step.value, idx)"
+          :disabled="readonly"
+          @click="selectStatus(step.value)"
+        >
+          <span class="step-index me-1">{{ idx + 1 }}</span>
+          {{ step.label }}
+        </button>
+      </template>
     </div>
     <div v-if="!readonly && selectedStatus !== modelValue" class="alert alert-light border py-2 px-3 mb-0 small">
       Ubah status ke <strong>{{ labelFor(selectedStatus) }}</strong>
@@ -75,6 +80,18 @@ function selectStatus(status: ProgressTrackerStatus) {
 </script>
 
 <style scoped>
+.progress-status-stepper__steps {
+  gap: 0.35rem;
+}
+
+.progress-status-stepper__separator {
+  color: rgba(67, 89, 113, 0.35);
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0 0.15rem;
+  user-select: none;
+}
+
 .step-index {
   display: inline-flex;
   width: 1.25rem;

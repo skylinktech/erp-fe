@@ -269,35 +269,35 @@
 
           <!-- Tab Content: Forecast -->
           <div v-show="activeTab === 'forecast'" class="tab-content mb-3">
-            <!-- Filter Section -->
-            <div class="row">
-              <div class="col-md-3 mb-2">
-                <label class="form-label text-muted">Start Date</label>
-                <InputText v-model="filterStartDate" type="date" class="w-100" />
-              </div>
-              <div class="col-md-3 mb-2">
-                <label class="form-label text-muted">End Date</label>
-                <InputText v-model="filterEndDate" type="date" class="w-100" />
-              </div>
-              <div class="col-md-3 mb-2">
-                <label class="form-label text-muted">Group By</label>
-                <CustomSelect2
-                  v-model="groupBy"
-                  :options="groupByOptions"
-                  :get-option-label="(o) => o.label"
-                  :reduce="(o) => o.value"
-                  searchable
-                  clearable
-                  placeholder="Pilih Group By"
-                />
-              </div>
-              <div class="col-md-3 mb-2 d-flex align-items-end">
-                <button @click="fetchForecast" class="btn btn-primary w-100">
-                  <i class="ri-search-line me-1"></i>
-                  Filter
-                </button>
-              </div>
-            </div>
+            <CollapsibleFilterCard
+              title="Filter Forecast"
+              :has-active-filters="hasActiveForecastFilters"
+              @reset="resetForecastFilters"
+            >
+              <FilterFieldsRow>
+                <FilterField>
+                  <label class="form-label">Start Date</label>
+                  <InputText v-model="filterStartDate" type="date" class="w-100" @change="fetchForecast" />
+                </FilterField>
+                <FilterField>
+                  <label class="form-label">End Date</label>
+                  <InputText v-model="filterEndDate" type="date" class="w-100" @change="fetchForecast" />
+                </FilterField>
+                <FilterField>
+                  <label class="form-label">Group By</label>
+                  <CustomSelect2
+                    v-model="groupBy"
+                    :options="groupByOptions"
+                    :get-option-label="(o) => o.label"
+                    :reduce="(o) => o.value"
+                    searchable
+                    clearable
+                    placeholder="Pilih Group By"
+                    @update:modelValue="fetchForecast"
+                  />
+                </FilterField>
+              </FilterFieldsRow>
+            </CollapsibleFilterCard>
 
             <!-- Forecast Table -->
             <div class="row g-6">
@@ -479,6 +479,22 @@ const groupByOptions = [
   { label: 'By Month', value: 'month' },
   { label: 'By Stage', value: 'stage' },
 ]
+
+const hasActiveForecastFilters = computed(() => groupBy.value !== 'month')
+
+function setDefaultForecastDates() {
+  const today = new Date()
+  filterStartDate.value = today.toISOString().split('T')[0]
+  const endDate = new Date(today)
+  endDate.setMonth(endDate.getMonth() + 6)
+  filterEndDate.value = endDate.toISOString().split('T')[0]
+}
+
+function resetForecastFilters() {
+  setDefaultForecastDates()
+  groupBy.value = 'month'
+  fetchForecast()
+}
 
 const sortedStages = computed(() => {
   const stagesList = stages.value || []
@@ -739,13 +755,8 @@ async function fetchForecast() {
 // Watch for tab change to fetch forecast
 watch(activeTab, (newTab) => {
   if (newTab === 'forecast') {
-    // Set default date range if not set
     if (!filterStartDate.value || !filterEndDate.value) {
-      const today = new Date()
-      filterStartDate.value = today.toISOString().split('T')[0]
-      const endDate = new Date(today)
-      endDate.setMonth(endDate.getMonth() + 6)
-      filterEndDate.value = endDate.toISOString().split('T')[0]
+      setDefaultForecastDates()
     }
     fetchForecast()
   }

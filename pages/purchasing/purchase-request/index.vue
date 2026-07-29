@@ -11,20 +11,51 @@
         <div class="col-xl-3 col-lg-6 col-md-6"><div class="card"><div class="card-body"><div class="d-flex justify-content-between align-items-center mb-4"><p class="mb-0">Approved</p><div class="avatar"><span class="avatar-initial rounded bg-label-success"><i class="ri-checkbox-circle-line"></i></span></div></div><h5 class="mb-0">{{ statistics?.approvedPurchaseRequests || 0 }}</h5></div></div></div>
       </div>
 
-      <div class="row g-6">
-        <div class="col-12"><h4 class="mt-2 mb-1">Filter</h4></div>
-        <div class="col-12">
-          <div class="card"><div class="card-body"><div class="row g-2">
-            <div class="col-md-6">
-              <CustomSelect2 v-model="filters.status" :options="statusOptions" :get-option-label="o => o.label" :reduce="o => o.value" searchable clearable placeholder="Status" />
-            </div>
-            <div class="col-md-6">
-              <CustomSelect2 v-model="filters.priority" :options="priorityOptions" :get-option-label="o => o.label" :reduce="o => o.value" searchable clearable placeholder="Prioritas" />
-            </div>
-          </div></div></div>
+      <CollapsibleFilterCard
+        title="Filter Purchase Request"
+        :has-active-filters="hasActiveFilters"
+        :show-reset="false"
+        @reset="resetFilters"
+      >
+        <div class="row g-4">
+          <div class="col-md-6">
+            <FilterField>
+              <label class="form-label">Status</label>
+              <CustomSelect2
+                v-model="filters.status"
+                :options="statusOptions"
+                :get-option-label="(o) => o.label"
+                :reduce="(o) => o.value"
+                searchable
+                clearable
+                placeholder="Status"
+              />
+            </FilterField>
+          </div>
+          <div class="col-md-6">
+            <FilterField>
+              <label class="form-label">Prioritas</label>
+              <CustomSelect2
+                v-model="filters.priority"
+                :options="priorityOptions"
+                :get-option-label="(o) => o.label"
+                :reduce="(o) => o.value"
+                searchable
+                clearable
+                placeholder="Prioritas"
+              />
+            </FilterField>
+          </div>
+          <div class="col-md-6 offset-md-6 d-flex justify-content-end mt-4">
+            <button type="button" class="btn btn-outline-secondary btn-sm" @click="resetFilters">
+              <i class="ri-refresh-line me-1"></i>
+              Reset Filter
+            </button>
+          </div>
         </div>
-        <div class="col-12">
-          <div class="card">
+      </CollapsibleFilterCard>
+
+      <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
               <div class="d-flex align-items-center me-3 mb-2 mb-md-0"><span class="me-2">Baris:</span><Dropdown v-model="tableControls.rows" :options="rowsPerPageOptionsArray" @change="handleRowsChange" placeholder="Jumlah" style="width: 8rem;" /></div>
               <div class="d-flex align-items-center gap-2">
@@ -68,8 +99,6 @@
               </MyDataTable>
             </div>
           </div>
-        </div>
-      </div>
     </div>
 
     <Menu
@@ -106,6 +135,15 @@ const formatRupiah = useFormatRupiah()
 const { purchaseRequests, loading, totalRecords, params, statistics } = storeToRefs(purchaseRequestStore)
 const tableControls = ref({ rows: 10 })
 const filters = ref({ status: null, priority: null })
+
+const hasActiveFilters = computed(
+  () => !!filters.value.status || !!filters.value.priority
+)
+
+function resetFilters() {
+  filters.value.status = null
+  filters.value.priority = null
+}
 const globalFilterValue = ref('')
 const rowsPerPageOptionsArray = ref([10, 25, 50, 100])
 const statusOptions = [{ label: 'Draft', value: 'draft' }, { label: 'Pending', value: 'pending' }, { label: 'Approved', value: 'approved' }, { label: 'Rejected', value: 'rejected' }, { label: 'Completed', value: 'completed' }]

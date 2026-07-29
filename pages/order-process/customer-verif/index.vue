@@ -123,54 +123,48 @@
                 <!-- Filters -->
                 <div class="row g-6">
                     <div class="col-12">
-                        <h4 class="mt-6 mb-1">Filter Customer Verification</h4>
-                        <p class="mb-0">Temukan semua customer verification perusahaan Anda</p>
-                    </div>
-                    <div class="col-12">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-md-4 mb-3">
-                                        <label class="form-label text-muted mb-2">Filter Customer</label>
-                                        <CustomSelect2
-                                            v-model="filters.customerId"
-                                            :options="customers"
-                                            :get-option-label="c => c.name"
-                                            :reduce="c => c.id"
-                                            placeholder="Pilih Customer"
-                                            searchable
-                                            clearable
-                                            :loading="customerStore.loading"
-                                            loading-text="Memuat customer..."
-                                        />
-                                    </div>
-                                    <div class="col-md-4 mb-3">
-                                        <label class="form-label text-muted mb-2">Filter Status</label>
-                                        <CustomSelect2
-                                            v-model="filters.status"
-                                            :options="statusOptions"
-                                            :get-option-label="option => option.label"
-                                            :reduce="option => option.value"
-                                            placeholder="Pilih Status"
-                                            searchable
-                                            clearable
-                                        />
-                                    </div>
-                                    <div class="col-md-4 mb-3">
-                                        <label class="form-label text-muted mb-2">Filter Purchase Order</label>
-                                        <CustomSelect2
-                                            v-model="filters.purchaseRequestId"
-                                            :options="approvedPurchaseRequests"
-                                            :get-option-label="formatPurchaseOrderOptionLabel"
-                                            :reduce="po => po.id"
-                                            placeholder="Pilih Purchase Order"
-                                            searchable
-                                            clearable
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <CollapsibleFilterCard title="Filter Customer Verification" :has-active-filters="hasActiveFilters" @reset="resetFilters">
+                            <FilterFieldsRow>
+                                <FilterField>
+                                    <label class="form-label">Filter Customer</label>
+                                    <CustomSelect2
+                                        v-model="filters.customerId"
+                                        :options="customers"
+                                        :get-option-label="c => c.name"
+                                        :reduce="c => c.id"
+                                        placeholder="Pilih Customer"
+                                        searchable
+                                        clearable
+                                        :loading="customerStore.loading"
+                                        loading-text="Memuat customer..."
+                                    />
+                                </FilterField>
+                                <FilterField>
+                                    <label class="form-label">Filter Status</label>
+                                    <CustomSelect2
+                                        v-model="filters.status"
+                                        :options="statusOptions"
+                                        :get-option-label="option => option.label"
+                                        :reduce="option => option.value"
+                                        placeholder="Pilih Status"
+                                        searchable
+                                        clearable
+                                    />
+                                </FilterField>
+                                <FilterField>
+                                    <label class="form-label">Filter Purchase Order</label>
+                                    <CustomSelect2
+                                        v-model="filters.purchaseRequestId"
+                                        :options="approvedPurchaseRequests"
+                                        :get-option-label="formatPurchaseOrderOptionLabel"
+                                        :reduce="po => po.id"
+                                        placeholder="Pilih Purchase Order"
+                                        searchable
+                                        clearable
+                                    />
+                                </FilterField>
+                            </FilterFieldsRow>
+                        </CollapsibleFilterCard>
                     </div>
 
                     <!-- Table -->
@@ -544,6 +538,16 @@ const filters = ref({
     customerId: null,
     search: '',
 })
+
+const hasActiveFilters = computed(
+  () => !!filters.value.customerId || !!filters.value.status || !!filters.value.purchaseRequestId
+)
+
+function resetFilters() {
+  filters.value.customerId = null
+  filters.value.status = null
+  filters.value.purchaseRequestId = null
+}
 const globalFilterValue = ref('')
 const loadingPurchaseRequests = ref(false)
 

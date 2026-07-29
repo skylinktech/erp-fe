@@ -30,24 +30,35 @@
         <NuxtLink to="/admin/approval-workflows">Atur di Approval Workflows</NuxtLink>.
       </div>
 
-      <div class="card mb-4">
-        <div class="card-body row g-3">
+      <CollapsibleFilterCard
+        title="Filter Perjalanan Dinas"
+        :has-active-filters="hasActiveFilters"
+        :show-reset="false"
+        @reset="resetFilters"
+      >
+        <div class="row g-4">
           <div class="col-md-6">
-            <label class="form-label small">Status</label>
+            <label class="form-label">Status</label>
             <select v-model.number="params.status" class="form-select" @change="reload">
               <option :value="null">Semua</option>
               <option v-for="s in STATUS_PD_OPTIONS" :key="s.value" :value="s.value">{{ s.label }}</option>
             </select>
           </div>
           <div class="col-md-6">
-            <label class="form-label small">Jenis Perjalanan</label>
+            <label class="form-label">Jenis Perjalanan</label>
             <select v-model="params.jenisPerjalanan" class="form-select" @change="reload">
               <option :value="null">Semua</option>
               <option v-for="o in JENIS_PERJALANAN_OPTIONS" :key="o.value" :value="o.value">{{ o.label }}</option>
             </select>
           </div>
+          <div class="col-md-6 offset-md-6 d-flex justify-content-end mt-4">
+            <button type="button" class="btn btn-outline-secondary btn-sm" @click="resetFilters">
+              <i class="ri-refresh-line me-1"></i>
+              Reset Filter
+            </button>
+          </div>
         </div>
-      </div>
+      </CollapsibleFilterCard>
 
       <div class="col-12">
         <div class="card">
@@ -208,6 +219,16 @@ const statCards = computed(() => [
     iconClass: 'bg-label-info',
   },
 ])
+
+const hasActiveFilters = computed(
+  () => params.value.status != null || params.value.jenisPerjalanan != null
+)
+
+function resetFilters() {
+  params.value.status = null
+  params.value.jenisPerjalanan = null
+  reload()
+}
 
 const actionMenuItems = computed(() => {
   const row = activeRow.value

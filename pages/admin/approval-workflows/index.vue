@@ -38,6 +38,28 @@
           <p class="mb-4">Kelola workflow approval dan langkah-langkah persetujuannya.</p>
         </div>
         <div class="col-12">
+          <CollapsibleFilterCard
+            title="Filter Workflow"
+            :has-active-filters="hasActiveFilters"
+            @reset="resetFilters"
+          >
+            <FilterFieldsRow>
+              <FilterField>
+                <label class="form-label">Status</label>
+                <select
+                  v-model="wfStore.params.isActive"
+                  class="form-select"
+                  @change="load"
+                >
+                  <option value="">Semua Status</option>
+                  <option value="true">Aktif</option>
+                  <option value="false">Nonaktif</option>
+                </select>
+              </FilterField>
+            </FilterFieldsRow>
+          </CollapsibleFilterCard>
+        </div>
+        <div class="col-12">
           <div class="card">
             <ListPageTableHeader
               :rows="Number(wfStore.params.rows)"
@@ -50,22 +72,10 @@
               @update:search="(v) => { globalFilterValue = v }"
             >
               <template #add>
-                <button type="button" class="btn btn-primary" @click="wfStore.openModal()">
+                <button type="button" class="btn btn-primary" @click="openWorkflowModal()">
                   <i class="ri-add-line me-1"></i>
                   Tambah Workflow
                 </button>
-              </template>
-              <template #toolbar-extra>
-                <select
-                  v-model="wfStore.params.isActive"
-                  class="form-select form-select-sm"
-                  style="width: 9rem;"
-                  @change="load"
-                >
-                  <option value="">Semua Status</option>
-                  <option value="true">Aktif</option>
-                  <option value="false">Nonaktif</option>
-                </select>
               </template>
             </ListPageTableHeader>
             <div class="card-datatable table-responsive py-3 px-3">
@@ -122,7 +132,7 @@
                             </NuxtLink>
                           </li>
                           <li>
-                            <a class="dropdown-item" href="javascript:void(0)" @click="wfStore.openModal(w)">
+                            <a class="dropdown-item" href="javascript:void(0)" @click="openWorkflowModal(w)">
                               <i class="ri-edit-box-line me-2"></i> Edit
                             </a>
                           </li>
@@ -178,7 +188,7 @@
               <h5 class="modal-title">{{ wfStore.isEditMode ? 'Edit Workflow' : 'Tambah Workflow' }}</h5>
               <button type="button" class="btn-close" @click="wfStore.closeModal()"></button>
             </div>
-            <form @submit.prevent="wfStore.saveWorkflow()">
+            <form @submit.prevent="onSaveWorkflow">
               <div class="modal-body">
                 <div v-if="wfStore.validationErrors.length" class="alert alert-danger py-2">
                   <ul class="mb-0 ps-3">
@@ -191,20 +201,39 @@
                 </div>
                 <div class="mb-3">
                   <label class="form-label">Entity Type <span class="text-danger">*</span></label>
-                  <select
-                    v-model.number="wfStore.form.approvalWorkflowEntityId"
-                    class="form-select"
-                    required
+                  <CustomSelect2
+                    v-model="wfStore.form.approvalWorkflowEntityId"
+                    :options="wfStore.entities"
+                    :get-option-label="entityOptionLabel"
+                    :get-option-key="(opt) => String(opt?.id ?? '')"
+                    :reduce="(opt) => opt?.id"
+                    :filter-by="filterEntityOption"
+                    :loading="wfStore.entitiesLoading"
                     :disabled="wfStore.isEditMode || wfStore.entitiesLoading"
+                    :is-invalid="entitySelectInvalid"
+                    searchable
+                    clearable
+                    placeholder="Pilih entity..."
+                    search-placeholder="Cari nama / code / modul..."
+                    no-options-text="Tidak ada entity ditemukan"
                   >
-                    <option :value="null">Pilih entity...</option>
-                    <option v-for="opt in wfStore.entityTypeOptions" :key="opt.value" :value="opt.value">
-                      {{ opt.label }}
-                      <template v-if="opt.module"> ({{ opt.module }})</template>
-                    </option>
-                  </select>
+                    <template #option="{ option }">
+                      <div class="d-flex flex-column">
+                        <span class="fw-medium">{{ option.name }}</span>
+                        <small class="text-muted">
+                          <code>{{ option.code }}</code>
+                          <template v-if="option.module"> · {{ option.module }}</template>
+                        </small>
+                      </div>
+                    </template>
+                  </CustomSelect2>
                   <small v-if="wfStore.isEditMode" class="text-muted">Entity type tidak dapat diubah setelah dibuat</small>
                   <small v-else-if="wfStore.entitiesLoading" class="text-muted">Memuat daftar entity...</small>
+                  <small v-else-if="!wfStore.entities.length" class="text-muted">
+                    Belum ada entity aktif.
+                    <NuxtLink to="/admin/approval-workflow-entities">Tambah entity</NuxtLink>
+                  </small>
+                  <small v-else-if="entitySelectInvalid" class="text-danger">Entity type wajib dipilih</small>
                 </div>
                 <div class="mb-3">
                   <label class="form-label">Deskripsi</label>
@@ -231,7 +260,9 @@
 
 <script setup lang="ts">
 import { useDebounceFn } from '@vueuse/core'
+import CustomSelect2 from '~/components/CustomSelect2.vue'
 import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
+import type { ApprovalWorkflowEntity } from '~/stores/approval-workflows'
 
 definePageMeta({
   layout: 'default',
@@ -242,6 +273,52 @@ const wfStore = useApprovalWorkflowsStore()
 const { stats } = storeToRefs(wfStore)
 
 const globalFilterValue = ref('')
+const entitySelectInvalid = ref(false)
+
+const hasActiveFilters = computed(() => wfStore.params.isActive !== '')
+
+function entityOptionLabel(opt: ApprovalWorkflowEntity | null | undefined) {
+  if (!opt) return ''
+  return opt.module ? `${opt.name} (${opt.module})` : opt.name
+}
+
+function filterEntityOption(
+  option: ApprovalWorkflowEntity,
+  _label: string,
+  search: string,
+) {
+  const q = search.toLowerCase().trim()
+  if (!q) return true
+  return [option.name, option.code, option.module]
+    .filter(Boolean)
+    .some((v) => String(v).toLowerCase().includes(q))
+}
+
+async function openWorkflowModal(data?: Parameters<typeof wfStore.openModal>[0]) {
+  entitySelectInvalid.value = false
+  // Refresh entity list so newly added entities appear in the select
+  await wfStore.fetchEntities(true)
+  wfStore.openModal(data)
+}
+
+async function onSaveWorkflow() {
+  if (!wfStore.isEditMode && !wfStore.form.approvalWorkflowEntityId) {
+    entitySelectInvalid.value = true
+    return
+  }
+  entitySelectInvalid.value = false
+  await wfStore.saveWorkflow()
+}
+
+watch(() => wfStore.form.approvalWorkflowEntityId, () => {
+  if (wfStore.form.approvalWorkflowEntityId) entitySelectInvalid.value = false
+})
+
+function resetFilters() {
+  wfStore.params.isActive = ''
+  wfStore.params.page = 1
+  load()
+}
 
 const statCards = computed(() => [
   {

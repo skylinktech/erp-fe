@@ -140,76 +140,63 @@
                     </div>
                 </div>
 
-                <!-- Filters -->
                 <div class="row g-6">
                     <div class="col-12">
-                        <h4 class="mt-6 mb-1">Filter Site Investment</h4>
-                        <p class="mb-0">Temukan semua site investment perusahaan Anda</p>
-                    </div>
-                    <div class="col-12">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-md-4 mb-3">
-                                        <label class="form-label text-muted mb-2">Filter Customer</label>
-                                        <CustomSelect2
-                                            v-model="filters.customerId"
-                                            :options="customers"
-                                            :get-option-label="getCustomerLabel"
-                                            :reduce="getCustomerId"
-                                            placeholder="Pilih Customer"
-                                            searchable
-                                            clearable
-                                            :loading="customerStore.loading"
-                                            loading-text="Memuat customer..."
-                                        />
-                                    </div>
-                                    <div class="col-md-4 mb-3">
-                                        <label class="form-label text-muted mb-2">Filter Status</label>
-                                        <CustomSelect2
-                                            v-model="filters.status"
-                                            :options="statusOptions"
-                                            :get-option-label="getOptionLabel"
-                                            :reduce="getOptionValue"
-                                            placeholder="Pilih Status"
-                                            searchable
-                                            clearable
-                                        />
-                                    </div>
-                                    <div class="col-md-4 mb-3">
-                                        <label class="form-label text-muted mb-2">Filter Priority</label>
-                                        <CustomSelect2
-                                            v-model="filters.priority"
-                                            :options="priorityOptions"
-                                            :get-option-label="getOptionLabel"
-                                            :reduce="getOptionValue"
-                                            placeholder="Pilih Priority"
-                                            searchable
-                                            clearable
-                                        />
-                                    </div>
-                                </div>
-                                <div class="row mt-3">
-                                    <div class="col-md-4 mb-3">
-                                        <div class="form-floating form-floating-outline">
-                                            <input type="date" v-model="filters.startDate" class="form-control" placeholder="Tanggal Mulai" @change="onDateChange">
-                                            <label>Tanggal Mulai</label>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4 mb-3">
-                                        <div class="form-floating form-floating-outline">
-                                            <input type="date" v-model="filters.endDate" class="form-control" placeholder="Tanggal Akhir" @change="onDateChange">
-                                            <label>Tanggal Akhir</label>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4 mb-3 reset-filter-button">
-                                        <button @click="clearDateFilters" class="btn btn-outline-secondary me-2 si-reset-filter-btn">
-                                            <i class="ri-refresh-line me-1"></i> Reset Filter
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <CollapsibleFilterCard
+                            title="Filter Site Investment"
+                            description="Temukan semua site investment perusahaan Anda"
+                            :has-active-filters="hasActiveFilters"
+                            @reset="resetFilters"
+                        >
+                            <FilterFieldsRow>
+                                <FilterField>
+                                    <label class="form-label">Filter Customer</label>
+                                    <CustomSelect2
+                                        v-model="filters.customerId"
+                                        :options="customers"
+                                        :get-option-label="getCustomerLabel"
+                                        :reduce="getCustomerId"
+                                        placeholder="Pilih Customer"
+                                        searchable
+                                        clearable
+                                        :loading="customerStore.loading"
+                                        loading-text="Memuat customer..."
+                                    />
+                                </FilterField>
+                                <FilterField>
+                                    <label class="form-label">Filter Status</label>
+                                    <CustomSelect2
+                                        v-model="filters.status"
+                                        :options="statusOptions"
+                                        :get-option-label="getOptionLabel"
+                                        :reduce="getOptionValue"
+                                        placeholder="Pilih Status"
+                                        searchable
+                                        clearable
+                                    />
+                                </FilterField>
+                                <FilterField>
+                                    <label class="form-label">Filter Priority</label>
+                                    <CustomSelect2
+                                        v-model="filters.priority"
+                                        :options="priorityOptions"
+                                        :get-option-label="getOptionLabel"
+                                        :reduce="getOptionValue"
+                                        placeholder="Pilih Priority"
+                                        searchable
+                                        clearable
+                                    />
+                                </FilterField>
+                                <FilterField>
+                                    <label class="form-label">Tanggal Mulai</label>
+                                    <input type="date" v-model="filters.startDate" class="form-control" @change="onDateChange">
+                                </FilterField>
+                                <FilterField>
+                                    <label class="form-label">Tanggal Akhir</label>
+                                    <input type="date" v-model="filters.endDate" class="form-control" @change="onDateChange">
+                                </FilterField>
+                            </FilterFieldsRow>
+                        </CollapsibleFilterCard>
                     </div>
 
                     <!-- Table -->
@@ -479,6 +466,24 @@ const filters = ref({
     endDate: null,
     search: '',
 })
+
+const hasActiveFilters = computed(
+    () =>
+        !!filters.value.customerId ||
+        !!filters.value.status ||
+        !!filters.value.priority ||
+        !!filters.value.startDate ||
+        !!filters.value.endDate
+)
+
+function resetFilters() {
+    filters.value.customerId = null
+    filters.value.status = null
+    filters.value.priority = null
+    filters.value.startDate = null
+    filters.value.endDate = null
+}
+
 const globalFilterValue = ref('')
 
 const tableControls = ref({
@@ -1207,12 +1212,6 @@ function getStatusBadgeText(data) {
     return getStatusBadge(data).text
 }
 
-const clearDateFilters = () => {
-    filters.value.startDate = null
-    filters.value.endDate = null
-    siteInvestStore.setFilters(filters.value)
-}
-
 const onDateChange = () => {
     siteInvestStore.setFilters(filters.value)
 }
@@ -1339,11 +1338,5 @@ definePageMeta({
 .si-add-button {
     flex: 0 0 auto;
     white-space: nowrap;
-}
-
-@media (max-width: 767.98px) {
-    .si-reset-filter-btn {
-        width: 100%;
-    }
 }
 </style>

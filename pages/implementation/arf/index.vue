@@ -51,38 +51,47 @@
         </div>
       </div>
 
-      <div class="row g-6">
-        <div class="col-12"><h4 class="mt-2 mb-1">Filter</h4></div>
-        <div class="col-12">
-          <div class="card">
-            <div class="card-body">
-              <div class="row g-2">
-                <div class="col-md-6">
-                  <CustomSelect2
-                    v-model="filters.status"
-                    :options="statusOptions"
-                    :get-option-label="(o) => o.label"
-                    :reduce="(o) => o.value"
-                    searchable
-                    clearable
-                    placeholder="Status"
-                  />
-                </div>
-                <div class="col-md-6">
-                  <CustomSelect2
-                    v-model="filters.type"
-                    :options="typeOptions"
-                    :get-option-label="(o) => o.label"
-                    :reduce="(o) => o.value"
-                    searchable
-                    clearable
-                    placeholder="Tipe"
-                  />
-                </div>
-              </div>
-            </div>
+      <CollapsibleFilterCard
+        title="Filter ARF"
+        :has-active-filters="hasActiveFilters"
+        :show-reset="false"
+        @reset="resetFilters"
+      >
+        <div class="row g-4">
+          <div class="col-md-6">
+            <label class="form-label">Status</label>
+            <CustomSelect2
+              v-model="filters.status"
+              :options="statusOptions"
+              :get-option-label="(o) => o.label"
+              :reduce="(o) => o.value"
+              searchable
+              clearable
+              placeholder="Semua status"
+            />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Tipe</label>
+            <CustomSelect2
+              v-model="filters.type"
+              :options="typeOptions"
+              :get-option-label="(o) => o.label"
+              :reduce="(o) => o.value"
+              searchable
+              clearable
+              placeholder="Semua tipe"
+            />
+          </div>
+          <div class="col-md-6 offset-md-6 d-flex justify-content-end mt-4">
+            <button type="button" class="btn btn-outline-secondary btn-sm" @click="resetFilters">
+              <i class="ri-refresh-line me-1"></i>
+              Reset Filter
+            </button>
           </div>
         </div>
+      </CollapsibleFilterCard>
+
+      <div class="row g-6">
         <div class="col-12">
           <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
@@ -213,6 +222,15 @@ const rowsPerPageOptionsArray = [10, 25, 50, 100]
 const actionsMenuRef = ref()
 const selectedRow = ref<Arf | null>(null)
 
+const hasActiveFilters = computed(
+  () => filters.value.status != null || filters.value.type != null
+)
+
+function resetFilters() {
+  filters.value.status = null
+  filters.value.type = null
+}
+
 const actionMenuItems = computed(() => {
   const row = selectedRow.value
   if (!row) return []
@@ -248,6 +266,11 @@ const actionMenuItems = computed(() => {
     label: 'Detail',
     icon: 'ri-eye-line',
     command: () => navigateTo(`/implementation/arf/detail/${row.id}`),
+  })
+  items.push({
+    label: 'Cetak',
+    icon: 'ri-printer-line',
+    command: () => goToCetak(row),
   })
 
   return items
@@ -313,6 +336,10 @@ async function onRejectArf(row: Arf) {
     await arfStore.fetchArfs(true)
     await arfStore.fetchStatistics()
   }
+}
+
+function goToCetak(row: Arf) {
+  void navigateTo({ path: '/implementation/cetak-arf', query: { id: String(row.id) } })
 }
 
 function toggleActions(event: Event, row: Arf) {

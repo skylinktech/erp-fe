@@ -7,18 +7,35 @@ import { useMenuGroupStore } from './menu-group'
 export interface MenuDetail {
   id: number
   name: string
-  route: string
+  route: string | null
   status: number
   order: number
   isReferenceable: boolean
-  referenceCode: string
+  referenceCode: string | null
   menuGroupId: number
-  menu_group?: MenuGroup
+  parentId?: number | null
+  menuGroup?: MenuGroup
+  parent?: MenuDetail | null
+  children?: MenuDetail[]
+  depth?: number
+  label?: string
+}
+
+export interface MenuDetailParentOption {
+  id: number
+  name: string
+  label: string
+  route: string | null
+  parentId: number | null
+  menuGroupId: number
+  depth: number
+  order: number
 }
 
 interface MenuDetailState {
   menuDetails: MenuDetail[]
   menuGroups: MenuGroup[]
+  parentOptions: MenuDetailParentOption[]
   loading: boolean
   error: any
   totalRecords: number
@@ -39,6 +56,7 @@ export const useMenuDetailStore = defineStore('menu-detail', {
     state: (): MenuDetailState => ({
         menuDetails: [],
         menuGroups: [],
+        parentOptions: [],
         loading: true,
         error: null,
         totalRecords: 0,
@@ -72,7 +90,7 @@ export const useMenuDetailStore = defineStore('menu-detail', {
             headers: {
               'Accept': 'application/json',
             },
-            credentials: 'include', // Cookie-based auth
+            credentials: 'include',
         });
 
         if (!response.ok) {
@@ -110,7 +128,7 @@ export const useMenuDetailStore = defineStore('menu-detail', {
                 headers: {
                     'Accept': 'application/json',
                 },
-                credentials: 'include', // Cookie-based auth
+                credentials: 'include',
             });
             if (!response.ok) throw new Error('Gagal mengambil data menu groups');
             const result = await response.json();
@@ -127,6 +145,32 @@ export const useMenuDetailStore = defineStore('menu-detail', {
         }
     },
 
+    async fetchParentOptions(menuGroupId: number | null | undefined, excludeId: number | null = null) {
+      this.parentOptions = []
+      if (!menuGroupId) return
+
+      const { $api } = useNuxtApp()
+      try {
+        const params = new URLSearchParams({
+          menu_group_id: String(menuGroupId),
+        })
+        if (excludeId != null) {
+          params.set('exclude_id', String(excludeId))
+        }
+
+        const response = await fetch(`${$api.menuDetailParentOptions()}?${params.toString()}`, {
+          headers: { Accept: 'application/json' },
+          credentials: 'include',
+        })
+        if (!response.ok) throw new Error('Gagal mengambil opsi parent')
+        const result = await response.json()
+        this.parentOptions = result.data || []
+      } catch (error) {
+        console.error('Error fetching parent options:', error)
+        this.parentOptions = []
+      }
+    },
+
     async saveMenuDetail() {
       const toast = useToast();
       this.loading = true;
@@ -137,15 +181,17 @@ export const useMenuDetailStore = defineStore('menu-detail', {
         let url = $api.menuDetails();
         let method = 'POST';
 
-        // Ensure data is in camelCase format for backend validator
+        const routeValue = (this.form.route ?? '').toString().trim()
         const payload = {
-          ...this.form,
+          name: this.form.name,
+          route: routeValue.length > 0 ? routeValue : null,
+          status: Number(this.form.status ?? 1),
+          order: Number(this.form.order ?? 0),
           isReferenceable: this.form.isReferenceable ?? false,
-          referenceCode: this.form.referenceCode ?? '',
+          referenceCode: this.form.referenceCode ?? null,
+          menuGroupId: this.form.menuGroupId,
+          parentId: this.form.parentId ?? null,
         };
-        // Remove snake_case properties if they exist
-        delete (payload as any).is_referenceable;
-        delete (payload as any).reference_code;
 
         const body = JSON.stringify(payload);
 
@@ -161,14 +207,18 @@ export const useMenuDetailStore = defineStore('menu-detail', {
             'Content-Type': 'application/json'
           },
           body: body,
-          credentials: 'include', // Cookie-based auth
+          credentials: 'include',
         });
 
         if (!response.ok) {
             const errorData = await response.json();
             if (response.status === 422) {
-                this.validationErrors = Object.values(errorData.errors).flat();
-                throw new Error('Data validasi tidak valid');
+                if (errorData.errors) {
+                  this.validationErrors = Object.values(errorData.errors).flat();
+                } else if (errorData.message) {
+                  this.validationErrors = [errorData.message];
+                }
+                throw new Error(errorData.message || 'Data validasi tidak valid');
             }
             throw new Error(errorData.message || 'Gagal menyimpan data menu detail');
         }
@@ -189,7 +239,7 @@ export const useMenuDetailStore = defineStore('menu-detail', {
         })
 
       } catch (error: any) {
-        if (error.message !== 'Data validasi tidak valid') {
+        if (!this.validationErrors.length) {
             toast.error({
                 title: 'Error',
                 icon: 'ri-close-line',
@@ -230,7 +280,7 @@ export const useMenuDetailStore = defineStore('menu-detail', {
             headers: {
                 'Accept': 'application/json',
             },
-            credentials: 'include', // Cookie-based auth
+            credentials: 'include',
           });
 
           if (!response.ok) {
@@ -266,15 +316,15 @@ export const useMenuDetailStore = defineStore('menu-detail', {
     },
 
     async openModal(menuDetail: MenuDetail | null = null) {
-      
       this.isEditMode = !!menuDetail;
       this.validationErrors = [];
       if (menuDetail) {
-        // Normalize data: handle both camelCase and snake_case from API
         this.form = { 
           ...menuDetail,
           isReferenceable: menuDetail.isReferenceable ?? (menuDetail as any).is_referenceable ?? false,
           referenceCode: menuDetail.referenceCode ?? (menuDetail as any).reference_code ?? '',
+          parentId: menuDetail.parentId ?? (menuDetail as any).parent_id ?? null,
+          route: menuDetail.route ?? '',
         };
       } else {
         this.form = {
@@ -285,17 +335,23 @@ export const useMenuDetailStore = defineStore('menu-detail', {
           isReferenceable: false,
           referenceCode: '',
           menuGroupId: undefined,
+          parentId: null,
         };
       }
       this.showModal = true;
       
       await this.fetchMenuGroupsForSelect();
+      await this.fetchParentOptions(
+        this.form.menuGroupId,
+        this.isEditMode ? this.form.id ?? null : null
+      );
     },
 
     closeModal() {
         this.showModal = false;
         this.isEditMode = false;
         this.form = {};
+        this.parentOptions = [];
         this.validationErrors = [];
     },
 

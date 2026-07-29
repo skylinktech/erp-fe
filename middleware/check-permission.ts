@@ -35,6 +35,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       '/sales/sales-return': 'view_sales_return',
       '/sales/customer': 'view_customer',
       '/purchasing/purchase-order': 'view_purchase_order',
+      '/purchasing/material-request': 'access_material_request',
       '/purchasing/purchase-invoice': 'view_purchase_invoice',
       '/purchasing/vendor': 'view_vendor',
       '/accounting/accounts/': 'view_account',
@@ -43,8 +44,15 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       '/accounting/expenses/': 'view_expense',
       '/accounting/journals/': 'view_journal',
       '/accounting/taxes/': 'view_tax',
+      '/finance/taxes': 'view_tax',
+      '/finance/tax-masters': 'view_tax_master',
       '/accounting/ap-payments/': 'view_ap_payment',
       '/accounting/ar-receipts/': 'view_ar_receipt',
+      '/finance/invoices': 'view_invoice',
+      '/finance/payment-request': 'view_payment_request',
+      '/finance/billing-adjustments': 'view_billing_adjustment',
+      '/finance/billing-preparations': 'view_billing_preparation',
+      '/finance/ar-receipts': 'view_ar_receipt',
       '/hrd/pegawai': 'view_pegawai',
       '/hrd/departemen': 'view_departemen',
       '/hrd/divisi': 'view_divisi',
@@ -59,6 +67,8 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       '/hrd/cetak-cuti': 'view_cuti',
       '/hrd/cetak-lembur': 'view_lembur',
       '/hrd/cetak-perjalanan-dinas': 'view_perjalanan_dinas',
+      '/implementation/cetak-arf': 'view_arf',
+      '/finance/cetak-payment-request': 'view_payment_request',
       '/company/perusahaan': 'view_perusahaan',
       '/company/cabang': 'view_cabang',
       '/admin/roles': 'view_role',
@@ -88,6 +98,26 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
         requiredPermission = 'create_perjalanan_dinas'
       } else if (/^\/hrd\/perjalanan-dinas\/detail\/.+$/.test(to.path)) {
         requiredPermission = 'show_perjalanan_dinas'
+      } else if (/^\/finance\/invoices\/detail\/.+$/.test(to.path)) {
+        requiredPermission = 'show_invoice'
+      } else if (/^\/finance\/billing-preparations\/detail\/.+$/.test(to.path)) {
+        requiredPermission = 'show_billing_preparation'
+      } else if (/^\/finance\/tax-masters/.test(to.path)) {
+        requiredPermission = 'view_tax_master'
+      } else if (/^\/finance\/taxes/.test(to.path)) {
+        requiredPermission = 'view_tax'
+      } else if (/^\/finance\/billing-adjustments/.test(to.path)) {
+        requiredPermission = 'view_billing_adjustment'
+      } else if (/^\/finance\/payment-request\/form(\/.*)?$/.test(to.path)) {
+        requiredPermission = 'access_payment_request'
+      } else if (/^\/finance\/payment-request\/detail\/.+$/.test(to.path)) {
+        requiredPermission = 'show_payment_request'
+      } else if (/^\/finance\/payment-request/.test(to.path)) {
+        requiredPermission = 'view_payment_request'
+      } else if (/^\/finance\/cetak-payment-request/.test(to.path)) {
+        requiredPermission = 'view_payment_request'
+      } else if (/^\/finance\/billing-preparations/.test(to.path)) {
+        requiredPermission = 'view_billing_preparation'
       } else if (/^\/purchasing\/purchase-order\/form(\/.*)?$/.test(to.path)) {
         requiredPermission = 'view_purchase_order'
       } else if (/^\/implementation\/arf\/form(\/.*)?$/.test(to.path)) {
@@ -96,10 +126,18 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
         requiredPermission = 'access_progress_tracker'
       } else if (/^\/purchasing\/purchase-request\/form(\/.*)?$/.test(to.path)) {
         requiredPermission = 'access_purchase_request'
+      } else if (/^\/purchasing\/material-request\/form(\/.*)?$/.test(to.path)) {
+        requiredPermission = 'access_material_request'
+      } else if (/^\/purchasing\/material-request\/detail\/.+$/.test(to.path)) {
+        requiredPermission = 'show_material_request'
       } else if (/^\/purchasing\/purchase-invoice\/form(\/.*)?$/.test(to.path)) {
         requiredPermission = 'view_purchase_invoice'
       } else if (/^\/sales\/sales-invoice\/form(\/.*)?$/.test(to.path)) {
         requiredPermission = 'create_sales_invoice'
+      } else if (/^\/finance\/invoices\/detail\/.+$/.test(to.path)) {
+        requiredPermission = 'view_invoice'
+      } else if (/^\/finance\/cetak-invoice/.test(to.path)) {
+        requiredPermission = 'view_invoice'
       }
     }
 

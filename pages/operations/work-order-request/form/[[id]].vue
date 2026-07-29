@@ -194,7 +194,7 @@
 
           <!-- Actions -->
           <div class="col-12">
-            <div class="d-flex gap-2 justify-content-end">
+            <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
               <NuxtLink to="/operations/work-order-request" class="btn btn-outline-secondary">Batal</NuxtLink>
               <button type="submit" class="btn btn-primary" :disabled="saving">
                 <span v-if="saving" class="spinner-border spinner-border-sm me-1"></span>

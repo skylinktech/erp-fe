@@ -12,7 +12,9 @@
           @update:model-value="onRowsUpdate"
         />
       </div>
-      <slot name="add" />
+      <div class="lp-add-slot">
+        <slot name="add" />
+      </div>
       <div v-if="$slots['toolbar-extra']" class="lp-toolbar-extra d-flex flex-wrap align-items-center gap-2">
         <slot name="toolbar-extra" />
       </div>
@@ -97,8 +99,46 @@ function onSearchUpdate(value) {
   flex-wrap: nowrap;
 }
 
+.lp-header-top-row :deep(.btn),
+.lp-export-group .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  min-height: 2.375rem;
+  padding-top: 0.4375rem;
+  padding-bottom: 0.4375rem;
+  line-height: 1.25;
+}
+
+.lp-header-top-row :deep(.btn.btn-sm) {
+  min-height: 2.375rem;
+  padding: 0.4375rem 1rem;
+  font-size: 0.9375rem;
+}
+
+.lp-add-slot,
+.lp-toolbar-extra {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
 .lp-rows-control {
   min-width: 0;
+}
+
+.lp-rows-control :deep(.p-dropdown) {
+  min-height: 2.375rem;
+  align-items: center;
+}
+
+.lp-rows-control :deep(.p-dropdown .p-dropdown-label) {
+  display: flex;
+  align-items: center;
+  min-height: 2.375rem;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 .lp-actions-row {
@@ -119,6 +159,9 @@ function onSearchUpdate(value) {
 
 .lp-search-input {
   width: 100% !important;
+  min-height: 2.375rem !important;
+  height: 2.375rem;
+  box-sizing: border-box;
 }
 
 .lp-export-group {

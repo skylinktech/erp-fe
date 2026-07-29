@@ -108,45 +108,50 @@
           </div>
         </div>
 
-        <!-- Filter card (terpisah, pola mengikuti halaman Quotation) -->
         <div class="row g-6">
           <div class="col-12">
-            <h4 class="mt-2 mb-1">Filter Pengajuan</h4>
-            <p class="mb-0">Saring pengajuan berdasarkan status dan tipe cuti.</p>
-          </div>
-          <div class="col-12">
-            <div class="card">
-              <div class="card-body">
-                <div class="row">
-                  <div class="col-md-6 mb-2">
-                    <label class="form-label small text-muted mb-1">Status</label>
-                    <CustomSelect2
-                      v-model="params.status"
-                      :options="statusFilterOptions"
-                      :get-option-label="(o: any) => o.label"
-                      :reduce="(o: any) => o.value"
-                      searchable
-                      clearable
-                      placeholder="Semua status"
-                      @update:modelValue="reload"
-                    />
-                  </div>
-                  <div class="col-md-6 mb-2">
-                    <label class="form-label small text-muted mb-1">Tipe Cuti</label>
-                    <CustomSelect2
-                      v-model="params.cutiTypeId"
-                      :options="cutiTypes"
-                      :get-option-label="(o: any) => o.nmTipeCuti"
-                      :reduce="(o: any) => o.id"
-                      searchable
-                      clearable
-                      placeholder="Semua tipe"
-                      @update:modelValue="reload"
-                    />
-                  </div>
+            <CollapsibleFilterCard
+              title="Filter Pengajuan"
+              description="Saring pengajuan berdasarkan status dan tipe cuti."
+              :has-active-filters="hasActiveFilters"
+              :show-reset="false"
+              @reset="resetFilters"
+            >
+              <div class="row g-4">
+                <div class="col-md-6">
+                  <label class="form-label">Status</label>
+                  <CustomSelect2
+                    v-model="params.status"
+                    :options="statusFilterOptions"
+                    :get-option-label="(o: any) => o.label"
+                    :reduce="(o: any) => o.value"
+                    searchable
+                    clearable
+                    placeholder="Semua status"
+                    @update:modelValue="reload"
+                  />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Tipe Cuti</label>
+                  <CustomSelect2
+                    v-model="params.cutiTypeId"
+                    :options="cutiTypes"
+                    :get-option-label="(o: any) => o.nmTipeCuti"
+                    :reduce="(o: any) => o.id"
+                    searchable
+                    clearable
+                    placeholder="Semua tipe"
+                    @update:modelValue="reload"
+                  />
+                </div>
+                <div class="col-md-6 offset-md-6 d-flex justify-content-end mt-4">
+                  <button type="button" class="btn btn-outline-secondary btn-sm" @click="resetFilters">
+                    <i class="ri-refresh-line me-1"></i>
+                    Reset Filter
+                  </button>
                 </div>
               </div>
-            </div>
+            </CollapsibleFilterCard>
           </div>
 
           <div class="col-12">
@@ -597,6 +602,16 @@ function formatDateTime(value: string | null | undefined): string {
 
 const globalFilterValue = ref('')
 const rowsPerPageOptionsArray = ref([10, 25, 50, 100])
+
+const hasActiveFilters = computed(
+  () => !!params.value.status || !!params.value.cutiTypeId
+)
+
+function resetFilters() {
+  params.value.status = null
+  params.value.cutiTypeId = null
+  reload()
+}
 
 setListTitle('Cuti, Izin, Sakit', 0)
 

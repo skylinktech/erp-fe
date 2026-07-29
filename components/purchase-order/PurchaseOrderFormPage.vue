@@ -217,9 +217,15 @@
                     </div>
 
                     <div id="po-tab-items" class="tab-pane fade">
-                      <div class="d-flex justify-content-between align-items-center mb-4">
-                        <p class="mb-0 text-muted small">Tambah produk, qty, dan harga per baris.</p>
-                        <button type="button" class="btn btn-sm btn-primary" @click="purchaseOrderStore.addItem()">
+                      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+                        <p class="mb-0 text-muted small flex-grow-1" style="min-width: 0">
+                          Tambah produk, qty, dan harga per baris.
+                        </p>
+                        <button
+                          type="button"
+                          class="btn btn-primary btn-sm text-nowrap flex-shrink-0"
+                          @click="purchaseOrderStore.addItem()"
+                        >
                           <i class="ri-add-line me-1"></i>Tambah Item
                         </button>
                       </div>

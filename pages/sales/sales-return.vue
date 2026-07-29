@@ -64,25 +64,19 @@
 
             <div class="row g-6">
                 <div class="col-12">
-                    <h4 class="mt-6 mb-1">Total & Filter Sales Return</h4>
-                    <p class="mb-0">Temukan semua akun administrator perusahaan Anda dan Sales Return terkait.</p>
-                </div>
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <CustomSelect2 v-model="filters.customerId" :options="customers" :get-option-label="option => option.name" :reduce="option => option.id" searchable clearable placeholder="Pilih Customer" />
-                                </div>
-                                <div class="col-md-4">
-                                    <CustomSelect2 v-model="filters.perusahaanId" :options="perusahaans" :get-option-label="option => option.nmPerusahaan" :reduce="option => option.id" searchable clearable placeholder="Pilih Perusahaan" />
-                                </div>
-                                <div class="col-md-4">
-                                    <CustomSelect2 v-model="filters.status" :options="statusOptions" :get-option-label="option => option.label" :reduce="option => option.value" searchable clearable placeholder="Pilih Status" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <CollapsibleFilterCard title="Filter Sales Return" :has-active-filters="hasActiveFilters" @reset="resetFilters">
+                        <FilterFieldsRow>
+                            <FilterField>
+                                <CustomSelect2 v-model="filters.customerId" :options="customers" :get-option-label="option => option.name" :reduce="option => option.id" searchable clearable placeholder="Pilih Customer" />
+                            </FilterField>
+                            <FilterField>
+                                <CustomSelect2 v-model="filters.perusahaanId" :options="perusahaans" :get-option-label="option => option.nmPerusahaan" :reduce="option => option.id" searchable clearable placeholder="Pilih Perusahaan" />
+                            </FilterField>
+                            <FilterField>
+                                <CustomSelect2 v-model="filters.status" :options="statusOptions" :get-option-label="option => option.label" :reduce="option => option.value" searchable clearable placeholder="Pilih Status" />
+                            </FilterField>
+                        </FilterFieldsRow>
+                    </CollapsibleFilterCard>
                 </div>
                 <div class="col-12">
                     <!-- salesReturn Table -->
@@ -437,6 +431,16 @@ const filters = ref({
 });
 const globalFilterValue = ref('');
 const attachmentPreview = ref(null);
+
+const hasActiveFilters = computed(
+  () => !!filters.value.customerId || !!filters.value.perusahaanId || !!filters.value.status
+)
+
+function resetFilters() {
+  filters.value.customerId = null
+  filters.value.perusahaanId = null
+  filters.value.status = null
+}
 
 const rowsPerPageOptionsArray = ref([10, 25, 50, 100]);
 const modalTitle = computed(() => isEditMode.value ? 'Edit Sales Return' : 'Tambah Sales Return');

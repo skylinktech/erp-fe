@@ -33,7 +33,7 @@
       </div>
 
       <!-- Header + progress (layar biasa / non-cetak cuti) -->
-      <div v-if="!cutiPrintMode" class="d-flex justify-content-between align-items-center mb-3">
+      <div v-if="!cutiPrintMode && showHeader" class="d-flex justify-content-between align-items-center mb-3">
         <h5 class="mb-0">{{ title }}</h5>
         <div class="signature-progress no-print">
           <span class="badge" :class="isFullySigned ? 'bg-success' : 'bg-warning'">
@@ -42,7 +42,7 @@
         </div>
       </div>
 
-      <div v-if="!cutiPrintMode && effectiveRequired > 0" class="progress mb-4" style="height: 8px;">
+      <div v-if="!cutiPrintMode && showHeader && effectiveRequired > 0" class="progress mb-4" style="height: 8px;">
         <div
           class="progress-bar"
           :class="isFullySigned ? 'bg-success' : 'bg-primary'"
@@ -113,13 +113,13 @@
         </div>
       </div>
 
-      <!-- Pending / lengkap (disembunyikan di cetak cuti) -->
-      <div v-if="!cutiPrintMode && !isFullySigned && effectiveRequired > 0" class="alert alert-info mt-3">
+      <!-- Pending / lengkap (disembunyikan di cetak cuti / tanpa header) -->
+      <div v-if="!cutiPrintMode && showHeader && !isFullySigned && effectiveRequired > 0" class="alert alert-info mt-3">
         <i class="ri-information-line me-2"></i>
         <strong>Status:</strong> Menunggu {{ effectiveRequired - signatures.length }} tanda tangan lagi
       </div>
 
-      <div v-if="!cutiPrintMode && isFullySigned && effectiveRequired > 0" class="alert alert-success mt-3">
+      <div v-if="!cutiPrintMode && showHeader && isFullySigned && effectiveRequired > 0" class="alert alert-success mt-3">
         <i class="ri-checkbox-circle-line me-2"></i>
         <strong>Dokumen telah ditandatangani lengkap</strong>
       </div>
@@ -181,6 +181,7 @@ const props = defineProps({
         'site-investments',
         'quotations',
         'purchase-requests',
+        'material-requests',
         'fdrs',
         'purchase-orders',
         'sales-invoices',
@@ -190,6 +191,8 @@ const props = defineProps({
         'lembur',
         'perjalanan-dinas',
         'work-order-requests',
+        'arfs',
+        'payment-requests',
       ].includes(value),
   },
   documentId: {
@@ -235,6 +238,16 @@ const props = defineProps({
   showApprovedByLabel: {
     type: Boolean,
     default: true,
+  },
+  /** Tampilkan judul "Tanda tangan digital" + progress bar (false = cetak invoice) */
+  showHeader: {
+    type: Boolean,
+    default: true,
+  },
+  /** Layout ringkas untuk halaman cetak */
+  compact: {
+    type: Boolean,
+    default: false,
   },
   /** Mode cetak form cuti: chrome biru (judul, badge counter, progress, status bawah) + label di atas QR */
   cutiPrintMode: {
@@ -416,7 +429,7 @@ watch(
 
 <style scoped>
 .multi-signature-display {
-  padding: 1rem 0;
+  padding: 0.5rem 0;
 }
 
 .signature-grid {

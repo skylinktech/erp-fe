@@ -1,7 +1,7 @@
 <template>
   <div class="content-wrapper">
     <!-- Content -->
-    <div class="container-xxl flex-grow-1 container-p-y">
+    <div class="container-xxl flex-grow-1 container-pt-10">
       <div v-if="loading" class="text-center py-8">
         <ProgressSpinner 
           style="width: 50px; height: 50px" 
@@ -104,6 +104,26 @@
 
           <div class="row g-6">
             <div class="col-12">
+              <CollapsibleFilterCard
+                title="Filter Pricing Approval"
+                :has-active-filters="hasActiveFilters"
+                @reset="resetFilters"
+              >
+                <FilterFieldsRow>
+                  <FilterField>
+                    <label class="form-label">Status</label>
+                    <select v-model="statusFilter" class="form-select" @change="handleStatusChange">
+                      <option value="">Semua Status</option>
+                      <option value="draft">Draft</option>
+                      <option value="pending">Pending</option>
+                      <option value="approved">Approved</option>
+                      <option value="rejected">Rejected</option>
+                    </select>
+                  </FilterField>
+                </FilterFieldsRow>
+              </CollapsibleFilterCard>
+            </div>
+            <div class="col-12">
               <!-- Price Adjustment Requests Table -->
               <div class="card">
                 <div class="card-header">
@@ -124,14 +144,6 @@
                             />
                           </div>
                           <div class="d-flex align-items-center gap-2">
-                            <Dropdown 
-                              v-model="tableControls.statusFilter" 
-                              :options="statusOptions" 
-                              @change="handleStatusChange" 
-                              placeholder="Semua Status" 
-                              style="width: 12rem;"
-                              :showClear="true"
-                            />
                             <div class="input-group">
                               <span class="p-input-icon-left">
                                 <InputText
@@ -159,16 +171,6 @@
                                 :showClear="false"
                               />
                             </div>
-                          </div>
-                          <div class="mb-3">
-                            <Dropdown 
-                              v-model="tableControls.statusFilter" 
-                              :options="statusOptions" 
-                              @change="handleStatusChange" 
-                              placeholder="Semua Status" 
-                              class="w-100"
-                              :showClear="true"
-                            />
                           </div>
                           <div class="mb-3">
                             <InputText
@@ -412,15 +414,18 @@ const rowsPerPageOptionsArray = ref([10, 25, 50, 100])
 const tableControls = ref({
   rows: 10,
   search: '',
-  statusFilter: null,
 })
 
-const statusOptions = ref([
-  { label: 'Draft', value: 'draft' },
-  { label: 'Pending', value: 'pending' },
-  { label: 'Approved', value: 'approved' },
-  { label: 'Rejected', value: 'rejected' },
-])
+const statusFilter = ref('')
+
+const hasActiveFilters = computed(() => !!statusFilter.value)
+
+function resetFilters() {
+  statusFilter.value = ''
+  store.params.status = undefined
+  store.params.first = 0
+  void store.fetchRequests()
+}
 
 // Detail modal
 const showDetailModal = ref(false)
@@ -486,7 +491,7 @@ const handleSearch = useDebounceFn(async (value) => {
 }, 500)
 
 const handleStatusChange = async () => {
-  store.params.status = tableControls.value.statusFilter?.value
+  store.params.status = statusFilter.value || undefined
   store.params.first = 0
   await store.fetchRequests()
 }

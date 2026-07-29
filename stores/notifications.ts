@@ -1,610 +1,172 @@
 import { defineStore } from 'pinia'
-
-// Use localStorage safely
-const getLocalStorage = () => {
-  if (typeof window !== 'undefined') {
-    return window.localStorage
-  }
-  return null
-}
-
-export interface StockNotification {
-  id: string
-  type: 'stock_in' | 'stock_out'
-  noSi?: string
-  noSo?: string
-  quantity: number
-  status: string
-  createdAt: string
-  createdBy: string
-  createdByName?: string
-  warehouseName?: string
-  description?: string
-}
-
-export interface OrderNotification {
-  id: string
-  type: 'purchase_order' | 'sales_order' | 'quotation' | 'quotation_expiring' | 'price_adjustment'
-  noPo?: string
-  noSo?: string
-  noQuotation?: string
-  quotationId?: string
-  validUntil?: string
-  status: string
-  createdAt: string
-  createdBy: string
-  createdByName?: string
-  vendorName?: string
-  customerName?: string
-  total: number
-  description?: string
-}
-
-export type Notification = StockNotification | OrderNotification
-
-interface NotificationState {
-  notifications: Notification[]
-  stockNotifications: StockNotification[]
-  orderNotifications: OrderNotification[]
-  unreadCount: number
-  loading: boolean
-  error: any
-  lastChecked: Date | null
-  readNotifications: Set<string>
-}
+import { showBrowserNotification, canSendBrowserNotifications } from '~/utils/browserNotifications'
+import { useNotificationFeedStore } from '~/stores/notificationFeed'
 
 export const useNotificationsStore = defineStore('notifications', {
-  state: (): NotificationState => ({
-    notifications: [],
-    stockNotifications: [],
-    orderNotifications: [],
-    unreadCount: 0,
-    loading: false,
-    error: null,
-    lastChecked: null,
-    readNotifications: new Set<string>()
+  state: () => ({
+    initialized: false,
   }),
 
-  getters: {
-    stockInNotifications: (state) => 
-      state.stockNotifications.filter(n => n.type === 'stock_in'),
-    
-    stockOutNotifications: (state) => 
-      state.stockNotifications.filter(n => n.type === 'stock_out'),
-    
-    purchaseOrderNotifications: (state) => 
-      state.orderNotifications.filter(n => n.type === 'purchase_order'),
-    
-    salesOrderNotifications: (state) => 
-      state.orderNotifications.filter(n => n.type === 'sales_order'),
-    
-    // Getter untuk notifikasi navbar (maksimal 5 terbaru)
-    navbarNotifications: (state) => 
-      state.notifications.slice(0, 5),
-    
-    unreadNotifications: (state) => 
-      state.notifications.filter(n => {
-        if (n.type === 'stock_in' || n.type === 'stock_out') {
-          return n.status !== 'posted'
-        }
-        return n.status === 'draft'
-      }),
-    
-    hasUnreadNotifications: (state) => 
-      state.unreadCount > 0
-  },
-
   actions: {
-    // Load read notifications from localStorage
-    loadReadNotifications() {
-      try {
-        const storage = getLocalStorage()
-        if (storage) {
-          const stored = storage.getItem('readNotifications')
-          if (stored) {
-            this.readNotifications = new Set(JSON.parse(stored))
-          }
-        }
-      } catch (error) {
-        console.warn('Failed to load read notifications from localStorage:', error)
-      }
-    },
-
-    // Save read notifications to localStorage
-    saveReadNotifications() {
-      try {
-        const storage = getLocalStorage()
-        if (storage) {
-          storage.setItem('readNotifications', JSON.stringify([...this.readNotifications]))
-        }
-      } catch (error) {
-        console.warn('Failed to save read notifications to localStorage:', error)
-      }
-    },
-
-    async fetchNotifications() {
-      this.loading = true
-      this.error = null
-      
-      // Load read notifications from localStorage first
-      this.loadReadNotifications()
-      
-      try {
-        const { $api } = useNuxtApp()
-        
-        // Cookie-based auth: token otomatis dikirim via httpOnly cookie
-
-        // Fetch all notifications in parallel
-        const [stockInResponse, stockOutResponse, purchaseOrderResponse, salesOrderResponse] = await Promise.all([
-          fetch(`${$api.stockInNotifications()}?status=not_posted&limit=10`, {
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            credentials: 'include' // Cookie-based auth
-          }),
-          fetch(`${$api.stockOutNotifications()}?status=not_posted&limit=10`, {
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            credentials: 'include' // Cookie-based auth
-          }),
-          fetch(`${$api.purchaseOrderNotifications()}?status=draft&limit=10`, {
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            credentials: 'include' // Cookie-based auth
-          }),
-          fetch(`${$api.salesOrderNotifications()}?status=draft&limit=10`, {
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            credentials: 'include' // Cookie-based auth
-          })
-        ])
-
-        const stockNotifications: StockNotification[] = []
-        const orderNotifications: OrderNotification[] = []
-
-        // Process stock in notifications
-        if (stockInResponse.ok) {
-          const stockInData = await stockInResponse.json()
-          const stockIns = Array.isArray(stockInData.data) ? stockInData.data : stockInData
-          
-          stockIns.forEach((item: any) => {
-            if (item.status !== 'posted') {
-              stockNotifications.push({
-                id: item.id,
-                type: 'stock_in',
-                noSi: item.noSi,
-                quantity: item.quantity || 0,
-                status: item.status,
-                createdAt: item.createdAt,
-                createdBy: item.createdBy || item.userId || '',
-                createdByName: item.user?.fullName || item.createdByName || 'Unknown',
-                warehouseName: item.warehouseName || item.warehouse?.name || 'Unknown Warehouse',
-                description: item.description || ''
-              })
-            }
-          })
-        }
-
-        // Process stock out notifications
-        if (stockOutResponse.ok) {
-          const stockOutData = await stockOutResponse.json()
-          const stockOuts = Array.isArray(stockOutData.data) ? stockOutData.data : stockOutData
-          
-          stockOuts.forEach((item: any) => {
-            if (item.status !== 'posted') {
-              stockNotifications.push({
-                id: item.id,
-                type: 'stock_out',
-                noSo: item.noSo,
-                quantity: item.quantity || 0,
-                status: item.status,
-                createdAt: item.createdAt,
-                createdBy: item.createdBy || item.userId || '',
-                createdByName: item.user?.fullName || item.createdByName || 'Unknown',
-                warehouseName: item.warehouseName || item.warehouse?.name || 'Unknown Warehouse',
-                description: item.description || ''
-              })
-            }
-          })
-        }
-
-        // Process purchase order notifications
-        if (purchaseOrderResponse.ok) {
-          const purchaseOrderData = await purchaseOrderResponse.json()
-          const purchaseOrders = Array.isArray(purchaseOrderData.data) ? purchaseOrderData.data : purchaseOrderData
-          
-          purchaseOrders.forEach((item: any) => {
-            if (item.status === 'draft') {
-              orderNotifications.push({
-                id: item.id,
-                type: 'purchase_order',
-                noPo: item.noPo,
-                status: item.status,
-                createdAt: item.createdAt,
-                createdBy: item.createdBy || '',
-                createdByName: item.createdByName || 'Unknown',
-                vendorName: item.vendorName || 'Unknown Vendor',
-                total: item.total || 0,
-                description: item.description || ''
-              })
-            }
-          })
-        }
-
-        // Process sales order notifications
-        if (salesOrderResponse.ok) {
-          const salesOrderData = await salesOrderResponse.json()
-          const salesOrders = Array.isArray(salesOrderData.data) ? salesOrderData.data : salesOrderData
-          
-          salesOrders.forEach((item: any) => {
-            if (item.status === 'draft') {
-              orderNotifications.push({
-                id: item.id,
-                type: 'sales_order',
-                noSo: item.noSo,
-                status: item.status,
-                createdAt: item.createdAt,
-                createdBy: item.createdBy || '',
-                createdByName: item.createdByName || 'Unknown',
-                customerName: item.customerName || 'Unknown Customer',
-                total: item.total || 0,
-                description: item.description || ''
-              })
-            }
-          })
-        }
-
-        // Fetch NotificationRecipient entries for price_adjustment (so we have recipient ids)
-        try {
-          const paRes = await fetch(`${$api.notifications()}?types=price_adjustment&rows=10`, {
-            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-            credentials: 'include'
-          })
-          if (paRes.ok) {
-            const paData = await paRes.json()
-            const paList = Array.isArray(paData.data) ? paData.data : paData
-            paList.forEach((rec: any) => {
-              const n = rec.notification || {}
-              const payload = n.payload || {}
-              const productName = payload.product?.name || payload.service?.name || payload.did?.code || ''
-              orderNotifications.push({
-                id: String(rec.id),
-                type: n.type || 'price_adjustment',
-                status: n.event || payload.status || '',
-                createdAt: n.created_at || payload.createdAt || rec.created_at,
-                createdBy: payload.requestedBy || payload.requested_by || '',
-                createdByName: payload.requestedByUser?.fullName || payload.requested_by_user?.full_name || payload.createdByName || 'Sales',
-                customerName: payload.customer?.name || payload.customerName || '',
-                total: payload.proposedPrice || payload.total || 0,
-                description: productName ? `Price adjustment - ${productName}` : `Permintaan price adjustment #${payload.id || n.id}`,
-              })
-            })
-          }
-        } catch (e) {
-          console.error('Error fetching price adjustment notifications:', e)
-        }
-        
-        // Fetch quotation notifications as well
-        try {
-          const qRes = await fetch(`${$api.notifications()}?types=quotation&rows=10`, {
-            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-            credentials: 'include'
-          })
-          if (qRes.ok) {
-            const qData = await qRes.json()
-            const qList = Array.isArray(qData.data) ? qData.data : qData
-            qList.forEach((rec: any) => {
-              const n = rec.notification || {}
-              const payload = n.payload || {}
-              const noQuotation = payload.noQuotation || payload.no_quotation || ''
-              orderNotifications.push({
-                id: String(rec.id),
-                type: n.type || 'quotation',
-                noQuotation,
-                status: n.event || payload.status || '',
-                createdAt: n.created_at || payload.createdAt || rec.created_at,
-                createdBy: payload.createdBy || payload.requestedBy || '',
-                createdByName: payload.createdByUser?.fullName || payload.requestedByUser?.fullName || 'Sales',
-                customerName: payload.customer?.name || '',
-                total: payload.total || payload.grandTotal || 0,
-                description: noQuotation ? `Quotation ${noQuotation}` : (payload.description || '')
-              })
-            })
-          }
-        } catch (e) {
-          console.error('Error fetching quotation notifications:', e)
-        }
-
-        // Fetch quotation expiring soon (valid_until dalam 1 minggu)
-        try {
-          const expRes = await fetch(`${$api.quotationExpiringSoon()}?rows=5&page=1`, {
-            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-            credentials: 'include'
-          })
-          if (expRes.ok) {
-            const expData = await expRes.json()
-            const expList = Array.isArray(expData.data) ? expData.data : []
-            expList.forEach((q: any) => {
-              const noQuotation = q.no_quotation || q.noQuotation || ''
-              orderNotifications.push({
-                id: `exp-${q.id}`,
-                type: 'quotation_expiring',
-                noQuotation,
-                quotationId: q.id,
-                status: q.status || '',
-                createdAt: q.created_at || q.createdAt,
-                createdBy: q.created_by || q.createdBy || '',
-                createdByName: (q.createdByUser || q.created_by_user)?.full_name || (q.createdByUser || q.created_by_user)?.fullName || 'Sales',
-                customerName: (q.customer?.name) || '',
-                total: q.total || q.grandTotal || 0,
-                validUntil: q.valid_until || q.validUntil,
-                description: noQuotation ? `Quotation ${noQuotation} akan expired dalam 1 minggu` : 'Quotation akan expired dalam 1 minggu'
-              })
-            })
-          }
-        } catch (e) {
-          console.error('Error fetching expiring quotation notifications:', e)
-        }
-
-        // Combine all notifications
-        const allNotifications: Notification[] = [...stockNotifications, ...orderNotifications]
-        
-        // Sort by creation date (newest first)
-        allNotifications.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-
-        // Store all notifications
-        this.notifications = allNotifications
-        this.stockNotifications = stockNotifications
-        this.orderNotifications = orderNotifications
-        
-        // Calculate unread count based on read notifications
-        this.unreadCount = allNotifications.filter(notification => 
-          !this.readNotifications.has(notification.id)
-        ).length
-        
-        // Clean up read notifications for items that are no longer relevant
-        this.cleanupReadNotifications()
-        
-        this.lastChecked = new Date()
-
-        // Initialize SSE stream for realtime notifications
-        try {
-          const { $api } = useNuxtApp()
-          // Only open one EventSource per client
-          // Initialize WebSocket (socket.io) connection for realtime notifications
-          if (typeof window !== 'undefined' && !(window as any).__notifications_socket_opened) {
-            try {
-              // use socket.io-client via dynamic import (avoid require in ESM/browser)
-              const socketModule = await import('socket.io-client')
-              const io = (socketModule && (socketModule.io || socketModule.default || socketModule)) as any
-              const config = useRuntimeConfig?.() || {}
-              const publicConfig = config.public || {}
-              const socketPort = publicConfig.socketPort || null
-              const socketUrl = socketPort ? `${window.location.protocol}//${window.location.hostname}:${socketPort}` : window.location.origin
-              const socket = io(socketUrl, { withCredentials: true })
-
-              socket.on('connect', () => {
-                // authenticate by sending userId so server can join user room
-                const userStore = useUserStore()
-                const uid = userStore?.user?.id
-                socket.emit('authenticate', { userId: uid })
-              })
-
-              socket.on('price_adjustment', (payload: any) => {
-                try {
-                  const p = payload.data || payload
-                  const productName = p.product?.name || p.service?.name || p.did?.code || ''
-                  const n = {
-                    id: `pa-${p.id}`,
-                    type: 'price_adjustment',
-                    status: p.status,
-                    createdAt: p.createdAt || p.created_at,
-                    createdBy: p.requestedBy || p.requested_by,
-                    createdByName: p.requestedByUser?.fullName || p.requested_by_user?.full_name || 'Sales',
-                    customerName: p.customer?.name || '',
-                    total: p.proposedPrice || 0,
-                    description: productName ? `Price adjustment - ${productName}` : `Permintaan price adjustment membutuhkan approval`
-                  }
-                  this.orderNotifications.unshift(n as any)
-                  this.notifications.unshift(n as any)
-                  this.unreadCount = this.notifications.filter(notification => !this.readNotifications.has(notification.id)).length
-                  try {
-                    const toast = useToast()
-                    if (toast?.info) {
-                      toast.info({ title: 'Price Adjustment', message: productName ? `Price adjustment - ${productName} membutuhkan approval` : 'Permintaan price adjustment membutuhkan approval' })
-                    }
-                  } catch {}
-                } catch (e) {
-                  console.error('WS payload handle error', e)
-                }
-              })
-
-              // Realtime listener for quotation notifications
-              socket.on('quotation', (payload: any) => {
-                try {
-                  const p = payload.data || payload
-                  const noQuotation = p.noQuotation || p.no_quotation || ''
-                  const n = {
-                    id: `q-${p.id}`,
-                    type: 'quotation',
-                    noQuotation,
-                    status: payload.event || p.status,
-                    createdAt: p.createdAt || p.created_at,
-                    createdBy: p.createdBy || p.created_by,
-                    createdByName: p.createdByUser?.fullName || p.created_by_user?.full_name || 'Sales',
-                    customerName: p.customer?.name || '',
-                    total: p.total || p.grandTotal || 0,
-                    description: noQuotation ? `Quotation ${noQuotation} membutuhkan approval` : (p.description || '')
-                  }
-                  this.orderNotifications.unshift(n as any)
-                  this.notifications.unshift(n as any)
-                  this.unreadCount = this.notifications.filter(notification => !this.readNotifications.has(notification.id)).length
-                  try {
-                    const toast = useToast()
-                    if (toast?.info) {
-                      toast.info({ title: 'Quotation', message: noQuotation ? `Quotation ${noQuotation} membutuhkan approval` : `Quotation ${payload.event}` })
-                    }
-                  } catch {}
-                } catch (e) {
-                  console.error('WS payload handle error (quotation)', e)
-                }
-              })
-
-              socket.on('fdr', (payload: any) => {
-                try {
-                  const p = payload.data || payload
-                  const fdrNumber = p.fdrNumber || p.fdr_number || ''
-                  const n = {
-                    id: `fdr-${p.id}`,
-                    type: 'fdr',
-                    status: payload.event || p.status,
-                    createdAt: p.createdAt || p.created_at,
-                    createdBy: p.createdBy || p.created_by,
-                    createdByName: p.createdByUser?.fullName || p.created_by_user?.full_name || 'Sales',
-                    description: fdrNumber ? `FDR ${fdrNumber}` : `FDR ${p.name || p.id || ''}`
-                  }
-                  this.orderNotifications.unshift(n as any)
-                  this.notifications.unshift(n as any)
-                  this.unreadCount = this.notifications.filter(notification => !this.readNotifications.has(notification.id)).length
-                  try {
-                    const toast = useToast()
-                    if (toast?.info) {
-                      const msg = payload.event === 'submitted'
-                        ? (fdrNumber ? `FDR ${fdrNumber} membutuhkan approval` : 'FDR membutuhkan approval')
-                        : (fdrNumber ? `FDR ${fdrNumber} telah diapprove` : 'FDR telah diapprove')
-                      toast.info({ title: 'FDR', message: msg })
-                    }
-                  } catch {}
-                } catch (e) {
-                  console.error('WS payload handle error (fdr)', e)
-                }
-              })
-
-              socket.on('disconnect', () => {
-                console.warn('Notification socket disconnected')
-              })
-
-              ;(window as any).__notifications_socket_opened = true
-              ;(window as any).__notifications_socket = socket
-            } catch (e) {
-              console.error('Failed to init socket.io client for notifications', e)
-            }
-          }
-        } catch (e) {
-          console.error('Failed to initialize SSE for notifications:', e)
-        }
-
-      } catch (error) {
-        console.error('Error fetching notifications:', error)
-        this.error = error
-        this.notifications = []
-        this.unreadCount = 0
-      } finally {
-        this.loading = false
-      }
-    },
-
-    async markAsRead(notificationId: string) {
-      try {
-        const { $api } = useNuxtApp()
-        // If notificationId is prefixed (e.g. pa-123), backend expects recipient id for DB.
-        // We'll attempt to call API only when id is numeric (recipient id). For frontend-only ids, just mark locally.
-        if (/^\d+$/.test(String(notificationId))) {
-          const res = await fetch(`${$api.notificationMarkAsRead(notificationId)}`, {
-            method: 'PATCH',
-            credentials: 'include',
-          })
-          if (!res.ok) {
-            console.warn('Failed to mark notification as read on server', res.status)
-          }
-        }
-
-        this.readNotifications.add(notificationId)
-        this.saveReadNotifications()
-
-        // Recalculate unread count
-        this.unreadCount = this.notifications.filter(notification =>
-          !this.readNotifications.has(notification.id)
-        ).length
-      } catch (e) {
-        console.error('Error in markAsRead action:', e)
-      }
-    },
-
-    async markAllAsRead() {
-      try {
-        const { $api } = useNuxtApp()
-        // Call backend to mark recipients as read for current user
-        const res = await fetch(`${$api.notificationMarkAllRead()}`, {
-          method: 'PATCH',
-          credentials: 'include',
-        })
-        if (!res.ok) {
-          console.warn('Failed to mark all notifications as read on server', res.status)
-        }
-
-        // Mark locally as well
-        this.notifications.forEach(notification => {
-          this.readNotifications.add(notification.id)
-        })
-        this.saveReadNotifications()
-
-        // Set unread count to 0
-        this.unreadCount = 0
-      } catch (e) {
-        console.error('Error in markAllAsRead action:', e)
-      }
-    },
-
-    clearNotifications() {
-      this.notifications = []
-      this.unreadCount = 0
-      this.error = null
-    },
-
-    // Clean up read notifications for items that are no longer in the notifications list.
-    // Preserve numeric IDs (NotificationRecipient ids) - they're from the /notifications API
-    // and aren't in this.notifications (which is stock/order/price_adjustment etc).
-    cleanupReadNotifications() {
-      const currentNotificationIds = new Set(this.notifications.map(n => n.id))
-      const cleanedReadNotifications = new Set<string>()
-      
-      this.readNotifications.forEach(id => {
-        const isRecipientId = /^\d+$/.test(String(id))
-        if (isRecipientId || currentNotificationIds.has(id)) {
-          cleanedReadNotifications.add(id)
-        }
+    pushBrowserNotification(title: string, message: string, tag?: string) {
+      if (!canSendBrowserNotifications()) return
+      showBrowserNotification(title, {
+        body: message,
+        tag: tag || title,
       })
-      
-      this.readNotifications = cleanedReadNotifications
-      this.saveReadNotifications()
     },
 
-    // Format time ago for display
-    formatTimeAgo(dateString: string): string {
-      const now = new Date()
-      const date = new Date(dateString)
-      const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
+    async refreshFeedCounts() {
+      const feedStore = useNotificationFeedStore()
+      await feedStore.fetchCountsOnly()
+    },
 
-      if (diffInSeconds < 60) {
-        return 'Baru saja'
-      } else if (diffInSeconds < 3600) {
-        const minutes = Math.floor(diffInSeconds / 60)
-        return `${minutes} menit yang lalu`
-      } else if (diffInSeconds < 86400) {
-        const hours = Math.floor(diffInSeconds / 3600)
-        return `${hours} jam yang lalu`
-      } else {
-        const days = Math.floor(diffInSeconds / 86400)
-        return `${days} hari yang lalu`
+    async refreshOpenFeed() {
+      const feedStore = useNotificationFeedStore()
+      if (!feedStore.initialized) return
+      await feedStore.openDropdown()
+    },
+
+    handleRealtimeEvent(options: {
+      title: string
+      message: string
+      tag?: string
+      recipient?: Record<string, unknown>
+    }) {
+      try {
+        const toast = useToast()
+        if (toast?.info) {
+          toast.info({ title: options.title, message: options.message })
+        }
+      } catch {
+        /* ignore toast errors */
       }
-    }
-  }
+
+      this.pushBrowserNotification(options.title, options.message, options.tag)
+
+      const feedStore = useNotificationFeedStore()
+      if (options.recipient) {
+        feedStore.prependFeedItem(options.recipient)
+      } else {
+        void feedStore.fetchCountsOnly()
+        void this.refreshOpenFeed()
+      }
+    },
+
+    async initRealtime() {
+      if (this.initialized || typeof window === 'undefined') return
+
+      const feedStore = useNotificationFeedStore()
+      await feedStore.fetchCountsOnly()
+
+      if ((window as any).__notifications_socket_opened) {
+        this.initialized = true
+        return
+      }
+
+      try {
+        const socketModule = await import('socket.io-client')
+        const io = (socketModule && (socketModule.io || socketModule.default || socketModule)) as any
+        const config = useRuntimeConfig?.() || {}
+        const publicConfig = config.public || {}
+        const socketPort = publicConfig.socketPort || null
+        const socketUrl = socketPort
+          ? `${window.location.protocol}//${window.location.hostname}:${socketPort}`
+          : window.location.origin
+        const socket = io(socketUrl, { withCredentials: true })
+
+        socket.on('connect', () => {
+          const userStore = useUserStore()
+          const uid = userStore?.user?.id
+          socket.emit('authenticate', { userId: uid })
+        })
+
+        socket.on('price_adjustment', (payload: any) => {
+          try {
+            const p = payload.data || payload
+            const productName = p.product?.name || p.service?.name || p.did?.code || ''
+            const msg = productName
+              ? `Price adjustment - ${productName} membutuhkan approval`
+              : 'Permintaan price adjustment membutuhkan approval'
+            this.handleRealtimeEvent({
+              title: 'Price Adjustment',
+              message: msg,
+              tag: `price_adjustment-${p.id}`,
+              recipient: payload.recipient,
+            })
+          } catch (e) {
+            console.error('WS payload handle error', e)
+          }
+        })
+
+        socket.on('quotation', (payload: any) => {
+          try {
+            const p = payload.data || payload
+            const noQuotation = p.noQuotation || p.no_quotation || ''
+            const msg = noQuotation
+              ? `Quotation ${noQuotation} membutuhkan approval`
+              : `Quotation ${payload.event}`
+            this.handleRealtimeEvent({
+              title: 'Quotation',
+              message: msg,
+              tag: `quotation-${p.id}`,
+              recipient: payload.recipient,
+            })
+          } catch (e) {
+            console.error('WS payload handle error (quotation)', e)
+          }
+        })
+
+        socket.on('fdr', (payload: any) => {
+          try {
+            const p = payload.data || payload
+            const fdrNumber = p.fdrNumber || p.fdr_number || ''
+            const msg =
+              payload.event === 'submitted'
+                ? fdrNumber
+                  ? `FDR ${fdrNumber} membutuhkan approval`
+                  : 'FDR membutuhkan approval'
+                : fdrNumber
+                  ? `FDR ${fdrNumber} telah diapprove`
+                  : 'FDR telah diapprove'
+            this.handleRealtimeEvent({
+              title: 'FDR',
+              message: msg,
+              tag: `fdr-${p.id}`,
+              recipient: payload.recipient,
+            })
+          } catch (e) {
+            console.error('WS payload handle error (fdr)', e)
+          }
+        })
+
+        socket.on('notification', (payload: any) => {
+          try {
+            const recipient = payload.recipient || payload.data?.recipient || payload
+            const notification = recipient?.notification || payload.notification
+            const type = notification?.type || payload.type || 'Notifikasi'
+            const msg = payload.message || notification?.payload?.title || 'Anda memiliki notifikasi baru'
+            this.handleRealtimeEvent({
+              title: String(type),
+              message: String(msg),
+              tag: `notification-${recipient?.id || notification?.id || Date.now()}`,
+              recipient: recipient?.notification ? recipient : undefined,
+            })
+          } catch (e) {
+            console.error('WS payload handle error (notification)', e)
+          }
+        })
+
+        socket.on('disconnect', () => {
+          console.warn('Notification socket disconnected')
+        })
+
+        ;(window as any).__notifications_socket_opened = true
+        ;(window as any).__notifications_socket = socket
+        this.initialized = true
+      } catch (e) {
+        console.error('Failed to init socket.io client for notifications', e)
+      }
+    },
+  },
 })

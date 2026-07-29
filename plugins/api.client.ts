@@ -60,6 +60,7 @@ export default defineNuxtPlugin(() => {
     menuGroupsOptions: () => `${apiBase}/menu-groups/options`,
     menuGroupsAll: () => `${apiBase}/menu-groups-all`,
     menuDetails: () => `${apiBase}/menu-details`,
+    menuDetailParentOptions: () => `${apiBase}/menu-details/parent-options`,
 
     // Access Requests (permintaan akses modul/menu)
     accessRequests: () => `${apiBase}/access-requests`,
@@ -178,10 +179,22 @@ export default defineNuxtPlugin(() => {
     rejectPurchaseRequest: (id: number | string) => `${apiBase}/purchase-request/${id}/rejectPurchaseRequest`,
     submitPurchaseRequest: (id: number | string) => `${apiBase}/purchase-request/${id}/submitPurchaseRequest`,
 
+    // Material Request Form — Purchasing (project / SI materials)
+    materialRequest: () => `${apiBase}/material-request`,
+    materialRequestShow: (id: string) => `${apiBase}/material-request/${id}`,
+    getMaterialRequestDetails: (id: string) => `${apiBase}/material-request/getMaterialRequestDetails/${id}`,
+    materialRequestSiteInvestmentItems: (siteInvestmentId: string) =>
+      `${apiBase}/material-request/site-investment/${siteInvestmentId}/items`,
+    materialRequestStatistics: () => `${apiBase}/material-request/countByStatus`,
+    approveMaterialRequest: (id: string) => `${apiBase}/material-request/${id}/approveMaterialRequest`,
+    rejectMaterialRequest: (id: string) => `${apiBase}/material-request/${id}/rejectMaterialRequest`,
+    submitMaterialRequest: (id: string) => `${apiBase}/material-request/${id}/submitMaterialRequest`,
+
     // ARF (Advanced Request Form) — Implementation
     arf: () => `${apiBase}/arf`,
     arfShow: (id: number | string) => `${apiBase}/arf/${id}`,
     getArfDetails: (id: number | string) => `${apiBase}/arf/getArfDetails/${id}`,
+    arfCetak: (id: number | string) => `${apiBase}/arf/${id}/cetak`,
     countArfByStatus: () => `${apiBase}/arf/countByStatus`,
     approveArf: (id: number | string) => `${apiBase}/arf/${id}/approveArf`,
     rejectArf: (id: number | string) => `${apiBase}/arf/${id}/rejectArf`,
@@ -208,6 +221,9 @@ export default defineNuxtPlugin(() => {
       `${apiBase}/progress-tracker/nodes/${nodeId}/attachments`,
     deleteProgressTrackerAttachment: (attachmentId: string) =>
       `${apiBase}/progress-tracker/attachments/${attachmentId}`,
+    submitProgressTracker: (id: string) => `${apiBase}/progress-tracker/${id}/submit`,
+    approveProgressTracker: (id: string) => `${apiBase}/progress-tracker/${id}/approve`,
+    rejectProgressTracker: (id: string) => `${apiBase}/progress-tracker/${id}/reject`,
     
     // Purchase Order Item
     purchaseOrderItemUpdateStatusPartial: (id: number | string) => `${apiBase}/purchase-order-item/updateStatusPartial/${id}`,
@@ -221,8 +237,49 @@ export default defineNuxtPlugin(() => {
     // Finance Invoices (billing perangkat aktif — Finance module)
     financeInvoices             : () => `${apiBase}/finance/invoices`,
     financeInvoicesShow         : (id: string) => `${apiBase}/finance/invoices/${id}`,
+    financeInvoicesUpdate       : (id: string) => `${apiBase}/finance/invoices/${id}`,
+    financeInvoicesDelete       : (id: string) => `${apiBase}/finance/invoices/${id}`,
+    financeInvoicesSend         : (id: string) => `${apiBase}/finance/invoices/${id}/send`,
+    financeInvoicesSendBulk     : () => `${apiBase}/finance/invoices/send-bulk`,
+    financeInvoicesSubmit       : (id: string) => `${apiBase}/finance/invoices/${id}/submit`,
+    financeInvoicesApprove      : (id: string) => `${apiBase}/finance/invoices/${id}/approve`,
+    financeInvoicesReject       : (id: string) => `${apiBase}/finance/invoices/${id}/reject`,
     financeInvoicesStatistics   : () => `${apiBase}/finance/invoices/statistics`,
     financeInvoicesBillableItems: () => `${apiBase}/finance/invoices/billable-items`,
+
+    // Billing Adjustments
+    billingAdjustments          : () => `${apiBase}/finance/billing-adjustments`,
+    billingAdjustmentsStatistics: () => `${apiBase}/finance/billing-adjustments/statistics`,
+    billingAdjustmentsShow      : (id: string) => `${apiBase}/finance/billing-adjustments/${id}`,
+    billingAdjustmentsApprove   : (id: string) => `${apiBase}/finance/billing-adjustments/${id}/approve`,
+
+    // Tax Masters
+    taxMasters                  : () => `${apiBase}/finance/tax-masters`,
+    taxMastersStatistics        : () => `${apiBase}/finance/tax-masters/statistics`,
+    taxMastersActive            : () => `${apiBase}/finance/tax-masters/active`,
+    taxMastersShow              : (id: string) => `${apiBase}/finance/tax-masters/${id}`,
+    taxMastersEffectiveRate     : (id: string) => `${apiBase}/finance/tax-masters/${id}/effective-rate`,
+    taxMastersRates             : (id: string) => `${apiBase}/finance/tax-masters/${id}/rates`,
+    taxMastersRateUpdate        : (id: string, rateId: string) => `${apiBase}/finance/tax-masters/${id}/rates/${rateId}`,
+
+    // Billing Preparations
+    billingPreparations         : () => `${apiBase}/finance/billing-preparations`,
+    billingPreparationsStatistics: () => `${apiBase}/finance/billing-preparations/statistics`,
+    billingPreparationsPreviewSources: () => `${apiBase}/finance/billing-preparations/preview-sources`,
+    billingPreparationsShow     : (id: string) => `${apiBase}/finance/billing-preparations/${id}`,
+    billingPreparationsRebuild  : (id: string) => `${apiBase}/finance/billing-preparations/${id}/rebuild-items`,
+    billingPreparationsReady    : (id: string) => `${apiBase}/finance/billing-preparations/${id}/ready`,
+
+    // Payment Requests — pengajuan dana ke Direktur Utama
+    paymentRequests             : () => `${apiBase}/finance/payment-requests`,
+    paymentRequestsShow         : (id: string) => `${apiBase}/finance/payment-requests/${id}`,
+    paymentRequestsStatistics   : () => `${apiBase}/finance/payment-requests/statistics`,
+    paymentRequestsSources      : () => `${apiBase}/finance/payment-requests/sources`,
+    paymentRequestsLoadSource   : (type: string, id: string) =>
+      `${apiBase}/finance/payment-requests/sources/${type}/${id}`,
+    paymentRequestsSubmit       : (id: string) => `${apiBase}/finance/payment-requests/${id}/submit`,
+    paymentRequestsApprove      : (id: string) => `${apiBase}/finance/payment-requests/${id}/approve`,
+    paymentRequestsReject       : (id: string) => `${apiBase}/finance/payment-requests/${id}/reject`,
 
     // Bank Accounts
     bankAccounts: () => `${apiBase}/accounting/bank-accounts`,
@@ -331,6 +388,7 @@ export default defineNuxtPlugin(() => {
 
     // Product
     product: () => `${apiBase}/product`,
+    productStatistics: () => `${apiBase}/product/statistics`,
     productExportExcel: () => `${apiBase}/product/export-excel`,
 
     // DID (Delivery, Installation, dll)
@@ -532,7 +590,11 @@ export default defineNuxtPlugin(() => {
     dataPerusahaan: () => `${apiBase}/data/perusahaan`,
     dataCabang: () => `${apiBase}/data/cabang`,
     dataWarehouse: () => `${apiBase}/data/warehouse`,
-    dataProduct: () => `${apiBase}/data/product`,
+    dataProduct: (scope?: 'internal' | 'external') => {
+      const url = `${apiBase}/data/product`
+      if (!scope) return url
+      return `${url}?scope=${encodeURIComponent(scope)}`
+    },
     dataCustomer: () => `${apiBase}/data/customer`,
     dataVendor: () => `${apiBase}/data/vendor`,
     dataDepartemen: () => `${apiBase}/data/departemen`,
@@ -545,10 +607,18 @@ export default defineNuxtPlugin(() => {
     dataStock: () => `${apiBase}/data/stock`,
 
     // User Sessions
+    userSessionsLoginActivity: () => `${apiBase}/user-sessions/login-activity`,
     userSessionsActiveUsers: () => `${apiBase}/user-sessions/active-users`,
     userSessionsUserSessions: (id: number | string) => `${apiBase}/user-sessions/user/${id}/sessions`,
     userSessionsForceLogout: (sessionId: string) => `${apiBase}/user-sessions/force-logout/${sessionId}`,
     userSessionsCleanupExpired: () => `${apiBase}/user-sessions/cleanup-expired`,
+
+    // System stats (infrastructure)
+    systemStats: () => `${apiBase}/system-stats`,
+
+    // Activity logs
+    activityLogsFeed: (limit = 15) => `${apiBase}/activity-logs/feed?limit=${limit}`,
+    activityLogs: () => `${apiBase}/activity-logs`,
   };
 
   const token = useCookie('access_token')

@@ -74,6 +74,17 @@
                     <input type="text" :value="localForm.customerName" class="form-control bg-light" readonly />
                   </div>
                   <div class="col-md-6">
+                    <label class="form-label text-muted">Status</label>
+                    <CustomSelect2
+                      v-model="localForm.status"
+                      :options="statusOptions"
+                      :get-option-label="o => o.label"
+                      :reduce="o => o.value"
+                      searchable
+                      placeholder="Pilih Status"
+                    />
+                  </div>
+                  <div class="col-md-6">
                     <label class="form-label text-muted">Service Plan</label>
                     <input type="text" :value="servicePlanNameFromQuotation" class="form-control bg-light" readonly />
                   </div>
@@ -93,18 +104,39 @@
                     <label class="form-label text-muted">Term of Payment</label>
                     <input type="text" :value="localForm.termOfPayment" class="form-control bg-light" readonly />
                   </div>
-                </div>
-
-                <div class="row g-4 mt-2">
+                  <div class="col-md-6">
+                    <label class="form-label text-muted">PO Reference</label>
+                    <input v-model="localForm.poReference" type="text" class="form-control" maxlength="100" placeholder="Nomor / referensi PO customer" />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label text-muted">PO Attachment</label>
+                    <input type="file" class="form-control" accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx,.csv" @change="onPoAttachmentChange">
+                    <small class="text-muted d-block mt-1">Maks. 2MB. Satu file dokumen PO.</small>
+                    <div v-if="localForm.poAttachmentPreview || localForm.existingPoAttachment" class="mt-2">
+                      <div v-if="localForm.poAttachmentPreview" class="d-flex align-items-center gap-2 mb-2 p-2 border rounded">
+                        <i class="ri-file-line text-primary"></i>
+                        <span class="flex-grow-1 small">{{ localForm.poAttachment?.name || 'PO File' }}</span>
+                        <button type="button" class="btn btn-sm btn-text-danger p-0" @click="removePoAttachment('new')"><i class="ri-close-circle-line"></i></button>
+                      </div>
+                      <div v-else-if="localForm.existingPoAttachment" class="d-flex align-items-center gap-2 mb-2 p-2 border rounded">
+                        <i class="ri-file-line text-success"></i>
+                        <a :href="getAttachmentUrl(localForm.existingPoAttachment)" target="_blank" rel="noopener noreferrer" class="flex-grow-1 small text-decoration-none">{{ getFileNameFromUrl(localForm.existingPoAttachment) }}</a>
+                        <button type="button" class="btn btn-sm btn-text-danger p-0" @click="removePoAttachment('existing')"><i class="ri-close-circle-line"></i></button>
+                      </div>
+                    </div>
+                  </div>
                   <div class="col-md-6">
                     <label class="form-label text-muted">Contract Period (Months)</label>
                     <input v-model.number="localForm.contractPeriod" type="number" class="form-control" min="1" placeholder="12" @input="calculateContractEndDate" />
                   </div>
-                  <div class="col-md-3">
+                </div>
+
+                <div class="row g-4 mt-2">
+                  <div class="col-md-6">
                     <label class="form-label text-muted">Target Activation Date</label>
                     <input v-model="localForm.targetActiveDate" type="date" class="form-control" @change="calculateContractEndDate" />
                   </div>
-                  <div class="col-md-3">
+                  <div class="col-md-6">
                     <label class="form-label text-muted">Contract End Date (Auto-calculated)</label>
                     <input type="text" :value="localForm.contractEndDate ? new Date(localForm.contractEndDate).toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-'" class="form-control bg-light" readonly />
                   </div>
@@ -261,7 +293,6 @@ const selectedQuotation = ref<any>(null)
 const prefilledQuotationId = computed(() => route.query.quotationId ? String(route.query.quotationId) : null)
 const prefilledLeTechReviewId = computed(() => route.query.leTechReviewId ? Number(route.query.leTechReviewId) : null)
 const prefilledLeTechReviewNo = computed(() => route.query.leTechReviewNo ? String(route.query.leTechReviewNo) : null)
-const prefilledPurchaseRequestId = computed(() => route.query.purchaseRequestId ? String(route.query.purchaseRequestId) : null)
 const pageTitle = computed(() => (isEditMode.value ? 'Edit Subscription' : 'Tambah Subscription'))
 const pageSubtitle = computed(() => (isEditMode.value ? 'Perbarui data subscription.' : 'Isi form untuk membuat subscription baru.'))
 const moduleNavItems = computed(() => [
@@ -271,6 +302,14 @@ const moduleNavItems = computed(() => [
   { label: 'Customer Verification', to: '/order-process/customer-verif', icon: 'ri-user-search-line' },
 ])
 
+const statusOptions = [
+  { label: 'Draft', value: 'draft' },
+  { label: 'Signed', value: 'signed' },
+  { label: 'Active', value: 'active' },
+  { label: 'Terminated', value: 'terminated' },
+  { label: 'Expired', value: 'expired' },
+  { label: 'Canceled', value: 'canceled' },
+]
 const localForm = computed({
   get: () => form.value,
   set: (val) => { form.value = val },
@@ -352,7 +391,6 @@ async function onQuotationChange(quotationId: string | null) {
   localForm.value.customerId = q.customerId ?? q.customer_id ?? q.customer?.id ?? null
   localForm.value.customerName = q.customer?.name ?? q.customer_name ?? ''
   localForm.value.termOfPayment = q.termOfPayment ?? q.term_of_payment ?? 'Net 30 Days'
-  localForm.value.purchaseRequestId = q.purchaseRequestId ?? q.purchase_request_id ?? q.purchaseRequest?.id ?? localForm.value.purchaseRequestId
   const services = q.quotationServices ?? q.quotation_services ?? []
   const items = q.quotationItems ?? q.quotation_items ?? []
   const totalOtcFromItems = items.reduce((total: number, item: any) => {
@@ -385,6 +423,32 @@ function onAttachmentsChange(e: Event) {
   localForm.value.attachments.push(...files)
   localForm.value.attachmentPreviews.push(...files.map((f) => URL.createObjectURL(f)))
   target.value = ''
+}
+
+function onPoAttachmentChange(e: Event) {
+  const target = e.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) return
+  if (localForm.value.poAttachmentPreview?.startsWith('blob:')) {
+    URL.revokeObjectURL(localForm.value.poAttachmentPreview)
+  }
+  localForm.value.poAttachment = file
+  localForm.value.poAttachmentPreview = URL.createObjectURL(file)
+  // New upload replaces existing stored URL
+  localForm.value.existingPoAttachment = null
+  target.value = ''
+}
+
+function removePoAttachment(type: 'new' | 'existing') {
+  if (type === 'new') {
+    if (localForm.value.poAttachmentPreview?.startsWith('blob:')) {
+      URL.revokeObjectURL(localForm.value.poAttachmentPreview)
+    }
+    localForm.value.poAttachment = null
+    localForm.value.poAttachmentPreview = null
+  } else {
+    localForm.value.existingPoAttachment = null
+  }
 }
 
 function removeAttachment(index: number, type: 'new' | 'existing') {
@@ -436,7 +500,6 @@ onMounted(async () => {
     subscriptionStore.showModal = false
     if (prefilledQuotationId.value) {
       localForm.value.quotationId = prefilledQuotationId.value
-      if (prefilledPurchaseRequestId.value) localForm.value.purchaseRequestId = prefilledPurchaseRequestId.value
       if (prefilledLeTechReviewId.value) localForm.value.leTechReviewId = prefilledLeTechReviewId.value
       await onQuotationChange(prefilledQuotationId.value)
     }

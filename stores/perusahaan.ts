@@ -12,6 +12,8 @@ export interface Perusahaan {
   tlpPerusahaan: string
   emailPerusahaan: string
   logoPerusahaan: string
+  namaBankPerusahaan?: string | null
+  nomorRekeningPerusahaan?: string | null
   createdAt: string
   updatedAt: string
 }
@@ -241,6 +243,8 @@ export const usePerusahaanStore = defineStore('perusahaan', {
                 alamatPerusahaan: '',
                 tlpPerusahaan: '',
                 emailPerusahaan: '',
+                namaBankPerusahaan: '',
+                nomorRekeningPerusahaan: '',
                 logoPerusahaan: null,
                 logoPreview: '',
             };
@@ -257,6 +261,8 @@ export const usePerusahaanStore = defineStore('perusahaan', {
             alamatPerusahaan: '',
             tlpPerusahaan: '',
             emailPerusahaan: '',
+            namaBankPerusahaan: '',
+            nomorRekeningPerusahaan: '',
             logoPerusahaan: null,
             logoPreview: '',
         };

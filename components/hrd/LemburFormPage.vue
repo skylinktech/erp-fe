@@ -95,11 +95,11 @@
                     <label class="form-check-label" for="autoSubmit">Langsung ajukan ke approval setelah simpan</label>
                   </div>
 
-                  <div class="d-flex gap-2">
+                  <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                    <NuxtLink to="/hrd/lembur" class="btn btn-outline-secondary">Batal</NuxtLink>
                     <button type="submit" class="btn btn-primary" :disabled="store.saving">
                       {{ store.saving ? 'Menyimpan...' : store.isEditMode ? 'Perbarui' : 'Simpan' }}
                     </button>
-                    <NuxtLink to="/hrd/lembur" class="btn btn-outline-secondary">Batal</NuxtLink>
                   </div>
                 </form>
               </div>

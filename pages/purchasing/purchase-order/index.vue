@@ -99,55 +99,53 @@
 
             <div class="row g-6">
                 <div class="col-12">
-                    <h4 class="mt-6 mb-1">Filter Purchase Order</h4>
-                    <p class="mb-0">Temukan semua purchase order perusahaan Anda</p>
-                </div>
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-4 mb-3">
-                                    <label class="form-label text-muted mb-2">Filter Vendor</label>
-                                    <CustomSelect2 
-                                        v-model="filters.vendorId" 
-                                        :options="vendors || []" 
-                                        :get-option-label="v => v.name" 
-                                        :reduce="v => v.id" 
-                                        placeholder="Pilih Vendor"
-                                        searchable
-                                        clearable
-                                        :loading="vendorStore.loading"
-                                        loading-text="Memuat vendor..."
-                                        
-                                    />
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <label class="form-label text-muted mb-2">Filter Tipe PO</label>
-                                    <CustomSelect2 
-                                        v-model="filters.poType" 
-                                        :options="poTypeOptions" 
-                                        :get-option-label="option => option.label" 
-                                        :reduce="option => option.value" 
-                                        placeholder="Pilih Tipe PO"
-                                        searchable
-                                        clearable
-                                    />
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <label class="form-label text-muted mb-2">Filter Status</label>
-                                    <CustomSelect2 
-                                        v-model="filters.status" 
-                                        :options="statusOptions" 
-                                        :get-option-label="option => option.label" 
-                                        :reduce="option => option.value" 
-                                        placeholder="Pilih Status"
-                                        searchable
-                                        clearable
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <CollapsibleFilterCard
+                        title="Filter Purchase Order"
+                        description="Temukan semua purchase order perusahaan Anda"
+                        :has-active-filters="hasActiveFilters"
+                        @reset="resetFilters"
+                    >
+                        <FilterFieldsRow>
+                            <FilterField>
+                                <label class="form-label">Filter Vendor</label>
+                                <CustomSelect2 
+                                    v-model="filters.vendorId" 
+                                    :options="vendors || []" 
+                                    :get-option-label="v => v.name" 
+                                    :reduce="v => v.id" 
+                                    placeholder="Pilih Vendor"
+                                    searchable
+                                    clearable
+                                    :loading="vendorStore.loading"
+                                    loading-text="Memuat vendor..."
+                                />
+                            </FilterField>
+                            <FilterField>
+                                <label class="form-label">Filter Tipe PO</label>
+                                <CustomSelect2 
+                                    v-model="filters.poType" 
+                                    :options="poTypeOptions" 
+                                    :get-option-label="option => option.label" 
+                                    :reduce="option => option.value" 
+                                    placeholder="Pilih Tipe PO"
+                                    searchable
+                                    clearable
+                                />
+                            </FilterField>
+                            <FilterField>
+                                <label class="form-label">Filter Status</label>
+                                <CustomSelect2 
+                                    v-model="filters.status" 
+                                    :options="statusOptions" 
+                                    :get-option-label="option => option.label" 
+                                    :reduce="option => option.value" 
+                                    placeholder="Pilih Status"
+                                    searchable
+                                    clearable
+                                />
+                            </FilterField>
+                        </FilterFieldsRow>
+                    </CollapsibleFilterCard>
                 </div>
                 <div class="col-12">
                     <!-- purchaseOrder Table -->
@@ -750,6 +748,17 @@ const filters = ref({
     poType: null,
     status: null,
 });
+
+const hasActiveFilters = computed(
+    () => !!filters.value.vendorId || !!filters.value.poType || !!filters.value.status
+)
+
+function resetFilters() {
+    filters.value.vendorId = null
+    filters.value.poType = null
+    filters.value.status = null
+}
+
 const expandedRows = ref({});
 
 // State untuk produk berdasarkan warehouse (tidak lagi digunakan, semua produk selalu tersedia)

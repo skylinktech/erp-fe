@@ -1,46 +1,24 @@
+import { useNotificationFeedStore } from '~/stores/notificationFeed'
 import { useNotificationsStore } from '~/stores/notifications'
+import { formatNotificationTimeAgo } from '~/utils/notificationFeed'
 
 export const useNotifications = () => {
   const notificationsStore = useNotificationsStore()
-
-  const fetchNotifications = async () => {
-    await notificationsStore.fetchNotifications()
-  }
-
-  const markAsRead = async (notificationId: string) => {
-    await notificationsStore.markAsRead(notificationId)
-  }
-
-  const markAllAsRead = async () => {
-    await notificationsStore.markAllAsRead()
-  }
-
-  const clearNotifications = () => {
-    notificationsStore.clearNotifications()
-  }
-
-  const formatTimeAgo = (dateString: string) => {
-    return notificationsStore.formatTimeAgo(dateString)
-  }
+  const feedStore = useNotificationFeedStore()
 
   return {
-    // State
-    notifications: computed(() => notificationsStore.notifications),
-    unreadCount: computed(() => notificationsStore.unreadCount),
-    hasUnreadNotifications: computed(() => notificationsStore.hasUnreadNotifications),
-    loading: computed(() => notificationsStore.loading),
-    error: computed(() => notificationsStore.error),
-    
-    // Getters
-    stockInNotifications: computed(() => notificationsStore.stockInNotifications),
-    stockOutNotifications: computed(() => notificationsStore.stockOutNotifications),
-    unreadNotifications: computed(() => notificationsStore.unreadNotifications),
-    
-    // Actions
-    fetchNotifications,
-    markAsRead,
-    markAllAsRead,
-    clearNotifications,
-    formatTimeAgo
+    unreadCount: computed(() => feedStore.unreadCount),
+    loading: computed(() => feedStore.loading),
+    error: computed(() => feedStore.error),
+    items: computed(() => feedStore.items),
+    counts: computed(() => feedStore.counts),
+    initRealtime: () => notificationsStore.initRealtime(),
+    fetchCounts: () => feedStore.fetchCountsOnly(),
+    openDropdown: () => feedStore.openDropdown(),
+    switchTab: (tab: Parameters<typeof feedStore.switchTab>[0]) => feedStore.switchTab(tab),
+    loadMore: () => feedStore.loadMore(),
+    markAsRead: (id: number | string) => feedStore.markAsRead(id),
+    markAllAsRead: () => feedStore.markAllAsRead(),
+    formatTimeAgo: formatNotificationTimeAgo,
   }
 }

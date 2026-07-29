@@ -41,7 +41,6 @@ export interface SubscriptionContact {
 export interface Subscription {
   id: string
   noSubscription: string
-  purchaseRequestId: string
   quotationId: string
   customerId: number
   customerName: string
@@ -52,6 +51,9 @@ export interface Subscription {
   contractEndDate: string | null
   paymentMethod: string
   termOfPayment: string
+  poReference?: string | null
+  poAttachment?: string | null
+  attachment?: string | null
   leTechReviewId?: number | null
   leTechReviewAt?: string | null
   canceledAt?: string | null
@@ -60,7 +62,6 @@ export interface Subscription {
   createdAt: string
   updatedAt: string
   canceledByUser?: { id: number; fullName?: string; full_name?: string; email?: string } | null
-  purchaseRequest?: { id: number; prNumber?: string; noPurchaseRequest?: string }
   quotation?: { id: string; noQuotation?: string }
   customer?: { id: number; name: string }
   subscriptionServices?: SubscriptionService[]
@@ -88,16 +89,20 @@ interface SubscriptionState {
   }
   form: {
     id?: string | null
-    purchaseRequestId: string | null
     quotationId: string | null
     customerId: number | null
     customerName: string
+    status: 'draft' | 'signed' | 'active' | 'terminated' | 'expired' | 'canceled'
     contractPeriod: number
     targetActiveDate: string | null
     contractStartDate: string | null
     contractEndDate: string | null
     paymentMethod: string
     termOfPayment: string
+    poReference: string
+    poAttachment?: File | null
+    poAttachmentPreview?: string | null
+    existingPoAttachment?: string | null
     subscriptionServices: SubscriptionService[]
     subscriptionInstallations: SubscriptionInstallation[]
     subscriptionContacts: SubscriptionContact[]
@@ -139,16 +144,20 @@ export const useSubscriptionStore = defineStore('subscription', {
       status: null,
     },
     form: {
-      purchaseRequestId: null,
       quotationId: null,
       customerId: null,
       customerName: '',
+      status: 'draft',
       contractPeriod: 12,
       targetActiveDate: null,
       contractStartDate: null,
       contractEndDate: null,
       paymentMethod: '',
       termOfPayment: '',
+      poReference: '',
+      poAttachment: null,
+      poAttachmentPreview: null,
+      existingPoAttachment: null,
       subscriptionServices: [],
       subscriptionInstallations: [],
       subscriptionContacts: [],
@@ -290,16 +299,17 @@ export const useSubscriptionStore = defineStore('subscription', {
       const hasExisting = this.form.existingAttachments && this.form.existingAttachments.length > 0
       const formData = new FormData()
 
-      formData.append('purchaseRequestId', this.form.purchaseRequestId || '')
       formData.append('quotationId', String(this.form.quotationId))
       formData.append('customerId', String(this.form.customerId))
       formData.append('customerName', this.form.customerName)
+      formData.append('status', this.form.status || 'draft')
       formData.append('contractPeriod', String(this.form.contractPeriod))
       if (this.form.targetActiveDate) formData.append('targetActiveDate', this.form.targetActiveDate)
       if (this.form.contractStartDate) formData.append('contractStartDate', this.form.contractStartDate)
       if (this.form.contractEndDate) formData.append('contractEndDate', this.form.contractEndDate)
       formData.append('paymentMethod', this.form.paymentMethod)
       formData.append('termOfPayment', this.form.termOfPayment)
+      formData.append('poReference', this.form.poReference || '')
       formData.append('subscriptionServices', JSON.stringify(this.form.subscriptionServices.map((s) => ({
         serviceId: s.serviceId,
         serviceName: s.serviceName || '',
@@ -333,6 +343,19 @@ export const useSubscriptionStore = defineStore('subscription', {
       }
       if (this.isEditMode && hasExisting) {
         formData.append('existingAttachments', JSON.stringify(this.form.existingAttachments))
+      }
+
+      // Dedicated PO attachment (single file)
+      if (this.form.poAttachment instanceof File) {
+        formData.append('poAttachment', this.form.poAttachment)
+      }
+      if (this.isEditMode) {
+        if (this.form.existingPoAttachment) {
+          formData.append('existingPoAttachment', this.form.existingPoAttachment)
+        } else if (!this.form.poAttachment) {
+          // Explicitly clear when user removed existing PO file
+          formData.append('removePoAttachment', '1')
+        }
       }
 
       const url = this.isEditMode && this.form.id ? `${$api.subscription()}/${this.form.id}` : $api.subscription()
@@ -459,16 +482,20 @@ export const useSubscriptionStore = defineStore('subscription', {
       // Reset form with default values
       this.form = {
         id: null,
-        purchaseRequestId: leTechReview.purchaseRequestId ?? leTechReview.purchase_request_id ?? leTechReview.purchaseRequest?.id ?? null,
         quotationId: leTechReview.quotationId ?? leTechReview.quotation_id ?? leTechReview.quotation?.id ?? null,
         customerId: leTechReview.quotation?.customerId ?? leTechReview.quotation?.customer_id ?? leTechReview.quotation?.customer?.id ?? null,
         customerName: leTechReview.quotation?.customer?.name ?? leTechReview.quotation?.customerName ?? '',
+        status: 'draft',
         contractPeriod: 12,
         targetActiveDate: null,
         contractStartDate: null,
         contractEndDate: null,
         paymentMethod: '',
         termOfPayment: '',
+        poReference: '',
+        poAttachment: null,
+        poAttachmentPreview: null,
+        existingPoAttachment: null,
         subscriptionServices: [],
         subscriptionInstallations: [],
         subscriptionContacts: [],
@@ -491,16 +518,20 @@ export const useSubscriptionStore = defineStore('subscription', {
         const raw = data as any
         this.form = {
           id: raw.id,
-          purchaseRequestId: raw.purchaseRequestId ?? raw.purchase_request_id ?? raw.purchaseRequest?.id ?? null,
           quotationId: raw.quotationId ?? raw.quotation_id ?? raw.quotation?.id ?? null,
           customerId: raw.customerId ?? raw.customer_id ?? raw.customer?.id ?? null,
           customerName: raw.customerName ?? raw.customer_name ?? raw.customer?.name ?? '',
+          status: raw.status || 'draft',
           contractPeriod: Number(raw.contractPeriod ?? raw.contract_period) || 12,
           targetActiveDate: raw.targetActiveDate ?? raw.target_active_date ? new Date(raw.targetActiveDate ?? raw.target_active_date).toISOString().split('T')[0] : null,
           contractStartDate: raw.contractStartDate ?? raw.contract_start_date ? new Date(raw.contractStartDate ?? raw.contract_start_date).toISOString().split('T')[0] : null,
           contractEndDate: raw.contractEndDate ?? raw.contract_end_date ? new Date(raw.contractEndDate ?? raw.contract_end_date).toISOString().split('T')[0] : null,
           paymentMethod: raw.paymentMethod ?? raw.payment_method ?? '',
           termOfPayment: raw.termOfPayment ?? raw.term_of_payment ?? '',
+          poReference: raw.poReference ?? raw.po_reference ?? '',
+          poAttachment: null,
+          poAttachmentPreview: null,
+          existingPoAttachment: raw.poAttachment ?? raw.po_attachment ?? null,
           subscriptionServices: (raw.subscriptionServices ?? raw.subscription_services ?? []).map((s: any) => ({
             id: s.id,
             serviceId: s.serviceId ?? s.service_id ?? s.service?.id,
@@ -547,16 +578,20 @@ export const useSubscriptionStore = defineStore('subscription', {
       } else {
         this.form = {
           id: null,
-          purchaseRequestId: null,
           quotationId: null,
           customerId: null,
           customerName: '',
+          status: 'draft',
           contractPeriod: 12,
           targetActiveDate: null,
           contractStartDate: null,
           contractEndDate: null,
           paymentMethod: '',
           termOfPayment: '',
+          poReference: '',
+          poAttachment: null,
+          poAttachmentPreview: null,
+          existingPoAttachment: null,
           subscriptionServices: [],
           subscriptionInstallations: [],
           subscriptionContacts: [],
@@ -578,18 +613,25 @@ export const useSubscriptionStore = defineStore('subscription', {
           if (url.startsWith('blob:')) URL.revokeObjectURL(url)
         }
       }
+      if (this.form.poAttachmentPreview?.startsWith('blob:')) {
+        URL.revokeObjectURL(this.form.poAttachmentPreview)
+      }
       this.form = {
         id: null,
-        purchaseRequestId: null,
         quotationId: null,
         customerId: null,
         customerName: '',
+        status: 'draft',
         contractPeriod: 12,
         targetActiveDate: null,
         contractStartDate: null,
         contractEndDate: null,
         paymentMethod: '',
         termOfPayment: '',
+        poReference: '',
+        poAttachment: null,
+        poAttachmentPreview: null,
+        existingPoAttachment: null,
         subscriptionServices: [],
         subscriptionInstallations: [],
         subscriptionContacts: [],

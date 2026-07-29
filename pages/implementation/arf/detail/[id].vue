@@ -346,6 +346,11 @@ const headerActionItems = computed(() => {
       command: () => navigateTo(`/implementation/arf/form/${row.id}`),
     })
   }
+  items.push({
+    label: 'Cetak',
+    icon: 'ri ri-printer-line',
+    command: () => goToCetak(),
+  })
   if (row.status === 'draft') {
     items.push({
       label: 'Hapus',
@@ -360,6 +365,11 @@ const headerActionItems = computed(() => {
 
 function toggleHeaderActions(event: MouseEvent) {
   headerActionsMenuRef.value?.toggle(event)
+}
+
+function goToCetak() {
+  if (!arf.value?.id) return
+  void navigateTo({ path: '/implementation/cetak-arf', query: { id: String(arf.value.id) } })
 }
 
 function formatDateTime(v: string | null | undefined) {
