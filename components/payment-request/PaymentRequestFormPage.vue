@@ -52,6 +52,13 @@
                         <span v-if="itemCount" class="badge bg-primary ms-1">{{ itemCount }}</span>
                       </button>
                     </li>
+                    <li class="nav-item">
+                      <button class="nav-link" type="button" data-bs-toggle="tab" data-bs-target="#prq-tab-other">
+                        <i class="ri-truck-line me-1"></i>
+                        Biaya lainnya
+                        <span v-if="otherChargeCount" class="badge bg-secondary ms-1">{{ otherChargeCount }}</span>
+                      </button>
+                    </li>
                   </ul>
 
                   <div class="tab-content pt-4">
@@ -114,6 +121,13 @@
                         </div>
                       </div>
                       <div class="row mb-3">
+                        <label class="col-sm-3 col-form-label">Due Date / Jatuh Tempo</label>
+                        <div class="col-sm-9">
+                          <input v-model="form.dueDate" type="date" class="form-control" />
+                          <small class="text-muted">Tanggal jatuh tempo pembayaran.</small>
+                        </div>
+                      </div>
+                      <div class="row mb-3">
                         <label class="col-sm-3 col-form-label">Prioritas</label>
                         <div class="col-sm-9">
                           <CustomSelect2
@@ -154,17 +168,73 @@
                         </div>
                       </div>
                       <div class="row mb-3">
-                        <label class="col-sm-3 col-form-label">Pajak / PPN (%)</label>
+                        <label class="col-sm-3 col-form-label">Pajak</label>
                         <div class="col-sm-9">
-                          <input
-                            v-model.number="form.taxPercent"
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            class="form-control"
-                            placeholder="Contoh: 11"
-                          />
-                          <small class="text-muted">Nilai pajak dihitung dari DPP (subtotal setelah diskon).</small>
+                          <div class="border rounded p-3">
+                            <div class="form-check form-switch mb-2">
+                              <input
+                                id="prqApplyTax"
+                                v-model="form.applyTax"
+                                class="form-check-input"
+                                type="checkbox"
+                              >
+                              <label class="form-check-label fw-semibold" for="prqApplyTax">
+                                Gunakan Tax Master
+                              </label>
+                            </div>
+
+                            <template v-if="form.applyTax">
+                              <label class="form-label">Pajak (Tax Master)</label>
+                              <CustomSelect2
+                                v-model="form.taxMasterIds"
+                                :options="taxMasterOptions"
+                                :get-option-label="taxMasterLabel"
+                                :reduce="(o) => o.id"
+                                :loading="loadingTaxes"
+                                searchable
+                                clearable
+                                multiple
+                                :close-on-select="false"
+                                placeholder="Pilih satu atau lebih pajak"
+                                no-options-text="Tidak ada tax master aktif"
+                              />
+
+                              <div v-if="selectedTaxPreviews.length" class="mt-3">
+                                <div class="small text-muted mb-2">Perkiraan dari DPP</div>
+                                <div
+                                  v-for="tax in selectedTaxPreviews"
+                                  :key="tax.id"
+                                  class="d-flex justify-content-between align-items-start border-bottom py-2 gap-2"
+                                >
+                                  <div>
+                                    <div class="fw-semibold">{{ tax.code }} — {{ tax.name }}</div>
+                                    <small class="text-muted">
+                                      {{ tax.type }} · {{ formatTaxRate(tax) }}
+                                    </small>
+                                  </div>
+                                  <div class="text-end fw-medium">
+                                    {{ formatRupiah(previewTaxAmount(tax)) }}
+                                  </div>
+                                </div>
+                              </div>
+                              <p v-else class="text-muted small mb-0 mt-2">
+                                Pilih pajak untuk menampilkan tarif dari Tax Master.
+                              </p>
+                            </template>
+
+                            <template v-else>
+                              <label class="form-label">Pajak / PPN (%)</label>
+                              <input
+                                v-model.number="form.taxPercent"
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                class="form-control"
+                                placeholder="Contoh: 11"
+                              />
+                              <small class="text-muted">Nilai pajak dihitung dari DPP (subtotal setelah diskon).</small>
+                            </template>
+                          </div>
                         </div>
                       </div>
                       <div class="row mb-3">
@@ -300,8 +370,12 @@
                       <div class="d-flex justify-content-end mt-3">
                         <div class="prq-items-totals">
                           <div class="d-flex justify-content-between gap-4 py-1">
-                            <span class="text-muted">Subtotal</span>
+                            <span class="text-muted">Subtotal sumber</span>
                             <span class="fw-medium text-end">{{ formatRupiah(itemsSubtotal) }}</span>
+                          </div>
+                          <div v-if="otherChargesSubtotal > 0" class="d-flex justify-content-between gap-4 py-1">
+                            <span class="text-muted">Biaya lainnya</span>
+                            <span class="fw-medium text-end">{{ formatRupiah(otherChargesSubtotal) }}</span>
                           </div>
                           <div class="d-flex justify-content-between gap-4 py-1">
                             <span class="text-muted">
@@ -317,7 +391,20 @@
                             <span class="text-muted">DPP</span>
                             <span class="fw-medium text-end">{{ formatRupiah(dppAmount) }}</span>
                           </div>
-                          <div class="d-flex justify-content-between gap-4 py-1">
+                          <template v-if="form.applyTax && selectedTaxPreviews.length">
+                            <div
+                              v-for="tax in selectedTaxPreviews"
+                              :key="`total-${tax.id}`"
+                              class="d-flex justify-content-between gap-4 py-1"
+                            >
+                              <span class="text-muted">
+                                {{ tax.code }}
+                                <small>({{ formatTaxRate(tax) }})</small>
+                              </span>
+                              <span class="fw-medium text-end">{{ formatRupiah(previewTaxAmount(tax)) }}</span>
+                            </div>
+                          </template>
+                          <div v-else class="d-flex justify-content-between gap-4 py-1">
                             <span class="text-muted">
                               Pajak / PPN
                               <template v-if="Number(form.taxPercent) > 0">({{ form.taxPercent }}%)</template>
@@ -332,6 +419,89 @@
                             <span class="fw-bold text-primary text-end">{{ formatRupiah(grandTotal) }}</span>
                           </div>
                         </div>
+                      </div>
+                    </div>
+
+                    <div id="prq-tab-other" class="tab-pane fade">
+                      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+                        <p class="mb-0 text-muted small">
+                          Biaya di luar dokumen sumber (ongkir, transportasi, materai, dll). Tidak terhapus saat muat ulang sumber.
+                        </p>
+                        <button type="button" class="btn btn-sm btn-primary" @click="paymentRequestStore.addOtherCharge()">
+                          <i class="ri-add-line me-1"></i>Tambah Biaya
+                        </button>
+                      </div>
+
+                      <div v-if="!form.otherCharges.length" class="text-center py-5 border rounded text-muted">
+                        <i class="ri-truck-line fs-3 d-block mb-2"></i>
+                        Belum ada biaya tambahan. Klik <strong>Tambah Biaya</strong> untuk menambah.
+                      </div>
+
+                      <div v-else class="table-responsive border rounded">
+                        <table class="table table-sm table-hover mb-0">
+                          <thead class="table-light">
+                            <tr>
+                              <th style="width: 40px;">#</th>
+                              <th>Deskripsi</th>
+                              <th style="width: 90px;">Qty</th>
+                              <th style="width: 140px;">Nominal</th>
+                              <th style="width: 140px;">Subtotal</th>
+                              <th>Catatan</th>
+                              <th style="width: 48px;"></th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr v-for="(item, index) in form.otherCharges" :key="`other-${index}`">
+                              <td>{{ index + 1 }}</td>
+                              <td>
+                                <input
+                                  v-model="item.description"
+                                  type="text"
+                                  class="form-control form-control-sm"
+                                  placeholder="Contoh: Ongkos kirim / Uang transport"
+                                />
+                              </td>
+                              <td>
+                                <input
+                                  v-model.number="item.qty"
+                                  type="number"
+                                  min="0.01"
+                                  step="any"
+                                  class="form-control form-control-sm"
+                                  @input="paymentRequestStore.updateOtherChargeAmount(index)"
+                                />
+                              </td>
+                              <td>
+                                <input
+                                  :value="formatRupiah(item.unitAmount)"
+                                  type="text"
+                                  class="form-control form-control-sm text-end"
+                                  @input="onOtherAmountInput(index, $event)"
+                                />
+                              </td>
+                              <td class="text-end fw-medium align-middle">{{ formatRupiah(item.subtotal) }}</td>
+                              <td>
+                                <input v-model="item.remarks" type="text" class="form-control form-control-sm" />
+                              </td>
+                              <td>
+                                <button
+                                  type="button"
+                                  class="btn btn-sm btn-icon btn-text-danger"
+                                  @click="paymentRequestStore.removeOtherCharge(index)"
+                                >
+                                  <i class="ri-delete-bin-line"></i>
+                                </button>
+                              </td>
+                            </tr>
+                          </tbody>
+                          <tfoot>
+                            <tr class="table-light">
+                              <td colspan="4" class="text-end fw-semibold">Total biaya lainnya</td>
+                              <td class="text-end fw-bold">{{ formatRupiah(otherChargesSubtotal) }}</td>
+                              <td colspan="2"></td>
+                            </tr>
+                          </tfoot>
+                        </table>
                       </div>
                     </div>
                   </div>
@@ -368,6 +538,7 @@
                     <ul class="mb-0 ps-3">
                       <li>Pilih sumber dokumen yang sudah <strong>approved</strong>.</li>
                       <li>Gunakan <strong>Muat Data dari Sumber</strong> untuk mengisi item otomatis.</li>
+                      <li>Tambahkan ongkir/transport di tab <strong>Biaya lainnya</strong> (tidak terhapus saat muat ulang sumber).</li>
                       <li>Setelah draft tersimpan, submit agar masuk ke alur Finance → Direktur Utama.</li>
                     </ul>
                   </div>
@@ -391,6 +562,7 @@ import {
   type PaymentRequestSourceType,
   type PaymentRequestSourceOption,
 } from '~/stores/payment-request'
+import { useTaxMasterStore } from '~/stores/tax-masters'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
 import FormPageSidebar from '~/components/form/FormPageSidebar.vue'
 import { FINANCE_MODULE_NAV } from '~/constants/finance/formNav'
@@ -398,21 +570,62 @@ import type { FormPageSummaryRow } from '~/types/form-page'
 
 const route = useRoute()
 const paymentRequestStore = usePaymentRequestStore()
+const taxMasterStore = useTaxMasterStore()
 const formatRupiah = useFormatRupiah()
 
 const { form, isEditMode, loading, saving } = storeToRefs(paymentRequestStore)
 const formReady = ref(false)
 const loadingSource = ref(false)
+const loadingTaxes = ref(false)
 const sourceOptions = ref<PaymentRequestSourceOption[]>([])
+const taxMasterOptions = ref<any[]>([])
 const departemens = ref<any[]>([])
 
 const moduleNav = FINANCE_MODULE_NAV
 const itemsSubtotal = computed(() => paymentRequestStore.formItemsSubtotal)
+const otherChargesSubtotal = computed(() => paymentRequestStore.formOtherChargesSubtotal)
 const discountAmount = computed(() => paymentRequestStore.formDiscountAmount)
 const dppAmount = computed(() => paymentRequestStore.formDpp)
-const taxAmount = computed(() => paymentRequestStore.formTaxAmount)
-const grandTotal = computed(() => paymentRequestStore.formGrandTotal)
 const itemCount = computed(() => form.value?.paymentRequestItems?.length ?? 0)
+const otherChargeCount = computed(() => form.value?.otherCharges?.length ?? 0)
+
+const selectedTaxPreviews = computed(() => {
+  const ids = new Set(form.value.taxMasterIds || [])
+  return (taxMasterOptions.value || []).filter((t) => ids.has(t.id))
+})
+
+const taxMasterLabel = (o: any) => {
+  if (!o) return ''
+  const rate =
+    o.calculationType === 'FIXED'
+      ? formatRupiah(o.defaultRate || 0)
+      : `${Number(o.defaultRate || 0)}%`
+  return `${o.code} — ${o.name} (${rate})`
+}
+
+const formatTaxRate = (tax: any) => {
+  if (!tax) return '—'
+  if (tax.calculationType === 'FIXED') return formatRupiah(tax.defaultRate || 0)
+  return `${Number(tax.defaultRate || 0)}%`
+}
+
+function previewTaxAmount(tax: any) {
+  const rate = Number(tax?.defaultRate || 0)
+  const dpp = dppAmount.value
+  if (tax?.calculationType === 'FIXED') {
+    return tax?.type === 'WITHHOLDING' ? -Math.abs(rate) : Math.abs(rate)
+  }
+  const pct = (dpp * rate) / 100
+  return tax?.type === 'WITHHOLDING' ? -Math.abs(pct) : Math.abs(pct)
+}
+
+const taxMasterPreviewTotal = computed(() =>
+  selectedTaxPreviews.value.reduce((sum, tax) => sum + previewTaxAmount(tax), 0)
+)
+const taxAmount = computed(() =>
+  form.value.applyTax ? taxMasterPreviewTotal.value : paymentRequestStore.formTaxAmount
+)
+const grandTotal = computed(() => dppAmount.value + taxAmount.value)
 
 const pageTitle = computed(() => (isEditMode.value ? 'Edit Payment Request' : 'Tambah Payment Request'))
 const pageSubtitle = computed(() =>
@@ -460,10 +673,16 @@ const summaryRows = computed<FormPageSummaryRow[]>(() => {
     { label: 'No. Dokumen', value: f.sourceNumber || '—' },
     { label: 'Tgl request', value: formatDateId(f.requestDate) },
     { label: 'Dibutuhkan', value: formatDateId(f.neededDate) },
+    { label: 'Jatuh tempo', value: formatDateId(f.dueDate) },
     { label: 'Penerima', value: f.payeeName || '—' },
     { label: 'Departemen', value: findDepartemenName(f.departmentId) },
     { label: 'Jumlah item', value: String(itemCount.value) },
-    { label: 'Subtotal', value: formatRupiah(itemsSubtotal.value) },
+    { label: 'Biaya lainnya', value: otherChargeCount.value ? String(otherChargeCount.value) : '—' },
+    { label: 'Subtotal sumber', value: formatRupiah(itemsSubtotal.value) },
+    {
+      label: 'Biaya lainnya (Rp)',
+      value: otherChargesSubtotal.value > 0 ? formatRupiah(otherChargesSubtotal.value) : '—',
+    },
     {
       label: 'Diskon',
       value:
@@ -472,9 +691,12 @@ const summaryRows = computed<FormPageSummaryRow[]>(() => {
           : '—',
     },
     {
-      label: 'Pajak / PPN',
-      value:
-        Number(f.taxPercent) > 0
+      label: 'Pajak',
+      value: form.value.applyTax
+        ? selectedTaxPreviews.value.length
+          ? `${selectedTaxPreviews.value.map((t) => t.code).join(', ')} (${formatRupiah(taxAmount.value)})`
+          : 'Tax Master (belum dipilih)'
+        : Number(f.taxPercent) > 0
           ? `${f.taxPercent}% (${formatRupiah(taxAmount.value)})`
           : '—',
     },
@@ -488,6 +710,15 @@ function onAmountInput(index: number, e: Event) {
   if (row) {
     row.unitAmount = Number(raw) || 0
     paymentRequestStore.updateItemAmount(index)
+  }
+}
+
+function onOtherAmountInput(index: number, e: Event) {
+  const raw = (e.target as HTMLInputElement).value.replace(/[^\d]/g, '')
+  const row = form.value.otherCharges[index]
+  if (row) {
+    row.unitAmount = Number(raw) || 0
+    paymentRequestStore.updateOtherChargeAmount(index)
   }
 }
 
@@ -550,6 +781,25 @@ watch(
   }
 )
 
+watch(
+  () => form.value.applyTax,
+  (on) => {
+    if (!on) form.value.taxMasterIds = []
+    else form.value.taxPercent = 0
+  }
+)
+
+async function loadTaxMasters() {
+  loadingTaxes.value = true
+  try {
+    taxMasterOptions.value = await taxMasterStore.fetchActiveOptions()
+  } catch {
+    taxMasterOptions.value = []
+  } finally {
+    loadingTaxes.value = false
+  }
+}
+
 async function loadMasterData() {
   const { $api } = useNuxtApp()
   try {
@@ -562,6 +812,7 @@ async function loadMasterData() {
   } catch {
     departemens.value = []
   }
+  await loadTaxMasters()
 }
 
 async function handleSubmit() {

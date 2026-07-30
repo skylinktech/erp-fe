@@ -7,6 +7,8 @@ import type { ApprovalLogEntry } from '~/types/approval'
 
 export type PaymentRequestSourceType = 'purchase_order' | 'material_request' | 'arf'
 
+export type PaymentRequestItemType = 'source' | 'other'
+
 export interface PaymentRequestItemForm {
   description: string
   qty: number
@@ -14,6 +16,7 @@ export interface PaymentRequestItemForm {
   subtotal: number
   remarks?: string | null
   sortOrder?: number
+  itemType?: PaymentRequestItemType
 }
 
 export interface ApproverInfo {
@@ -30,6 +33,19 @@ export interface PaymentRequestSourceOption {
   totalAmount: number
   status: string
   date?: string | null
+}
+
+export interface PaymentRequestTax {
+  id?: string
+  taxMasterId: string
+  taxRateId?: string | null
+  taxCode: string
+  taxName: string
+  taxType: 'OUTPUT' | 'WITHHOLDING'
+  calculationType: 'PERCENTAGE' | 'FIXED'
+  rate: number
+  amount: number
+  sortOrder?: number
 }
 
 export interface PaymentRequest {
@@ -59,6 +75,8 @@ export interface PaymentRequest {
   status: string
   purpose?: string | null
   neededDate?: string | null
+  dueDate?: string | null
+  due_date?: string | null
   approvalStatus?: string | null
   rejectionReason?: string | null
   rejectReason?: string | null
@@ -70,6 +88,9 @@ export interface PaymentRequest {
   dpp?: number
   taxAmount?: number
   tax_amount?: number
+  applyTax?: boolean
+  apply_tax?: boolean
+  taxes?: PaymentRequestTax[]
   currency?: string
   notes?: string | null
   attachment?: string | null
@@ -126,11 +147,15 @@ interface PaymentRequestState {
     priority: string
     purpose: string
     neededDate: string
+    dueDate: string
     discountPercent: number
     taxPercent: number
+    applyTax: boolean
+    taxMasterIds: string[]
     currency: string
     notes: string
     paymentRequestItems: PaymentRequestItemForm[]
+    otherCharges: PaymentRequestItemForm[]
   }
   isEditMode: boolean
   validationErrors: any[]
@@ -154,6 +179,7 @@ function recalcItem(d: PaymentRequestItemForm) {
 function mapItemFromApi(d: any): PaymentRequestItemForm {
   const qty = Number(d.qty) || 1
   const unitAmount = Number(d.unitAmount ?? d.unit_amount ?? d.amount ?? 0)
+  const rawType = d.itemType ?? d.item_type
   return {
     description: d.description ?? '',
     qty,
@@ -161,6 +187,7 @@ function mapItemFromApi(d: any): PaymentRequestItemForm {
     subtotal: Number(d.subtotal) || qty * unitAmount,
     remarks: d.remarks ?? null,
     sortOrder: d.sortOrder ?? d.sort_order ?? 0,
+    itemType: rawType === 'other' ? 'other' : 'source',
   }
 }
 
@@ -168,12 +195,56 @@ function todayIso() {
   return new Date().toISOString().slice(0, 10)
 }
 
+function blankCharge(): PaymentRequestItemForm {
+  return {
+    description: '',
+    qty: 1,
+    unitAmount: 0,
+    subtotal: 0,
+    remarks: null,
+    sortOrder: 0,
+    itemType: 'other',
+  }
+}
+
+export function partitionItemsFromApi(items: any[]): {
+  sourceItems: PaymentRequestItemForm[]
+  otherCharges: PaymentRequestItemForm[]
+} {
+  const sourceItems: PaymentRequestItemForm[] = []
+  const otherCharges: PaymentRequestItemForm[] = []
+  for (const raw of items || []) {
+    const mapped = mapItemFromApi(raw)
+    if (mapped.itemType === 'other') otherCharges.push(mapped)
+    else sourceItems.push(mapped)
+  }
+  return { sourceItems, otherCharges }
+}
+
 export function getPaymentRequestNo(row: PaymentRequest | null | undefined) {
   return row?.prqNumber || row?.prq_number || ''
 }
 
+export function getPaymentRequestAllItems(row: PaymentRequest | null | undefined) {
+  return row?.paymentRequestItems || row?.payment_request_items || []
+}
+
+export function getPaymentRequestSourceItems(row: PaymentRequest | null | undefined) {
+  return getPaymentRequestAllItems(row).filter((d: any) => {
+    const t = d.itemType ?? d.item_type
+    return t !== 'other'
+  })
+}
+
+export function getPaymentRequestOtherCharges(row: PaymentRequest | null | undefined) {
+  return getPaymentRequestAllItems(row).filter((d: any) => {
+    const t = d.itemType ?? d.item_type
+    return t === 'other'
+  })
+}
+
 export function getPaymentRequestItemsSubtotal(row: PaymentRequest | null | undefined) {
-  const items = row?.paymentRequestItems || row?.payment_request_items || []
+  const items = getPaymentRequestAllItems(row)
   if (items.length) {
     return items.reduce((s, d) => s + (Number(d.subtotal) || 0), 0)
   }
@@ -181,33 +252,69 @@ export function getPaymentRequestItemsSubtotal(row: PaymentRequest | null | unde
   const taxPct = Number(row?.taxPercent ?? row?.tax_percent ?? 0)
   const discPct = Number(row?.discountPercent ?? row?.discount_percent ?? 0)
   if (taxPct <= 0 && discPct <= 0) return total
-  // reverse approx not needed when items exist; fallback to dpp if stored
   return Number(row?.dpp ?? total)
 }
 
+export function getPaymentRequestSourceSubtotal(row: PaymentRequest | null | undefined) {
+  const items = getPaymentRequestSourceItems(row)
+  if (items.length) {
+    return items.reduce((s, d) => s + (Number(d.subtotal) || 0), 0)
+  }
+  return getPaymentRequestItemsSubtotal(row)
+}
+
+export function getPaymentRequestOtherSubtotal(row: PaymentRequest | null | undefined) {
+  return getPaymentRequestOtherCharges(row).reduce((s, d) => s + (Number(d.subtotal) || 0), 0)
+}
+
 export function getPaymentRequestDiscountAmount(row: PaymentRequest | null | undefined) {
-  const subtotal = getPaymentRequestItemsSubtotal(row)
+  const sourceSubtotal = getPaymentRequestSourceSubtotal(row)
   const discPct = Number(row?.discountPercent ?? row?.discount_percent ?? 0)
-  return (subtotal * discPct) / 100
+  return (sourceSubtotal * discPct) / 100
+}
+
+export function getPaymentRequestTaxes(row: PaymentRequest | null | undefined): PaymentRequestTax[] {
+  const taxes = row?.taxes
+  if (!Array.isArray(taxes)) return []
+  return taxes.map((t: any) => ({
+    id: t.id,
+    taxMasterId: t.taxMasterId ?? t.tax_master_id,
+    taxRateId: t.taxRateId ?? t.tax_rate_id ?? null,
+    taxCode: t.taxCode ?? t.tax_code ?? '',
+    taxName: t.taxName ?? t.tax_name ?? '',
+    taxType: t.taxType ?? t.tax_type ?? 'OUTPUT',
+    calculationType: t.calculationType ?? t.calculation_type ?? 'PERCENTAGE',
+    rate: Number(t.rate ?? 0),
+    amount: Number(t.amount ?? 0),
+    sortOrder: t.sortOrder ?? t.sort_order ?? 0,
+  }))
 }
 
 export function getPaymentRequestTaxAmount(row: PaymentRequest | null | undefined) {
+  const taxes = getPaymentRequestTaxes(row)
+  if (row?.applyTax || row?.apply_tax || taxes.length) {
+    if (taxes.length) {
+      return taxes.reduce((sum, t) => sum + Number(t.amount || 0), 0)
+    }
+  }
   const stored = Number(row?.taxAmount ?? row?.tax_amount ?? 0)
-  if (stored > 0) return stored
-  const subtotal = getPaymentRequestItemsSubtotal(row)
+  if (stored !== 0) return stored
+  const sourceSubtotal = getPaymentRequestSourceSubtotal(row)
+  const otherSubtotal = getPaymentRequestOtherSubtotal(row)
   const discPct = Number(row?.discountPercent ?? row?.discount_percent ?? 0)
   const taxPct = Number(row?.taxPercent ?? row?.tax_percent ?? 0)
-  const dpp = Math.max(0, subtotal - (subtotal * discPct) / 100)
+  const dpp = Math.max(0, sourceSubtotal - (sourceSubtotal * discPct) / 100) + otherSubtotal
   return (dpp * taxPct) / 100
 }
 
 export function getPaymentRequestTotal(row: PaymentRequest | null | undefined) {
   const stored = Number(row?.totalAmount ?? 0)
   if (stored > 0) return stored
-  const subtotal = getPaymentRequestItemsSubtotal(row)
+  const sourceSubtotal = getPaymentRequestSourceSubtotal(row)
+  const otherSubtotal = getPaymentRequestOtherSubtotal(row)
   const discount = getPaymentRequestDiscountAmount(row)
   const tax = getPaymentRequestTaxAmount(row)
-  return Math.max(0, subtotal - discount) + tax
+  return Math.max(0, sourceSubtotal - discount) + otherSubtotal + tax
 }
 
 export function getSourceTypeLabel(type?: string | null) {
@@ -257,11 +364,15 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
       priority: 'normal',
       purpose: '',
       neededDate: '',
+      dueDate: '',
       discountPercent: 0,
       taxPercent: 0,
+      applyTax: false,
+      taxMasterIds: [],
       currency: 'IDR',
       notes: '',
       paymentRequestItems: [],
+      otherCharges: [],
     },
     isEditMode: false,
     validationErrors: [],
@@ -279,14 +390,24 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
   getters: {
     formItemsSubtotal: (state) =>
       state.form.paymentRequestItems.reduce((s, d) => s + (Number(d.subtotal) || 0), 0),
+    formOtherChargesSubtotal: (state) =>
+      state.form.otherCharges.reduce((s, d) => s + (Number(d.subtotal) || 0), 0),
     formDiscountAmount: (state) => {
-      const subtotal = state.form.paymentRequestItems.reduce((s, d) => s + (Number(d.subtotal) || 0), 0)
-      return (subtotal * (Number(state.form.discountPercent) || 0)) / 100
+      const sourceSubtotal = state.form.paymentRequestItems.reduce(
+        (s, d) => s + (Number(d.subtotal) || 0),
+        0
+      )
+      return (sourceSubtotal * (Number(state.form.discountPercent) || 0)) / 100
     },
     formDpp(): number {
-      return Math.max(0, this.formItemsSubtotal - this.formDiscountAmount)
+      return (
+        Math.max(0, this.formItemsSubtotal - this.formDiscountAmount) + this.formOtherChargesSubtotal
+      )
     },
     formTaxAmount(): number {
+      if (this.form.applyTax) {
+        return 0
+      }
       return (this.formDpp * (Number(this.form.taxPercent) || 0)) / 100
     },
     formGrandTotal(): number {
@@ -325,17 +446,24 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
         priority: 'normal',
         purpose: '',
         neededDate: '',
+        dueDate: '',
         discountPercent: 0,
         taxPercent: 0,
+        applyTax: false,
+        taxMasterIds: [],
         currency: 'IDR',
         notes: '',
         paymentRequestItems: [],
+        otherCharges: [],
       }
     },
 
     openModal(data: PaymentRequest) {
       this.isEditMode = true
-      const items = (data.paymentRequestItems || data.payment_request_items || []).map(mapItemFromApi)
+      const allItems = data.paymentRequestItems || data.payment_request_items || []
+      const { sourceItems, otherCharges } = partitionItemsFromApi(allItems)
+      const taxes = getPaymentRequestTaxes(data)
+      const applyTax = !!(data.applyTax ?? data.apply_tax) || taxes.length > 0
       this.form = {
         id: data.id,
         status: data.status,
@@ -352,11 +480,15 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
         priority: data.priority || 'normal',
         purpose: data.purpose || '',
         neededDate: data.neededDate ? String(data.neededDate).slice(0, 10) : '',
+        dueDate: data.dueDate || data.due_date ? String(data.dueDate || data.due_date).slice(0, 10) : '',
         discountPercent: Number(data.discountPercent ?? data.discount_percent ?? 0),
-        taxPercent: Number(data.taxPercent ?? data.tax_percent ?? 0),
+        taxPercent: applyTax ? 0 : Number(data.taxPercent ?? data.tax_percent ?? 0),
+        applyTax,
+        taxMasterIds: taxes.map((t) => t.taxMasterId).filter(Boolean),
         currency: data.currency || 'IDR',
         notes: data.notes || '',
-        paymentRequestItems: items,
+        paymentRequestItems: sourceItems,
+        otherCharges,
       }
     },
 
@@ -368,6 +500,7 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
         subtotal: 0,
         remarks: null,
         sortOrder: this.form.paymentRequestItems.length,
+        itemType: 'source',
       })
     },
 
@@ -377,6 +510,22 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
 
     updateItemAmount(index: number) {
       const item = this.form.paymentRequestItems[index]
+      if (item) recalcItem(item)
+    },
+
+    addOtherCharge() {
+      this.form.otherCharges.push({
+        ...blankCharge(),
+        sortOrder: this.form.otherCharges.length,
+      })
+    },
+
+    removeOtherCharge(index: number) {
+      this.form.otherCharges.splice(index, 1)
+    },
+
+    updateOtherChargeAmount(index: number) {
+      const item = this.form.otherCharges[index]
       if (item) recalcItem(item)
     },
 
@@ -419,6 +568,38 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
       } finally {
         this.loading = false
       }
+    },
+
+    /**
+     * Ambil semua PR sesuai filter aktif + items/taxes (untuk export CSV).
+     * 1 request list + preload items & taxes di BE (anti N+1).
+     */
+    async fetchAllForExport(): Promise<PaymentRequest[]> {
+      const api = this.apiEndpoints()
+      const url = new URL(api.list())
+      const sp = new URLSearchParams({
+        page: '1',
+        rows: '10000',
+        sortField: this.params.sortField || 'created_at',
+        sortOrder: String(this.params.sortOrder ?? '2'),
+        search: this.params.search || '',
+        includeItems: 'true',
+        forExport: 'true',
+      })
+      if (this.params.status) sp.append('status', this.params.status)
+      if (this.params.priority) sp.append('priority', this.params.priority)
+      if (this.params.sourceType) sp.append('sourceType', this.params.sourceType)
+      if (this.params.departmentId) sp.append('departmentId', String(this.params.departmentId))
+      url.search = sp.toString()
+
+      const res = await fetch(String(url), {
+        method: 'GET',
+        headers: { Accept: 'application/json' },
+        credentials: 'include',
+      })
+      if (!res.ok) throw new Error(`Gagal mengambil data export (HTTP ${res.status})`)
+      const json = await res.json()
+      return (json.data ?? []) as PaymentRequest[]
     },
 
     async getPaymentRequestDetails(id: string) {
@@ -488,7 +669,7 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
         )
         const taxPercent = Number(data.taxPercent ?? data.tax_percent ?? 0)
 
-        // Replace form slice agar reactive (diskon/pajak ikut ter-update di UI)
+        // Replace form slice agar reactive — otherCharges tidak dihapus saat muat sumber
         this.form = {
           ...this.form,
           sourceType,
@@ -501,10 +682,19 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
           neededDate: data.neededDate
             ? String(data.neededDate).slice(0, 10)
             : this.form.neededDate,
+          dueDate: data.dueDate || data.due_date
+            ? String(data.dueDate || data.due_date).slice(0, 10)
+            : this.form.dueDate,
           currency: data.currency || this.form.currency || 'IDR',
           discountPercent: Number.isFinite(discountPercent) ? discountPercent : 0,
           taxPercent: Number.isFinite(taxPercent) ? taxPercent : 0,
-          paymentRequestItems: (data.items || []).map(mapItemFromApi),
+          applyTax: false,
+          taxMasterIds: [],
+          paymentRequestItems: (data.items || []).map((it: any) => ({
+            ...mapItemFromApi(it),
+            itemType: 'source' as const,
+          })),
+          otherCharges: this.form.otherCharges || [],
         }
         if (!this.form.paymentRequestItems.length) this.addItem()
 
@@ -553,17 +743,53 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
       const validItems = this.form.paymentRequestItems.filter(
         (d) => d.description?.trim() && (Number(d.qty) || 0) > 0
       )
+      const validOtherCharges = (this.form.otherCharges || []).filter(
+        (d) => d.description?.trim() && (Number(d.qty) || 0) > 0
+      )
       if (!validItems.length) {
         this.saving = false
         toast.error({
           title: 'Validasi',
-          message: 'Minimal 1 item dengan deskripsi dan qty valid',
+          message: 'Minimal 1 item sumber dengan deskripsi dan qty valid',
           color: 'red',
           position: 'topRight',
           layout: 2,
         })
         return false
       }
+
+      if (this.form.applyTax && !(this.form.taxMasterIds || []).length) {
+        this.saving = false
+        toast.error({
+          title: 'Validasi',
+          message: 'Pilih minimal 1 Tax Master jika pajak diaktifkan',
+          color: 'red',
+          position: 'topRight',
+          layout: 2,
+        })
+        return false
+      }
+
+      const mergedItems = [
+        ...validItems.map((d, idx) => ({
+          description: d.description.trim(),
+          qty: Number(d.qty) || 1,
+          unitAmount: Number(d.unitAmount) || 0,
+          subtotal: Number(d.subtotal) || 0,
+          remarks: d.remarks?.trim() || null,
+          sortOrder: d.sortOrder ?? idx,
+          itemType: 'source' as const,
+        })),
+        ...validOtherCharges.map((d, idx) => ({
+          description: d.description.trim(),
+          qty: Number(d.qty) || 1,
+          unitAmount: Number(d.unitAmount) || 0,
+          subtotal: Number(d.subtotal) || 0,
+          remarks: d.remarks?.trim() || null,
+          sortOrder: d.sortOrder ?? idx,
+          itemType: 'other' as const,
+        })),
+      ]
 
       const body: Record<string, any> = {
         requestDate: this.form.requestDate || todayIso(),
@@ -578,19 +804,15 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
         priority: this.form.priority || 'normal',
         purpose: this.form.purpose?.trim() || null,
         neededDate: this.form.neededDate || null,
+        dueDate: this.form.dueDate || null,
         discountPercent: Number(this.form.discountPercent) || 0,
-        taxPercent: Number(this.form.taxPercent) || 0,
+        taxPercent: this.form.applyTax ? 0 : Number(this.form.taxPercent) || 0,
+        applyTax: !!this.form.applyTax,
+        taxMasterIds: this.form.applyTax ? this.form.taxMasterIds || [] : [],
         currency: this.form.currency || 'IDR',
         notes: this.form.notes?.trim() || null,
         createdBy: this.isEditMode ? undefined : (userStore.user?.id ?? null),
-        paymentRequestItems: validItems.map((d, idx) => ({
-          description: d.description.trim(),
-          qty: Number(d.qty) || 1,
-          unitAmount: Number(d.unitAmount) || 0,
-          subtotal: Number(d.subtotal) || 0,
-          remarks: d.remarks?.trim() || null,
-          sortOrder: d.sortOrder ?? idx,
-        })),
+        paymentRequestItems: mergedItems,
       }
 
       const isEdit = this.isEditMode && this.form.id

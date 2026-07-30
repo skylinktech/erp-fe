@@ -43,6 +43,7 @@
     <div class="d-flex justify-content-between mb-4" style="font-size: 12px;">
       <div class="text-start">
         <p class="mb-1"><strong>Tanggal :</strong> {{ formatDate(paymentRequest.requestDate || paymentRequest.request_date || paymentRequest.createdAt) }}</p>
+        <p class="mb-1"><strong>Jatuh Tempo :</strong> {{ formatDate(paymentRequest.dueDate || paymentRequest.due_date) }}</p>
         <p class="mb-1"><strong>Pemohon :</strong> {{ requesterName }}</p>
         <p class="mb-1"><strong>Departemen :</strong> {{ departmentName }}</p>
         <p class="mb-1"><strong>Sumber :</strong> {{ sourceLabel }}</p>
@@ -91,7 +92,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(d, idx) in tableRows" :key="idx">
+          <tr v-for="(d, idx) in sourceRows" :key="`src-${idx}`">
             <td class="text-center">{{ idx + 1 }}</td>
             <td class="text-start">{{ d.description || '—' }}</td>
             <td class="text-end">{{ Number(d.qty) || 0 }}</td>
@@ -99,19 +100,52 @@
             <td class="text-end">{{ formatRupiahNum(Number(d.subtotal) || 0) }}</td>
             <td class="text-start">{{ d.remarks || '—' }}</td>
           </tr>
-          <tr v-if="tableRows.length === 0">
+          <tr v-if="sourceRows.length === 0">
             <td colspan="6" class="text-center py-4 text-muted">Tidak ada item</td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <div v-if="tableRows.length > 0" class="d-flex justify-content-end mb-4">
+    <template v-if="otherRows.length">
+      <div class="cetak-payment-request-section-header">Biaya Lainnya</div>
+      <div class="table-responsive mb-4">
+        <table class="table table-striped cetak-payment-request-table m-0" style="font-size: 12px;">
+          <thead class="table-dark table-head-white">
+            <tr>
+              <th class="text-center" style="width: 40px;">No</th>
+              <th class="text-start">Deskripsi</th>
+              <th class="text-end" style="width: 70px;">Qty</th>
+              <th class="text-end" style="width: 120px;">Nominal</th>
+              <th class="text-end" style="width: 130px;">Subtotal</th>
+              <th class="text-start">Catatan</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(d, idx) in otherRows" :key="`oth-${idx}`">
+              <td class="text-center">{{ idx + 1 }}</td>
+              <td class="text-start">{{ d.description || '—' }}</td>
+              <td class="text-end">{{ Number(d.qty) || 0 }}</td>
+              <td class="text-end">{{ formatRupiahNum(Number(d.unitAmount ?? d.unit_amount) || 0) }}</td>
+              <td class="text-end">{{ formatRupiahNum(Number(d.subtotal) || 0) }}</td>
+              <td class="text-start">{{ d.remarks || '—' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </template>
+
+    <div v-if="sourceRows.length > 0 || otherRows.length > 0" class="d-flex justify-content-end mb-4">
       <div style="min-width: 280px; font-size: 12px;">
         <div class="mb-2 d-flex">
-          <span class="fw-medium" style="min-width: 110px;">Subtotal</span>
+          <span class="fw-medium" style="min-width: 110px;">Subtotal sumber</span>
           <span class="px-2">:</span>
-          <span class="fw-semibold text-end flex-grow-1">{{ formatRupiahNum(itemsSubtotal) }}</span>
+          <span class="fw-semibold text-end flex-grow-1">{{ formatRupiahNum(sourceSubtotal) }}</span>
+        </div>
+        <div v-if="otherSubtotal > 0" class="mb-2 d-flex">
+          <span class="fw-medium" style="min-width: 110px;">Biaya lainnya</span>
+          <span class="px-2">:</span>
+          <span class="fw-semibold text-end flex-grow-1">{{ formatRupiahNum(otherSubtotal) }}</span>
         </div>
         <div class="mb-2 d-flex">
           <span class="fw-medium" style="min-width: 110px;">
@@ -127,7 +161,21 @@
           <span class="px-2">:</span>
           <span class="fw-semibold text-end flex-grow-1">{{ formatRupiahNum(dppAmount) }}</span>
         </div>
-        <div class="mb-2 d-flex">
+        <template v-if="taxRows.length">
+          <div
+            v-for="(tax, tIdx) in taxRows"
+            :key="tax.id || `tax-${tIdx}`"
+            class="mb-2 d-flex"
+          >
+            <span class="fw-medium" style="min-width: 110px;">
+              {{ tax.taxCode }}
+              <span v-if="tax.calculationType === 'PERCENTAGE'">({{ Number(tax.rate) }}%)</span>
+            </span>
+            <span class="px-2">:</span>
+            <span class="fw-semibold text-end flex-grow-1">{{ formatRupiahNum(tax.amount) }}</span>
+          </div>
+        </template>
+        <div v-else class="mb-2 d-flex">
           <span class="fw-medium" style="min-width: 110px;">
             Pajak / PPN
             <span v-if="taxPercent > 0">({{ taxPercent }}%)</span>
@@ -194,9 +242,13 @@ import {
   usePaymentRequestStore,
   getPaymentRequestNo,
   getPaymentRequestTotal,
-  getPaymentRequestItemsSubtotal,
+  getPaymentRequestSourceSubtotal,
+  getPaymentRequestOtherSubtotal,
   getPaymentRequestDiscountAmount,
   getPaymentRequestTaxAmount,
+  getPaymentRequestTaxes,
+  getPaymentRequestSourceItems,
+  getPaymentRequestOtherCharges,
   getSourceTypeLabel,
 } from '~/stores/payment-request'
 import { usePerusahaanStore } from '~/stores/perusahaan'
@@ -221,13 +273,14 @@ const perusahaan = computed(() => {
   return null
 })
 
-const tableRows = computed(
-  () => paymentRequest.value?.paymentRequestItems || paymentRequest.value?.payment_request_items || []
-)
+const sourceRows = computed(() => getPaymentRequestSourceItems(paymentRequest.value))
+const otherRows = computed(() => getPaymentRequestOtherCharges(paymentRequest.value))
 
-const itemsSubtotal = computed(() => getPaymentRequestItemsSubtotal(paymentRequest.value))
+const sourceSubtotal = computed(() => getPaymentRequestSourceSubtotal(paymentRequest.value))
+const otherSubtotal = computed(() => getPaymentRequestOtherSubtotal(paymentRequest.value))
 const discountAmount = computed(() => getPaymentRequestDiscountAmount(paymentRequest.value))
 const taxAmount = computed(() => getPaymentRequestTaxAmount(paymentRequest.value))
+const taxRows = computed(() => getPaymentRequestTaxes(paymentRequest.value))
 const discountPercent = computed(() =>
   Number(paymentRequest.value?.discountPercent ?? paymentRequest.value?.discount_percent ?? 0)
 )
@@ -237,7 +290,7 @@ const taxPercent = computed(() =>
 const dppAmount = computed(() => {
   const stored = Number(paymentRequest.value?.dpp ?? 0)
   if (stored > 0) return stored
-  return Math.max(0, itemsSubtotal.value - discountAmount.value)
+  return Math.max(0, sourceSubtotal.value - discountAmount.value) + otherSubtotal.value
 })
 
 const requesterName = computed(

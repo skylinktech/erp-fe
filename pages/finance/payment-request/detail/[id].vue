@@ -106,6 +106,10 @@
                       <p class="mb-0">{{ paymentRequest.requestDate || paymentRequest.request_date || '—' }}</p>
                     </div>
                     <div class="col-md-6">
+                      <label class="form-label text-muted">Due Date / Jatuh Tempo</label>
+                      <p class="mb-0">{{ paymentRequest.dueDate || paymentRequest.due_date || '—' }}</p>
+                    </div>
+                    <div class="col-md-6">
                       <label class="form-label text-muted">Sumber</label>
                       <p class="mb-0">{{ getSourceTypeLabel(paymentRequest.sourceType || paymentRequest.source_type) }}</p>
                     </div>
@@ -149,8 +153,21 @@
                       </p>
                     </div>
                     <div class="col-md-6">
-                      <label class="form-label text-muted">Pajak / PPN</label>
-                      <p class="mb-0">
+                      <label class="form-label text-muted">Pajak</label>
+                      <template v-if="taxRows.length">
+                        <div
+                          v-for="(tax, tIdx) in taxRows"
+                          :key="tax.id || `info-tax-${tIdx}`"
+                          class="mb-1"
+                        >
+                          <span class="fw-medium">{{ tax.taxCode }} — {{ tax.taxName }}</span>
+                          <span class="text-muted small ms-1">
+                            ({{ tax.calculationType === 'PERCENTAGE' ? `${Number(tax.rate)}%` : formatRupiah(tax.rate) }})
+                          </span>
+                          <div class="small">{{ formatRupiah(tax.amount) }}</div>
+                        </div>
+                      </template>
+                      <p v-else class="mb-0">
                         <template v-if="Number(paymentRequest.taxPercent ?? paymentRequest.tax_percent) > 0">
                           {{ paymentRequest.taxPercent ?? paymentRequest.tax_percent }}%
                           ({{ formatRupiah(taxAmount) }})
@@ -214,7 +231,7 @@
                 </div>
                 <hr class="mx-5 my-0" style="border-width: 2px;">
                 <div class="card-body px-5 pt-4 pb-5">
-                  <div v-if="!itemList.length" class="text-muted text-center py-4">Tidak ada item</div>
+                  <div v-if="!sourceItemList.length" class="text-muted text-center py-4">Tidak ada item</div>
                   <div v-else class="table-responsive">
                     <table class="table table-sm table-hover">
                       <thead>
@@ -228,7 +245,40 @@
                         </tr>
                       </thead>
                       <tbody>
-                        <tr v-for="(d, i) in itemList" :key="i">
+                        <tr v-for="(d, i) in sourceItemList" :key="`src-${i}`">
+                          <td>{{ i + 1 }}</td>
+                          <td>{{ d.description || '-' }}</td>
+                          <td class="text-end">{{ Number(d.qty) || 0 }}</td>
+                          <td class="text-end">{{ formatRupiah(d.unitAmount ?? d.unit_amount) }}</td>
+                          <td class="text-end fw-bold">{{ formatRupiah(d.subtotal) }}</td>
+                          <td class="text-muted small">{{ d.remarks || '—' }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="otherItemList.length" class="card mb-4 shadow-sm border-0">
+                <div class="card-header border-0 bg-transparent px-5 py-4">
+                  <h5 class="card-title mb-0">Biaya Lainnya</h5>
+                </div>
+                <hr class="mx-5 my-0" style="border-width: 2px;">
+                <div class="card-body px-5 pt-4 pb-5">
+                  <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                      <thead>
+                        <tr>
+                          <th>#</th>
+                          <th>Deskripsi</th>
+                          <th class="text-end">Qty</th>
+                          <th class="text-end">Nominal</th>
+                          <th class="text-end">Subtotal</th>
+                          <th>Catatan</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="(d, i) in otherItemList" :key="`oth-${i}`">
                           <td>{{ i + 1 }}</td>
                           <td>{{ d.description || '-' }}</td>
                           <td class="text-end">{{ Number(d.qty) || 0 }}</td>
@@ -251,21 +301,38 @@
                 <div class="card-body px-5 pt-4 pb-4">
                   <div class="d-flex justify-content-between py-1">
                     <span class="text-muted">Jumlah item</span>
-                    <span class="fw-medium">{{ itemList.length }}</span>
+                    <span class="fw-medium">{{ sourceItemList.length }}</span>
                   </div>
                   <div class="d-flex justify-content-between py-1">
-                    <span class="text-muted">Subtotal</span>
-                    <span class="fw-medium">{{ formatRupiah(itemsSubtotal) }}</span>
+                    <span class="text-muted">Subtotal sumber</span>
+                    <span class="fw-medium">{{ formatRupiah(sourceSubtotal) }}</span>
+                  </div>
+                  <div v-if="otherSubtotal > 0" class="d-flex justify-content-between py-1">
+                    <span class="text-muted">Biaya lainnya ({{ otherItemList.length }})</span>
+                    <span class="fw-medium">{{ formatRupiah(otherSubtotal) }}</span>
                   </div>
                   <div v-if="Number(paymentRequest.discountPercent ?? paymentRequest.discount_percent) > 0" class="d-flex justify-content-between py-1">
                     <span class="text-muted">Diskon ({{ paymentRequest.discountPercent ?? paymentRequest.discount_percent }}%)</span>
                     <span class="fw-medium">−{{ formatRupiah(discountAmount) }}</span>
                   </div>
-                  <div v-if="Number(paymentRequest.taxPercent ?? paymentRequest.tax_percent) > 0 || Number(paymentRequest.discountPercent ?? paymentRequest.discount_percent) > 0" class="d-flex justify-content-between py-1">
+                  <div v-if="Number(paymentRequest.taxPercent ?? paymentRequest.tax_percent) > 0 || Number(paymentRequest.discountPercent ?? paymentRequest.discount_percent) > 0 || taxRows.length || otherSubtotal > 0" class="d-flex justify-content-between py-1">
                     <span class="text-muted">DPP</span>
                     <span class="fw-medium">{{ formatRupiah(dppAmount) }}</span>
                   </div>
-                  <div v-if="Number(paymentRequest.taxPercent ?? paymentRequest.tax_percent) > 0" class="d-flex justify-content-between py-1">
+                  <template v-if="taxRows.length">
+                    <div
+                      v-for="(tax, tIdx) in taxRows"
+                      :key="tax.id || `sum-tax-${tIdx}`"
+                      class="d-flex justify-content-between py-1"
+                    >
+                      <span class="text-muted">
+                        {{ tax.taxCode }}
+                        <template v-if="tax.calculationType === 'PERCENTAGE'">({{ Number(tax.rate) }}%)</template>
+                      </span>
+                      <span class="fw-medium">{{ formatRupiah(tax.amount) }}</span>
+                    </div>
+                  </template>
+                  <div v-else-if="Number(paymentRequest.taxPercent ?? paymentRequest.tax_percent) > 0" class="d-flex justify-content-between py-1">
                     <span class="text-muted">Pajak / PPN ({{ paymentRequest.taxPercent ?? paymentRequest.tax_percent }}%)</span>
                     <span class="fw-medium">{{ formatRupiah(taxAmount) }}</span>
                   </div>
@@ -395,9 +462,13 @@ import {
   usePaymentRequestStore,
   getPaymentRequestNo,
   getPaymentRequestTotal,
-  getPaymentRequestItemsSubtotal,
+  getPaymentRequestSourceSubtotal,
+  getPaymentRequestOtherSubtotal,
   getPaymentRequestDiscountAmount,
   getPaymentRequestTaxAmount,
+  getPaymentRequestTaxes,
+  getPaymentRequestSourceItems,
+  getPaymentRequestOtherCharges,
   getSourceTypeLabel,
 } from '~/stores/payment-request'
 import { useApprovalStatus } from '~/composables/useApprovalStatus'
@@ -434,16 +505,17 @@ const canDelete = computed(() => {
     paymentRequest.value.status === 'draft' && userHasPermission('delete_payment_request')
   )
 })
-const itemList = computed(
-  () => paymentRequest.value?.paymentRequestItems || paymentRequest.value?.payment_request_items || []
-)
-const itemsSubtotal = computed(() => getPaymentRequestItemsSubtotal(paymentRequest.value))
+const sourceItemList = computed(() => getPaymentRequestSourceItems(paymentRequest.value))
+const otherItemList = computed(() => getPaymentRequestOtherCharges(paymentRequest.value))
+const sourceSubtotal = computed(() => getPaymentRequestSourceSubtotal(paymentRequest.value))
+const otherSubtotal = computed(() => getPaymentRequestOtherSubtotal(paymentRequest.value))
 const discountAmount = computed(() => getPaymentRequestDiscountAmount(paymentRequest.value))
 const taxAmount = computed(() => getPaymentRequestTaxAmount(paymentRequest.value))
+const taxRows = computed(() => getPaymentRequestTaxes(paymentRequest.value))
 const dppAmount = computed(() => {
   const stored = Number(paymentRequest.value?.dpp ?? 0)
   if (stored > 0) return stored
-  return Math.max(0, itemsSubtotal.value - discountAmount.value)
+  return Math.max(0, sourceSubtotal.value - discountAmount.value) + otherSubtotal.value
 })
 
 function formatDateTime(v: string | null | undefined) {

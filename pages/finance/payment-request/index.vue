@@ -129,6 +129,16 @@
             >
               <i class="ri-add-line me-1"></i>Tambah
             </button>
+            <button
+              type="button"
+              class="btn btn-outline-secondary"
+              :disabled="exportingCsv || loading"
+              @click="exportCSV"
+            >
+              <span v-if="exportingCsv" class="spinner-border spinner-border-sm me-1"></span>
+              <i v-else class="ri-file-download-line me-1"></i>
+              Export CSV
+            </button>
             <span class="p-input-icon-left">
               <InputText
                 v-model="globalFilterValue"
@@ -166,6 +176,11 @@
                 >
                   {{ getPaymentRequestNo(slotProps.data) || '—' }}
                 </a>
+              </template>
+            </Column>
+            <Column field="dueDate" header="Jatuh Tempo" :sortable="true" class="text-nowrap">
+              <template #body="slotProps">
+                {{ formatListDate(slotProps.data.dueDate || slotProps.data.due_date) }}
               </template>
             </Column>
             <Column field="sourceType" header="Sumber" :sortable="true">
@@ -255,6 +270,21 @@ const formatRupiah = useFormatRupiah()
 const { paymentRequests, loading, totalRecords, params, statistics } = storeToRefs(paymentRequestStore)
 const tableControls = ref({ rows: 10 })
 const filters = ref({ status: null as string | null, priority: null as string | null, sourceType: null as string | null })
+const exportingCsv = ref(false)
+
+function formatListDate(val: unknown) {
+  if (!val) return '—'
+  const raw = String(val)
+  const m = raw.match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (m) return `${m[3]}/${m[2]}/${m[1]}`
+  try {
+    const d = new Date(raw)
+    if (Number.isNaN(d.getTime())) return raw
+    return d.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  } catch {
+    return raw
+  }
+}
 
 const hasActiveFilters = computed(
   () => !!filters.value.status || !!filters.value.priority || !!filters.value.sourceType
@@ -393,6 +423,192 @@ watch(
     }),
   { deep: true }
 )
+
+function csvCell(value: unknown) {
+  const str = value === null || value === undefined ? '' : String(value)
+  return `"${str.replace(/"/g, '""')}"`
+}
+
+function formatDateCsv(val: unknown) {
+  if (!val) return ''
+  const raw = String(val)
+  const m = raw.match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (m) return `${m[3]}/${m[2]}/${m[1]}`
+  try {
+    const d = new Date(raw)
+    if (Number.isNaN(d.getTime())) return raw
+    const dd = String(d.getDate()).padStart(2, '0')
+    const mm = String(d.getMonth() + 1).padStart(2, '0')
+    return `${dd}/${mm}/${d.getFullYear()}`
+  } catch {
+    return raw
+  }
+}
+
+function itemTypeLabel(item: any) {
+  const t = item?.itemType ?? item?.item_type
+  return t === 'other' ? 'Biaya lainnya' : 'Item sumber'
+}
+
+function statusLabelCsv(s: string | null | undefined) {
+  const map: Record<string, string> = {
+    draft: 'Draft',
+    pending: 'Pending',
+    approved: 'Approved',
+    rejected: 'Rejected',
+    completed: 'Completed',
+    cancelled: 'Cancelled',
+  }
+  return s ? map[s] || s : ''
+}
+
+async function exportCSV() {
+  const toast = useToast()
+  exportingCsv.value = true
+  try {
+    const data = await paymentRequestStore.fetchAllForExport()
+    if (!data.length) {
+      toast.warning({
+        title: 'Peringatan',
+        message: 'Tidak ada data untuk diexport',
+        color: 'orange',
+        position: 'topRight',
+      })
+      return
+    }
+
+    const headers = [
+      'No. PRQ',
+      'Tanggal Request',
+      'Due Date / Jatuh Tempo',
+      'Sumber',
+      'No. Dokumen Sumber',
+      'Penerima',
+      'Bank',
+      'No. Rekening',
+      'Atas Nama',
+      'Prioritas',
+      'Status',
+      'Pemohon',
+      'Departemen',
+      'Keperluan',
+      'Tipe Item',
+      'Deskripsi Item',
+      'Qty',
+      'Nominal Satuan',
+      'Subtotal Item',
+      'Catatan Item',
+      'Subtotal Semua Item',
+      'Diskon (%)',
+      'DPP',
+      'Pajak (%)',
+      'Nilai Pajak',
+      'Pajak (Tax Master)',
+      'Grand Total',
+      'Mata Uang',
+      'Catatan',
+    ]
+
+    const lines = [`\uFEFF${headers.map(csvCell).join(',')}`]
+
+    for (const row of data) {
+      const items = row.paymentRequestItems || row.payment_request_items || []
+      const taxes = row.taxes || []
+      const taxMasterLabel = taxes.length
+        ? taxes
+            .map((t: any) => {
+              const code = t.taxCode ?? t.tax_code ?? ''
+              const rate = t.rate ?? 0
+              const calc = t.calculationType ?? t.calculation_type
+              const rateLabel = calc === 'FIXED' ? String(rate) : `${rate}%`
+              return `${code} (${rateLabel})`
+            })
+            .join('; ')
+        : ''
+
+      const base = [
+        getPaymentRequestNo(row),
+        formatDateCsv(row.requestDate || row.request_date || row.createdAt),
+        formatDateCsv(row.dueDate || row.due_date),
+        getSourceTypeLabel(row.sourceType || row.source_type),
+        row.sourceNumber || row.source_number || '',
+        row.payeeName || row.payee_name || row.vendor?.name || '',
+        row.bankName || row.bank_name || '',
+        row.bankAccountNumber || row.bank_account_number || '',
+        row.bankAccountName || row.bank_account_name || '',
+        (row.priority || '').toString().toUpperCase(),
+        statusLabelCsv(row.status),
+        row.requestedByUser?.fullName ||
+          row.requestedByUser?.full_name ||
+          row.createdByUser?.full_name ||
+          '',
+        row.department?.nm_departemen || row.department?.nmDepartemen || '',
+        row.purpose || '',
+      ]
+
+      const allItemsSubtotal = items.reduce(
+        (s: number, it: any) => s + (Number(it.subtotal) || 0),
+        0
+      )
+      const nominals = [
+        allItemsSubtotal,
+        Number(row.discountPercent ?? row.discount_percent ?? 0),
+        Number(row.dpp ?? 0),
+        Number(row.taxPercent ?? row.tax_percent ?? 0),
+        Number(row.taxAmount ?? row.tax_amount ?? 0),
+        taxMasterLabel,
+        Number(row.totalAmount ?? 0),
+        row.currency || 'IDR',
+        row.notes || '',
+      ]
+
+      const rowsToWrite = items.length ? items : [null]
+      for (const item of rowsToWrite) {
+        lines.push(
+          [
+            ...base,
+            item ? itemTypeLabel(item) : '',
+            item?.description || (item ? '' : 'Tidak ada item'),
+            item ? Number(item.qty) || 0 : '',
+            item ? Number(item.unitAmount ?? item.unit_amount) || 0 : '',
+            item ? Number(item.subtotal) || 0 : '',
+            item?.remarks || '',
+            ...nominals,
+          ]
+            .map(csvCell)
+            .join(',')
+        )
+      }
+    }
+
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.href = url
+    link.download = `payment-requests_${new Date().toISOString().slice(0, 10)}.csv`
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+
+    toast.success({
+      title: 'Berhasil',
+      message: `CSV berhasil diunduh (${data.length} payment request)`,
+      color: 'green',
+      position: 'topRight',
+    })
+  } catch (error: any) {
+    toast.error({
+      title: 'Error',
+      message: `Gagal export CSV: ${error?.message || 'Unknown error'}`,
+      color: 'red',
+      position: 'topRight',
+    })
+  } finally {
+    exportingCsv.value = false
+  }
+}
 
 onMounted(() => {
   paymentRequestStore.fetchPaymentRequests()

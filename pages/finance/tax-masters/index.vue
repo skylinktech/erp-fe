@@ -271,6 +271,7 @@
               min="0"
               class="form-control"
               :disabled="store.saving"
+              @input="syncDefaultRateToHistory"
             >
           </div>
           <div class="col-md-6">
@@ -309,7 +310,15 @@
           >
             <div class="col-md-2">
               <label class="form-label small">Rate</label>
-              <input v-model.number="rate.rate" type="number" step="0.0001" min="0" class="form-control form-control-sm" :disabled="store.saving">
+              <input
+                v-model.number="rate.rate"
+                type="number"
+                step="0.0001"
+                min="0"
+                class="form-control form-control-sm"
+                :disabled="store.saving"
+                @input="syncHistoryRateToDefault(idx)"
+              >
             </div>
             <div class="col-md-3">
               <label class="form-label small">Berlaku Dari</label>
@@ -472,6 +481,7 @@ const removeRateRow = (idx) => {
   form.value.taxRates.splice(idx, 1)
   if (wasDefault && form.value.taxRates.length) {
     form.value.taxRates[0].isDefault = true
+    form.value.defaultRate = Number(form.value.taxRates[0].rate || 0)
   }
 }
 
@@ -479,6 +489,24 @@ const setDefaultRate = (idx) => {
   form.value.taxRates.forEach((r, i) => {
     r.isDefault = i === idx
   })
+  form.value.defaultRate = Number(form.value.taxRates[idx].rate || 0)
+}
+
+/** Field Default Rate harus selalu sinkron dengan baris tarif yang di-mark default. */
+const syncDefaultRateToHistory = () => {
+  if (!form.value?.taxRates?.length) return
+  const idx = form.value.taxRates.findIndex((r) => r.isDefault)
+  const target = idx >= 0 ? idx : 0
+  if (!form.value.taxRates[target].isDefault) {
+    form.value.taxRates.forEach((r, i) => {
+      r.isDefault = i === target
+    })
+  }
+  form.value.taxRates[target].rate = Number(form.value.defaultRate ?? 0)
+}
+
+const syncHistoryRateToDefault = (idx) => {
+  if (!form.value?.taxRates?.[idx]?.isDefault) return
   form.value.defaultRate = Number(form.value.taxRates[idx].rate || 0)
 }
 
@@ -498,19 +526,22 @@ const validateForm = () => {
 }
 
 const submitForm = async () => {
+  // Pastikan perubahan di field Default Rate ikut ke payload taxRates
+  syncDefaultRateToHistory()
+
   const err = validateForm()
   if (err) {
     useToast().error({ title: 'Validasi', message: err, color: 'red', position: 'topRight' })
     return
   }
 
-  const defaultRate = form.value.taxRates.find((r) => r.isDefault)
+  const defaultRateRow = form.value.taxRates.find((r) => r.isDefault)
   const payload = {
     code: form.value.code.trim().toUpperCase(),
     name: form.value.name.trim(),
     type: form.value.type,
     calculationType: form.value.calculationType,
-    defaultRate: Number(defaultRate?.rate ?? form.value.defaultRate),
+    defaultRate: Number(defaultRateRow?.rate ?? form.value.defaultRate),
     accountCode: form.value.accountCode?.trim() || null,
     description: form.value.description?.trim() || null,
     isActive: !!form.value.isActive,
