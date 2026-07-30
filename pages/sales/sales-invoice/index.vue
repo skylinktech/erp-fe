@@ -7,6 +7,18 @@
             <p class="mb-6">
             List salesInvoice yang terdaftar di sistem
             </p>
+            <div class="alert alert-info d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4" role="alert">
+              <span>
+                Daftar AR terpadu (semua sumber termasuk Manual) tersedia di
+                <strong>Finance → Invoices</strong>.
+              </span>
+              <NuxtLink
+                class="btn btn-sm btn-outline-primary"
+                :to="{ path: '/finance/invoices', query: { documentSource: 'manual' } }"
+              >
+                Buka Finance Invoices
+              </NuxtLink>
+            </div>
             <div class="row g-6 mb-6">
                 <div class="col-xl col-lg-6 col-md-6">
                     <div class="card">

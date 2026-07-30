@@ -259,6 +259,9 @@
                     <button @click="confirmPayment(slotProps.data.id)" class="btn btn-sm btn-icon btn-text-secondary rounded-pill btn-icon me-2" v-if="userHasPermission('approve_ap_payment') && slotProps.data.status === 'draft'">
                       <i class="ri-checkbox-circle-line ri-20px"></i>
                     </button>
+                    <button @click="cancelPayment(slotProps.data.id)" class="btn btn-sm btn-icon btn-text-secondary rounded-pill btn-icon me-2" v-if="userHasPermission('approve_ap_payment') && slotProps.data.status === 'confirmed'" title="Batalkan">
+                      <i class="ri-close-circle-line ri-20px"></i>
+                    </button>
                     <button @click="deletePayment(slotProps.data.id)" class="btn btn-sm btn-icon btn-text-secondary rounded-pill btn-icon" v-if="userHasPermission('delete_ap_payment') && slotProps.data.status === 'draft'">
                       <i class="ri-delete-bin-7-line ri-20px"></i>
                     </button>
@@ -498,7 +501,51 @@
               </div>
             </div>
           </div>
-          
+        </div>
+
+        <div class="row mb-3">
+          <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <label class="form-label mb-0">Alokasi multi-invoice (opsional)</label>
+              <button type="button" class="btn btn-sm btn-outline-primary" @click="apPaymentStore.addAllocation()">+ Baris</button>
+            </div>
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Purchase Invoice</th>
+                  <th style="width:160px">Amount</th>
+                  <th style="width:50px"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(row, idx) in (apPaymentStore.form.allocations || [])" :key="idx">
+                  <td>
+                    <select v-model="row.purchaseInvoiceId" class="form-select form-select-sm">
+                      <option value="">Pilih PI</option>
+                      <option v-for="inv in apPaymentStore.invoices" :key="inv.id" :value="inv.id">
+                        {{ inv.noInvoice || inv.id }}
+                      </option>
+                    </select>
+                  </td>
+                  <td>
+                    <input v-model.number="row.amount" type="number" min="0" step="0.01" class="form-control form-control-sm" />
+                  </td>
+                  <td>
+                    <button type="button" class="btn btn-sm btn-outline-danger" @click="apPaymentStore.removeAllocation(idx)">×</button>
+                  </td>
+                </tr>
+                <tr v-if="!(apPaymentStore.form.allocations || []).length">
+                  <td colspan="3" class="text-muted small">Kosong = pakai invoice utama (1:1).</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="small text-muted">
+              Total alokasi: {{ formatRupiah(apPaymentStore.allocationTotal()) }}
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
           <div class="col-md-3">
             <div class="mb-3">
               <label class="form-label">Kurs Tukar</label>
@@ -577,8 +624,9 @@
 
 <script setup>
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useAPPaymentStore } from '~/stores/ap-payments'
+import { usePaymentRequestStore } from '~/stores/payment-request'
 import { useUserStore } from '~/stores/user'
 import { usePermissionsStore } from '~/stores/permissions'
 import { useDebounceFn } from '@vueuse/core'
@@ -598,11 +646,13 @@ const { setListTitle, setFormTitle } = useDynamicTitle()
 
 // Stores
 const apPaymentStore = useAPPaymentStore()
+const paymentRequestStore = usePaymentRequestStore()
 const userStore = useUserStore()
 const permissionStore = usePermissionsStore()
 
 // Router
 const router = useRouter()
+const route = useRoute()
 
 const formatRupiah = useFormatRupiah()
 
@@ -659,6 +709,15 @@ onMounted(async () => {
     // Preload invoice data untuk dropdown
     if (apPaymentStore.invoices.length === 0) {
       await apPaymentStore.fetchInvoices();
+    }
+
+    const fromPrq = route.query.fromPrq
+    if (fromPrq && typeof fromPrq === 'string') {
+      await paymentRequestStore.getPaymentRequestDetails(fromPrq)
+      const prq = paymentRequestStore.paymentRequest
+      if (prq?.id) {
+        apPaymentStore.openFromPaymentRequest(prq)
+      }
     }
   } catch (error) {
     console.error('Error in onMounted:', error)
@@ -721,6 +780,10 @@ const deletePayment = (id) => {
 
 const confirmPayment = (id) => {
   apPaymentStore.confirmPayment(id)
+}
+
+const cancelPayment = (id) => {
+  apPaymentStore.cancelPayment(id)
 }
 
 const viewDetail = (payment) => {

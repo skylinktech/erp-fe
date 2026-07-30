@@ -59,6 +59,23 @@
                                     <span>Term Of Payment: </span>
                                     <span>{{ purchaseOrder.termOfPayment }}</span>
                                     </div>
+                                <div
+                                  v-if="purchaseOrder.purchaseRequestId || purchaseOrder.purchase_request_id || purchaseOrder.purchaseRequest"
+                                  class="mb-1"
+                                >
+                                    <span>Purchase Request: </span>
+                                    <NuxtLink
+                                      class="text-primary"
+                                      :to="`/purchasing/purchase-request/detail/${purchaseOrder.purchaseRequestId || purchaseOrder.purchase_request_id || purchaseOrder.purchaseRequest?.id}`"
+                                    >
+                                      {{
+                                        purchaseOrder.purchaseRequest?.prNumber ||
+                                        purchaseOrder.purchaseRequest?.pr_number ||
+                                        purchaseOrder.purchaseRequestId ||
+                                        purchaseOrder.purchase_request_id
+                                      }}
+                                    </NuxtLink>
+                                </div>
                             </div>
                             </div>
                         </div>
@@ -256,6 +273,12 @@
                         >
                         </button>
                     </div>
+                    </div>
+                    <div class="mt-4" v-if="purchaseOrder?.id">
+                      <ThreeWayMatchPanel :purchase-order-id="purchaseOrder.id" />
+                    </div>
+                    <div class="mt-4" v-if="purchaseOrder?.id">
+                      <DocumentTimelinePanel entity-type="purchase_order" :entity-id="purchaseOrder.id" />
                     </div>
                 </div>
                 <!-- /Invoice Actions -->
@@ -501,6 +524,8 @@ import { usePurchaseOrderStore } from '~/stores/purchaseOrder'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
+import DocumentTimelinePanel from '~/components/documents/DocumentTimelinePanel.vue'
+import ThreeWayMatchPanel from '~/components/purchasing/ThreeWayMatchPanel.vue'
 import Swal from 'sweetalert2'
 import { Modal } from 'bootstrap'
 

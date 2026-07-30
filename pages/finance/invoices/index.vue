@@ -1366,10 +1366,17 @@ watch(billableSearchQuery, debouncedBillableSearch)
 // ── Lifecycle ─────────────────────────────────────────────────────────────────
 
 onMounted(async () => {
-    await Promise.all([
-        store.fetchInvoices(),
-        store.fetchStatistics(),
-    ])
+    const route = useRoute()
+    const qs = route.query.documentSource
+    if (typeof qs === 'string' && qs) {
+        filterSource.value = qs
+        applyFilter('documentSource', qs)
+    } else {
+        await Promise.all([
+            store.fetchInvoices(),
+            store.fetchStatistics(),
+        ])
+    }
     setListTitle('Finance Invoice', totalRecords.value)
 })
 

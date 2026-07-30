@@ -23,6 +23,9 @@ export interface ARReceipt {
   bank_account?: any
   created_by_user?: any
   confirmed_by_user?: any
+  allocations?: Array<{ salesInvoiceId: string; amount: number }>
+  settlementLines?: any[]
+  settlement_lines?: any[]
 }
 
 interface ARReceiptState {
@@ -75,7 +78,8 @@ export const useARReceiptStore = defineStore('arReceipt', {
       currency: 'IDR',
       exchange_rate: 1,
       notes: '',
-      status: 'draft'
+      status: 'draft',
+      allocations: [],
     },
     isEditMode: false,
     showModal: false,
@@ -134,16 +138,31 @@ export const useARReceiptStore = defineStore('arReceipt', {
 
         const result = await response.json()
         
+        // Support ApiResponse { data, meta } and Lucid nested paginator
         if (result.data && result.data.data) {
           this.receipts = result.data.data
           this.totalRecords = result.data.meta?.total || 0
-        } else if (result.data && Array.isArray(result.data)) {
+        } else if (Array.isArray(result.data)) {
           this.receipts = result.data
           this.totalRecords = result.meta?.total || result.data.length
         } else {
           this.receipts = []
           this.totalRecords = 0
         }
+
+        // Normalize display fields for FE that still reads snake_case
+        this.receipts = this.receipts.map((r: any) => ({
+          ...r,
+          reference_number: r.reference_number || r.receiptNumber,
+          customer_id: r.customer_id || r.customerId,
+          invoice_id: r.invoice_id || r.salesInvoiceId,
+          bank_account_id: r.bank_account_id || r.bankAccountId,
+          payment_method: r.payment_method || r.method,
+          notes: r.notes || r.description,
+          status: r.status || 'draft',
+          invoice: r.invoice || r.salesInvoice,
+          bank_account: r.bank_account || r.bankAccount,
+        }))
       } catch (e: any) {
         console.error('Error fetching receipts:', e)
         this.error = e.message
@@ -239,24 +258,28 @@ export const useARReceiptStore = defineStore('arReceipt', {
 
       try {
         const payload = {
-          reference_number: this.form.reference_number,
+          receiptNumber: this.form.reference_number || this.form.receiptNumber,
           date: this.form.date,
-          customer_id: this.form.customer_id,
-          invoice_id: this.form.invoice_id || null,
-          payment_method: this.form.payment_method,
-          bank_account_id: this.form.bank_account_id || null,
+          customerId: Number(this.form.customer_id || this.form.customerId),
+          salesInvoiceId: this.form.invoice_id || this.form.salesInvoiceId || this.form.invoiceId,
+          method: this.form.payment_method || this.form.method || 'bank_transfer',
+          bankAccountId: this.form.bank_account_id || this.form.bankAccountId,
           amount: this.form.amount,
-          currency: this.form.currency,
-          exchange_rate: this.form.exchange_rate,
-          notes: this.form.notes,
-          status: this.form.status
-        };
+          description: this.form.notes || this.form.description || '',
+        }
+        const allocations = this.buildAllocationsPayload()
+        if (allocations.length) {
+          payload.allocations = allocations
+          if (!payload.salesInvoiceId) {
+            payload.salesInvoiceId = allocations[0].salesInvoiceId
+          }
+        }
 
-        let method = 'POST';
-        let url = $api.arReceipts();
+        let method = 'POST'
+        let url = $api.arReceipts()
         if (this.isEditMode && this.form.id) {
-          url = $api.arReceipts() + '/' + this.form.id;
-          method = 'PUT';
+          url = $api.arReceipts() + '/' + this.form.id
+          method = 'PUT'
         }
 
         const response = await fetch(url, {
@@ -266,7 +289,7 @@ export const useARReceiptStore = defineStore('arReceipt', {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
-          credentials: 'include', // Cookie-based auth
+          credentials: 'include',
         })
 
         let result;
@@ -383,7 +406,7 @@ export const useARReceiptStore = defineStore('arReceipt', {
       const toast = useToast();
       
       try {
-        const url = $api.arReceipts() + '/' + id + '/confirm';
+        const url = $api.arReceiptsConfirm?.(id) || ($api.arReceipts() + '/' + id + '/confirm');
 
         const response = await fetch(url, {
           method: 'POST',
@@ -391,7 +414,7 @@ export const useARReceiptStore = defineStore('arReceipt', {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
-          credentials: 'include' // Cookie-based auth
+          credentials: 'include',
         });
 
         if (!response.ok) {
@@ -402,7 +425,7 @@ export const useARReceiptStore = defineStore('arReceipt', {
         await this.fetchReceipts();
         toast.success({
           title: 'Success',
-          message: 'Penerimaan berhasil dikonfirmasi.',
+          message: 'Penerimaan berhasil dikonfirmasi dan invoice di-settle.',
           color: 'green',
           position: 'topRight',
           layout: 2,
@@ -419,12 +442,83 @@ export const useARReceiptStore = defineStore('arReceipt', {
       }
     },
 
+    async cancelReceipt(id: string | number, reason?: string) {
+      const { $api } = useNuxtApp();
+      const toast = useToast();
+
+      const prompt = await Swal.fire({
+        title: 'Batalkan penerimaan?',
+        input: 'text',
+        inputLabel: 'Alasan pembatalan',
+        inputValue: reason || '',
+        inputValidator: (value) => (!value?.trim() ? 'Alasan wajib diisi' : null),
+        showCancelButton: true,
+        confirmButtonText: 'Ya, batalkan',
+        cancelButtonText: 'Batal',
+        confirmButtonColor: '#d33',
+      });
+
+      if (!prompt.isConfirmed) return;
+
+      try {
+        const url = $api.arReceiptsCancel?.(id) || ($api.arReceipts() + '/' + id + '/cancel');
+        const response = await fetch(url, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({ reason: String(prompt.value).trim() }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ message: 'Gagal membatalkan penerimaan.' }));
+          throw new Error(errorData.message || 'Gagal membatalkan penerimaan.');
+        }
+
+        await this.fetchReceipts();
+        toast.success({
+          title: 'Success',
+          message: 'Penerimaan dibatalkan; settlement invoice dihitung ulang.',
+          color: 'green',
+          position: 'topRight',
+          layout: 2,
+        });
+      } catch (error: any) {
+        console.error('Error cancelling receipt:', error)
+        toast.error({
+          title: 'Error',
+          message: error.message || 'Gagal membatalkan penerimaan',
+          color: 'red',
+          position: 'topRight',
+          layout: 2,
+        });
+      }
+    },
+
     openModal(receipt?: ARReceipt) {
       this.isEditMode = !!receipt;
       this.validationErrors = [];
       
       if (receipt) {
-        this.form = { ...receipt };
+        const lines = (receipt as any).settlementLines || (receipt as any).settlement_lines || []
+        this.form = {
+          ...receipt,
+          allocations: lines.length
+            ? lines.map((l: any) => ({
+                salesInvoiceId: l.salesInvoiceId || l.sales_invoice_id,
+                amount: Number(l.amount || 0),
+              }))
+            : receipt.invoice_id || (receipt as any).salesInvoiceId
+              ? [
+                  {
+                    salesInvoiceId: String(receipt.invoice_id || (receipt as any).salesInvoiceId),
+                    amount: Number(receipt.amount || 0),
+                  },
+                ]
+              : [],
+        };
       } else {
         this.form = {
           reference_number: '',
@@ -437,7 +531,8 @@ export const useARReceiptStore = defineStore('arReceipt', {
           currency: 'IDR',
           exchange_rate: 1,
           notes: '',
-          status: 'draft'
+          status: 'draft',
+          allocations: [],
         };
       }
       
@@ -461,9 +556,45 @@ export const useARReceiptStore = defineStore('arReceipt', {
         currency: 'IDR',
         exchange_rate: 1,
         notes: '',
-        status: 'draft'
+        status: 'draft',
+        allocations: [],
       };
       this.validationErrors = [];
+    },
+
+    addAllocation() {
+      if (!this.form.allocations) this.form.allocations = []
+      this.form.allocations.push({ salesInvoiceId: '', amount: 0 })
+    },
+
+    removeAllocation(index: number) {
+      this.form.allocations?.splice(index, 1)
+    },
+
+    syncPrimaryAllocation() {
+      const invoiceId = this.form.invoice_id || (this.form as any).salesInvoiceId
+      const amount = Number(this.form.amount || 0)
+      if (!invoiceId || !amount) return
+      if (!this.form.allocations?.length) {
+        this.form.allocations = [{ salesInvoiceId: String(invoiceId), amount }]
+      } else if (this.form.allocations.length === 1) {
+        this.form.allocations[0].salesInvoiceId = String(invoiceId)
+        this.form.allocations[0].amount = amount
+      }
+    },
+
+    buildAllocationsPayload() {
+      const rows = (this.form.allocations || []).filter(
+        (a) => a.salesInvoiceId && Number(a.amount) > 0
+      )
+      return rows.map((a) => ({
+        salesInvoiceId: String(a.salesInvoiceId),
+        amount: Number(a.amount),
+      }))
+    },
+
+    allocationTotal() {
+      return (this.form.allocations || []).reduce((s, a) => s + Number(a.amount || 0), 0)
     },
 
     setPagination(event: any) {

@@ -128,8 +128,9 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
         attachment: null, 
         status: 'draft',
         poType: 'internal',
+        purchaseRequestId: null as number | null,
         purchaseOrderItems: []
-    },
+      },
     stats: {
         total: undefined,
         approved: undefined,
@@ -882,6 +883,7 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
                 attachment: null, 
                 status: 'draft',
                 poType: 'internal', // Default ke internal
+                purchaseRequestId: null,
                 purchaseOrderItems: [],
             };
             this.addItem(); // Tambahkan satu item default untuk PO baru
@@ -910,6 +912,7 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
             attachmentPreview: '',
             status: 'draft',
             poType: 'internal',
+            purchaseRequestId: null,
             purchaseOrderItems: [],
         };
         this.validationErrors = [];

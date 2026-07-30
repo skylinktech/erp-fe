@@ -652,6 +652,7 @@ async function prefillFromPurchaseRequest(prId: string) {
   form.value.description =
     form.value.description ||
     `PO dari PR ${pr.prNumber || pr.pr_number || pr.id}`
+  form.value.purchaseRequestId = Number(pr.id) || null
 
   form.value.purchaseOrderItems = items.map((d) => {
     const product = products.value.find((p) => Number(p.id) === Number(d.productId))

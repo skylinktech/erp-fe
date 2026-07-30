@@ -245,13 +245,16 @@
                                 </Column>
                                 <Column header="Actions" :exportable="false" style="min-width:8rem">
                                     <template #body="slotProps">
-                                        <button @click="receiptStore.openModal(slotProps.data)" class="btn btn-sm btn-icon btn-text-secondary rounded-pill btn-icon me-2" v-if="userHasPermission('edit_ar_receipt') || userHasRole('superadmin')">
+                                        <button @click="receiptStore.openModal(slotProps.data)" class="btn btn-sm btn-icon btn-text-secondary rounded-pill btn-icon me-2" v-if="slotProps.data.status === 'draft' && (userHasPermission('edit_ar_receipt') || userHasRole('superadmin'))">
                                             <i class="ri-edit-box-line ri-20px"></i>
                                         </button>
                                         <button @click="confirmReceipt(slotProps.data.id)" class="btn btn-sm btn-icon btn-text-secondary rounded-pill btn-icon me-2" v-if="slotProps.data.status === 'draft' && (userHasPermission('approve_ar_receipt') || userHasRole('superadmin'))">
                                             <i class="ri-checkbox-circle-line ri-20px"></i>
                                         </button>
-                                        <button @click="receiptStore.deleteReceipt(slotProps.data.id)" class="btn btn-sm btn-icon btn-text-secondary rounded-pill btn-icon" v-if="userHasPermission('delete_ar_receipt') || userHasRole('superadmin')">
+                                        <button @click="cancelReceipt(slotProps.data.id)" class="btn btn-sm btn-icon btn-text-secondary rounded-pill btn-icon me-2" v-if="slotProps.data.status === 'confirmed' && (userHasPermission('approve_ar_receipt') || userHasRole('superadmin'))" title="Batalkan">
+                                            <i class="ri-close-circle-line ri-20px"></i>
+                                        </button>
+                                        <button @click="receiptStore.deleteReceipt(slotProps.data.id)" class="btn btn-sm btn-icon btn-text-secondary rounded-pill btn-icon" v-if="slotProps.data.status === 'draft' && (userHasPermission('delete_ar_receipt') || userHasRole('superadmin'))">
                                             <i class="ri-delete-bin-7-line ri-20px"></i>
                                         </button>
                                     </template>
@@ -314,6 +317,7 @@
                                         <select 
                                             class="form-select" 
                                             v-model="form.invoice_id"
+                                            @change="receiptStore.syncPrimaryAllocation()"
                                         >
                                             <option value="">Pilih Invoice (Opsional)</option>
                                             <option v-for="invoice in invoices" :key="invoice.id" :value="invoice.id">
@@ -361,10 +365,52 @@
                                             step="0.01"
                                             min="0"
                                             placeholder="Masukkan jumlah"
-                                            
+                                            @change="receiptStore.syncPrimaryAllocation()"
                                         >
                                         <label>Jumlah *</label>
                                     </div>
+                                </div>
+                                <div class="col-12">
+                                  <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label class="form-label mb-0">Alokasi multi-invoice (opsional)</label>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" @click="receiptStore.addAllocation()">+ Baris</button>
+                                  </div>
+                                  <div class="table-responsive">
+                                    <table class="table table-sm">
+                                      <thead>
+                                        <tr>
+                                          <th>Invoice</th>
+                                          <th style="width:160px">Amount</th>
+                                          <th style="width:50px"></th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        <tr v-for="(row, idx) in (form.allocations || [])" :key="idx">
+                                          <td>
+                                            <select v-model="row.salesInvoiceId" class="form-select form-select-sm">
+                                              <option value="">Pilih invoice</option>
+                                              <option v-for="invoice in invoices" :key="invoice.id" :value="invoice.id">
+                                                {{ invoice.reference_number || invoice.noInvoice || invoice.id }}
+                                              </option>
+                                            </select>
+                                          </td>
+                                          <td>
+                                            <input v-model.number="row.amount" type="number" min="0" step="0.01" class="form-control form-control-sm" />
+                                          </td>
+                                          <td>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" @click="receiptStore.removeAllocation(idx)">×</button>
+                                          </td>
+                                        </tr>
+                                        <tr v-if="!(form.allocations || []).length">
+                                          <td colspan="3" class="text-muted small">Kosong = pakai invoice utama di atas (1:1).</td>
+                                        </tr>
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                  <div class="small" :class="Math.abs(receiptStore.allocationTotal() - Number(form.amount || 0)) > 0.01 && (form.allocations || []).length ? 'text-danger' : 'text-muted'">
+                                    Total alokasi: {{ formatCurrency(receiptStore.allocationTotal(), form.currency) }}
+                                    <span v-if="(form.allocations || []).length"> / receipt {{ formatCurrency(form.amount || 0, form.currency) }}</span>
+                                  </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-floating form-floating-outline">
@@ -571,6 +617,10 @@ const formatCurrency = (amount, currency = 'IDR') => {
 
 const confirmReceipt = async (id) => {
     await receiptStore.confirmReceipt(id)
+}
+
+const cancelReceipt = async (id) => {
+    await receiptStore.cancelReceipt(id)
 }
 
 const exportData = (format) => {

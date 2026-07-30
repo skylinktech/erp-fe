@@ -50,9 +50,17 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       '/accounting/ar-receipts/': 'view_ar_receipt',
       '/finance/invoices': 'view_invoice',
       '/finance/payment-request': 'view_payment_request',
+      '/operations/request-activation': 'view_request_activation',
       '/finance/billing-adjustments': 'view_billing_adjustment',
       '/finance/billing-preparations': 'view_billing_preparation',
       '/finance/ar-receipts': 'view_ar_receipt',
+      '/finance/ap-payments': 'view_ap_payment',
+      '/finance/fiscal-periods': 'view_fiscal_period',
+      '/finance/reports/ar-aging': 'view_ar_aging',
+      '/finance/reports/ap-aging': 'view_ap_aging',
+      '/finance/bank-recon': 'view_bank_recon',
+      '/finance/credit-notes': 'view_credit_note',
+      '/finance/journals': 'view_journal',
       '/hrd/pegawai': 'view_pegawai',
       '/hrd/departemen': 'view_departemen',
       '/hrd/divisi': 'view_divisi',
@@ -116,6 +124,24 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
         requiredPermission = 'show_payment_request'
       } else if (/^\/finance\/payment-request/.test(to.path)) {
         requiredPermission = 'view_payment_request'
+      } else if (/^\/finance\/fiscal-periods/.test(to.path)) {
+        requiredPermission = 'view_fiscal_period'
+      } else if (/^\/finance\/reports\/ar-aging/.test(to.path)) {
+        requiredPermission = 'view_ar_aging'
+      } else if (/^\/finance\/reports\/ap-aging/.test(to.path)) {
+        requiredPermission = 'view_ap_aging'
+      } else if (/^\/finance\/bank-recon/.test(to.path)) {
+        requiredPermission = 'view_bank_recon'
+      } else if (/^\/finance\/credit-notes/.test(to.path)) {
+        requiredPermission = 'view_credit_note'
+      } else if (/^\/finance\/journals/.test(to.path)) {
+        requiredPermission = 'view_journal'
+      } else if (/^\/operations\/request-activation\/form(\/.*)?$/.test(to.path)) {
+        requiredPermission = 'access_request_activation'
+      } else if (/^\/operations\/request-activation\/detail\/.+$/.test(to.path)) {
+        requiredPermission = 'show_request_activation'
+      } else if (/^\/operations\/request-activation/.test(to.path)) {
+        requiredPermission = 'view_request_activation'
       } else if (/^\/finance\/cetak-payment-request/.test(to.path)) {
         requiredPermission = 'view_payment_request'
       } else if (/^\/finance\/billing-preparations/.test(to.path)) {

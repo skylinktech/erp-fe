@@ -446,7 +446,7 @@ export const useJournalStore = defineStore('journal', {
       if (result.isConfirmed) {
         try {
           const response = await fetch(`${$api.journals()}/${id}/post`, {
-            method: 'POST',
+            method: 'PATCH',
             headers: {
               'Content-Type': 'application/json',
               'Accept': 'application/json',

@@ -244,6 +244,16 @@ export default defineNuxtPlugin(() => {
     rejectWorkOrderRequest: (id: number | string) => `${apiBase}/work-order-request/${id}/reject`,
     completeWorkOrderRequest: (id: number | string) => `${apiBase}/work-order-request/${id}/complete`,
 
+    // Request Activation — Operations
+    requestActivation: () => `${apiBase}/request-activation`,
+    requestActivationShow: (id: number | string) => `${apiBase}/request-activation/${id}`,
+    getRequestActivationDetails: (id: number | string) => `${apiBase}/request-activation/getDetails/${id}`,
+    requestActivationStatistics: () => `${apiBase}/request-activation/statistics`,
+    submitRequestActivation: (id: number | string) => `${apiBase}/request-activation/${id}/submit`,
+    approveRequestActivation: (id: number | string) => `${apiBase}/request-activation/${id}/approve`,
+    rejectRequestActivation: (id: number | string) => `${apiBase}/request-activation/${id}/reject`,
+    completeRequestActivation: (id: number | string) => `${apiBase}/request-activation/${id}/complete`,
+
     // Progress Tracker — Implementation
     progressTracker: () => `${apiBase}/progress-tracker`,
     progressTrackerShow: (id: string) => `${apiBase}/progress-tracker/${id}`,
@@ -281,6 +291,12 @@ export default defineNuxtPlugin(() => {
     financeInvoicesReject       : (id: string) => `${apiBase}/finance/invoices/${id}/reject`,
     financeInvoicesStatistics   : () => `${apiBase}/finance/invoices/statistics`,
     financeInvoicesBillableItems: () => `${apiBase}/finance/invoices/billable-items`,
+    creditNotes                 : () => `${apiBase}/finance/credit-notes`,
+    creditNotesShow             : (id: string) => `${apiBase}/finance/credit-notes/${id}`,
+    creditNotesIssue            : (id: string) => `${apiBase}/finance/credit-notes/${id}/issue`,
+    creditNotesCancel           : (id: string) => `${apiBase}/finance/credit-notes/${id}/cancel`,
+    documentTimeline            : (entityType: string, entityId: string | number) =>
+      `${apiBase}/documents/${entityType}/${entityId}/timeline`,
 
     // Billing Adjustments
     billingAdjustments          : () => `${apiBase}/finance/billing-adjustments`,
@@ -338,6 +354,8 @@ export default defineNuxtPlugin(() => {
     apPaymentsShow: (id: number | string) => `${apiBase}/accounting/ap-payments/${id}`,
     apPaymentsDelete: (id: number | string) => `${apiBase}/accounting/ap-payments/delete/${id}`,
     apPaymentsSummary: () => `${apiBase}/accounting/ap-payments/summary`,
+    apPaymentsConfirm: (id: number | string) => `${apiBase}/accounting/ap-payments/${id}/confirm`,
+    apPaymentsCancel: (id: number | string) => `${apiBase}/accounting/ap-payments/${id}/cancel`,
     
     // AR Receipts
     arReceipts: () => `${apiBase}/accounting/ar-receipts`,
@@ -346,6 +364,8 @@ export default defineNuxtPlugin(() => {
     arReceiptsShow: (id: number | string) => `${apiBase}/accounting/ar-receipts/${id}`,
     arReceiptsDelete: (id: number | string) => `${apiBase}/accounting/ar-receipts/delete/${id}`,
     arReceiptsSummary: () => `${apiBase}/accounting/ar-receipts/summary`,
+    arReceiptsConfirm: (id: number | string) => `${apiBase}/accounting/ar-receipts/${id}/confirm`,
+    arReceiptsCancel: (id: number | string) => `${apiBase}/accounting/ar-receipts/${id}/cancel`,
     
     // Assets
     assets: () => `${apiBase}/accounting/assets`,
@@ -378,6 +398,30 @@ export default defineNuxtPlugin(() => {
 
     // Journal Entries
     journals: () => `${apiBase}/accounting/journals`,
+    journalsPost: (id: number | string) => `${apiBase}/accounting/journals/${id}/post`,
+    journalsCancel: (id: number | string) => `${apiBase}/accounting/journals/${id}/cancel`,
+    fiscalPeriods: () => `${apiBase}/accounting/fiscal-periods`,
+    fiscalPeriodsCurrent: () => `${apiBase}/accounting/fiscal-periods/current`,
+    fiscalPeriodsClose: () => `${apiBase}/accounting/fiscal-periods/close`,
+    fiscalPeriodsReopen: () => `${apiBase}/accounting/fiscal-periods/reopen`,
+    arAgingReport: (params?: string) =>
+      `${apiBase}/accounting/reports/ar-aging${params ? `?${params}` : ''}`,
+    apAgingReport: (params?: string) =>
+      `${apiBase}/accounting/reports/ap-aging${params ? `?${params}` : ''}`,
+    bankStatements: () => `${apiBase}/accounting/bank-statements`,
+    bankStatementShow: (id: number | string) => `${apiBase}/accounting/bank-statements/${id}`,
+    bankStatementImportLines: (id: number | string) =>
+      `${apiBase}/accounting/bank-statements/${id}/import-lines`,
+    bankStatementSuggest: (id: number | string) =>
+      `${apiBase}/accounting/bank-statements/${id}/suggest-matches`,
+    bankStatementLineConfirmMatch: (lineId: number | string) =>
+      `${apiBase}/accounting/bank-statement-lines/${lineId}/confirm-match`,
+    bankStatementLineIgnore: (lineId: number | string) =>
+      `${apiBase}/accounting/bank-statement-lines/${lineId}/ignore`,
+    bankStatementLineUnmatch: (lineId: number | string) =>
+      `${apiBase}/accounting/bank-statement-lines/${lineId}/unmatch`,
+    purchaseOrderThreeWayMatch: (id: number | string) =>
+      `${apiBase}/purchase-order/${id}/three-way-match`,
     journalEntries: () => `${apiBase}/accounting/journals`,
     journalEntriesStore: () => `${apiBase}/accounting/journals/store`,
     journalEntriesUpdate: (id: number | string) => `${apiBase}/accounting/journals/update/${id}`,

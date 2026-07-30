@@ -61,6 +61,14 @@
                     <i class="ri-close-line me-2"></i> Reject
                   </a>
                   <a
+                    v-if="canCreateApPayment"
+                    class="dropdown-item"
+                    href="javascript:void(0)"
+                    @click="goCreateApPayment"
+                  >
+                    <i class="ri-bank-card-line me-2"></i> Buat AP Payment
+                  </a>
+                  <a
                     v-if="paymentRequest.status === 'draft' || paymentRequest.status === 'rejected'"
                     class="dropdown-item"
                     href="javascript:void(0)"
@@ -505,6 +513,11 @@ const canDelete = computed(() => {
     paymentRequest.value.status === 'draft' && userHasPermission('delete_payment_request')
   )
 })
+const canCreateApPayment = computed(() => {
+  if (!paymentRequest.value) return false
+  if (paymentRequest.value.status !== 'approved') return false
+  return userHasRole('superadmin') || userHasPermission('create_ap_payment')
+})
 const sourceItemList = computed(() => getPaymentRequestSourceItems(paymentRequest.value))
 const otherItemList = computed(() => getPaymentRequestOtherCharges(paymentRequest.value))
 const sourceSubtotal = computed(() => getPaymentRequestSourceSubtotal(paymentRequest.value))
@@ -568,6 +581,14 @@ function onDelete() {
   if (!paymentRequest.value) return
   paymentRequestStore.deletePaymentRequest(paymentRequest.value.id)
   navigateTo('/finance/payment-request')
+}
+
+function goCreateApPayment() {
+  if (!paymentRequest.value) return
+  navigateTo({
+    path: '/finance/ap-payments',
+    query: { fromPrq: paymentRequest.value.id },
+  })
 }
 
 onMounted(() => load())

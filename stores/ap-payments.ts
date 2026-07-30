@@ -9,6 +9,7 @@ export interface APPayment {
   date: string
   vendorId: string
   invoiceId?: string
+  paymentRequestId?: string | null
   method: 'cash' | 'bank_transfer' | 'check' | 'credit_card' | 'giro'
   bankAccountId?: string
   amount: number
@@ -24,8 +25,12 @@ export interface APPayment {
   vendor?: any
   invoice?: any
   bank_account?: any
+  paymentRequest?: any
   created_by_user?: any
   confirmed_by_user?: any
+  allocations?: Array<{ purchaseInvoiceId: string; amount: number }>
+  settlementLines?: any[]
+  settlement_lines?: any[]
 }
 
 interface APPaymentState {
@@ -70,6 +75,7 @@ export const useAPPaymentStore = defineStore('apPayment', {
       date: new Date().toISOString().split('T')[0],
       vendorId: null,
       invoiceId: null,
+      paymentRequestId: null,
       method: 'bank_transfer',
       bankAccountId: null,
       amount: 0,
@@ -317,15 +323,28 @@ export const useAPPaymentStore = defineStore('apPayment', {
         
 
         const payload = {
-          paymentNumber: this.form.paymentNumber,
+          paymentNumber: this.form.paymentNumber || undefined,
           date: this.form.date,
           vendorId: this.form.vendorId ? Number(this.form.vendorId) : null,
           invoiceId: this.form.invoiceId || null,
+          paymentRequestId: this.form.paymentRequestId || null,
           method: this.form.method,
           bankAccountId: this.form.bankAccountId || null,
           amount: Number(this.form.amount),
-          description: this.form.description
+          description: this.form.description,
+          autoConfirm: false,
         };
+        const allocations = (this.form.allocations || []).filter(
+          (a) => a.purchaseInvoiceId && Number(a.amount) > 0
+        )
+        if (allocations.length) {
+          payload.allocations = allocations.map((a) => ({
+            purchaseInvoiceId: String(a.purchaseInvoiceId),
+            amount: Number(a.amount),
+          }))
+          if (!payload.invoiceId) payload.invoiceId = allocations[0].purchaseInvoiceId
+        }
+
         
         
 
@@ -468,7 +487,7 @@ export const useAPPaymentStore = defineStore('apPayment', {
       const toast = useToast();
       
       try {
-        const url = $api.apPayments() + '/' + id + '/confirm';
+        const url = $api.apPaymentsConfirm?.(id) || ($api.apPayments() + '/' + id + '/confirm');
 
         const response = await fetch(url, {
           method: 'POST',
@@ -476,7 +495,7 @@ export const useAPPaymentStore = defineStore('apPayment', {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
-          credentials: 'include' // Cookie-based auth
+          credentials: 'include',
         });
 
         if (!response.ok) {
@@ -487,7 +506,7 @@ export const useAPPaymentStore = defineStore('apPayment', {
         await this.fetchPayments();
         toast.success({
           title: 'Success',
-          message: 'Pembayaran berhasil dikonfirmasi.',
+          message: 'Pembayaran dikonfirmasi; invoice/PRQ terkait di-settle bila ada.',
           color: 'green',
           position: 'topRight',
           layout: 2,
@@ -504,26 +523,130 @@ export const useAPPaymentStore = defineStore('apPayment', {
       }
     },
 
+    async cancelPayment(id: string | number, reason?: string) {
+      const { $api } = useNuxtApp();
+      const toast = useToast();
+
+      const prompt = await Swal.fire({
+        title: 'Batalkan pembayaran?',
+        input: 'text',
+        inputLabel: 'Alasan pembatalan',
+        inputValue: reason || '',
+        inputValidator: (value) => (!value?.trim() ? 'Alasan wajib diisi' : null),
+        showCancelButton: true,
+        confirmButtonText: 'Ya, batalkan',
+        cancelButtonText: 'Batal',
+        confirmButtonColor: '#d33',
+      });
+
+      if (!prompt.isConfirmed) return;
+
+      try {
+        const url = $api.apPaymentsCancel?.(id) || ($api.apPayments() + '/' + id + '/cancel');
+        const response = await fetch(url, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({ reason: String(prompt.value).trim() }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ message: 'Gagal membatalkan pembayaran.' }));
+          throw new Error(errorData.message || 'Gagal membatalkan pembayaran.');
+        }
+
+        await this.fetchPayments();
+        toast.success({
+          title: 'Success',
+          message: 'Pembayaran dibatalkan; settlement invoice dihitung ulang.',
+          color: 'green',
+          position: 'topRight',
+          layout: 2,
+        });
+      } catch (error: any) {
+        console.error('Error cancelling payment:', error)
+        toast.error({
+          title: 'Error',
+          message: error.message || 'Gagal membatalkan pembayaran',
+          color: 'red',
+          position: 'topRight',
+          layout: 2,
+        });
+      }
+    },
+
+    openFromPaymentRequest(prq: {
+      id: string
+      vendorId?: number | string | null
+      vendor_id?: number | string | null
+      totalAmount?: number
+      total_amount?: number
+      paymentRequestNo?: string
+      payment_request_no?: string
+      description?: string | null
+    }) {
+      this.isEditMode = false
+      this.validationErrors = []
+      const vendorId = prq.vendorId ?? prq.vendor_id ?? null
+      const amount = Number(prq.totalAmount ?? prq.total_amount ?? 0)
+      const prqNo = prq.paymentRequestNo || prq.payment_request_no || prq.id
+      this.form = {
+        paymentNumber: '',
+        date: new Date().toISOString().split('T')[0],
+        vendorId: vendorId as any,
+        invoiceId: null,
+        paymentRequestId: prq.id,
+        method: 'bank_transfer',
+        bankAccountId: null,
+        amount,
+        currency: 'IDR',
+        exchangeRate: 1,
+        description: prq.description || `Pelunasan dari Payment Request ${prqNo}`,
+        status: 'draft',
+      }
+      this.showModal = true
+      this.fetchVendors()
+      this.fetchInvoices()
+      this.fetchBankAccounts()
+    },
+
     openModal(payment?: APPayment) {
-      
       this.isEditMode = !!payment;
       this.validationErrors = [];
       
       if (payment) {
-        this.form = { ...payment };
+        const lines = (payment as any).settlementLines || (payment as any).settlement_lines || []
+        this.form = {
+          ...payment,
+          allocations: lines.length
+            ? lines.map((l: any) => ({
+                purchaseInvoiceId: l.purchaseInvoiceId || l.purchase_invoice_id,
+                amount: Number(l.amount || 0),
+              }))
+            : payment.invoiceId
+              ? [{ purchaseInvoiceId: String(payment.invoiceId), amount: Number(payment.amount || 0) }]
+              : [],
+        };
       } else {
         this.form = {
           paymentNumber: '',
           date: new Date().toISOString().split('T')[0],
           vendorId: null,
           invoiceId: null,
+          paymentRequestId: null,
           method: 'bank_transfer',
           bankAccountId: null,
           amount: 0,
-          description: ''
+          currency: 'IDR',
+          exchangeRate: 1,
+          description: '',
+          status: 'draft',
+          allocations: [],
         };
       }
-      
       
       this.showModal = true;
       this.fetchVendors();
@@ -531,21 +654,35 @@ export const useAPPaymentStore = defineStore('apPayment', {
       this.fetchBankAccounts();
     },
 
+    addAllocation() {
+      if (!this.form.allocations) this.form.allocations = []
+      this.form.allocations.push({ purchaseInvoiceId: '', amount: 0 })
+    },
+
+    removeAllocation(index: number) {
+      this.form.allocations?.splice(index, 1)
+    },
+
+    allocationTotal() {
+      return (this.form.allocations || []).reduce((s, a) => s + Number(a.amount || 0), 0)
+    },
+
     closeModal() {
       this.showModal = false;
       this.isEditMode = false;
       this.form = {
-        referenceNumber: '',
+        paymentNumber: '',
         date: new Date().toISOString().split('T')[0],
-        vendorId: '',
-        invoiceId: '',
-        paymentMethod: 'bank_transfer',
-        bankAccountId: '',
+        vendorId: null,
+        invoiceId: null,
+        paymentRequestId: null,
+        method: 'bank_transfer',
+        bankAccountId: null,
         amount: 0,
         currency: 'IDR',
         exchangeRate: 1,
-        notes: '',
-        status: 'draft'
+        description: '',
+        status: 'draft',
       };
       this.validationErrors = [];
     },
