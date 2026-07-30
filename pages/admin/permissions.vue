@@ -90,30 +90,28 @@
                                         <template #add>
                                             <button type="button" class="btn btn-primary" @click="openAddPermissionModal">
                                                 <i class="ri-add-line me-1"></i>
-                                                Tambah Permission
+                                                Tambah
                                             </button>
                                         </template>
                                         <template #toolbar-extra>
-                                            <div v-if="selectedPermissions.length > 0" class="d-flex flex-wrap align-items-center gap-2">
-                                                <button
-                                                    class="btn btn-sm btn-dark"
-                                                    type="button"
-                                                    @click="deleteBatchPermissions"
-                                                    :disabled="selectedPermissions.length === 0"
-                                                >
-                                                    <i class="ri-delete-bin-7-line me-1"></i>
-                                                    Delete ({{ selectedPermissions.length }})
-                                                </button>
-                                                <button
-                                                    class="btn btn-sm btn-primary"
-                                                    type="button"
-                                                    @click="openUpdateBatchModal"
-                                                    :disabled="selectedPermissions.length === 0"
-                                                >
-                                                    <i class="ri-edit-line me-1"></i>
-                                                    Update ({{ selectedPermissions.length }})
-                                                </button>
-                                            </div>
+                                            <button
+                                                v-if="selectedPermissions.length > 0"
+                                                class="btn btn-dark"
+                                                type="button"
+                                                @click="deleteBatchPermissions"
+                                            >
+                                                <i class="ri-delete-bin-7-line me-1"></i>
+                                                Delete ({{ selectedPermissions.length }})
+                                            </button>
+                                            <button
+                                                v-if="selectedPermissions.length > 0"
+                                                class="btn btn-primary"
+                                                type="button"
+                                                @click="openUpdateBatchModal"
+                                            >
+                                                <i class="ri-edit-line me-1"></i>
+                                                Update ({{ selectedPermissions.length }})
+                                            </button>
                                         </template>
                                     </ListPageTableHeader>
                                     <div class="card-datatable table-responsive py-3 px-3">
@@ -231,9 +229,9 @@
                                     </div>
                                     <div class="col-6 mb-3">
                                         <label for="menuGroup">Menu Group</label>
-                                        <CustomSelect2 v-model="formPermission.menuGroupId" :options="menuGroups"
-                                            :get-option-label="option => option.name"
-                                            :reduce="option => option.id" searchable clearable
+                                        <CustomSelect2 v-model="formPermission.menuGroupId" :options="menuGroupOptions"
+                                            :get-option-label="option => option?.name ?? ''"
+                                            :reduce="option => option?.id" searchable clearable
                                             placeholder="-- Pilih Menu Group --"
                                             id="menuGroup"
                                             class="menu-group"
@@ -242,8 +240,8 @@
                                     <div class="col-6 mb-3">
                                         <label for="menuDetail">Menu Detail</label>
                                         <CustomSelect2 v-model="formPermission.menuDetailId" :options="filteredMenuDetails"
-                                            :get-option-label="option => option.name"
-                                            :reduce="option => option.id" searchable clearable
+                                            :get-option-label="option => option?.name ?? ''"
+                                            :reduce="option => option?.id" searchable clearable
                                             placeholder="-- Pilih Menu Detail --"
                                             id="menuDetail"
                                             class="menu-detail"
@@ -277,9 +275,9 @@
                                 <div class="row g-3">
                                     <div class="col-6 mb-3">
                                         <label for="batchMenuGroup">Menu Group</label>
-                                        <CustomSelect2 v-model="batchForm.menuGroupId" :options="menuGroups"
-                                            :get-option-label="option => option.name"
-                                            :reduce="option => option.id" searchable clearable
+                                        <CustomSelect2 v-model="batchForm.menuGroupId" :options="menuGroupOptions"
+                                            :get-option-label="option => option?.name ?? ''"
+                                            :reduce="option => option?.id" searchable clearable
                                             placeholder="-- Pilih Menu Group --"
                                             id="batchMenuGroup"
                                             class="menu-group"
@@ -288,8 +286,8 @@
                                     <div class="col-6 mb-3">
                                         <label for="batchMenuDetail">Menu Detail</label>
                                         <CustomSelect2 v-model="batchForm.menuDetailId" :options="filteredBatchMenuDetails"
-                                            :get-option-label="option => option.name"
-                                            :reduce="option => option.id" searchable clearable
+                                            :get-option-label="option => option?.name ?? ''"
+                                            :reduce="option => option?.id" searchable clearable
                                             placeholder="-- Pilih Menu Detail --"
                                             id="batchMenuDetail"
                                             class="menu-detail"
@@ -322,19 +320,13 @@
  
 <script setup>
 import { ref, computed, onMounted, watch, onBeforeUnmount, nextTick } from 'vue'
-import { storeToRefs } from 'pinia'
 import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
 import { usePermissionsStore } from '~/stores/permissions'
 import { useLayoutStore } from '~/stores/layout'
-import { useMenuGroupStore } from '~/stores/menu-group'
-import { useMenuDetailStore } from '~/stores/menu-detail'
-import vSelect from 'vue-select'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
 import Swal from 'sweetalert2'
-import 'vue-select/dist/vue-select.css'
-import InputText from 'primevue/inputtext'
 import { FilterMatchMode } from '@primevue/core/api'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 
@@ -348,8 +340,6 @@ const myDataTableRef = ref(null)
 const globalFilterValue = ref('')
 const permissionsStore = usePermissionsStore()
 const layoutStore = useLayoutStore()
-const menuGroupStore = useMenuGroupStore()
-const menuDetailStore = useMenuDetailStore()
 const permissions = ref([])
 const totalRecords = ref(0)
 const loading = ref(false)
@@ -372,9 +362,8 @@ const filters = ref({
   global: { value: null, matchMode: FilterMatchMode.CONTAINS },
 })
 
-// Use stores for menu groups
-const menuGroups = computed(() => menuGroupStore.menuGroups)
-// Menu details perlu ref lokal karena di-fetch berdasarkan groupId
+// Lightweight options for CustomSelect2 (from /menu-groups/options)
+const menuGroupOptions = ref([])
 const menuDetails = ref([])
 
 let searchDebounceTimer = null;
@@ -420,7 +409,7 @@ const isBatchModalOpen = ref(false);
 
 const permissionsRowsOptions = [10, 20, 50, 100]
 
-const modalTitle = computed(() => isEditMode.value ? 'Edit Permission' : 'Tambah Permission');
+const modalTitle = computed(() => isEditMode.value ? 'Edit Permission' : 'Tambah');
 const modalDescription = computed(() => isEditMode.value ? 'Silakan ubah data permission di bawah ini.' : 'Silakan isi form di bawah ini untuk menambahkan permission baru.');
 
 const handleCloseModal = () => {
@@ -640,30 +629,42 @@ const getBadgeClass = (roleId) => {
     return classMap[roleId] || 'bg-label-info';
 };
 
-// Fungsi untuk mengambil data menu groups - menggunakan store
-const fetchMenuGroups = async () => {
+const fetchMenuGroupOptions = async (search = '') => {
     try {
-        await menuGroupStore.fetchMenuGroups()
+        const params = new URLSearchParams();
+        if (search.trim()) {
+            params.set('search', search.trim());
+        }
+        const query = params.toString();
+        const url = query ? `${$api.menuGroupsOptions()}?${query}` : $api.menuGroupsOptions();
+        const response = await fetch(url, {
+            headers: { Accept: 'application/json' },
+            credentials: 'include',
+        });
+        if (!response.ok) throw new Error('Gagal mengambil data menu group');
+        const result = await response.json();
+        menuGroupOptions.value = Array.isArray(result.data) ? result.data : [];
     } catch (error) {
-        console.error('Error fetching menu groups:', error)
+        console.error('Error fetching menu group options:', error);
+        menuGroupOptions.value = [];
     }
-}
+};
 
-// Fungsi untuk mengambil data menu details berdasarkan group
 const fetchMenuDetails = async (groupId) => {
     if (!groupId) {
+        menuDetails.value = [];
         return;
     }
     try {
         const response = await fetch($api.getMenuDetails(groupId), {
-            headers: { 
-                'Content-Type': 'application/json'
+            headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
             },
-            credentials: 'include', // Cookie-based auth
+            credentials: 'include',
         });
         if (!response.ok) throw new Error('Gagal mengambil data menu details');
         const data = await response.json();
-        // Update menuDetails ref (temporary solution, ideally should use store)
         menuDetails.value = Array.isArray(data.menuDetails) ? data.menuDetails : [];
     } catch (error) {
         console.error('Error fetching menu details:', error);
@@ -697,9 +698,13 @@ const fetchAllPageData = async () => {
     }
 };
 
-function openAddPermissionModal() {
+async function openAddPermissionModal() {
     isEditMode.value = false;
     resetFormState();
+    menuDetails.value = [];
+    if (menuGroupOptions.value.length === 0) {
+        await fetchMenuGroupOptions();
+    }
     const modalEl = document.getElementById('PermissionModal');
     if (modalEl) {
         const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
@@ -707,7 +712,7 @@ function openAddPermissionModal() {
     }
 }
 
-function openUpdateBatchModal() {
+async function openUpdateBatchModal() {
     try {
         if (selectedPermissions.value.length === 0) {
             toast.error({
@@ -727,11 +732,10 @@ function openUpdateBatchModal() {
             menuDetailId: null,
         };
         batchValidationErrors.value = [];
-        
-        // Ensure menuDetails is initialized
-        if (!Array.isArray(menuDetails.value)) {
-            menuDetails.value = [];
-        }
+        menuDetails.value = [];
+
+        // Pastikan opsi menu group terisi sebelum modal dibuka
+        await fetchMenuGroupOptions();
         
         // Mark modal as open before showing
         isBatchModalOpen.value = true;
@@ -766,6 +770,10 @@ async function openEditPermissionModal(permissionData) {
     resetFormState();
     selectedPermission.value = JSON.parse(JSON.stringify(permissionData));
 
+    if (menuGroupOptions.value.length === 0) {
+        await fetchMenuGroupOptions();
+    }
+
     formPermission.value = {
         id: permissionData.id,
         name: permissionData.name || '',
@@ -775,7 +783,6 @@ async function openEditPermissionModal(permissionData) {
     
     if (formPermission.value.menuGroupId) {
         await fetchMenuDetails(formPermission.value.menuGroupId);
-        // Ensure menuDetailId is set after details are fetched
         formPermission.value.menuDetailId = permissionData.menuDetails && permissionData.menuDetails.length > 0 ? permissionData.menuDetails[0].id : null;
     }
 
@@ -1029,10 +1036,7 @@ watch(() => batchForm.value.menuGroupId, (newVal, oldVal) => {
 })
 
 const fetchMenuGroupsAndDetails = async () => {
-    await Promise.all([
-        fetchMenuGroups(),
-        fetchMenuDetails()
-    ]);
+    await fetchMenuGroupOptions();
 };
 
 definePageMeta({

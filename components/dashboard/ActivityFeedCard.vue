@@ -1,13 +1,14 @@
 <template>
-  <div class="card activity-feed-card">
-    <div class="card-header">
+  <div class="card activity-feed-card h-100">
+    <div class="card-header flex-shrink-0">
       <div class="d-flex justify-content-between align-items-start gap-2">
         <div>
           <h5 class="mb-1">Activity Feed</h5>
           <p class="mb-0 card-subtitle text-muted">
-            <span v-if="store.loading">Memuat...</span>
+            <span v-if="store.loading && store.items.length === 0">Memuat...</span>
             <span v-else-if="store.items.length > 0">
-              {{ store.items.length }} aktivitas terbaru
+              {{ store.items.length }} aktivitas dimuat
+              <template v-if="store.hasMore"> · scroll untuk lainnya</template>
             </span>
             <span v-else>Log aktivitas CRUD &amp; approval semua user</span>
           </p>
@@ -23,14 +24,14 @@
       </div>
     </div>
 
-    <div class="card-body pt-0">
-      <div v-if="store.loading" class="text-center py-4">
+    <div class="card-body pt-0 activity-feed-body">
+      <div v-if="store.loading && store.items.length === 0" class="text-center py-4">
         <div class="spinner-border text-primary" role="status">
           <span class="visually-hidden">Loading...</span>
         </div>
       </div>
 
-      <div v-else-if="store.error" class="text-center py-4">
+      <div v-else-if="store.error && store.items.length === 0" class="text-center py-4">
         <p class="text-danger small mb-2">{{ store.error }}</p>
         <button type="button" class="btn btn-sm btn-primary" @click="refresh">Coba Lagi</button>
       </div>
@@ -40,7 +41,11 @@
         <p class="text-muted mb-0 small">Belum ada aktivitas tercatat</p>
       </div>
 
-      <div v-else class="activity-feed-list">
+      <div
+        v-else
+        class="activity-feed-list"
+        @scroll.passive="store.handleScroll"
+      >
         <div
           v-for="item in store.items"
           :key="item.id"
@@ -85,6 +90,16 @@
             </div>
           </div>
         </div>
+
+        <div v-if="store.loadingMore" class="text-center py-2">
+          <div class="spinner-border spinner-border-sm text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+
+        <p v-else-if="!store.hasMore && store.items.length > 0" class="text-center text-muted small mb-0 py-2">
+          Semua aktivitas sudah ditampilkan
+        </p>
       </div>
     </div>
   </div>
@@ -98,7 +113,6 @@ import {
   formatActivityTimeAgo,
   getActivityUserName,
   parseActivityAction,
-  type ActivityFeedItem,
 } from '~/utils/activityFeed'
 
 const store = useDashboardActivityFeedStore()
@@ -125,16 +139,31 @@ onUnmounted(() => {
 
 <style scoped>
 .activity-feed-card {
-  height: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.activity-feed-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .activity-feed-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  max-height: 28rem;
-  overflow-y: auto;
   padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  overscroll-behavior: contain;
 }
 
 .activity-feed-item {
@@ -142,6 +171,7 @@ onUnmounted(() => {
   border-radius: 0.5rem;
   padding: 0.875rem;
   background: rgba(67, 89, 113, 0.02);
+  flex-shrink: 0;
 }
 
 .activity-feed-item--success {

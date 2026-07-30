@@ -73,6 +73,8 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       '/company/cabang': 'view_cabang',
       '/admin/roles': 'view_role',
       '/admin/permissions': 'view_permission',
+      '/admin/dashboards': 'manage_dashboard',
+      '/admin/dashboards/widgets': 'manage_dashboard_widget',
     }
 
     // Cek apakah user adalah superadmin
@@ -138,6 +140,8 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
         requiredPermission = 'view_invoice'
       } else if (/^\/finance\/cetak-invoice/.test(to.path)) {
         requiredPermission = 'view_invoice'
+      } else if (/^\/admin\/dashboards\/\d+\/layout-builder$/.test(to.path)) {
+        requiredPermission = 'manage_dashboard'
       }
     }
 

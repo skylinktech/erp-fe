@@ -22,11 +22,38 @@
     <div class="menu-inner-shadow"></div>
 
     <ul class="menu-inner py-7">
-      <li class="menu-item" :class="{ active: $route.path === '/dashboard' }">
-        <a href="/dashboard" class="menu-link" @click="handleMenuClick">
+      <li
+        class="menu-item"
+        :class="{
+          open: isDashboardMenuOpen,
+          active: isDashboardMenuActive,
+        }"
+      >
+        <a href="javascript:void(0);" class="menu-link menu-toggle" @click="toggleDashboardMenu">
           <i class="menu-icon tf-icons ri-home-smile-line"></i>
-          <div data-i18n="Dashboards">Dashboards</div>
+          <div data-i18n="Dashboard">Dashboard</div>
         </a>
+        <transition
+          name="menu-expand"
+          @before-enter="beforeEnter"
+          @enter="enter"
+          @after-enter="afterEnter"
+          @before-leave="beforeLeave"
+          @leave="leave"
+        >
+          <ul class="menu-sub" v-show="isDashboardMenuOpen">
+            <li class="menu-item" :class="{ active: $route.path === '/dashboard' }">
+              <NuxtLink to="/dashboard" class="menu-link" @click="handleMenuClick">
+                <div data-i18n="Main">Main</div>
+              </NuxtLink>
+            </li>
+            <li class="menu-item" :class="{ active: $route.path === '/dashboard/settings' }">
+              <NuxtLink to="/dashboard/settings" class="menu-link" @click="handleMenuClick">
+                <div data-i18n="Settings">Settings</div>
+              </NuxtLink>
+            </li>
+          </ul>
+        </transition>
       </li>
 
       <li class="menu-header mt-5">
@@ -92,6 +119,17 @@ const userStore = useUserStore();
 const openGroupIds = ref(new Set());
 const openDetailIds = ref(new Set());
 const isNavigatingFromMenu = ref(false);
+const DASHBOARD_MENU_ID = 'static-dashboard';
+
+const isDashboardMenuActive = computed(() => {
+  return route.path === '/dashboard' || route.path === '/dashboard/settings';
+});
+
+const isDashboardMenuOpen = computed(() => openGroupIds.value.has(DASHBOARD_MENU_ID));
+
+const toggleDashboardMenu = () => {
+  toggleGroup(DASHBOARD_MENU_ID);
+};
 
 const filteredAndSortedMenuGroups = computed(() => {
   const filteredGroups = menuGroupsStore.filteredMenuGroups;
@@ -183,6 +221,14 @@ function toggleSidebar() {
 }
 
 const setActiveGroup = () => {
+  if (isDashboardMenuActive.value) {
+    if (!openGroupIds.value.has(DASHBOARD_MENU_ID)) {
+      openGroupIds.value.clear();
+      openGroupIds.value.add(DASHBOARD_MENU_ID);
+    }
+    return;
+  }
+
   const activeGroup = filteredAndSortedMenuGroups.value.find(isGroupActive);
   if (activeGroup) {
     if (!openGroupIds.value.has(activeGroup.id)) {

@@ -7,7 +7,7 @@
           :model-value="rows"
           :options="rowsOptions"
           placeholder="Jumlah"
-          style="width: 8rem"
+          class="lp-rows-dropdown"
           :show-clear="false"
           @update:model-value="onRowsUpdate"
         />
@@ -15,29 +15,31 @@
       <div class="lp-add-slot">
         <slot name="add" />
       </div>
-      <div v-if="$slots['toolbar-extra']" class="lp-toolbar-extra d-flex flex-wrap align-items-center gap-2">
+      <div v-if="$slots['toolbar-extra']" class="lp-toolbar-extra">
         <slot name="toolbar-extra" />
       </div>
-      <div v-if="showExport" class="btn-group lp-export-group">
-        <button
-          class="btn btn-outline-secondary dropdown-toggle"
-          type="button"
-          data-bs-toggle="dropdown"
-          aria-expanded="false"
-          :disabled="exportDisabled"
-        >
-          <i class="ri-download-line me-1" />
-          Export
-        </button>
-        <ul class="dropdown-menu">
-          <li v-for="item in exportItems" :key="item.value">
-            <a
-              class="dropdown-item"
-              href="javascript:void(0)"
-              @click="$emit('export', item.value)"
-            >{{ item.label }}</a>
-          </li>
-        </ul>
+      <div v-if="showExport" class="lp-export-group">
+        <div class="btn-group">
+          <button
+            class="btn btn-outline-secondary dropdown-toggle"
+            type="button"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+            :disabled="exportDisabled"
+          >
+            <i class="ri-download-line me-1" />
+            Export
+          </button>
+          <ul class="dropdown-menu">
+            <li v-for="item in exportItems" :key="item.value">
+              <a
+                class="dropdown-item"
+                href="javascript:void(0)"
+                @click="$emit('export', item.value)"
+              >{{ item.label }}</a>
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
     <div class="lp-actions-row">
@@ -95,8 +97,9 @@ function onSearchUpdate(value) {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 0.75rem;
+  gap: 0.5rem;
   flex-wrap: nowrap;
+  min-width: 0;
 }
 
 .lp-header-top-row :deep(.btn),
@@ -118,17 +121,34 @@ function onSearchUpdate(value) {
 }
 
 .lp-add-slot,
-.lp-toolbar-extra {
+.lp-toolbar-extra,
+.lp-export-group {
   display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
   align-items: center;
+  gap: 0.5rem;
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.lp-toolbar-extra:empty {
+  display: none;
+}
+
+.lp-toolbar-extra :deep(.btn),
+.lp-add-slot :deep(.btn) {
   flex: 0 0 auto;
 }
 
 .lp-rows-control {
   min-width: 0;
+  flex: 0 0 auto;
 }
 
+.lp-rows-dropdown,
 .lp-rows-control :deep(.p-dropdown) {
+  width: 4.5rem;
   min-height: 2.375rem;
   align-items: center;
 }
@@ -164,24 +184,24 @@ function onSearchUpdate(value) {
   box-sizing: border-box;
 }
 
-.lp-export-group {
-  flex: 0 0 auto;
-}
-
 @media (min-width: 768px) {
   .lp-table-header {
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    gap: 1rem;
+    gap: 0.75rem;
   }
 
   .lp-header-top-row {
-    flex: 0 0 auto;
+    flex: 1 1 auto;
+    min-width: 0;
+    flex-wrap: nowrap;
   }
 
   .lp-actions-row {
     width: auto;
+    flex: 0 1 auto;
+    min-width: 0;
   }
 
   .lp-actions-row .p-input-icon-left {
@@ -190,14 +210,20 @@ function onSearchUpdate(value) {
 
   .lp-search-wrap {
     width: auto;
+    max-width: 100%;
   }
 
   .lp-search-input {
-    width: 20rem !important;
+    width: 12rem !important;
+    max-width: 100%;
   }
 }
 
 @media (max-width: 767.98px) {
+  .lp-header-top-row {
+    flex-wrap: wrap;
+  }
+
   .lp-actions-row {
     flex-direction: column;
     align-items: stretch;
@@ -206,34 +232,33 @@ function onSearchUpdate(value) {
 
 @media (min-width: 768px) and (max-width: 991.98px) {
   .lp-table-header {
-    flex-direction: column;
-    align-items: stretch;
-    justify-content: flex-start;
-    gap: 0.75rem;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
   }
 
   .lp-header-top-row {
-    width: 100%;
+    width: auto;
+    flex: 1 1 auto;
     justify-content: flex-start;
+    flex-wrap: nowrap;
   }
 
   .lp-actions-row {
-    width: 100%;
+    width: auto;
+    flex: 0 1 auto;
     flex-wrap: nowrap;
-    justify-content: flex-start;
-  }
-
-  .lp-export-group {
-    margin-left: 0.5rem;
+    justify-content: flex-end;
   }
 
   .lp-search-wrap {
-    width: 100% !important;
-    flex-basis: 100%;
+    width: auto !important;
+    flex-basis: auto;
   }
 
   .lp-search-input {
-    width: 100% !important;
+    width: 10rem !important;
   }
 }
 </style>

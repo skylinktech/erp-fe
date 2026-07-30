@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { apiFetch } from '~/utils/apiFetch'
 
-type UserSession = {
+export type UserSession = {
   id: number
   userId: number
   sessionId: string
@@ -19,153 +19,171 @@ type UserSession = {
   }
 }
 
-// Helper function untuk mendapatkan sesi terbaru per user
-const getLatestSessionPerUser = (sessions: UserSession[]) => {
+export type ActiveUsersMeta = {
+  total: number
+  byDevice: {
+    desktop: number
+    mobile: number
+    tablet: number
+  }
+}
+
+/**
+ * Dedup 1 session terbaru per user di FE — safety net saja.
+ * Backend `getActiveUsers` sudah mengembalikan 1 baris/user; helper ini
+ * menjaga widget tetap benar kalau ada sumber SSO yang masih mengirim
+ * duplikat.
+ */
+function getLatestSessionPerUser(sessions: UserSession[]): UserSession[] {
   const userSessionMap = new Map<number, UserSession>()
-  
-  sessions.forEach(session => {
-    const existingSession = userSessionMap.get(session.userId)
-    
-    if (!existingSession || 
-        new Date(session.lastActivity).getTime() > new Date(existingSession.lastActivity).getTime()) {
+
+  for (const session of sessions) {
+    const existing = userSessionMap.get(session.userId)
+    if (
+      !existing ||
+      new Date(session.lastActivity).getTime() > new Date(existing.lastActivity).getTime()
+    ) {
       userSessionMap.set(session.userId, session)
     }
-  })
-  
-  return Array.from(userSessionMap.values())
+  }
+
+  return Array.from(userSessionMap.values()).sort(
+    (a, b) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime()
+  )
+}
+
+function emptyMeta(): ActiveUsersMeta {
+  return { total: 0, byDevice: { desktop: 0, mobile: 0, tablet: 0 } }
+}
+
+function summarizeLocally(sessions: UserSession[]): ActiveUsersMeta {
+  const latest = getLatestSessionPerUser(sessions)
+  const byDevice = { desktop: 0, mobile: 0, tablet: 0 }
+
+  for (const session of latest) {
+    const key = session.deviceType as keyof typeof byDevice
+    if (key in byDevice) byDevice[key] += 1
+  }
+
+  return { total: latest.length, byDevice }
 }
 
 export const useUserSessionStore = defineStore('userSession', {
   state: () => ({
     activeUsers: [] as UserSession[],
+    /** Ringkasan dari backend (lebih akurat & tidak perlu recompute di tiap getter). */
+    meta: emptyMeta() as ActiveUsersMeta,
     loading: false,
     error: null as string | null,
-    // Pagination state
-    displayedCount: 3, // Jumlah user yang ditampilkan
-    showLoadMore: false, // Apakah tombol load more ditampilkan
-    isExpanded: false, // Apakah data sudah di-expand semua
+    displayedCount: 3,
   }),
 
   getters: {
-    totalActiveUsers: (state) => {
-      return getLatestSessionPerUser(state.activeUsers).length
+    uniqueActiveUsers(state): UserSession[] {
+      return getLatestSessionPerUser(state.activeUsers)
     },
-    
-    activeUsersByDevice: (state) => {
-      const deviceCount = {
-        desktop: 0,
-        mobile: 0,
-        tablet: 0,
+
+    totalActiveUsers(): number {
+      return this.meta.total > 0 || this.activeUsers.length === 0
+        ? this.meta.total
+        : this.uniqueActiveUsers.length
+    },
+
+    activeUsersByDevice(): ActiveUsersMeta['byDevice'] {
+      if (this.meta.total > 0 || this.activeUsers.length === 0) {
+        return this.meta.byDevice
       }
-      
-      const latestSessions = getLatestSessionPerUser(state.activeUsers)
-      
-      latestSessions.forEach(session => {
-        if (deviceCount[session.deviceType as keyof typeof deviceCount] !== undefined) {
-          deviceCount[session.deviceType as keyof typeof deviceCount]++
-        }
-      })
-      
-      return deviceCount
+      return summarizeLocally(this.activeUsers).byDevice
     },
 
-    recentActiveUsers: (state) => {
-      const latestSessions = getLatestSessionPerUser(state.activeUsers)
-        .sort((a, b) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime())
-      
-      // Update showLoadMore berdasarkan jumlah data
-      state.showLoadMore = latestSessions.length > state.displayedCount
-      
-      // Update isExpanded jika semua data sudah ditampilkan
-      state.isExpanded = state.displayedCount >= latestSessions.length
-      
-      return latestSessions.slice(0, state.displayedCount)
+    recentActiveUsers(): UserSession[] {
+      return this.uniqueActiveUsers.slice(0, this.displayedCount)
     },
 
-    hasMoreUsers: (state) => {
-      return getLatestSessionPerUser(state.activeUsers).length > state.displayedCount
+    hasMoreUsers(): boolean {
+      return this.uniqueActiveUsers.length > this.displayedCount
     },
 
-    isFullyExpanded: (state) => {
-      return state.displayedCount >= getLatestSessionPerUser(state.activeUsers).length
-    }
+    isFullyExpanded(): boolean {
+      return this.displayedCount >= this.uniqueActiveUsers.length
+    },
   },
 
   actions: {
-    // Load more users
     loadMoreUsers() {
       this.displayedCount += 3
     },
 
-    // Show less users (collapse back to initial state)
     showLessUsers() {
       this.displayedCount = 3
     },
 
-    // Reset pagination
     resetPagination() {
       this.displayedCount = 3
     },
 
+    /**
+     * Shared fetch — kalau Online Users & Total User Login mount bersamaan,
+     * hanya 1 HTTP request yang jalan (in-flight promise di-reuse).
+     */
     async fetchActiveUsers() {
+      if (inFlightFetch) return inFlightFetch
+
       this.loading = true
       this.error = null
-      
-      try {
-        const { $api } = useNuxtApp()
 
-        const response = await apiFetch<{ success: boolean; data: UserSession[] }>($api.userSessionsActiveUsers(), {
-          credentials: 'include',
-          skip403Redirect: true,
-        })
+      inFlightFetch = (async () => {
+        try {
+          const { $api } = useNuxtApp()
+          const response = await apiFetch<{
+            success: boolean
+            data: UserSession[]
+            meta?: ActiveUsersMeta
+          }>($api.userSessionsActiveUsers(), {
+            credentials: 'include',
+            skip403Redirect: true,
+          })
 
-        if (response.success) {
+          if (!response.success) {
+            this.error = 'Response tidak berhasil'
+            return
+          }
+
           this.activeUsers = response.data || []
-          
-          // Reset pagination saat refresh data
+          this.meta = response.meta ?? summarizeLocally(this.activeUsers)
           this.resetPagination()
-        } else {
-          this.error = 'Response tidak berhasil'
+        } catch (error: any) {
+          this.error = error.message || 'Gagal mengambil data user aktif'
+        } finally {
+          this.loading = false
+          inFlightFetch = null
         }
-      } catch (error: any) {
-        this.error = error.message || 'Gagal mengambil data user aktif'
-      } finally {
-        this.loading = false
-      }
+      })()
+
+      return inFlightFetch
     },
 
     async forceLogoutUser(sessionId: string) {
-      try {
-        const { $api } = useNuxtApp()
-
-        await apiFetch($api.userSessionsForceLogout(sessionId), {
-          method: 'POST',
-          credentials: 'include',
-          skip403Redirect: true,
-        })
-
-        // Refresh data setelah force logout
-        await this.fetchActiveUsers()
-      } catch (error: any) {
-        throw error
-      }
+      const { $api } = useNuxtApp()
+      await apiFetch($api.userSessionsForceLogout(sessionId), {
+        method: 'POST',
+        credentials: 'include',
+        skip403Redirect: true,
+      })
+      await this.fetchActiveUsers()
     },
 
     async cleanupExpiredSessions() {
-      try {
-        const { $api } = useNuxtApp()
-
-        await apiFetch($api.userSessionsCleanupExpired(), {
-          method: 'POST',
-          credentials: 'include',
-          skip403Redirect: true,
-        })
-
-        // Refresh data setelah cleanup
-        await this.fetchActiveUsers()
-      } catch (error: any) {
-        throw error
-      }
-    }
+      const { $api } = useNuxtApp()
+      await apiFetch($api.userSessionsCleanupExpired(), {
+        method: 'POST',
+        credentials: 'include',
+        skip403Redirect: true,
+      })
+      await this.fetchActiveUsers()
+    },
   },
 })
+
+/** Module-level in-flight guard — survive across multiple component mounts. */
+let inFlightFetch: Promise<void> | null = null

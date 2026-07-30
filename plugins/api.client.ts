@@ -34,6 +34,40 @@ export default defineNuxtPlugin(() => {
     // Dashboard
     associations: () => `${apiBase}/associations`,
 
+    // Dashboard Framework (Layout + Widget Engine)
+    dashboards      : () => `${apiBase}/dashboards`,
+    dashboardShow   : (code: string) => `${apiBase}/dashboards/${code}`,
+    dashboardPreferences: (code: string) => `${apiBase}/dashboards/${code}/preferences`,
+    dashboardStore  : () => `${apiBase}/dashboards`,
+    dashboardUpdate : (id: number | string) => `${apiBase}/dashboards/${id}`,
+    dashboardDelete : (id: number | string) => `${apiBase}/dashboards/${id}`,
+    dashboardWidgets      : () => `${apiBase}/admin/dashboard-widgets`,
+    dashboardWidgetStore  : () => `${apiBase}/admin/dashboard-widgets`,
+    dashboardWidgetUpdate : (id: number | string) => `${apiBase}/admin/dashboard-widgets/${id}`,
+    dashboardWidgetDelete : (id: number | string) => `${apiBase}/admin/dashboard-widgets/${id}`,
+
+    // Dashboard Framework — Fase 3 (versioning + admin layout builder)
+    dashboardShowAdmin        : (id: number | string) => `${apiBase}/admin/dashboards/${id}`,
+    dashboardLayouts          : (dashboardId: number | string) => `${apiBase}/admin/dashboards/${dashboardId}/layouts`,
+    dashboardLayoutCreate     : (dashboardId: number | string) => `${apiBase}/admin/dashboards/${dashboardId}/layouts`,
+    dashboardLayoutDetail     : (dashboardId: number | string, layoutId: number | string) => `${apiBase}/admin/dashboards/${dashboardId}/layouts/${layoutId}`,
+    dashboardLayoutUpdate     : (dashboardId: number | string, layoutId: number | string) => `${apiBase}/admin/dashboards/${dashboardId}/layouts/${layoutId}`,
+    dashboardLayoutDelete     : (dashboardId: number | string, layoutId: number | string) => `${apiBase}/admin/dashboards/${dashboardId}/layouts/${layoutId}`,
+    dashboardLayoutUpdateWidgets: (dashboardId: number | string, layoutId: number | string) => `${apiBase}/admin/dashboards/${dashboardId}/layouts/${layoutId}/widgets`,
+    dashboardLayoutPublish    : (dashboardId: number | string, layoutId: number | string) => `${apiBase}/admin/dashboards/${dashboardId}/layouts/${layoutId}/publish`,
+    dashboardLayoutArchive    : (dashboardId: number | string, layoutId: number | string) => `${apiBase}/admin/dashboards/${dashboardId}/layouts/${layoutId}/archive`,
+
+    // Widget & Dashboard Analytics
+    dashboardEvents          : (code: string) => `${apiBase}/dashboards/${code}/events`,
+    dashboardAnalyticsOverview: () => `${apiBase}/admin/dashboards-analytics/overview`,
+    dashboardAnalyticsShow    : (id: number | string) => `${apiBase}/admin/dashboards/${id}/analytics`,
+    dashboardWidgetAnalyticsShow: (id: number | string) => `${apiBase}/admin/dashboard-widgets/${id}/analytics`,
+
+    // Personal dashboard (Main + Settings)
+    myDashboard              : () => `${apiBase}/my-dashboard`,
+    myDashboardWidgetCatalog : () => `${apiBase}/my-dashboard/widget-catalog`,
+    myDashboardUpdateWidgets : () => `${apiBase}/my-dashboard/widgets`,
+
     // Roles & Permissions
     roles             : () => `${apiBase}/roles`,
     roleStore         : () => `${apiBase}/roles/store`,
@@ -233,6 +267,7 @@ export default defineNuxtPlugin(() => {
     financeDashboard: () => `${apiBase}/finance/dashboard`,
     financeCashFlow: () => `${apiBase}/finance/cash-flow`,
     financeTaxReport: () => `${apiBase}/finance/tax-report`,
+    financeRevenue: () => `${apiBase}/finance/revenue`,
 
     // Finance Invoices (billing perangkat aktif — Finance module)
     financeInvoices             : () => `${apiBase}/finance/invoices`,
@@ -617,7 +652,8 @@ export default defineNuxtPlugin(() => {
     systemStats: () => `${apiBase}/system-stats`,
 
     // Activity logs
-    activityLogsFeed: (limit = 15) => `${apiBase}/activity-logs/feed?limit=${limit}`,
+    activityLogsFeed: (limit = 15, page = 1) =>
+      `${apiBase}/activity-logs/feed?limit=${limit}&page=${page}`,
     activityLogs: () => `${apiBase}/activity-logs`,
   };
 
