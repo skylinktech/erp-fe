@@ -3,6 +3,7 @@ const props = defineProps<{
   purchaseOrderId: string | number
 }>()
 
+// https://github.com/skylinktech/skylink-api/blob/main/src/main/java/com/skylinktech/core/purchase/service/ThreeWayMatchService.java
 type MatchLine = {
   productId: number
   poQty: number
