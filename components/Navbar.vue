@@ -102,9 +102,9 @@
                         <div class="dropdown-divider"></div>
                     </li>
                     <li>
-                        <a class="dropdown-item" href="javascript:void(0);" @click="showProfileToast">
+                        <NuxtLink class="dropdown-item" to="/account/profile" @click="isAvatarDropdownOpen = false">
                         <i class="ri-user-3-line ri-22px me-3"></i><span class="align-middle">My Profile</span>
-                        </a>
+                        </NuxtLink>
                     </li>
                     <li>
                         <div class="d-grid px-4 pt-2 pb-1">
@@ -647,15 +647,6 @@
 
     const toggleSidebar = () => {
         layoutStore.toggleSidebar();
-    }
-
-    const showProfileToast = () => {
-        const toast = useToast();
-        toast.info({
-            title: 'Info',
-            message: 'Fitur My Profile akan segera tersedia. Ditunggu ya!',
-            color: 'blue'
-        });
     }
 
     const handleLogout = async () => {

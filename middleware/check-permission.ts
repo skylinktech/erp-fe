@@ -61,6 +61,10 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       '/finance/bank-recon': 'view_bank_recon',
       '/finance/credit-notes': 'view_credit_note',
       '/finance/journals': 'view_journal',
+      '/service-management/customer-service': 'view_service_instance',
+      '/service-management/pending': 'view_service_instance',
+      '/service-management/events': 'view_service_instance',
+      '/service-management/monitoring': 'view_service_instance',
       '/hrd/pegawai': 'view_pegawai',
       '/hrd/departemen': 'view_departemen',
       '/hrd/divisi': 'view_divisi',
@@ -136,6 +140,8 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
         requiredPermission = 'view_credit_note'
       } else if (/^\/finance\/journals/.test(to.path)) {
         requiredPermission = 'view_journal'
+      } else if (/^\/service-management(\/.*)?$/.test(to.path)) {
+        requiredPermission = 'view_service_instance'
       } else if (/^\/operations\/request-activation\/form(\/.*)?$/.test(to.path)) {
         requiredPermission = 'access_request_activation'
       } else if (/^\/operations\/request-activation\/detail\/.+$/.test(to.path)) {

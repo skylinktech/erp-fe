@@ -2,7 +2,23 @@
   <div class="content-wrapper">
     <div class="container-xxl flex-grow-1 container-pt-12">
       <h4 class="mb-1">Payment Request</h4>
-      <p class="mb-6">Pengajuan dana ke Direktur Utama berdasarkan Purchase Order, Material Request Form, atau Advanced Request Form.</p>
+      <p class="mb-4">Modul pengajuan dana — Project, Operational, dan Reimbursement dalam satu halaman.</p>
+
+      <ul v-if="visibleTabs.length" class="nav nav-tabs mb-4" role="tablist">
+        <li class="nav-item" v-for="tab in visibleTabs" :key="tab.value">
+          <button
+            type="button"
+            class="nav-link"
+            :class="{ active: activeRequestType === tab.value }"
+            @click="switchRequestType(tab.value)"
+          >
+            {{ tab.label }}
+          </button>
+        </li>
+      </ul>
+      <div v-else class="alert alert-warning mb-4">
+        Anda tidak memiliki permission untuk melihat tab Payment Request manapun.
+      </div>
 
       <div class="row g-6 mb-6">
         <div class="col-xl-3 col-lg-6 col-md-6">
@@ -72,7 +88,7 @@
               />
             </FilterField>
           </div>
-          <div class="col-md-4">
+          <div v-if="activeRequestType === 'project'" class="col-md-4">
             <FilterField>
               <label class="form-label">Sumber</label>
               <CustomSelect2
@@ -123,8 +139,8 @@
           </div>
           <div class="d-flex align-items-center gap-2">
             <button
-              v-if="userHasRole('superadmin') || userHasPermission('create_payment_request')"
-              @click="navigateTo('/finance/payment-request/form')"
+              v-if="canCreateCurrentType"
+              @click="goCreate"
               class="btn btn-primary"
             >
               <i class="ri-add-line me-1"></i>Tambah
@@ -183,11 +199,19 @@
                 {{ formatListDate(slotProps.data.dueDate || slotProps.data.due_date) }}
               </template>
             </Column>
-            <Column field="sourceType" header="Sumber" :sortable="true">
+            <Column field="sourceType" header="Tipe / Sumber" :sortable="true">
               <template #body="slotProps">
                 <div class="small">
-                  <div>{{ getSourceTypeLabel(slotProps.data.sourceType || slotProps.data.source_type) }}</div>
-                  <div class="text-muted">{{ slotProps.data.sourceNumber || slotProps.data.source_number || '—' }}</div>
+                  <div class="fw-medium">
+                    {{ getRequestTypeLabel(slotProps.data.requestType || slotProps.data.request_type) }}
+                  </div>
+                  <div v-if="(slotProps.data.requestType || slotProps.data.request_type || 'project') === 'project'" class="text-muted">
+                    {{ getSourceTypeLabel(slotProps.data.sourceType || slotProps.data.source_type) }}
+                    · {{ slotProps.data.sourceNumber || slotProps.data.source_number || '—' }}
+                  </div>
+                  <div v-else class="text-muted">
+                    {{ getPaymentMethodLabel(slotProps.data.paymentMethod || slotProps.data.payment_method) }}
+                  </div>
                 </div>
               </template>
             </Column>
@@ -249,6 +273,9 @@ import {
   usePaymentRequestStore,
   getPaymentRequestNo,
   getSourceTypeLabel,
+  getRequestTypeLabel,
+  getPaymentMethodLabel,
+  type PaymentRequestRequestType,
 } from '~/stores/payment-request'
 import { usePermissions } from '~/composables/usePermissions'
 import MyDataTable from '~/components/table/MyDataTable.vue'
@@ -262,15 +289,46 @@ import InputText from 'primevue/inputtext'
 import { useDebounceFn } from '@vueuse/core'
 import Swal from 'sweetalert2'
 import { usePaymentRequestApproval } from '~/composables/usePaymentRequestApproval'
+import { usePaymentRequestTabPermissions } from '~/composables/usePaymentRequestTabPermissions'
 
 const paymentRequestStore = usePaymentRequestStore()
 const { userHasPermission, userHasRole } = usePermissions()
 const { canApprovePaymentRequest, canRejectPaymentRequest } = usePaymentRequestApproval()
+const {
+  visibleTabs,
+  defaultRequestType,
+  canCreateType,
+  canEditType,
+  canDeleteType,
+  canAccessTab,
+  resolveAllowedType,
+} = usePaymentRequestTabPermissions()
 const formatRupiah = useFormatRupiah()
 const { paymentRequests, loading, totalRecords, params, statistics } = storeToRefs(paymentRequestStore)
 const tableControls = ref({ rows: 10 })
 const filters = ref({ status: null as string | null, priority: null as string | null, sourceType: null as string | null })
 const exportingCsv = ref(false)
+
+const activeRequestType = computed(
+  () =>
+    (params.value.requestType && canAccessTab(params.value.requestType as PaymentRequestRequestType)
+      ? params.value.requestType
+      : defaultRequestType.value) as PaymentRequestRequestType
+)
+
+function switchRequestType(type: PaymentRequestRequestType) {
+  if (!canAccessTab(type)) return
+  paymentRequestStore.setRequestType(type)
+}
+
+function goCreate() {
+  navigateTo({
+    path: '/finance/payment-request/form',
+    query: { type: activeRequestType.value },
+  })
+}
+
+const canCreateCurrentType = computed(() => canCreateType(activeRequestType.value))
 
 function formatListDate(val: unknown) {
   if (!val) return '—'
@@ -325,7 +383,8 @@ const actionMenuItems = computed(() => {
   const row = activeRow.value
   if (!row) return []
   const items = []
-  const canEdit = userHasRole('superadmin') || userHasPermission('edit_payment_request')
+  const rowType = (row.requestType || row.request_type || 'project') as PaymentRequestRequestType
+  const canEdit = canEditType(rowType)
   const isEditable = row.status === 'draft' || row.status === 'rejected'
 
   if (canEdit && isEditable) {
@@ -364,10 +423,7 @@ const actionMenuItems = computed(() => {
     icon: 'ri ri-printer-line',
     command: () => navigateTo({ path: '/finance/cetak-payment-request', query: { id: row.id } }),
   })
-  if (
-    userHasRole('superadmin') ||
-    (row.status === 'draft' && userHasPermission('delete_payment_request'))
-  ) {
+  if (row.status === 'draft' && canDeleteType(rowType)) {
     items.push({
       label: 'Hapus',
       icon: 'ri ri-delete-bin-7-line',
@@ -611,6 +667,11 @@ async function exportCSV() {
 }
 
 onMounted(() => {
+  const allowed = resolveAllowedType(paymentRequestStore.params.requestType)
+  if (!allowed) {
+    return
+  }
+  paymentRequestStore.params.requestType = allowed
   paymentRequestStore.fetchPaymentRequests()
   paymentRequestStore.fetchStatistics()
 })

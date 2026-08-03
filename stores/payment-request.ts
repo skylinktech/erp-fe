@@ -7,6 +7,10 @@ import type { ApprovalLogEntry } from '~/types/approval'
 
 export type PaymentRequestSourceType = 'purchase_order' | 'material_request' | 'arf'
 
+export type PaymentRequestRequestType = 'project' | 'operational' | 'reimbursement'
+
+export type PaymentRequestPaymentMethod = 'advance' | 'reimbursement'
+
 export type PaymentRequestItemType = 'source' | 'other'
 
 export interface PaymentRequestItemForm {
@@ -52,6 +56,18 @@ export interface PaymentRequest {
   id: string
   prqNumber?: string
   prq_number?: string
+  requestType?: PaymentRequestRequestType
+  request_type?: PaymentRequestRequestType
+  paymentMethod?: PaymentRequestPaymentMethod | null
+  payment_method?: PaymentRequestPaymentMethod | null
+  projectId?: string | null
+  project_id?: string | null
+  customerId?: number | null
+  customer_id?: number | null
+  employeeId?: number | null
+  employee_id?: number | null
+  settlementStatus?: string | null
+  settlement_status?: string | null
   requestDate?: string
   request_date?: string
   sourceType?: PaymentRequestSourceType
@@ -99,6 +115,10 @@ export interface PaymentRequest {
   updatedAt: string
   paymentRequestItems?: PaymentRequestItemForm[]
   payment_request_items?: PaymentRequestItemForm[]
+  settlements?: any[]
+  project?: { id: string; projectCode?: string; project_code?: string; name?: string }
+  customer?: { id: number; name?: string }
+  employee?: { id_pegawai?: number; nm_pegawai?: string }
   requestedByUser?: { id: number; full_name?: string; fullName?: string; email?: string }
   createdByUser?: { id: number; full_name?: string; fullName?: string; email?: string }
   approvedByUser?: { id: number; full_name?: string; fullName?: string; roles?: Array<{ name?: string }> }
@@ -129,11 +149,17 @@ interface PaymentRequestState {
     status?: string | null
     priority?: string | null
     sourceType?: PaymentRequestSourceType | null
+    requestType?: PaymentRequestRequestType | null
     departmentId?: number | null
   }
   form: {
     id?: string | null
     status?: string
+    requestType: PaymentRequestRequestType
+    paymentMethod: PaymentRequestPaymentMethod | null
+    projectId: string | null
+    customerId: number | null
+    employeeId: number | null
     requestDate: string
     sourceType: PaymentRequestSourceType | null
     sourceId: string | null
@@ -330,6 +356,29 @@ export function getSourceTypeLabel(type?: string | null) {
   }
 }
 
+export function getRequestTypeLabel(type?: string | null) {
+  switch (type) {
+    case 'operational':
+      return 'Operational Request'
+    case 'reimbursement':
+      return 'Reimbursement'
+    case 'project':
+    default:
+      return 'Project Request'
+  }
+}
+
+export function getPaymentMethodLabel(method?: string | null) {
+  switch (method) {
+    case 'advance':
+      return 'Advance'
+    case 'reimbursement':
+      return 'Reimbursement'
+    default:
+      return method || '—'
+  }
+}
+
 export const usePaymentRequestStore = defineStore('paymentRequest', {
   state: (): PaymentRequestState => ({
     paymentRequests: [],
@@ -348,9 +397,15 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
       status: null,
       priority: null,
       sourceType: null,
+      requestType: 'project',
       departmentId: null,
     },
     form: {
+      requestType: 'project',
+      paymentMethod: null,
+      projectId: null,
+      customerId: null,
+      employeeId: null,
       requestDate: todayIso(),
       sourceType: null,
       sourceId: null,
@@ -427,12 +482,31 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
         submit: (id: string) => $api.paymentRequestsSubmit(id),
         approve: (id: string) => $api.paymentRequestsApprove(id),
         reject: (id: string) => $api.paymentRequestsReject(id),
+        settlements: (id: string) => $api.paymentRequestsSettlements(id),
+        settlementSubmit: (id: string, settlementId: string) =>
+          $api.paymentRequestsSettlementSubmit(id, settlementId),
+        settlementApprove: (id: string, settlementId: string) =>
+          $api.paymentRequestsSettlementApprove(id, settlementId),
+        settlementReject: (id: string, settlementId: string) =>
+          $api.paymentRequestsSettlementReject(id, settlementId),
+        settlementSettle: (id: string, settlementId: string) =>
+          $api.paymentRequestsSettlementSettle(id, settlementId),
       }
     },
 
-    resetForm() {
+    resetForm(requestType: PaymentRequestRequestType = 'project') {
       this.isEditMode = false
       this.form = {
+        requestType,
+        paymentMethod:
+          requestType === 'reimbursement'
+            ? 'reimbursement'
+            : requestType === 'operational'
+              ? 'advance'
+              : null,
+        projectId: null,
+        customerId: null,
+        employeeId: null,
         requestDate: todayIso(),
         sourceType: null,
         sourceId: null,
@@ -464,9 +538,15 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
       const { sourceItems, otherCharges } = partitionItemsFromApi(allItems)
       const taxes = getPaymentRequestTaxes(data)
       const applyTax = !!(data.applyTax ?? data.apply_tax) || taxes.length > 0
+      const requestType = (data.requestType || data.request_type || 'project') as PaymentRequestRequestType
       this.form = {
         id: data.id,
         status: data.status,
+        requestType,
+        paymentMethod: (data.paymentMethod || data.payment_method || null) as PaymentRequestPaymentMethod | null,
+        projectId: data.projectId || data.project_id || null,
+        customerId: data.customerId ?? data.customer_id ?? null,
+        employeeId: data.employeeId ?? data.employee_id ?? null,
         requestDate: String(data.requestDate || data.request_date || todayIso()).slice(0, 10),
         sourceType: (data.sourceType || data.source_type || null) as PaymentRequestSourceType | null,
         sourceId: data.sourceId || data.source_id || null,
@@ -487,8 +567,8 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
         taxMasterIds: taxes.map((t) => t.taxMasterId).filter(Boolean),
         currency: data.currency || 'IDR',
         notes: data.notes || '',
-        paymentRequestItems: sourceItems,
-        otherCharges,
+        paymentRequestItems: sourceItems.length ? sourceItems : otherCharges.length ? otherCharges.map((c) => ({ ...c, itemType: 'source' as const })) : [],
+        otherCharges: sourceItems.length ? otherCharges : [],
       }
     },
 
@@ -548,6 +628,7 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
         if (this.params.status) sp.append('status', this.params.status)
         if (this.params.priority) sp.append('priority', this.params.priority)
         if (this.params.sourceType) sp.append('sourceType', this.params.sourceType)
+        if (this.params.requestType) sp.append('requestType', this.params.requestType)
         if (this.params.departmentId) sp.append('departmentId', String(this.params.departmentId))
         url.search = sp.toString()
 
@@ -589,6 +670,7 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
       if (this.params.status) sp.append('status', this.params.status)
       if (this.params.priority) sp.append('priority', this.params.priority)
       if (this.params.sourceType) sp.append('sourceType', this.params.sourceType)
+      if (this.params.requestType) sp.append('requestType', this.params.requestType)
       if (this.params.departmentId) sp.append('departmentId', String(this.params.departmentId))
       url.search = sp.toString()
 
@@ -727,12 +809,26 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
       this.saving = true
       const api = this.apiEndpoints()
       const userStore = useUserStore()
+      const requestType = this.form.requestType || 'project'
+      const isProject = requestType === 'project'
 
-      if (!this.form.sourceType || !this.form.sourceId) {
+      if (isProject && (!this.form.sourceType || !this.form.sourceId)) {
         this.saving = false
         toast.error({
           title: 'Validasi',
           message: 'Sumber dokumen (PO / MRF / ARF) wajib dipilih',
+          color: 'red',
+          position: 'topRight',
+          layout: 2,
+        })
+        return false
+      }
+
+      if (requestType === 'operational' && !this.form.paymentMethod) {
+        this.saving = false
+        toast.error({
+          title: 'Validasi',
+          message: 'Pilih metode: Advance atau Reimbursement',
           color: 'red',
           position: 'topRight',
           layout: 2,
@@ -746,16 +842,20 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
       const validOtherCharges = (this.form.otherCharges || []).filter(
         (d) => d.description?.trim() && (Number(d.qty) || 0) > 0
       )
-      if (!validItems.length) {
-        this.saving = false
-        toast.error({
-          title: 'Validasi',
-          message: 'Minimal 1 item sumber dengan deskripsi dan qty valid',
-          color: 'red',
-          position: 'topRight',
-          layout: 2,
-        })
-        return false
+      if (!validItems.length && !(isProject === false && validOtherCharges.length)) {
+        if (!validItems.length) {
+          this.saving = false
+          toast.error({
+            title: 'Validasi',
+            message: isProject
+              ? 'Minimal 1 item sumber dengan deskripsi dan qty valid'
+              : 'Minimal 1 item pengajuan dengan deskripsi dan qty valid',
+            color: 'red',
+            position: 'topRight',
+            layout: 2,
+          })
+          return false
+        }
       }
 
       if (this.form.applyTax && !(this.form.taxMasterIds || []).length) {
@@ -778,7 +878,7 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
           subtotal: Number(d.subtotal) || 0,
           remarks: d.remarks?.trim() || null,
           sortOrder: d.sortOrder ?? idx,
-          itemType: 'source' as const,
+          itemType: (isProject ? 'source' : 'source') as const,
         })),
         ...validOtherCharges.map((d, idx) => ({
           description: d.description.trim(),
@@ -791,10 +891,28 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
         })),
       ]
 
+      if (!mergedItems.length) {
+        this.saving = false
+        toast.error({
+          title: 'Validasi',
+          message: 'Minimal 1 item wajib diisi',
+          color: 'red',
+          position: 'topRight',
+          layout: 2,
+        })
+        return false
+      }
+
       const body: Record<string, any> = {
+        requestType,
+        paymentMethod:
+          requestType === 'reimbursement'
+            ? 'reimbursement'
+            : this.form.paymentMethod,
+        projectId: this.form.projectId || null,
+        customerId: this.form.customerId,
+        employeeId: this.form.employeeId,
         requestDate: this.form.requestDate || todayIso(),
-        sourceType: this.form.sourceType,
-        sourceId: this.form.sourceId,
         departmentId: this.form.departmentId,
         vendorId: this.form.vendorId,
         payeeName: this.form.payeeName?.trim() || null,
@@ -813,6 +931,11 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
         notes: this.form.notes?.trim() || null,
         createdBy: this.isEditMode ? undefined : (userStore.user?.id ?? null),
         paymentRequestItems: mergedItems,
+      }
+
+      if (isProject) {
+        body.sourceType = this.form.sourceType
+        body.sourceId = this.form.sourceId
       }
 
       const isEdit = this.isEditMode && this.form.id
@@ -990,7 +1113,11 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
     async fetchStatistics() {
       const api = this.apiEndpoints()
       try {
-        const res = await fetch(api.statistics(), {
+        const url = new URL(api.statistics())
+        if (this.params.requestType) {
+          url.searchParams.set('requestType', this.params.requestType)
+        }
+        const res = await fetch(String(url), {
           method: 'GET',
           headers: { Accept: 'application/json' },
           credentials: 'include',
@@ -1021,20 +1148,106 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
       this.fetchPaymentRequests()
     },
 
+    setRequestType(type: PaymentRequestRequestType) {
+      this.params.requestType = type
+      this.params.first = 0
+      this.fetchPaymentRequests()
+      this.fetchStatistics()
+    },
+
     setFilters(f: {
       status?: string | null
       priority?: string | null
       sourceType?: PaymentRequestSourceType | null
+      requestType?: PaymentRequestRequestType | null
       departmentId?: number | null
       search?: string
     }) {
       if (f.status !== undefined) this.params.status = f.status
       if (f.priority !== undefined) this.params.priority = f.priority
       if (f.sourceType !== undefined) this.params.sourceType = f.sourceType
+      if (f.requestType !== undefined) this.params.requestType = f.requestType
       if (f.departmentId !== undefined) this.params.departmentId = f.departmentId
       if (f.search !== undefined) this.params.search = f.search
       this.params.first = 0
       this.fetchPaymentRequests()
+    },
+
+    async createSettlement(paymentRequestId: string, payload: {
+      notes?: string | null
+      returnedAmount?: number
+      items: Array<{
+        category?: string | null
+        description: string
+        amount: number
+        receiptAttachment?: string | null
+        expenseDate?: string | null
+      }>
+    }) {
+      const api = this.apiEndpoints()
+      const res = await fetch(api.settlements(paymentRequestId), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(payload),
+      })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(json.message || 'Gagal membuat settlement')
+      return json.data
+    },
+
+    async submitSettlement(paymentRequestId: string, settlementId: string) {
+      const api = this.apiEndpoints()
+      const res = await fetch(api.settlementSubmit(paymentRequestId, settlementId), {
+        method: 'PATCH',
+        headers: { Accept: 'application/json' },
+        credentials: 'include',
+      })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(json.message || 'Gagal submit settlement')
+      return json.data
+    },
+
+    async approveSettlement(paymentRequestId: string, settlementId: string) {
+      const api = this.apiEndpoints()
+      const res = await fetch(api.settlementApprove(paymentRequestId, settlementId), {
+        method: 'PATCH',
+        headers: { Accept: 'application/json' },
+        credentials: 'include',
+      })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(json.message || 'Gagal approve settlement')
+      return json.data
+    },
+
+    async rejectSettlement(paymentRequestId: string, settlementId: string, reason: string) {
+      const api = this.apiEndpoints()
+      const res = await fetch(api.settlementReject(paymentRequestId, settlementId), {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ rejection_reason: reason }),
+      })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(json.message || 'Gagal reject settlement')
+      return json.data
+    },
+
+    async settleSettlement(
+      paymentRequestId: string,
+      settlementId: string,
+      returnedAmount?: number
+    ) {
+      const api = this.apiEndpoints()
+      const res = await fetch(api.settlementSettle(paymentRequestId, settlementId), {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ returnedAmount }),
+      })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(json.message || 'Gagal settle')
+      return json.data
     },
   },
 })

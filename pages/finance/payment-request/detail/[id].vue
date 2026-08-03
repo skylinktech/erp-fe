@@ -36,13 +36,13 @@
                 </button>
                 <div class="dropdown-menu">
                   <a
-                    v-if="paymentRequest.status === 'draft' || paymentRequest.status === 'rejected'"
+                    v-if="canEdit"
                     class="dropdown-item"
                     href="javascript:void(0)"
                     @click="onSubmit"
                   >
                     <i class="ri-send-plane-line me-2"></i>
-                    {{ paymentRequest.status === 'rejected' ? 'Submit Revisi' : 'Submit ke Direktur Utama' }}
+                    {{ paymentRequest.status === 'rejected' ? 'Submit Revisi' : 'Submit ke Approval' }}
                   </a>
                   <a
                     v-if="canApprove"
@@ -69,7 +69,7 @@
                     <i class="ri-bank-card-line me-2"></i> Buat AP Payment
                   </a>
                   <a
-                    v-if="paymentRequest.status === 'draft' || paymentRequest.status === 'rejected'"
+                    v-if="canEdit"
                     class="dropdown-item"
                     href="javascript:void(0)"
                     @click="navigateTo('/finance/payment-request/form/' + paymentRequest.id)"
@@ -105,6 +105,14 @@
                 <hr class="mx-5 my-0" style="border-width: 2px;">
                 <div class="card-body px-5 pt-4 pb-5">
                   <div class="row g-2">
+                    <div class="col-md-6">
+                      <label class="form-label text-muted">Tipe Request</label>
+                      <p class="mb-0 fw-medium">{{ getRequestTypeLabel(paymentRequest.requestType || paymentRequest.request_type) }}</p>
+                    </div>
+                    <div v-if="(paymentRequest.paymentMethod || paymentRequest.payment_method)" class="col-md-6">
+                      <label class="form-label text-muted">Metode</label>
+                      <p class="mb-0">{{ getPaymentMethodLabel(paymentRequest.paymentMethod || paymentRequest.payment_method) }}</p>
+                    </div>
                     <div class="col-md-6">
                       <label class="form-label text-muted">No. PRQ</label>
                       <p class="mb-0 fw-medium">{{ getPaymentRequestNo(paymentRequest) || '—' }}</p>
@@ -385,6 +393,15 @@
                 </div>
               </div>
 
+              <PaymentRequestSettlementPanel
+                v-if="showSettlementPanel"
+                :payment-request-id="paymentRequest.id"
+                :advance-amount="Number(paymentRequest.totalAmount) || 0"
+                :settlement-status="paymentRequest.settlementStatus || paymentRequest.settlement_status"
+                :settlements="paymentRequest.settlements || []"
+                @refreshed="loadDetail"
+              />
+
               <ApprovalCard
                 :status-text="getStatusText(paymentRequest)"
                 :current-step="approvalStepDisplay"
@@ -478,16 +495,21 @@ import {
   getPaymentRequestSourceItems,
   getPaymentRequestOtherCharges,
   getSourceTypeLabel,
+  getRequestTypeLabel,
+  getPaymentMethodLabel,
 } from '~/stores/payment-request'
 import { useApprovalStatus } from '~/composables/useApprovalStatus'
 import { usePaymentRequestApproval } from '~/composables/usePaymentRequestApproval'
 import { usePermissions } from '~/composables/usePermissions'
 import ApprovalCard from '~/components/ApprovalCard.vue'
+import PaymentRequestSettlementPanel from '~/components/payment-request/PaymentRequestSettlementPanel.vue'
+import { usePaymentRequestTabPermissions } from '~/composables/usePaymentRequestTabPermissions'
 
 const route = useRoute()
 const paymentRequestStore = usePaymentRequestStore()
 const { canApprovePaymentRequest, canRejectPaymentRequest } = usePaymentRequestApproval()
 const { userHasRole, userHasPermission } = usePermissions()
+const { canEditType, canDeleteType, canAccessTab } = usePaymentRequestTabPermissions()
 const formatRupiah = useFormatRupiah()
 const { paymentRequest, loading, error } = storeToRefs(paymentRequestStore)
 const { getStatusBadge, getStatusText, getApprovalStepJabatan } = useApprovalStatus()
@@ -497,6 +519,26 @@ const showApproveModal = ref(false)
 const showRejectModal = ref(false)
 const approveRemarks = ref('')
 const rejectRemarks = ref('')
+
+const rowRequestType = computed(() => {
+  const row = paymentRequest.value
+  return (row?.requestType || row?.request_type || 'project') as
+    | 'project'
+    | 'operational'
+    | 'reimbursement'
+})
+
+const showSettlementPanel = computed(() => {
+  const row = paymentRequest.value
+  if (!row) return false
+  const method = row.paymentMethod || row.payment_method
+  const status = row.settlementStatus || row.settlement_status
+  return method === 'advance' && status && status !== 'not_required'
+})
+
+async function loadDetail() {
+  if (id.value) await paymentRequestStore.getPaymentRequestDetails(id.value)
+}
 
 const approvalStepDisplay = computed(() => {
   const row = paymentRequest.value
@@ -508,10 +550,12 @@ const canApprove = computed(() => canApprovePaymentRequest(paymentRequest.value)
 const canReject = computed(() => canRejectPaymentRequest(paymentRequest.value))
 const canDelete = computed(() => {
   if (!paymentRequest.value) return false
-  if (userHasRole('superadmin')) return true
-  return (
-    paymentRequest.value.status === 'draft' && userHasPermission('delete_payment_request')
-  )
+  return paymentRequest.value.status === 'draft' && canDeleteType(rowRequestType.value)
+})
+const canEdit = computed(() => {
+  if (!paymentRequest.value) return false
+  const status = paymentRequest.value.status
+  return (status === 'draft' || status === 'rejected') && canEditType(rowRequestType.value)
 })
 const canCreateApPayment = computed(() => {
   if (!paymentRequest.value) return false

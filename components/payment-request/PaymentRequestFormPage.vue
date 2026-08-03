@@ -64,6 +64,14 @@
                   <div class="tab-content pt-4">
                     <div id="prq-tab-info" class="tab-pane fade show active">
                       <div class="row mb-3">
+                        <label class="col-sm-3 col-form-label">Tipe Request</label>
+                        <div class="col-sm-9">
+                          <input type="text" class="form-control" :value="requestTypeLabel" disabled />
+                        </div>
+                      </div>
+
+                      <template v-if="isProjectType">
+                      <div class="row mb-3">
                         <label class="col-sm-3 col-form-label">Sumber Dokumen <span class="text-danger">*</span></label>
                         <div class="col-sm-9">
                           <CustomSelect2
@@ -108,6 +116,43 @@
                           </div>
                         </div>
                       </div>
+                      </template>
+
+                      <template v-else>
+                      <div v-if="isOperationalType" class="row mb-3">
+                        <label class="col-sm-3 col-form-label">Metode <span class="text-danger">*</span></label>
+                        <div class="col-sm-9">
+                          <CustomSelect2
+                            v-model="form.paymentMethod"
+                            :options="paymentMethodOptions"
+                            :get-option-label="(o) => o.label"
+                            :reduce="(o) => o.value"
+                            searchable
+                            clearable
+                            placeholder="Advance / Reimbursement"
+                          />
+                        </div>
+                      </div>
+                      <div class="row mb-3">
+                        <label class="col-sm-3 col-form-label">Project ID</label>
+                        <div class="col-sm-9">
+                          <input v-model="form.projectId" type="text" class="form-control" placeholder="UUID project (opsional)" />
+                        </div>
+                      </div>
+                      <div class="row mb-3">
+                        <label class="col-sm-3 col-form-label">Employee ID</label>
+                        <div class="col-sm-9">
+                          <input v-model.number="form.employeeId" type="number" class="form-control" placeholder="ID pegawai" />
+                        </div>
+                      </div>
+                      <div class="row mb-3">
+                        <label class="col-sm-3 col-form-label">Customer ID</label>
+                        <div class="col-sm-9">
+                          <input v-model.number="form.customerId" type="number" class="form-control" placeholder="ID customer (opsional)" />
+                        </div>
+                      </div>
+                      </template>
+
                       <div class="row mb-3">
                         <label class="col-sm-3 col-form-label">Tanggal Request</label>
                         <div class="col-sm-9">
@@ -559,9 +604,12 @@ import { storeToRefs } from 'pinia'
 import {
   usePaymentRequestStore,
   getSourceTypeLabel,
+  getRequestTypeLabel,
   type PaymentRequestSourceType,
   type PaymentRequestSourceOption,
+  type PaymentRequestRequestType,
 } from '~/stores/payment-request'
+import { usePaymentRequestTabPermissions } from '~/composables/usePaymentRequestTabPermissions'
 import { useTaxMasterStore } from '~/stores/tax-masters'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
 import FormPageSidebar from '~/components/form/FormPageSidebar.vue'
@@ -581,6 +629,13 @@ const sourceOptions = ref<PaymentRequestSourceOption[]>([])
 const taxMasterOptions = ref<any[]>([])
 const departemens = ref<any[]>([])
 
+const isProjectType = computed(() => (form.value.requestType || 'project') === 'project')
+const isOperationalType = computed(() => form.value.requestType === 'operational')
+const requestTypeLabel = computed(() => getRequestTypeLabel(form.value.requestType))
+const paymentMethodOptions = [
+  { label: 'Advance', value: 'advance' },
+  { label: 'Reimbursement', value: 'reimbursement' },
+]
 const moduleNav = FINANCE_MODULE_NAV
 const itemsSubtotal = computed(() => paymentRequestStore.formItemsSubtotal)
 const otherChargesSubtotal = computed(() => paymentRequestStore.formOtherChargesSubtotal)
@@ -627,11 +682,17 @@ const taxAmount = computed(() =>
 )
 const grandTotal = computed(() => dppAmount.value + taxAmount.value)
 
-const pageTitle = computed(() => (isEditMode.value ? 'Edit Payment Request' : 'Tambah Payment Request'))
-const pageSubtitle = computed(() =>
+const pageTitle = computed(() =>
   isEditMode.value
-    ? 'Perbarui pengajuan dana sebelum di-submit ke Direktur Utama.'
-    : 'Buat pengajuan dana dari PO, MRF, atau ARF untuk persetujuan Direktur Utama.'
+    ? `Edit ${requestTypeLabel.value}`
+    : `Tambah ${requestTypeLabel.value}`
+)
+const pageSubtitle = computed(() =>
+  isProjectType.value
+    ? 'Pengajuan dana project dari PO / MRF / ARF'
+    : isOperationalType.value
+      ? 'Pengajuan dana operasional (Advance / Reimbursement)'
+      : 'Pengajuan reimbursement karyawan'
 )
 
 const sourceTypeOptions = [
@@ -821,11 +882,23 @@ async function handleSubmit() {
 }
 
 onMounted(async () => {
-  paymentRequestStore.resetForm()
+  const { resolveAllowedType } = usePaymentRequestTabPermissions()
+  const queryType = String(route.query.type || '')
+  const allowed = resolveAllowedType(queryType)
+  if (!allowed) {
+    navigateTo('/finance/payment-request')
+    return
+  }
+  paymentRequestStore.resetForm(allowed)
   await loadMasterData()
   const id = route.params.id ? String(route.params.id) : ''
   if (id) {
     await paymentRequestStore.fetchPaymentRequestForEdit(id)
+    const editType = (form.value.requestType || 'project') as PaymentRequestRequestType
+    if (!resolveAllowedType(editType)) {
+      navigateTo('/finance/payment-request')
+      return
+    }
     if (form.value.sourceType) await loadSources()
   } else if (!form.value.paymentRequestItems.length) {
     paymentRequestStore.addItem()

@@ -743,7 +743,12 @@ export const useFinanceInvoiceStore = defineStore('financeInvoice', {
       }
     },
 
-    async approveInvoice(id: string, remarks = '', skipConfirm = false) {
+    async approveInvoice(
+      id: string,
+      remarks = '',
+      skipConfirm = false,
+      ttdDigital = true
+    ) {
       const { $api } = useNuxtApp()
       if (!skipConfirm) {
         const confirm = await Swal.fire({
@@ -762,7 +767,7 @@ export const useFinanceInvoiceStore = defineStore('financeInvoice', {
           method: 'PATCH',
           headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
           credentials: 'include',
-          body: JSON.stringify({ remarks }),
+          body: JSON.stringify({ remarks, ttdDigital: !!ttdDigital }),
         })
         const result = await response.json().catch(() => ({}))
         if (!response.ok) throw new Error(result.message || `HTTP ${response.status}`)

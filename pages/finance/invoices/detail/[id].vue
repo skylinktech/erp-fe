@@ -588,7 +588,9 @@ const canReject = computed(() => {
 
 const showSignatureSection = computed(() => {
   if (!invoice.value) return false
-  return invoice.value.documentStatus === 'approved' || invoice.value.documentStatus === 'pending_approval'
+  const status = invoice.value.documentStatus
+  const statusOk = status === 'approved' || status === 'pending_approval'
+  return statusOk && !!invoice.value.ttdDigital
 })
 
 const groupedInvoiceItems = computed(() =>
@@ -717,19 +719,19 @@ const onSubmit = async () => {
 
 const onApprove = async () => {
   if (!invoice.value) return
-  const result = await Swal.fire({
-    title: 'Approve Invoice',
-    input: 'textarea',
-    inputLabel: 'Catatan (opsional)',
-    inputPlaceholder: 'Tulis catatan approval jika diperlukan...',
-    showCancelButton: true,
-    confirmButtonText: 'Approve',
-    cancelButtonText: 'Batal',
+  const { promptFinanceInvoiceApprove } = await import('~/composables/useFinanceInvoiceApproveDialog')
+  const choice = await promptFinanceInvoiceApprove({
+    ttdDigital: invoice.value.ttdDigital !== false,
   })
-  if (!result.isConfirmed) return
+  if (!choice) return
   submitting.value = true
   try {
-    const ok = await store.approveInvoice(invoice.value.id, result.value || '', true)
+    const ok = await store.approveInvoice(
+      invoice.value.id,
+      choice.remarks,
+      true,
+      choice.ttdDigital
+    )
     if (ok) refreshAfterAction()
   } finally {
     submitting.value = false

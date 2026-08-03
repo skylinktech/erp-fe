@@ -21,12 +21,22 @@ export function usePaymentRequestApproval() {
     })
   }
 
+  function hasApprovePermission(row: PaymentRequest): boolean {
+    const type = row.requestType || row.request_type || 'project'
+    if (userHasRole('superadmin')) return true
+    if (userHasPermission('approve_payment_request')) return true
+    if (type === 'operational' && userHasPermission('approve_operational_payment_request')) return true
+    if (type === 'reimbursement' && userHasPermission('approve_reimbursement_payment_request')) {
+      return true
+    }
+    return false
+  }
+
   function canApprovePaymentRequest(row: PaymentRequest | null | undefined): boolean {
     if (!row || row.status !== 'pending') return false
     if (userStore.user?.id == null) return false
 
-    const privileged =
-      userHasRole('superadmin') || userHasPermission('approve_payment_request')
+    const privileged = hasApprovePermission(row)
 
     if (privileged) {
       const approvers = getApprovers(row)
@@ -42,9 +52,7 @@ export function usePaymentRequestApproval() {
     if (userStore.user?.id == null) return false
 
     const privileged =
-      userHasRole('superadmin') ||
-      userHasPermission('reject_payment_request') ||
-      userHasPermission('approve_payment_request')
+      hasApprovePermission(row) || userHasPermission('reject_payment_request')
 
     if (privileged) {
       const approvers = getApprovers(row)

@@ -354,13 +354,6 @@
                     :legacy-signature-token="invoice.signatureToken || undefined"
                   />
                 </div>
-                <div v-else-if="invoice.ttdDigital" class="mb-2">
-                  <img
-                    :src="publicPath('/img/branding/Ttd Digital-2.png')"
-                    alt="TTD Digital"
-                    style="height: 120px; object-fit: contain;"
-                  >
-                </div>
                 <div v-else style="height: 80px;"></div>
                 <p v-if="!showSignatureSection" class="fw-bold mb-0">Finance</p>
               </div>
@@ -402,14 +395,6 @@ const { selectedInvoice: invoice, loadingDetail, error } = storeToRefs(store)
 const formatRupiah = useFormatRupiah()
 const { setDetailTitle } = useDynamicTitle()
 const { getCompanyLogo, handleImageError } = useImageUrl()
-const config = useRuntimeConfig()
-
-const publicPath = (p) => {
-  if (!p) return p
-  if (p.startsWith('http')) return p
-  const base = config?.app?.baseURL || '/'
-  return `${base.replace(/\/$/, '')}/${p.replace(/^\//, '')}`
-}
 
 const invoiceId = computed(() => String(route.query.id || ''))
 
@@ -462,10 +447,12 @@ const adjustmentItems = computed(() => groupedInvoiceItems.value.adjustment)
 const taxItems = computed(() => groupedInvoiceItems.value.tax)
 const otherItems = computed(() => groupedInvoiceItems.value.other)
 
+/** QR/TTD digital hanya tampil jika status approval + flag ttdDigital aktif. */
 const showSignatureSection = computed(() => {
   if (!invoice.value) return false
   const status = invoice.value.documentStatus
-  return status === 'approved' || status === 'pending_approval'
+  const statusOk = status === 'approved' || status === 'pending_approval'
+  return statusOk && !!invoice.value.ttdDigital
 })
 
 /** Subtotal sebelum pajak (item non-tax). */

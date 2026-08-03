@@ -138,6 +138,19 @@
                       </p>
                     </div>
                     <div class="col-md-6">
+                      <label class="form-label text-muted">Service Instance</label>
+                      <p class="mb-0">
+                        <NuxtLink
+                          v-if="requestActivation.serviceInstanceId || requestActivation.service_instance_id"
+                          :to="`/service-management/${requestActivation.serviceInstanceId || requestActivation.service_instance_id}`"
+                          class="text-primary"
+                        >
+                          {{ requestActivation.serviceInstanceId || requestActivation.service_instance_id }}
+                        </NuxtLink>
+                        <span v-else class="text-muted">— (di-link saat Complete)</span>
+                      </p>
+                    </div>
+                    <div class="col-md-6">
                       <label class="form-label text-muted">Subscription (linked)</label>
                       <p class="mb-0">
                         <NuxtLink

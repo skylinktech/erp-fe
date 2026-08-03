@@ -15,6 +15,7 @@ export default defineNuxtPlugin(() => {
     register    : () => `${authBase}/register`,
     logout      : () => `${authBase}/logout`,
     me          : () => `${authBase}/me`,
+    meProfile   : () => `${authBase}/me/profile`,
     refreshToken: () => `${authBase}/refresh-token`,
     
     // SSO Auth (direct to SSO server)
@@ -298,6 +299,22 @@ export default defineNuxtPlugin(() => {
     documentTimeline            : (entityType: string, entityId: string | number) =>
       `${apiBase}/documents/${entityType}/${entityId}/timeline`,
 
+    // Service Management — Service Instances
+    serviceInstances            : () => `${apiBase}/service-instances`,
+    serviceInstancesShow        : (id: string) => `${apiBase}/service-instances/${id}`,
+    serviceInstancesEvents      : (id: string) => `${apiBase}/service-instances/${id}/events`,
+    serviceInstancesGlobalEvents: () => `${apiBase}/service-instances/events`,
+    serviceInstancesDashboard   : () => `${apiBase}/service-instances/dashboard/summary`,
+    serviceInstancesMonitoring  : () => `${apiBase}/service-instances/monitoring`,
+    serviceInstancesActivate    : (id: string) => `${apiBase}/service-instances/${id}/activate`,
+    serviceInstancesSuspend     : (id: string) => `${apiBase}/service-instances/${id}/suspend`,
+    serviceInstancesResume      : (id: string) => `${apiBase}/service-instances/${id}/resume`,
+    serviceInstancesTerminate   : (id: string) => `${apiBase}/service-instances/${id}/terminate`,
+    serviceInstancesArchive     : (id: string) => `${apiBase}/service-instances/${id}/archive`,
+    customerServiceInstances    : (customerId: string | number) =>
+      `${apiBase}/customers/${customerId}/service-instances`,
+    serviceManagementRules      : () => `${apiBase}/service-management/rules`,
+
     // Billing Adjustments
     billingAdjustments          : () => `${apiBase}/finance/billing-adjustments`,
     billingAdjustmentsStatistics: () => `${apiBase}/finance/billing-adjustments/statistics`,
@@ -331,6 +348,17 @@ export default defineNuxtPlugin(() => {
     paymentRequestsSubmit       : (id: string) => `${apiBase}/finance/payment-requests/${id}/submit`,
     paymentRequestsApprove      : (id: string) => `${apiBase}/finance/payment-requests/${id}/approve`,
     paymentRequestsReject       : (id: string) => `${apiBase}/finance/payment-requests/${id}/reject`,
+    paymentRequestsSettlements  : (id: string) => `${apiBase}/finance/payment-requests/${id}/settlements`,
+    paymentRequestsSettlementUpdate: (id: string, settlementId: string) =>
+      `${apiBase}/finance/payment-requests/${id}/settlements/${settlementId}`,
+    paymentRequestsSettlementSubmit: (id: string, settlementId: string) =>
+      `${apiBase}/finance/payment-requests/${id}/settlements/${settlementId}/submit`,
+    paymentRequestsSettlementApprove: (id: string, settlementId: string) =>
+      `${apiBase}/finance/payment-requests/${id}/settlements/${settlementId}/approve`,
+    paymentRequestsSettlementReject: (id: string, settlementId: string) =>
+      `${apiBase}/finance/payment-requests/${id}/settlements/${settlementId}/reject`,
+    paymentRequestsSettlementSettle: (id: string, settlementId: string) =>
+      `${apiBase}/finance/payment-requests/${id}/settlements/${settlementId}/settle`,
 
     // Bank Accounts
     bankAccounts: () => `${apiBase}/accounting/bank-accounts`,

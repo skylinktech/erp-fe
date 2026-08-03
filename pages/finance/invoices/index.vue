@@ -1144,17 +1144,12 @@ const submitInvoice = async (invoice) => {
 }
 
 const approveInvoice = async (invoice) => {
-    const result = await Swal.fire({
-        title: 'Approve Invoice',
-        input: 'textarea',
-        inputLabel: 'Catatan (opsional)',
-        inputPlaceholder: 'Tulis catatan approval jika diperlukan...',
-        showCancelButton: true,
-        confirmButtonText: 'Approve',
-        cancelButtonText: 'Batal',
+    const { promptFinanceInvoiceApprove } = await import('~/composables/useFinanceInvoiceApproveDialog')
+    const choice = await promptFinanceInvoiceApprove({
+        ttdDigital: invoice?.ttdDigital !== false,
     })
-    if (!result.isConfirmed) return
-    const ok = await store.approveInvoice(invoice.id, result.value || '', true)
+    if (!choice) return
+    const ok = await store.approveInvoice(invoice.id, choice.remarks, true, choice.ttdDigital)
     if (ok) await store.fetchInvoices()
 }
 
