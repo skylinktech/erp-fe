@@ -154,10 +154,16 @@
                                 <Column field="phone" header="Phone Customer" :sortable="true"></Column>
                                 <Column header="Actions" :exportable="false" style="min-width:8rem">
                                     <template #body="slotProps">
-                                        <div class="d-inline-block">
-                                            <a href="javascript:;" class="btn btn-sm btn-text-secondary rounded-pill btn-icon dropdown-toggle hide-arrow" data-bs-toggle="dropdown"><i class="ri-more-2-fill"></i>
+                                        <div class="d-inline-block dropdown">
+                                            <a
+                                                href="javascript:;"
+                                                class="btn btn-sm btn-text-secondary rounded-pill btn-icon dropdown-toggle hide-arrow"
+                                                data-bs-toggle="dropdown"
+                                                data-bs-popper-config='{"strategy":"fixed"}'
+                                            >
+                                                <i class="ri-more-2-fill"></i>
                                             </a>
-                                            <ul class="dropdown-menu">
+                                            <ul class="dropdown-menu dropdown-menu-end customer-actions-dropdown">
                                                 <li v-if="userHasRole('superadmin') || userHasPermission('view_customer')">
                                                     <a class="dropdown-item" href="javascript:void(0)" @click="openCustomerDetails(slotProps.data.id)">
                                                         <i class="ri-eye-line me-2"></i> Lihat Detail
@@ -472,6 +478,11 @@ definePageMeta({
 </script>
 
 <style scoped>
+/* Dropdown aksi: fixed strategy agar tidak ter-clip overflow datatable */
+:deep(.customer-actions-dropdown) {
+  z-index: 1100 !important;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .card-body {
