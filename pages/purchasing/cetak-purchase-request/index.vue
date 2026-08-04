@@ -135,6 +135,8 @@ const route = useRoute()
 
 const { purchaseRequest, loading, error } = storeToRefs(purchaseRequestStore)
 
+useRegisterCetakDraftStatus(() => purchaseRequest.value?.status)
+
 const perusahaan = computed(() => {
   const list = perusahaanStore.perusahaans
   if (list && list.length > 0) return list[0]

@@ -58,7 +58,7 @@
                   <a v-if="canEditSiteInvest(siteInvest)" class="dropdown-item" href="javascript:void(0)" @click="navigateTo('/sales/site-investment/form/' + siteInvest.id)">
                     <i class="ri-edit-box-line me-2"></i> Edit
                   </a>
-                  <a v-if="siteInvest.status === 'approved'" class="dropdown-item" href="javascript:void(0)" @click="onPrintSI">
+                  <a class="dropdown-item" href="javascript:void(0)" @click="onPrintSI">
                     <i class="ri-printer-line me-2"></i> Print SI
                   </a>
                   <a class="dropdown-item text-danger" href="javascript:void(0)" @click="handleDelete">

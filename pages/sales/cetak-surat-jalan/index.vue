@@ -209,6 +209,8 @@
 
   const { suratJalan, loading, error } = storeToRefs(suratJalanStore);
 
+  useRegisterCetakDraftStatus(() => suratJalan.value?.status)
+
   // ✅ Computed key untuk force re-render saat route berubah (hanya untuk halaman ini)
   const routeKey = computed(() => `surat-jalan-${route.query.id || 'new'}`);
 

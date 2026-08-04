@@ -36,24 +36,56 @@
                 <form @submit.prevent="handleSubmit">
                   <ul class="nav nav-tabs mb-0" role="tablist">
                     <li class="nav-item">
-                      <button class="nav-link active" type="button" data-bs-toggle="tab" data-bs-target="#prq-tab-info">
+                      <button
+                        class="nav-link"
+                        :class="{ active: activeTab === 'info' }"
+                        type="button"
+                        @click="activeTab = 'info'"
+                      >
                         <i class="ri-information-line me-1"></i>Informasi
                       </button>
                     </li>
                     <li class="nav-item">
-                      <button class="nav-link" type="button" data-bs-toggle="tab" data-bs-target="#prq-tab-payee">
+                      <button
+                        class="nav-link"
+                        :class="{ active: activeTab === 'payee' }"
+                        type="button"
+                        @click="activeTab = 'payee'"
+                      >
                         <i class="ri-bank-line me-1"></i>Penerima
                       </button>
                     </li>
                     <li class="nav-item">
-                      <button class="nav-link" type="button" data-bs-toggle="tab" data-bs-target="#prq-tab-items">
+                      <button
+                        class="nav-link"
+                        :class="{ active: activeTab === 'items' }"
+                        type="button"
+                        @click="activeTab = 'items'"
+                      >
                         <i class="ri-list-check-2 me-1"></i>
                         Item
                         <span v-if="itemCount" class="badge bg-primary ms-1">{{ itemCount }}</span>
                       </button>
                     </li>
+                    <li v-if="showEmployeesTab" class="nav-item">
+                      <button
+                        class="nav-link"
+                        :class="{ active: activeTab === 'employees' }"
+                        type="button"
+                        @click="activeTab = 'employees'"
+                      >
+                        <i class="ri-user-line me-1"></i>
+                        Pegawai
+                        <span v-if="employeeCount" class="badge bg-info ms-1">{{ employeeCount }}</span>
+                      </button>
+                    </li>
                     <li class="nav-item">
-                      <button class="nav-link" type="button" data-bs-toggle="tab" data-bs-target="#prq-tab-other">
+                      <button
+                        class="nav-link"
+                        :class="{ active: activeTab === 'other' }"
+                        type="button"
+                        @click="activeTab = 'other'"
+                      >
                         <i class="ri-truck-line me-1"></i>
                         Biaya lainnya
                         <span v-if="otherChargeCount" class="badge bg-secondary ms-1">{{ otherChargeCount }}</span>
@@ -62,7 +94,7 @@
                   </ul>
 
                   <div class="tab-content pt-4">
-                    <div id="prq-tab-info" class="tab-pane fade show active">
+                    <div v-show="activeTab === 'info'" class="tab-pane-vue">
                       <div class="row mb-3">
                         <label class="col-sm-3 col-form-label">Tipe Request</label>
                         <div class="col-sm-9">
@@ -134,21 +166,63 @@
                         </div>
                       </div>
                       <div class="row mb-3">
-                        <label class="col-sm-3 col-form-label">Project ID</label>
+                        <label class="col-sm-3 col-form-label">Layanan Aktif</label>
                         <div class="col-sm-9">
-                          <input v-model="form.projectId" type="text" class="form-control" placeholder="UUID project (opsional)" />
+                          <CustomSelect2
+                            v-model="form.serviceInstanceId"
+                            :options="serviceInstanceOptions"
+                            :get-option-label="(o) => o.label"
+                            :reduce="(o) => o.id"
+                            :loading="loadingServiceInstances"
+                            searchable
+                            clearable
+                            placeholder="Cari layanan aktif (Customer Service)"
+                            no-options-text="Tidak ada layanan active"
+                            @search="onServiceInstanceSearch"
+                            @update:model-value="onServiceInstanceSelected"
+                          />
+                          <small class="text-muted">
+                            Hanya Service Instance berstatus <strong>active</strong>. Customer terisi otomatis.
+                          </small>
+                          <div v-if="selectedServiceInstanceMeta" class="small mt-1 text-body">
+                            Customer: <strong>{{ selectedServiceInstanceMeta.customerName || '—' }}</strong>
+                            <span v-if="selectedServiceInstanceMeta.locationName" class="text-muted">
+                              · {{ selectedServiceInstanceMeta.locationName }}
+                            </span>
+                          </div>
                         </div>
                       </div>
                       <div class="row mb-3">
-                        <label class="col-sm-3 col-form-label">Employee ID</label>
+                        <label class="col-sm-3 col-form-label">Estimasi Durasi</label>
                         <div class="col-sm-9">
-                          <input v-model.number="form.employeeId" type="number" class="form-control" placeholder="ID pegawai" />
-                        </div>
-                      </div>
-                      <div class="row mb-3">
-                        <label class="col-sm-3 col-form-label">Customer ID</label>
-                        <div class="col-sm-9">
-                          <input v-model.number="form.customerId" type="number" class="form-control" placeholder="ID customer (opsional)" />
+                          <div class="row g-2">
+                            <div class="col-sm-5">
+                              <input
+                                v-model="form.estimatedStartDate"
+                                type="date"
+                                class="form-control"
+                                @change="paymentRequestStore.syncEstimatedDuration()"
+                              />
+                              <small class="text-muted">Mulai</small>
+                            </div>
+                            <div class="col-sm-5">
+                              <input
+                                v-model="form.estimatedEndDate"
+                                type="date"
+                                class="form-control"
+                                @change="paymentRequestStore.syncEstimatedDuration()"
+                              />
+                              <small class="text-muted">Selesai</small>
+                            </div>
+                            <div class="col-sm-2 d-flex align-items-start">
+                              <span class="badge bg-label-primary mt-2 w-100 text-wrap">
+                                {{ durationLabel }}
+                              </span>
+                            </div>
+                          </div>
+                          <small class="text-muted d-block mt-1">
+                            Jumlah hari dihitung otomatis saat rentang tanggal diisi (inklusif).
+                          </small>
                         </div>
                       </div>
                       </template>
@@ -313,9 +387,38 @@
                           <textarea v-model="form.notes" class="form-control" rows="2" placeholder="Catatan tambahan"></textarea>
                         </div>
                       </div>
+                      <div class="row mb-3">
+                        <label class="col-sm-3 col-form-label">Attachment</label>
+                        <div class="col-sm-9">
+                          <input
+                            type="file"
+                            class="form-control"
+                            accept=".pdf,.xlsx,.xls,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp,.svg,.csv"
+                            @change="onAttachmentChange"
+                          />
+                          <div v-if="attachmentPreviewUrl" class="mt-2">
+                            <a
+                              :href="attachmentPreviewUrl"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              class="d-inline-flex align-items-center gap-1"
+                            >
+                              <i :class="getFileIcon(attachmentPreviewUrl)"></i>
+                              Lihat attachment
+                            </a>
+                            <img
+                              v-if="isImageFile(attachmentPreviewUrl)"
+                              :src="attachmentPreviewUrl"
+                              alt="Preview attachment"
+                              class="d-block mt-2 rounded border"
+                              style="height: 60px; max-width: 120px; object-fit: contain"
+                            />
+                          </div>
+                        </div>
+                      </div>
                     </div>
 
-                    <div id="prq-tab-payee" class="tab-pane fade">
+                    <div v-show="activeTab === 'payee'" class="tab-pane-vue">
                       <div class="row mb-3">
                         <label class="col-sm-3 col-form-label">Nama Penerima</label>
                         <div class="col-sm-9">
@@ -342,10 +445,10 @@
                       </div>
                     </div>
 
-                    <div id="prq-tab-items" class="tab-pane fade">
+                    <div v-show="activeTab === 'items'" class="tab-pane-vue">
                       <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
                         <p class="mb-0 text-muted small">
-                          Item pengajuan dana. Bisa dimuat otomatis dari dokumen sumber.
+                          Item pengajuan dana (opsional). Bisa dimuat otomatis dari dokumen sumber.
                         </p>
                         <button type="button" class="btn btn-sm btn-primary" @click="paymentRequestStore.addItem()">
                           <i class="ri-add-line me-1"></i>Tambah Item
@@ -354,7 +457,7 @@
 
                       <div v-if="!form.paymentRequestItems.length" class="text-center py-5 border rounded text-muted">
                         <i class="ri-inbox-line fs-3 d-block mb-2"></i>
-                        Belum ada item. Muat dari sumber atau klik <strong>Tambah Item</strong>.
+                        Belum ada item (opsional). Muat dari sumber atau klik <strong>Tambah Item</strong>.
                       </div>
 
                       <div v-else class="table-responsive border rounded">
@@ -374,7 +477,7 @@
                             <tr v-for="(item, index) in form.paymentRequestItems" :key="index">
                               <td>{{ index + 1 }}</td>
                               <td>
-                                <input v-model="item.description" type="text" class="form-control form-control-sm" required />
+                                <input v-model="item.description" type="text" class="form-control form-control-sm" placeholder="Deskripsi item (opsional)" />
                               </td>
                               <td>
                                 <input
@@ -422,6 +525,10 @@
                             <span class="text-muted">Biaya lainnya</span>
                             <span class="fw-medium text-end">{{ formatRupiah(otherChargesSubtotal) }}</span>
                           </div>
+                          <div v-if="employeeSalarySubtotal > 0" class="d-flex justify-content-between gap-4 py-1">
+                            <span class="text-muted">Gaji pegawai</span>
+                            <span class="fw-medium text-end">{{ formatRupiah(employeeSalarySubtotal) }}</span>
+                          </div>
                           <div class="d-flex justify-content-between gap-4 py-1">
                             <span class="text-muted">
                               Diskon
@@ -467,7 +574,86 @@
                       </div>
                     </div>
 
-                    <div id="prq-tab-other" class="tab-pane fade">
+                    <div v-if="showEmployeesTab" v-show="activeTab === 'employees'" class="tab-pane-vue">
+                      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+                        <p class="mb-0 text-muted small">
+                          Daftar pegawai yang terlibat pada pengajuan ini (opsional), termasuk nominal gaji harian.
+                        </p>
+                        <button type="button" class="btn btn-sm btn-primary" @click="paymentRequestStore.addEmployee()">
+                          <i class="ri-add-line me-1"></i>Tambah Pegawai
+                        </button>
+                      </div>
+
+                      <div v-if="!form.employees.length" class="text-center py-5 border rounded text-muted">
+                        <i class="ri-user-line fs-3 d-block mb-2"></i>
+                        Belum ada pegawai (opsional). Klik <strong>Tambah Pegawai</strong> bila perlu.
+                      </div>
+
+                      <div v-else class="d-flex flex-column gap-3">
+                        <div
+                          v-for="(row, index) in form.employees"
+                          :key="`emp-${index}`"
+                          class="border rounded p-3"
+                        >
+                          <div class="d-flex justify-content-between align-items-center mb-2">
+                            <strong class="small text-muted">Pegawai #{{ index + 1 }}</strong>
+                          </div>
+
+                          <div class="mb-3">
+                            <label class="form-label mb-1">Pegawai</label>
+                            <CustomSelect2
+                              v-model="row.employeeId"
+                              :options="pegawaiOptions"
+                              :get-option-label="pegawaiLabel"
+                              :reduce="(o) => Number(o.id_pegawai)"
+                              searchable
+                              clearable
+                              append-to-body
+                              placeholder="Pilih pegawai"
+                              no-options-text="Tidak ada data pegawai"
+                            />
+                          </div>
+
+                          <div class="row g-2 align-items-end">
+                            <div class="col-md-4">
+                              <label class="form-label mb-1">Nominal Gaji</label>
+                              <div class="input-group">
+                                <input
+                                  :value="formatRupiah(row.salaryAmount || 0)"
+                                  type="text"
+                                  inputmode="numeric"
+                                  class="form-control"
+                                  placeholder="Rp 0"
+                                  @input="onEmployeeSalaryInput(index, $event)"
+                                />
+                                <span class="input-group-text">/hari</span>
+                              </div>
+                            </div>
+                            <div class="col-md-6">
+                              <label class="form-label mb-1">Catatan</label>
+                              <input
+                                v-model="row.notes"
+                                type="text"
+                                class="form-control"
+                                placeholder="Catatan (opsional)"
+                              />
+                            </div>
+                            <div class="col-md-2 d-flex justify-content-md-end">
+                              <button
+                                type="button"
+                                class="btn btn-outline-danger w-100"
+                                title="Hapus pegawai"
+                                @click="paymentRequestStore.removeEmployee(index)"
+                              >
+                                <i class="ri-delete-bin-line me-1"></i>Hapus
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div v-show="activeTab === 'other'" class="tab-pane-vue">
                       <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
                         <p class="mb-0 text-muted small">
                           Biaya di luar dokumen sumber (ongkir, transportasi, materai, dll). Tidak terhapus saat muat ulang sumber.
@@ -605,32 +791,46 @@ import {
   usePaymentRequestStore,
   getSourceTypeLabel,
   getRequestTypeLabel,
+  formatDurationDaysLabel,
+  calcEstimatedDurationDays,
   type PaymentRequestSourceType,
   type PaymentRequestSourceOption,
   type PaymentRequestRequestType,
+  type ActiveServiceInstanceOption,
 } from '~/stores/payment-request'
 import { usePaymentRequestTabPermissions } from '~/composables/usePaymentRequestTabPermissions'
 import { useTaxMasterStore } from '~/stores/tax-masters'
+import { parseRupiahToNumber } from '~/composables/formatRupiah'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
 import FormPageSidebar from '~/components/form/FormPageSidebar.vue'
 import { FINANCE_MODULE_NAV } from '~/constants/finance/formNav'
 import type { FormPageSummaryRow } from '~/types/form-page'
+import { apiFetch } from '~/utils/apiFetch'
+import { useImageUrl } from '~/composables/useImageUrl'
 
 const route = useRoute()
 const paymentRequestStore = usePaymentRequestStore()
 const taxMasterStore = useTaxMasterStore()
 const formatRupiah = useFormatRupiah()
+const { getAttachmentUrl, getFileIcon, isImageFile } = useImageUrl()
 
 const { form, isEditMode, loading, saving } = storeToRefs(paymentRequestStore)
 const formReady = ref(false)
+const activeTab = ref<'info' | 'payee' | 'items' | 'employees' | 'other'>('info')
 const loadingSource = ref(false)
 const loadingTaxes = ref(false)
+const loadingServiceInstances = ref(false)
 const sourceOptions = ref<PaymentRequestSourceOption[]>([])
+const serviceInstanceOptions = ref<ActiveServiceInstanceOption[]>([])
 const taxMasterOptions = ref<any[]>([])
 const departemens = ref<any[]>([])
+const pegawaiOptions = ref<any[]>([])
 
 const isProjectType = computed(() => (form.value.requestType || 'project') === 'project')
 const isOperationalType = computed(() => form.value.requestType === 'operational')
+const showEmployeesTab = computed(
+  () => form.value.requestType === 'operational' || form.value.requestType === 'reimbursement'
+)
 const requestTypeLabel = computed(() => getRequestTypeLabel(form.value.requestType))
 const paymentMethodOptions = [
   { label: 'Advance', value: 'advance' },
@@ -639,10 +839,31 @@ const paymentMethodOptions = [
 const moduleNav = FINANCE_MODULE_NAV
 const itemsSubtotal = computed(() => paymentRequestStore.formItemsSubtotal)
 const otherChargesSubtotal = computed(() => paymentRequestStore.formOtherChargesSubtotal)
+const employeeSalarySubtotal = computed(() => paymentRequestStore.formEmployeeSalarySubtotal)
 const discountAmount = computed(() => paymentRequestStore.formDiscountAmount)
 const dppAmount = computed(() => paymentRequestStore.formDpp)
 const itemCount = computed(() => form.value?.paymentRequestItems?.length ?? 0)
 const otherChargeCount = computed(() => form.value?.otherCharges?.length ?? 0)
+const employeeCount = computed(
+  () => (form.value?.employees || []).filter((e) => e.employeeId != null).length
+)
+const attachmentPreviewUrl = computed(() => {
+  const preview = form.value.attachmentPreview
+  if (!preview) return null
+  if (preview.startsWith('blob:')) return preview
+  return getAttachmentUrl(preview)
+})
+const durationLabel = computed(() => {
+  const days =
+    form.value.estimatedDurationDays ??
+    calcEstimatedDurationDays(form.value.estimatedStartDate, form.value.estimatedEndDate)
+  return formatDurationDaysLabel(days)
+})
+const selectedServiceInstanceMeta = computed(() => {
+  const id = form.value.serviceInstanceId
+  if (!id) return null
+  return serviceInstanceOptions.value.find((o) => String(o.id) === String(id)) || null
+})
 
 const selectedTaxPreviews = computed(() => {
   const ids = new Set(form.value.taxMasterIds || [])
@@ -728,10 +949,25 @@ function findDepartemenName(id: number | null | undefined): string {
 
 const summaryRows = computed<FormPageSummaryRow[]>(() => {
   const f = form.value
-  return [
+  const rows: FormPageSummaryRow[] = [
     { label: 'Mode', value: isEditMode.value ? 'Edit' : 'Baru' },
-    { label: 'Sumber', value: getSourceTypeLabel(f.sourceType) },
-    { label: 'No. Dokumen', value: f.sourceNumber || '—' },
+  ]
+  if (isProjectType.value) {
+    rows.push(
+      { label: 'Sumber', value: getSourceTypeLabel(f.sourceType) },
+      { label: 'No. Dokumen', value: f.sourceNumber || '—' }
+    )
+  } else {
+    rows.push(
+      {
+        label: 'Layanan',
+        value: selectedServiceInstanceMeta.value?.serviceNumber || f.serviceInstanceId || '—',
+      },
+      { label: 'Estimasi', value: durationLabel.value },
+      { label: 'Pegawai', value: employeeCount.value ? String(employeeCount.value) : '—' }
+    )
+  }
+  rows.push(
     { label: 'Tgl request', value: formatDateId(f.requestDate) },
     { label: 'Dibutuhkan', value: formatDateId(f.neededDate) },
     { label: 'Jatuh tempo', value: formatDateId(f.dueDate) },
@@ -743,6 +979,10 @@ const summaryRows = computed<FormPageSummaryRow[]>(() => {
     {
       label: 'Biaya lainnya (Rp)',
       value: otherChargesSubtotal.value > 0 ? formatRupiah(otherChargesSubtotal.value) : '—',
+    },
+    {
+      label: 'Gaji pegawai',
+      value: employeeSalarySubtotal.value > 0 ? formatRupiah(employeeSalarySubtotal.value) : '—',
     },
     {
       label: 'Diskon',
@@ -761,9 +1001,95 @@ const summaryRows = computed<FormPageSummaryRow[]>(() => {
           ? `${f.taxPercent}% (${formatRupiah(taxAmount.value)})`
           : '—',
     },
-    { label: 'Total', value: formatRupiah(grandTotal.value) },
-  ]
+    { label: 'Total', value: formatRupiah(grandTotal.value) }
+  )
+  return rows
 })
+
+function pegawaiLabel(o: any) {
+  if (!o) return ''
+  return o.nm_pegawai || o.nmPegawai || `#${o.id_pegawai}`
+}
+
+function mapServiceInstanceOption(raw: any): ActiveServiceInstanceOption {
+  const id = String(raw.id)
+  const serviceNumber = raw.serviceNumber || raw.service_number || ''
+  const serviceName = raw.serviceName || raw.service_name || ''
+  const customer = raw.customer || {}
+  const customerName = customer.name || ''
+  const locationName = raw.locationName || raw.location_name || ''
+  const label = [serviceNumber, serviceName, customerName].filter(Boolean).join(' — ')
+  return {
+    id,
+    label: label || id,
+    serviceNumber,
+    serviceName,
+    customerId: Number(raw.customerId ?? raw.customer_id ?? customer.id) || null,
+    customerName,
+    locationName,
+    status: raw.status,
+  }
+}
+
+async function loadServiceInstances(search = '') {
+  loadingServiceInstances.value = true
+  const { $api } = useNuxtApp()
+  try {
+    const params = new URLSearchParams({
+      status: 'active',
+      limit: '30',
+      page: '1',
+    })
+    if (search?.trim()) params.set('search', search.trim())
+    const res = await fetch(`${$api.serviceInstances()}?${params.toString()}`, {
+      headers: { Accept: 'application/json' },
+      credentials: 'include',
+    })
+    const json = await res.json()
+    const rows = Array.isArray(json?.data) ? json.data : Array.isArray(json) ? json : []
+    serviceInstanceOptions.value = rows.map(mapServiceInstanceOption)
+  } catch {
+    serviceInstanceOptions.value = []
+  } finally {
+    loadingServiceInstances.value = false
+  }
+}
+
+function onServiceInstanceSearch(query: string) {
+  if (!query || query.length >= 1) loadServiceInstances(query || '')
+}
+
+function onServiceInstanceSelected(id: string | null) {
+  if (!id) {
+    form.value.customerId = null
+    return
+  }
+  const opt = serviceInstanceOptions.value.find((o) => String(o.id) === String(id))
+  if (opt?.customerId) form.value.customerId = opt.customerId
+}
+
+async function loadPegawaiOptions() {
+  const { $api } = useNuxtApp()
+  try {
+    // Pakai apiFetch agar Bearer/CSRF ikut (raw fetch sering 401 → dropdown kosong)
+    const res = await apiFetch($api.dataPegawai(), { skip403Redirect: true })
+    const rows = Array.isArray(res)
+      ? res
+      : Array.isArray(res?.data)
+        ? res.data
+        : Array.isArray(res?.data?.data)
+          ? res.data.data
+          : []
+    pegawaiOptions.value = rows
+      .map((p: any) => ({
+        id_pegawai: Number(p.id_pegawai ?? p.idPegawai ?? p.id) || null,
+        nm_pegawai: p.nm_pegawai ?? p.nmPegawai ?? p.name ?? '',
+      }))
+      .filter((p: any) => p.id_pegawai)
+  } catch {
+    pegawaiOptions.value = []
+  }
+}
 
 function onAmountInput(index: number, e: Event) {
   const raw = (e.target as HTMLInputElement).value.replace(/[^\d]/g, '')
@@ -774,6 +1100,12 @@ function onAmountInput(index: number, e: Event) {
   }
 }
 
+function onEmployeeSalaryInput(index: number, e: Event) {
+  const raw = (e.target as HTMLInputElement).value
+  const row = form.value.employees[index]
+  if (row) row.salaryAmount = parseRupiahToNumber(raw)
+}
+
 function onOtherAmountInput(index: number, e: Event) {
   const raw = (e.target as HTMLInputElement).value.replace(/[^\d]/g, '')
   const row = form.value.otherCharges[index]
@@ -781,6 +1113,18 @@ function onOtherAmountInput(index: number, e: Event) {
     row.unitAmount = Number(raw) || 0
     paymentRequestStore.updateOtherChargeAmount(index)
   }
+}
+
+function onAttachmentChange(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) {
+    form.value.attachment = null
+    form.value.attachmentPreview = null
+    return
+  }
+  form.value.attachment = file
+  form.value.attachmentPreview = URL.createObjectURL(file)
 }
 
 async function loadSources(search = '') {
@@ -850,6 +1194,33 @@ watch(
   }
 )
 
+watch(
+  () => form.value.serviceInstanceId,
+  (id) => {
+    if (!id) {
+      form.value.customerId = null
+      return
+    }
+    const opt = serviceInstanceOptions.value.find((o) => String(o.id) === String(id))
+    if (opt?.customerId) form.value.customerId = opt.customerId
+  }
+)
+
+watch(
+  () => [form.value.estimatedStartDate, form.value.estimatedEndDate],
+  () => paymentRequestStore.syncEstimatedDuration()
+)
+
+watch(activeTab, async (tab) => {
+  if (tab === 'employees' && showEmployeesTab.value && !pegawaiOptions.value.length) {
+    await loadPegawaiOptions()
+  }
+})
+
+watch(showEmployeesTab, (show) => {
+  if (!show && activeTab.value === 'employees') activeTab.value = 'info'
+})
+
 async function loadTaxMasters() {
   loadingTaxes.value = true
   try {
@@ -873,7 +1244,11 @@ async function loadMasterData() {
   } catch {
     departemens.value = []
   }
-  await loadTaxMasters()
+  await Promise.all([
+    loadTaxMasters(),
+    showEmployeesTab.value ? loadPegawaiOptions() : Promise.resolve(),
+    !isProjectType.value ? loadServiceInstances() : Promise.resolve(),
+  ])
 }
 
 async function handleSubmit() {
@@ -900,8 +1275,21 @@ onMounted(async () => {
       return
     }
     if (form.value.sourceType) await loadSources()
-  } else if (!form.value.paymentRequestItems.length) {
-    paymentRequestStore.addItem()
+    if (showEmployeesTab.value && !pegawaiOptions.value.length) await loadPegawaiOptions()
+    if (!isProjectType.value) {
+      await loadServiceInstances()
+      // Pastikan opsi terpilih tetap ada di list saat edit
+      const si = paymentRequestStore.paymentRequest?.serviceInstance
+      if (si?.id && !serviceInstanceOptions.value.some((o) => o.id === si.id)) {
+        serviceInstanceOptions.value.unshift(
+          mapServiceInstanceOption({
+            ...si,
+            customer: si.customer || paymentRequestStore.paymentRequest?.customer,
+          })
+        )
+      }
+      paymentRequestStore.syncEstimatedDuration()
+    }
   }
   formReady.value = true
 })

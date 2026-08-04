@@ -1,6 +1,7 @@
 <template>
-  <div class="custom-select2-wrapper">
+  <div ref="rootEl" class="custom-select2-wrapper">
     <div 
+      ref="triggerEl"
       class="custom-select2"
       :class="{ 
         'is-open': isOpen,
@@ -9,7 +10,6 @@
         'is-invalid': isInvalid
       }"
       @click="toggleDropdown"
-      v-click-outside="closeDropdown"
     >
       <!-- Main Input Area -->
       <div class="select2-selection">
@@ -44,70 +44,79 @@
         </span>
       </div>
 
-      <!-- Dropdown -->
-      <transition name="dropdown">
-        <div v-if="isOpen" class="select2-dropdown">
-          <!-- Search Input -->
-          <div v-if="searchable" class="select2-search">
-            <input
-              ref="searchInput"
-              v-model="searchTerm"
-              type="text"
-              class="select2-search__field"
-              :placeholder="searchPlaceholder"
-              @keydown.prevent.enter="selectFirstOption"
-              @keydown.prevent.escape="closeDropdown"
-              @keydown.prevent.arrow-down="navigateDown"
-              @keydown.prevent.arrow-up="navigateUp"
-            />
-          </div>
+      <!-- Dropdown: teleport ke body jika appendToBody (hindari overflow tab/table) -->
+      <Teleport to="body" :disabled="!appendToBody">
+        <transition name="dropdown">
+          <div
+            v-if="isOpen"
+            ref="dropdownEl"
+            class="select2-dropdown"
+            :class="{ 'select2-dropdown--portal': appendToBody }"
+            :style="appendToBody ? dropdownStyle : undefined"
+            @click.stop
+          >
+            <!-- Search Input -->
+            <div v-if="searchable" class="select2-search">
+              <input
+                ref="searchInput"
+                v-model="searchTerm"
+                type="text"
+                class="select2-search__field"
+                :placeholder="searchPlaceholder"
+                @keydown.prevent.enter="selectFirstOption"
+                @keydown.prevent.escape="closeDropdown"
+                @keydown.prevent.arrow-down="navigateDown"
+                @keydown.prevent.arrow-up="navigateUp"
+              />
+            </div>
 
-          <!-- Options List -->
-          <div class="select2-results">
-            <ul class="select2-results__options" role="listbox">
-              <!-- Loading State -->
-              <li v-if="loading" class="select2-results__option select2-results__option--loading">
-                <div class="loading-wrapper">
-                  <div class="loading-spinner"></div>
-                  <span>{{ loadingText }}</span>
-                </div>
-              </li>
-
-              <!-- No Options -->
-              <li v-else-if="filteredOptions.length === 0" class="select2-results__option select2-results__option--no-results">
-                <slot name="no-options">
-                  <div class="no-options-wrapper">
-                    <svg class="no-options-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                    <span>{{ noOptionsText }}</span>
+            <!-- Options List -->
+            <div class="select2-results">
+              <ul class="select2-results__options" role="listbox">
+                <!-- Loading State -->
+                <li v-if="loading" class="select2-results__option select2-results__option--loading">
+                  <div class="loading-wrapper">
+                    <div class="loading-spinner"></div>
+                    <span>{{ loadingText }}</span>
                   </div>
-                </slot>
-              </li>
+                </li>
 
-              <!-- Options -->
-              <li
-                v-else
-                v-for="(option, index) in filteredOptions"
-                :key="getOptionKey(option, index)"
-                class="select2-results__option"
-                :class="{
-                  'select2-results__option--highlighted': highlightedIndex === index,
-                  'select2-results__option--selected': isSelected(option)
-                }"
-                role="option"
-                :aria-selected="isSelected(option)"
-                @click.stop="selectOption(option)"
-                @mouseenter="highlightedIndex = index"
-              >
-                <slot name="option" :option="option" :index="index">
-                  {{ getOptionLabel(option) }}
-                </slot>
-              </li>
-            </ul>
+                <!-- No Options -->
+                <li v-else-if="filteredOptions.length === 0" class="select2-results__option select2-results__option--no-results">
+                  <slot name="no-options">
+                    <div class="no-options-wrapper">
+                      <svg class="no-options-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                      <span>{{ noOptionsText }}</span>
+                    </div>
+                  </slot>
+                </li>
+
+                <!-- Options -->
+                <li
+                  v-else
+                  v-for="(option, index) in filteredOptions"
+                  :key="getOptionKey(option, index)"
+                  class="select2-results__option"
+                  :class="{
+                    'select2-results__option--highlighted': highlightedIndex === index,
+                    'select2-results__option--selected': isSelected(option)
+                  }"
+                  role="option"
+                  :aria-selected="isSelected(option)"
+                  @click.stop="selectOption(option)"
+                  @mouseenter="highlightedIndex = index"
+                >
+                  <slot name="option" :option="option" :index="index">
+                    {{ getOptionLabel(option) }}
+                  </slot>
+                </li>
+              </ul>
+            </div>
           </div>
-        </div>
-      </transition>
+        </transition>
+      </Teleport>
     </div>
 
     <!-- Clear Button -->
@@ -217,6 +226,11 @@ const props = defineProps({
   multiple: {
     type: Boolean,
     default: false
+  },
+  /** Render dropdown di body (fixed) — hindari clipping overflow tab/table */
+  appendToBody: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -228,6 +242,71 @@ const isOpen = ref(false)
 const searchTerm = ref('')
 const highlightedIndex = ref(-1)
 const searchInput = ref(null)
+const rootEl = ref(null)
+const triggerEl = ref(null)
+const dropdownEl = ref(null)
+const dropdownStyle = ref({})
+let positionListenersBound = false
+
+const DROPDOWN_GAP = 4
+const DROPDOWN_MAX_HEIGHT = 300
+
+function updateDropdownPosition() {
+  if (!props.appendToBody || !isOpen.value) return
+  const el = triggerEl.value
+  if (!el) return
+  const rect = el.getBoundingClientRect()
+  const viewportH = window.innerHeight
+  const spaceBelow = viewportH - rect.bottom - DROPDOWN_GAP
+  const spaceAbove = rect.top - DROPDOWN_GAP
+  const preferBelow = spaceBelow >= Math.min(DROPDOWN_MAX_HEIGHT, 180) || spaceBelow >= spaceAbove
+  const maxH = Math.max(120, Math.min(DROPDOWN_MAX_HEIGHT, preferBelow ? spaceBelow : spaceAbove))
+
+  if (preferBelow) {
+    dropdownStyle.value = {
+      position: 'fixed',
+      top: `${rect.bottom + DROPDOWN_GAP}px`,
+      left: `${rect.left}px`,
+      width: `${rect.width}px`,
+      right: 'auto',
+      maxHeight: `${maxH}px`,
+      zIndex: 10050,
+    }
+  } else {
+    dropdownStyle.value = {
+      position: 'fixed',
+      top: 'auto',
+      bottom: `${viewportH - rect.top + DROPDOWN_GAP}px`,
+      left: `${rect.left}px`,
+      width: `${rect.width}px`,
+      right: 'auto',
+      maxHeight: `${maxH}px`,
+      zIndex: 10050,
+    }
+  }
+}
+
+function bindPositionListeners() {
+  if (positionListenersBound || !props.appendToBody) return
+  window.addEventListener('scroll', updateDropdownPosition, true)
+  window.addEventListener('resize', updateDropdownPosition)
+  positionListenersBound = true
+}
+
+function unbindPositionListeners() {
+  if (!positionListenersBound) return
+  window.removeEventListener('scroll', updateDropdownPosition, true)
+  window.removeEventListener('resize', updateDropdownPosition)
+  positionListenersBound = false
+}
+
+function handleDocumentClick(event) {
+  if (!isOpen.value) return
+  const target = event.target
+  if (rootEl.value?.contains(target)) return
+  if (dropdownEl.value?.contains(target)) return
+  closeDropdown()
+}
 
 // Computed
 const hasValue = computed(() => {
@@ -324,6 +403,13 @@ const openDropdown = async () => {
   
   isOpen.value = true
   highlightedIndex.value = -1
+
+  await nextTick()
+  if (props.appendToBody) {
+    updateDropdownPosition()
+    bindPositionListeners()
+  }
+  document.addEventListener('click', handleDocumentClick, true)
   
   if (props.searchable) {
     await nextTick()
@@ -336,6 +422,8 @@ const openDropdown = async () => {
 const closeDropdown = () => {
   isOpen.value = false
   highlightedIndex.value = -1
+  unbindPositionListeners()
+  document.removeEventListener('click', handleDocumentClick, true)
   
   if (!props.preserveSearch) {
     searchTerm.value = ''
@@ -427,20 +515,7 @@ const selectFirstOption = () => {
   }
 }
 
-// Click outside directive
-const clickOutsideDirective = {
-  beforeMount(el, binding) {
-    el.clickOutsideEvent = (event) => {
-      if (!(el === event.target || el.contains(event.target))) {
-        binding.value(event)
-      }
-    }
-    document.body.addEventListener('click', el.clickOutsideEvent)
-  },
-  unmounted(el) {
-    document.body.removeEventListener('click', el.clickOutsideEvent)
-  }
-}
+// Click outside handled via handleDocumentClick when open
 
 // Watch for search changes
 watch(searchTerm, (newTerm) => {
@@ -455,6 +530,8 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleGlobalKeydown)
+  document.removeEventListener('click', handleDocumentClick, true)
+  unbindPositionListeners()
 })
 
 const handleGlobalKeydown = (event) => {
@@ -466,22 +543,7 @@ const handleGlobalKeydown = (event) => {
 
 <script>
 export default {
-  name: 'CustomSelect2',
-  directives: {
-    clickOutside: {
-      beforeMount(el, binding) {
-        el.clickOutsideEvent = (event) => {
-          if (!(el === event.target || el.contains(event.target))) {
-            binding.value(event)
-          }
-        }
-        document.body.addEventListener('click', el.clickOutsideEvent)
-      },
-      unmounted(el) {
-        document.body.removeEventListener('click', el.clickOutsideEvent)
-      }
-    }
-  }
+  name: 'CustomSelect2'
 }
 </script>
 
@@ -675,6 +737,19 @@ export default {
   border-radius: 7px;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   overflow: hidden;
+}
+
+.select2-dropdown--portal {
+  margin-top: 0;
+  display: flex;
+  flex-direction: column;
+  /* top/left/width/maxHeight di-set via inline style (fixed) */
+}
+
+.select2-dropdown--portal .select2-results {
+  max-height: none;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 /* Search Input */

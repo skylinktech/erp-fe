@@ -139,6 +139,8 @@ const lembur = ref<Record<string, any> | null>(null)
 const perusahaan = ref<Record<string, any> | null>(null)
 const multiplierBreakdown = ref<Array<{ jam_ke: number; multiplier: number; keterangan: string }>>([])
 
+useRegisterCetakDraftStatus(() => lembur.value?.status)
+
 const companyName = computed(
   () => perusahaan.value?.nmPerusahaan ?? perusahaan.value?.nm_perusahaan ?? ''
 )

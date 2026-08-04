@@ -180,6 +180,8 @@ const route = useRoute()
 
 const { workOrderRequest, loading, error } = storeToRefs(store)
 
+useRegisterCetakDraftStatus(() => workOrderRequest.value?.status)
+
 const perusahaan = computed(() => {
   const list = perusahaanStore.perusahaans
   return list && list.length > 0 ? list[0] : null

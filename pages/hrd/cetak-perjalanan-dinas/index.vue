@@ -147,6 +147,8 @@ const error = ref<string | null>(null)
 const sppd = ref<Record<string, any> | null>(null)
 const perusahaan = ref<Record<string, any> | null>(null)
 
+useRegisterCetakDraftStatus(() => sppd.value?.status)
+
 const companyName = computed(
   () => perusahaan.value?.nmPerusahaan ?? perusahaan.value?.nm_perusahaan ?? ''
 )

@@ -50,7 +50,7 @@
                   <a v-if="(userHasRole('superadmin') || userHasPermission('edit_purchase_order')) && canEditQuotation(quotation)" class="dropdown-item" href="javascript:void(0)" @click="navigateTo('/sales/quotation?edit=' + quotation.id)">
                     <i class="ri-edit-box-line me-2"></i> Edit
                   </a>
-                  <a v-if="userHasRole('superadmin') || quotation.status === 'approved'" class="dropdown-item" href="javascript:void(0)" @click="onPrintQuotation">
+                  <a class="dropdown-item" href="javascript:void(0)" @click="onPrintQuotation">
                     <i class="ri-printer-line me-2"></i> Print Quotation
                   </a>
                   <a class="dropdown-item text-danger" href="javascript:void(0)" @click="handleDelete">

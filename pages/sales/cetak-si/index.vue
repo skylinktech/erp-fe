@@ -239,6 +239,8 @@ const formatRupiah = useFormatRupiah()
 
 const { siteInvest, loading, error } = storeToRefs(siteInvestStore)
 
+useRegisterCetakDraftStatus(() => siteInvest.value?.status)
+
 const perusahaan = computed(() => {
   const list = perusahaanStore.perusahaans
   return list && list.length > 0 ? list[0] : null

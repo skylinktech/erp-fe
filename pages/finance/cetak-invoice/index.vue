@@ -396,6 +396,10 @@ const formatRupiah = useFormatRupiah()
 const { setDetailTitle } = useDynamicTitle()
 const { getCompanyLogo, handleImageError } = useImageUrl()
 
+useRegisterCetakDraftStatus(
+  () => invoice.value?.documentStatus ?? invoice.value?.document_status
+)
+
 const invoiceId = computed(() => String(route.query.id || ''))
 
 const termAndConditions = [

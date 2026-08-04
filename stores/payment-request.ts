@@ -23,6 +23,25 @@ export interface PaymentRequestItemForm {
   itemType?: PaymentRequestItemType
 }
 
+export interface PaymentRequestEmployeeForm {
+  employeeId: number | null
+  /** Nominal gaji harian (Rp / hari) */
+  salaryAmount?: number
+  notes?: string | null
+  sortOrder?: number
+}
+
+export interface ActiveServiceInstanceOption {
+  id: string
+  label: string
+  serviceNumber?: string
+  serviceName?: string | null
+  customerId?: number | null
+  customerName?: string | null
+  locationName?: string | null
+  status?: string
+}
+
 export interface ApproverInfo {
   userId: number
   fullName?: string
@@ -62,14 +81,51 @@ export interface PaymentRequest {
   payment_method?: PaymentRequestPaymentMethod | null
   projectId?: string | null
   project_id?: string | null
+  serviceInstanceId?: string | null
+  service_instance_id?: string | null
   customerId?: number | null
   customer_id?: number | null
   employeeId?: number | null
   employee_id?: number | null
+  employees?: Array<{
+    employeeId?: number
+    employee_id?: number
+    salaryAmount?: number
+    salary_amount?: number
+    notes?: string | null
+    employee?: { id_pegawai?: number; nm_pegawai?: string; nmPegawai?: string }
+    nm_pegawai?: string
+    nmPegawai?: string
+  }>
+  paymentRequestEmployees?: Array<{
+    employeeId?: number
+    employee_id?: number
+    salaryAmount?: number
+    salary_amount?: number
+    notes?: string | null
+    employee?: { id_pegawai?: number; nm_pegawai?: string; nmPegawai?: string }
+  }>
+  estimatedStartDate?: string | null
+  estimated_start_date?: string | null
+  estimatedEndDate?: string | null
+  estimated_end_date?: string | null
+  estimatedDurationDays?: number | null
+  estimated_duration_days?: number | null
   settlementStatus?: string | null
   settlement_status?: string | null
   requestDate?: string
   request_date?: string
+  serviceInstance?: {
+    id: string
+    serviceNumber?: string
+    service_number?: string
+    serviceName?: string | null
+    service_name?: string | null
+    locationName?: string | null
+    location_name?: string | null
+    status?: string
+    customer?: { id: number; name?: string; code?: string }
+  } | null
   sourceType?: PaymentRequestSourceType
   source_type?: PaymentRequestSourceType
   sourceId?: string
@@ -157,9 +213,11 @@ interface PaymentRequestState {
     status?: string
     requestType: PaymentRequestRequestType
     paymentMethod: PaymentRequestPaymentMethod | null
-    projectId: string | null
+    serviceInstanceId: string | null
     customerId: number | null
-    employeeId: number | null
+    estimatedStartDate: string
+    estimatedEndDate: string
+    estimatedDurationDays: number | null
     requestDate: string
     sourceType: PaymentRequestSourceType | null
     sourceId: string | null
@@ -180,8 +238,11 @@ interface PaymentRequestState {
     taxMasterIds: string[]
     currency: string
     notes: string
+    attachment: File | string | null
+    attachmentPreview: string | null
     paymentRequestItems: PaymentRequestItemForm[]
     otherCharges: PaymentRequestItemForm[]
+    employees: PaymentRequestEmployeeForm[]
   }
   isEditMode: boolean
   validationErrors: any[]
@@ -231,6 +292,41 @@ function blankCharge(): PaymentRequestItemForm {
     sortOrder: 0,
     itemType: 'other',
   }
+}
+
+/** Inclusive days (e.g. 3–5 Aug = 3 hari). */
+export function calcEstimatedDurationDays(
+  start?: string | null,
+  end?: string | null
+): number | null {
+  if (!start || !end) return null
+  const s = new Date(`${start}T00:00:00`)
+  const e = new Date(`${end}T00:00:00`)
+  if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime())) return null
+  const days = Math.floor((e.getTime() - s.getTime()) / 86400000) + 1
+  return days >= 1 ? days : null
+}
+
+export function formatDurationDaysLabel(days?: number | null) {
+  if (days == null || !Number.isFinite(days) || days < 1) return '—'
+  return `${days} Hari`
+}
+
+function mapEmployeesFromApi(data: PaymentRequest | any): PaymentRequestEmployeeForm[] {
+  const rows = data?.employees || []
+  if (Array.isArray(rows) && rows.length) {
+    return rows.map((e: any, idx: number) => ({
+      employeeId: Number(e.employeeId ?? e.employee_id ?? e.employee?.id_pegawai) || null,
+      salaryAmount: Number(e.salaryAmount ?? e.salary_amount ?? 0) || 0,
+      notes: e.notes ?? null,
+      sortOrder: e.sortOrder ?? e.sort_order ?? idx,
+    }))
+  }
+  const legacyId = data?.employeeId ?? data?.employee_id
+  if (legacyId) {
+    return [{ employeeId: Number(legacyId), salaryAmount: 0, notes: null, sortOrder: 0 }]
+  }
+  return []
 }
 
 export function partitionItemsFromApi(items: any[]): {
@@ -293,6 +389,12 @@ export function getPaymentRequestOtherSubtotal(row: PaymentRequest | null | unde
   return getPaymentRequestOtherCharges(row).reduce((s, d) => s + (Number(d.subtotal) || 0), 0)
 }
 
+export function getPaymentRequestEmployeeSalarySubtotal(row: PaymentRequest | null | undefined) {
+  const rows = row?.employees || row?.paymentRequestEmployees || []
+  if (!Array.isArray(rows) || !rows.length) return 0
+  return rows.reduce((s, e: any) => s + (Number(e.salaryAmount ?? e.salary_amount ?? 0) || 0), 0)
+}
+
 export function getPaymentRequestDiscountAmount(row: PaymentRequest | null | undefined) {
   const sourceSubtotal = getPaymentRequestSourceSubtotal(row)
   const discPct = Number(row?.discountPercent ?? row?.discount_percent ?? 0)
@@ -327,9 +429,11 @@ export function getPaymentRequestTaxAmount(row: PaymentRequest | null | undefine
   if (stored !== 0) return stored
   const sourceSubtotal = getPaymentRequestSourceSubtotal(row)
   const otherSubtotal = getPaymentRequestOtherSubtotal(row)
+  const salarySubtotal = getPaymentRequestEmployeeSalarySubtotal(row)
   const discPct = Number(row?.discountPercent ?? row?.discount_percent ?? 0)
   const taxPct = Number(row?.taxPercent ?? row?.tax_percent ?? 0)
-  const dpp = Math.max(0, sourceSubtotal - (sourceSubtotal * discPct) / 100) + otherSubtotal
+  const dpp =
+    Math.max(0, sourceSubtotal - (sourceSubtotal * discPct) / 100) + otherSubtotal + salarySubtotal
   return (dpp * taxPct) / 100
 }
 
@@ -338,9 +442,10 @@ export function getPaymentRequestTotal(row: PaymentRequest | null | undefined) {
   if (stored > 0) return stored
   const sourceSubtotal = getPaymentRequestSourceSubtotal(row)
   const otherSubtotal = getPaymentRequestOtherSubtotal(row)
+  const salarySubtotal = getPaymentRequestEmployeeSalarySubtotal(row)
   const discount = getPaymentRequestDiscountAmount(row)
   const tax = getPaymentRequestTaxAmount(row)
-  return Math.max(0, sourceSubtotal - discount) + otherSubtotal + tax
+  return Math.max(0, sourceSubtotal - discount) + otherSubtotal + salarySubtotal + tax
 }
 
 export function getSourceTypeLabel(type?: string | null) {
@@ -403,9 +508,11 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
     form: {
       requestType: 'project',
       paymentMethod: null,
-      projectId: null,
+      serviceInstanceId: null,
       customerId: null,
-      employeeId: null,
+      estimatedStartDate: '',
+      estimatedEndDate: '',
+      estimatedDurationDays: null,
       requestDate: todayIso(),
       sourceType: null,
       sourceId: null,
@@ -426,8 +533,11 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
       taxMasterIds: [],
       currency: 'IDR',
       notes: '',
+      attachment: null,
+      attachmentPreview: null,
       paymentRequestItems: [],
       otherCharges: [],
+      employees: [],
     },
     isEditMode: false,
     validationErrors: [],
@@ -447,6 +557,11 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
       state.form.paymentRequestItems.reduce((s, d) => s + (Number(d.subtotal) || 0), 0),
     formOtherChargesSubtotal: (state) =>
       state.form.otherCharges.reduce((s, d) => s + (Number(d.subtotal) || 0), 0),
+    formEmployeeSalarySubtotal: (state) =>
+      (state.form.employees || []).reduce((s, e) => {
+        if (e.employeeId == null || !(Number(e.employeeId) > 0)) return s
+        return s + (Number(e.salaryAmount) || 0)
+      }, 0),
     formDiscountAmount: (state) => {
       const sourceSubtotal = state.form.paymentRequestItems.reduce(
         (s, d) => s + (Number(d.subtotal) || 0),
@@ -456,7 +571,9 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
     },
     formDpp(): number {
       return (
-        Math.max(0, this.formItemsSubtotal - this.formDiscountAmount) + this.formOtherChargesSubtotal
+        Math.max(0, this.formItemsSubtotal - this.formDiscountAmount) +
+        this.formOtherChargesSubtotal +
+        this.formEmployeeSalarySubtotal
       )
     },
     formTaxAmount(): number {
@@ -504,9 +621,11 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
             : requestType === 'operational'
               ? 'advance'
               : null,
-        projectId: null,
+        serviceInstanceId: null,
         customerId: null,
-        employeeId: null,
+        estimatedStartDate: '',
+        estimatedEndDate: '',
+        estimatedDurationDays: null,
         requestDate: todayIso(),
         sourceType: null,
         sourceId: null,
@@ -527,8 +646,11 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
         taxMasterIds: [],
         currency: 'IDR',
         notes: '',
+        attachment: null,
+        attachmentPreview: null,
         paymentRequestItems: [],
         otherCharges: [],
+        employees: [],
       }
     },
 
@@ -539,14 +661,25 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
       const taxes = getPaymentRequestTaxes(data)
       const applyTax = !!(data.applyTax ?? data.apply_tax) || taxes.length > 0
       const requestType = (data.requestType || data.request_type || 'project') as PaymentRequestRequestType
+      const estimatedStartDate = data.estimatedStartDate || data.estimated_start_date
+        ? String(data.estimatedStartDate || data.estimated_start_date).slice(0, 10)
+        : ''
+      const estimatedEndDate = data.estimatedEndDate || data.estimated_end_date
+        ? String(data.estimatedEndDate || data.estimated_end_date).slice(0, 10)
+        : ''
       this.form = {
         id: data.id,
         status: data.status,
         requestType,
         paymentMethod: (data.paymentMethod || data.payment_method || null) as PaymentRequestPaymentMethod | null,
-        projectId: data.projectId || data.project_id || null,
+        serviceInstanceId: data.serviceInstanceId || data.service_instance_id || null,
         customerId: data.customerId ?? data.customer_id ?? null,
-        employeeId: data.employeeId ?? data.employee_id ?? null,
+        estimatedStartDate,
+        estimatedEndDate,
+        estimatedDurationDays:
+          data.estimatedDurationDays ??
+          data.estimated_duration_days ??
+          calcEstimatedDurationDays(estimatedStartDate, estimatedEndDate),
         requestDate: String(data.requestDate || data.request_date || todayIso()).slice(0, 10),
         sourceType: (data.sourceType || data.source_type || null) as PaymentRequestSourceType | null,
         sourceId: data.sourceId || data.source_id || null,
@@ -567,9 +700,34 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
         taxMasterIds: taxes.map((t) => t.taxMasterId).filter(Boolean),
         currency: data.currency || 'IDR',
         notes: data.notes || '',
+        attachment: data.attachment || null,
+        attachmentPreview: data.attachment || null,
         paymentRequestItems: sourceItems.length ? sourceItems : otherCharges.length ? otherCharges.map((c) => ({ ...c, itemType: 'source' as const })) : [],
         otherCharges: sourceItems.length ? otherCharges : [],
+        employees: mapEmployeesFromApi(data),
       }
+    },
+
+    addEmployee() {
+      if (!Array.isArray(this.form.employees)) this.form.employees = []
+      this.form.employees.push({
+        employeeId: null,
+        salaryAmount: 0,
+        notes: null,
+        sortOrder: this.form.employees.length,
+      })
+    },
+
+    removeEmployee(index: number) {
+      if (!Array.isArray(this.form.employees)) return
+      this.form.employees.splice(index, 1)
+    },
+
+    syncEstimatedDuration() {
+      this.form.estimatedDurationDays = calcEstimatedDurationDays(
+        this.form.estimatedStartDate,
+        this.form.estimatedEndDate
+      )
     },
 
     addItem() {
@@ -836,27 +994,43 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
         return false
       }
 
+      const start = this.form.estimatedStartDate || ''
+      const end = this.form.estimatedEndDate || ''
+      if ((start && !end) || (!start && end)) {
+        this.saving = false
+        toast.error({
+          title: 'Validasi',
+          message: 'Estimasi durasi wajib diisi lengkap (tanggal mulai dan selesai)',
+          color: 'red',
+          position: 'topRight',
+          layout: 2,
+        })
+        return false
+      }
+      const durationDays = calcEstimatedDurationDays(start, end)
+      if (start && end && !durationDays) {
+        this.saving = false
+        toast.error({
+          title: 'Validasi',
+          message: 'Tanggal selesai harus sama atau setelah tanggal mulai',
+          color: 'red',
+          position: 'topRight',
+          layout: 2,
+        })
+        return false
+      }
+      this.form.estimatedDurationDays = durationDays
+
+      const validEmployees = (this.form.employees || []).filter(
+        (e) => e.employeeId != null && Number(e.employeeId) > 0
+      )
+
       const validItems = this.form.paymentRequestItems.filter(
         (d) => d.description?.trim() && (Number(d.qty) || 0) > 0
       )
       const validOtherCharges = (this.form.otherCharges || []).filter(
         (d) => d.description?.trim() && (Number(d.qty) || 0) > 0
       )
-      if (!validItems.length && !(isProject === false && validOtherCharges.length)) {
-        if (!validItems.length) {
-          this.saving = false
-          toast.error({
-            title: 'Validasi',
-            message: isProject
-              ? 'Minimal 1 item sumber dengan deskripsi dan qty valid'
-              : 'Minimal 1 item pengajuan dengan deskripsi dan qty valid',
-            color: 'red',
-            position: 'topRight',
-            layout: 2,
-          })
-          return false
-        }
-      }
 
       if (this.form.applyTax && !(this.form.taxMasterIds || []).length) {
         this.saving = false
@@ -870,6 +1044,7 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
         return false
       }
 
+      // Item & pegawai opsional — baris kosong diabaikan
       const mergedItems = [
         ...validItems.map((d, idx) => ({
           description: d.description.trim(),
@@ -878,7 +1053,7 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
           subtotal: Number(d.subtotal) || 0,
           remarks: d.remarks?.trim() || null,
           sortOrder: d.sortOrder ?? idx,
-          itemType: (isProject ? 'source' : 'source') as const,
+          itemType: 'source' as const,
         })),
         ...validOtherCharges.map((d, idx) => ({
           description: d.description.trim(),
@@ -891,27 +1066,22 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
         })),
       ]
 
-      if (!mergedItems.length) {
-        this.saving = false
-        toast.error({
-          title: 'Validasi',
-          message: 'Minimal 1 item wajib diisi',
-          color: 'red',
-          position: 'topRight',
-          layout: 2,
-        })
-        return false
-      }
-
       const body: Record<string, any> = {
         requestType,
         paymentMethod:
           requestType === 'reimbursement'
             ? 'reimbursement'
             : this.form.paymentMethod,
-        projectId: this.form.projectId || null,
+        serviceInstanceId: this.form.serviceInstanceId || null,
         customerId: this.form.customerId,
-        employeeId: this.form.employeeId,
+        employees: validEmployees.map((e, idx) => ({
+          employeeId: Number(e.employeeId),
+          salaryAmount: Number(e.salaryAmount) || 0,
+          notes: e.notes?.trim() || null,
+          sortOrder: e.sortOrder ?? idx,
+        })),
+        estimatedStartDate: start || null,
+        estimatedEndDate: end || null,
         requestDate: this.form.requestDate || todayIso(),
         departmentId: this.form.departmentId,
         vendorId: this.form.vendorId,
@@ -941,27 +1111,55 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
       const isEdit = this.isEditMode && this.form.id
       const url = isEdit ? `${api.list()}/${this.form.id}` : api.list()
       const method = isEdit ? 'PUT' : 'POST'
+      const hasFile = this.form.attachment instanceof File
 
       try {
-        const res = await fetch(url, {
-          method,
-          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify(body),
-        })
-        if (!res.ok) {
-          const ed = await res.json().catch(() => ({}))
-          toast.error({
-            title: 'Error',
-            message: ed.message || 'Gagal menyimpan',
-            color: 'red',
-            position: 'topRight',
-            layout: 2,
+        let savedId: string | undefined
+        if (hasFile) {
+          const formData = new FormData()
+          Object.keys(body).forEach((key) => {
+            const value = body[key]
+            if (value === undefined) return
+            if (value === null) {
+              formData.append(key, '')
+              return
+            }
+            if (typeof value === 'object') {
+              formData.append(key, JSON.stringify(value))
+              return
+            }
+            if (typeof value === 'boolean') {
+              formData.append(key, value ? 'true' : 'false')
+              return
+            }
+            formData.append(key, String(value))
           })
-          return false
+          formData.append('attachment', this.form.attachment as File)
+
+          const json = await apiFetch(url, { method, body: formData })
+          savedId = json?.data?.id || this.form.id
+        } else {
+          const res = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(body),
+          })
+          if (!res.ok) {
+            const ed = await res.json().catch(() => ({}))
+            toast.error({
+              title: 'Error',
+              message: ed.message || 'Gagal menyimpan',
+              color: 'red',
+              position: 'topRight',
+              layout: 2,
+            })
+            return false
+          }
+          const json = await res.json()
+          savedId = json?.data?.id || this.form.id
         }
-        const json = await res.json()
-        const savedId = json?.data?.id || this.form.id
+
         await this.fetchPaymentRequests()
         await this.fetchStatistics()
         toast.success({
@@ -973,7 +1171,13 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
         })
         return savedId
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'topRight', layout: 2 })
+        toast.error({
+          title: 'Error',
+          message: e?.data?.message || e.message || 'Gagal menyimpan',
+          color: 'red',
+          position: 'topRight',
+          layout: 2,
+        })
         return false
       } finally {
         this.saving = false

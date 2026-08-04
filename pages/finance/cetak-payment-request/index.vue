@@ -1,15 +1,16 @@
 <template>
-  <div v-if="loading" class="text-center p-6">
-    <ProgressSpinner
-      style="width: 50px; height: 50px"
-      strokeWidth="4"
-      fill="transparent"
-      animationDuration="1s"
-    />
-    <div class="mt-3 text-muted">Memuat data...</div>
-  </div>
-  <div v-else-if="error" class="alert alert-danger m-6">{{ error.message }}</div>
-  <div v-else-if="paymentRequest" class="p-2 cetak-payment-request-doc position-relative">
+  <div class="cetak-payment-request-root">
+    <div v-if="loading" class="text-center p-6">
+      <ProgressSpinner
+        style="width: 50px; height: 50px"
+        strokeWidth="4"
+        fill="transparent"
+        animationDuration="1s"
+      />
+      <div class="mt-3 text-muted">Memuat data...</div>
+    </div>
+    <div v-else-if="error" class="alert alert-danger m-6">{{ error.message }}</div>
+    <div v-else-if="paymentRequest" class="p-2 cetak-payment-request-doc position-relative">
     <button
       type="button"
       class="btn btn-primary no-print cetak-payment-request-print-btn"
@@ -29,34 +30,64 @@
           class="cetak-payment-request-logo"
           @error="(e) => handleImageError(e, '/img/branding/logo.png')"
           style="height: 90px; max-width: 200px; object-fit: contain;"
-        >
+        />
         <h2 class="app-brand-logo demo fw-bold mb-0">SKYLINK</h2>
       </div>
       <div class="cetak-payment-request-title-wrap text-end">
-        <h1 class="cetak-payment-request-title fw-bold mb-0">PAYMENT REQUEST</h1>
+        <h1 class="cetak-payment-request-title fw-bold mb-0">{{ documentTitle }}</h1>
         <p class="mb-0" style="font-size: 14px;">NO. PRQ: {{ getPaymentRequestNo(paymentRequest) || '-' }}</p>
+        <p class="mb-0 text-muted" style="font-size: 12px;">{{ requestTypeLabel }}</p>
       </div>
     </div>
 
-    <hr class="cetak-payment-request-hr my-4">
+    <hr class="cetak-payment-request-hr my-4" />
 
     <div class="d-flex justify-content-between mb-4" style="font-size: 12px;">
       <div class="text-start">
         <p class="mb-1"><strong>Tanggal :</strong> {{ formatDate(paymentRequest.requestDate || paymentRequest.request_date || paymentRequest.createdAt) }}</p>
         <p class="mb-1"><strong>Jatuh Tempo :</strong> {{ formatDate(paymentRequest.dueDate || paymentRequest.due_date) }}</p>
         <p class="mb-1"><strong>Pemohon :</strong> {{ requesterName }}</p>
-        <p class="mb-1"><strong>Departemen :</strong> {{ departmentName }}</p>
-        <p class="mb-1"><strong>Sumber :</strong> {{ sourceLabel }}</p>
-        <p class="mb-1"><strong>No. Dokumen Sumber :</strong> {{ paymentRequest.sourceNumber || paymentRequest.source_number || '-' }}</p>
-        <p v-if="paymentRequest.purpose" class="mb-1"><strong>Keperluan :</strong> {{ paymentRequest.purpose }}</p>
+        <template v-if="isProjectType">
+          <p class="mb-1"><strong>Sumber :</strong> {{ sourceLabel }}</p>
+          <p class="mb-1"><strong>No. Dokumen Sumber :</strong> {{ paymentRequest.sourceNumber || paymentRequest.source_number || '-' }}</p>
+        </template>
+        <template v-else>
+          <p class="mb-1"><strong>Layanan Aktif :</strong> {{ serviceInstanceLabel }}</p>
+        </template>
       </div>
       <div class="text-end">
         <p class="mb-1"><strong>Prioritas :</strong> {{ (paymentRequest.priority || '-').toUpperCase() }}</p>
-        <p class="mb-1"><strong>Status :</strong> {{ statusLabel(paymentRequest.status) }}</p>
-        <p class="mb-1"><strong>Mata Uang :</strong> {{ paymentRequest.currency || 'IDR' }}</p>
-        <p class="mb-1"><strong>Total :</strong> {{ formatRupiahNum(getPaymentRequestTotal(paymentRequest)) }}</p>
+        <template v-if="!isProjectType">
+          <p class="mb-1"><strong>Customer :</strong> {{ customerName }}</p>
+          <p class="mb-1"><strong>Estimasi Durasi :</strong> {{ estimatedDurationLabel }}</p>
+        </template>
+        <p v-if="paymentRequest.purpose" class="mb-1"><strong>Keperluan :</strong> {{ paymentRequest.purpose }}</p>
       </div>
     </div>
+
+    <template v-if="!isProjectType && employeeRows.length">
+      <div class="cetak-payment-request-section-header">Pegawai Terlibat</div>
+      <div class="table-responsive mb-4">
+        <table class="table table-striped cetak-payment-request-table m-0" style="font-size: 12px;">
+          <thead class="table-dark table-head-white">
+            <tr>
+              <th class="text-center" style="width: 40px;">No</th>
+              <th class="text-start">Nama Pegawai</th>
+              <th class="text-end" style="width: 140px;">Gaji /hari</th>
+              <th class="text-start">Catatan</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(emp, idx) in employeeRows" :key="`emp-${idx}`">
+              <td class="text-center">{{ idx + 1 }}</td>
+              <td class="text-start">{{ emp.name }}</td>
+              <td class="text-end">{{ emp.salaryLabel }}</td>
+              <td class="text-start">{{ emp.notes || '—' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </template>
 
     <div class="cetak-payment-request-section-header">Informasi Penerima</div>
     <div class="table-responsive mb-4">
@@ -135,7 +166,7 @@
       </div>
     </template>
 
-    <div v-if="sourceRows.length > 0 || otherRows.length > 0" class="d-flex justify-content-end mb-4">
+    <div v-if="sourceRows.length > 0 || otherRows.length > 0 || employeeSalarySubtotal > 0" class="d-flex justify-content-end mb-4">
       <div style="min-width: 280px; font-size: 12px;">
         <div class="mb-2 d-flex">
           <span class="fw-medium" style="min-width: 110px;">Subtotal sumber</span>
@@ -146,6 +177,11 @@
           <span class="fw-medium" style="min-width: 110px;">Biaya lainnya</span>
           <span class="px-2">:</span>
           <span class="fw-semibold text-end flex-grow-1">{{ formatRupiahNum(otherSubtotal) }}</span>
+        </div>
+        <div v-if="employeeSalarySubtotal > 0" class="mb-2 d-flex">
+          <span class="fw-medium" style="min-width: 110px;">Gaji pegawai</span>
+          <span class="px-2">:</span>
+          <span class="fw-semibold text-end flex-grow-1">{{ formatRupiahNum(employeeSalarySubtotal) }}</span>
         </div>
         <div class="mb-2 d-flex">
           <span class="fw-medium" style="min-width: 110px;">
@@ -197,6 +233,13 @@
       <div class="cetak-payment-request-description-body" style="white-space: pre-wrap;">{{ notesText }}</div>
     </div>
 
+    <div v-if="attachmentUrl" class="cetak-payment-request-description mb-4">
+      <div class="cetak-payment-request-terms-header fw-bold text-white">Attachment</div>
+      <div class="cetak-payment-request-description-body">
+        <a :href="attachmentUrl" target="_blank" rel="noopener noreferrer">{{ attachmentLabel }}</a>
+      </div>
+    </div>
+
     <div
       v-if="paymentRequest.status === 'rejected' && (paymentRequest.rejectionReason || paymentRequest.rejectReason)"
       class="alert alert-danger py-2 mb-4"
@@ -226,9 +269,10 @@
       <span>{{ getPaymentRequestNo(paymentRequest) || 'PRQ' }} — Skylink</span>
       <span>{{ printedAt }}</span>
     </div>
-  </div>
-  <div v-else class="alert alert-danger m-6" role="alert">
-    Payment Request tidak ditemukan.
+    </div>
+    <div v-else class="alert alert-danger m-6" role="alert">
+      Payment Request tidak ditemukan.
+    </div>
   </div>
 </template>
 
@@ -244,12 +288,15 @@ import {
   getPaymentRequestTotal,
   getPaymentRequestSourceSubtotal,
   getPaymentRequestOtherSubtotal,
+  getPaymentRequestEmployeeSalarySubtotal,
   getPaymentRequestDiscountAmount,
   getPaymentRequestTaxAmount,
   getPaymentRequestTaxes,
   getPaymentRequestSourceItems,
   getPaymentRequestOtherCharges,
   getSourceTypeLabel,
+  getRequestTypeLabel,
+  formatDurationDaysLabel,
 } from '~/stores/payment-request'
 import { usePerusahaanStore } from '~/stores/perusahaan'
 import { storeToRefs } from 'pinia'
@@ -259,13 +306,15 @@ import { useImageUrl } from '~/composables/useImageUrl'
 import MultiSignatureDisplay from '~/components/MultiSignatureDisplay.vue'
 
 const { setDetailTitle } = useDynamicTitle()
-const { getCompanyLogo, handleImageError } = useImageUrl()
+const { getCompanyLogo, handleImageError, getAttachmentUrl } = useImageUrl()
 
 const paymentRequestStore = usePaymentRequestStore()
 const perusahaanStore = usePerusahaanStore()
 const route = useRoute()
 
 const { paymentRequest, loading, error } = storeToRefs(paymentRequestStore)
+
+useRegisterCetakDraftStatus(() => paymentRequest.value?.status)
 
 const perusahaan = computed(() => {
   const list = perusahaanStore.perusahaans
@@ -278,6 +327,9 @@ const otherRows = computed(() => getPaymentRequestOtherCharges(paymentRequest.va
 
 const sourceSubtotal = computed(() => getPaymentRequestSourceSubtotal(paymentRequest.value))
 const otherSubtotal = computed(() => getPaymentRequestOtherSubtotal(paymentRequest.value))
+const employeeSalarySubtotal = computed(() =>
+  getPaymentRequestEmployeeSalarySubtotal(paymentRequest.value)
+)
 const discountAmount = computed(() => getPaymentRequestDiscountAmount(paymentRequest.value))
 const taxAmount = computed(() => getPaymentRequestTaxAmount(paymentRequest.value))
 const taxRows = computed(() => getPaymentRequestTaxes(paymentRequest.value))
@@ -290,7 +342,11 @@ const taxPercent = computed(() =>
 const dppAmount = computed(() => {
   const stored = Number(paymentRequest.value?.dpp ?? 0)
   if (stored > 0) return stored
-  return Math.max(0, sourceSubtotal.value - discountAmount.value) + otherSubtotal.value
+  return (
+    Math.max(0, sourceSubtotal.value - discountAmount.value) +
+    otherSubtotal.value +
+    employeeSalarySubtotal.value
+  )
 })
 
 const requesterName = computed(
@@ -301,20 +357,91 @@ const requesterName = computed(
     '-'
 )
 
-const departmentName = computed(
-  () =>
-    paymentRequest.value?.department?.nm_departemen ||
-    paymentRequest.value?.department?.nmDepartemen ||
-    '-'
-)
-
 const sourceLabel = computed(() =>
   getSourceTypeLabel(paymentRequest.value?.sourceType || paymentRequest.value?.source_type)
 )
 
+const requestType = computed(
+  () => paymentRequest.value?.requestType || paymentRequest.value?.request_type || 'project'
+)
+const isProjectType = computed(() => requestType.value === 'project')
+const requestTypeLabel = computed(() => getRequestTypeLabel(requestType.value))
+const documentTitle = computed(() => {
+  if (requestType.value === 'operational') return 'OPERATIONAL PAYMENT REQUEST'
+  if (requestType.value === 'reimbursement') return 'REIMBURSEMENT REQUEST'
+  return 'PAYMENT REQUEST'
+})
+
+const serviceInstanceLabel = computed(() => {
+  const si = paymentRequest.value?.serviceInstance
+  if (!si) return '—'
+  const number = si.serviceNumber || si.service_number || ''
+  const name = si.serviceName || si.service_name || ''
+  return [number, name].filter(Boolean).join(' — ') || '—'
+})
+
+const customerName = computed(
+  () =>
+    paymentRequest.value?.customer?.name ||
+    paymentRequest.value?.serviceInstance?.customer?.name ||
+    '—'
+)
+
+const estimatedDurationLabel = computed(() => {
+  const start =
+    paymentRequest.value?.estimatedStartDate || paymentRequest.value?.estimated_start_date
+  const end = paymentRequest.value?.estimatedEndDate || paymentRequest.value?.estimated_end_date
+  const days =
+    paymentRequest.value?.estimatedDurationDays ??
+    paymentRequest.value?.estimated_duration_days
+  if (!start && !end && !days) return '—'
+  const range = start || end ? `${formatDate(start)} – ${formatDate(end)}` : ''
+  const dayLabel = formatDurationDaysLabel(days)
+  return [range, dayLabel !== '—' ? `(${dayLabel})` : ''].filter(Boolean).join(' ') || '—'
+})
+
+const employeeRows = computed(() => {
+  const rows =
+    paymentRequest.value?.employees ||
+    paymentRequest.value?.paymentRequestEmployees ||
+    []
+  if (Array.isArray(rows) && rows.length) {
+    return rows.map((e) => {
+      const salary = Number(e.salaryAmount ?? e.salary_amount ?? 0) || 0
+      return {
+        name:
+          e.employee?.nm_pegawai ||
+          e.employee?.nmPegawai ||
+          e.nm_pegawai ||
+          e.nmPegawai ||
+          (e.employeeId || e.employee_id
+            ? `Pegawai #${e.employeeId || e.employee_id}`
+            : '—'),
+        salaryLabel: salary > 0 ? `${formatRupiahNum(salary)} /hari` : '—',
+        notes: e.notes || null,
+      }
+    })
+  }
+  const legacy = paymentRequest.value?.employee
+  if (legacy?.nm_pegawai || legacy?.nmPegawai) {
+    return [{ name: legacy.nm_pegawai || legacy.nmPegawai, salaryLabel: '—', notes: null }]
+  }
+  return []
+})
+
 const notesText = computed(() => {
   const notes = (paymentRequest.value?.notes ?? '') + ''
   return notes.trim() || ''
+})
+
+const attachmentUrl = computed(() => {
+  const path = paymentRequest.value?.attachment
+  return path ? getAttachmentUrl(path) : null
+})
+const attachmentLabel = computed(() => {
+  const path = paymentRequest.value?.attachment || ''
+  const name = String(path).split('/').pop() || 'Lihat / Unduh File'
+  return decodeURIComponent(name.split('?')[0] || name)
 })
 
 const showSignatureSection = computed(
@@ -365,18 +492,6 @@ function formatDate(val) {
   }
 }
 
-function statusLabel(s) {
-  const map = {
-    draft: 'Draft',
-    pending: 'Pending',
-    approved: 'Approved',
-    rejected: 'Rejected',
-    completed: 'Completed',
-    cancelled: 'Cancelled',
-  }
-  return s ? map[s] || s : '-'
-}
-
 onMounted(async () => {
   const id = route.query.id
   if (id) {
@@ -384,7 +499,12 @@ onMounted(async () => {
       await perusahaanStore.fetchPerusahaans()
       await paymentRequestStore.getPaymentRequestDetails(String(id))
       if (paymentRequest.value) {
-        setDetailTitle('Cetak Payment Request - ' + getPaymentRequestNo(paymentRequest.value))
+        const typeLabel = getRequestTypeLabel(
+          paymentRequest.value.requestType || paymentRequest.value.request_type
+        )
+        setDetailTitle(
+          `Cetak ${typeLabel} - ${getPaymentRequestNo(paymentRequest.value)}`
+        )
       }
     } catch (e) {
       console.error('Cetak Payment Request load error:', e)

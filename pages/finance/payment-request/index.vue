@@ -74,7 +74,7 @@
         @reset="resetFilters"
       >
         <div class="row g-4">
-          <div class="col-md-4">
+          <div :class="activeRequestType === 'project' ? 'col-md-4' : 'col-md-6'">
             <FilterField>
               <label class="form-label">Status</label>
               <CustomSelect2
@@ -102,7 +102,7 @@
               />
             </FilterField>
           </div>
-          <div class="col-md-4">
+          <div :class="activeRequestType === 'project' ? 'col-md-4' : 'col-md-6'">
             <FilterField>
               <label class="form-label">Prioritas</label>
               <CustomSelect2
@@ -223,6 +223,22 @@
             <Column field="totalAmount" header="Nominal" :sortable="true">
               <template #body="slotProps">{{ formatRupiah(slotProps.data.totalAmount) }}</template>
             </Column>
+            <Column field="attachment" header="File" :sortable="false" style="width:4rem">
+              <template #body="slotProps">
+                <a
+                  v-if="slotProps.data.attachment"
+                  :href="getAttachmentUrl(slotProps.data.attachment)"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="btn btn-sm btn-icon btn-text-secondary"
+                  title="Lihat attachment"
+                  @click.stop
+                >
+                  <i :class="getFileIcon(slotProps.data.attachment)"></i>
+                </a>
+                <span v-else class="text-muted">—</span>
+              </template>
+            </Column>
             <Column field="requestedByUser.full_name" header="Pemohon" :sortable="true">
               <template #body="slotProps">
                 {{
@@ -240,34 +256,68 @@
             </Column>
             <Column header="Actions" :exportable="false" style="min-width:9rem">
               <template #body="slotProps">
-                <button
-                  type="button"
-                  class="btn btn-sm btn-text-secondary rounded-pill btn-icon"
-                  aria-haspopup="true"
-                  aria-controls="prq-actions-menu"
-                  @click.stop="toggleActions($event, slotProps.data)"
-                >
-                  <i class="ri-more-2-fill"></i>
-                </button>
+                <div class="d-inline-block dropdown">
+                  <a
+                    href="javascript:;"
+                    class="btn btn-sm btn-text-secondary rounded-pill btn-icon dropdown-toggle hide-arrow"
+                    data-bs-toggle="dropdown"
+                    data-bs-popper-config='{"strategy":"fixed"}'
+                  >
+                    <i class="ri-more-2-fill"></i>
+                  </a>
+                  <ul class="dropdown-menu dropdown-menu-end prq-actions-dropdown">
+                    <li v-if="canSubmitRow(slotProps.data)">
+                      <a class="dropdown-item" href="javascript:void(0)" @click="paymentRequestStore.submitPaymentRequest(slotProps.data.id)">
+                        <i class="ri-send-plane-line me-2"></i>Submit
+                      </a>
+                    </li>
+                    <li v-if="canEditRow(slotProps.data)">
+                      <a class="dropdown-item" href="javascript:void(0)" @click="navigateTo(`/finance/payment-request/form/${slotProps.data.id}`)">
+                        <i class="ri-edit-box-line me-2"></i>Edit
+                      </a>
+                    </li>
+                    <li v-if="canApprovePaymentRequest(slotProps.data)">
+                      <a class="dropdown-item text-success" href="javascript:void(0)" @click="paymentRequestStore.approvePaymentRequest(slotProps.data.id)">
+                        <i class="ri-check-line me-2"></i>Approve
+                      </a>
+                    </li>
+                    <li v-if="canRejectPaymentRequest(slotProps.data)">
+                      <a class="dropdown-item text-danger" href="javascript:void(0)" @click="rejectRow(slotProps.data)">
+                        <i class="ri-close-line me-2"></i>Reject
+                      </a>
+                    </li>
+                    <li>
+                      <a class="dropdown-item" href="javascript:void(0)" @click="navigateTo(`/finance/payment-request/detail/${slotProps.data.id}`)">
+                        <i class="ri-eye-line me-2"></i>Detail
+                      </a>
+                    </li>
+                    <li>
+                      <a
+                        class="dropdown-item"
+                        href="javascript:void(0)"
+                        @click="navigateTo({ path: '/finance/cetak-payment-request', query: { id: slotProps.data.id } })"
+                      >
+                        <i class="ri-printer-line me-2"></i>Cetak
+                      </a>
+                    </li>
+                    <li v-if="canDeleteRow(slotProps.data)">
+                      <a class="dropdown-item text-danger" href="javascript:void(0)" @click="paymentRequestStore.deletePaymentRequest(slotProps.data.id)">
+                        <i class="ri-delete-bin-7-line me-2"></i>Hapus
+                      </a>
+                    </li>
+                  </ul>
+                </div>
               </template>
             </Column>
           </MyDataTable>
         </div>
       </div>
     </div>
-
-    <Menu
-      id="prq-actions-menu"
-      ref="actionsMenuRef"
-      :model="actionMenuItems"
-      :popup="true"
-      append-to="body"
-    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import {
   usePaymentRequestStore,
@@ -277,22 +327,20 @@ import {
   getPaymentMethodLabel,
   type PaymentRequestRequestType,
 } from '~/stores/payment-request'
-import { usePermissions } from '~/composables/usePermissions'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
 import CollapsibleFilterCard from '~/components/list/CollapsibleFilterCard.vue'
 import FilterField from '~/components/list/FilterField.vue'
 import Column from 'primevue/column'
-import Menu from 'primevue/menu'
 import Dropdown from 'primevue/dropdown'
 import InputText from 'primevue/inputtext'
 import { useDebounceFn } from '@vueuse/core'
 import Swal from 'sweetalert2'
 import { usePaymentRequestApproval } from '~/composables/usePaymentRequestApproval'
 import { usePaymentRequestTabPermissions } from '~/composables/usePaymentRequestTabPermissions'
+import { useImageUrl } from '~/composables/useImageUrl'
 
 const paymentRequestStore = usePaymentRequestStore()
-const { userHasPermission, userHasRole } = usePermissions()
 const { canApprovePaymentRequest, canRejectPaymentRequest } = usePaymentRequestApproval()
 const {
   visibleTabs,
@@ -303,6 +351,7 @@ const {
   canAccessTab,
   resolveAllowedType,
 } = usePaymentRequestTabPermissions()
+const { getAttachmentUrl, getFileIcon } = useImageUrl()
 const formatRupiah = useFormatRupiah()
 const { paymentRequests, loading, totalRecords, params, statistics } = storeToRefs(paymentRequestStore)
 const tableControls = ref({ rows: 10 })
@@ -376,63 +425,22 @@ const sourceTypeOptions = [
 ]
 const { getStatusBadge } = useApprovalStatus()
 
-const actionsMenuRef = ref(null)
-const activeRow = ref(null)
+function rowTypeOf(row: any): PaymentRequestRequestType {
+  return (row?.requestType || row?.request_type || 'project') as PaymentRequestRequestType
+}
 
-const actionMenuItems = computed(() => {
-  const row = activeRow.value
-  if (!row) return []
-  const items = []
-  const rowType = (row.requestType || row.request_type || 'project') as PaymentRequestRequestType
-  const canEdit = canEditType(rowType)
-  const isEditable = row.status === 'draft' || row.status === 'rejected'
+function canEditRow(row: any) {
+  const isEditable = row?.status === 'draft' || row?.status === 'rejected'
+  return isEditable && canEditType(rowTypeOf(row))
+}
 
-  if (canEdit && isEditable) {
-    items.push({
-      label: 'Submit',
-      icon: 'ri ri-send-plane-line',
-      command: () => paymentRequestStore.submitPaymentRequest(row.id),
-    })
-    items.push({
-      label: 'Edit',
-      icon: 'ri ri-edit-box-line',
-      command: () => navigateTo(`/finance/payment-request/form/${row.id}`),
-    })
-  }
-  if (canApprovePaymentRequest(row)) {
-    items.push({
-      label: 'Approve',
-      icon: 'ri ri-check-line',
-      command: () => paymentRequestStore.approvePaymentRequest(row.id),
-    })
-  }
-  if (canRejectPaymentRequest(row)) {
-    items.push({
-      label: 'Reject',
-      icon: 'ri ri-close-line',
-      command: () => rejectRow(row),
-    })
-  }
-  items.push({
-    label: 'Detail',
-    icon: 'ri ri-eye-line',
-    command: () => navigateTo(`/finance/payment-request/detail/${row.id}`),
-  })
-  items.push({
-    label: 'Cetak',
-    icon: 'ri ri-printer-line',
-    command: () => navigateTo({ path: '/finance/cetak-payment-request', query: { id: row.id } }),
-  })
-  if (row.status === 'draft' && canDeleteType(rowType)) {
-    items.push({
-      label: 'Hapus',
-      icon: 'ri ri-delete-bin-7-line',
-      class: 'text-danger',
-      command: () => paymentRequestStore.deletePaymentRequest(row.id),
-    })
-  }
-  return items
-})
+function canSubmitRow(row: any) {
+  return canEditRow(row)
+}
+
+function canDeleteRow(row: any) {
+  return row?.status === 'draft' && canDeleteType(rowTypeOf(row))
+}
 
 async function rejectRow(row) {
   const { value, isConfirmed } = await Swal.fire({
@@ -449,11 +457,6 @@ async function rejectRow(row) {
   if (isConfirmed && value?.trim()) {
     await paymentRequestStore.rejectPaymentRequest(row.id, value.trim())
   }
-}
-
-function toggleActions(event, row) {
-  activeRow.value = row
-  nextTick(() => actionsMenuRef.value?.toggle(event))
 }
 
 const onPage = (e) => {
@@ -678,3 +681,10 @@ onMounted(() => {
 
 definePageMeta({ layout: 'default', middleware: ['auth', 'check-permission'], title: 'Payment Request' })
 </script>
+
+<style scoped>
+/* Dropdown aksi: fixed strategy agar tidak ter-clip overflow datatable */
+:deep(.prq-actions-dropdown) {
+  z-index: 1100 !important;
+}
+</style>

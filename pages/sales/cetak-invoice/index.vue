@@ -326,6 +326,10 @@
 
   const { selectedSalesInvoice: salesInvoice, loading, error } = storeToRefs(salesInvoiceStore);
 
+  useRegisterCetakDraftStatus(
+    () => salesInvoice.value?.documentStatus ?? salesInvoice.value?.document_status
+  )
+
   const getLogoUrl = (logoPath) => {
     if (!logoPath || typeof logoPath !== 'string') {
         return null;

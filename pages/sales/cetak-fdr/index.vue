@@ -221,6 +221,8 @@ const route = useRoute()
 
 const { fdr, loading, error } = storeToRefs(fdrStore)
 
+useRegisterCetakDraftStatus(() => fdr.value?.status)
+
 const perusahaan = computed(() => {
   const list = perusahaanStore.perusahaans
   if (list && list.length > 0) return list[0]

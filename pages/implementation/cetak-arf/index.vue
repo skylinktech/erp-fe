@@ -191,6 +191,8 @@ const error = ref<string | null>(null)
 const arf = ref<Arf | null>(null)
 const perusahaan = ref<Record<string, any> | null>(null)
 
+useRegisterCetakDraftStatus(() => arf.value?.status)
+
 const companyName = computed(
   () => perusahaan.value?.nmPerusahaan ?? perusahaan.value?.nm_perusahaan ?? ''
 )

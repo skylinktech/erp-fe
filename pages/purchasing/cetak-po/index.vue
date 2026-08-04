@@ -319,6 +319,8 @@
 
   const { purchaseOrder, loading, error } = storeToRefs(purchaseOrderStore);
 
+  useRegisterCetakDraftStatus(() => purchaseOrder.value?.status)
+
   // ✅ Computed key untuk force re-render saat route berubah (hanya untuk halaman ini)
   const routeKey = computed(() => `purchase-order-${route.query.id || 'new'}`);
 

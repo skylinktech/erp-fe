@@ -206,6 +206,8 @@ const formatRupiah = useFormatRupiah()
 
 const { quotation, loading, error } = storeToRefs(quotationStore)
 
+useRegisterCetakDraftStatus(() => quotation.value?.status)
+
 const perusahaan = computed(() => {
   const list = perusahaanStore.perusahaans
   if (list && list.length > 0) return list[0]

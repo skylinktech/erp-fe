@@ -113,6 +113,63 @@
                       <label class="form-label text-muted">Metode</label>
                       <p class="mb-0">{{ getPaymentMethodLabel(paymentRequest.paymentMethod || paymentRequest.payment_method) }}</p>
                     </div>
+                    <div
+                      v-if="paymentRequest.serviceInstance || paymentRequest.service_instance_id || paymentRequest.serviceInstanceId"
+                      class="col-md-6"
+                    >
+                      <label class="form-label text-muted">Layanan Aktif</label>
+                      <p class="mb-0 fw-medium">
+                        {{
+                          paymentRequest.serviceInstance?.serviceNumber ||
+                          paymentRequest.serviceInstance?.service_number ||
+                          '—'
+                        }}
+                        <span
+                          v-if="paymentRequest.serviceInstance?.serviceName || paymentRequest.serviceInstance?.service_name"
+                          class="text-muted fw-normal"
+                        >
+                          — {{ paymentRequest.serviceInstance?.serviceName || paymentRequest.serviceInstance?.service_name }}
+                        </span>
+                      </p>
+                      <small v-if="paymentRequest.customer?.name || paymentRequest.serviceInstance?.customer?.name" class="text-muted">
+                        {{ paymentRequest.customer?.name || paymentRequest.serviceInstance?.customer?.name }}
+                      </small>
+                    </div>
+                    <div
+                      v-if="paymentRequest.estimatedStartDate || paymentRequest.estimated_start_date || paymentRequest.estimatedDurationDays || paymentRequest.estimated_duration_days"
+                      class="col-md-6"
+                    >
+                      <label class="form-label text-muted">Estimasi Durasi</label>
+                      <p class="mb-0">
+                        <template v-if="paymentRequest.estimatedStartDate || paymentRequest.estimated_start_date">
+                          {{ String(paymentRequest.estimatedStartDate || paymentRequest.estimated_start_date).slice(0, 10) }}
+                          –
+                          {{ String(paymentRequest.estimatedEndDate || paymentRequest.estimated_end_date || '').slice(0, 10) }}
+                        </template>
+                        <span class="badge bg-label-primary ms-1">
+                          {{ formatDurationDaysLabel(paymentRequest.estimatedDurationDays ?? paymentRequest.estimated_duration_days) }}
+                        </span>
+                      </p>
+                    </div>
+                    <div
+                      v-if="rowRequestType !== 'project'"
+                      class="col-md-12"
+                    >
+                      <label class="form-label text-muted">Pegawai</label>
+                      <ul v-if="employeeDisplayRows.length" class="mb-0 ps-3">
+                        <li
+                          v-for="(emp, eIdx) in employeeDisplayRows"
+                          :key="`emp-${eIdx}`"
+                        >
+                          {{ emp.name }}
+                          <span v-if="emp.salaryLabel" class="text-muted">
+                            — {{ emp.salaryLabel }}
+                          </span>
+                          <span v-if="emp.notes" class="text-muted">— {{ emp.notes }}</span>
+                        </li>
+                      </ul>
+                      <p v-else class="mb-0 text-muted">—</p>
+                    </div>
                     <div class="col-md-6">
                       <label class="form-label text-muted">No. PRQ</label>
                       <p class="mb-0 fw-medium">{{ getPaymentRequestNo(paymentRequest) || '—' }}</p>
@@ -207,6 +264,20 @@
                     <div v-if="paymentRequest.notes" class="col-12 mt-2">
                       <label class="form-label text-muted">Catatan</label>
                       <p class="mb-0 text-break">{{ paymentRequest.notes }}</p>
+                    </div>
+                    <div v-if="paymentRequest.attachment" class="col-12 mt-2">
+                      <label class="form-label text-muted">Attachment</label>
+                      <div>
+                        <a
+                          :href="getAttachmentUrl(paymentRequest.attachment)"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="d-inline-flex align-items-center gap-2 badge bg-label-primary text-decoration-none py-2 px-3"
+                        >
+                          <i :class="getFileIcon(paymentRequest.attachment) + ' me-1'"></i>
+                          Lihat / Unduh File
+                        </a>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -327,11 +398,15 @@
                     <span class="text-muted">Biaya lainnya ({{ otherItemList.length }})</span>
                     <span class="fw-medium">{{ formatRupiah(otherSubtotal) }}</span>
                   </div>
+                  <div v-if="employeeSalarySubtotal > 0" class="d-flex justify-content-between py-1">
+                    <span class="text-muted">Gaji pegawai</span>
+                    <span class="fw-medium">{{ formatRupiah(employeeSalarySubtotal) }}</span>
+                  </div>
                   <div v-if="Number(paymentRequest.discountPercent ?? paymentRequest.discount_percent) > 0" class="d-flex justify-content-between py-1">
                     <span class="text-muted">Diskon ({{ paymentRequest.discountPercent ?? paymentRequest.discount_percent }}%)</span>
                     <span class="fw-medium">−{{ formatRupiah(discountAmount) }}</span>
                   </div>
-                  <div v-if="Number(paymentRequest.taxPercent ?? paymentRequest.tax_percent) > 0 || Number(paymentRequest.discountPercent ?? paymentRequest.discount_percent) > 0 || taxRows.length || otherSubtotal > 0" class="d-flex justify-content-between py-1">
+                  <div v-if="Number(paymentRequest.taxPercent ?? paymentRequest.tax_percent) > 0 || Number(paymentRequest.discountPercent ?? paymentRequest.discount_percent) > 0 || taxRows.length || otherSubtotal > 0 || employeeSalarySubtotal > 0" class="d-flex justify-content-between py-1">
                     <span class="text-muted">DPP</span>
                     <span class="fw-medium">{{ formatRupiah(dppAmount) }}</span>
                   </div>
@@ -414,70 +489,70 @@
       </div>
     </div>
     <div class="content-backdrop fade"></div>
+
+    <Teleport to="body">
+      <div
+        v-if="showApproveModal"
+        class="modal fade show d-block"
+        tabindex="-1"
+        style="background: rgba(0,0,0,0.5);"
+        @click.self="showApproveModal = false"
+      >
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Approve Payment Request</h5>
+              <button type="button" class="btn-close" @click="showApproveModal = false"></button>
+            </div>
+            <div class="modal-body">
+              <label class="form-label">Catatan (opsional)</label>
+              <textarea v-model="approveRemarks" class="form-control" rows="2" placeholder="Catatan approval..."></textarea>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-outline-secondary" @click="showApproveModal = false">Batal</button>
+              <button type="button" class="btn btn-success" @click="handleApprove">
+                <i class="ri-check-line me-1"></i> Approve
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <Teleport to="body">
+      <div
+        v-if="showRejectModal"
+        class="modal fade show d-block"
+        tabindex="-1"
+        style="background: rgba(0,0,0,0.5);"
+        @click.self="showRejectModal = false"
+      >
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Reject Payment Request</h5>
+              <button type="button" class="btn-close" @click="showRejectModal = false"></button>
+            </div>
+            <div class="modal-body">
+              <label class="form-label">Alasan Reject <span class="text-danger">*</span></label>
+              <textarea v-model="rejectRemarks" class="form-control" rows="3" placeholder="Wajib diisi..." required></textarea>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-outline-secondary" @click="showRejectModal = false">Batal</button>
+              <button
+                type="button"
+                class="btn btn-danger"
+                :disabled="!rejectRemarks?.trim()"
+                @click="handleReject"
+              >
+                <i class="ri-close-line me-1"></i> Reject
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
-
-  <Teleport to="body">
-    <div
-      v-if="showApproveModal"
-      class="modal fade show d-block"
-      tabindex="-1"
-      style="background: rgba(0,0,0,0.5);"
-      @click.self="showApproveModal = false"
-    >
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Approve Payment Request</h5>
-            <button type="button" class="btn-close" @click="showApproveModal = false"></button>
-          </div>
-          <div class="modal-body">
-            <label class="form-label">Catatan (opsional)</label>
-            <textarea v-model="approveRemarks" class="form-control" rows="2" placeholder="Catatan approval..."></textarea>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-outline-secondary" @click="showApproveModal = false">Batal</button>
-            <button type="button" class="btn btn-success" @click="handleApprove">
-              <i class="ri-check-line me-1"></i> Approve
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </Teleport>
-
-  <Teleport to="body">
-    <div
-      v-if="showRejectModal"
-      class="modal fade show d-block"
-      tabindex="-1"
-      style="background: rgba(0,0,0,0.5);"
-      @click.self="showRejectModal = false"
-    >
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Reject Payment Request</h5>
-            <button type="button" class="btn-close" @click="showRejectModal = false"></button>
-          </div>
-          <div class="modal-body">
-            <label class="form-label">Alasan Reject <span class="text-danger">*</span></label>
-            <textarea v-model="rejectRemarks" class="form-control" rows="3" placeholder="Wajib diisi..." required></textarea>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-outline-secondary" @click="showRejectModal = false">Batal</button>
-            <button
-              type="button"
-              class="btn btn-danger"
-              :disabled="!rejectRemarks?.trim()"
-              @click="handleReject"
-            >
-              <i class="ri-close-line me-1"></i> Reject
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -489,6 +564,7 @@ import {
   getPaymentRequestTotal,
   getPaymentRequestSourceSubtotal,
   getPaymentRequestOtherSubtotal,
+  getPaymentRequestEmployeeSalarySubtotal,
   getPaymentRequestDiscountAmount,
   getPaymentRequestTaxAmount,
   getPaymentRequestTaxes,
@@ -497,6 +573,7 @@ import {
   getSourceTypeLabel,
   getRequestTypeLabel,
   getPaymentMethodLabel,
+  formatDurationDaysLabel,
 } from '~/stores/payment-request'
 import { useApprovalStatus } from '~/composables/useApprovalStatus'
 import { usePaymentRequestApproval } from '~/composables/usePaymentRequestApproval'
@@ -504,6 +581,9 @@ import { usePermissions } from '~/composables/usePermissions'
 import ApprovalCard from '~/components/ApprovalCard.vue'
 import PaymentRequestSettlementPanel from '~/components/payment-request/PaymentRequestSettlementPanel.vue'
 import { usePaymentRequestTabPermissions } from '~/composables/usePaymentRequestTabPermissions'
+import { useImageUrl } from '~/composables/useImageUrl'
+
+const { getAttachmentUrl, getFileIcon } = useImageUrl()
 
 const route = useRoute()
 const paymentRequestStore = usePaymentRequestStore()
@@ -526,6 +606,46 @@ const rowRequestType = computed(() => {
     | 'project'
     | 'operational'
     | 'reimbursement'
+})
+
+const employeeDisplayRows = computed(() => {
+  const row = paymentRequest.value
+  if (!row) return [] as Array<{ name: string; salaryLabel?: string | null; notes?: string | null }>
+
+  const rows = (row as any).employees || (row as any).paymentRequestEmployees || []
+  if (Array.isArray(rows) && rows.length) {
+    return rows
+      .map((e: any) => {
+        const name =
+          e.employee?.nm_pegawai ||
+          e.employee?.nmPegawai ||
+          e.nm_pegawai ||
+          e.nmPegawai ||
+          null
+        const id = e.employeeId ?? e.employee_id ?? e.employee?.id_pegawai
+        const salary = Number(e.salaryAmount ?? e.salary_amount ?? 0) || 0
+        return {
+          name: name || (id != null ? `Pegawai #${id}` : null),
+          salaryLabel: salary > 0 ? `${formatRupiah(salary)} /hari` : null,
+          notes: e.notes || null,
+        }
+      })
+      .filter((e: { name: string | null }) => !!e.name) as Array<{
+        name: string
+        salaryLabel?: string | null
+        notes?: string | null
+      }>
+  }
+
+  const legacy = row.employee
+  if (legacy?.nm_pegawai || legacy?.nmPegawai) {
+    return [{ name: legacy.nm_pegawai || legacy.nmPegawai || '', salaryLabel: null, notes: null }]
+  }
+  const legacyId = (row as any).employeeId ?? (row as any).employee_id
+  if (legacyId) {
+    return [{ name: `Pegawai #${legacyId}`, salaryLabel: null, notes: null }]
+  }
+  return []
 })
 
 const showSettlementPanel = computed(() => {
@@ -566,13 +686,20 @@ const sourceItemList = computed(() => getPaymentRequestSourceItems(paymentReques
 const otherItemList = computed(() => getPaymentRequestOtherCharges(paymentRequest.value))
 const sourceSubtotal = computed(() => getPaymentRequestSourceSubtotal(paymentRequest.value))
 const otherSubtotal = computed(() => getPaymentRequestOtherSubtotal(paymentRequest.value))
+const employeeSalarySubtotal = computed(() =>
+  getPaymentRequestEmployeeSalarySubtotal(paymentRequest.value)
+)
 const discountAmount = computed(() => getPaymentRequestDiscountAmount(paymentRequest.value))
 const taxAmount = computed(() => getPaymentRequestTaxAmount(paymentRequest.value))
 const taxRows = computed(() => getPaymentRequestTaxes(paymentRequest.value))
 const dppAmount = computed(() => {
   const stored = Number(paymentRequest.value?.dpp ?? 0)
   if (stored > 0) return stored
-  return Math.max(0, sourceSubtotal.value - discountAmount.value) + otherSubtotal.value
+  return (
+    Math.max(0, sourceSubtotal.value - discountAmount.value) +
+    otherSubtotal.value +
+    employeeSalarySubtotal.value
+  )
 })
 
 function formatDateTime(v: string | null | undefined) {

@@ -206,6 +206,8 @@
 
   const { selectedStockTransfer: stockTransfer, loading, error } = storeToRefs(stockTransferStore);
 
+  useRegisterCetakDraftStatus(() => stockTransfer.value?.status)
+
   // ✅ Computed key untuk force re-render saat route berubah (hanya untuk halaman ini)
   const routeKey = computed(() => `stock-transfer-${route.query.id || 'new'}`);
 

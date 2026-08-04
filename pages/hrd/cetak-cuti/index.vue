@@ -233,6 +233,8 @@ const perusahaan = ref<Record<string, any> | null>(null)
 const cutiSignatures = ref<Record<string, any>[]>([])
 const sigLoading = ref(false)
 
+useRegisterCetakDraftStatus(() => cuti.value?.status)
+
 const QR_COL_SIZE = 80
 
 const pegawaiName = computed(() => cuti.value?.pegawai?.nmPegawai ?? cuti.value?.pegawai?.nm_pegawai ?? '-')
