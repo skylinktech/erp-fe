@@ -649,77 +649,8 @@
         layoutStore.toggleSidebar();
     }
 
-    const handleLogout = async () => {
-        try {
-            // Logout dari SSO terlebih dahulu (agar token SSO di-revoke)
-            const ssoService = useSsoService()
-            try {
-                // Ambil token SSO dari cookie untuk logout
-                const ssoToken = document.cookie
-                    .split('; ')
-                    .find(row => row.startsWith('sso_token='))
-                    ?.split('=')[1];
-                
-                if (ssoToken) {
-                    // Gunakan method logout dari useSsoService
-                    await ssoService.logout(ssoToken);
-                    console.log('SSO logout berhasil');
-                } else {
-                    // Jika tidak ada token di cookie, coba logout langsung ke endpoint
-                    await fetch(`${useRuntimeConfig().public.ssoUrl}/api/oauth/logout`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        credentials: 'include' // Kirim cookies SSO
-                    });
-                    console.log('SSO logout via cookie berhasil');
-                }
-            } catch (ssoError) {
-                console.warn('SSO logout gagal:', ssoError)
-            }
-            
-            // Logout dari server backend ERP (akan clear cookie)
-            try {
-                const response = await fetch($api.logout(), {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    credentials: 'include' // PENTING: kirim cookies untuk autentikasi
-                });
-
-                // Cek status response
-                if (!response.ok) {
-                    console.warn('Logout dari server ERP gagal:', response.status);
-                }
-            } catch (serverError) {
-                console.warn('Gagal menghubungi server ERP untuk logout:', serverError.message);
-            }
-            
-            // Bersihkan data lokal setelah logout dari server
-            userStore.clearUser()
-            document.documentElement.className = ''
-            
-            // Clear semua cookies yang mungkin tersimpan
-            // Collect cookie names first to avoid modifying document.cookie while iterating
-            const cookieStrings = document.cookie.split(";")
-            const cookieNames = cookieStrings
-                .map((c) => {
-                    const eqPos = c.indexOf("=")
-                    return eqPos >= 0 ? c.substring(0, eqPos).trim() : c.trim()
-                })
-                .filter(Boolean)
-            cookieNames.forEach((name) => {
-                document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`
-            })
-        } catch (error) {
-            console.warn('Error saat logout:', error.message);
-        } finally {
-            // Selalu redirect ke halaman login
-            router.push('/auth/login')
-        }
-    }
+    const { logout } = useLogout()
+    const handleLogout = () => logout()
   </script>
 
 <style>

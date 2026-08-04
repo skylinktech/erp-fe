@@ -3,6 +3,7 @@ import type { User } from './userManagement'
 import type { Permission } from './permissions'
 import { useNuxtApp } from '#app'
 import { useSecureStorage } from '~/composables/useSecureStorage'
+import { clearAccessTokenCookie } from '~/utils/authCookie'
 
 // Interface untuk cached user data yang minimal
 interface CachedUserData {
@@ -212,9 +213,9 @@ export const useUserStore = defineStore('user', {
       localStorage.removeItem('user')
       localStorage.removeItem('user_cache')
 
-      // Hapus access_token cookie (untuk Authorization header)
-      const accessTokenCookie = useCookie('access_token')
-      accessTokenCookie.value = null
+      // Hapus access_token dengan atribut yang sama saat login
+      // (secure + sameSite), agar browser benar-benar drop cookie.
+      clearAccessTokenCookie()
 
       // Clear secure storage
       const secureStorage = useSecureStorage()

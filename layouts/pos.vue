@@ -59,8 +59,8 @@ useHead({
 })
 
 function signOut() {
-  // Redirect to login or call auth logout
-  navigateTo('/auth/login')
+  const { logout } = useLogout()
+  logout()
 }
 </script>
 

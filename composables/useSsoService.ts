@@ -140,19 +140,23 @@ export const useSsoService = () => {
    * @param token - SSO access token
    * @returns Promise<boolean>
    */
-  const logout = async (token: string): Promise<boolean> => {
-    if (!ssoUrl || !token) {
+  const logout = async (token?: string | null): Promise<boolean> => {
+    if (!ssoUrl) {
       return false
     }
 
     try {
+      const headers: Record<string, string> = {
+        Accept: 'application/json',
+      }
+      if (token) {
+        headers.Authorization = `Bearer ${token}`
+      }
+
       const response = await fetch(`${ssoUrl}/api/oauth/logout`, {
         method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: 'application/json',
-        },
-        credentials: 'include', // PENTING: Untuk mengirim cookies ke server
+        headers,
+        credentials: 'include',
       })
 
       return response.ok
