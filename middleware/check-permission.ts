@@ -51,6 +51,8 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       '/finance/invoices': 'view_invoice',
       '/finance/payment-request': 'view_payment_request',
       '/operations/request-activation': 'view_request_activation',
+      '/operations/berita-acara': 'view_berita_acara',
+      '/operations/cetak-berita-acara': 'view_berita_acara',
       '/finance/billing-adjustments': 'view_billing_adjustment',
       '/finance/billing-preparations': 'view_billing_preparation',
       '/finance/ar-receipts': 'view_ar_receipt',
@@ -148,6 +150,14 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
         requiredPermission = 'show_request_activation'
       } else if (/^\/operations\/request-activation/.test(to.path)) {
         requiredPermission = 'view_request_activation'
+      } else if (/^\/operations\/berita-acara\/form(\/.*)?$/.test(to.path)) {
+        requiredPermission = 'access_berita_acara'
+      } else if (/^\/operations\/berita-acara\/detail\/.+$/.test(to.path)) {
+        requiredPermission = 'show_berita_acara'
+      } else if (/^\/operations\/cetak-berita-acara/.test(to.path)) {
+        requiredPermission = 'view_berita_acara'
+      } else if (/^\/operations\/berita-acara/.test(to.path)) {
+        requiredPermission = 'view_berita_acara'
       } else if (/^\/finance\/cetak-payment-request/.test(to.path)) {
         requiredPermission = 'view_payment_request'
       } else if (/^\/finance\/billing-preparations/.test(to.path)) {

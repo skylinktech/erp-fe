@@ -255,6 +255,16 @@ export default defineNuxtPlugin(() => {
     rejectRequestActivation: (id: number | string) => `${apiBase}/request-activation/${id}/reject`,
     completeRequestActivation: (id: number | string) => `${apiBase}/request-activation/${id}/complete`,
 
+    // Berita Acara — Operations
+    beritaAcara: () => `${apiBase}/berita-acara`,
+    beritaAcaraShow: (id: number | string) => `${apiBase}/berita-acara/${id}`,
+    getBeritaAcaraDetails: (id: number | string) => `${apiBase}/berita-acara/getDetails/${id}`,
+    beritaAcaraStatistics: () => `${apiBase}/berita-acara/statistics`,
+    submitBeritaAcara: (id: number | string) => `${apiBase}/berita-acara/${id}/submit`,
+    approveBeritaAcara: (id: number | string) => `${apiBase}/berita-acara/${id}/approve`,
+    rejectBeritaAcara: (id: number | string) => `${apiBase}/berita-acara/${id}/reject`,
+    completeBeritaAcara: (id: number | string) => `${apiBase}/berita-acara/${id}/complete`,
+
     // Progress Tracker — Implementation
     progressTracker: () => `${apiBase}/progress-tracker`,
     progressTrackerShow: (id: string) => `${apiBase}/progress-tracker/${id}`,
