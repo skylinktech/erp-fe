@@ -301,6 +301,7 @@ export default defineNuxtPlugin(() => {
     financeInvoicesApprove      : (id: string) => `${apiBase}/finance/invoices/${id}/approve`,
     financeInvoicesReject       : (id: string) => `${apiBase}/finance/invoices/${id}/reject`,
     financeInvoicesStatistics   : () => `${apiBase}/finance/invoices/statistics`,
+    financeInvoicesAlerts       : () => `${apiBase}/finance/invoices/alerts`,
     financeInvoicesBillableItems: () => `${apiBase}/finance/invoices/billable-items`,
     creditNotes                 : () => `${apiBase}/finance/credit-notes`,
     creditNotesShow             : (id: string) => `${apiBase}/finance/credit-notes/${id}`,
@@ -675,6 +676,7 @@ export default defineNuxtPlugin(() => {
     // Subscription
     subscription: () => `${apiBase}/subscription`,
     subscriptionStatistics: () => `${apiBase}/subscription/statistics`,
+    subscriptionExpiringSoon: () => `${apiBase}/subscription/expiring-soon`,
     approveSubscription: (id: string) => `${apiBase}/subscription/approveSubscription/${id}`,
     rejectSubscription: (id: string) => `${apiBase}/subscription/rejectSubscription/${id}`,
     submitSubscription: (id: string) => `${apiBase}/subscription/submitSubscription/${id}`,

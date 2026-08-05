@@ -6,8 +6,9 @@ import { defineAsyncComponent, h, type Component } from 'vue'
  * `component_key` (dari tabel `dashboard_widgets` di backend) di-mapping ke
  * komponen Vue lazy-loaded di sini. Widget yang didaftarkan adalah komponen
  * EXISTING yang sudah production-ready (SystemStatsCard, ActivityFeedCard,
- * ImportantNotificationsCard) — masing-masing sudah self-contained: fetch
- * data sendiri lewat store Pinia-nya, dan punya loading/error/retry sendiri.
+ * ImportantNotificationsCard, ExpiringContractsCard, dll.) — masing-masing
+ * sudah self-contained: fetch data sendiri lewat store Pinia-nya, dan punya
+ * loading/error/retry sendiri.
  * Dashboard Engine tidak perlu tahu apa-apa soal cara widget mengambil data.
  *
  * Menambah widget baru ke framework = tambah 1 baris di sini + 1 baris seed
@@ -27,6 +28,10 @@ const WIDGET_COMPONENT_MAP: Record<string, () => Promise<Component>> = {
   total_user_login: () =>
     import('~/components/dashboard/TotalUserLoginCard.vue') as Promise<Component>,
   revenue: () => import('~/components/dashboard/RevenueCard.vue') as Promise<Component>,
+  expiring_contracts: () =>
+    import('~/components/dashboard/ExpiringContractsCard.vue') as Promise<Component>,
+  invoice_alerts: () =>
+    import('~/components/dashboard/InvoiceAlertsCard.vue') as Promise<Component>,
 }
 
 const resolvedCache = new Map<string, Component>()
