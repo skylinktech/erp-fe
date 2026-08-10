@@ -311,7 +311,7 @@ const downloadTemplate = async () => {
             title: 'Berhasil!',
             message: 'Template Excel berhasil diunduh.',
             color: 'green',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
         })
     } catch (error) {
@@ -320,7 +320,7 @@ const downloadTemplate = async () => {
             title: 'Error',
             message: 'Gagal mengunduh template: ' + error.message,
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
         })
     } finally {
@@ -335,7 +335,7 @@ const uploadFile = async () => {
             title: 'Error',
             message: 'Silakan pilih file Excel terlebih dahulu.',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
         })
         return
@@ -395,7 +395,7 @@ const uploadFile = async () => {
             title: 'Berhasil!',
             message: 'Import data berhasil diproses.',
             color: 'green',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
         })
     } catch (error) {
@@ -405,7 +405,7 @@ const uploadFile = async () => {
             title: 'Error',
             message: 'Gagal mengupload file: ' + error.message,
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
         })
     } finally {

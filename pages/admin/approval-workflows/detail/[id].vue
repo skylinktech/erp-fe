@@ -305,10 +305,10 @@ async function saveStep() {
     }
     if (editingStep.value) {
       await wfStore.updateStep(editingStep.value.id, payload)
-      toast.success({ title: 'Berhasil', message: 'Step berhasil diupdate', color: 'green', position: 'topRight' })
+      toast.success({ title: 'Berhasil', message: 'Step berhasil diupdate', color: 'green', position: 'bottomRight' })
     } else {
       await wfStore.storeStep(Number(id.value), payload)
-      toast.success({ title: 'Berhasil', message: 'Step berhasil ditambahkan', color: 'green', position: 'topRight' })
+      toast.success({ title: 'Berhasil', message: 'Step berhasil ditambahkan', color: 'green', position: 'bottomRight' })
     }
     showStepModal.value = false
     await load()
@@ -333,10 +333,10 @@ async function deleteStep(stepId: number) {
   if (!ok.isConfirmed) return
   try {
     await wfStore.deleteStep(stepId)
-    toast.success({ title: 'Berhasil', message: 'Step berhasil dihapus', color: 'green', position: 'topRight' })
+    toast.success({ title: 'Berhasil', message: 'Step berhasil dihapus', color: 'green', position: 'bottomRight' })
     await load()
   } catch (e: any) {
-    toast.error({ title: 'Error', message: e?.message || 'Gagal menghapus', color: 'red', position: 'topRight' })
+    toast.error({ title: 'Error', message: e?.message || 'Gagal menghapus', color: 'red', position: 'bottomRight' })
   }
 }
 

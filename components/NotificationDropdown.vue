@@ -237,7 +237,7 @@ async function markAllAsRead() {
       title: 'Berhasil',
       message: 'Semua notifikasi ditandai dibaca',
       color: 'green',
-      position: 'topRight',
+      position: 'bottomRight',
     })
   } catch {
     const toast = useToast()
@@ -245,7 +245,7 @@ async function markAllAsRead() {
       title: 'Error',
       message: 'Gagal menandai semua notifikasi',
       color: 'red',
-      position: 'topRight',
+      position: 'bottomRight',
     })
   }
 }

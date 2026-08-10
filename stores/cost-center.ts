@@ -110,7 +110,7 @@ export const useCostCenterStore = defineStore('cost-center', {
             title: 'Error',
             message: `Tidak dapat memuat data cost center: ${e.message}`,
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
             icon: 'error',
           })
@@ -176,7 +176,7 @@ export const useCostCenterStore = defineStore('cost-center', {
           title: 'Success',
           message: `Cost center berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
       } catch (error: any) {
@@ -186,7 +186,7 @@ export const useCostCenterStore = defineStore('cost-center', {
             title: 'Error',
             message: error.message || 'Operasi gagal',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           })
         }
@@ -249,7 +249,7 @@ export const useCostCenterStore = defineStore('cost-center', {
             title: 'Success',
             message: 'Cost center berhasil dihapus.',
             color: 'green',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           })
         } catch (error: any) {
@@ -258,7 +258,7 @@ export const useCostCenterStore = defineStore('cost-center', {
             title: 'Error',
             message: error.message || 'Gagal menghapus cost center',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           })
         } finally {
@@ -351,7 +351,7 @@ export const useCostCenterStore = defineStore('cost-center', {
           title: 'Error',
           message: error.message || 'Gagal memuat data cost center untuk export',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         })
         throw error
       }

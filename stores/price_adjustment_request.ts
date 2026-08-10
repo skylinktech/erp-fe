@@ -184,7 +184,7 @@ export const usePriceAdjustmentRequestStore = defineStore('priceAdjustmentReques
             title: 'Error',
             message: `Tidak dapat memuat data price adjustment request: ${e.message}`,
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
           })
         }
       } finally {
@@ -235,7 +235,7 @@ export const usePriceAdjustmentRequestStore = defineStore('priceAdjustmentReques
           title: 'Berhasil',
           message: 'Price adjustment request berhasil disubmit ke finance',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
         })
 
         await this.fetchRequests()
@@ -246,7 +246,7 @@ export const usePriceAdjustmentRequestStore = defineStore('priceAdjustmentReques
           title: 'Error',
           message: e.message,
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         })
         throw e
       } finally {
@@ -291,7 +291,7 @@ export const usePriceAdjustmentRequestStore = defineStore('priceAdjustmentReques
             title: 'Berhasil',
             message: 'Price adjustment request berhasil diapprove',
             color: 'green',
-            position: 'topRight',
+            position: 'bottomRight',
           })
 
           await this.fetchRequests()
@@ -301,7 +301,7 @@ export const usePriceAdjustmentRequestStore = defineStore('priceAdjustmentReques
             title: 'Error',
             message: e.message,
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
           })
         } finally {
           this.loading = false
@@ -335,7 +335,7 @@ export const usePriceAdjustmentRequestStore = defineStore('priceAdjustmentReques
           title: 'Berhasil',
           message: 'Price adjustment request berhasil direject',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
         })
 
         await this.fetchRequests()
@@ -345,7 +345,7 @@ export const usePriceAdjustmentRequestStore = defineStore('priceAdjustmentReques
           title: 'Error',
           message: e.message,
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         })
         throw e
       } finally {
@@ -389,7 +389,7 @@ export const usePriceAdjustmentRequestStore = defineStore('priceAdjustmentReques
             title: 'Berhasil',
             message: 'Price adjustment request berhasil dihapus',
             color: 'green',
-            position: 'topRight',
+            position: 'bottomRight',
           })
 
           await this.fetchRequests()
@@ -399,7 +399,7 @@ export const usePriceAdjustmentRequestStore = defineStore('priceAdjustmentReques
             title: 'Error',
             message: e.message,
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
           })
         } finally {
           this.loading = false

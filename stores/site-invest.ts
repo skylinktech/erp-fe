@@ -500,7 +500,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
             title: 'Success',
             message: `Site Investment berhasil ${this.isEditMode ? 'diperbarui' : 'dibuat'}.`,
             color: 'green',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           })
           if (options?.navigateToList) {
@@ -515,7 +515,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
           title: 'Error',
           message: error.message || 'Operasi gagal',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return false
@@ -533,7 +533,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
           title: 'Error',
           message: 'ID Site Investment tidak valid',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return false
@@ -576,7 +576,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
           title: 'Success',
           message: 'Site Investment berhasil dihapus.',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return true
@@ -586,7 +586,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
           title: 'Error',
           message: error.message || 'Gagal menghapus Site Investment',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return false
@@ -603,7 +603,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
           title: 'Error',
           message: 'ID Site Investment tidak valid',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return false
@@ -645,7 +645,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
               title: 'Stock Tidak Mencukupi',
               message: errorMessages,
               color: 'red',
-              position: 'topRight',
+              position: 'bottomRight',
               layout: 2,
               duration: 5000,
             })
@@ -663,7 +663,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
           title: 'Success',
           message: 'Site Investment berhasil diapprove.',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
 
@@ -677,7 +677,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
             title: 'Error',
             message: error.message || 'Gagal mengapprove site investment.',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           })
         }
@@ -690,7 +690,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
     async cancelSiteInvest(siteInvestId: string) {
       if (!siteInvestId || siteInvestId === 'undefined' || siteInvestId === 'null' || String(siteInvestId).trim() === '') {
         const toast = useToast()
-        toast.error({ title: 'Error', message: 'ID Site Investment tidak valid', color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Error', message: 'ID Site Investment tidak valid', color: 'red', position: 'bottomRight', layout: 2 })
         return false
       }
       this.loading = true
@@ -734,7 +734,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
           title: 'Success',
           message: 'Site Investment berhasil dibatalkan.',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
 
@@ -746,7 +746,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
           title: 'Error',
           message: error.message || 'Gagal membatalkan site investment.',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return false
@@ -758,7 +758,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
     async rejectSiteInvest(siteInvestId: string, rejectReason?: string) {
       if (!siteInvestId || siteInvestId === 'undefined' || siteInvestId === 'null' || String(siteInvestId).trim() === '') {
         const toast = useToast()
-        toast.error({ title: 'Error', message: 'ID Site Investment tidak valid', color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Error', message: 'ID Site Investment tidak valid', color: 'red', position: 'bottomRight', layout: 2 })
         return false
       }
       this.loading = true
@@ -823,7 +823,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
           title: 'Success',
           message: 'Site Investment berhasil direject.',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
 
@@ -835,7 +835,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
           title: 'Error',
           message: error.message || 'Gagal mereject site investment.',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return false
@@ -847,7 +847,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
     async submitSiteInvest(siteInvestId: string) {
       if (!siteInvestId || siteInvestId === 'undefined' || siteInvestId === 'null' || String(siteInvestId).trim() === '') {
         const toast = useToast()
-        toast.error({ title: 'Error', message: 'ID Site Investment tidak valid', color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Error', message: 'ID Site Investment tidak valid', color: 'red', position: 'bottomRight', layout: 2 })
         return false
       }
       this.loading = true
@@ -891,7 +891,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
           title: 'Success',
           message: 'Site Investment berhasil di-submit (status: pending).',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
 
@@ -903,7 +903,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
           title: 'Error',
           message: error.message || 'Gagal submit site investment.',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return false
@@ -951,7 +951,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
         const siId = siteInvestData.id ?? (siteInvestData as any).id
         if (!siId || siId === 'undefined') {
           const toast = useToast()
-          toast.error({ title: 'Error', message: 'ID Site Investment tidak valid.', color: 'red', position: 'topRight' })
+          toast.error({ title: 'Error', message: 'ID Site Investment tidak valid.', color: 'red', position: 'bottomRight' })
           return
         }
         await this.getSiteInvestDetails(siId)
@@ -963,7 +963,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
             title: 'Error',
             message: 'Tidak dapat memuat data Site Investment.',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           })
           return

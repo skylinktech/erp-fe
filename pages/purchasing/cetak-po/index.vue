@@ -348,7 +348,7 @@
         icon: 'ri-close-line',
         message: e.message || 'Gagal memuat detail purchase order.',
         timeout: 3000,
-        position: 'topRight',
+        position: 'bottomRight',
         layout: 2,
       });
     }

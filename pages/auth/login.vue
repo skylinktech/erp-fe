@@ -170,7 +170,7 @@
           icon: 'ri-close-line',
           message: error.value,
           timeout: 3000,
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         });
         pending.value = false;
@@ -185,7 +185,7 @@
           icon: 'ri-close-line',
           message: error.value,
           timeout: 3000,
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         });
         pending.value = false;
@@ -202,7 +202,7 @@
           icon: 'ri-close-line',
           message: error.value,
           timeout: 3000,
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         });
         pending.value = false;
@@ -287,7 +287,7 @@
         icon: 'ri-check-line',
         message: 'Selamat datang',
         timeout: 3000,
-        position: 'topRight',
+        position: 'bottomRight',
         layout: 2,
       });
       
@@ -302,7 +302,7 @@
         icon: 'ri-close-line',
         message: `Gagal login: ${errorMessage}`,
         timeout: 3000,
-        position: 'topRight',
+        position: 'bottomRight',
         layout: 2,
       });
     } finally {

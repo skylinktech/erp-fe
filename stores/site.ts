@@ -127,7 +127,7 @@ export const useSiteStore = defineStore('site', {
             title: 'Error',
             message: `Tidak dapat memuat data site: ${e.message}`,
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
             icon: 'error',
           })
@@ -213,7 +213,7 @@ export const useSiteStore = defineStore('site', {
           title: 'Success',
           message: `Site berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
       } catch (error: any) {
@@ -223,7 +223,7 @@ export const useSiteStore = defineStore('site', {
             title: 'Error',
             message: error.message || 'Operasi gagal',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           })
         }
@@ -286,7 +286,7 @@ export const useSiteStore = defineStore('site', {
             title: 'Success',
             message: 'Site berhasil dihapus.',
             color: 'green',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           })
         } catch (error: any) {
@@ -295,7 +295,7 @@ export const useSiteStore = defineStore('site', {
             title: 'Error',
             message: error.message || 'Gagal menghapus site',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           })
         } finally {
@@ -404,7 +404,7 @@ export const useSiteStore = defineStore('site', {
           title: 'Error',
           message: error.message || 'Gagal memuat data site untuk export',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         })
         throw error
       }

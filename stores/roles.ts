@@ -92,7 +92,7 @@ export const useRolesStore = defineStore('roles', {
                         title: 'Error',
                         message: `Tidak dapat memuat data roles: ${e.message}`,
                         color: 'red',
-                        position: 'topRight',
+                        position: 'bottomRight',
                         layout: 2,
                         icon: 'error',
                     });
@@ -124,7 +124,7 @@ export const useRolesStore = defineStore('roles', {
                     title: 'Error',
                     message: `Gagal memuat permissions: ${error.message}`,
                     color: 'red',
-                    position: 'topRight',
+                    position: 'bottomRight',
                     layout: 2,
                     icon: 'error',
                 });
@@ -179,7 +179,7 @@ export const useRolesStore = defineStore('roles', {
                     title: 'Success',
                     message: `Role berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
                     color: 'green',
-                    position: 'topRight',
+                    position: 'bottomRight',
                     layout: 2,
                     icon: 'success',
                 });
@@ -190,7 +190,7 @@ export const useRolesStore = defineStore('roles', {
                         title: 'Error',
                         message: error.message || 'Operasi gagal',
                         color: 'red',
-                        position: 'topRight',
+                        position: 'bottomRight',
                         layout: 2,
                         icon: 'error',
                     });
@@ -238,7 +238,7 @@ export const useRolesStore = defineStore('roles', {
                     title: 'Success',
                     message: 'Role berhasil dihapus.',
                     color: 'green',
-                    position: 'topRight',
+                    position: 'bottomRight',
                     layout: 2,
                     icon: 'success',
                 });
@@ -247,7 +247,7 @@ export const useRolesStore = defineStore('roles', {
                     title: 'Error',
                     message: error.message || 'Gagal menghapus role',
                     color: 'red',
-                    position: 'topRight',
+                    position: 'bottomRight',
                     layout: 2,
                     icon: 'error',
                 });
@@ -285,7 +285,7 @@ export const useRolesStore = defineStore('roles', {
                         title: 'Error',
                         message: error.message,
                         color: 'red',
-                        position: 'topRight',
+                        position: 'bottomRight',
                         layout: 2,
                         icon: 'error',
                     });

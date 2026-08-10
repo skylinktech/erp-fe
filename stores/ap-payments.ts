@@ -160,7 +160,7 @@ export const useAPPaymentStore = defineStore('apPayment', {
           title: 'Error',
           message: `Tidak dapat memuat data pembayaran: ${e.message}`,
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
           icon: 'error',
         });
@@ -213,7 +213,7 @@ export const useAPPaymentStore = defineStore('apPayment', {
               title: 'Error',
               message: 'Sesi Anda telah berakhir. Silakan login kembali.',
               color: 'red',
-              position: 'topRight',
+              position: 'bottomRight',
             });
           }
         }
@@ -225,7 +225,7 @@ export const useAPPaymentStore = defineStore('apPayment', {
           title: 'Error',
           message: 'Gagal memuat data vendor',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         });
       }
     },
@@ -270,7 +270,7 @@ export const useAPPaymentStore = defineStore('apPayment', {
               title: 'Error',
               message: 'Sesi Anda telah berakhir. Silakan login kembali.',
               color: 'red',
-              position: 'topRight',
+              position: 'bottomRight',
             });
           }
         }
@@ -282,7 +282,7 @@ export const useAPPaymentStore = defineStore('apPayment', {
           title: 'Error',
           message: 'Gagal memuat data invoice',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         });
       }
     },
@@ -393,7 +393,7 @@ export const useAPPaymentStore = defineStore('apPayment', {
           title: 'Success',
           message: `Pembayaran berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         });
 
@@ -406,7 +406,7 @@ export const useAPPaymentStore = defineStore('apPayment', {
             title: 'Error',
             message: error.message || 'Operasi gagal',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           });
         }
@@ -462,7 +462,7 @@ export const useAPPaymentStore = defineStore('apPayment', {
             title: 'Success',
             message: 'Pembayaran berhasil dihapus.',
             color: 'green',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           });
         } catch (error: any) {
@@ -471,7 +471,7 @@ export const useAPPaymentStore = defineStore('apPayment', {
             title: 'Error',
             message: error.message || 'Gagal menghapus pembayaran',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           });
         } finally {
@@ -508,7 +508,7 @@ export const useAPPaymentStore = defineStore('apPayment', {
           title: 'Success',
           message: 'Pembayaran dikonfirmasi; invoice/PRQ terkait di-settle bila ada.',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         });
       } catch (error: any) {
@@ -517,7 +517,7 @@ export const useAPPaymentStore = defineStore('apPayment', {
           title: 'Error',
           message: error.message || 'Gagal mengkonfirmasi pembayaran',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         });
       }
@@ -563,7 +563,7 @@ export const useAPPaymentStore = defineStore('apPayment', {
           title: 'Success',
           message: 'Pembayaran dibatalkan; settlement invoice dihitung ulang.',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         });
       } catch (error: any) {
@@ -572,7 +572,7 @@ export const useAPPaymentStore = defineStore('apPayment', {
           title: 'Error',
           message: error.message || 'Gagal membatalkan pembayaran',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         });
       }

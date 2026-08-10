@@ -82,7 +82,7 @@ export const useDivisiStore = defineStore('divisi', {
           title: 'Error',
           message: `Tidak dapat memuat data divisi: ${e.message}`,
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         });
       } finally {
         this.loading = false
@@ -133,7 +133,7 @@ export const useDivisiStore = defineStore('divisi', {
           title: 'Success',
           message: `Divisi berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
         });
 
       } catch (error: any) {
@@ -143,7 +143,7 @@ export const useDivisiStore = defineStore('divisi', {
             title: 'Error',
             message: error.message || 'Operasi gagal',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
           });
         }
       } finally {
@@ -191,7 +191,7 @@ export const useDivisiStore = defineStore('divisi', {
             title: 'Success',
             message: 'Divisi berhasil dihapus.',
             color: 'green',
-            position: 'topRight',
+            position: 'bottomRight',
           });
       } catch (error: any) {
           console.error('Gagal menghapus divisi:', error);
@@ -200,7 +200,7 @@ export const useDivisiStore = defineStore('divisi', {
             title: 'Error',
             message: error.message || 'Gagal menghapus divisi',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
           });
       } finally {
           this.loading = false;

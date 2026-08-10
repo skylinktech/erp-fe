@@ -192,7 +192,7 @@ export const usePksStore = defineStore('pks', {
       } catch (e: any) {
         this.error = e
         if (!suppressError) {
-          toast.error({ title: 'Error', message: `Tidak dapat memuat data PKS: ${e.message}`, color: 'red', position: 'topRight', layout: 2 })
+          toast.error({ title: 'Error', message: `Tidak dapat memuat data PKS: ${e.message}`, color: 'red', position: 'bottomRight', layout: 2 })
         }
       } finally {
         this.loading = false
@@ -225,7 +225,7 @@ export const usePksStore = defineStore('pks', {
         else throw new Error('Data tidak valid')
       } catch (e: any) {
         this.error = e
-        toast.error({ title: 'Error', message: 'Gagal mengambil data PKS untuk edit', color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Error', message: 'Gagal mengambil data PKS untuk edit', color: 'red', position: 'bottomRight', layout: 2 })
       } finally {
         this.loading = false
       }
@@ -295,7 +295,7 @@ export const usePksStore = defineStore('pks', {
         if (!res.ok) {
           const ed = await res.json().catch(() => ({}))
           this.validationErrors = ed.errors || []
-          toast.error({ title: 'Error', message: ed.message || (this.isEditMode ? 'Gagal memperbarui PKS' : 'Gagal menyimpan PKS'), color: 'red', position: 'topRight', layout: 2 })
+          toast.error({ title: 'Error', message: ed.message || (this.isEditMode ? 'Gagal memperbarui PKS' : 'Gagal menyimpan PKS'), color: 'red', position: 'bottomRight', layout: 2 })
           this.saving = false
           return false
         }
@@ -304,16 +304,16 @@ export const usePksStore = defineStore('pks', {
         // Halaman list biasanya akan fetch ulang saat mount.
         void this.fetchPks(true)
         void this.fetchStatistics()
-        toast.success({ title: 'Sukses', message: `PKS berhasil ${this.isEditMode ? 'diperbarui' : 'dibuat'}`, color: 'green', position: 'topRight', layout: 2 })
+        toast.success({ title: 'Sukses', message: `PKS berhasil ${this.isEditMode ? 'diperbarui' : 'dibuat'}`, color: 'green', position: 'bottomRight', layout: 2 })
         if (options?.navigateToList) {
           await navigateTo('/order-process/pks')
         }
         return true
       } catch (e: any) {
         if (e?.name === 'AbortError') {
-          toast.error({ title: 'Timeout', message: 'Proses simpan terlalu lama. Silakan coba lagi.', color: 'red', position: 'topRight', layout: 2 })
+          toast.error({ title: 'Timeout', message: 'Proses simpan terlalu lama. Silakan coba lagi.', color: 'red', position: 'bottomRight', layout: 2 })
         } else {
-          toast.error({ title: 'Error', message: e.message || 'Operasi gagal', color: 'red', position: 'topRight', layout: 2 })
+          toast.error({ title: 'Error', message: e.message || 'Operasi gagal', color: 'red', position: 'bottomRight', layout: 2 })
         }
         this.saving = false
         return false
@@ -334,9 +334,9 @@ export const usePksStore = defineStore('pks', {
         if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message || 'Gagal menghapus PKS')
         await this.fetchPks()
         await this.fetchStatistics()
-        toast.success({ title: 'Sukses', message: 'PKS berhasil dihapus', color: 'green', position: 'topRight', layout: 2 })
+        toast.success({ title: 'Sukses', message: 'PKS berhasil dihapus', color: 'green', position: 'bottomRight', layout: 2 })
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message || 'Gagal menghapus PKS', color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Error', message: e.message || 'Gagal menghapus PKS', color: 'red', position: 'bottomRight', layout: 2 })
       } finally {
         this.loading = false
       }
@@ -355,10 +355,10 @@ export const usePksStore = defineStore('pks', {
         if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message || 'Gagal signed PKS')
         await this.fetchPks()
         await this.fetchStatistics()
-        toast.success({ title: 'Sukses', message: 'PKS berhasil di-signed', color: 'green', position: 'topRight', layout: 2 })
+        toast.success({ title: 'Sukses', message: 'PKS berhasil di-signed', color: 'green', position: 'bottomRight', layout: 2 })
         return true
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message || 'Gagal signed PKS', color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Error', message: e.message || 'Gagal signed PKS', color: 'red', position: 'bottomRight', layout: 2 })
         return false
       } finally {
         this.loading = false
@@ -522,7 +522,7 @@ export const usePksStore = defineStore('pks', {
         const json = await res.json()
         this.statistics = json.data ?? this.statistics
       } catch (e: any) {
-        toast.error({ title: 'Error', message: 'Gagal memuat statistik PKS', color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Error', message: 'Gagal memuat statistik PKS', color: 'red', position: 'bottomRight', layout: 2 })
       }
     },
   },

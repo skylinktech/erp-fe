@@ -276,7 +276,7 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
           title: 'Error',
           message: `Tidak dapat memuat data Purchase Invoice: ${e.message}`,
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2
         });
       } finally {
@@ -312,7 +312,7 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
           title: 'Error',
           message: `Tidak dapat memuat statistik invoice: ${e.message}`,
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2
         });
       }
@@ -341,7 +341,7 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
           title: 'Error',
           message: 'Gagal memuat data purchase invoice.',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2
         });
       } finally {
@@ -441,7 +441,7 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
                       title: 'Error',
                       message: errorData.errors.map((e: any) => e.message).join('<br>'),
                       color: 'red',
-                      position: 'topRight',
+                      position: 'bottomRight',
                       layout: 2
                     });
                     return false;
@@ -455,7 +455,7 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
                   title: 'Success',
                   message: `Purchase Invoice berhasil ${this.isEditMode ? 'diperbarui' : 'dibuat'}.`,
                   color: 'green',
-                  position: 'topRight',
+                  position: 'bottomRight',
                   layout: 2
                 });
                 return true;
@@ -468,7 +468,7 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
               title: 'Error',
               message: error.message || 'Operasi gagal',
               color: 'red',
-              position: 'topRight',
+              position: 'bottomRight',
               layout: 2
             });
             return false;
@@ -517,7 +517,7 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
             title: 'Success',
             message: 'Purchase Invoice berhasil dihapus.',
             color: 'green',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2
           });
       } catch (error: any) {
@@ -525,7 +525,7 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
             title: 'Error',
             message: error.message || 'Gagal menghapus Purchase Invoice',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2
           });
       } finally {
@@ -547,7 +547,7 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
                 title: 'Error',
                 message: 'Tidak dapat memuat data Purchase Invoice.',
                 color: 'red',
-                position: 'topRight',
+                position: 'bottomRight',
                 layout: 2
               });
               return;

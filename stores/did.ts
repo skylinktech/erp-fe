@@ -113,7 +113,7 @@ export const useDidStore = defineStore('did', {
             title: 'Error',
             message: `Tidak dapat memuat data DID: ${e.message}`,
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
           })
         }
       } finally {
@@ -192,7 +192,7 @@ export const useDidStore = defineStore('did', {
           title: 'Success',
           message: `DID berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
         })
       } catch (error: any) {
         if (this.validationErrors.length === 0) {
@@ -200,7 +200,7 @@ export const useDidStore = defineStore('did', {
             title: 'Error',
             message: error.message || 'Operasi gagal',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
           })
         }
       } finally {
@@ -244,7 +244,7 @@ export const useDidStore = defineStore('did', {
           title: 'Success',
           message: 'DID berhasil dihapus.',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
         })
       } catch (error: any) {
         console.error('Gagal menghapus DID:', error)
@@ -252,7 +252,7 @@ export const useDidStore = defineStore('did', {
           title: 'Error',
           message: error.message || 'Gagal menghapus DID',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         })
       } finally {
         this.loading = false

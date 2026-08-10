@@ -534,7 +534,7 @@ const handleSavePermission = async () => {
                 icon: 'ri-close-line',
                 message: 'ID Permission tidak ditemukan untuk update.',
                 timeout: 3000,
-                position: 'topRight',
+                position: 'bottomRight',
                 layout: 2,
             })
             return;
@@ -558,7 +558,7 @@ const handleSavePermission = async () => {
             icon: 'ri-check-line',
             message: 'Permission berhasil disimpan',
             timeout: 3000,
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
         })
     } catch (error) {
@@ -570,7 +570,7 @@ const handleSavePermission = async () => {
                 icon: 'ri-close-line',
                 message: 'Terjadi kesalahan saat menyimpan data',
                 timeout: 3000,
-                position: 'topRight',
+                position: 'bottomRight',
                 layout: 2,
             })
         }
@@ -690,7 +690,7 @@ const fetchAllPageData = async () => {
             icon: 'ri-close-line',
             message: 'Gagal memuat data halaman.',
             timeout: 3000,
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
         });
     } finally {
@@ -720,7 +720,7 @@ async function openUpdateBatchModal() {
                 icon: 'ri-error-warning-line',
                 message: 'Tidak ada permission yang dipilih untuk diupdate.',
                 timeout: 3000,
-                position: 'topRight',
+                position: 'bottomRight',
                 layout: 2,
             });
             return;
@@ -759,7 +759,7 @@ async function openUpdateBatchModal() {
             icon: 'ri-close-line',
             message: 'Terjadi kesalahan saat membuka modal.',
             timeout: 3000,
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
         });
     }
@@ -818,7 +818,7 @@ const deletePermission = async (permissionId) => {
                 icon: 'ri-check-line',
                 message: 'Permission berhasil dihapus.',
                 timeout: 3000,
-                position: 'topRight',
+                position: 'bottomRight',
                 layout: 2,
             });
 
@@ -828,7 +828,7 @@ const deletePermission = async (permissionId) => {
                 icon: 'ri-close-line',
                 message: 'Terjadi kesalahan saat menghapus permission',
                 timeout: 3000,
-                position: 'topRight',
+                position: 'bottomRight',
                 layout: 2,
             });
         } finally {
@@ -844,7 +844,7 @@ const deleteBatchPermissions = async () => {
             icon: 'ri-error-warning-line',
             message: 'Tidak ada permission yang dipilih untuk dihapus.',
             timeout: 3000,
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
         });
         return;
@@ -880,7 +880,7 @@ const deleteBatchPermissions = async () => {
                     icon: 'ri-check-line',
                     message: `${successful} permission berhasil dihapus.`,
                     timeout: 3000,
-                    position: 'topRight',
+                    position: 'bottomRight',
                     layout: 2,
                 });
             } else {
@@ -889,7 +889,7 @@ const deleteBatchPermissions = async () => {
                     icon: 'ri-error-warning-line',
                     message: `${successful} permission berhasil dihapus, ${failed} gagal dihapus.`,
                     timeout: 5000,
-                    position: 'topRight',
+                    position: 'bottomRight',
                     layout: 2,
                 });
             }
@@ -901,7 +901,7 @@ const deleteBatchPermissions = async () => {
                 icon: 'ri-close-line',
                 message: 'Terjadi kesalahan saat menghapus permissions: ' + (error?.message || 'Unknown error'),
                 timeout: 5000,
-                position: 'topRight',
+                position: 'bottomRight',
                 layout: 2,
             });
         } finally {
@@ -921,7 +921,7 @@ const handleUpdateBatchPermission = async () => {
             icon: 'ri-close-line',
             message: 'Menu Group dan Menu Detail harus dipilih.',
             timeout: 3000,
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
         });
         return;
@@ -955,7 +955,7 @@ const handleUpdateBatchPermission = async () => {
                 icon: 'ri-check-line',
                 message: `${successful} permission berhasil diupdate.`,
                 timeout: 3000,
-                position: 'topRight',
+                position: 'bottomRight',
                 layout: 2,
             });
         } else {
@@ -964,7 +964,7 @@ const handleUpdateBatchPermission = async () => {
                 icon: 'ri-error-warning-line',
                 message: `${successful} permission berhasil diupdate, ${failed} gagal diupdate.`,
                 timeout: 5000,
-                position: 'topRight',
+                position: 'bottomRight',
                 layout: 2,
             });
         }
@@ -974,7 +974,7 @@ const handleUpdateBatchPermission = async () => {
             icon: 'ri-close-line',
             message: 'Terjadi kesalahan saat mengupdate batch permission.',
             timeout: 3000,
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
         });
     } finally {

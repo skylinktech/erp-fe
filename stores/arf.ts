@@ -256,7 +256,7 @@ export const useArfStore = defineStore('arf', {
       } catch (e: any) {
         this.error = e
         if (!suppressError) {
-          toast.error({ title: 'Error', message: e.message, color: 'red', position: 'topRight', layout: 2 })
+          toast.error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight', layout: 2 })
         }
       } finally {
         this.loading = false
@@ -294,7 +294,7 @@ export const useArfStore = defineStore('arf', {
           title: 'Error',
           message: 'Gagal memuat data untuk edit',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
       } finally {
@@ -392,7 +392,7 @@ export const useArfStore = defineStore('arf', {
           title: 'Validasi',
           message: 'Minimal 1 item dengan deskripsi dan qty valid',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return false
@@ -410,7 +410,7 @@ export const useArfStore = defineStore('arf', {
             title: 'Validasi',
             message: 'Pegawai tidak boleh duplikat',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           })
           return false
@@ -460,7 +460,7 @@ export const useArfStore = defineStore('arf', {
             title: 'Error',
             message: ed.message || 'Gagal menyimpan',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           })
           return false
@@ -474,12 +474,12 @@ export const useArfStore = defineStore('arf', {
           title: 'Sukses',
           message: `ARF berhasil ${this.isEditMode ? 'diperbarui' : 'dibuat'}`,
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return true
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight', layout: 2 })
         return false
       } finally {
         this.saving = false
@@ -514,11 +514,11 @@ export const useArfStore = defineStore('arf', {
           title: 'Sukses',
           message: 'ARF dihapus',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight', layout: 2 })
       } finally {
         this.loading = false
       }
@@ -542,12 +542,12 @@ export const useArfStore = defineStore('arf', {
           title: 'Sukses',
           message: 'Berhasil diapprove',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return true
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight', layout: 2 })
         return false
       } finally {
         this.loading = false
@@ -572,12 +572,12 @@ export const useArfStore = defineStore('arf', {
           title: 'Sukses',
           message: 'Berhasil direject',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return true
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight', layout: 2 })
         return false
       } finally {
         this.loading = false
@@ -601,12 +601,12 @@ export const useArfStore = defineStore('arf', {
           title: 'Sukses',
           message: 'ARF berhasil di-submit',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return true
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight', layout: 2 })
         return false
       } finally {
         this.loading = false

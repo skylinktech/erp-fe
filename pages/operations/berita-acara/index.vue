@@ -66,9 +66,26 @@
         <div class="col-12">
           <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
-              <div class="d-flex align-items-center me-3 mb-2 mb-md-0">
-                <span class="me-2">Baris:</span>
+              <div class="d-flex align-items-center gap-2 me-3 mb-2 mb-md-0">
+                <span class="me-1">Baris:</span>
                 <Dropdown v-model="tableControls.rows" :options="rowsPerPageOptions" @change="handleRowsChange" placeholder="Jumlah" style="width: 8rem;" />
+                <button
+                  v-if="userHasRole('superadmin') || userHasPermission('edit_berita_acara')"
+                  class="btn btn-primary btn-sm"
+                  :disabled="!selectedRows.length || store.sending"
+                  @click="bulkSend"
+                >
+                  <i class="ri-mail-send-line me-1"></i>
+                  {{ store.sending ? 'Mengirim...' : `Kirim (${selectedRows.length})` }}
+                </button>
+                <button
+                  v-if="selectedRows.length"
+                  class="btn btn-outline-secondary btn-sm"
+                  :disabled="store.sending"
+                  @click="clearSelection"
+                >
+                  Bersihkan
+                </button>
               </div>
               <div class="d-flex align-items-center gap-2">
                 <button
@@ -87,6 +104,7 @@
             <div class="card-datatable table-responsive py-3 px-3">
               <MyDataTable
                 ref="myDataTableRef"
+                v-model:selection="selectedRows"
                 :data="beritaAcaras"
                 :rows="Number(params.rows)"
                 :loading="loading"
@@ -95,11 +113,17 @@
                 :lazy="true"
                 @page="onPage($event)"
                 @sort="onSort($event)"
+                @selection-change="onSelectionChange"
                 responsiveLayout="scroll"
                 paginatorPosition="bottom"
                 paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink"
                 currentPageReportTemplate="Menampilkan {first} sampai {last} dari {totalRecords} data"
               >
+                <Column
+                  v-if="userHasRole('superadmin') || userHasPermission('edit_berita_acara')"
+                  selectionMode="multiple"
+                  headerStyle="width: 3rem"
+                />
                 <Column header="#" :sortable="false">
                   <template #body="slotProps">{{ params.first + slotProps.index + 1 }}</template>
                 </Column>
@@ -129,6 +153,9 @@
                 <Column field="status" header="Status" :sortable="true">
                   <template #body="slotProps">
                     <span :class="getStatusBadge(slotProps.data).class">{{ getStatusBadge(slotProps.data).text }}</span>
+                    <div v-if="slotProps.data.sentAt || slotProps.data.sent_at" class="small text-success mt-1">
+                      Terkirim
+                    </div>
                   </template>
                 </Column>
                 <Column header="Aksi" :exportable="false" style="min-width:8rem">
@@ -160,6 +187,7 @@ import {
   useBeritaAcaraStore,
   getBeritaAcaraNo,
   formatPeriod,
+  isBeritaAcaraSendable,
 } from '~/stores/berita-acara'
 import { usePermissions } from '~/composables/usePermissions'
 import { useBeritaAcaraApproval } from '~/composables/useBeritaAcaraApproval'
@@ -199,6 +227,7 @@ const statusOptions = [
 
 const actionsMenuRef = ref(null)
 const activeRow = ref<any>(null)
+const selectedRows = ref<any[]>([])
 
 const actionMenuItems = computed(() => {
   const row = activeRow.value
@@ -255,6 +284,15 @@ const actionMenuItems = computed(() => {
     command: () => navigateTo({ path: '/operations/cetak-berita-acara', query: { id: row.id } }),
   })
 
+  if (canEdit && isBeritaAcaraSendable(row)) {
+    items.push({
+      label: store.sending ? 'Mengirim...' : 'Kirim Email',
+      icon: 'ri ri-mail-send-line',
+      disabled: store.sending,
+      command: () => store.sendBeritaAcara(row.id),
+    })
+  }
+
   if (isEditable && canEdit) {
     items.push({ separator: true })
     items.push({
@@ -267,6 +305,20 @@ const actionMenuItems = computed(() => {
 
   return items
 })
+
+function onSelectionChange(e: any) {
+  selectedRows.value = Array.isArray(e?.value) ? e.value : Array.isArray(e) ? e : []
+}
+
+function clearSelection() {
+  selectedRows.value = []
+}
+
+async function bulkSend() {
+  const ids = selectedRows.value.map((row) => row.id)
+  const result = await store.sendBeritaAcarasBulk(ids)
+  if (result) clearSelection()
+}
 
 async function rejectRow(row: any) {
   const { value, isConfirmed } = await Swal.fire({

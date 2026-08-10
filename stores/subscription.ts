@@ -208,7 +208,7 @@ export const useSubscriptionStore = defineStore('subscription', {
       } catch (e: any) {
         this.error = e
         if (!suppressError) {
-          toast.error({ title: 'Error', message: `Tidak dapat memuat data Subscription: ${e.message}`, color: 'red', position: 'topRight', layout: 2 })
+          toast.error({ title: 'Error', message: `Tidak dapat memuat data Subscription: ${e.message}`, color: 'red', position: 'bottomRight', layout: 2 })
         }
       } finally {
         this.loading = false
@@ -241,7 +241,7 @@ export const useSubscriptionStore = defineStore('subscription', {
         else throw new Error('Data tidak valid')
       } catch (e: any) {
         this.error = e
-        toast.error({ title: 'Error', message: 'Gagal mengambil data Subscription untuk edit', color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Error', message: 'Gagal mengambil data Subscription untuk edit', color: 'red', position: 'bottomRight', layout: 2 })
       } finally {
         this.loading = false
       }
@@ -257,20 +257,20 @@ export const useSubscriptionStore = defineStore('subscription', {
 
       if (!this.form.quotationId || !this.form.customerId) {
         this.saving = false
-        toast.error({ title: 'Validasi', message: 'Quotation dan Customer wajib diisi', color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Validasi', message: 'Quotation dan Customer wajib diisi', color: 'red', position: 'bottomRight', layout: 2 })
         return false
       }
 
       if (!this.form.contractPeriod || this.form.contractPeriod <= 0) {
         this.saving = false
-        toast.error({ title: 'Validasi', message: 'Contract Period harus lebih dari 0', color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Validasi', message: 'Contract Period harus lebih dari 0', color: 'red', position: 'bottomRight', layout: 2 })
         return false
       }
 
       if (this.form.subscriptionServices.length === 0) {
         this.saving = false
         console.error('Validation failed: subscriptionServices is empty', this.form)
-        toast.error({ title: 'Validasi', message: 'Minimal 1 service harus diisi. Pastikan Quotation sudah memiliki services.', color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Validasi', message: 'Minimal 1 service harus diisi. Pastikan Quotation sudah memiliki services.', color: 'red', position: 'bottomRight', layout: 2 })
         return false
       }
 
@@ -283,7 +283,7 @@ export const useSubscriptionStore = defineStore('subscription', {
             s.planName = s.servicePlan
           } else {
             this.saving = false
-            toast.error({ title: 'Validasi', message: `Plan Name untuk service ${i + 1} wajib diisi`, color: 'red', position: 'topRight', layout: 2 })
+            toast.error({ title: 'Validasi', message: `Plan Name untuk service ${i + 1} wajib diisi`, color: 'red', position: 'bottomRight', layout: 2 })
             return false
           }
         }
@@ -291,7 +291,7 @@ export const useSubscriptionStore = defineStore('subscription', {
 
       if (this.form.subscriptionInstallations.length === 0) {
         this.saving = false
-        toast.error({ title: 'Validasi', message: 'Minimal 1 installation address harus diisi', color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Validasi', message: 'Minimal 1 installation address harus diisi', color: 'red', position: 'bottomRight', layout: 2 })
         return false
       }
 
@@ -377,7 +377,7 @@ export const useSubscriptionStore = defineStore('subscription', {
           console.error('Subscription save error:', responseData)
           this.validationErrors = responseData.errors || []
           const errorMessage = responseData.message || (this.isEditMode ? 'Gagal memperbarui Subscription' : 'Gagal menyimpan Subscription')
-          toast.error({ title: 'Error', message: errorMessage, color: 'red', position: 'topRight', layout: 2 })
+          toast.error({ title: 'Error', message: errorMessage, color: 'red', position: 'bottomRight', layout: 2 })
           console.log('saveSubscription: Returning false (not ok)')
           this.saving = false
           return false
@@ -387,12 +387,12 @@ export const useSubscriptionStore = defineStore('subscription', {
         this.closeModal()
         await this.fetchSubscriptions()
         await this.fetchStatistics()
-        toast.success({ title: 'Sukses', message: `Subscription berhasil ${this.isEditMode ? 'diperbarui' : 'dibuat'}`, color: 'green', position: 'topRight', layout: 2 })
+        toast.success({ title: 'Sukses', message: `Subscription berhasil ${this.isEditMode ? 'diperbarui' : 'dibuat'}`, color: 'green', position: 'bottomRight', layout: 2 })
         console.log('saveSubscription: Returning true')
         return true
       } catch (e: any) {
         console.error('saveSubscription: Caught error', e)
-        toast.error({ title: 'Error', message: e.message || 'Operasi gagal', color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Error', message: e.message || 'Operasi gagal', color: 'red', position: 'bottomRight', layout: 2 })
         return false
       } finally {
         console.log('saveSubscription: Finally block, setting saving to false')
@@ -411,9 +411,9 @@ export const useSubscriptionStore = defineStore('subscription', {
         if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message || 'Gagal menghapus Subscription')
         await this.fetchSubscriptions()
         await this.fetchStatistics()
-        toast.success({ title: 'Sukses', message: 'Subscription berhasil dihapus', color: 'green', position: 'topRight', layout: 2 })
+        toast.success({ title: 'Sukses', message: 'Subscription berhasil dihapus', color: 'green', position: 'bottomRight', layout: 2 })
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message || 'Gagal menghapus Subscription', color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Error', message: e.message || 'Gagal menghapus Subscription', color: 'red', position: 'bottomRight', layout: 2 })
       } finally {
         this.loading = false
       }
@@ -427,10 +427,10 @@ export const useSubscriptionStore = defineStore('subscription', {
         if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message || 'Gagal submit Subscription')
         await this.fetchSubscriptions()
         await this.fetchStatistics()
-        toast.success({ title: 'Sukses', message: 'Subscription berhasil di-submit', color: 'green', position: 'topRight', layout: 2 })
+        toast.success({ title: 'Sukses', message: 'Subscription berhasil di-submit', color: 'green', position: 'bottomRight', layout: 2 })
         return true
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message || 'Gagal submit Subscription', color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Error', message: e.message || 'Gagal submit Subscription', color: 'red', position: 'bottomRight', layout: 2 })
         return false
       }
     },
@@ -447,10 +447,10 @@ export const useSubscriptionStore = defineStore('subscription', {
         if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message || 'Gagal mengaktifkan Subscription')
         await this.fetchSubscriptions()
         await this.fetchStatistics()
-        toast.success({ title: 'Sukses', message: 'Subscription berhasil diaktifkan', color: 'green', position: 'topRight', layout: 2 })
+        toast.success({ title: 'Sukses', message: 'Subscription berhasil diaktifkan', color: 'green', position: 'bottomRight', layout: 2 })
         return true
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message || 'Gagal mengaktifkan Subscription', color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Error', message: e.message || 'Gagal mengaktifkan Subscription', color: 'red', position: 'bottomRight', layout: 2 })
         return false
       }
     },
@@ -464,10 +464,10 @@ export const useSubscriptionStore = defineStore('subscription', {
         if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message || 'Gagal cancel Subscription')
         await this.fetchSubscriptions()
         await this.fetchStatistics()
-        toast.success({ title: 'Sukses', message: 'Subscription berhasil di-cancel', color: 'green', position: 'topRight', layout: 2 })
+        toast.success({ title: 'Sukses', message: 'Subscription berhasil di-cancel', color: 'green', position: 'bottomRight', layout: 2 })
         return true
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message || 'Gagal cancel Subscription', color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Error', message: e.message || 'Gagal cancel Subscription', color: 'red', position: 'bottomRight', layout: 2 })
         return false
       }
     },
@@ -737,7 +737,7 @@ export const useSubscriptionStore = defineStore('subscription', {
         return Array.isArray(json.data) ? json.data : []
       } catch (e) {
         console.error(e)
-        toast.error({ title: 'Error', message: 'Gagal mengambil data untuk export', color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Error', message: 'Gagal mengambil data untuk export', color: 'red', position: 'bottomRight', layout: 2 })
         return []
       }
     },
@@ -751,7 +751,7 @@ export const useSubscriptionStore = defineStore('subscription', {
         const json = await res.json()
         this.statistics = json.data ?? this.statistics
       } catch (e: any) {
-        toast.error({ title: 'Error', message: 'Gagal memuat statistik Subscription', color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Error', message: 'Gagal memuat statistik Subscription', color: 'red', position: 'bottomRight', layout: 2 })
       }
     },
   },

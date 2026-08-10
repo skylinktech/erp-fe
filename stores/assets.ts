@@ -142,7 +142,7 @@ export const useAssetStore = defineStore('asset', {
           title: 'Error',
           message: `Tidak dapat memuat data aset: ${e.message}`,
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         });
       } finally {
@@ -235,7 +235,7 @@ export const useAssetStore = defineStore('asset', {
           title: 'Success',
           message: `Aset berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         });
 
@@ -245,7 +245,7 @@ export const useAssetStore = defineStore('asset', {
             title: 'Error',
             message: error.message || 'Operasi gagal',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           });
         }
@@ -290,7 +290,7 @@ export const useAssetStore = defineStore('asset', {
             title: 'Success',
             message: 'Aset berhasil dihapus.',
             color: 'green',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           });
         } catch (error: any) {
@@ -298,7 +298,7 @@ export const useAssetStore = defineStore('asset', {
             title: 'Error',
             message: error.message || 'Gagal menghapus aset',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           });
         }

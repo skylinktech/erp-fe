@@ -145,7 +145,7 @@ export const useCabangStore = defineStore('cabang', {
             title: 'Error',
             message: error.message || 'Gagal membuat cabang',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           });
         }
@@ -177,7 +177,7 @@ export const useCabangStore = defineStore('cabang', {
           title: 'Berhasil!',
           message: 'Cabang berhasil diperbarui.',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         });
       } catch (error: any) {
@@ -188,7 +188,7 @@ export const useCabangStore = defineStore('cabang', {
             title: 'Error',
             message: error.message || 'Gagal memperbarui cabang',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           });
         }
@@ -238,7 +238,7 @@ export const useCabangStore = defineStore('cabang', {
           title: 'Error',
           message: error.message || 'Gagal menghapus cabang',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         });
       } finally {

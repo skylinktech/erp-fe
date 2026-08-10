@@ -419,7 +419,7 @@ const saveItems = async () => {
       title: 'Validasi',
       message: 'Pilih minimal 1 pajak jika Tambah Pajak diaktifkan',
       color: 'red',
-      position: 'topRight',
+      position: 'bottomRight',
     })
     return false
   }
@@ -452,7 +452,7 @@ const onSetReady = async () => {
       title: 'Tidak bisa Set Ready',
       message: readyDisabledReason.value,
       color: 'red',
-      position: 'topRight',
+      position: 'bottomRight',
     })
     return
   }

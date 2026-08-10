@@ -403,7 +403,7 @@ const exportData = (format) => {
             title: 'Info',
             message: 'Export PDF akan tersedia pada rilis berikutnya.',
             color: 'blue',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
         });
     }

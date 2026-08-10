@@ -268,7 +268,7 @@ export const useProductStore = defineStore('product', {
             title: 'Error',
             message: `Tidak dapat memuat data produk: ${e.message}`,
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
           });
         }
       } finally {
@@ -315,7 +315,7 @@ export const useProductStore = defineStore('product', {
           title: 'Error',
           message: `Tidak dapat memuat data produk: ${e.message}`,
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         });
         this.allProducts = [];
         return [];
@@ -361,7 +361,7 @@ export const useProductStore = defineStore('product', {
           title: 'Error',
           message: `Tidak dapat memuat data produk untuk gudang: ${e.message}`,
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         });
       } finally {
         this.loading = false;
@@ -483,7 +483,7 @@ export const useProductStore = defineStore('product', {
             title: 'Success',
             message: `Produk berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
             color: 'green',
-            position: 'topRight',
+            position: 'bottomRight',
           });
 
       } catch (error: any) {
@@ -493,7 +493,7 @@ export const useProductStore = defineStore('product', {
                 title: 'Error',
                 message: error.message || 'Operasi gagal',
                 color: 'red',
-                position: 'topRight',
+                position: 'bottomRight',
               });
           }
       } finally {
@@ -542,7 +542,7 @@ export const useProductStore = defineStore('product', {
             title: 'Success',
             message: 'Produk berhasil dihapus.',
             color: 'green',
-            position: 'topRight',
+            position: 'bottomRight',
           });
       } catch (error: any) {
           console.error('Gagal menghapus produk:', error);
@@ -550,7 +550,7 @@ export const useProductStore = defineStore('product', {
             title: 'Error',
             message: error.message || 'Gagal menghapus produk',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
           });
       } finally {
           this.loading = false;
@@ -700,7 +700,7 @@ export const useProductStore = defineStore('product', {
                   title: 'Error',
                   message: 'File gambar kosong atau tidak valid',
                   color: 'red',
-                  position: 'topRight',
+                  position: 'bottomRight',
                 });
                 return;
             }
@@ -729,7 +729,7 @@ export const useProductStore = defineStore('product', {
                   title: 'Error',
                   message: `File harus berupa gambar (JPEG, PNG, GIF, WebP). Detected: MIME=${fileType}, Ext=${fileExtension}`,
                   color: 'red',
-                  position: 'topRight',
+                  position: 'bottomRight',
                 });
                 return;
             }
@@ -741,7 +741,7 @@ export const useProductStore = defineStore('product', {
                   title: 'Error',
                   message: 'Ukuran file terlalu besar (maksimal 5MB)',
                   color: 'red',
-                  position: 'topRight',
+                  position: 'bottomRight',
                 });
                 return;
             }
@@ -820,7 +820,7 @@ export const useProductStore = defineStore('product', {
               title: 'Error',
               message: error.message || 'Gagal memuat data produk untuk export',
               color: 'red',
-              position: 'topRight',
+              position: 'bottomRight',
             });
         }
     },
@@ -864,7 +864,7 @@ export const useProductStore = defineStore('product', {
               title: 'Error',
               message: error.message || 'Gagal memuat data produk untuk export',
               color: 'red',
-              position: 'topRight',
+              position: 'bottomRight',
             });
             throw error
         }

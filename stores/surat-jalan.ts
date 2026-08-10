@@ -273,7 +273,7 @@ export const useSuratJalanStore = defineStore('suratJalan', {
                           title  : 'Form Tidak Lengkap',
                           message: `Produk dan gudang wajib diisi pada baris ${idx + 1}.`,
                           color  : 'red',
-                          position: 'topRight'
+                          position: 'bottomRight'
                         });
                         return;
                     }
@@ -305,7 +305,7 @@ export const useSuratJalanStore = defineStore('suratJalan', {
                               title  : 'Qty Melebihi Stok',
                               message: `Baris ${idx + 1}: ${productName} di ${warehouseName} tersedia ${availableQty}, diminta ${requestedQty}.`,
                               color  : 'red',
-                              position: 'topRight'
+                              position: 'bottomRight'
                             })
                             return
                         }
@@ -317,7 +317,7 @@ export const useSuratJalanStore = defineStore('suratJalan', {
                               title  : 'Stok Tidak Cukup',
                               message: `Produk pada baris ${idx + 1} tidak memiliki stok di gudang terpilih.`,
                               color  : 'red',
-                              position: 'topRight'
+                              position: 'bottomRight'
                             })
                             return
                         }
@@ -327,7 +327,7 @@ export const useSuratJalanStore = defineStore('suratJalan', {
                           title  : 'Error Stok',
                           message: `Gagal memeriksa stok untuk item ke-${idx + 1}.`,
                           color  : 'red',
-                          position: 'topRight'
+                          position: 'bottomRight'
                         })
                         return
                     }
@@ -387,7 +387,7 @@ export const useSuratJalanStore = defineStore('suratJalan', {
                     title: 'Error',
                     message: errorData.errors.map((e: any) => e.message).join('<br>'),
                     color: 'red',
-                    position: 'topRight'
+                    position: 'bottomRight'
                   });
                   return false;
               } else {
@@ -404,7 +404,7 @@ export const useSuratJalanStore = defineStore('suratJalan', {
                   title: 'Success',
                   message: `Surat Jalan berhasil ${this.isEditMode ? 'diperbarui' : 'dibuat'}.`,
                   color: 'green',
-                  position: 'topRight'
+                  position: 'bottomRight'
               });
               return true;
             }
@@ -418,7 +418,7 @@ export const useSuratJalanStore = defineStore('suratJalan', {
               title: 'Error',
               message: error.message || 'Operasi gagal',
               color: 'red',
-              position: 'topRight'
+              position: 'bottomRight'
             });
             return false;
         } finally {
@@ -479,7 +479,7 @@ export const useSuratJalanStore = defineStore('suratJalan', {
           title: 'Success',
           message: `Surat Jalan berhasil dihapus.`,
           color: 'green',
-          position: 'topRight'
+          position: 'bottomRight'
         });
 
       } catch (error: any) {
@@ -493,7 +493,7 @@ export const useSuratJalanStore = defineStore('suratJalan', {
             title: 'Error',
             message: errorMessage,
             color: 'red',
-            position: 'topRight'
+            position: 'bottomRight'
           });
       } finally {
           this.loading = false;
@@ -607,7 +607,7 @@ export const useSuratJalanStore = defineStore('suratJalan', {
                 title: 'Error',
                 message: 'Tidak dapat memuat data Surat Jalan.',
                 color: 'red',
-                position: 'topRight'
+                position: 'bottomRight'
               });
               return;
           }
@@ -819,7 +819,7 @@ export const useSuratJalanStore = defineStore('suratJalan', {
                 title: 'Error',
                 message: 'Gagal memuat statistik surat jalan',
                 color: 'red',
-                position: 'topRight',
+                position: 'bottomRight',
                 layout: 2,
             });
         }

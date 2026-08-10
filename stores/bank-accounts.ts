@@ -109,7 +109,7 @@ export const useBankAccountStore = defineStore('bankAccount', {
           title: 'Error',
           message: `Tidak dapat memuat data rekening bank: ${e.message}`,
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         });
       } finally {
         this.loading = false
@@ -171,7 +171,7 @@ export const useBankAccountStore = defineStore('bankAccount', {
           title: 'Success',
           message: `Rekening bank berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
         });
 
       } catch (error: any) {
@@ -181,7 +181,7 @@ export const useBankAccountStore = defineStore('bankAccount', {
             title: 'Error',
             message: error.message || 'Operasi gagal',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
           });
         }
       } finally {
@@ -225,7 +225,7 @@ export const useBankAccountStore = defineStore('bankAccount', {
             title: 'Success',
             message: 'Rekening bank berhasil dihapus.',
             color: 'green',
-            position: 'topRight',
+            position: 'bottomRight',
           });
         } catch (error: any) {
           const toast = useToast()          
@@ -233,7 +233,7 @@ export const useBankAccountStore = defineStore('bankAccount', {
             title: 'Error',
             message: error.message || 'Gagal menghapus rekening bank',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
           });
         }
       }

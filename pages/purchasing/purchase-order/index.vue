@@ -1043,7 +1043,7 @@ const exportData = (format) => {
                                 title: 'Success',
                                 message: `Excel berhasil dibuat dengan ${allData.length} data Purchase Order${hasFilters ? ' sesuai filter' : ''}`,
                                 color: 'green',
-                                position: 'topRight',
+                                position: 'bottomRight',
                                 layout: 2
                             });
                         });
@@ -1052,7 +1052,7 @@ const exportData = (format) => {
                         title: 'Warning',
                         message: 'Tidak ada data untuk diexport',
                         color: 'orange',
-                        position: 'topRight',
+                        position: 'bottomRight',
                         layout: 2
                     });
                 }
@@ -1063,7 +1063,7 @@ const exportData = (format) => {
                     title: 'Error',
                     message: 'Gagal membuat Excel',
                     color: 'red',
-                    position: 'topRight',
+                    position: 'bottomRight',
                     layout: 2
                 });
             });
@@ -1092,7 +1092,7 @@ const exportData = (format) => {
                                 title: 'Success',
                                 message: `PDF berhasil dibuat dengan ${allData.length} data Purchase Order${hasFilters ? ' sesuai filter' : ''}`,
                                 color: 'green',
-                                position: 'topRight',
+                                position: 'bottomRight',
                                 layout: 2
                             });
                         });
@@ -1101,7 +1101,7 @@ const exportData = (format) => {
                         title: 'Warning',
                         message: 'Tidak ada data untuk diexport',
                         color: 'orange',
-                        position: 'topRight',
+                        position: 'bottomRight',
                         layout: 2
                     });
                 }
@@ -1112,7 +1112,7 @@ const exportData = (format) => {
                     title: 'Error',
                     message: 'Gagal membuat PDF',
                     color: 'red',
-                    position: 'topRight',
+                    position: 'bottomRight',
                     layout: 2
                 });
             });
@@ -1130,7 +1130,7 @@ function onFileChange(e) {
         title: 'Error',
         message: 'File attachment kosong atau tidak valid',
         color: 'red',
-        position: 'topRight',
+        position: 'bottomRight',
         layout: 2
       })
       return;
@@ -1161,7 +1161,7 @@ function onFileChange(e) {
         title: 'Error',
         message: `File harus berupa PDF, Excel, atau gambar. Detected: MIME=${fileType}, Ext=${fileExtension}`,
         color: 'red',
-        position: 'topRight',
+        position: 'bottomRight',
         layout: 2
       })
       return;
@@ -1174,7 +1174,7 @@ function onFileChange(e) {
         title: 'Error',
         message: 'Ukuran file terlalu besar (maksimal 10MB)',
         color: 'red',
-        position: 'topRight',
+        position: 'bottomRight',
         layout: 2
       })
       return;

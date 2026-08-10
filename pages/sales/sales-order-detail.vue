@@ -599,7 +599,7 @@ const updateDeliveredQty = async (item) => {
             message: `Sales Order sudah dalam status ${salesOrder.value?.status?.toUpperCase()} dan tidak dapat diubah lagi. Jika ada perubahan yang diperlukan, silakan buat Sales Return.`,
             icon: 'ri-alert-line',
             timeout: 3000,
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
         })
         return
@@ -632,7 +632,7 @@ const updateDeliveredQty = async (item) => {
             message: `Quantity tidak boleh melebihi ${maxQty}`,
             color: 'orange',
             timeout: 2000,
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
         })
         return
@@ -657,7 +657,7 @@ const updateDeliveredQty = async (item) => {
                     message: 'Stock pada product ini kosong, tidak dapat mengubah status',
                     color: 'red',
                     timeout: 2000,
-                    position: 'topRight',
+                    position: 'bottomRight',
                     layout: 2,
                 })
                 // Kembalikan nilai tampilan ke data backend terbaru
@@ -680,7 +680,7 @@ const updateDeliveredQty = async (item) => {
             message: `Delivered quantity berhasil diperbarui menjadi ${deliveredQty}`,
             color: 'green',
             timeout: 2000,
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
         })
         
@@ -694,7 +694,7 @@ const updateDeliveredQty = async (item) => {
             message: 'Terjadi kesalahan saat memperbarui quantity.',
             color: 'red',
             timeout: 2000,
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
         })
     }
@@ -720,7 +720,7 @@ const checkAllItemsStatus = async () => {
                 message: 'Semua item telah dikirim sepenuhnya. Status berubah menjadi Delivered.',
                 color: 'green',
                 timeout: 2000,
-                position: 'topRight',
+                position: 'bottomRight',
                 layout: 2,
             })
         }
@@ -781,7 +781,7 @@ async function refreshSalesOrderDetails() {
             message: `Tidak dapat memuat detail Sales Order dengan ID: ${soIdToFetch}. ${error.message || 'Silakan coba lagi.'}`,
             color: 'red',
             timeout: 2000,
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
         })
         
@@ -905,7 +905,7 @@ const openDeliverPartialModal = () => {
             message: 'Tidak ada item yang dapat dikirim',
             color: 'red',
             timeout: 2000,
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
         })
         return
@@ -954,7 +954,7 @@ const validateModalQty = (item) => {
             message: `Quantity tidak boleh melebihi ${remaining}`,
             color: 'orange',
             timeout: 2000,
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
         })
     }
@@ -971,7 +971,7 @@ const confirmDeliverPartial = async () => {
             message: 'Silakan pilih minimal 1 item untuk dikirim',
             color: 'orange',
             timeout: 2000,
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
         })
         return
@@ -1058,7 +1058,7 @@ const confirmDeliverPartial = async () => {
             message: `Berhasil mengirim ${totalModalDeliverQty.value} items dari ${itemsToDeliver.length} produk`,
             color: 'green',
             timeout: 2000,
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
         })
 
@@ -1069,7 +1069,7 @@ const confirmDeliverPartial = async () => {
             message: error.message || 'Gagal mengirim barang',
             color: 'red',
             timeout: 2000,
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
         })
         // ✅ Jika error, buka kembali modal
@@ -1086,7 +1086,7 @@ const deliverAllItems = async () => {
             message: `Semua item sudah dikirim atau Sales Order sudah dalam status ${salesOrder.value?.status?.toUpperCase()}.`,
             color: 'orange',
             timeout: 2000,
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
         })
         return
@@ -1129,7 +1129,7 @@ const deliverAllItems = async () => {
             message: `Semua barang telah dikirim. ${totalPendingQuantity.value} Stock Out telah dibuat.`,
             color: 'green',
             timeout: 2000,
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
         })
         
@@ -1141,7 +1141,7 @@ const deliverAllItems = async () => {
             message: error.data?.message || error.message || 'Gagal mengirim semua barang',
             color: 'red',
             timeout: 2000,
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
         })
     }

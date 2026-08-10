@@ -633,7 +633,7 @@ watch(
 
 const submitCreate = async () => {
   if (!form.value.customerId || !form.value.billingPeriod) {
-    useToast().error({ title: 'Error', message: 'Customer & periode wajib', color: 'red', position: 'topRight' })
+    useToast().error({ title: 'Error', message: 'Customer & periode wajib', color: 'red', position: 'bottomRight' })
     return
   }
   if (!form.value.subscriptionIds.length && !form.value.adjustmentIds.length) {
@@ -641,7 +641,7 @@ const submitCreate = async () => {
       title: 'Error',
       message: 'Pilih minimal 1 Form Berlangganan atau Billing Adjustment',
       color: 'red',
-      position: 'topRight',
+      position: 'bottomRight',
     })
     return
   }
@@ -650,7 +650,7 @@ const submitCreate = async () => {
       title: 'Error',
       message: 'Pilih minimal 1 pajak jika Tambah Pajak diaktifkan',
       color: 'red',
-      position: 'topRight',
+      position: 'bottomRight',
     })
     return
   }

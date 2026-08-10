@@ -534,7 +534,7 @@ const exportData = async (format) => {
           title: 'Error',
           message: 'Gagal melakukan export data',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         });
     }
 };

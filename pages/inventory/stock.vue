@@ -414,7 +414,7 @@ const exportData = async (format) => {
                                     title: 'Success',
                                     message: `Excel berhasil dibuat dengan ${result.data.length} data Stock${hasFilters ? ' sesuai filter' : ''}`,
                                     color: 'green',
-                                    position: 'topRight',
+                                    position: 'bottomRight',
                                     layout: 2
                                 });
                             });
@@ -423,7 +423,7 @@ const exportData = async (format) => {
                             title: 'Warning',
                             message: 'Tidak ada data untuk diexport',
                             color: 'orange',
-                            position: 'topRight',
+                            position: 'bottomRight',
                             layout: 2
                         });
                     }
@@ -434,7 +434,7 @@ const exportData = async (format) => {
                         title: 'Error',
                         message: 'Gagal membuat Excel',
                         color: 'red',
-                        position: 'topRight',
+                        position: 'bottomRight',
                         layout: 2
                     });
                 });
@@ -533,7 +533,7 @@ const deleteStock = async (id) => {
                 title: 'Success',
                 message: 'Stock berhasil dihapus.',
                 color: 'green',
-                position: 'topRight',
+                position: 'bottomRight',
             });
 
         } catch (error) {
@@ -541,7 +541,7 @@ const deleteStock = async (id) => {
                 title: 'Error',
                 message: error.message,
                 color: 'red',
-                position: 'topRight',
+                position: 'bottomRight',
             });
         }
     }

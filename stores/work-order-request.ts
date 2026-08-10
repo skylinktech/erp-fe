@@ -230,7 +230,7 @@ export const useWorkOrderRequestStore = defineStore('workOrderRequest', {
             title: 'Error',
             message: e.message,
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           })
         }
@@ -296,7 +296,7 @@ export const useWorkOrderRequestStore = defineStore('workOrderRequest', {
             title: 'Error',
             message: ed.message || 'Gagal menyimpan',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           })
           return false
@@ -306,7 +306,7 @@ export const useWorkOrderRequestStore = defineStore('workOrderRequest', {
           title: 'Sukses',
           message: `Work Order Request berhasil ${isEdit ? 'diperbarui' : 'dibuat'}`,
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return result?.data?.id ?? true
@@ -315,7 +315,7 @@ export const useWorkOrderRequestStore = defineStore('workOrderRequest', {
           title: 'Error',
           message: e.message,
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return false
@@ -353,7 +353,7 @@ export const useWorkOrderRequestStore = defineStore('workOrderRequest', {
           title: 'Sukses',
           message: 'Work Order Request dihapus',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
       } catch (e: any) {
@@ -361,7 +361,7 @@ export const useWorkOrderRequestStore = defineStore('workOrderRequest', {
           title: 'Error',
           message: e.message,
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
       } finally {
@@ -385,7 +385,7 @@ export const useWorkOrderRequestStore = defineStore('workOrderRequest', {
           title: 'Sukses',
           message: 'Work Order Request berhasil di-submit',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return true
@@ -394,7 +394,7 @@ export const useWorkOrderRequestStore = defineStore('workOrderRequest', {
           title: 'Error',
           message: e.message,
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return false
@@ -432,7 +432,7 @@ export const useWorkOrderRequestStore = defineStore('workOrderRequest', {
           title: 'Sukses',
           message: json.message || 'Work Order Request berhasil diapprove',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return true
@@ -441,7 +441,7 @@ export const useWorkOrderRequestStore = defineStore('workOrderRequest', {
           title: 'Error',
           message: e.message,
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return false
@@ -465,7 +465,7 @@ export const useWorkOrderRequestStore = defineStore('workOrderRequest', {
           title: 'Sukses',
           message: 'Work Order Request ditolak',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return true
@@ -474,7 +474,7 @@ export const useWorkOrderRequestStore = defineStore('workOrderRequest', {
           title: 'Error',
           message: e.message,
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return false
@@ -497,7 +497,7 @@ export const useWorkOrderRequestStore = defineStore('workOrderRequest', {
           title: 'Sukses',
           message: 'Work Order Request ditandai selesai',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return true
@@ -506,7 +506,7 @@ export const useWorkOrderRequestStore = defineStore('workOrderRequest', {
           title: 'Error',
           message: e.message,
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return false

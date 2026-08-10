@@ -943,7 +943,7 @@ async function editPriceList(priceList) {
             title: 'Error',
             message: 'Gagal memuat data price list',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
         })
     } finally {
         loading.value = false

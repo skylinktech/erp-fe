@@ -445,7 +445,7 @@ function exportData(format) {
       title: 'Info',
       message: `Export ${format === 'excel' ? 'Excel' : 'PDF'} akan tersedia pada rilis berikutnya.`,
       color: 'blue',
-      position: 'topRight',
+      position: 'bottomRight',
       layout: 2,
     })
   }
@@ -535,16 +535,16 @@ function onAttachmentsChange(e) {
 
   for (const file of files) {
     if (!file.size || file.size === 0) {
-      toast.error({ title: 'Error', message: `File ${file.name} kosong atau tidak valid`, color: 'red', position: 'topRight', layout: 2 })
+      toast.error({ title: 'Error', message: `File ${file.name} kosong atau tidak valid`, color: 'red', position: 'bottomRight', layout: 2 })
       continue
     }
     if (file.size > maxSize) {
-      toast.error({ title: 'Error', message: `File ${file.name} terlalu besar (maksimal 2MB)`, color: 'red', position: 'topRight', layout: 2 })
+      toast.error({ title: 'Error', message: `File ${file.name} terlalu besar (maksimal 2MB)`, color: 'red', position: 'bottomRight', layout: 2 })
       continue
     }
     const ext = file.name?.split('.').pop()?.toLowerCase() || ''
     if (!allowed.includes(ext)) {
-      toast.error({ title: 'Error', message: `Format ${file.name} tidak didukung. Gunakan: ${allowed.join(', ')}`, color: 'red', position: 'topRight', layout: 2 })
+      toast.error({ title: 'Error', message: `Format ${file.name} tidak didukung. Gunakan: ${allowed.join(', ')}`, color: 'red', position: 'bottomRight', layout: 2 })
       continue
     }
     validFiles.push(file)

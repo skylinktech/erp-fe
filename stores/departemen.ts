@@ -84,7 +84,7 @@ export const useDepartemenStore = defineStore('departemen', {
           title: 'Error',
           message: `Tidak dapat memuat data departemen: ${e.message}`,
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         });
       } finally {
         this.loading = false
@@ -110,7 +110,7 @@ export const useDepartemenStore = defineStore('departemen', {
             title: 'Error',
             message: 'Gagal mengambil data Divisi untuk pilihan.',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
           });
         }
     },
@@ -160,7 +160,7 @@ export const useDepartemenStore = defineStore('departemen', {
           title: 'Success',
           message: `Departemen berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
         });
 
       } catch (error: any) {
@@ -170,7 +170,7 @@ export const useDepartemenStore = defineStore('departemen', {
               title: 'Error',
               message: error.message || 'Operasi gagal',
               color: 'red',
-              position: 'topRight',
+              position: 'bottomRight',
             });
         }
       } finally {
@@ -218,7 +218,7 @@ export const useDepartemenStore = defineStore('departemen', {
             title: 'Success',
             message: 'Departemen berhasil dihapus.',
             color: 'green',
-            position: 'topRight',
+            position: 'bottomRight',
           });
       } catch (error: any) {
           console.error('Gagal menghapus departemen:', error);
@@ -227,7 +227,7 @@ export const useDepartemenStore = defineStore('departemen', {
             title: 'Error',
             message: error.message || 'Gagal menghapus departemen',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
           });
       } finally {
           this.loading = false;

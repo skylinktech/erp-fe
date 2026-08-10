@@ -100,7 +100,7 @@ export const useMenuGroupStore = defineStore('menu-group', {
           title: 'Error',
           message: `Tidak dapat memuat data menu group: ${e.message}`,
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         });
       } finally {
         this.loading = false
@@ -193,7 +193,7 @@ export const useMenuGroupStore = defineStore('menu-group', {
           title: 'Success',
           message: `Menu group berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
         });
 
       } catch (error: any) {
@@ -203,7 +203,7 @@ export const useMenuGroupStore = defineStore('menu-group', {
               title: 'Error',
               message: error.message || 'Operasi gagal',
               color: 'red',
-              position: 'topRight',
+              position: 'bottomRight',
             });
         }
       } finally {
@@ -251,7 +251,7 @@ export const useMenuGroupStore = defineStore('menu-group', {
             title: 'Success',
             message: 'Menu group berhasil dihapus.',
             color: 'green',
-            position: 'topRight',
+            position: 'bottomRight',
           });
       } catch (error: any) {
           console.error('Gagal menghapus menu group:', error);
@@ -260,7 +260,7 @@ export const useMenuGroupStore = defineStore('menu-group', {
             title: 'Error',
             message: error.message || 'Gagal menghapus menu group',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
           });
       } finally {
           this.loading = false;

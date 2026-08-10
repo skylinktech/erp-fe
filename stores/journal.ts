@@ -137,7 +137,7 @@ export const useJournalStore = defineStore('journal', {
           title: 'Error',
           message: `Tidak dapat memuat data jurnal: ${e?.message || 'Terjadi kesalahan'}`,
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         });
       } finally {
         this.loading = false
@@ -192,7 +192,7 @@ export const useJournalStore = defineStore('journal', {
             title: 'Error',
             message: 'Semua field wajib diisi',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
           });
           this.saving = false
           return
@@ -205,7 +205,7 @@ export const useJournalStore = defineStore('journal', {
             title: 'Error',
             message: 'Minimal 2 baris journal lines diperlukan',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
           });
           this.saving = false
           return
@@ -220,7 +220,7 @@ export const useJournalStore = defineStore('journal', {
               title: 'Error',
               message: `Baris ${i + 1}: Account harus dipilih`,
               color: 'red',
-              position: 'topRight',
+              position: 'bottomRight',
             });
             this.saving = false
             return
@@ -239,7 +239,7 @@ export const useJournalStore = defineStore('journal', {
             title: 'Error',
             message: 'Total debit dan credit harus sama',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
           });
           this.saving = false
           return
@@ -359,7 +359,7 @@ export const useJournalStore = defineStore('journal', {
           title: 'Success',
           message: `Jurnal berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
         });
 
       } catch (error: any) {
@@ -369,7 +369,7 @@ export const useJournalStore = defineStore('journal', {
             title: 'Error',
             message: error?.message || 'Operasi gagal',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
           });
         }
       } finally {
@@ -413,7 +413,7 @@ export const useJournalStore = defineStore('journal', {
             title: 'Success',
             message: 'Jurnal berhasil dihapus.',
             color: 'green',
-            position: 'topRight',
+            position: 'bottomRight',
           });
         } catch (error: any) {
           const toast = useToast()          
@@ -421,7 +421,7 @@ export const useJournalStore = defineStore('journal', {
             title: 'Error',
             message: error?.message || 'Gagal menghapus jurnal',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
           });
         } finally {
           this.loading = false
@@ -465,7 +465,7 @@ export const useJournalStore = defineStore('journal', {
             title: 'Success',
             message: 'Jurnal berhasil diposting.',
             color: 'green',
-            position: 'topRight',
+            position: 'bottomRight',
           });
         } catch (error: any) {
           const toast = useToast()          
@@ -473,7 +473,7 @@ export const useJournalStore = defineStore('journal', {
             title: 'Error',
             message: error?.message || 'Gagal memposting jurnal',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
           });
         } finally {
           this.loading = false

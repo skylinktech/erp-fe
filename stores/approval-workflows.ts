@@ -149,7 +149,7 @@ export const useApprovalWorkflowsStore = defineStore('approval-workflows', {
       } catch (e: any) {
         this.error = e.message || 'Gagal memuat data'
         const toast = useToast()
-        toast.error({ title: 'Error', message: this.error, color: 'red', position: 'topRight' })
+        toast.error({ title: 'Error', message: this.error, color: 'red', position: 'bottomRight' })
       } finally {
         this.loading = false
       }
@@ -166,7 +166,7 @@ export const useApprovalWorkflowsStore = defineStore('approval-workflows', {
       } catch (e: any) {
         this.error = e.message || 'Gagal memuat detail'
         const toast = useToast()
-        toast.error({ title: 'Error', message: this.error, color: 'red', position: 'topRight' })
+        toast.error({ title: 'Error', message: this.error, color: 'red', position: 'bottomRight' })
         throw e
       } finally {
         this.loading = false
@@ -237,13 +237,13 @@ export const useApprovalWorkflowsStore = defineStore('approval-workflows', {
             credentials: 'include',
           })
         }
-        toast.success({ title: 'Berhasil', message: this.isEditMode ? 'Workflow berhasil diupdate' : 'Workflow berhasil dibuat', color: 'green', position: 'topRight' })
+        toast.success({ title: 'Berhasil', message: this.isEditMode ? 'Workflow berhasil diupdate' : 'Workflow berhasil dibuat', color: 'green', position: 'bottomRight' })
         this.closeModal()
         await Promise.all([this.fetchWorkflows(), this.fetchStats()])
       } catch (e: any) {
         const errData = e?.data || e
         this.validationErrors = errData?.errors ? Object.values(errData.errors).flat() as string[] : [errData?.message || e.message || 'Gagal menyimpan']
-        toast.error({ title: 'Error', message: this.validationErrors[0] || 'Gagal menyimpan', color: 'red', position: 'topRight' })
+        toast.error({ title: 'Error', message: this.validationErrors[0] || 'Gagal menyimpan', color: 'red', position: 'bottomRight' })
       } finally {
         this.loading = false
       }
@@ -268,10 +268,10 @@ export const useApprovalWorkflowsStore = defineStore('approval-workflows', {
           credentials: 'include',
         })
         if (!res.ok) throw new Error((await res.json()).message || 'Gagal menghapus')
-        toast.success({ title: 'Berhasil', message: 'Workflow berhasil dihapus', color: 'green', position: 'topRight' })
+        toast.success({ title: 'Berhasil', message: 'Workflow berhasil dihapus', color: 'green', position: 'bottomRight' })
         await Promise.all([this.fetchWorkflows(), this.fetchStats()])
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message || 'Gagal menghapus', color: 'red', position: 'topRight' })
+        toast.error({ title: 'Error', message: e.message || 'Gagal menghapus', color: 'red', position: 'bottomRight' })
       }
     },
 

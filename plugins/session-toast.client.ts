@@ -5,6 +5,7 @@ export default defineNuxtPlugin((nuxtApp) => {
       title: 'Sesi Berakhir',
       message: 'Sesi anda telah berakhir, silakan logout dan login kembali',
       color: 'red',
+      position: 'bottomRight',
     })
   }
 

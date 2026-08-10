@@ -312,7 +312,7 @@ export const useVendorStore = defineStore('vendor', {
           title: 'Error',
           message: 'Gagal memuat semua vendor',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         });
         return [];
       } finally {
@@ -329,7 +329,7 @@ export const useVendorStore = defineStore('vendor', {
                   title: 'Error',
                   message: 'File logo kosong atau tidak valid',
                   color: 'red',
-                  position: 'topRight',
+                  position: 'bottomRight',
                 });
                 return;
             }
@@ -359,7 +359,7 @@ export const useVendorStore = defineStore('vendor', {
                   title: 'Error',
                   message: `File harus berupa gambar (JPEG, PNG, GIF, WebP). Detected: MIME=${fileType}, Ext=${fileExtension}`,
                   color: 'red',
-                  position: 'topRight',
+                  position: 'bottomRight',
                 });
                 return;
             }
@@ -372,7 +372,7 @@ export const useVendorStore = defineStore('vendor', {
                   title: 'Error',
                   message: 'Ukuran file terlalu besar (maksimal 5MB)',
                   color: 'red',
-                  position: 'topRight',
+                  position: 'bottomRight',
                 });
                 return;
             }

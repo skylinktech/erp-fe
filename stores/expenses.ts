@@ -124,7 +124,7 @@ export const useExpenseStore = defineStore('expense', {
           title: 'Error',
           message: `Tidak dapat memuat data pengeluaran: ${e.message}`,
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         });
       } finally {
         this.loading = false
@@ -231,7 +231,7 @@ export const useExpenseStore = defineStore('expense', {
           title: 'Success',
           message: `Pengeluaran berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
         });
 
       } catch (error: any) {
@@ -241,7 +241,7 @@ export const useExpenseStore = defineStore('expense', {
             title: 'Error',
             message: error.message || 'Operasi gagal',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
           });
         }
       } finally {
@@ -285,7 +285,7 @@ export const useExpenseStore = defineStore('expense', {
             title: 'Success',
             message: 'Pengeluaran berhasil dihapus.',
             color: 'green',
-            position: 'topRight',
+            position: 'bottomRight',
           });
         } catch (error: any) {
           const toast = useToast()          
@@ -293,7 +293,7 @@ export const useExpenseStore = defineStore('expense', {
             title: 'Error',
             message: error.message || 'Gagal menghapus pengeluaran',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
           });
         }
       }

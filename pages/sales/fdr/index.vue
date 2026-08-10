@@ -596,7 +596,7 @@ async function exportData(format) {
       toast.info({ title: 'Info', message: 'Mempersiapkan export Excel...', color: 'blue' })
       const allData = await fdrStore.fetchAllFdrsForExport()
       if (!allData?.length) {
-        toast.warning({ title: 'Warning', message: 'Tidak ada data untuk diexport', color: 'orange', position: 'topRight', layout: 2 })
+        toast.warning({ title: 'Warning', message: 'Tidak ada data untuk diexport', color: 'orange', position: 'bottomRight', layout: 2 })
         return
       }
       const XLSX = await import('xlsx').then((m) => m.default || m)
@@ -617,10 +617,10 @@ async function exportData(format) {
       ws['!cols'] = headers.map(() => ({ wch: 16 }))
       XLSX.utils.book_append_sheet(wb, ws, 'FDR')
       XLSX.writeFile(wb, 'fdr.xlsx')
-      toast.success({ title: 'Success', message: `Excel berisi ${allData.length} baris`, color: 'green', position: 'topRight', layout: 2 })
+      toast.success({ title: 'Success', message: `Excel berisi ${allData.length} baris`, color: 'green', position: 'bottomRight', layout: 2 })
     } catch (e) {
       console.error(e)
-      toast.error({ title: 'Error', message: 'Gagal export Excel', color: 'red', position: 'topRight', layout: 2 })
+      toast.error({ title: 'Error', message: 'Gagal export Excel', color: 'red', position: 'bottomRight', layout: 2 })
     }
     return
   }
@@ -629,7 +629,7 @@ async function exportData(format) {
       toast.info({ title: 'Info', message: 'Mempersiapkan export PDF...', color: 'blue' })
       const allData = await fdrStore.fetchAllFdrsForExport()
       if (!allData?.length) {
-        toast.warning({ title: 'Warning', message: 'Tidak ada data untuk diexport', color: 'orange', position: 'topRight', layout: 2 })
+        toast.warning({ title: 'Warning', message: 'Tidak ada data untuk diexport', color: 'orange', position: 'bottomRight', layout: 2 })
         return
       }
       const { default: jsPDF } = await import('jspdf')
@@ -651,10 +651,10 @@ async function exportData(format) {
         styles: { fontSize: 8 },
       })
       doc.save('fdr.pdf')
-      toast.success({ title: 'Success', message: `PDF berisi ${allData.length} baris`, color: 'green', position: 'topRight', layout: 2 })
+      toast.success({ title: 'Success', message: `PDF berisi ${allData.length} baris`, color: 'green', position: 'bottomRight', layout: 2 })
     } catch (e) {
       console.error(e)
-      toast.error({ title: 'Error', message: 'Gagal export PDF', color: 'red', position: 'topRight', layout: 2 })
+      toast.error({ title: 'Error', message: 'Gagal export PDF', color: 'red', position: 'bottomRight', layout: 2 })
     }
   }
 }

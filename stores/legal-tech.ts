@@ -153,7 +153,7 @@ export const useLegalTechStore = defineStore('legal-tech', {
       } catch (e: any) {
         this.error = e
         if (!suppressError) {
-          toast.error({ title: 'Error', message: `Tidak dapat memuat data: ${e.message}`, color: 'red', position: 'topRight', layout: 2 })
+          toast.error({ title: 'Error', message: `Tidak dapat memuat data: ${e.message}`, color: 'red', position: 'bottomRight', layout: 2 })
         }
       } finally {
         this.loading = false
@@ -251,7 +251,7 @@ export const useLegalTechStore = defineStore('legal-tech', {
       } catch (e: any) {
         this.error = e
         console.error('fetchLeTechReviewForView error:', e, 'ID:', id)
-        toast.error({ title: 'Error', message: e.message || 'Gagal mengambil data untuk dilihat', color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Error', message: e.message || 'Gagal mengambil data untuk dilihat', color: 'red', position: 'bottomRight', layout: 2 })
       } finally {
         this.loading = false
       }
@@ -280,7 +280,7 @@ export const useLegalTechStore = defineStore('legal-tech', {
       } catch (e: any) {
         this.error = e
         console.error('fetchLeTechReviewForEdit error:', e, 'ID:', id)
-        toast.error({ title: 'Error', message: e.message || 'Gagal mengambil data untuk edit', color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Error', message: e.message || 'Gagal mengambil data untuk edit', color: 'red', position: 'bottomRight', layout: 2 })
       } finally {
         this.loading = false
       }
@@ -295,7 +295,7 @@ export const useLegalTechStore = defineStore('legal-tech', {
 
       if (!this.form.quotationId) {
         this.saving = false
-        toast.error({ title: 'Validasi', message: 'Quotation wajib dipilih', color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Validasi', message: 'Quotation wajib dipilih', color: 'red', position: 'bottomRight', layout: 2 })
         return
       }
 
@@ -342,15 +342,15 @@ export const useLegalTechStore = defineStore('legal-tech', {
         const ed = await res.json().catch(() => ({}))
         if (!res.ok) {
           this.validationErrors = ed.errors || []
-          toast.error({ title: 'Error', message: ed.message || (this.isEditMode ? 'Gagal memperbarui' : 'Gagal menyimpan'), color: 'red', position: 'topRight', layout: 2 })
+          toast.error({ title: 'Error', message: ed.message || (this.isEditMode ? 'Gagal memperbarui' : 'Gagal menyimpan'), color: 'red', position: 'bottomRight', layout: 2 })
           return
         }
         this.closeModal()
         await this.fetchLeTechReviews()
         await this.fetchStatistics()
-        toast.success({ title: 'Sukses', message: `Legal-Tech Review berhasil ${this.isEditMode ? 'diperbarui' : 'dibuat'}`, color: 'green', position: 'topRight', layout: 2 })
+        toast.success({ title: 'Sukses', message: `Legal-Tech Review berhasil ${this.isEditMode ? 'diperbarui' : 'dibuat'}`, color: 'green', position: 'bottomRight', layout: 2 })
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message || 'Operasi gagal', color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Error', message: e.message || 'Operasi gagal', color: 'red', position: 'bottomRight', layout: 2 })
       } finally {
         this.saving = false
       }
@@ -367,9 +367,9 @@ export const useLegalTechStore = defineStore('legal-tech', {
         if (!r.ok) throw new Error((await r.json().catch(() => ({}))).message || 'Gagal menghapus')
         await this.fetchLeTechReviews()
         await this.fetchStatistics()
-        toast.success({ title: 'Sukses', message: 'Legal-Tech Review berhasil dihapus', color: 'green', position: 'topRight', layout: 2 })
+        toast.success({ title: 'Sukses', message: 'Legal-Tech Review berhasil dihapus', color: 'green', position: 'bottomRight', layout: 2 })
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message || 'Gagal menghapus', color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Error', message: e.message || 'Gagal menghapus', color: 'red', position: 'bottomRight', layout: 2 })
       } finally {
         this.loading = false
       }
@@ -383,10 +383,10 @@ export const useLegalTechStore = defineStore('legal-tech', {
         if (!r.ok) throw new Error((await r.json().catch(() => ({}))).message || 'Gagal submit')
         await this.fetchLeTechReviews()
         await this.fetchStatistics()
-        toast.success({ title: 'Sukses', message: 'Legal-Tech Review berhasil di-submit', color: 'green', position: 'topRight', layout: 2 })
+        toast.success({ title: 'Sukses', message: 'Legal-Tech Review berhasil di-submit', color: 'green', position: 'bottomRight', layout: 2 })
         return true
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message || 'Gagal submit', color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Error', message: e.message || 'Gagal submit', color: 'red', position: 'bottomRight', layout: 2 })
         return false
       }
     },
@@ -400,10 +400,10 @@ export const useLegalTechStore = defineStore('legal-tech', {
         if (!r.ok) throw new Error((await r.json().catch(() => ({}))).message || 'Gagal approve')
         await this.fetchLeTechReviews()
         await this.fetchStatistics()
-        toast.success({ title: 'Sukses', message: 'Legal-Tech Review berhasil diapprove', color: 'green', position: 'topRight', layout: 2 })
+        toast.success({ title: 'Sukses', message: 'Legal-Tech Review berhasil diapprove', color: 'green', position: 'bottomRight', layout: 2 })
         return true
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message || 'Gagal approve', color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Error', message: e.message || 'Gagal approve', color: 'red', position: 'bottomRight', layout: 2 })
         return false
       } finally {
         this.loading = false
@@ -419,10 +419,10 @@ export const useLegalTechStore = defineStore('legal-tech', {
         if (!r.ok) throw new Error((await r.json().catch(() => ({}))).message || 'Gagal reject')
         await this.fetchLeTechReviews()
         await this.fetchStatistics()
-        toast.success({ title: 'Sukses', message: 'Legal-Tech Review berhasil direject', color: 'green', position: 'topRight', layout: 2 })
+        toast.success({ title: 'Sukses', message: 'Legal-Tech Review berhasil direject', color: 'green', position: 'bottomRight', layout: 2 })
         return true
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message || 'Gagal reject', color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Error', message: e.message || 'Gagal reject', color: 'red', position: 'bottomRight', layout: 2 })
         return false
       } finally {
         this.loading = false
@@ -532,7 +532,7 @@ export const useLegalTechStore = defineStore('legal-tech', {
         const j = await r.json()
         this.statistics = j.data ?? this.statistics
       } catch (e: any) {
-        toast.error({ title: 'Error', message: 'Gagal memuat statistik', color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Error', message: 'Gagal memuat statistik', color: 'red', position: 'bottomRight', layout: 2 })
       }
     },
   },

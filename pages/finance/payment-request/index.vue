@@ -531,7 +531,7 @@ async function exportCSV() {
         title: 'Peringatan',
         message: 'Tidak ada data untuk diexport',
         color: 'orange',
-        position: 'topRight',
+        position: 'bottomRight',
       })
       return
     }
@@ -655,14 +655,14 @@ async function exportCSV() {
       title: 'Berhasil',
       message: `CSV berhasil diunduh (${data.length} payment request)`,
       color: 'green',
-      position: 'topRight',
+      position: 'bottomRight',
     })
   } catch (error: any) {
     toast.error({
       title: 'Error',
       message: `Gagal export CSV: ${error?.message || 'Unknown error'}`,
       color: 'red',
-      position: 'topRight',
+      position: 'bottomRight',
     })
   } finally {
     exportingCsv.value = false

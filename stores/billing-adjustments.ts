@@ -130,7 +130,7 @@ export const useBillingAdjustmentStore = defineStore('billingAdjustment', {
         this.rows = (json.data || []).map(normalizeAdj)
         this.totalRecords = json.meta?.total ?? 0
       } catch (e: any) {
-        useToast().error({ title: 'Error', message: e.message, color: 'red', position: 'topRight' })
+        useToast().error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight' })
       } finally {
         this.loading = false
       }
@@ -157,12 +157,12 @@ export const useBillingAdjustmentStore = defineStore('billingAdjustment', {
           title: 'Berhasil',
           message: json.message || 'Adjustment dibuat',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
         })
         await Promise.all([this.fetchList(), this.fetchStatistics()])
         return true
       } catch (e: any) {
-        useToast().error({ title: 'Error', message: e.message, color: 'red', position: 'topRight' })
+        useToast().error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight' })
         return false
       } finally {
         this.saving = false
@@ -190,12 +190,12 @@ export const useBillingAdjustmentStore = defineStore('billingAdjustment', {
           title: 'Berhasil',
           message: json.message || 'Adjustment diperbarui',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
         })
         await Promise.all([this.fetchList(), this.fetchStatistics()])
         return true
       } catch (e: any) {
-        useToast().error({ title: 'Error', message: e.message, color: 'red', position: 'topRight' })
+        useToast().error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight' })
         return false
       } finally {
         this.saving = false
@@ -223,12 +223,12 @@ export const useBillingAdjustmentStore = defineStore('billingAdjustment', {
           title: 'Berhasil',
           message: json.message,
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
         })
         await Promise.all([this.fetchList(), this.fetchStatistics()])
         return true
       } catch (e: any) {
-        useToast().error({ title: 'Error', message: e.message, color: 'red', position: 'topRight' })
+        useToast().error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight' })
         return false
       }
     },
@@ -254,12 +254,12 @@ export const useBillingAdjustmentStore = defineStore('billingAdjustment', {
           title: 'Berhasil',
           message: json.message,
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
         })
         await Promise.all([this.fetchList(), this.fetchStatistics()])
         return true
       } catch (e: any) {
-        useToast().error({ title: 'Error', message: e.message, color: 'red', position: 'topRight' })
+        useToast().error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight' })
         return false
       }
     },

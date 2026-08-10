@@ -263,7 +263,7 @@ async function handleSubmit() {
       title: 'Validasi',
       message: 'Customer wajib dipilih',
       color: 'red',
-      position: 'topRight',
+      position: 'bottomRight',
       layout: 2,
     })
     return
@@ -275,7 +275,7 @@ async function handleSubmit() {
       title: 'Validasi',
       message: 'Setiap baris wajib mengisi PID dan Lokasi',
       color: 'red',
-      position: 'topRight',
+      position: 'bottomRight',
       layout: 2,
     })
     return
@@ -286,7 +286,7 @@ async function handleSubmit() {
       title: 'Validasi',
       message: 'Tanggal akhir periode harus setelah tanggal mulai',
       color: 'red',
-      position: 'topRight',
+      position: 'bottomRight',
       layout: 2,
     })
     return

@@ -32,6 +32,8 @@ const WIDGET_COMPONENT_MAP: Record<string, () => Promise<Component>> = {
     import('~/components/dashboard/ExpiringContractsCard.vue') as Promise<Component>,
   invoice_alerts: () =>
     import('~/components/dashboard/InvoiceAlertsCard.vue') as Promise<Component>,
+  birthday_today: () =>
+    import('~/components/dashboard/BirthdayTodayCard.vue') as Promise<Component>,
 }
 
 const resolvedCache = new Map<string, Component>()

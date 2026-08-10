@@ -500,7 +500,7 @@ export const useSalesOrderStore = defineStore('salesOrder', {
                   title: 'Success',
                   message: `Sales Order berhasil ${this.isEditMode ? 'diperbarui' : 'dibuat'}.`,
                   color: 'green',
-                  position: 'topRight',
+                  position: 'bottomRight',
                   layout: 2,
                 });
             }
@@ -514,7 +514,7 @@ export const useSalesOrderStore = defineStore('salesOrder', {
               title: 'Error',
               message: error.message || 'Operasi gagal',
               color: 'red',
-              position: 'topRight',
+              position: 'bottomRight',
               layout: 2,
             });
         } finally {
@@ -562,7 +562,7 @@ export const useSalesOrderStore = defineStore('salesOrder', {
             title: 'Success',
             message: 'Sales Order berhasil dihapus.',
             color: 'green',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           });
       } catch (error: any) {
@@ -571,7 +571,7 @@ export const useSalesOrderStore = defineStore('salesOrder', {
             title: 'Error',
             message: error.message || 'Gagal menghapus Sales Order',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           });
       } finally {
@@ -596,11 +596,11 @@ export const useSalesOrderStore = defineStore('salesOrder', {
           }
           await this.fetchSalesOrders();
           const toast = useToast();
-          toast.success({ title: 'Success', message: 'Sales Order berhasil di-submit.', color: 'green', position: 'topRight', layout: 2 });
+          toast.success({ title: 'Success', message: 'Sales Order berhasil di-submit.', color: 'green', position: 'bottomRight', layout: 2 });
           return true;
       } catch (error: any) {
           const toast = useToast();
-          toast.error({ title: 'Error', message: error.message || 'Gagal submit sales order.', color: 'red', position: 'topRight', layout: 2 });
+          toast.error({ title: 'Error', message: error.message || 'Gagal submit sales order.', color: 'red', position: 'bottomRight', layout: 2 });
           return false;
       } finally {
           this.loading = false;
@@ -633,7 +633,7 @@ export const useSalesOrderStore = defineStore('salesOrder', {
             title: 'Success',
             message: 'Sales Order berhasil diapprove.',
             color: 'green',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           });
 
@@ -645,7 +645,7 @@ export const useSalesOrderStore = defineStore('salesOrder', {
             title: 'Error',
             message: error.message || 'Gagal mengapprove sales order.',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           });
           return false;
@@ -680,7 +680,7 @@ export const useSalesOrderStore = defineStore('salesOrder', {
             title: 'Success',
             message: 'Sales Order berhasil direject.',
             color: 'green',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           });
 
@@ -692,7 +692,7 @@ export const useSalesOrderStore = defineStore('salesOrder', {
             title: 'Error',
             message: error.message || 'Gagal mereject sales order.',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           });
           return false;
@@ -740,7 +740,7 @@ export const useSalesOrderStore = defineStore('salesOrder', {
               title: 'Error',
               message: error.data?.message || error.message || 'Operasi gagal',
               color: 'red',
-              position: 'topRight',
+              position: 'bottomRight',
               layout: 2,
             });
             throw error;
@@ -774,7 +774,7 @@ export const useSalesOrderStore = defineStore('salesOrder', {
           title: 'Error',
           message: 'Gagal memuat daftar perusahaan.',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         });
         return [];
@@ -810,7 +810,7 @@ export const useSalesOrderStore = defineStore('salesOrder', {
             title: 'Error',
             message: 'Gagal memuat daftar cabang.',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
             });
             return [];
@@ -842,7 +842,7 @@ export const useSalesOrderStore = defineStore('salesOrder', {
             title: 'Error',
             message: 'Gagal memuat daftar customer.',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
             });
             return [];
@@ -863,7 +863,7 @@ export const useSalesOrderStore = defineStore('salesOrder', {
                 title: 'Error',
                 message: 'Tidak dapat memuat data Sales Order.',
                 color: 'red',
-                position: 'topRight',
+                position: 'bottomRight',
                 layout: 2,
               });
               return;

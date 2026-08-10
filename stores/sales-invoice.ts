@@ -936,7 +936,7 @@ export const useSalesInvoiceStore = defineStore('salesInvoice', {
                 title: 'Error',
                 message: 'Gagal mengambil data untuk export',
                 color: 'red',
-                position: 'topRight',
+                position: 'bottomRight',
             });
             return [];
         }

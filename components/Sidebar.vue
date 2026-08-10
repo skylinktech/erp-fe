@@ -5,7 +5,7 @@
         <span class="app-brand-logo demo">
           <img src="/img/branding/logo.png" alt="" height="40" />
         </span>
-        <span class="app-brand-text demo menu-text fw-semibold ms-2">Skylink ERP</span>
+        <span class="app-brand-text demo menu-text fw-semibold ms-2">CoreX</span>
       </a>
       <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto" @click="toggleSidebar">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

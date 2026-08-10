@@ -1115,7 +1115,7 @@ const exportData = async (format) => {
                     title: 'Success',
                     message: `Excel berhasil dibuat dengan ${allData.length} data Sales Order${hasFilters ? ' sesuai filter' : ''}`,
                     color: 'green',
-                    position: 'topRight',
+                    position: 'bottomRight',
                     layout: 2,
                 });
             } else {
@@ -1123,7 +1123,7 @@ const exportData = async (format) => {
                     title: 'Warning',
                     message: 'Tidak ada data untuk diexport',
                     color: 'orange',
-                    position: 'topRight',
+                    position: 'bottomRight',
                     layout: 2,
                 });
             }
@@ -1133,7 +1133,7 @@ const exportData = async (format) => {
                 title: 'Error',
                 message: 'Gagal membuat Excel',
                 color: 'red',
-                position: 'topRight',
+                position: 'bottomRight',
                 layout: 2,
             });
         }

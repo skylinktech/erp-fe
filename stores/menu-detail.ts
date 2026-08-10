@@ -108,7 +108,7 @@ export const useMenuDetailStore = defineStore('menu-detail', {
           title: 'Error',
           message: `Tidak dapat memuat data menu detail: ${e.message}`,
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         });
       } finally {
         this.loading = false
@@ -140,7 +140,7 @@ export const useMenuDetailStore = defineStore('menu-detail', {
               title: 'Error',
               message: 'Gagal mengambil data Menu Group untuk pilihan.',
               color: 'red',
-              position: 'topRight',
+              position: 'bottomRight',
             });
         }
     },
@@ -234,7 +234,7 @@ export const useMenuDetailStore = defineStore('menu-detail', {
             icon: 'ri-check-line',
             message: `Menu detail berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
             timeout: 3000,
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
         })
 
@@ -245,7 +245,7 @@ export const useMenuDetailStore = defineStore('menu-detail', {
                 icon: 'ri-close-line',
                 message: error.message || 'Operasi gagal',
                 timeout: 3000,
-                position: 'topRight',
+                position: 'bottomRight',
                 layout: 2,
             })
         }
@@ -297,7 +297,7 @@ export const useMenuDetailStore = defineStore('menu-detail', {
             icon: 'ri-check-line',
             message: 'Menu detail berhasil dihapus.',
             timeout: 3000,
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           })
       } catch (error: any) {
@@ -307,7 +307,7 @@ export const useMenuDetailStore = defineStore('menu-detail', {
             icon: 'ri-close-line',
             message: error.message || 'Gagal menghapus menu detail',
             timeout: 3000,
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           })
       } finally {

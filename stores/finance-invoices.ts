@@ -352,7 +352,7 @@ export const useFinanceInvoiceStore = defineStore('financeInvoice', {
           title: 'Error',
           message: `Gagal memuat daftar invoice: ${error.message}`,
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         })
       } finally {
         this.loading = false
@@ -418,7 +418,7 @@ export const useFinanceInvoiceStore = defineStore('financeInvoice', {
           title: 'Error',
           message: `Gagal memuat detail invoice: ${error.message}`,
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         })
         return null
       } finally {
@@ -452,7 +452,7 @@ export const useFinanceInvoiceStore = defineStore('financeInvoice', {
           title: 'Berhasil',
           message: result.message || 'Invoice berhasil diperbarui',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
         })
         return updated
       } catch (error: any) {
@@ -460,7 +460,7 @@ export const useFinanceInvoiceStore = defineStore('financeInvoice', {
           title: 'Error',
           message: error.message || 'Gagal memperbarui invoice',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         })
         throw error
       } finally {
@@ -503,7 +503,7 @@ export const useFinanceInvoiceStore = defineStore('financeInvoice', {
           title: 'Berhasil',
           message: result.message || 'Invoice berhasil dihapus',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
         })
         return true
       } catch (error: any) {
@@ -511,7 +511,7 @@ export const useFinanceInvoiceStore = defineStore('financeInvoice', {
           title: 'Error',
           message: error.message || 'Gagal menghapus invoice',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         })
         return false
       }
@@ -560,7 +560,7 @@ export const useFinanceInvoiceStore = defineStore('financeInvoice', {
           title: 'Berhasil',
           message: result.message || 'Invoice berhasil dikirim',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
         })
         return true
       } catch (error: any) {
@@ -568,7 +568,7 @@ export const useFinanceInvoiceStore = defineStore('financeInvoice', {
           title: 'Error',
           message: error.message || 'Gagal mengirim invoice',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         })
         return false
       } finally {
@@ -586,7 +586,7 @@ export const useFinanceInvoiceStore = defineStore('financeInvoice', {
           title: 'Error',
           message: 'Pilih minimal 1 invoice',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         })
         return null
       }
@@ -595,7 +595,7 @@ export const useFinanceInvoiceStore = defineStore('financeInvoice', {
           title: 'Error',
           message: 'Maksimal 50 invoice per bulk send',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         })
         return null
       }
@@ -679,7 +679,7 @@ export const useFinanceInvoiceStore = defineStore('financeInvoice', {
             title: 'Berhasil',
             message: result.message || `${data.success || uniqueIds.length} invoice terkirim`,
             color: 'green',
-            position: 'topRight',
+            position: 'bottomRight',
           })
         }
 
@@ -689,7 +689,7 @@ export const useFinanceInvoiceStore = defineStore('financeInvoice', {
           title: 'Error',
           message: error.message || 'Gagal mengirim invoice bulk',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         })
         return null
       } finally {
@@ -729,7 +729,7 @@ export const useFinanceInvoiceStore = defineStore('financeInvoice', {
           title: 'Berhasil',
           message: result.message || 'Invoice berhasil di-submit',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
         })
         return true
       } catch (error: any) {
@@ -737,7 +737,7 @@ export const useFinanceInvoiceStore = defineStore('financeInvoice', {
           title: 'Error',
           message: error.message || 'Gagal submit invoice',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         })
         return false
       }
@@ -783,7 +783,7 @@ export const useFinanceInvoiceStore = defineStore('financeInvoice', {
           title: 'Berhasil',
           message: result.message || 'Invoice berhasil disetujui',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
         })
         return true
       } catch (error: any) {
@@ -791,7 +791,7 @@ export const useFinanceInvoiceStore = defineStore('financeInvoice', {
           title: 'Error',
           message: error.message || 'Gagal approve invoice',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         })
         return false
       }
@@ -833,7 +833,7 @@ export const useFinanceInvoiceStore = defineStore('financeInvoice', {
           title: 'Berhasil',
           message: result.message || 'Invoice berhasil ditolak',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
         })
         return true
       } catch (error: any) {
@@ -841,7 +841,7 @@ export const useFinanceInvoiceStore = defineStore('financeInvoice', {
           title: 'Error',
           message: error.message || 'Gagal reject invoice',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         })
         return false
       }
@@ -904,7 +904,7 @@ export const useFinanceInvoiceStore = defineStore('financeInvoice', {
           title: 'Error',
           message: `Gagal memuat perangkat aktif: ${error.message}`,
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         })
       } finally {
         this.loadingBillable = false

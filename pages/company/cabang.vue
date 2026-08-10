@@ -425,7 +425,7 @@ const handleSubmit = async () => {
                 title: 'Error',
                 message: 'Pilih perusahaan terlebih dahulu',
                 color: 'red',
-                position: 'topRight',
+                position: 'bottomRight',
                 layout: 2,
             })
             return
@@ -436,7 +436,7 @@ const handleSubmit = async () => {
                 title: 'Error',
                 message: 'Semua field wajib diisi',
                 color: 'red',
-                position: 'topRight',
+                position: 'bottomRight',
                 layout: 2,
             })
             return
@@ -452,7 +452,7 @@ const handleSubmit = async () => {
             title: 'Error',
             message: error.message || 'Terjadi kesalahan saat menyimpan data',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
         })
     }

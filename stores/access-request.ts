@@ -94,7 +94,7 @@ export const useAccessRequestStore = defineStore('accessRequest', {
             title: 'Error',
             message: `Tidak dapat memuat data: ${e.message}`,
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
             icon: 'error',
           })
@@ -133,7 +133,7 @@ export const useAccessRequestStore = defineStore('accessRequest', {
           title: 'Error',
           message: e.message || 'Gagal mengambil detail',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
           icon: 'error',
         })
@@ -176,7 +176,7 @@ export const useAccessRequestStore = defineStore('accessRequest', {
           title: 'Berhasil',
           message: `Permintaan akses berhasil ${this.isEditMode ? 'diperbarui' : 'ditambahkan'}.`,
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
           icon: 'success',
         })
@@ -185,7 +185,7 @@ export const useAccessRequestStore = defineStore('accessRequest', {
           title: 'Error',
           message: e.message || 'Gagal menyimpan',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
           icon: 'error',
         })
@@ -210,7 +210,7 @@ export const useAccessRequestStore = defineStore('accessRequest', {
           title: 'Berhasil',
           message: 'Permintaan akses berhasil di-submit.',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
           icon: 'success',
         })
@@ -220,7 +220,7 @@ export const useAccessRequestStore = defineStore('accessRequest', {
           title: 'Error',
           message: e.message || 'Gagal submit',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
           icon: 'error',
         })
@@ -245,7 +245,7 @@ export const useAccessRequestStore = defineStore('accessRequest', {
           title: 'Berhasil',
           message: 'Permintaan akses berhasil disetujui.',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
           icon: 'success',
         })
@@ -255,7 +255,7 @@ export const useAccessRequestStore = defineStore('accessRequest', {
           title: 'Error',
           message: e.message || 'Gagal approve',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
           icon: 'error',
         })
@@ -280,7 +280,7 @@ export const useAccessRequestStore = defineStore('accessRequest', {
           title: 'Berhasil',
           message: 'Permintaan akses berhasil direject.',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
           icon: 'success',
         })
@@ -290,7 +290,7 @@ export const useAccessRequestStore = defineStore('accessRequest', {
           title: 'Error',
           message: e.message || 'Gagal reject',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
           icon: 'error',
         })
@@ -314,7 +314,7 @@ export const useAccessRequestStore = defineStore('accessRequest', {
           title: 'Berhasil',
           message: 'Permintaan akses berhasil dibatalkan.',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
           icon: 'success',
         })
@@ -324,7 +324,7 @@ export const useAccessRequestStore = defineStore('accessRequest', {
           title: 'Error',
           message: e.message || 'Gagal membatalkan',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
           icon: 'error',
         })
@@ -360,7 +360,7 @@ export const useAccessRequestStore = defineStore('accessRequest', {
           title: 'Berhasil',
           message: 'Permintaan akses berhasil dihapus.',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
           icon: 'success',
         })
@@ -371,7 +371,7 @@ export const useAccessRequestStore = defineStore('accessRequest', {
           title: 'Error',
           message: e.message || 'Gagal menghapus',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
           icon: 'error',
         })

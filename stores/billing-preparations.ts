@@ -252,7 +252,7 @@ export const useBillingPreparationStore = defineStore('billingPreparation', {
         this.rows = (json.data || []).map(normalizePrep)
         this.totalRecords = json.meta?.total ?? 0
       } catch (e: any) {
-        useToast().error({ title: 'Error', message: e.message, color: 'red', position: 'topRight' })
+        useToast().error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight' })
       } finally {
         this.loading = false
       }
@@ -272,7 +272,7 @@ export const useBillingPreparationStore = defineStore('billingPreparation', {
         return this.selected
       } catch (e: any) {
         this.selected = null
-        useToast().error({ title: 'Error', message: e.message, color: 'red', position: 'topRight' })
+        useToast().error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight' })
         return null
       } finally {
         this.loadingDetail = false
@@ -315,12 +315,12 @@ export const useBillingPreparationStore = defineStore('billingPreparation', {
           title: 'Berhasil',
           message: json.message,
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
         })
         await Promise.all([this.fetchList(), this.fetchStatistics()])
         return json.data?.id as string | undefined
       } catch (e: any) {
-        useToast().error({ title: 'Error', message: e.message, color: 'red', position: 'topRight' })
+        useToast().error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight' })
         return null
       } finally {
         this.saving = false
@@ -385,11 +385,11 @@ export const useBillingPreparationStore = defineStore('billingPreparation', {
           title: 'Berhasil',
           message: json.message,
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
         })
         return true
       } catch (e: any) {
-        useToast().error({ title: 'Error', message: e.message, color: 'red', position: 'topRight' })
+        useToast().error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight' })
         return false
       } finally {
         this.saving = false
@@ -412,11 +412,11 @@ export const useBillingPreparationStore = defineStore('billingPreparation', {
           title: 'Berhasil',
           message: json.message,
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
         })
         return true
       } catch (e: any) {
-        useToast().error({ title: 'Error', message: e.message, color: 'red', position: 'topRight' })
+        useToast().error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight' })
         return false
       }
     },
@@ -443,13 +443,13 @@ export const useBillingPreparationStore = defineStore('billingPreparation', {
           title: 'Berhasil',
           message: json.message,
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
         })
         await this.fetchById(id)
         await Promise.all([this.fetchList(), this.fetchStatistics()])
         return true
       } catch (e: any) {
-        useToast().error({ title: 'Error', message: e.message, color: 'red', position: 'topRight' })
+        useToast().error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight' })
         return false
       }
     },
@@ -475,12 +475,12 @@ export const useBillingPreparationStore = defineStore('billingPreparation', {
           title: 'Berhasil',
           message: json.message,
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
         })
         await Promise.all([this.fetchList(), this.fetchStatistics()])
         return true
       } catch (e: any) {
-        useToast().error({ title: 'Error', message: e.message, color: 'red', position: 'topRight' })
+        useToast().error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight' })
         return false
       }
     },

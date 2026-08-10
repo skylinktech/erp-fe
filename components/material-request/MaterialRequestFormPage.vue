@@ -468,7 +468,7 @@ async function handleSubmit() {
       title: 'Validasi',
       message: 'Site Investment wajib dipilih',
       color: 'red',
-      position: 'topRight',
+      position: 'bottomRight',
       layout: 2,
     })
     return

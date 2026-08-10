@@ -169,7 +169,7 @@ export const usePriceListStore = defineStore('priceList', {
             title: 'Error',
             message: `Tidak dapat memuat data price list: ${e.message}`,
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
           })
         }
       } finally {
@@ -232,7 +232,7 @@ export const usePriceListStore = defineStore('priceList', {
           title: 'Berhasil',
           message: this.isEditMode ? 'Price list berhasil diperbarui' : 'Price list berhasil ditambahkan',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
         })
 
         this.closeModal()
@@ -242,7 +242,7 @@ export const usePriceListStore = defineStore('priceList', {
           title: 'Error',
           message: e.message,
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         })
       } finally {
         this.saving = false
@@ -285,7 +285,7 @@ export const usePriceListStore = defineStore('priceList', {
             title: 'Berhasil',
             message: 'Price list berhasil dihapus',
             color: 'green',
-            position: 'topRight',
+            position: 'bottomRight',
           })
 
           await this.fetchPriceLists()
@@ -294,7 +294,7 @@ export const usePriceListStore = defineStore('priceList', {
             title: 'Error',
             message: e.message,
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
           })
         } finally {
           this.loading = false

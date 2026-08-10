@@ -531,7 +531,7 @@ const submitForm = async () => {
 
   const err = validateForm()
   if (err) {
-    useToast().error({ title: 'Validasi', message: err, color: 'red', position: 'topRight' })
+    useToast().error({ title: 'Validasi', message: err, color: 'red', position: 'bottomRight' })
     return
   }
 

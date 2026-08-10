@@ -154,7 +154,7 @@ export const useTaxMasterStore = defineStore('taxMaster', {
           title: 'Error',
           message: e.message || 'Gagal memuat tax master',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         })
       } finally {
         this.loading = false
@@ -192,7 +192,7 @@ export const useTaxMasterStore = defineStore('taxMaster', {
           title: 'Berhasil',
           message: json.message || 'Tax master dibuat',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
         })
         await Promise.all([this.fetchList(), this.fetchStatistics()])
         return normalizeMaster(json.data)
@@ -201,7 +201,7 @@ export const useTaxMasterStore = defineStore('taxMaster', {
           title: 'Error',
           message: e.message || 'Gagal membuat tax master',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         })
         throw e
       } finally {
@@ -225,7 +225,7 @@ export const useTaxMasterStore = defineStore('taxMaster', {
           title: 'Berhasil',
           message: json.message || 'Tax master diperbarui',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
         })
         await Promise.all([this.fetchList(), this.fetchStatistics()])
         return normalizeMaster(json.data)
@@ -234,7 +234,7 @@ export const useTaxMasterStore = defineStore('taxMaster', {
           title: 'Error',
           message: e.message || 'Gagal memperbarui tax master',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         })
         throw e
       } finally {
@@ -267,7 +267,7 @@ export const useTaxMasterStore = defineStore('taxMaster', {
           title: 'Berhasil',
           message: json.message || 'Tax master dihapus',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
         })
         await Promise.all([this.fetchList(), this.fetchStatistics()])
         return true
@@ -276,7 +276,7 @@ export const useTaxMasterStore = defineStore('taxMaster', {
           title: 'Error',
           message: e.message || 'Gagal menghapus tax master',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         })
         return false
       }

@@ -102,7 +102,7 @@ export const useCustomerStore = defineStore('customer', {
             title: 'Error',
             message: `Tidak dapat memuat data pelanggan: ${e.message}`,
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
           });
         }
       } finally {
@@ -183,7 +183,7 @@ export const useCustomerStore = defineStore('customer', {
           title: 'Success',
           message: `Customer berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
         });
 
       } catch (error: any) {
@@ -194,7 +194,7 @@ export const useCustomerStore = defineStore('customer', {
               title: 'Error',
               message: error.message || 'Operasi gagal',
               color: 'red',
-              position: 'topRight',
+              position: 'bottomRight',
             });
         }
       } finally {
@@ -278,7 +278,7 @@ export const useCustomerStore = defineStore('customer', {
           title: 'Error',
           message: `Tidak dapat memuat detail pelanggan: ${e.message}`,
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         });
       } finally {
         this.loading = false;
@@ -311,7 +311,7 @@ export const useCustomerStore = defineStore('customer', {
                   title: 'Error',
                   message: error.message,
                   color: 'red',
-                  position: 'topRight',
+                  position: 'bottomRight',
                 });
             } finally {
                 this.loading = false;

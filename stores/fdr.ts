@@ -420,7 +420,7 @@ export const useFdrStore = defineStore('fdr', {
           await this.fetchFdrs()
           await this.fetchStats()
           const toast = useToast()
-          toast.success({ title: 'Success', message: `FDR berhasil ${this.isEditMode ? 'diperbarui' : 'dibuat'}.`, color: 'green', position: 'topRight', layout: 2 })
+          toast.success({ title: 'Success', message: `FDR berhasil ${this.isEditMode ? 'diperbarui' : 'dibuat'}.`, color: 'green', position: 'bottomRight', layout: 2 })
           if (options?.navigateToList) {
             await navigateTo('/sales/fdr')
           }
@@ -428,7 +428,7 @@ export const useFdrStore = defineStore('fdr', {
       } catch (error: any) {
         this.validationErrors = []
         const toast = useToast()
-        toast.error({ title: 'Error', message: error.message || 'Operasi gagal', color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Error', message: error.message || 'Operasi gagal', color: 'red', position: 'bottomRight', layout: 2 })
       } finally {
         this.saving = false
       }
@@ -451,11 +451,11 @@ export const useFdrStore = defineStore('fdr', {
         await this.fetchFdrs()
         await this.fetchStats()
         const toast = useToast()
-        toast.success({ title: 'Success', message: 'FDR berhasil dihapus.', color: 'green', position: 'topRight', layout: 2 })
+        toast.success({ title: 'Success', message: 'FDR berhasil dihapus.', color: 'green', position: 'bottomRight', layout: 2 })
         return true
       } catch (error: any) {
         const toast = useToast()
-        toast.error({ title: 'Error', message: error.message || 'Gagal menghapus FDR', color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Error', message: error.message || 'Gagal menghapus FDR', color: 'red', position: 'bottomRight', layout: 2 })
         return false
       } finally {
         this.loading = false
@@ -480,11 +480,11 @@ export const useFdrStore = defineStore('fdr', {
         await this.fetchFdrs()
         await this.fetchStats()
         const toast = useToast()
-        toast.success({ title: 'Success', message: 'FDR berhasil diapprove.', color: 'green', position: 'topRight', layout: 2 })
+        toast.success({ title: 'Success', message: 'FDR berhasil diapprove.', color: 'green', position: 'bottomRight', layout: 2 })
         return true
       } catch (error: any) {
         const toast = useToast()
-        toast.error({ title: 'Error', message: error.message || 'Gagal mengapprove FDR.', color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Error', message: error.message || 'Gagal mengapprove FDR.', color: 'red', position: 'bottomRight', layout: 2 })
         return false
       } finally {
         this.loading = false
@@ -509,11 +509,11 @@ export const useFdrStore = defineStore('fdr', {
         await this.fetchFdrs()
         await this.fetchStats()
         const toast = useToast()
-        toast.success({ title: 'Success', message: 'FDR berhasil dibatalkan.', color: 'green', position: 'topRight', layout: 2 })
+        toast.success({ title: 'Success', message: 'FDR berhasil dibatalkan.', color: 'green', position: 'bottomRight', layout: 2 })
         return true
       } catch (error: any) {
         const toast = useToast()
-        toast.error({ title: 'Error', message: error.message || 'Gagal membatalkan FDR.', color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Error', message: error.message || 'Gagal membatalkan FDR.', color: 'red', position: 'bottomRight', layout: 2 })
         return false
       } finally {
         this.loading = false
@@ -538,11 +538,11 @@ export const useFdrStore = defineStore('fdr', {
         await this.fetchFdrs()
         await this.fetchStats()
         const toast = useToast()
-        toast.success({ title: 'Success', message: 'FDR berhasil direject.', color: 'green', position: 'topRight', layout: 2 })
+        toast.success({ title: 'Success', message: 'FDR berhasil direject.', color: 'green', position: 'bottomRight', layout: 2 })
         return true
       } catch (error: any) {
         const toast = useToast()
-        toast.error({ title: 'Error', message: error.message || 'Gagal mereject FDR.', color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Error', message: error.message || 'Gagal mereject FDR.', color: 'red', position: 'bottomRight', layout: 2 })
         return false
       } finally {
         this.loading = false
@@ -567,11 +567,11 @@ export const useFdrStore = defineStore('fdr', {
         await this.fetchFdrs()
         await this.fetchStats()
         const toast = useToast()
-        toast.success({ title: 'Success', message: 'FDR berhasil di-submit (status: pending).', color: 'green', position: 'topRight', layout: 2 })
+        toast.success({ title: 'Success', message: 'FDR berhasil di-submit (status: pending).', color: 'green', position: 'bottomRight', layout: 2 })
         return true
       } catch (error: any) {
         const toast = useToast()
-        toast.error({ title: 'Error', message: error.message || 'Gagal submit FDR.', color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Error', message: error.message || 'Gagal submit FDR.', color: 'red', position: 'bottomRight', layout: 2 })
         return false
       } finally {
         this.loading = false
@@ -607,7 +607,7 @@ export const useFdrStore = defineStore('fdr', {
         const fullData = this.fdr
         if (!fullData) {
           const toast = useToast()
-          toast.error({ title: 'Error', message: 'Tidak dapat memuat data FDR.', color: 'red', position: 'topRight', layout: 2 })
+          toast.error({ title: 'Error', message: 'Tidak dapat memuat data FDR.', color: 'red', position: 'bottomRight', layout: 2 })
           return
         }
 

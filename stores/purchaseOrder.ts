@@ -200,7 +200,7 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
             title: 'Error',
             message: `Tidak dapat memuat data Purchase Order: ${e.message}`,
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
           });
         }
       } finally {
@@ -350,7 +350,7 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
                       title: 'Error',
                       message: errorData.errors.map((e: any) => e.message).join('<br>'),
                       color: 'red',
-                      position: 'topRight',
+                      position: 'bottomRight',
                       layout: 2,
                     });
                     return false;
@@ -377,7 +377,7 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
                   title: 'Success',
                   message: `Purchase Order berhasil ${this.isEditMode ? 'diperbarui' : 'dibuat'}.`,
                   color: 'green',
-                  position: 'topRight',
+                  position: 'bottomRight',
                 });
                 return true;
             }
@@ -391,7 +391,7 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
               title: 'Error',
               message: error.message || 'Operasi gagal',
               color: 'red',
-              position: 'topRight',
+              position: 'bottomRight',
             });
             return false;
         } finally {
@@ -439,14 +439,14 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
               title: 'Success',
               message: 'Purchase Order berhasil dihapus.',
               color: 'green',
-              position: 'topRight',
+              position: 'bottomRight',
             });
         } catch (error: any) {
             toast.error({
               title: 'Error',
               message: error.message || 'Gagal menghapus Purchase Order',
               color: 'red',
-              position: 'topRight',
+              position: 'bottomRight',
             });
         } finally {
             this.loading = false;
@@ -470,10 +470,10 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
               throw new Error(errorData.message || 'Gagal submit purchase order');
           }
           await this.fetchPurchaseOrders();
-          toast.success({ title: 'Success', message: 'Purchase Order berhasil di-submit.', color: 'green', position: 'topRight' });
+          toast.success({ title: 'Success', message: 'Purchase Order berhasil di-submit.', color: 'green', position: 'bottomRight' });
           return true;
       } catch (error: any) {
-          toast.error({ title: 'Error', message: error.message || 'Gagal submit purchase order.', color: 'red', position: 'topRight' });
+          toast.error({ title: 'Error', message: error.message || 'Gagal submit purchase order.', color: 'red', position: 'bottomRight' });
           return false;
       } finally {
           this.loading = false;
@@ -506,7 +506,7 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
             title: 'Success',
             message: 'Purchase Order berhasil diapprove.',
             color: 'green',
-            position: 'topRight',
+            position: 'bottomRight',
           });
           return true;
       } catch (error: any) {
@@ -515,7 +515,7 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
             title: 'Error',
             message: error.message || 'Gagal mengapprove purchase order.',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
           });
           return false;
       } finally {
@@ -549,7 +549,7 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
             title: 'Success',
             message: 'Purchase Order berhasil direject.',
             color: 'green',
-            position: 'topRight',
+            position: 'bottomRight',
           });
 
           return true;
@@ -559,7 +559,7 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
             title: 'Error',
             message: error.message || 'Gagal mereject purchase order.',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
           });
           return false;
       } finally {
@@ -608,7 +608,7 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
               title: 'Error',
               message: error.data?.message || error.message || 'Operasi gagal',
               color: 'red',
-              position: 'topRight',
+              position: 'bottomRight',
             });
             throw error;
         } finally {
@@ -647,7 +647,7 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
             title: 'Error',
             message: error.message || 'Gagal menerima semua item purchase order.',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
           });
           throw error;
       } finally {
@@ -680,7 +680,7 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
             title: 'Error',
             message: 'Gagal memuat daftar perusahaan.',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
           });
           return [];
         }
@@ -715,7 +715,7 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
             title: 'Error',
             message: 'Gagal memuat daftar cabang.',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             });
             return [];
         }
@@ -746,7 +746,7 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
             title: 'Error',
             message: 'Gagal memuat daftar vendor.',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             });
             return [];
         }
@@ -788,7 +788,7 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
                 title: 'Error',
                 message: warehouseId ? 'Gagal memuat data produk untuk gudang yang dipilih' : 'Gagal memuat data produk',
                 color: 'red',
-                position: 'topRight',
+                position: 'bottomRight',
             });
             return [];
         }
@@ -820,7 +820,7 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
                 title: 'Error',
                 message: 'Gagal memuat semua produk',
                 color: 'red',
-                position: 'topRight',
+                position: 'bottomRight',
             });
             return [];
         }
@@ -1022,7 +1022,7 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
               title: 'Error',
               message: 'Gagal mengambil data purchase order untuk edit',
               color: 'red',
-              position: 'topRight',
+              position: 'bottomRight',
             });
         } finally {
             this.loading = false;
@@ -1103,7 +1103,7 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
                 title: 'Error',
                 message: 'Gagal mengambil data untuk export',
                 color: 'red',
-                position: 'topRight',
+                position: 'bottomRight',
             });
             return [];
         }

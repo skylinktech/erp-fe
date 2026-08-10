@@ -304,7 +304,7 @@ async function handleSubmit() {
       title: 'Validasi',
       message: 'Customer wajib dipilih',
       color: 'red',
-      position: 'topRight',
+      position: 'bottomRight',
       layout: 2,
     })
     return

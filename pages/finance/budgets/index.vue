@@ -576,7 +576,7 @@ const exportData = async (format) => {
           title: 'Success',
           message: 'Data budget berhasil diekspor ke Excel',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
       }
@@ -587,7 +587,7 @@ const exportData = async (format) => {
       title: 'Error',
       message: error.message || 'Gagal melakukan export data',
       color: 'red',
-      position: 'topRight',
+      position: 'bottomRight',
       layout: 2,
     })
   }

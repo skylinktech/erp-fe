@@ -638,7 +638,7 @@ const receiveAllItems = async () => {
             message: `Semua item sudah diterima atau Purchase Order sudah dalam status ${purchaseOrder.value?.status?.toUpperCase()}.`,
             color: 'orange',
             timeout: 2000,
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
         })
         return
@@ -721,7 +721,7 @@ const updateReceivedQty = async (item) => {
             message: `Purchase Order sudah dalam status ${purchaseOrder.value?.status?.toUpperCase()} dan tidak dapat diubah lagi. Jika ada perubahan yang diperlukan, silakan buat Purchase Return.`,
             icon: 'ri-alert-line',
             timeout: 3000,
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
         })
         return
@@ -752,7 +752,7 @@ const updateReceivedQty = async (item) => {
             message: `Quantity tidak boleh melebihi ${maxQty}`,
             color: 'orange',
             timeout: 2000,
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
         })
         return
@@ -768,7 +768,7 @@ const updateReceivedQty = async (item) => {
             message: `Received quantity berhasil diperbarui menjadi ${receivedQty}`,
             color: 'green',
             timeout: 2000,
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
         })
         
@@ -782,7 +782,7 @@ const updateReceivedQty = async (item) => {
             message: 'Terjadi kesalahan saat memperbarui quantity.',
             color: 'red',
             timeout: 2000,
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
         })
     }
@@ -806,7 +806,7 @@ const checkAllItemsStatus = () => {
             message: 'Semua item telah diterima sepenuhnya. Status berubah menjadi Received.',
             color: 'green',
             timeout: 2000,
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
         })
     }
@@ -843,7 +843,7 @@ const openReceivePartialModal = () => {
             message: 'Tidak ada item yang dapat diterima',
             color: 'red',
             timeout: 2000,
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
         })
         return
@@ -892,7 +892,7 @@ const validateModalQty = (item) => {
             message: `Quantity tidak boleh melebihi ${remaining}`,
             color: 'orange',
             timeout: 2000,
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
         })
     }
@@ -909,7 +909,7 @@ const confirmReceivePartial = async () => {
             message: 'Silakan pilih minimal 1 item untuk diterima',
             color: 'orange',
             timeout: 2000,
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
         })
         return
@@ -990,7 +990,7 @@ const confirmReceivePartial = async () => {
             message: `Berhasil menerima ${totalModalReceiveQty.value} items dari ${itemsToReceive.length} produk`,
             color: 'green',
             timeout: 2000,
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
         })
 
@@ -1001,7 +1001,7 @@ const confirmReceivePartial = async () => {
             message: error.message || 'Gagal menerima barang',
             color: 'red',
             timeout: 2000,
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
         })
         // ✅ Jika error, buka kembali modal

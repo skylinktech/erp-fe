@@ -802,7 +802,7 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
       } catch (e: any) {
         this.error = e
         if (!suppressError) {
-          toast.error({ title: 'Error', message: e.message, color: 'red', position: 'topRight', layout: 2 })
+          toast.error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight', layout: 2 })
         }
       } finally {
         this.loading = false
@@ -873,7 +873,7 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
           title: 'Error',
           message: 'Gagal memuat data untuk edit',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
       } finally {
@@ -946,7 +946,7 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
           title: 'Sumber dimuat',
           message: `Data dari ${data.sourceNumber || sourceType} berhasil diisi${taxNote}`,
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return true
@@ -955,7 +955,7 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
           title: 'Error',
           message: e.message || 'Gagal memuat sumber dokumen',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return false
@@ -976,7 +976,7 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
           title: 'Validasi',
           message: 'Sumber dokumen (PO / MRF / ARF) wajib dipilih',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return false
@@ -988,7 +988,7 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
           title: 'Validasi',
           message: 'Pilih metode: Advance atau Reimbursement',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return false
@@ -1002,7 +1002,7 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
           title: 'Validasi',
           message: 'Estimasi durasi wajib diisi lengkap (tanggal mulai dan selesai)',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return false
@@ -1014,7 +1014,7 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
           title: 'Validasi',
           message: 'Tanggal selesai harus sama atau setelah tanggal mulai',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return false
@@ -1038,7 +1038,7 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
           title: 'Validasi',
           message: 'Pilih minimal 1 Tax Master jika pajak diaktifkan',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return false
@@ -1151,7 +1151,7 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
               title: 'Error',
               message: ed.message || 'Gagal menyimpan',
               color: 'red',
-              position: 'topRight',
+              position: 'bottomRight',
               layout: 2,
             })
             return false
@@ -1166,7 +1166,7 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
           title: 'Sukses',
           message: `Payment Request berhasil ${this.isEditMode ? 'diperbarui' : 'dibuat'}`,
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return savedId
@@ -1175,7 +1175,7 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
           title: 'Error',
           message: e?.data?.message || e.message || 'Gagal menyimpan',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return false
@@ -1212,11 +1212,11 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
           title: 'Sukses',
           message: 'Payment Request dihapus',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight', layout: 2 })
       } finally {
         this.loading = false
       }
@@ -1241,12 +1241,12 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
           title: 'Sukses',
           message: 'Berhasil diapprove',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return true
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight', layout: 2 })
         return false
       } finally {
         this.loading = false
@@ -1272,12 +1272,12 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
           title: 'Sukses',
           message: 'Payment Request ditolak',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return true
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight', layout: 2 })
         return false
       } finally {
         this.loading = false
@@ -1302,12 +1302,12 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
           title: 'Sukses',
           message: 'Payment Request diajukan ke Direktur Utama',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return true
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight', layout: 2 })
         return false
       } finally {
         this.loading = false

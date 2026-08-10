@@ -128,7 +128,7 @@ export const useServiceStore = defineStore('service', {
             title: 'Error',
             message: `Tidak dapat memuat data service: ${e.message}`,
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
           })
         }
       } finally {
@@ -210,7 +210,7 @@ export const useServiceStore = defineStore('service', {
           title: 'Success',
           message: `Service berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
         })
       } catch (error: any) {
         if (this.validationErrors.length === 0) {
@@ -218,7 +218,7 @@ export const useServiceStore = defineStore('service', {
             title: 'Error',
             message: error.message || 'Operasi gagal',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
           })
         }
       } finally {
@@ -266,7 +266,7 @@ export const useServiceStore = defineStore('service', {
           title: 'Success',
           message: 'Service berhasil dihapus.',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
         })
       } catch (error: any) {
         console.error('Gagal menghapus service:', error)
@@ -274,7 +274,7 @@ export const useServiceStore = defineStore('service', {
           title: 'Error',
           message: error.message || 'Gagal menghapus service',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         })
       } finally {
         this.loading = false
@@ -369,7 +369,7 @@ export const useServiceStore = defineStore('service', {
           title: 'Error',
           message: error.message || 'Gagal memuat total service',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         })
       }
     },
@@ -408,7 +408,7 @@ export const useServiceStore = defineStore('service', {
           title: 'Error',
           message: error.message || 'Gagal memuat data service untuk export',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         })
         throw error
       }

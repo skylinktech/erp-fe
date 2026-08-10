@@ -1081,7 +1081,7 @@ const submitEdit = async () => {
             title: 'Validasi',
             message: validationMessage,
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
         })
         return
     }
@@ -1219,7 +1219,7 @@ const exportCSV = async () => {
                 title: 'Peringatan',
                 message: 'Tidak ada data untuk diexport',
                 color: 'orange',
-                position: 'topRight',
+                position: 'bottomRight',
             })
             return
         }
@@ -1311,14 +1311,14 @@ const exportCSV = async () => {
             title: 'Berhasil',
             message: `CSV berhasil diunduh (${data.length} invoice)`,
             color: 'green',
-            position: 'topRight',
+            position: 'bottomRight',
         })
     } catch (error) {
         toast.error({
             title: 'Error',
             message: `Gagal export CSV: ${error?.message || 'Unknown error'}`,
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
         })
     } finally {
         exportingCsv.value = false

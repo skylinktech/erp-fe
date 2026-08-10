@@ -149,7 +149,7 @@ export const usePerusahaanStore = defineStore('perusahaan', {
               title: 'Success',
               message: `Perusahaan berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
               color: 'green',
-              position: 'topRight',
+              position: 'bottomRight',
             });
 
         } catch (error: any) {
@@ -160,7 +160,7 @@ export const usePerusahaanStore = defineStore('perusahaan', {
                   title: 'Error',
                   message: error.message || 'Operasi gagal',
                   color: 'red',
-                  position: 'topRight',
+                  position: 'bottomRight',
                 });
             }
         } finally {
@@ -207,7 +207,7 @@ export const usePerusahaanStore = defineStore('perusahaan', {
             title: 'Success',
             message: 'Perusahaan berhasil dihapus.',
             color: 'green',
-            position: 'topRight',
+            position: 'bottomRight',
           });
       } catch (error: any) {
           const toast = useToast()
@@ -215,7 +215,7 @@ export const usePerusahaanStore = defineStore('perusahaan', {
             title: 'Error',
             message: error.message || 'Gagal menghapus perusahaan',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
           });
       } finally {
           this.loading = false;
@@ -293,7 +293,7 @@ export const usePerusahaanStore = defineStore('perusahaan', {
                   title: 'Error',
                   message: 'File logo kosong atau tidak valid',
                   color: 'red',
-                  position: 'topRight',
+                  position: 'bottomRight',
                 });
                 return;
             }
@@ -323,7 +323,7 @@ export const usePerusahaanStore = defineStore('perusahaan', {
                   title: 'Error',
                   message: `File harus berupa gambar (JPEG, PNG, GIF, WebP). Detected: MIME=${fileType}, Ext=${fileExtension}`,
                   color: 'red',
-                  position: 'topRight',
+                  position: 'bottomRight',
                 });
                 return;
             }
@@ -336,7 +336,7 @@ export const usePerusahaanStore = defineStore('perusahaan', {
                   title: 'Error',
                   message: 'Ukuran file terlalu besar (maksimal 5MB)',
                   color: 'red',
-                  position: 'topRight',
+                  position: 'bottomRight',
                 });
                 return;
             }

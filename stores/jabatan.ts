@@ -102,7 +102,7 @@ export const useJabatanStore = defineStore('jabatan', {
           title: 'Error',
           message: 'Gagal mengambil data jabatan',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         });
       } finally {
         this.loading = false
@@ -176,7 +176,7 @@ export const useJabatanStore = defineStore('jabatan', {
               title: 'Success',
               message: `Jabatan berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
               color: 'green',
-              position: 'topRight',
+              position: 'bottomRight',
             });
 
         } catch (error: any) {
@@ -185,7 +185,7 @@ export const useJabatanStore = defineStore('jabatan', {
               title: 'Error',
               message: error.message || 'Operasi gagal',
               color: 'red',
-              position: 'topRight',
+              position: 'bottomRight',
             });
         } finally {
             this.loading = false;
@@ -232,7 +232,7 @@ export const useJabatanStore = defineStore('jabatan', {
             title: 'Success',
             message: 'Jabatan berhasil dihapus.',
             color: 'green',
-            position: 'topRight',
+            position: 'bottomRight',
           });
       } catch (error: any) {
           const toast = useToast()          
@@ -240,7 +240,7 @@ export const useJabatanStore = defineStore('jabatan', {
             title: 'Error',
             message: error.message || 'Gagal menghapus jabatan',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
           });
       } finally {
           this.loading = false;

@@ -255,7 +255,7 @@ export const useMaterialRequestStore = defineStore('materialRequest', {
       } catch (e: any) {
         this.error = e
         if (!suppressError) {
-          toast.error({ title: 'Error', message: e.message, color: 'red', position: 'topRight', layout: 2 })
+          toast.error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight', layout: 2 })
         }
       } finally {
         this.loading = false
@@ -283,7 +283,7 @@ export const useMaterialRequestStore = defineStore('materialRequest', {
         if (data?.data) this.openModal(data.data)
         else throw new Error('Data tidak valid')
       } catch (e: any) {
-        toast.error({ title: 'Error', message: 'Gagal memuat data untuk edit', color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Error', message: 'Gagal memuat data untuk edit', color: 'red', position: 'bottomRight', layout: 2 })
       } finally {
         this.loading = false
       }
@@ -310,10 +310,10 @@ export const useMaterialRequestStore = defineStore('materialRequest', {
         if (items.length) {
           this.form.materialRequestItems = items.map(mapItemFromApi)
         } else {
-          toast.info({ title: 'Info', message: 'Tidak ada material produk pada SI ini', color: 'blue', position: 'topRight', layout: 2 })
+          toast.info({ title: 'Info', message: 'Tidak ada material produk pada SI ini', color: 'blue', position: 'bottomRight', layout: 2 })
         }
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message || 'Gagal memuat item SI', color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Error', message: e.message || 'Gagal memuat item SI', color: 'red', position: 'bottomRight', layout: 2 })
       }
     },
 
@@ -325,7 +325,7 @@ export const useMaterialRequestStore = defineStore('materialRequest', {
 
       if (!this.form.siteInvestmentId) {
         this.saving = false
-        toast.error({ title: 'Validasi', message: 'Site Investment wajib dipilih', color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Validasi', message: 'Site Investment wajib dipilih', color: 'red', position: 'bottomRight', layout: 2 })
         return false
       }
 
@@ -334,7 +334,7 @@ export const useMaterialRequestStore = defineStore('materialRequest', {
       )
       if (!validItems.length) {
         this.saving = false
-        toast.error({ title: 'Validasi', message: 'Minimal 1 item dengan nama barang dan qty valid', color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Validasi', message: 'Minimal 1 item dengan nama barang dan qty valid', color: 'red', position: 'bottomRight', layout: 2 })
         return false
       }
 
@@ -378,7 +378,7 @@ export const useMaterialRequestStore = defineStore('materialRequest', {
         })
         if (!res.ok) {
           const ed = await res.json().catch(() => ({}))
-          toast.error({ title: 'Error', message: ed.message || 'Gagal menyimpan', color: 'red', position: 'topRight', layout: 2 })
+          toast.error({ title: 'Error', message: ed.message || 'Gagal menyimpan', color: 'red', position: 'bottomRight', layout: 2 })
           return false
         }
         this.closeModal()
@@ -388,12 +388,12 @@ export const useMaterialRequestStore = defineStore('materialRequest', {
           title: 'Sukses',
           message: `Material Request Form berhasil ${this.isEditMode ? 'diperbarui' : 'dibuat'}`,
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return true
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight', layout: 2 })
         return false
       } finally {
         this.saving = false
@@ -420,9 +420,9 @@ export const useMaterialRequestStore = defineStore('materialRequest', {
         if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message)
         await this.fetchMaterialRequests()
         await this.fetchStatistics()
-        toast.success({ title: 'Sukses', message: 'Material Request Form dihapus', color: 'green', position: 'topRight', layout: 2 })
+        toast.success({ title: 'Sukses', message: 'Material Request Form dihapus', color: 'green', position: 'bottomRight', layout: 2 })
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight', layout: 2 })
       } finally {
         this.loading = false
       }
@@ -443,10 +443,10 @@ export const useMaterialRequestStore = defineStore('materialRequest', {
         if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message)
         if (refreshList) await this.fetchMaterialRequests()
         await this.fetchStatistics()
-        toast.success({ title: 'Sukses', message: 'Berhasil diapprove', color: 'green', position: 'topRight', layout: 2 })
+        toast.success({ title: 'Sukses', message: 'Berhasil diapprove', color: 'green', position: 'bottomRight', layout: 2 })
         return true
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight', layout: 2 })
         return false
       } finally {
         this.loading = false
@@ -468,10 +468,10 @@ export const useMaterialRequestStore = defineStore('materialRequest', {
         if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message)
         if (refreshList) await this.fetchMaterialRequests()
         await this.fetchStatistics()
-        toast.success({ title: 'Sukses', message: 'Berhasil direject', color: 'green', position: 'topRight', layout: 2 })
+        toast.success({ title: 'Sukses', message: 'Berhasil direject', color: 'green', position: 'bottomRight', layout: 2 })
         return true
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight', layout: 2 })
         return false
       } finally {
         this.loading = false
@@ -487,10 +487,10 @@ export const useMaterialRequestStore = defineStore('materialRequest', {
         if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message)
         if (refreshList) await this.fetchMaterialRequests()
         await this.fetchStatistics()
-        toast.success({ title: 'Sukses', message: 'Berhasil di-submit', color: 'green', position: 'topRight', layout: 2 })
+        toast.success({ title: 'Sukses', message: 'Berhasil di-submit', color: 'green', position: 'bottomRight', layout: 2 })
         return true
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'topRight', layout: 2 })
+        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight', layout: 2 })
         return false
       }
     },

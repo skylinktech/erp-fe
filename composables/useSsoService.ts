@@ -52,7 +52,7 @@ export const useSsoService = () => {
         title: 'Konfigurasi SSO Belum Lengkap',
         message: 'Silakan buat file .env dan isi NUXT_PUBLIC_SSO_URL, NUXT_PUBLIC_SSO_CLIENT_ID, dan NUXT_PUBLIC_SSO_CLIENT_SECRET. Lihat docs/SSO_INTEGRATION.md untuk panduan lengkap.',
         timeout: 8000,
-        position: 'topRight',
+        position: 'bottomRight',
         layout: 2,
       })
       return null

@@ -826,7 +826,7 @@ async function onSubmit() {
   if (errors.length > 0) {
     fdrStore.validationErrors = errors.map((e) => ({ [e.field]: [e.message] }))
     activateTab(errors[0].tab)
-    toast.error({ title: 'Validasi', message: errors[0].message, color: 'red', position: 'topRight', layout: 2 })
+    toast.error({ title: 'Validasi', message: errors[0].message, color: 'red', position: 'bottomRight', layout: 2 })
     return
   }
   await fdrStore.saveFdr({ navigateToList: true })

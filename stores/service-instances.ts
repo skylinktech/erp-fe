@@ -235,7 +235,7 @@ export const useServiceInstanceStore = defineStore('serviceInstance', {
           title: 'Sukses',
           message: json.message || 'Berhasil',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return json.data
@@ -244,7 +244,7 @@ export const useServiceInstanceStore = defineStore('serviceInstance', {
           title: 'Gagal',
           message: e.message,
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return null

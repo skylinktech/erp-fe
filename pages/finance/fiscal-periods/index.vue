@@ -119,10 +119,10 @@ async function ensureCurrent() {
     })
     const json = await res.json()
     if (!res.ok) throw new Error(json.message)
-    toast.success({ title: 'OK', message: `Periode ${json.data?.year}-${json.data?.month}`, color: 'green', position: 'topRight', layout: 2 })
+    toast.success({ title: 'OK', message: `Periode ${json.data?.year}-${json.data?.month}`, color: 'green', position: 'bottomRight', layout: 2 })
     await load()
   } catch (e: any) {
-    toast.error({ title: 'Error', message: e.message, color: 'red', position: 'topRight', layout: 2 })
+    toast.error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight', layout: 2 })
   }
 }
 
@@ -138,10 +138,10 @@ async function closePeriod() {
     })
     const json = await res.json()
     if (!res.ok) throw new Error(json.message)
-    toast.success({ title: 'Closed', message: json.message, color: 'green', position: 'topRight', layout: 2 })
+    toast.success({ title: 'Closed', message: json.message, color: 'green', position: 'bottomRight', layout: 2 })
     await load()
   } catch (e: any) {
-    toast.error({ title: 'Error', message: e.message, color: 'red', position: 'topRight', layout: 2 })
+    toast.error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight', layout: 2 })
   }
 }
 
@@ -157,10 +157,10 @@ async function reopenPeriod() {
     })
     const json = await res.json()
     if (!res.ok) throw new Error(json.message)
-    toast.success({ title: 'Reopened', message: json.message, color: 'green', position: 'topRight', layout: 2 })
+    toast.success({ title: 'Reopened', message: json.message, color: 'green', position: 'bottomRight', layout: 2 })
     await load()
   } catch (e: any) {
-    toast.error({ title: 'Error', message: e.message, color: 'red', position: 'topRight', layout: 2 })
+    toast.error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight', layout: 2 })
   }
 }
 

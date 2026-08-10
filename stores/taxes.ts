@@ -107,7 +107,7 @@ export const useTaxStore = defineStore('tax', {
           title: 'Error',
           message: `Tidak dapat memuat data pajak: ${e.message}`,
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         });
       } finally {
@@ -182,7 +182,7 @@ export const useTaxStore = defineStore('tax', {
           title: 'Success',
           message: `Pajak berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
 
         });
@@ -193,7 +193,7 @@ export const useTaxStore = defineStore('tax', {
             title: 'Error',
             message: error.message || 'Operasi gagal',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           });
         }
@@ -238,7 +238,7 @@ export const useTaxStore = defineStore('tax', {
             title: 'Success',
             message: 'Pajak berhasil dihapus.',
             color: 'green',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           });
         } catch (error: any) {
@@ -246,7 +246,7 @@ export const useTaxStore = defineStore('tax', {
             title: 'Error',
             message: error.message || 'Gagal menghapus pajak',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           });
         }

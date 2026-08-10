@@ -101,7 +101,7 @@ async function onEnable() {
           title: 'Notifikasi aktif',
           message: 'Anda akan menerima pemberitahuan untuk aktivitas penting.',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
         })
       } catch {
         /* ignore */
@@ -113,7 +113,7 @@ async function onEnable() {
           title: 'Notifikasi dinonaktifkan',
           message: 'Izin notifikasi ditolak. Anda bisa mengaktifkannya lewat pengaturan browser.',
           color: 'blue',
-          position: 'topRight',
+          position: 'bottomRight',
         })
       } catch {
         /* ignore */

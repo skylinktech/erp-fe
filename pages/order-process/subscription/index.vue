@@ -341,10 +341,10 @@ async function exportData(format) {
   const toast = useToast()
   if (format === 'excel') {
     try {
-      toast.info({ title: 'Info', message: 'Mempersiapkan export Excel...', color: 'blue', position: 'topRight', layout: 2 })
+      toast.info({ title: 'Info', message: 'Mempersiapkan export Excel...', color: 'blue', position: 'bottomRight', layout: 2 })
       const all = await subscriptionStore.fetchAllSubscriptionsForExport()
       if (!all?.length) {
-        toast.warning({ title: 'Warning', message: 'Tidak ada data untuk diexport', color: 'orange', position: 'topRight', layout: 2 })
+        toast.warning({ title: 'Warning', message: 'Tidak ada data untuk diexport', color: 'orange', position: 'bottomRight', layout: 2 })
         return
       }
       const XLSX = await import('xlsx').then((m) => m.default || m)
@@ -362,19 +362,19 @@ async function exportData(format) {
       ws['!cols'] = headers.map(() => ({ wch: 18 }))
       XLSX.utils.book_append_sheet(wb, ws, 'Subscriptions')
       XLSX.writeFile(wb, 'subscriptions.xlsx')
-      toast.success({ title: 'Success', message: `Excel berisi ${all.length} baris`, color: 'green', position: 'topRight', layout: 2 })
+      toast.success({ title: 'Success', message: `Excel berisi ${all.length} baris`, color: 'green', position: 'bottomRight', layout: 2 })
     } catch (e) {
       console.error(e)
-      toast.error({ title: 'Error', message: 'Gagal export Excel', color: 'red', position: 'topRight', layout: 2 })
+      toast.error({ title: 'Error', message: 'Gagal export Excel', color: 'red', position: 'bottomRight', layout: 2 })
     }
     return
   }
   if (format === 'pdf') {
     try {
-      toast.info({ title: 'Info', message: 'Mempersiapkan export PDF...', color: 'blue', position: 'topRight', layout: 2 })
+      toast.info({ title: 'Info', message: 'Mempersiapkan export PDF...', color: 'blue', position: 'bottomRight', layout: 2 })
       const all = await subscriptionStore.fetchAllSubscriptionsForExport()
       if (!all?.length) {
-        toast.warning({ title: 'Warning', message: 'Tidak ada data untuk diexport', color: 'orange', position: 'topRight', layout: 2 })
+        toast.warning({ title: 'Warning', message: 'Tidak ada data untuk diexport', color: 'orange', position: 'bottomRight', layout: 2 })
         return
       }
       const { default: jsPDF } = await import('jspdf')
@@ -395,10 +395,10 @@ async function exportData(format) {
         styles: { fontSize: 8 },
       })
       doc.save('subscriptions.pdf')
-      toast.success({ title: 'Success', message: `PDF berisi ${all.length} baris`, color: 'green', position: 'topRight', layout: 2 })
+      toast.success({ title: 'Success', message: `PDF berisi ${all.length} baris`, color: 'green', position: 'bottomRight', layout: 2 })
     } catch (e) {
       console.error(e)
-      toast.error({ title: 'Error', message: 'Gagal export PDF', color: 'red', position: 'topRight', layout: 2 })
+      toast.error({ title: 'Error', message: 'Gagal export PDF', color: 'red', position: 'bottomRight', layout: 2 })
     }
   }
 }

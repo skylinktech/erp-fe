@@ -135,7 +135,7 @@ export const useAccountStore = defineStore('account', {
             title: 'Error',
             message: `Tidak dapat memuat data akun: ${e.message}`,
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
             icon: 'error',
           });
@@ -185,7 +185,7 @@ export const useAccountStore = defineStore('account', {
           title: 'Error',
           message: `Tidak dapat memuat Chart of Accounts: ${e.message}`,
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
           icon: 'error',
         });
@@ -276,7 +276,7 @@ export const useAccountStore = defineStore('account', {
           title: 'Success',
           message: `Akun berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         });
 
@@ -287,7 +287,7 @@ export const useAccountStore = defineStore('account', {
             title: 'Error',
             message: error.message || 'Operasi gagal',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           });
         }
@@ -343,7 +343,7 @@ export const useAccountStore = defineStore('account', {
             title: 'Success',
             message: 'Akun berhasil dihapus.',
             color: 'green',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           });
         } catch (error: any) {
@@ -352,7 +352,7 @@ export const useAccountStore = defineStore('account', {
             title: 'Error',
             message: error.message || 'Gagal menghapus akun',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           });
         } finally {

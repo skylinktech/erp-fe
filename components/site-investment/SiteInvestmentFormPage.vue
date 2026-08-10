@@ -918,7 +918,7 @@ async function handleSubmit() {
       title: 'Validasi',
       message: preErrors[0]?.message || 'Lengkapi data yang wajib diisi',
       color: 'red',
-      position: 'topRight',
+      position: 'bottomRight',
       layout: 2,
     })
     return

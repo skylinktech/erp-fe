@@ -11,7 +11,7 @@
               Versi {{ versionLabel }}
             </span>
             <span class="footer-brand-skylink">
-              ERP by Skylink
+              CoreX by Skylink
             </span>
           </div>
         </div>

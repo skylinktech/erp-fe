@@ -218,7 +218,7 @@ export const useRequestActivationStore = defineStore('requestActivation', {
             title: 'Error',
             message: e.message,
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           })
         }
@@ -285,7 +285,7 @@ export const useRequestActivationStore = defineStore('requestActivation', {
             title: 'Error',
             message: ed.message || 'Gagal menyimpan',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           })
           return false
@@ -295,7 +295,7 @@ export const useRequestActivationStore = defineStore('requestActivation', {
           title: 'Sukses',
           message: `Request Activation berhasil ${isEdit ? 'diperbarui' : 'dibuat'}`,
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return result?.data?.id ?? true
@@ -304,7 +304,7 @@ export const useRequestActivationStore = defineStore('requestActivation', {
           title: 'Error',
           message: e.message,
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return false
@@ -342,7 +342,7 @@ export const useRequestActivationStore = defineStore('requestActivation', {
           title: 'Sukses',
           message: 'Request Activation dihapus',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
       } catch (e: any) {
@@ -350,7 +350,7 @@ export const useRequestActivationStore = defineStore('requestActivation', {
           title: 'Error',
           message: e.message,
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
       } finally {
@@ -374,7 +374,7 @@ export const useRequestActivationStore = defineStore('requestActivation', {
           title: 'Sukses',
           message: 'Request Activation berhasil di-submit',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return true
@@ -383,7 +383,7 @@ export const useRequestActivationStore = defineStore('requestActivation', {
           title: 'Error',
           message: e.message,
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return false
@@ -421,7 +421,7 @@ export const useRequestActivationStore = defineStore('requestActivation', {
           title: 'Sukses',
           message: json.message || 'Request Activation berhasil diapprove',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return true
@@ -430,7 +430,7 @@ export const useRequestActivationStore = defineStore('requestActivation', {
           title: 'Error',
           message: e.message,
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return false
@@ -454,7 +454,7 @@ export const useRequestActivationStore = defineStore('requestActivation', {
           title: 'Sukses',
           message: 'Request Activation ditolak',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return true
@@ -463,7 +463,7 @@ export const useRequestActivationStore = defineStore('requestActivation', {
           title: 'Error',
           message: e.message,
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return false
@@ -492,7 +492,7 @@ export const useRequestActivationStore = defineStore('requestActivation', {
           title: 'Sukses',
           message: 'Request Activation ditandai selesai',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return true
@@ -501,7 +501,7 @@ export const useRequestActivationStore = defineStore('requestActivation', {
           title: 'Error',
           message: e.message,
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return false

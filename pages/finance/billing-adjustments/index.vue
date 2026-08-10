@@ -511,7 +511,7 @@ const onAmountInput = (e) => {
 
 const submitForm = async () => {
   if (!form.value.customerId || !form.value.billingPeriod) {
-    useToast().error({ title: 'Error', message: 'Customer & periode wajib', color: 'red', position: 'topRight' })
+    useToast().error({ title: 'Error', message: 'Customer & periode wajib', color: 'red', position: 'bottomRight' })
     return
   }
   const payload = {

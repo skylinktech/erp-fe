@@ -141,7 +141,7 @@ watch(
       title: 'Stok mencukupi',
       message: stockAvailabilitySummary(resolvedResult.value),
       color: 'green',
-      position: 'topRight',
+      position: 'bottomRight',
       layout: 2,
     })
   },

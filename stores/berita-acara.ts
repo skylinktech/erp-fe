@@ -51,6 +51,8 @@ export interface BeritaAcara {
   approvedAt?: string | null
   currentApprovalStep?: number | null
   submittedAt?: string | null
+  sentAt?: string | null
+  sent_at?: string | null
   requestedBy?: number | null
   createdBy: number | null
   createdAt: string
@@ -70,6 +72,7 @@ interface BeritaAcaraState {
   beritaAcara: BeritaAcara | null
   loading: boolean
   saving: boolean
+  sending: boolean
   error: any
   totalRecords: number
   params: {
@@ -139,6 +142,7 @@ export const useBeritaAcaraStore = defineStore('beritaAcara', {
     beritaAcara: null,
     loading: false,
     saving: false,
+    sending: false,
     error: null,
     totalRecords: 0,
     params: {
@@ -173,6 +177,8 @@ export const useBeritaAcaraStore = defineStore('beritaAcara', {
         approve: (id: number | string) => $api.approveBeritaAcara(id),
         reject: (id: number | string) => $api.rejectBeritaAcara(id),
         complete: (id: number | string) => $api.completeBeritaAcara(id),
+        send: (id: number | string) => $api.beritaAcaraSend(id),
+        sendBulk: () => $api.beritaAcaraSendBulk(),
       }
     },
 
@@ -211,7 +217,7 @@ export const useBeritaAcaraStore = defineStore('beritaAcara', {
             title: 'Error',
             message: e.message,
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           })
         }
@@ -283,7 +289,7 @@ export const useBeritaAcaraStore = defineStore('beritaAcara', {
             title: 'Error',
             message: ed.message || 'Gagal menyimpan',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           })
           return false
@@ -293,7 +299,7 @@ export const useBeritaAcaraStore = defineStore('beritaAcara', {
           title: 'Sukses',
           message: `Berita Acara berhasil ${isEdit ? 'diperbarui' : 'dibuat'}`,
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return result?.data?.id ?? true
@@ -302,7 +308,7 @@ export const useBeritaAcaraStore = defineStore('beritaAcara', {
           title: 'Error',
           message: e.message,
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return false
@@ -340,7 +346,7 @@ export const useBeritaAcaraStore = defineStore('beritaAcara', {
           title: 'Sukses',
           message: 'Berita Acara dihapus',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
       } catch (e: any) {
@@ -348,7 +354,7 @@ export const useBeritaAcaraStore = defineStore('beritaAcara', {
           title: 'Error',
           message: e.message,
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
       } finally {
@@ -372,7 +378,7 @@ export const useBeritaAcaraStore = defineStore('beritaAcara', {
           title: 'Sukses',
           message: 'Berita Acara berhasil di-submit',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return true
@@ -381,7 +387,7 @@ export const useBeritaAcaraStore = defineStore('beritaAcara', {
           title: 'Error',
           message: e.message,
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return false
@@ -419,7 +425,7 @@ export const useBeritaAcaraStore = defineStore('beritaAcara', {
           title: 'Sukses',
           message: json.message || 'Berita Acara berhasil diapprove',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return true
@@ -428,7 +434,7 @@ export const useBeritaAcaraStore = defineStore('beritaAcara', {
           title: 'Error',
           message: e.message,
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return false
@@ -452,7 +458,7 @@ export const useBeritaAcaraStore = defineStore('beritaAcara', {
           title: 'Sukses',
           message: 'Berita Acara ditolak',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return true
@@ -461,7 +467,7 @@ export const useBeritaAcaraStore = defineStore('beritaAcara', {
           title: 'Error',
           message: e.message,
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return false
@@ -484,7 +490,7 @@ export const useBeritaAcaraStore = defineStore('beritaAcara', {
           title: 'Sukses',
           message: 'Berita Acara ditandai selesai',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return true
@@ -493,10 +499,189 @@ export const useBeritaAcaraStore = defineStore('beritaAcara', {
           title: 'Error',
           message: e.message,
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return false
+      }
+    },
+
+    applySentAt(id: number | string, sentAt: string) {
+      const numId = Number(id)
+      if (this.beritaAcara && Number(this.beritaAcara.id) === numId) {
+        this.beritaAcara = { ...this.beritaAcara, sentAt }
+      }
+      const idx = this.beritaAcaras.findIndex((row) => Number(row.id) === numId)
+      if (idx !== -1) {
+        this.beritaAcaras[idx] = { ...this.beritaAcaras[idx], sentAt }
+      }
+    },
+
+    async sendBeritaAcara(id: number | string): Promise<boolean> {
+      this.sending = true
+      const api = this.apiEndpoints()
+
+      const confirm = await Swal.fire({
+        title: 'Kirim Berita Acara?',
+        text: 'Berita Acara akan dikirim ke email customer.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Ya, Kirim',
+        cancelButtonText: 'Batal',
+      })
+
+      if (!confirm.isConfirmed) {
+        this.sending = false
+        return false
+      }
+
+      try {
+        const response = await fetch(api.send(id), {
+          method: 'POST',
+          headers: { Accept: 'application/json' },
+          credentials: 'include',
+        })
+
+        const result = await response.json().catch(() => ({}))
+        if (!response.ok) {
+          throw new Error(result.message || `HTTP ${response.status}`)
+        }
+
+        const sentAt = result.data?.sentAt || new Date().toISOString()
+        this.applySentAt(id, sentAt)
+
+        useToast().success({
+          title: 'Berhasil',
+          message: result.message || 'Berita Acara berhasil dikirim',
+          color: 'green',
+          position: 'bottomRight',
+        })
+        return true
+      } catch (error: any) {
+        useToast().error({
+          title: 'Error',
+          message: error.message || 'Gagal mengirim Berita Acara',
+          color: 'red',
+          position: 'bottomRight',
+        })
+        return false
+      } finally {
+        this.sending = false
+      }
+    },
+
+    /**
+     * Bulk send — satu request API, partial success ditampilkan ke user.
+     */
+    async sendBeritaAcarasBulk(ids: Array<number | string>) {
+      const uniqueIds = [
+        ...new Set(
+          (ids || [])
+            .map((id) => Number(id))
+            .filter((n) => Number.isFinite(n) && n > 0)
+        ),
+      ]
+      if (!uniqueIds.length) {
+        useToast().error({
+          title: 'Error',
+          message: 'Pilih minimal 1 Berita Acara',
+          color: 'red',
+          position: 'bottomRight',
+        })
+        return null
+      }
+      if (uniqueIds.length > 50) {
+        useToast().error({
+          title: 'Error',
+          message: 'Maksimal 50 Berita Acara per bulk send',
+          color: 'red',
+          position: 'bottomRight',
+        })
+        return null
+      }
+
+      this.sending = true
+      const api = this.apiEndpoints()
+
+      const confirm = await Swal.fire({
+        title: 'Kirim Berita Acara Terpilih?',
+        html: `${uniqueIds.length} Berita Acara akan dikirim ke email customer masing-masing.`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Ya, Kirim',
+        cancelButtonText: 'Batal',
+      })
+
+      if (!confirm.isConfirmed) {
+        this.sending = false
+        return null
+      }
+
+      try {
+        const response = await fetch(api.sendBulk(), {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({ ids: uniqueIds }),
+        })
+
+        const result = await response.json().catch(() => ({}))
+        if (!response.ok) {
+          throw new Error(result.message || `HTTP ${response.status}`)
+        }
+
+        const data = result.data || {}
+        const results = Array.isArray(data.results) ? data.results : []
+
+        for (const row of results) {
+          if (!row?.ok || !row.id) continue
+          this.applySentAt(row.id, row.sentAt || new Date().toISOString())
+        }
+
+        const failedRows = results.filter((r: any) => !r.ok)
+        if (failedRows.length && data.success > 0) {
+          const failList = failedRows
+            .slice(0, 5)
+            .map((r: any) => `${r.documentNo || r.id}: ${r.error || 'gagal'}`)
+            .join('<br>')
+          await Swal.fire({
+            title: 'Sebagian berhasil',
+            html: `${data.success} terkirim, ${data.failed} gagal.<br><br>${failList}`,
+            icon: 'warning',
+          })
+        } else if (failedRows.length && !data.success) {
+          const failList = failedRows
+            .slice(0, 5)
+            .map((r: any) => `${r.documentNo || r.id}: ${r.error || 'gagal'}`)
+            .join('<br>')
+          await Swal.fire({
+            title: 'Gagal mengirim',
+            html: failList || result.message || 'Semua Berita Acara gagal dikirim',
+            icon: 'error',
+          })
+        } else {
+          useToast().success({
+            title: 'Berhasil',
+            message: result.message || `${data.success || uniqueIds.length} Berita Acara terkirim`,
+            color: 'green',
+            position: 'bottomRight',
+          })
+        }
+
+        return data
+      } catch (error: any) {
+        useToast().error({
+          title: 'Error',
+          message: error.message || 'Gagal mengirim Berita Acara bulk',
+          color: 'red',
+          position: 'bottomRight',
+        })
+        return null
+      } finally {
+        this.sending = false
       }
     },
 
@@ -600,6 +785,11 @@ export function formatPeriod(row: BeritaAcara | null | undefined): string {
   const end = row.periodEnd ?? row.period_end
   if (!start || !end) return '—'
   return `${start} – ${end}`
+}
+
+export function isBeritaAcaraSendable(row: BeritaAcara | null | undefined): boolean {
+  if (!row?.status) return false
+  return row.status === 'approved' || row.status === 'completed'
 }
 
 export { emptyItem }

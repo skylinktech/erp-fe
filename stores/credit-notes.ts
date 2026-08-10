@@ -52,7 +52,7 @@ export const useCreditNoteStore = defineStore('creditNote', {
           title: 'Sukses',
           message: 'Credit Note draft dibuat',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return json.data
@@ -61,7 +61,7 @@ export const useCreditNoteStore = defineStore('creditNote', {
           title: 'Error',
           message: e.message,
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return null

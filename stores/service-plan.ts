@@ -138,7 +138,7 @@ export const useServicePlanStore = defineStore('servicePlan', {
             title: 'Error',
             message: `Tidak dapat memuat data service plan: ${e.message}`,
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
           })
         }
       } finally {
@@ -220,7 +220,7 @@ export const useServicePlanStore = defineStore('servicePlan', {
           title: 'Success',
           message: `Service plan berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
         })
       } catch (error: any) {
         if (this.validationErrors.length === 0) {
@@ -228,7 +228,7 @@ export const useServicePlanStore = defineStore('servicePlan', {
             title: 'Error',
             message: error.message || 'Operasi gagal',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
           })
         }
       } finally {
@@ -276,7 +276,7 @@ export const useServicePlanStore = defineStore('servicePlan', {
           title: 'Success',
           message: 'Service plan berhasil dihapus.',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
         })
       } catch (error: any) {
         console.error('Gagal menghapus service plan:', error)
@@ -284,7 +284,7 @@ export const useServicePlanStore = defineStore('servicePlan', {
           title: 'Error',
           message: error.message || 'Gagal menghapus service plan',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         })
       } finally {
         this.loading = false
@@ -425,7 +425,7 @@ export const useServicePlanStore = defineStore('servicePlan', {
           title: 'Error',
           message: error.message || 'Gagal memuat total service plan',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         })
       }
     },
@@ -464,7 +464,7 @@ export const useServicePlanStore = defineStore('servicePlan', {
           title: 'Error',
           message: error.message || 'Gagal memuat data service plan untuk export',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         })
         throw error
       }

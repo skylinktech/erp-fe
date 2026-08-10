@@ -160,7 +160,7 @@ export const useBudgetStore = defineStore('budget', {
             title: 'Error',
             message: `Tidak dapat memuat data budget: ${e.message}`,
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
             icon: 'error',
           })
@@ -201,7 +201,7 @@ export const useBudgetStore = defineStore('budget', {
           title: 'Error',
           message: `Tidak dapat memuat detail budget: ${e.message}`,
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         throw e
@@ -269,7 +269,7 @@ export const useBudgetStore = defineStore('budget', {
           title: 'Success',
           message: `Budget berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
       } catch (error: any) {
@@ -279,7 +279,7 @@ export const useBudgetStore = defineStore('budget', {
             title: 'Error',
             message: error.message || 'Operasi gagal',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           })
         }
@@ -347,7 +347,7 @@ export const useBudgetStore = defineStore('budget', {
             title: 'Success',
             message: 'Budget berhasil dihapus.',
             color: 'green',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           })
         } catch (error: any) {
@@ -356,7 +356,7 @@ export const useBudgetStore = defineStore('budget', {
             title: 'Error',
             message: error.message || 'Gagal menghapus budget',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           })
         } finally {
@@ -426,7 +426,7 @@ export const useBudgetStore = defineStore('budget', {
           title: 'Success',
           message: 'Budget berhasil di-approve.',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
       } catch (error: any) {
@@ -435,7 +435,7 @@ export const useBudgetStore = defineStore('budget', {
           title: 'Error',
           message: error.message || 'Gagal approve budget',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
       } finally {
@@ -488,7 +488,7 @@ export const useBudgetStore = defineStore('budget', {
             title: 'Success',
             message: 'Budget berhasil ditolak.',
             color: 'green',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           })
         } catch (error: any) {
@@ -497,7 +497,7 @@ export const useBudgetStore = defineStore('budget', {
             title: 'Error',
             message: error.message || 'Gagal reject budget',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           })
         } finally {
@@ -637,7 +637,7 @@ export const useBudgetStore = defineStore('budget', {
           title: 'Error',
           message: error.message || 'Gagal memuat data budget untuk export',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         })
         throw error
       }

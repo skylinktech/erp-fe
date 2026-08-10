@@ -375,7 +375,7 @@ async function load() {
             title: 'Error', 
             message: 'Legal-Tech Review tidak ditemukan', 
             color: 'red', 
-            position: 'topRight', 
+            position: 'bottomRight', 
             layout: 2 
           })
         }

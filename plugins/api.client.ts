@@ -178,6 +178,7 @@ export default defineNuxtPlugin(() => {
     pegawaiDelete        : (id: number | string) => `${apiBase}/pegawai/delete/${id}`,
     pegawaiCountByStatus : () => `${apiBase}/pegawai/countByStatus`,
     pegawaiAvailableUsers: () => `${apiBase}/pegawai/available-users`,
+    pegawaiBirthdaysToday: () => `${apiBase}/pegawai/birthdays/today`,
     pegawaiKontrakList: (pegawaiId: number | string) => `${apiBase}/pegawai/${pegawaiId}/kontrak`,
     pegawaiKontrakStore: (pegawaiId: number | string) => `${apiBase}/pegawai/${pegawaiId}/kontrak`,
     pegawaiKontrakUpdate: (id: number | string) => `${apiBase}/pegawai-kontrak/${id}/update`,
@@ -264,6 +265,8 @@ export default defineNuxtPlugin(() => {
     approveBeritaAcara: (id: number | string) => `${apiBase}/berita-acara/${id}/approve`,
     rejectBeritaAcara: (id: number | string) => `${apiBase}/berita-acara/${id}/reject`,
     completeBeritaAcara: (id: number | string) => `${apiBase}/berita-acara/${id}/complete`,
+    beritaAcaraSend: (id: number | string) => `${apiBase}/berita-acara/${id}/send`,
+    beritaAcaraSendBulk: () => `${apiBase}/berita-acara/send-bulk`,
 
     // Progress Tracker — Implementation
     progressTracker: () => `${apiBase}/progress-tracker`,

@@ -249,7 +249,7 @@ export const useQuotationStore = defineStore('quotation', {
             title: 'Error',
             message: `Tidak dapat memuat data Quotation: ${e.message}`,
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           });
         }
@@ -434,7 +434,7 @@ export const useQuotationStore = defineStore('quotation', {
                       title: 'Error',
                       message: errorData.errors.map((e: any) => e.message).join('<br>'),
                       color: 'red',
-                      position: 'topRight',
+                      position: 'bottomRight',
                       layout: 2,
                     });
                 } else {
@@ -461,7 +461,7 @@ export const useQuotationStore = defineStore('quotation', {
                   title: 'Success',
                   message: `Quotation berhasil ${this.isEditMode ? 'diperbarui' : 'dibuat'}.`,
                   color: 'green',
-                  position: 'topRight',
+                  position: 'bottomRight',
                   layout: 2,
                 });
                 if (options?.navigateToList) {
@@ -478,7 +478,7 @@ export const useQuotationStore = defineStore('quotation', {
               title: 'Error',
               message: error.message || 'Operasi gagal',
               color: 'red',
-              position: 'topRight',
+              position: 'bottomRight',
               layout: 2,
             });
         } finally {
@@ -527,7 +527,7 @@ export const useQuotationStore = defineStore('quotation', {
               title   : 'Success',
               message : 'Quotation berhasil dihapus.',
               color   : 'green',
-              position: 'topRight',
+              position: 'bottomRight',
               layout  : 2,
             });
             return true;
@@ -536,7 +536,7 @@ export const useQuotationStore = defineStore('quotation', {
               title   : 'Error',
               message : error.message || 'Gagal menghapus Quotation',
               color   : 'red',
-              position: 'topRight',
+              position: 'bottomRight',
               layout  : 2,
             });
             return false;
@@ -588,7 +588,7 @@ export const useQuotationStore = defineStore('quotation', {
             title: 'Success',
             message: 'Quotation berhasil diapprove.',
             color: 'green',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           });
           return true;
@@ -598,7 +598,7 @@ export const useQuotationStore = defineStore('quotation', {
             title: 'Error',
             message: error.message || 'Gagal mengapprove quotation.',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           });
           return false;
@@ -667,7 +667,7 @@ export const useQuotationStore = defineStore('quotation', {
             title: 'Success',
             message: 'Quotation berhasil direject.',
             color: 'green',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           });
 
@@ -678,7 +678,7 @@ export const useQuotationStore = defineStore('quotation', {
             title: 'Error',
             message: error.message || 'Gagal mereject quotation.',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           });
           return false;
@@ -723,7 +723,7 @@ export const useQuotationStore = defineStore('quotation', {
           title: 'Success',
           message: 'Quotation berhasil di-submit (status: pending).',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         });
 
@@ -734,7 +734,7 @@ export const useQuotationStore = defineStore('quotation', {
           title: 'Error',
           message: error.message || 'Gagal submit quotation.',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         });
         return false;
@@ -1157,7 +1157,7 @@ export const useQuotationStore = defineStore('quotation', {
           title: 'Error',
           message: error?.message || 'Gagal memuat data dari Site Investment',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         });
         return null;
@@ -1270,7 +1270,7 @@ export const useQuotationStore = defineStore('quotation', {
               title: 'Error',
               message: 'Gagal mengambil data quotation untuk edit',
               color: 'red',
-              position: 'topRight',
+              position: 'bottomRight',
               layout: 2,
             });
         } finally {
@@ -1394,7 +1394,7 @@ export const useQuotationStore = defineStore('quotation', {
                 title: 'Error',
                 message: 'Gagal mengambil data untuk export',
                 color: 'red',
-                position: 'topRight',
+                position: 'bottomRight',
             });
             return [];
         }
@@ -1429,7 +1429,7 @@ export const useQuotationStore = defineStore('quotation', {
                 title: 'Error',
                 message: 'Gagal memuat statistik quotation',
                 color: 'red',
-                position: 'topRight',
+                position: 'bottomRight',
                 layout: 2,
             });
         }

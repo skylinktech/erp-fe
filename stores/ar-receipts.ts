@@ -172,7 +172,7 @@ export const useARReceiptStore = defineStore('arReceipt', {
           title: 'Error',
           message: `Tidak dapat memuat data penerimaan: ${e.message}`,
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
           icon: 'error',
         });
@@ -314,7 +314,7 @@ export const useARReceiptStore = defineStore('arReceipt', {
           title: 'Success',
           message: `Penerimaan berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         });
 
@@ -325,7 +325,7 @@ export const useARReceiptStore = defineStore('arReceipt', {
             title: 'Error',
             message: error.message || 'Operasi gagal',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           });
         }
@@ -381,7 +381,7 @@ export const useARReceiptStore = defineStore('arReceipt', {
             title: 'Success',
             message: 'Penerimaan berhasil dihapus.',
             color: 'green',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           });
         } catch (error: any) {
@@ -390,7 +390,7 @@ export const useARReceiptStore = defineStore('arReceipt', {
             title: 'Error',
             message: error.message || 'Gagal menghapus penerimaan',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           });
         } finally {
@@ -427,7 +427,7 @@ export const useARReceiptStore = defineStore('arReceipt', {
           title: 'Success',
           message: 'Penerimaan berhasil dikonfirmasi dan invoice di-settle.',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         });
       } catch (error: any) {
@@ -436,7 +436,7 @@ export const useARReceiptStore = defineStore('arReceipt', {
           title: 'Error',
           message: error.message || 'Gagal mengkonfirmasi penerimaan',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         });
       }
@@ -482,7 +482,7 @@ export const useARReceiptStore = defineStore('arReceipt', {
           title: 'Success',
           message: 'Penerimaan dibatalkan; settlement invoice dihitung ulang.',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         });
       } catch (error: any) {
@@ -491,7 +491,7 @@ export const useARReceiptStore = defineStore('arReceipt', {
           title: 'Error',
           message: error.message || 'Gagal membatalkan penerimaan',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         });
       }

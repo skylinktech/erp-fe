@@ -31,6 +31,16 @@
             </div>
 
             <div class="d-flex gap-2">
+              <button
+                v-if="canSend"
+                type="button"
+                class="btn btn-outline-primary btn-sm"
+                :disabled="store.sending"
+                @click="onSend"
+              >
+                <i class="ri-mail-send-line me-1"></i>
+                {{ store.sending ? 'Mengirim...' : 'Kirim Email' }}
+              </button>
               <div class="btn-group">
                 <button type="button" class="btn btn-outline-secondary dropdown-toggle btn-sm" data-bs-toggle="dropdown">
                   Actions
@@ -73,6 +83,16 @@
                     @click="navigateTo({ path: '/operations/cetak-berita-acara', query: { id: beritaAcara.id } })"
                   >
                     <i class="ri-printer-line me-2"></i> Cetak
+                  </a>
+                  <a
+                    v-if="canSend"
+                    class="dropdown-item"
+                    href="javascript:void(0)"
+                    :class="{ disabled: store.sending }"
+                    @click="onSend"
+                  >
+                    <i class="ri-mail-send-line me-2"></i>
+                    {{ store.sending ? 'Mengirim...' : 'Kirim Email' }}
                   </a>
                   <div class="dropdown-divider" v-if="isEditable"></div>
                   <a
@@ -194,9 +214,13 @@
                     <label class="form-label text-muted mb-1">Disetujui Oleh</label>
                     <p class="mb-0 fw-medium">{{ beritaAcara.approvedByUser?.fullName || beritaAcara.approvedByUser?.full_name || '—' }}</p>
                   </div>
-                  <div v-if="beritaAcara.submittedAt" class="mb-0">
+                  <div v-if="beritaAcara.submittedAt" class="mb-3">
                     <label class="form-label text-muted mb-1">Disubmit Pada</label>
                     <p class="mb-0">{{ formatDateTime(beritaAcara.submittedAt) }}</p>
+                  </div>
+                  <div v-if="beritaAcara.sentAt || beritaAcara.sent_at" class="mb-0">
+                    <label class="form-label text-muted mb-1">Terkirim Email</label>
+                    <p class="mb-0 text-success">{{ formatDateTime(beritaAcara.sentAt || beritaAcara.sent_at) }}</p>
                   </div>
                 </div>
               </div>
@@ -246,6 +270,7 @@ import {
   useBeritaAcaraStore,
   getBeritaAcaraNo,
   formatPeriod,
+  isBeritaAcaraSendable,
 } from '~/stores/berita-acara'
 import { useApprovalStatus } from '~/composables/useApprovalStatus'
 import { usePermissions } from '~/composables/usePermissions'
@@ -269,6 +294,11 @@ const isEditable = computed(() =>
 
 const canApprove = computed(() => canApproveBeritaAcara(beritaAcara.value))
 const canReject = computed(() => canRejectBeritaAcara(beritaAcara.value))
+const canSend = computed(() =>
+  !!beritaAcara.value &&
+  isBeritaAcaraSendable(beritaAcara.value) &&
+  (userHasRole('superadmin') || userHasPermission('edit_berita_acara'))
+)
 
 const approvalStepDisplay = computed(() => {
   const row = beritaAcara.value
@@ -312,6 +342,11 @@ async function onComplete() {
   if (!beritaAcara.value) return
   const ok = await store.markCompleted(beritaAcara.value.id)
   if (ok) await load()
+}
+
+async function onSend() {
+  if (!beritaAcara.value || store.sending) return
+  await store.sendBeritaAcara(beritaAcara.value.id)
 }
 
 async function onDelete() {

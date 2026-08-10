@@ -86,7 +86,7 @@ export const useApprovalWorkflowEntitiesStore = defineStore('approval-workflow-e
       } catch (e: any) {
         this.error = e.message || 'Gagal memuat data entity'
         const toast = useToast()
-        toast.error({ title: 'Error', message: this.error, color: 'red', position: 'topRight' })
+        toast.error({ title: 'Error', message: this.error, color: 'red', position: 'bottomRight' })
       } finally {
         this.loading = false
       }
@@ -170,7 +170,7 @@ export const useApprovalWorkflowEntitiesStore = defineStore('approval-workflow-e
           title: 'Berhasil',
           message: this.isEditMode ? 'Entity berhasil diupdate' : 'Entity berhasil dibuat',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
         })
         this.closeModal()
         await Promise.all([this.fetchEntities(), this.fetchStats()])
@@ -185,7 +185,7 @@ export const useApprovalWorkflowEntitiesStore = defineStore('approval-workflow-e
           title: 'Error',
           message: this.validationErrors[0] || 'Gagal menyimpan',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         })
       } finally {
         this.loading = false
@@ -211,12 +211,12 @@ export const useApprovalWorkflowEntitiesStore = defineStore('approval-workflow-e
           credentials: 'include',
         })
         if (!res.ok) throw new Error((await res.json()).message || 'Gagal menghapus')
-        toast.success({ title: 'Berhasil', message: 'Entity berhasil dihapus', color: 'green', position: 'topRight' })
+        toast.success({ title: 'Berhasil', message: 'Entity berhasil dihapus', color: 'green', position: 'bottomRight' })
         await Promise.all([this.fetchEntities(), this.fetchStats()])
         const wfStore = useApprovalWorkflowsStore()
         await wfStore.fetchEntities(true)
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message || 'Gagal menghapus', color: 'red', position: 'topRight' })
+        toast.error({ title: 'Error', message: e.message || 'Gagal menghapus', color: 'red', position: 'bottomRight' })
       }
     },
   },

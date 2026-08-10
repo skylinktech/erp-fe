@@ -96,7 +96,7 @@ export const useKategoriStore = defineStore('kategori', {
           title: 'Error',
           message: `Tidak dapat memuat data kategori: ${e.message}`,
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
         });
       } finally {
         this.loading = false
@@ -173,7 +173,7 @@ export const useKategoriStore = defineStore('kategori', {
               title: 'Success',
               message: `Kategori berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
               color: 'green',
-              position: 'topRight',
+              position: 'bottomRight',
             });
 
         } catch (error: any) {
@@ -182,7 +182,7 @@ export const useKategoriStore = defineStore('kategori', {
               title: 'Error',
               message: error.message || 'Operasi gagal',
               color: 'red',
-              position: 'topRight',
+              position: 'bottomRight',
             });
         } finally {
             this.loading = false;
@@ -228,7 +228,7 @@ export const useKategoriStore = defineStore('kategori', {
             title: 'Success',
             message: 'Kategori berhasil dihapus.',
             color: 'green',
-            position: 'topRight',
+            position: 'bottomRight',
           });
       } catch (error: any) {
           console.error('Gagal menghapus kategori:', error);
@@ -237,7 +237,7 @@ export const useKategoriStore = defineStore('kategori', {
             title: 'Error',
             message: error.message || 'Gagal menghapus kategori',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
           });
       } finally {
           this.loading = false;

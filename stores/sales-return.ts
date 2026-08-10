@@ -727,7 +727,7 @@ export const useSalesReturnStore = defineStore('salesReturn', {
                 title: 'Error',
                 message: 'Gagal mengambil data untuk export',
                 color: 'red',
-                position: 'topRight',
+                position: 'bottomRight',
             });
             return [];
         }

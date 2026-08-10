@@ -424,7 +424,7 @@ function resetFilters() {
                                   title: 'Success',
                                   message: `Excel berhasil dibuat dengan ${allData.length} data Quotation${hasFilters ? ' sesuai filter' : ''}`,
                                   color: 'green',
-                                  position: 'topRight',
+                                  position: 'bottomRight',
                                   layout: 2
                               });
                           });
@@ -433,7 +433,7 @@ function resetFilters() {
                           title: 'Warning',
                           message: 'Tidak ada data untuk diexport',
                           color: 'orange',
-                          position: 'topRight',
+                          position: 'bottomRight',
                           layout: 2
                       });
                   }
@@ -444,7 +444,7 @@ function resetFilters() {
                       title: 'Error',
                       message: 'Gagal membuat Excel',
                       color: 'red',
-                      position: 'topRight',
+                      position: 'bottomRight',
                       layout: 2
                   });
               });
@@ -472,7 +472,7 @@ function resetFilters() {
                                   title: 'Success',
                                   message: `PDF berhasil dibuat dengan ${allData.length} data Quotation${hasFilters ? ' sesuai filter' : ''}`,
                                   color: 'green',
-                                  position: 'topRight',
+                                  position: 'bottomRight',
                                   layout: 2
                               });
                           });
@@ -481,7 +481,7 @@ function resetFilters() {
                           title: 'Warning',
                           message: 'Tidak ada data untuk diexport',
                           color: 'orange',
-                          position: 'topRight',
+                          position: 'bottomRight',
                           layout: 2
                       });
                   }
@@ -492,7 +492,7 @@ function resetFilters() {
                       title: 'Error',
                       message: 'Gagal membuat PDF',
                       color: 'red',
-                      position: 'topRight',
+                      position: 'bottomRight',
                       layout: 2
                   });
               });
