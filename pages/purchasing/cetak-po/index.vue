@@ -237,7 +237,7 @@
                       />
                       <img 
                         class="andara-image" 
-                        :src="publicPath('/img/branding/andara.png')" 
+                        :src="publicPath('/img/branding/logo.png')" 
                         alt="Andara Logo" 
                         style="height: 40px; object-fit: contain; position: absolute; left: 50%; transform: translateX(-50%); bottom: 90px;" 
                         @error="(e) => handleImageError(e, '/img/default-company-logo.png')"
@@ -269,7 +269,7 @@
                       />
                       <img 
                         class="andara-image" 
-                        :src="publicPath('/img/branding/andara.png')" 
+                        :src="publicPath('/img/branding/logo.png')" 
                         alt="Andara Logo" 
                         style="height: 40px; object-fit: contain; position: absolute; left: 50%; transform: translateX(-50%); bottom: 40px;" 
                         @error="(e) => handleImageError(e, '/img/default-company-logo.png')"

@@ -24,7 +24,7 @@
           >
           <img
             v-else
-            src="/img/branding/andara.png"
+            src="/img/branding/logo.png"
             alt="logo"
             class="cetak-invoice-logo"
           >

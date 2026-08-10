@@ -51,7 +51,7 @@
                                 <div class="d-flex svg-illustration align-items-center gap-2 mb-6">
                                 <span class="app-brand-logo demo">
                                     <span style="color: var(--bs-primary)">
-                                        <img src="/img/branding/andara.png" alt="logo" width="200">
+                                        <img src="/img/branding/logo.png" alt="logo" width="200">
                                     </span>
                                 </span>
                                 </div>

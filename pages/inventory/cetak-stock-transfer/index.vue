@@ -136,7 +136,7 @@
                     />
                     <img 
                       class="andara-image" 
-                      :src="publicPath('/img/branding/andara.png')" 
+                      :src="publicPath('/img/branding/logo.png')" 
                       alt="Andara Logo" 
                       style="height: 40px; object-fit: contain; display: block; margin: -90px auto 0;" 
                       @error="(e) => handleImageError(e, '/img/default-company-logo.png')"

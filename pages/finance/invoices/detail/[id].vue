@@ -46,11 +46,11 @@
                         :src="getCompanyLogo(invoice.perusahaan.logoPerusahaan)"
                         alt="logo perusahaan"
                         class="invoice-issuer-logo"
-                        @error="(e) => handleImageError(e, '/img/branding/andara.png')"
+                        @error="(e) => handleImageError(e, '/img/branding/logo.png')"
                       >
                       <img
                         v-else
-                        src="/img/branding/andara.png"
+                        src="/img/branding/logo.png"
                         alt="logo perusahaan"
                         class="invoice-issuer-logo"
                       >

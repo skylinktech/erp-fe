@@ -253,7 +253,7 @@
               <td>
                 <div class="ttd-container">
                   <img class="ttd-image" :src="publicPath('/img/branding/Ttd Digital-2.png')" alt="TTD Digital" style="height: 120px; object-fit: contain; display: block; margin: 0 auto;" @error="(e) => handleImageError(e, '/img/branding/logo.png')" />
-                  <img class="andara-image" :src="publicPath('/img/branding/andara.png')" alt="Andara Logo" style="height: 40px; object-fit: contain; display: block; margin: -90px auto 0;" @error="(e) => handleImageError(e, '/img/branding/logo.png')" />
+                  <img class="andara-image" :src="publicPath('/img/branding/logo.png')" alt="Andara Logo" style="height: 40px; object-fit: contain; display: block; margin: -90px auto 0;" @error="(e) => handleImageError(e, '/img/branding/logo.png')" />
                 </div>
               </td>
             </tr>
