@@ -137,7 +137,13 @@ const hasActions = computed(() => {
 })
 
 async function load() {
-  const id = String(route.params.id)
+  const id = String(route.params.id || '')
+  // Reserved catalog paths must not be treated as service-instance UUIDs
+  const reserved = new Set(['service', 'service-plan', 'did', 'customer-service', 'pending', 'events', 'monitoring', 'dashboard'])
+  if (!id || reserved.has(id) || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
+    await navigateTo('/service-management/customer-service')
+    return
+  }
   await store.fetchOne(id)
   await store.fetchEvents({ serviceInstanceId: id })
 }
