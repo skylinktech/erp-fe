@@ -152,13 +152,13 @@
                                     />
                                 </FilterField>
                                 <FilterField>
-                                    <label class="form-label">Filter Purchase Order</label>
+                                    <label class="form-label">Filter Site Investment</label>
                                     <CustomSelect2
-                                        v-model="filters.purchaseRequestId"
-                                        :options="approvedPurchaseRequests"
-                                        :get-option-label="formatPurchaseOrderOptionLabel"
-                                        :reduce="po => po.id"
-                                        placeholder="Pilih Purchase Order"
+                                        v-model="filters.siteInvestmentId"
+                                        :options="approvedSiteInvestments"
+                                        :get-option-label="formatSiteInvestmentOptionLabel"
+                                        :reduce="si => si.id"
+                                        placeholder="Pilih Site Investment"
                                         searchable
                                         clearable
                                     />
@@ -229,9 +229,16 @@
                                             <span class="fw-semibold">{{ slotProps.data.noVerif || '-' }}</span>
                                         </template>
                                     </Column>
-                                    <Column field="purchaseRequest.noPurchaseRequest" header="Purchase Order" :sortable="true" class="text-nowrap">
+                                    <Column field="siteInvestment.siNumber" header="Site Investment" :sortable="true" class="text-nowrap">
                                         <template #body="slotProps">
-                                            <a @click="navigateTo(`/purchasing/purchase-request/detail/${slotProps.data.purchaseRequest.id}`)" class="text-primary" style="cursor:pointer;text-decoration:underline" :title="'View detail'">{{ slotProps.data.purchaseRequest?.prNumber || slotProps.data.purchaseRequest?.pr_number || slotProps.data.purchaseRequest?.noPurchaseRequest || '-' }}</a>
+                                            <a
+                                                v-if="slotProps.data.siteInvestment?.id"
+                                                @click="navigateTo(`/sales/site-investment/detail/${slotProps.data.siteInvestment.id}`)"
+                                                class="text-primary"
+                                                style="cursor:pointer;text-decoration:underline"
+                                                :title="'View detail'"
+                                            >{{ slotProps.data.siteInvestment?.siNumber || slotProps.data.siteInvestment?.si_number || '-' }}</a>
+                                            <span v-else>-</span>
                                         </template>
                                     </Column>
                                     <Column field="customerName" header="Customer Name" :sortable="true" class="text-nowrap fw-semibold"></Column>
@@ -333,20 +340,20 @@
                                 <div class="tab-pane fade active show" id="form-tabs-info" role="tabpanel">
                                     <div class="row g-4">
                                         <div class="col-md-12">
-                                            <label class="form-label text-muted mb-2">Pilih Purchase Order (Status: Approved)</label>
+                                            <label class="form-label text-muted mb-2">Pilih Site Investment (Status: Approved)</label>
                                             <CustomSelect2
-                                                v-model="form.purchaseRequestId"
-                                                :options="approvedPurchaseRequests"
-                                                :get-option-label="formatPurchaseOrderOptionLabel"
-                                                :reduce="po => po.id"
-                                                placeholder="Pilih Purchase Order"
+                                                v-model="form.siteInvestmentId"
+                                                :options="approvedSiteInvestments"
+                                                :get-option-label="formatSiteInvestmentOptionLabel"
+                                                :reduce="si => si.id"
+                                                placeholder="Pilih Site Investment"
                                                 searchable
                                                 clearable
-                                                :loading="loadingPurchaseRequests"
-                                                loading-text="Memuat Purchase Order..."
-                                                @update:modelValue="onPurchaseRequestChange"
+                                                :loading="loadingSiteInvestments"
+                                                loading-text="Memuat Site Investment..."
+                                                @update:modelValue="onSiteInvestmentChange"
                                             />
-                                            <small class="text-muted d-block mt-1">Hanya Purchase Order dengan status 'approved' yang dapat dipilih</small>
+                                            <small class="text-muted d-block mt-1">Hanya Site Investment dengan status 'approved' yang dapat dipilih</small>
                                         </div>
                                         <div class="col-md-6">
                                             <div class="form-floating form-floating-outline">
@@ -514,7 +521,7 @@ import InputText from 'primevue/inputtext'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
 import { useDebounceFn } from '@vueuse/core'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
-import { formatPurchaseOrderOptionLabel } from '~/constants/labels/purchasing'
+import { formatSiteInvestmentOptionLabel } from '~/constants/labels/sales'
 
 const { setListTitle } = useDynamicTitle()
 const route = useRoute()
@@ -527,29 +534,29 @@ const permissionStore = usePermissionsStore()
 const { userHasPermission, userHasRole } = usePermissions()
 const { getAttachmentUrl, isImageFile } = useImageUrl()
 
-const { customerVerifs, loading, saving, totalRecords, params, form, isEditMode, showModal, validationErrors, approvedPurchaseRequests, stats } = storeToRefs(customerVerifStore)
+const { customerVerifs, loading, saving, totalRecords, params, form, isEditMode, showModal, validationErrors, approvedSiteInvestments, stats } = storeToRefs(customerVerifStore)
 const { customers } = storeToRefs(customerStore)
 const { permissions } = storeToRefs(permissionStore)
 
 const myDataTableRef = ref(null)
 const filters = ref({
     status: null,
-    purchaseRequestId: null,
+    siteInvestmentId: null,
     customerId: null,
     search: '',
 })
 
 const hasActiveFilters = computed(
-  () => !!filters.value.customerId || !!filters.value.status || !!filters.value.purchaseRequestId
+  () => !!filters.value.customerId || !!filters.value.status || !!filters.value.siteInvestmentId
 )
 
 function resetFilters() {
   filters.value.customerId = null
   filters.value.status = null
-  filters.value.purchaseRequestId = null
+  filters.value.siteInvestmentId = null
 }
 const globalFilterValue = ref('')
-const loadingPurchaseRequests = ref(false)
+const loadingSiteInvestments = ref(false)
 
 const tableControls = ref({
     rows: 10,
@@ -572,7 +579,7 @@ const { isLoading: isDataLoading, error: dataError } = usePageData({
     loaders: [
         () => permissionStore.fetchPermissions(),
         () => customerStore.fetchCustomers(),
-        () => customerVerifStore.fetchApprovedPurchaseRequests(),
+        () => customerVerifStore.fetchApprovedSiteInvestments(),
         () => customerVerifStore.fetchStats(),
         () => customerVerifStore.fetchCustomerVerifs(),
     ],
@@ -613,10 +620,19 @@ watch(() => globalFilterValue.value, (newValue) => {
 
 watch(showModal, async (newValue) => {
     if (newValue) {
-        // Refresh daftar Purchase Order approved saat modal dibuka
-        loadingPurchaseRequests.value = true
-        await customerVerifStore.fetchApprovedPurchaseRequests()
-        loadingPurchaseRequests.value = false
+        loadingSiteInvestments.value = true
+        await customerVerifStore.fetchApprovedSiteInvestments()
+
+        // Keep currently linked SI selectable even if status changed after create
+        const current = form.value?.siteInvestment
+        if (current?.id) {
+            const list = customerVerifStore.approvedSiteInvestments
+            if (!list.some((s) => String(s.id) === String(current.id))) {
+                customerVerifStore.approvedSiteInvestments = [current, ...list]
+            }
+        }
+
+        loadingSiteInvestments.value = false
 
         nextTick(() => {
             const modalElement = document.getElementById('CustomerVerifModal')
@@ -721,10 +737,8 @@ const handleSubmit = () => {
     customerVerifStore.saveCustomerVerif()
 }
 
-const onPurchaseRequestChange = async (purchaseRequestId) => {
-    if (purchaseRequestId) {
-        await customerVerifStore.onPurchaseRequestChange(purchaseRequestId)
-    }
+const onSiteInvestmentChange = async (siteInvestmentId) => {
+    await customerVerifStore.onSiteInvestmentChange(siteInvestmentId)
 }
 
 const getStatusBadge = (status) => {

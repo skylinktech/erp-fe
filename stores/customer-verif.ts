@@ -18,7 +18,7 @@ export interface CustomerVerifDoc {
 
 export interface CustomerVerif {
   id: number
-  purchaseRequestId: string
+  siteInvestmentId: string
   customerId: number | null
   status: 'draft' | 'pending' | 'verified' | 'unverified'
   noVerif: string
@@ -37,7 +37,7 @@ export interface CustomerVerif {
   unverifiedAt: string | null
   createdAt: string
   updatedAt: string
-  purchaseRequest?: any
+  siteInvestment?: any
   customer?: any
   createdByUser?: any
   verifiedByUser?: any
@@ -70,14 +70,14 @@ interface CustomerVerifState {
     draw: number
     search: string
     status?: string | null
-    purchaseRequestId?: string | null
+    siteInvestmentId?: string | null
     customerId?: number | null
   }
   form: any
   isEditMode: boolean
   showModal: boolean
   validationErrors: any[]
-  approvedPurchaseRequests: any[]
+  approvedSiteInvestments: any[]
 }
 
 export const useCustomerVerifStore = defineStore('customerVerif', {
@@ -104,11 +104,11 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
       draw: 1,
       search: '',
       status: null,
-      purchaseRequestId: null,
+      siteInvestmentId: null,
       customerId: null,
     },
     form: {
-      purchaseRequestId: null,
+      siteInvestmentId: null,
       customerId: null,
       status: 'draft',
       notes: '',
@@ -125,7 +125,7 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
     isEditMode: false,
     showModal: false,
     validationErrors: [],
-    approvedPurchaseRequests: [],
+    approvedSiteInvestments: [],
   }),
 
   actions: {
@@ -147,8 +147,8 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
         if (this.params.status) {
           params.append('status', this.params.status)
         }
-        if (this.params.purchaseRequestId) {
-          params.append('purchaseRequestId', this.params.purchaseRequestId)
+        if (this.params.siteInvestmentId) {
+          params.append('siteInvestmentId', this.params.siteInvestmentId)
         }
         if (this.params.customerId) {
           params.append('customerId', this.params.customerId.toString())
@@ -216,10 +216,10 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
       }
     },
 
-    async fetchApprovedPurchaseRequests() {
+    async fetchApprovedSiteInvestments() {
       const { $api } = useNuxtApp()
       try {
-        const response = await fetch($api.customerVerifApprovedPurchaseRequests(), {
+        const response = await fetch($api.customerVerifApprovedSiteInvestments(), {
           headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json'
@@ -227,22 +227,22 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
           credentials: 'include'
         })
 
-        if (!response.ok) throw new Error('Gagal mengambil data Purchase Request approved')
+        if (!response.ok) throw new Error('Gagal mengambil data Site Investment approved')
 
         const result = await response.json()
-        this.approvedPurchaseRequests = result.data || []
-        return this.approvedPurchaseRequests
+        this.approvedSiteInvestments = result.data || []
+        return this.approvedSiteInvestments
       } catch (e: any) {
-        console.error('Gagal mengambil data Purchase Request approved:', e)
-        this.approvedPurchaseRequests = []
+        console.error('Gagal mengambil data Site Investment approved:', e)
+        this.approvedSiteInvestments = []
         return []
       }
     },
 
-    async fetchPurchaseRequestCustomer(purchaseRequestId: string) {
+    async fetchSiteInvestmentCustomer(siteInvestmentId: string) {
       const { $api } = useNuxtApp()
       try {
-        const response = await fetch($api.customerVerifPurchaseRequestCustomer(purchaseRequestId), {
+        const response = await fetch($api.customerVerifSiteInvestmentCustomer(siteInvestmentId), {
           headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json'
@@ -250,12 +250,12 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
           credentials: 'include'
         })
 
-        if (!response.ok) throw new Error('Gagal mengambil data customer dari Purchase Order')
+        if (!response.ok) throw new Error('Gagal mengambil data customer dari Site Investment')
 
         const result = await response.json()
         return result.data
       } catch (e: any) {
-        console.error('Gagal mengambil data customer dari Purchase Order:', e)
+        console.error('Gagal mengambil data customer dari Site Investment:', e)
         throw e
       }
     },
@@ -271,7 +271,7 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
 
         const dataToAppend = { ...this.form }
         delete dataToAppend.customerVerifDocs
-        delete dataToAppend.purchaseRequest
+        delete dataToAppend.siteInvestment
         delete dataToAppend.customer
         delete dataToAppend.createdByUser
         delete dataToAppend.verifiedByUser
@@ -355,7 +355,7 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
             title: 'Success',
             message: `Customer Verification berhasil ${this.isEditMode ? 'diperbarui' : 'dibuat'}.`,
             color: 'green',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           })
         }
@@ -366,7 +366,7 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
           title: 'Error',
           message: error.message || 'Operasi gagal',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
       } finally {
@@ -415,7 +415,7 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
           title: 'Success',
           message: 'Customer Verification berhasil dihapus.',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
       } catch (error: any) {
@@ -424,7 +424,7 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
           title: 'Error',
           message: error.message || 'Gagal menghapus Customer Verification',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
       } finally {
@@ -458,7 +458,7 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
           title: 'Success',
           message: 'Customer Verification berhasil di-submit (status: pending).',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
 
@@ -470,7 +470,7 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
           title: 'Error',
           message: error.message || 'Gagal submit customer verification.',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return false
@@ -520,7 +520,7 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
             title: 'Error',
             message: 'Tidak dapat memuat data Customer Verification.',
             color: 'red',
-            position: 'topRight',
+            position: 'bottomRight',
             layout: 2,
           })
           return
@@ -547,8 +547,8 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
       this.showModal = true
     },
 
-    async onPurchaseRequestChange(purchaseRequestId: string) {
-      if (!purchaseRequestId) {
+    async onSiteInvestmentChange(siteInvestmentId: string) {
+      if (!siteInvestmentId) {
         this.form.customerName = ''
         this.form.customerEmail = ''
         this.form.customerPhone = ''
@@ -560,7 +560,7 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
       }
 
       try {
-        const customerData = await this.fetchPurchaseRequestCustomer(purchaseRequestId)
+        const customerData = await this.fetchSiteInvestmentCustomer(siteInvestmentId)
         this.form.customerId = customerData.customerId
         this.form.customerName = customerData.customerName || ''
         this.form.customerEmail = customerData.customerEmail || ''
@@ -572,7 +572,7 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
         const toast = useToast()
         toast.error({
           title: 'Error',
-          message: e.message || 'Gagal memuat data Purchase Request',
+          message: e.message || 'Gagal memuat data Site Investment',
           color: 'red',
         })
       }
@@ -631,7 +631,7 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
           title: 'Success',
           message: 'Customer Verification berhasil diverify.',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
 
@@ -643,7 +643,7 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
           title: 'Error',
           message: error.message || 'Gagal verify customer verification.',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return false
@@ -678,7 +678,7 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
           title: 'Success',
           message: 'Customer Verification berhasil diunverify.',
           color: 'green',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
 
@@ -690,7 +690,7 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
           title: 'Error',
           message: error.message || 'Gagal unverify customer verification.',
           color: 'red',
-          position: 'topRight',
+          position: 'bottomRight',
           layout: 2,
         })
         return false
@@ -701,7 +701,7 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
 
     resetForm() {
       this.form = {
-        purchaseRequestId: null,
+        siteInvestmentId: null,
         customerId: null,
         status: 'draft',
         notes: '',
@@ -735,9 +735,9 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
       this.fetchCustomerVerifs()
     },
 
-    setFilters(filters: { status?: string | null, purchaseRequestId?: string | null, customerId?: number | null, search?: string }) {
+    setFilters(filters: { status?: string | null, siteInvestmentId?: string | null, customerId?: number | null, search?: string }) {
       this.params.status = filters.status
-      this.params.purchaseRequestId = filters.purchaseRequestId
+      this.params.siteInvestmentId = filters.siteInvestmentId
       this.params.customerId = filters.customerId
       this.params.search = filters.search || ''
       this.params.first = 0
