@@ -17,8 +17,15 @@ export interface Vendor {
 interface VendorState {
   vendors: Vendor[]
   loading: boolean
+  loadingStats: boolean
   error: any
   totalRecords: number
+  statistics: {
+    total: number
+    withEmail: number
+    withNpwp: number
+    withPhone: number
+  }
   params: {
     first: number
     rows: number
@@ -36,8 +43,15 @@ export const useVendorStore = defineStore('vendor', {
     state: (): VendorState => ({
     vendors: [],
     loading: false,
+    loadingStats: false,
     error: null,
     totalRecords: 0,
+    statistics: {
+      total: 0,
+      withEmail: 0,
+      withNpwp: 0,
+      withPhone: 0,
+    },
     params: {
         first: 0,
         rows: 10,
@@ -151,7 +165,7 @@ export const useVendorStore = defineStore('vendor', {
             }
 
             this.closeModal();
-            await this.fetchVendors();
+            await Promise.all([this.fetchVendors(), this.fetchStatistics()]);
             toast.success({
               title: 'Success',
               message: `Vendor berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
@@ -204,7 +218,7 @@ export const useVendorStore = defineStore('vendor', {
               throw new Error(errorData.message || 'Gagal menghapus vendor');
           }
 
-          await this.fetchVendors();
+          await Promise.all([this.fetchVendors(), this.fetchStatistics()]);
           toast.success({
             title: 'Success',
             message: 'Vendor berhasil dihapus.',
@@ -280,6 +294,29 @@ export const useVendorStore = defineStore('vendor', {
         this.params.search = value;
         this.params.first = 0;
         this.fetchVendors();
+    },
+
+    async fetchStatistics() {
+      this.loadingStats = true
+      const { $api } = useNuxtApp()
+      try {
+        const response = await fetch($api.vendorStatistics(), {
+          headers: { Accept: 'application/json' },
+          credentials: 'include',
+        })
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
+        const result = await response.json()
+        this.statistics = {
+          total: Number(result.total ?? 0),
+          withEmail: Number(result.withEmail ?? 0),
+          withNpwp: Number(result.withNpwp ?? 0),
+          withPhone: Number(result.withPhone ?? 0),
+        }
+      } catch (error: any) {
+        console.error('Error fetching vendor statistics:', error)
+      } finally {
+        this.loadingStats = false
+      }
     },
 
     // ✅ NEW: Method untuk mengambil semua vendor tanpa pagination

@@ -37,9 +37,16 @@ interface ServicePlanState {
   servicePlans: ServicePlan[]
   serviceTypes: ServiceType[]
   loading: boolean
+  loadingStats: boolean
   error: any
   totalRecords: number
   totalServicePlans: number
+  statistics: {
+    total: number
+    withType: number
+    withSla: number
+    withIpPublic: number
+  }
   params: {
     first: number
     rows: number
@@ -59,9 +66,16 @@ export const useServicePlanStore = defineStore('servicePlan', {
     servicePlans: [],
     serviceTypes: [],
     loading: true,
+    loadingStats: false,
     error: null,
     totalRecords: 0,
     totalServicePlans: 0,
+    statistics: {
+      total: 0,
+      withType: 0,
+      withSla: 0,
+      withIpPublic: 0,
+    },
     params: {
       first: 0,
       rows: 10,
@@ -214,8 +228,7 @@ export const useServicePlanStore = defineStore('servicePlan', {
         }
 
         this.closeModal()
-        await this.fetchServicePlans()
-        await this.fetchTotalServicePlans()
+        await Promise.all([this.fetchServicePlans(), this.fetchStatistics()])
         toast.success({
           title: 'Success',
           message: `Service plan berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
@@ -270,8 +283,7 @@ export const useServicePlanStore = defineStore('servicePlan', {
           throw new Error(errorData.message || 'Gagal menghapus service plan')
         }
 
-        await this.fetchServicePlans()
-        await this.fetchTotalServicePlans()
+        await Promise.all([this.fetchServicePlans(), this.fetchStatistics()])
         toast.success({
           title: 'Success',
           message: 'Service plan berhasil dihapus.',
@@ -401,33 +413,33 @@ export const useServicePlanStore = defineStore('servicePlan', {
       }
     },
 
-    async fetchTotalServicePlans() {
-      const toast = useToast()
+    async fetchStatistics() {
+      this.loadingStats = true
       const { $api } = useNuxtApp()
       try {
-        const response = await fetch(`${$api.servicePlan()}/totalServicePlans`, {
-          headers: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-          },
+        const response = await fetch($api.servicePlanStatistics(), {
+          headers: { Accept: 'application/json' },
           credentials: 'include',
         })
-
-        if (!response.ok) {
-          throw new Error('Gagal memuat total service plan')
-        }
-
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
         const result = await response.json()
-        this.totalServicePlans = result.total
+        this.statistics = {
+          total: Number(result.total ?? 0),
+          withType: Number(result.withType ?? 0),
+          withSla: Number(result.withSla ?? 0),
+          withIpPublic: Number(result.withIpPublic ?? 0),
+        }
+        this.totalServicePlans = this.statistics.total
       } catch (error: any) {
-        console.error('Error fetching total service plans:', error)
-        toast.error({
-          title: 'Error',
-          message: error.message || 'Gagal memuat total service plan',
-          color: 'red',
-          position: 'bottomRight',
-        })
+        console.error('Error fetching service plan statistics:', error)
+      } finally {
+        this.loadingStats = false
       }
+    },
+
+    /** @deprecated gunakan fetchStatistics */
+    async fetchTotalServicePlans() {
+      await this.fetchStatistics()
     },
 
     async fetchServicePlansForExport() {

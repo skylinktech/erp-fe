@@ -108,7 +108,7 @@
               style="width:8rem"
             />
             <button
-              v-if="userHasRole('superadmin') || userHasPermission('create_tax_master') || userHasPermission('create_tax')"
+              v-if="userHasRole('superadmin') || userHasPermission('create_tax_master')"
               class="btn btn-primary btn-sm"
               @click="openCreate"
             >
@@ -203,14 +203,14 @@
                   </a>
                   <ul class="dropdown-menu dropdown-menu-end">
                     <li
-                      v-if="userHasRole('superadmin') || userHasPermission('edit_tax_master') || userHasPermission('edit_tax')"
+                      v-if="userHasRole('superadmin') || userHasPermission('edit_tax_master')"
                     >
                       <a class="dropdown-item" href="javascript:void(0)" @click="openEdit(data)">
                         <i class="ri-pencil-line me-2"></i> Edit
                       </a>
                     </li>
                     <li
-                      v-if="userHasRole('superadmin') || userHasPermission('delete_tax_master') || userHasPermission('delete_tax')"
+                      v-if="userHasRole('superadmin') || userHasPermission('delete_tax_master')"
                     >
                       <a class="dropdown-item text-danger" href="javascript:void(0)" @click="store.remove(data.id)">
                         <i class="ri-delete-bin-line me-2"></i> Hapus

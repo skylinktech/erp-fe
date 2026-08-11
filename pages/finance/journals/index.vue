@@ -1,190 +1,62 @@
 <template>
     <div class="content-wrapper">
-        <!-- Content -->
         <div class="container-xxl flex-grow-1 container-pt-10">
             <h4 class="mb-1">Jurnal Umum</h4>
-            <p class="mb-6">
-                Kelola jurnal umum untuk pencatatan transaksi akuntansi
-            </p>
+            <p class="mb-6">Kelola jurnal umum untuk pencatatan transaksi akuntansi</p>
 
-            <!-- Journal Statistics Cards -->
-            <div class="row g-6 mb-6">
-                <div class="col-xl-3 col-lg-6 col-md-6" v-if="loading">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="skeleton-loader me-3" style="width: 40px; height: 40px; border-radius: 8px;"></div>
-                                <div class="flex-grow-1">
-                                    <div class="skeleton-loader mb-2" style="width: 60%; height: 16px;"></div>
-                                    <div class="skeleton-loader" style="width: 40%; height: 20px;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6" v-else>
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Total Jurnal</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-primary">
-                                        <i class="ri-file-text-line"></i>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="journal-heading">
-                                    <h5 class="mb-1">{{ totalJournalsCount }}</h5>
-                                    <span class="text-muted">Jurnal Terdaftar</span>
-                                </div>
-                                <a href="javascript:void(0);" class="text-secondary">
-                                    <i class="ri-file-copy-line ri-22px"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6" v-if="loading">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="skeleton-loader me-3" style="width: 40px; height: 40px; border-radius: 8px;"></div>
-                                <div class="flex-grow-1">
-                                    <div class="skeleton-loader mb-2" style="width: 60%; height: 16px;"></div>
-                                    <div class="skeleton-loader" style="width: 40%; height: 20px;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6" v-else>
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Draft</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-warning">
-                                        <i class="ri-file-text-line"></i>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="journal-heading">
-                                    <h5 class="mb-1">{{ draftCount }}</h5>
-                                    <span class="text-muted">Jurnal Draft</span>
-                                </div>
-                                <a href="javascript:void(0);" class="text-secondary">
-                                    <i class="ri-file-copy-line ri-22px"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6" v-if="loading">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="skeleton-loader me-3" style="width: 40px; height: 40px; border-radius: 8px;"></div>
-                                <div class="flex-grow-1">
-                                    <div class="skeleton-loader mb-2" style="width: 60%; height: 16px;"></div>
-                                    <div class="skeleton-loader" style="width: 40%; height: 20px;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6" v-else>
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Posted</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-success">
-                                        <i class="ri-check-line"></i>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="journal-heading">
-                                    <h5 class="mb-1">{{ postedCount }}</h5>
-                                    <span class="text-muted">Jurnal Posted</span>
-                                </div>
-                                <a href="javascript:void(0);" class="text-secondary">
-                                    <i class="ri-file-copy-line ri-22px"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6" v-if="loading">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="skeleton-loader me-3" style="width: 40px; height: 40px; border-radius: 8px;"></div>
-                                <div class="flex-grow-1">
-                                    <div class="skeleton-loader mb-2" style="width: 60%; height: 16px;"></div>
-                                    <div class="skeleton-loader" style="width: 40%; height: 20px;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6" v-else>
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Total Debit</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-info">
-                                        <i class="ri-money-dollar-circle-line"></i>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="journal-heading">
-                                    <h5 class="mb-1">{{ formatRupiah(totalDebit) }}</h5>
-                                    <span class="text-muted">Total Debit</span>
-                                </div>
-                                <a href="javascript:void(0);" class="text-secondary">
-                                    <i class="ri-file-copy-line ri-22px"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <ListPageStatsCards :items="statItems" :loading="loadingStats" />
 
-            <div class="row g-6">
-                <div class="col-12">
-                    <h4 class="mt-6 mb-1">Daftar Jurnal Umum</h4>
-                    <p class="mb-0">Temukan semua jurnal dalam sistem akuntansi.</p>
-                </div>
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
-                            <div class="d-flex align-items-center me-3 mb-2 mb-md-0">
-                                <span class="me-2">Baris:</span>
-                                <Dropdown v-model="params.rows" :options="rowsPerPageOptionsArray" @change="handleRowsChange" placeholder="Jumlah" style="width: 8rem;" />
-                            </div>
-                            <div class="d-flex align-items-center gap-2">
-                                <button 
-                                    v-if="userHasRole('superadmin') || userHasPermission('create_journal')"
-                                    @click="journalStore.openModal()" 
-                                    class="btn btn-primary">
-                                    <i class="ri-add-line me-1"></i>
-                                    Tambah Jurnal
-                                </button>
-                                <button @click="exportData('csv')" class="btn btn-outline-secondary">
-                                    <i class="ri-download-line me-1"></i>
-                                    Export
-                                </button>
-                                <span class="p-input-icon-left">
-                                    <InputText v-model="globalFilterValue" placeholder="Cari jurnal..." class="w-full md:w-20rem" />
-                                </span>
-                            </div>
-                        </div>
-                        <div class="card-datatable table-responsive py-3 px-3">
+            <CollapsibleFilterCard
+                title="Filter Jurnal"
+                :has-active-filters="hasActiveFilters"
+                @reset="resetFilters"
+            >
+                <FilterFieldsRow :columns="3">
+                    <FilterField>
+                        <label class="form-label">Status</label>
+                        <select class="form-select w-100" v-model="filterStatus" @change="applyFilters">
+                            <option value="">Semua Status</option>
+                            <option value="draft">Draft</option>
+                            <option value="posted">Posted</option>
+                            <option value="reversed">Reversed</option>
+                            <option value="cancelled">Dibatalkan</option>
+                        </select>
+                    </FilterField>
+                    <FilterField>
+                        <label class="form-label">Tanggal Mulai</label>
+                        <input type="date" class="form-control" v-model="filterStartDate" @change="applyFilters" />
+                    </FilterField>
+                    <FilterField>
+                        <label class="form-label">Tanggal Akhir</label>
+                        <input type="date" class="form-control" v-model="filterEndDate" @change="applyFilters" />
+                    </FilterField>
+                </FilterFieldsRow>
+            </CollapsibleFilterCard>
+
+            <div class="card">
+                <ListPageTableHeader
+                    :rows="Number(params.rows)"
+                    :rows-options="rowsPerPageOptionsArray"
+                    :search="globalFilterValue"
+                    search-placeholder="Cari jurnal..."
+                    :export-disabled="loading"
+                    :export-items="[{ value: 'csv', label: 'CSV' }]"
+                    @update:rows="handleRowsChange"
+                    @update:search="(v) => { globalFilterValue = v }"
+                    @export="exportData"
+                >
+                    <template #add>
+                        <button
+                            v-if="userHasRole('superadmin') || userHasPermission('create_journal')"
+                            type="button"
+                            class="btn btn-primary btn-sm"
+                            @click="journalStore.openModal()"
+                        >
+                            <i class="ri-add-line me-1"></i> Tambah Jurnal
+                        </button>
+                    </template>
+                </ListPageTableHeader>
+                <div class="card-datatable table-responsive py-3 px-3">
                             <MyDataTable
                                 ref="myDataTableRef"
                                 :data="journals"
@@ -202,7 +74,7 @@
                                 paginatorPosition="bottom"
                                 class="p-datatable-sm"
                             >
-                                <Column header="#" :sortable="false">
+<Column header="#" :sortable="false">
                                     <template #body="slotProps">
                                         {{ params.first + slotProps.index + 1 }}
                                     </template>
@@ -226,7 +98,7 @@
                                 </Column>
                                 <Column field="status" header="Status" :sortable="true" style="min-width:100px">
                                     <template #body="slotProps">
-                                        <span >
+                                        <span :class="statusBadgeClass(slotProps.data.status)">
                                             {{ getStatusLabel(slotProps.data.status) }}
                                         </span>
                                     </template>
@@ -250,7 +122,7 @@
                                                         <i class="ri-eye-line me-2"></i> Lihat Detail
                                                     </a>
                                                 </li>
-                                                <li v-if="userHasRole('superadmin') || userHasPermission('edit_journal')">
+                                                <li v-if="(userHasRole('superadmin') || userHasPermission('edit_journal')) && slotProps.data.status === 'draft'">
                                                     <a class="dropdown-item" href="javascript:void(0)" @click="journalStore.openModal(slotProps.data)">
                                                         <i class="ri-edit-box-line me-2"></i> Edit
                                                     </a>
@@ -260,7 +132,12 @@
                                                         <i class="ri-check-line me-2"></i> Post
                                                     </a>
                                                 </li>
-                                                <li v-if="userHasRole('superadmin') || userHasPermission('delete_journal')">
+                                                <li v-if="(userHasRole('superadmin') || userHasPermission('reverse_journal')) && slotProps.data.status === 'posted'">
+                                                    <a class="dropdown-item text-warning" href="javascript:void(0)" @click="journalStore.reverseJournal(slotProps.data.id)">
+                                                        <i class="ri-arrow-go-back-line me-2"></i> Reverse
+                                                    </a>
+                                                </li>
+                                                <li v-if="(userHasRole('superadmin') || userHasPermission('delete_journal')) && slotProps.data.status === 'draft'">
                                                     <a class="dropdown-item text-danger" href="javascript:void(0)" @click="journalStore.deleteJournal(slotProps.data.id)">
                                                         <i class="ri-delete-bin-7-line me-2"></i> Hapus
                                                     </a>
@@ -272,9 +149,7 @@
                             </MyDataTable>
                         </div>
                     </div>
-                </div>
 
-                <!-- Journal Modal -->
                 <Modal 
                     id="JournalModal"
                     :title="modalTitle" 
@@ -329,17 +204,14 @@
                                         </div>
                                         <div class="col-md-6">
                                             <div class="form-floating form-floating-outline">
-                                                <select 
-                                                    class="form-select" 
-                                                    v-model="form.status"
-                                                    
+                                                <input
+                                                    type="text"
+                                                    class="form-control"
+                                                    :value="getStatusLabel(form.status || 'draft')"
+                                                    readonly
+                                                    disabled
                                                 >
-                                                    <option value="">Pilih Status</option>
-                                                    <option v-for="status in journalStatuses" :key="status.value" :value="status.value">
-                                                        {{ status.label }}
-                                                    </option>
-                                                </select>
-                                                <label>Status *</label>
+                                                <label>Status (otomatis draft)</label>
                                             </div>
                                         </div>
                                         <div class="col-md-6">
@@ -476,9 +348,9 @@
                         </form>
                     </template>
                 </Modal>
-            </div>
         </div>
-        <div class="content-backdrop fade"></div>
+         <!-- / Content -->
+         <div class="content-backdrop fade"></div>
     </div>
 </template>
 
@@ -493,16 +365,16 @@ import { usePermissions } from '~/composables/usePermissions'
 import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import Column from 'primevue/column'
-import Dropdown from 'primevue/dropdown'
-import InputText from 'primevue/inputtext'
-import vSelect from 'vue-select'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
-import 'vue-select/dist/vue-select.css'
+import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
+import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
+import CollapsibleFilterCard from '~/components/list/CollapsibleFilterCard.vue'
+import FilterFieldsRow from '~/components/list/FilterFieldsRow.vue'
+import FilterField from '~/components/list/FilterField.vue'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 
-const { setListTitle, setFormTitle } = useDynamicTitle()
+const { setListTitle } = useDynamicTitle()
 
-// Page meta
 definePageMeta({
   layout: 'default',
   middleware: ['auth', 'check-permission'],
@@ -514,225 +386,143 @@ definePageMeta({
   viewport: 'width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0'
 })
 
-// Stores
 const journalStore = useJournalStore()
 const userStore = useUserStore()
 const permissionStore = usePermissionsStore()
 const formatRupiah = useFormatRupiah()
-
-// Router
 const router = useRouter()
 
-// Refs
 const myDataTableRef = ref()
 const globalFilterValue = ref('')
 const rowsPerPageOptionsArray = ref([10, 25, 50, 100])
+const filterStatus = ref('')
+const filterStartDate = ref('')
+const filterEndDate = ref('')
 
-// Computed values dari store
 const loading = computed(() => journalStore.loading)
+const loadingStats = computed(() => journalStore.loadingStats)
 const saving = computed(() => journalStore.saving)
 const totalRecords = computed(() => journalStore.totalRecords || 0)
-const params = computed(() => {
-  return journalStore.params || {
-    first: 0,
-    rows: 10,
-    sortField: 'date',
-    sortOrder: -1,
-    search: ''
-  }
-})
+const params = computed(() => journalStore.params)
 const form = computed(() => journalStore.form)
 const isEditMode = computed(() => journalStore.isEditMode)
 const showModal = computed(() => journalStore.showModal)
-const validationErrors = computed(() => {
-  return Array.isArray(journalStore.validationErrors) ? journalStore.validationErrors : []
-})
-const journalTypes = computed(() => {
-  return Array.isArray(journalStore.journalTypes) ? journalStore.journalTypes : []
-})
-const journalStatuses = computed(() => {
-  return Array.isArray(journalStore.journalStatuses) ? journalStore.journalStatuses : []
-})
-const accounts = computed(() => {
-  const result = Array.isArray(journalStore.accounts) ? journalStore.accounts : []
-  return result
-})
-const journals = computed(() => {
-  const result = Array.isArray(journalStore.journals) ? journalStore.journals : []
-  return result
-})
+const validationErrors = computed(() => Array.isArray(journalStore.validationErrors) ? journalStore.validationErrors : [])
+const accounts = computed(() => Array.isArray(journalStore.accounts) ? journalStore.accounts : [])
+const journals = computed(() => Array.isArray(journalStore.journals) ? journalStore.journals : [])
+const statistics = computed(() => journalStore.statistics)
 
-// Statistics yang diperbaiki
-const totalJournalsCount = computed(() => {
-  if (!journalStore.journals || !Array.isArray(journalStore.journals)) return 0
-  return journalStore.journals.length
-})
+const hasActiveFilters = computed(() => !!(filterStatus.value || filterStartDate.value || filterEndDate.value))
 
-const draftCount = computed(() => {
-  if (!journalStore.journals || !Array.isArray(journalStore.journals)) return 0
-  return journalStore.journals.filter(j => j.status === 'draft').length
-})
+const statItems = computed(() => [
+  { key: 'total', label: 'Total', value: statistics.value.total, icon: 'ri-file-text-line', iconBgClass: 'bg-label-primary', subtitle: 'Jurnal terdaftar' },
+  { key: 'draft', label: 'Draft', value: statistics.value.draft, icon: 'ri-draft-line', iconBgClass: 'bg-label-warning' },
+  { key: 'posted', label: 'Posted', value: statistics.value.posted, icon: 'ri-check-line', iconBgClass: 'bg-label-success', valueClass: 'text-success' },
+  { key: 'totalDebit', label: 'Total Debit', value: formatRupiah(statistics.value.totalDebit), icon: 'ri-money-dollar-circle-line', iconBgClass: 'bg-label-info' },
+])
 
-const postedCount = computed(() => {
-  if (!journalStore.journals || !Array.isArray(journalStore.journals)) return 0
-  return journalStore.journals.filter(j => j.status === 'posted').length
-})
+const applyFilters = () => {
+  journalStore.params.status = filterStatus.value
+  journalStore.params.startDate = filterStartDate.value
+  journalStore.params.endDate = filterEndDate.value
+  journalStore.params.first = 0
+  journalStore.fetchJournals()
+}
 
-const totalDebit = computed(() => {
-  if (!journalStore.journals || !Array.isArray(journalStore.journals)) return 0
-  return journalStore.journals.reduce((sum, j) => {
-    if (j.journalLines && Array.isArray(j.journalLines)) {
-      const linesTotal = j.journalLines.reduce((lineSum, line) => {
-        const rawDebit = (line && typeof line.debit !== 'undefined' && line.debit !== null) ? line.debit : 0
-        const numericDebit = Number(rawDebit)
-        return lineSum + (Number.isNaN(numericDebit) ? 0 : numericDebit)
-      }, 0)
-      return sum + linesTotal
-    }
-    return sum
-  }, 0)
-})
+const resetFilters = () => {
+  filterStatus.value = ''
+  filterStartDate.value = ''
+  filterEndDate.value = ''
+  applyFilters()
+}
 
-// Modal computed
 const modalTitle = computed(() => isEditMode.value ? 'Edit Jurnal' : 'Tambah Jurnal Baru')
 const modalDescription = computed(() => isEditMode.value ? 'Silakan ubah data jurnal di bawah ini.' : 'Silakan isi form di bawah ini untuk menambahkan jurnal baru.')
 
-// Methods
-const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('id-ID')
-}
+const formatDate = (date) => new Date(date).toLocaleDateString('id-ID')
 
 const getStatusLabel = (status) => {
-    const labels = {
-        draft: 'Draft',
-        posted: 'Posted',
-        cancelled: 'Dibatalkan'
-    }
-    return labels[status] || status
+  const labels = { draft: 'Draft', posted: 'Posted', reversed: 'Reversed', cancelled: 'Dibatalkan' }
+  return labels[status] || status
 }
 
-const getStatusBadgeClass = (status) => {
-    const classes = {
-        draft: 'badge bg-label-warning',
-        posted: 'badge bg-label-success',
-        cancelled: 'badge bg-label-danger'
-    }
-    return classes[status] || 'badge bg-label-secondary'
+const statusBadgeClass = (status) => {
+  if (status === 'posted') return 'badge bg-label-success'
+  if (status === 'reversed') return 'badge bg-label-info'
+  if (status === 'cancelled') return 'badge bg-label-danger'
+  return 'badge bg-label-warning'
 }
 
 const openJournalDetails = (journalId) => {
-    router.push({ path: `/accounting/journals/detail`, query: { id: journalId } })
+  router.push({ path: `/accounting/journals/detail`, query: { id: journalId } })
 }
 
 const exportData = (format) => {
-    if (format === 'csv' && myDataTableRef.value) {
-        myDataTableRef.value.exportCSV()
-    }
+  if (format === 'csv' && myDataTableRef.value) myDataTableRef.value.exportCSV()
 }
 
-// Permission helpers
 const { userHasRole, userHasPermission } = usePermissions()
 
-// Lifecycle
 let modalInstance = null
 onMounted(async () => {
-    try {
-        await permissionStore.fetchPermissions()
-        await userStore.loadUser()
-        // Pastikan journals diinisialisasi sebagai array kosong terlebih dahulu
-        journalStore.journals = []
-        // Load accounts dan journals secara bersamaan
-        await Promise.all([
-            journalStore.fetchAccounts(),
-            journalStore.fetchJournals()
-        ])
-    } catch (error) {
-        console.error('Error in onMounted:', error)
-    }
-    setListTitle('Jurnal Umum', totalJournalsCount.value)
+  try {
+    await permissionStore.fetchPermissions()
+    await userStore.loadUser()
+    journalStore.journals = []
+    filterStatus.value = journalStore.params.status || ''
+    filterStartDate.value = journalStore.params.startDate || ''
+    filterEndDate.value = journalStore.params.endDate || ''
+    await Promise.all([
+      journalStore.fetchAccounts(),
+      journalStore.fetchJournals(),
+      journalStore.fetchStatistics(),
+    ])
+  } catch (error) {
+    console.error('Error in onMounted:', error)
+  }
+  setListTitle('Jurnal Umum', totalRecords.value)
 })
 
-// Cleanup modal instance saat komponen di-unmount
 onUnmounted(() => {
-    if (modalInstance) {
-        modalInstance.dispose()
-        modalInstance = null
-    }
+  if (modalInstance) {
+    modalInstance.dispose()
+    modalInstance = null
+  }
 })
 
-// Watchers
 watch(showModal, (newValue) => {
-    if (newValue) {
-        nextTick(() => {
-            const modalElement = document.getElementById('JournalModal')
-            if (modalElement) {
-                // Hapus instance lama jika ada
-                if (modalInstance) {
-                    modalInstance.dispose()
-                }
-                // Buat instance baru
-                modalInstance = new bootstrap.Modal(modalElement, {
-                    backdrop: true,
-                    keyboard: true,
-                    focus: true
-                })
-                modalInstance.show()
-            }
-        })
-    } else {
-        if (modalInstance) {
-            modalInstance.hide()
-        }
-    }
+  if (newValue) {
+    nextTick(() => {
+      const modalElement = document.getElementById('JournalModal')
+      if (modalElement) {
+        if (modalInstance) modalInstance.dispose()
+        modalInstance = new bootstrap.Modal(modalElement, { backdrop: true, keyboard: true, focus: true })
+        modalInstance.show()
+      }
+    })
+  } else if (modalInstance) {
+    modalInstance.hide()
+  }
 })
 
 const debouncedSearch = useDebounceFn(() => {
-    journalStore.setSearch(globalFilterValue.value)
+  journalStore.setSearch(globalFilterValue.value)
 }, 500)
-
 watch(globalFilterValue, debouncedSearch)
 
-// Table events
-const onPage = (event) => {
-    journalStore.setPagination(event)
-}
-
-const onSort = (event) => {
-    journalStore.setSort(event)
-}
+const onPage = (event) => journalStore.setPagination(event)
+const onSort = (event) => journalStore.setSort(event)
 
 const handleRowsChange = async (value) => {
-    const rowsValue = Number(value) || 10
-    journalStore.params.rows = rowsValue
-    journalStore.params.first = 0
-    await journalStore.fetchJournals()
-}
-
-const handleSearch = async (value) => {
-    globalFilterValue.value = value
-    journalStore.params.first = 0
-    await journalStore.fetchJournals()
+  journalStore.params.rows = Number(value) || 10
+  journalStore.params.first = 0
+  await journalStore.fetchJournals()
 }
 </script>
 
 <style scoped>
-<style scoped>
-
-/* Responsive adjustments */
 @media (max-width: 768px) {
-  .card-body {
-    padding: 16px;
-  }
-  
-  .form-label {
-    font-size: 13px;
-    margin-bottom: 6px;
-  }
-}
-
-@media (max-width: 576px) {
-  .card-body {
-    padding: 12px;
-  }
+  .card-body { padding: 16px; }
+  .form-label { font-size: 13px; margin-bottom: 6px; }
 }
 </style>

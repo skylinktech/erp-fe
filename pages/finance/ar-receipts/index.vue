@@ -443,17 +443,14 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-floating form-floating-outline">
-                                        <select 
-                                            class="form-select" 
-                                            v-model="form.status"
-                                            
+                                        <input
+                                            type="text"
+                                            class="form-control"
+                                            :value="getStatusLabel(form.status || 'draft')"
+                                            readonly
+                                            disabled
                                         >
-                                            <option value="">Pilih Status</option>
-                                            <option v-for="status in statuses" :key="status.value" :value="status.value">
-                                                {{ status.label }}
-                                            </option>
-                                        </select>
-                                        <label>Status *</label>
+                                        <label>Status (otomatis draft)</label>
                                     </div>
                                 </div>
                                 <div class="col-md-12">

@@ -26,9 +26,16 @@ export interface Did {
 interface DidState {
   dids        : Did[]
   loading     : boolean
+  loadingStats: boolean
   error       : any
   totalRecords: number
   totalDids   : number
+  statistics  : {
+    total: number
+    withServices: number
+    provinces: number
+    linkedServices: number
+  }
   params      : {
     first    : number
     rows     : number
@@ -46,9 +53,16 @@ export const useDidStore = defineStore('did', {
   state: (): DidState => ({
     dids: [],
     loading: true,
+    loadingStats: false,
     error: null,
     totalRecords: 0,
     totalDids: 0,
+    statistics: {
+      total: 0,
+      withServices: 0,
+      provinces: 0,
+      linkedServices: 0,
+    },
     params: {
       first: 0,
       rows: 10,
@@ -186,8 +200,7 @@ export const useDidStore = defineStore('did', {
         }
 
         this.closeModal()
-        await this.fetchDids()
-        await this.fetchTotalDids()
+        await Promise.all([this.fetchDids(), this.fetchStatistics()])
         toast.success({
           title: 'Success',
           message: `DID berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
@@ -238,8 +251,7 @@ export const useDidStore = defineStore('did', {
           throw new Error(errorData.message || 'Gagal menghapus DID')
         }
 
-        await this.fetchDids()
-        await this.fetchTotalDids()
+        await Promise.all([this.fetchDids(), this.fetchStatistics()])
         toast.success({
           title: 'Success',
           message: 'DID berhasil dihapus.',
@@ -323,43 +335,33 @@ export const useDidStore = defineStore('did', {
       this.fetchDids()
     },
 
-    async fetchTotalDids() {
-      const toast = useToast()
+    async fetchStatistics() {
+      this.loadingStats = true
       const { $api } = useNuxtApp()
       try {
-        const response = await fetch($api.totalDids(), {
-          headers: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-          },
+        const response = await fetch($api.didStatistics(), {
+          headers: { Accept: 'application/json' },
           credentials: 'include',
         })
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}))
-          throw new Error(errorData.message || 'Gagal memuat total DID')
-        }
-
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
         const result = await response.json()
-        const total = result.total ?? 0
-        
-        // Pastikan total adalah number yang valid
-        this.totalDids = typeof total === 'number' ? total : Number(total) || 0
-        
-        // Jika total masih 0 tapi ada data di dids, gunakan totalRecords sebagai fallback
-        if (this.totalDids === 0 && this.dids.length > 0) {
-          this.totalDids = this.totalRecords || this.dids.length
+        this.statistics = {
+          total: Number(result.total ?? 0),
+          withServices: Number(result.withServices ?? 0),
+          provinces: Number(result.provinces ?? 0),
+          linkedServices: Number(result.linkedServices ?? 0),
         }
+        this.totalDids = this.statistics.total
       } catch (error: any) {
-        console.error('Error fetching total DID:', error)
-        // Jangan tampilkan toast error untuk menghindari spam, tapi log saja
-        // Gunakan totalRecords sebagai fallback jika tersedia
-        if (this.totalRecords > 0) {
-          this.totalDids = this.totalRecords
-        } else if (this.dids.length > 0) {
-          this.totalDids = this.dids.length
-        }
+        console.error('Error fetching DID statistics:', error)
+      } finally {
+        this.loadingStats = false
       }
+    },
+
+    /** @deprecated gunakan fetchStatistics */
+    async fetchTotalDids() {
+      await this.fetchStatistics()
     },
 
     async fetchDidsForExport() {

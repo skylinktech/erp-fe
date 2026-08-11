@@ -1,5 +1,21 @@
 <template>
   <div class="expanded-row-content bg-white">
+    <div
+      v-if="purchaseOrder?.budgetExceeded || purchaseOrder?.budget_exceeded"
+      class="alert alert-danger d-flex align-items-start py-2 px-3 mb-3"
+      role="alert"
+    >
+      <i class="ri-error-warning-line me-2 mt-1"></i>
+      <div class="small">
+        <strong class="d-block">Budget tidak mencukupi</strong>
+        {{
+          purchaseOrder.rejectionReason ||
+          purchaseOrder.rejection_reason ||
+          'Budget untuk departemen ini tidak mencukupi, silakan mengajukan tambahan budget terlebih dahulu'
+        }}
+      </div>
+    </div>
+
     <div v-if="purchaseOrder?.purchaseOrderItems && purchaseOrder.purchaseOrderItems.length > 0">
       <h6 class="mb-3 text-secondary">
         <i class="ri-shopping-cart-line me-2"></i>

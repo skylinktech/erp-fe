@@ -118,6 +118,8 @@ function buildTitle(type: string, payload: Record<string, any>): string {
       return `PKS ${payload.noPks || payload.no_pks || payload.id || ''}`.trim()
     case 'purchase_request':
       return `PR ${payload.prNumber || payload.pr_number || payload.noPurchaseRequest || payload.id || ''}`.trim()
+    case 'purchase_order':
+      return `PO ${payload.noPo || payload.no_po || payload.id || ''}`.trim()
     case 'payment_request':
       return `Payment Request ${payload.prqNumber || payload.prq_number || payload.id || ''}`.trim()
     case 'material_request':
@@ -153,6 +155,18 @@ export function mapRecipientToFeedItem(recipient: Record<string, any>): Notifica
   const categoryLabel = getNotificationTypeLabel(type)
   const eventLabel = getNotificationEventLabel(event)
 
+  let subtitle = `${eventLabel} ${title}`.trim()
+  if (
+    type === 'purchase_order' &&
+    event === 'rejected' &&
+    (payload.budgetExceeded || payload.budget_exceeded || payload.rejectionReason || payload.rejection_reason)
+  ) {
+    subtitle =
+      payload.rejectionReason ||
+      payload.rejection_reason ||
+      'Budget untuk departemen ini tidak mencukupi, silakan mengajukan tambahan budget terlebih dahulu'
+  }
+
   return {
     id: recipient.id,
     recipientId: Number(recipient.id),
@@ -168,7 +182,7 @@ export function mapRecipientToFeedItem(recipient: Record<string, any>): Notifica
       new Date().toISOString(),
     createdByName: String(createdByName),
     title,
-    subtitle: `${eventLabel} ${title}`.trim(),
+    subtitle,
     categoryLabel,
     raw: recipient,
   }

@@ -344,13 +344,10 @@
                                         </div>
                                     </div>
                                     <div class="col-md-3">
-                                        <CustomSelect2 v-model="form.status" :options="statusOptions"
-                                            :get-option-label="option => option?.label || 'Unknown Status'"
-                                            :reduce="option => option.value" searchable clearable
-                                            placeholder="-- Pilih Status --"
-                                            id="status"
-                                            class="status"
-                                        />   
+                                        <div class="form-floating form-floating-outline">
+                                            <input type="text" class="form-control" :value="(form.status || 'unpaid').toUpperCase()" readonly disabled>
+                                            <label>Status Pembayaran (derived)</label>
+                                        </div>
                                     </div>
                                     <div class="col-md-3">
                                         <CustomSelect2 v-model="form.paymentMethod" :options="paymentMethodOptions"
@@ -406,13 +403,8 @@
                                     </div>
                                     <div class="col-md-3">
                                         <div class="form-floating form-floating-outline">
-                                            <input type="text" :value="formatRupiah(form.paidAmount)" @input="updatePaidAmountFromInput" class="form-control" placeholder="Paid Amount" >
+                                            <input type="text" :value="formatRupiah(form.paidAmount)" class="form-control" readonly disabled>
                                             <label>Paid Amount</label>
-                                            <div v-if="!isPaidAmountValid" class="invalid-feedback">
-                                                <template v-if="form.status === 'unpaid'">Paid amount harus 0 untuk status unpaid</template>
-                                                <template v-else-if="form.status === 'paid'">Paid amount harus sama dengan grand total ({{ formatRupiah(grandTotal) }}) untuk status paid</template>
-                                                <template v-else-if="form.status === 'partial'">Paid amount harus lebih dari 0 dan kurang dari grand total ({{ formatRupiah(grandTotal) }}) untuk status partial</template>
-                                            </div>
                                         </div>
                                     </div>
                                     <div class="col-md-6">

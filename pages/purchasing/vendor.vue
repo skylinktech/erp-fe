@@ -1,205 +1,54 @@
 <template>
     <div class="content-wrapper">
-        <!-- Content -->
-        <div class="container-xxl flex-grow-1 container-p-y">
+        <div class="container-xxl flex-grow-1 container-pt-10">
             <h4 class="mb-1">List Vendor</h4>
-            <p class="mb-6">
-            List vendor yang terdaftar di sistem
-            </p>
-            <!-- vendor cards -->
-            <div class="row g-6">
-                <div class="col-xl-4 col-lg-6 col-md-6">
-                    <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                        <p class="mb-0">Total 3 users</p>
-                        <ul class="list-unstyled d-flex align-items-center avatar-group mb-0">
-                            <li
-                            data-bs-toggle="tooltip"
-                            data-popup="tooltip-custom"
-                            data-bs-placement="top"
-                            title="Kim Karlos"
-                            class="avatar pull-up">
-                            <img class="rounded-circle" src="/img/avatars/3.png" alt="Avatar" />
-                            </li>
-                            <li
-                            data-bs-toggle="tooltip"
-                            data-popup="tooltip-custom"
-                            data-bs-placement="top"
-                            title="Katy Turner"
-                            class="avatar pull-up">
-                            <img class="rounded-circle" src="/img/avatars/9.png" alt="Avatar" />
-                            </li>
-                            <li
-                            data-bs-toggle="tooltip"
-                            data-popup="tooltip-custom"
-                            data-bs-placement="top"
-                            title="Peter Adward"
-                            class="avatar pull-up">
-                            <img class="rounded-circle" src="/img/avatars/15.png" alt="Avatar" />
-                            </li>
-                            <li class="avatar">
-                            <span
-                                class="avatar-initial rounded-circle pull-up bg-lighter text-body"
-                                data-bs-toggle="tooltip"
-                                data-bs-placement="bottom"
-                                title="3 more"
-                                >+3</span
-                            >
-                            </li>
-                        </ul>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center">
-                        <div class="pegawai-heading">
-                            <h5 class="mb-1">Support</h5>
-                            <a
-                            href="javascript:;"
-                            data-bs-toggle="modal"
-                            data-bs-target="#PegawaiModal"
-                            class="pegawai-edit-modal">
-                            </a>
-                        </div>
-                        <a href="javascript:void(0);" class="text-secondary"
-                            ><i class="ri-file-copy-line ri-22px"></i
-                        ></a>
-                        </div>
-                    </div>
-                    </div>
-                </div>
-                <div class="col-xl-4 col-lg-6 col-md-6">
-                    <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                        <p class="mb-0">Total 2 users</p>
-                        <ul class="list-unstyled d-flex align-items-center avatar-group mb-0">
-                            <li
-                            data-bs-toggle="tooltip"
-                            data-popup="tooltip-custom"
-                            data-bs-placement="top"
-                            title="Kim Merchent"
-                            class="avatar pull-up">
-                            <img class="rounded-circle" src="/img/avatars/10.png" alt="Avatar" />
-                            </li>
-                            <li
-                            data-bs-toggle="tooltip"
-                            data-popup="tooltip-custom"
-                            data-bs-placement="top"
-                            title="Sam D'souza"
-                            class="avatar pull-up">
-                            <img class="rounded-circle" src="/img/avatars/13.png" alt="Avatar" />
-                            </li>
-                            <li
-                            data-bs-toggle="tooltip"
-                            data-popup="tooltip-custom"
-                            data-bs-placement="top"
-                            title="Nurvi Karlos"
-                            class="avatar pull-up">
-                            <img class="rounded-circle" src="/img/avatars/15.png" alt="Avatar" />
-                            </li>
-                            <li class="avatar">
-                            <span
-                                class="avatar-initial rounded-circle pull-up bg-lighter text-body"
-                                data-bs-toggle="tooltip"
-                                data-bs-placement="bottom"
-                                title="3 more"
-                                >+3</span
-                            >
-                            </li>
-                        </ul>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center">
-                        <div class="pegawai-heading">
-                            <h5 class="mb-1">Restricted User</h5>
-                            <a
-                            href="javascript:;"
-                            data-bs-toggle="modal"
-                            data-bs-target="#PegawaiModal"
-                            class="pegawai-edit-modal">
-                            </a>
-                        </div>
-                        <a href="javascript:void(0);" class="text-secondary"
-                            ><i class="ri-file-copy-line ri-22px"></i
-                        ></a>
-                        </div>
-                    </div>
-                    </div>
-                </div>
-                <div class="col-xl-4 col-lg-6 col-md-6">
-                    <div class="card h-100">
-                    <div class="row h-100">
-                        <div class="col-5">
-                        <div class="d-flex align-items-end h-100 justify-content-center">
-                            <img
-                            src="/img/illustrations/add-new-role-illustration.png"
-                            class="img-fluid"
-                            alt="Image"
-                            width="68" />
-                        </div>
-                        </div>
-                        <div class="col-7">
-                        <div class="card-body text-sm-end text-center ps-sm-0">
-                            <button v-if="userHasRole('superadmin') || userHasPermission('create_vendor')"
-                            class="btn btn-sm btn-primary mb-4 ml-5 textwrap add-new-pegawai"
-                            @click="vendorStore.openModal()"
-                            >
-                            Tambah Vendor
-                            </button>
-                        </div>
-                        </div>
-                    </div>
-                    </div>
-                </div>
+            <p class="mb-6">List vendor yang terdaftar di sistem</p>
 
-                <div class="col-12">
-                    <h4 class="mt-6 mb-1">Total Vendor</h4>
-                    <p class="mb-0">Find all of your company's administrator accounts and their associate Vendor.</p>
-                </div>
-                <div class="col-12">
-                    <!-- vendor Table -->
-                    <div class="card">
-                        <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
-                            <div class="d-flex align-items-center me-3 mb-2 mb-md-0">
-                                <span class="me-2">Baris:</span>
-                                <Dropdown v-model="params.rows" :options="rowsPerPageOptionsArray" @change="handleRowsChange" placeholder="Jumlah" style="width: 8rem;" />
-                            </div>
-                            <div class="d-flex align-items-center">
-                                <div class="btn-group me-2">
-                                    <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <i class="ri-upload-2-line me-1"></i> Export
-                                    </button>
-                                    <ul class="dropdown-menu">
-                                        <li><a class="dropdown-item" href="javascript:void(0)" @click="exportData('csv')">CSV</a></li>
-                                        <li><a class="dropdown-item" href="javascript:void(0)" @click="exportData('pdf')">PDF</a></li>
-                                    </ul>
-                                </div>
-                                <div class="input-group">
-                                    <span class="p-input-icon-left">
-                                        <InputText
-                                            v-model="globalFilterValue"
-                                            placeholder="Cari vendor..."
-                                            class="w-full md:w-20rem"
-                                        />
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card-datatable table-responsive py-3 px-3">
-                        <MyDataTable 
-                            ref="myDataTableRef"
-                            :data="vendors" 
-                            :rows="Number(params.rows)" 
-                            :loading="loading"
-                            :totalRecords="totalRecords"
-                            :first="params.first"
-                            :lazy="true"
-                            @page="onPage($event)"
-                            @sort="onSort($event)"
-                            responsiveLayout="scroll" 
-                            paginatorPosition="bottom"
-                            paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink"
-                            currentPageReportTemplate="Menampilkan {first} sampai {last} dari {totalRecords} data"
-                            >
-                                <Column header="#" :sortable="false">
+            <ListPageStatsCards :items="statItems" :loading="loadingStats" />
+
+            <div class="card">
+                <ListPageTableHeader
+                    :rows="Number(params.rows)"
+                    :rows-options="rowsPerPageOptionsArray"
+                    :search="globalFilterValue"
+                    search-placeholder="Cari vendor..."
+                    :export-disabled="loading"
+                    :export-items="[
+                        { value: 'csv', label: 'CSV' },
+                        { value: 'pdf', label: 'PDF' },
+                    ]"
+                    @update:rows="handleRowsChange"
+                    @update:search="(v) => { globalFilterValue = v }"
+                    @export="exportData"
+                >
+                    <template #add>
+                        <button
+                            v-if="userHasRole('superadmin') || userHasPermission('create_vendor')"
+                            type="button"
+                            class="btn btn-primary btn-sm"
+                            @click="vendorStore.openModal()"
+                        >
+                            <i class="ri-add-line me-1"></i> Tambah Vendor
+                        </button>
+                    </template>
+                </ListPageTableHeader>
+                <div class="card-datatable table-responsive py-3 px-3">
+                <MyDataTable 
+                    ref="myDataTableRef"
+                    :data="vendors" 
+                    :rows="Number(params.rows)" 
+                    :loading="loading"
+                    :totalRecords="totalRecords"
+                    :first="params.first"
+                    :lazy="true"
+                    @page="onPage($event)"
+                    @sort="onSort($event)"
+                    responsiveLayout="scroll" 
+                    paginatorPosition="bottom"
+                    paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink"
+                    currentPageReportTemplate="Menampilkan {first} sampai {last} dari {totalRecords} data"
+                    >
+<Column header="#" :sortable="false">
                                     <template #body="slotProps">
                                         {{ params.first + slotProps.index + 1 }}
                                     </template>
@@ -235,12 +84,8 @@
                                     </template>
                                 </Column>
                         </MyDataTable>
-                        </div>
-                    </div>
-                    <!--/ vendor Table -->
                 </div>
             </div>
-            <!--/ vendor cards -->
 
             <Modal 
                 id="VendorModal"
@@ -343,7 +188,6 @@
             </Modal>
         </div>
          <!-- / Content -->
- 
          <div class="content-backdrop fade"></div>
     </div>
 </template>
@@ -354,9 +198,9 @@ import { storeToRefs } from 'pinia'
 import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import { useVendorStore } from '~/stores/vendor'
-import Dropdown from 'primevue/dropdown'
 import Column from 'primevue/column'
-import InputText from 'primevue/inputtext'
+import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
+import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
 import { useDebounceFn } from '@vueuse/core'
 import { usePermissions } from '~/composables/usePermissions'
 import { usePermissionsStore } from '~/stores/permissions'
@@ -364,67 +208,64 @@ import { useUserStore } from '~/stores/user'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import { useImageUrl } from '~/composables/useImageUrl'
 
-// Composables
-const { setListTitle, setFormTitle } = useDynamicTitle()
+const { setListTitle } = useDynamicTitle()
 const { getVendorLogo, handleImageError } = useImageUrl()
-
-const { userHasPermission, userHasRole } = usePermissions();
+const { userHasPermission, userHasRole } = usePermissions()
 
 const vendorStore = useVendorStore()
-const { vendors, loading, totalRecords, params, form, isEditMode, showModal, validationErrors } = storeToRefs(vendorStore)
+const { vendors, loading, loadingStats, totalRecords, statistics, params, form, isEditMode, showModal, validationErrors } = storeToRefs(vendorStore)
 const permissionStore = usePermissionsStore()
 const userStore = useUserStore()
 
 const myDataTableRef = ref(null)
 const globalFilterValue = ref('')
+const rowsPerPageOptionsArray = ref([10, 25, 50, 100])
 
+const statItems = computed(() => [
+  { key: 'total', label: 'Total', value: statistics.value.total, icon: 'ri-store-2-line', iconBgClass: 'bg-label-primary', subtitle: 'Semua vendor' },
+  { key: 'withEmail', label: 'Dengan Email', value: statistics.value.withEmail, icon: 'ri-mail-line', iconBgClass: 'bg-label-info' },
+  { key: 'withNpwp', label: 'NPWP', value: statistics.value.withNpwp, icon: 'ri-file-text-line', iconBgClass: 'bg-label-success', valueClass: 'text-success' },
+  { key: 'withPhone', label: 'Phone', value: statistics.value.withPhone, icon: 'ri-phone-line', iconBgClass: 'bg-label-warning' },
+])
 
-const rowsPerPageOptionsArray = ref([10, 25, 50, 100]);
-const modalTitle = computed(() => isEditMode.value ? 'Edit Vendor' : 'Tambah Vendor');
-const modalDescription = computed(() => isEditMode.value ? 'Ubah detail vendor.' : 'Isi untuk menambah vendor baru.');
+const modalTitle = computed(() => isEditMode.value ? 'Edit Vendor' : 'Tambah Vendor')
+const modalDescription = computed(() => isEditMode.value ? 'Ubah detail vendor.' : 'Isi untuk menambah vendor baru.')
 
-let modalInstance = null;
+let modalInstance = null
 onMounted(() => {
-    permissionStore.fetchPermissions()
-    userStore.loadUser()
-    vendorStore.fetchVendors();
-    setListTitle('Vendor', vendors.value.length)
-    const modalElement = document.getElementById('VendorModal')
-    if (modalElement) {
-        modalInstance = new bootstrap.Modal(modalElement)
-    }
-});
+  permissionStore.fetchPermissions()
+  userStore.loadUser()
+  Promise.all([vendorStore.fetchVendors(), vendorStore.fetchStatistics()])
+  setListTitle('Vendor', totalRecords.value)
+  const modalElement = document.getElementById('VendorModal')
+  if (modalElement) modalInstance = new bootstrap.Modal(modalElement)
+})
 
 watch(showModal, (newValue) => {
-    if (newValue) {
-        modalInstance?.show()
-    } else {
-        modalInstance?.hide()
-    }
+  if (newValue) modalInstance?.show()
+  else modalInstance?.hide()
 })
 
 const debouncedSearch = useDebounceFn(() => {
-    vendorStore.setSearch(globalFilterValue.value)
+  vendorStore.setSearch(globalFilterValue.value)
 }, 500)
-watch(globalFilterValue, debouncedSearch);
+watch(globalFilterValue, debouncedSearch)
 
-const onPage = (event) => vendorStore.setPagination(event);
-const handleRowsChange = () => {
-    params.value.rows = Number(params.value.rows) || 10;
-    params.value.first = 0;
-    vendorStore.fetchVendors();
-};
-const onSort = (event) => vendorStore.setSort(event);
+const onPage = (event) => vendorStore.setPagination(event)
+const handleRowsChange = (value) => {
+  params.value.rows = Number(value) || 10
+  params.value.first = 0
+  vendorStore.fetchVendors()
+}
+const onSort = (event) => vendorStore.setSort(event)
 
 const exportData = (format) => {
-    if (format === 'csv') myDataTableRef.value.exportCSV();
-};
+  if (format === 'csv') myDataTableRef.value.exportCSV()
+}
 
 function onLogoChange(e) {
-  const file = e.target.files[0];
-  if (file) {
-    vendorStore.handleLogoChange(file);
-  }
+  const file = e.target.files[0]
+  if (file) vendorStore.handleLogoChange(file)
 }
 
 definePageMeta({
@@ -436,16 +277,10 @@ definePageMeta({
   author: 'Sinergi Innovate Pratama',
   robots: 'index, follow',
   viewport: 'width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0'
-});
+})
 </script>
 
 <style scoped>
-    .logo-preview {
-        transition: all 0.3s ease;
-    }
-
-    .logo-preview:hover {
-        transform: scale(1.05);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    }
+.logo-preview { transition: all 0.3s ease; }
+.logo-preview:hover { transform: scale(1.05); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
 </style>

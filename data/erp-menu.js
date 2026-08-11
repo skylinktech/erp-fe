@@ -130,6 +130,27 @@ export const erpMenuItems = [
     category: "Inventory",
     type: "main"
   },
+  {
+    name: "Purchase Return",
+    path: "/inventory/purchase-return",
+    icon: "ri-arrow-go-back-line",
+    category: "Inventory",
+    type: "main"
+  },
+  {
+    name: "Stock Card",
+    path: "/inventory/stock-card",
+    icon: "ri-file-list-3-line",
+    category: "Inventory",
+    type: "main"
+  },
+  {
+    name: "Rekonsiliasi Stok",
+    path: "/inventory/reconciliation",
+    icon: "ri-scales-3-line",
+    category: "Inventory",
+    type: "main"
+  },
 
   // Sales Module
   {

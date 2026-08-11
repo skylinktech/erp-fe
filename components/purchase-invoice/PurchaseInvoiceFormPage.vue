@@ -67,7 +67,16 @@
                     </div>
                   </div>
                   <div class="col-md-3">
-                    <CustomSelect2 v-model="form.status" :options="statusOptions" :get-option-label="o => o.label" :reduce="o => o.value" searchable clearable placeholder="Pilih Status" />
+                    <div class="form-floating form-floating-outline">
+                      <input type="text" class="form-control" :value="paymentStatusLabel" readonly disabled>
+                      <label>Status Pembayaran (derived)</label>
+                    </div>
+                  </div>
+                  <div class="col-md-3" v-if="form.documentStatus">
+                    <div class="form-floating form-floating-outline">
+                      <input type="text" class="form-control" :value="documentStatusLabel" readonly disabled>
+                      <label>Document Status</label>
+                    </div>
                   </div>
                   <div class="col-md-3">
                     <CustomSelect2 v-model="form.paymentMethod" :options="paymentMethodOptions" :get-option-label="o => o.label" :reduce="o => o.value" searchable clearable :clearable="false" placeholder="Metode Pembayaran" />
@@ -98,7 +107,7 @@
                   </div>
                   <div class="col-md-3">
                     <div class="form-floating form-floating-outline">
-                      <input type="number" v-model.number="form.paidAmount" class="form-control">
+                      <input type="text" :value="formatRupiah(form.paidAmount || 0)" class="form-control" readonly disabled>
                       <label>Paid Amount</label>
                     </div>
                   </div>
@@ -175,9 +184,51 @@
               </div>
             </div>
 
-            <div class="d-flex justify-content-end mt-4">
+            <div class="d-flex justify-content-end flex-wrap gap-2 mt-4">
               <button type="button" class="btn btn-outline-secondary" @click="navigateTo('/purchasing/purchase-invoice')">Tutup</button>
-              <button type="submit" class="btn btn-primary ms-2" :disabled="saving">
+              <template v-if="form.id && form.documentStatus">
+                <button
+                  v-if="form.documentStatus === 'draft'"
+                  type="button"
+                  class="btn btn-outline-info"
+                  :disabled="saving || loading"
+                  @click="runLifecycle('submit')"
+                >
+                  Submit
+                </button>
+                <button
+                  v-if="form.documentStatus === 'submitted'"
+                  type="button"
+                  class="btn btn-outline-success"
+                  :disabled="saving || loading"
+                  @click="runLifecycle('approve')"
+                >
+                  Approve
+                </button>
+                <button
+                  v-if="form.documentStatus === 'approved'"
+                  type="button"
+                  class="btn btn-outline-primary"
+                  :disabled="saving || loading"
+                  @click="runLifecycle('post')"
+                >
+                  Post
+                </button>
+                <button
+                  v-if="['draft', 'submitted', 'approved', 'posted'].includes(form.documentStatus)"
+                  type="button"
+                  class="btn btn-outline-danger"
+                  :disabled="saving || loading"
+                  @click="runLifecycle('cancel')"
+                >
+                  Cancel
+                </button>
+              </template>
+              <button
+                type="submit"
+                class="btn btn-primary"
+                :disabled="saving || (form.documentStatus && form.documentStatus !== 'draft')"
+              >
                 <span v-if="saving" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                 Simpan
               </button>
@@ -209,18 +260,12 @@ const purchaseOrderStore = usePurchaseOrderStore()
 const warehouseStore = useWarehouseStore()
 const formatRupiah = useFormatRupiah()
 
-const { form, isEditMode, saving } = storeToRefs(purchaseInvoiceStore)
+const { form, isEditMode, saving, loading } = storeToRefs(purchaseInvoiceStore)
 const { vendors } = storeToRefs(vendorStore)
 const { perusahaans } = storeToRefs(perusahaanStore)
 const { cabangs } = storeToRefs(cabangStore)
 const { purchaseOrders } = storeToRefs(purchaseOrderStore)
 const { warehouses } = storeToRefs(warehouseStore)
-
-const statusOptions = ref([
-  { label: 'Unpaid', value: 'unpaid' },
-  { label: 'Partial', value: 'partial' },
-  { label: 'Paid', value: 'paid' },
-])
 
 const paymentMethodOptions = ref([
   { label: 'Cash', value: 'cash' },
@@ -228,6 +273,58 @@ const paymentMethodOptions = ref([
   { label: 'QRIS', value: 'qris' },
   { label: 'Card', value: 'card' },
 ])
+
+const paymentStatusLabel = computed(() => {
+  const s = form.value.status || 'unpaid'
+  const map = { unpaid: 'Unpaid', partial: 'Partial', paid: 'Paid' }
+  return map[s] || s
+})
+
+const documentStatusLabel = computed(() => {
+  const s = form.value.documentStatus || ''
+  const map = {
+    draft: 'Draft',
+    submitted: 'Submitted',
+    approved: 'Approved',
+    posted: 'Posted',
+    cancelled: 'Cancelled',
+  }
+  return map[s] || s
+})
+
+async function runLifecycle(action) {
+  const id = form.value.id
+  if (!id) return
+  let ok = false
+  if (action === 'submit') ok = await purchaseInvoiceStore.submitPurchaseInvoice(id)
+  else if (action === 'approve') ok = await purchaseInvoiceStore.approvePurchaseInvoice(id)
+  else if (action === 'post') ok = await purchaseInvoiceStore.postPurchaseInvoice(id)
+  else if (action === 'cancel') {
+    const Swal = (await import('sweetalert2')).default
+    const result = await Swal.fire({
+      title: 'Cancel Purchase Invoice',
+      input: 'textarea',
+      inputLabel: 'Alasan pembatalan (wajib)',
+      inputValidator: (value) => (!value?.trim() ? 'Alasan wajib diisi' : undefined),
+      showCancelButton: true,
+      confirmButtonText: 'Cancel Invoice',
+      cancelButtonText: 'Batal',
+      icon: 'warning',
+    })
+    if (!result.isConfirmed) return
+    ok = await purchaseInvoiceStore.cancelPurchaseInvoice(id, result.value || '')
+  }
+  if (ok) {
+    await purchaseInvoiceStore.fetchPurchaseInvoiceDetails(id)
+    const full = purchaseInvoiceStore.purchaseInvoice
+    if (full) {
+      form.value.documentStatus = full.documentStatus
+      form.value.status = full.status
+      form.value.paidAmount = full.paidAmount
+      form.value.remainingAmount = full.remainingAmount
+    }
+  }
+}
 
 const filteredCabangs = computed(() => {
   if (!form.value.perusahaanId || !cabangs.value) return []

@@ -214,11 +214,40 @@
                                             </span>
                                         </template>
                                     </Column>
+                                    <Column field="budget.budgetCode" header="Budget" :sortable="false">
+                                        <template #body="slotProps">
+                                            <div class="d-flex flex-column">
+                                                <span class="text-nowrap">
+                                                    {{
+                                                        slotProps.data.budget?.budgetCode ||
+                                                        slotProps.data.budget?.budget_code ||
+                                                        '-'
+                                                    }}
+                                                </span>
+                                                <small class="text-muted" v-if="slotProps.data.department">
+                                                    {{
+                                                        slotProps.data.department?.nmDepartemen ||
+                                                        slotProps.data.department?.nm_departemen ||
+                                                        ''
+                                                    }}
+                                                </small>
+                                            </div>
+                                        </template>
+                                    </Column>
                                     <Column field="status" header="Status" :sortable="true">
                                         <template #body="slotProps">
-                                            <span :class="getStatusBadge(slotProps.data).class">
-                                                {{ getStatusBadge(slotProps.data).text }}
-                                            </span>
+                                            <div class="d-flex flex-column align-items-start gap-1">
+                                                <span :class="getStatusBadge(slotProps.data).class">
+                                                    {{ getStatusBadge(slotProps.data).text }}
+                                                </span>
+                                                <span
+                                                    v-if="isBudgetExceeded(slotProps.data)"
+                                                    class="badge rounded-pill bg-label-danger"
+                                                    :title="budgetExceededMessage(slotProps.data)"
+                                                >
+                                                    <i class="ri-error-warning-line me-1"></i>Budget tidak cukup
+                                                </span>
+                                            </div>
                                         </template>
                                     </Column>
                                     <Column field="createdByUser.fullName" header="Dibuat Oleh" :sortable="true">
@@ -282,19 +311,24 @@
                                                 <a href="javascript:;" class="btn btn-sm btn-text-secondary rounded-pill btn-icon dropdown-toggle hide-arrow" data-bs-toggle="dropdown"><i class="ri-more-2-fill"></i>
                                                 </a>
                                                 <ul class="dropdown-menu">
-                                                    <li v-if="(userHasPermission('approve_purchase_order') || userHasPermission('edit_purchase_order')) && slotProps.data.status == 'draft'">
+                                                    <li v-if="(userHasPermission('submit_purchase_order') || userHasPermission('approve_purchase_order') || userHasPermission('edit_purchase_order') || userHasRole('superadmin')) && slotProps.data.status == 'draft'">
                                                         <a class="dropdown-item" href="javascript:void(0)" @click="purchaseOrderStore.submitPurchaseOrder(slotProps.data.id)">
                                                             <i class="ri-send-plane-line me-2"></i> Submit
                                                         </a>
                                                     </li>
-                                                    <li v-if="userHasPermission('approve_purchase_order') && slotProps.data.status == 'draft'">
+                                                    <li v-if="(userHasPermission('approve_purchase_order') || userHasRole('superadmin')) && slotProps.data.status == 'submitted'">
                                                         <a class="dropdown-item" href="javascript:void(0)" @click="handleApprovePO(slotProps.data.id)">
                                                             <i class="ri-check-line me-2"></i> Approve
                                                         </a>
                                                     </li>
-                                                    <li v-if="userHasRole('superadmin') || (userHasPermission('reject_purchase_order') && slotProps.data.status == 'draft')">
+                                                    <li v-if="(userHasPermission('reject_purchase_order') || userHasRole('superadmin')) && slotProps.data.status == 'submitted'">
                                                         <a class="dropdown-item" href="javascript:void(0)" @click="handleRejectPO(slotProps.data.id)">
                                                             <i class="ri-close-line me-2"></i> Reject
+                                                        </a>
+                                                    </li>
+                                                    <li v-if="(userHasPermission('cancel_purchase_order') || userHasRole('superadmin')) && (slotProps.data.status == 'approved' || slotProps.data.status == 'partial')">
+                                                        <a class="dropdown-item text-warning" href="javascript:void(0)" @click="handleCancelPO(slotProps.data.id)">
+                                                            <i class="ri-close-circle-line me-2"></i> Cancel
                                                         </a>
                                                     </li>
                                                     <li v-if="userHasRole('superadmin') || (userHasPermission('view_purchase_order'))">
@@ -792,10 +826,12 @@ const poTypeOptions = ref([
 
 const statusOptions = ref([
     { label: 'Draft', value: 'draft' },
+    { label: 'Submitted', value: 'submitted' },
     { label: 'Approved', value: 'approved' },
     { label: 'Received', value: 'received' },
     { label: 'Rejected', value: 'rejected' },
     { label: 'Partial', value: 'partial' },
+    { label: 'Cancelled', value: 'cancelled' },
 ]);
 
 let modalInstance = null;
@@ -1271,14 +1307,43 @@ async function handleRejectPO (id) {
   await purchaseOrderStore.rejectPurchaseOrder(id, result.value || '')
 }
 
+async function handleCancelPO (id) {
+  const result = await Swal.fire({
+    title: 'Cancel Purchase Order',
+    input: 'textarea',
+    inputLabel: 'Alasan pembatalan (wajib)',
+    inputPlaceholder: 'Tulis alasan cancel...',
+    inputValidator: (value) => (!value ? 'Alasan cancel wajib diisi' : undefined),
+    showCancelButton: true,
+    confirmButtonText: 'Cancel PO',
+    cancelButtonText: 'Batal',
+    icon: 'warning',
+  })
+  if (!result.isConfirmed) return
+  await purchaseOrderStore.cancelPurchaseOrder(id, result.value || '')
+}
+
 const { getStatusBadge: _getStatusBadge, getApprovalStepJabatan } = useApprovalStatus();
 const getStatusBadge = (row) => _getStatusBadge(row, {
     draft: { text: 'Draft', class: 'badge rounded-pill bg-label-secondary' },
+    submitted: { text: 'Submitted', class: 'badge rounded-pill bg-label-info' },
     approved: { text: 'Approved', class: 'badge rounded-pill bg-label-primary' },
     received: { text: 'Received', class: 'badge rounded-pill bg-label-success' },
     rejected: { text: 'Rejected', class: 'badge rounded-pill bg-label-danger' },
     partial: { text: 'Partial', class: 'badge rounded-pill bg-label-warning' },
+    cancelled: { text: 'Cancelled', class: 'badge rounded-pill bg-label-dark' },
 });
+
+const BUDGET_INSUFFICIENT_MESSAGE =
+    'Budget untuk departemen ini tidak mencukupi, silakan mengajukan tambahan budget terlebih dahulu';
+
+function isBudgetExceeded(row) {
+    return !!(row?.budgetExceeded ?? row?.budget_exceeded);
+}
+
+function budgetExceededMessage(row) {
+    return row?.rejectionReason || row?.rejection_reason || BUDGET_INSUFFICIENT_MESSAGE;
+}
 
 const getPoTypeBadge = (poType) => {
     if (!poType) return { text: '-', class: 'badge rounded-pill bg-label-light' };

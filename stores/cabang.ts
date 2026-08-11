@@ -17,18 +17,26 @@ export interface Cabang {
 interface CabangState {
   cabangs: Cabang[]
   loading: boolean
+  loadingStats: boolean
   totalRecords: number
   showModal: boolean
   isEditMode: boolean
   form: Partial<Cabang>
   validationErrors: any
   error: string | null
+  statistics: {
+    total: number
+    perusahaanCount: number
+    withAlamat: number
+  }
   params: {
     page: number
     rows: number
     sortField?: string
     sortOrder?: number
     filters?: any
+    search?: string
+    perusahaanId: '' | number
   }
 }
 
@@ -44,15 +52,23 @@ export const useCabangStore = defineStore('cabang', {
   state: (): CabangState => ({
     cabangs: [],
     loading: false,
+    loadingStats: false,
     totalRecords: 0,
     showModal: false,
     isEditMode: false,
     form: { ...initialFormState },
     validationErrors: [],
     error: null,
+    statistics: {
+      total: 0,
+      perusahaanCount: 0,
+      withAlamat: 0,
+    },
     params: {
       page: 1,
       rows: 10,
+      search: '',
+      perusahaanId: '',
     },
   }),
   actions: {
@@ -69,8 +85,15 @@ export const useCabangStore = defineStore('cabang', {
           url.searchParams.append('sortField', this.params.sortField)
           url.searchParams.append('sortOrder', this.params.sortOrder === 1 ? 'asc' : 'desc')
         }
-        if (this.params.filters?.global?.value) {
-          url.searchParams.append('search', this.params.filters.global.value)
+        const search =
+          this.params.search ||
+          this.params.filters?.global?.value ||
+          ''
+        if (search) {
+          url.searchParams.append('search', search)
+        }
+        if (this.params.perusahaanId !== '' && this.params.perusahaanId != null) {
+          url.searchParams.append('perusahaan_id', String(this.params.perusahaanId))
         }
 
         const response = await fetch(url, {
@@ -136,7 +159,7 @@ export const useCabangStore = defineStore('cabang', {
           credentials: 'include', // Cookie-based auth
         })
         this.closeModal()
-        await this.fetchCabangs()
+        await Promise.all([this.fetchCabangs(), this.fetchStatistics()])
       } catch (error: any) {
         if (error.response && error.response.status === 422) {
           this.validationErrors = error.response._data.errors
@@ -172,7 +195,7 @@ export const useCabangStore = defineStore('cabang', {
           credentials: 'include', // Cookie-based auth
         })
         this.closeModal()
-        await this.fetchCabangs()
+        await Promise.all([this.fetchCabangs(), this.fetchStatistics()])
         toast.success({
           title: 'Berhasil!',
           message: 'Cabang berhasil diperbarui.',
@@ -227,7 +250,7 @@ export const useCabangStore = defineStore('cabang', {
           },
           credentials: 'include', // Cookie-based auth
         })
-        await this.fetchCabangs()
+        await Promise.all([this.fetchCabangs(), this.fetchStatistics()])
         toast.success({
           title: 'Berhasil!',
           message: 'Cabang berhasil dihapus.',
@@ -285,6 +308,40 @@ export const useCabangStore = defineStore('cabang', {
     setFilters(filters: any) {
       this.params.filters = filters;
       this.fetchCabangs();
-    }
+    },
+
+    setSearch(value: string) {
+      this.params.search = value
+      this.params.page = 1
+      this.fetchCabangs()
+    },
+
+    setPerusahaanId(value: '' | number) {
+      this.params.perusahaanId = value
+      this.params.page = 1
+      this.fetchCabangs()
+    },
+
+    async fetchStatistics() {
+      this.loadingStats = true
+      const { $api } = useNuxtApp()
+      try {
+        const response = await fetch($api.cabangStatistics(), {
+          headers: { Accept: 'application/json' },
+          credentials: 'include',
+        })
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
+        const result = await response.json()
+        this.statistics = {
+          total: Number(result.total ?? 0),
+          perusahaanCount: Number(result.perusahaanCount ?? 0),
+          withAlamat: Number(result.withAlamat ?? 0),
+        }
+      } catch (error: any) {
+        console.error('Error fetching cabang statistics:', error)
+      } finally {
+        this.loadingStats = false
+      }
+    },
   },
 })

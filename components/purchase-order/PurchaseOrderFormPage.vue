@@ -167,6 +167,37 @@
                         </div>
                       </div>
                       <div class="row mb-3">
+                        <label class="col-sm-3 col-form-label">Departemen</label>
+                        <div class="col-sm-9">
+                          <CustomSelect2
+                            v-model="form.departmentId"
+                            :options="departemens"
+                            :get-option-label="(d) => d?.nm_departemen || d?.nmDepartemen || ''"
+                            :reduce="(d) => d?.id"
+                            searchable
+                            clearable
+                            placeholder="Pilih departemen"
+                          />
+                        </div>
+                      </div>
+                      <div class="row mb-3">
+                        <label class="col-sm-3 col-form-label">Budget</label>
+                        <div class="col-sm-9">
+                          <CustomSelect2
+                            v-model="form.budgetId"
+                            :options="budgets"
+                            :get-option-label="budgetLabel"
+                            :reduce="(b) => b?.id"
+                            searchable
+                            clearable
+                            placeholder="Pilih budget"
+                          />
+                          <div v-if="selectedBudgetHint" class="form-text" :class="selectedBudgetHint.class">
+                            <i :class="selectedBudgetHint.icon" class="me-1"></i>{{ selectedBudgetHint.text }}
+                          </div>
+                        </div>
+                      </div>
+                      <div class="row mb-3">
                         <label class="col-sm-3 col-form-label">Discount (%)</label>
                         <div class="col-sm-9 col-md-4">
                           <input v-model.number="form.discountPercent" type="number" min="0" class="form-control" />
@@ -365,6 +396,7 @@
                     <ul class="mb-0 ps-3">
                       <li><strong>Internal</strong>: pilih perusahaan &amp; cabang grup.</li>
                       <li><strong>External</strong>: isi nama perusahaan pihak ketiga.</li>
+                      <li>Pilih <strong>Budget</strong> departemen agar approval tidak ditolak otomatis.</li>
                       <li>Harga otomatis terisi dari harga beli katalog, dapat disesuaikan manual.</li>
                     </ul>
                   </div>
@@ -406,6 +438,8 @@ const perusahaans = ref<any[]>([])
 const cabangs = ref<any[]>([])
 const warehouses = ref<any[]>([])
 const products = ref<any[]>([])
+const departemens = ref<any[]>([])
+const budgets = ref<any[]>([])
 const stockMap = ref<Map<string, number>>(new Map())
 
 const fromPurchaseRequestId = computed(() => {
@@ -461,6 +495,27 @@ function productLabel(p: any) {
   return `${sku}${p.name || ''}`
 }
 
+const budgetStatusLabel: Record<string, string> = {
+  draft: 'Draft',
+  submitted: 'Submitted',
+  approved: 'Approved',
+  rejected: 'Rejected',
+  closed: 'Closed',
+}
+
+function budgetLabel(b: any) {
+  if (!b) return ''
+  const code = b.budgetCode ?? b.budget_code ?? ''
+  const name = b.budgetName ?? b.budget_name ?? ''
+  const remaining = b.remainingAmount ?? b.remaining_amount
+  const main = code ? `${code} — ${name}` : name
+  if (remaining != null && remaining !== '') {
+    return `${main} · sisa ${formatRupiah(Number(remaining))}`
+  }
+  const status = b.status ? budgetStatusLabel[b.status] ?? b.status : ''
+  return status ? `${main} · ${status}` : main
+}
+
 function formatDateId(iso: string | null | undefined): string {
   if (!iso) return '—'
   try {
@@ -482,6 +537,40 @@ function findPerusahaanName(id: number | null | undefined): string {
   return p ? perusahaanLabel(p) : '—'
 }
 
+function findDepartemenName(id: number | null | undefined): string {
+  if (!id) return '—'
+  const d = departemens.value.find((x) => Number(x.id) === Number(id))
+  return d?.nm_departemen || d?.nmDepartemen || '—'
+}
+
+function findBudgetName(id: number | null | undefined): string {
+  if (!id) return '—'
+  const b = budgets.value.find((x) => Number(x.id) === Number(id))
+  return b ? budgetLabel(b) : '—'
+}
+
+const selectedBudgetHint = computed(() => {
+  const budgetId = form.value?.budgetId
+  if (!budgetId) return null
+  const b = budgets.value.find((x) => Number(x.id) === Number(budgetId))
+  if (!b) return null
+  const remaining = Number(b.remainingAmount ?? b.remaining_amount ?? NaN)
+  const total = grandTotal.value
+  if (Number.isNaN(remaining)) return null
+  if (total > remaining) {
+    return {
+      text: `Sisa budget ${formatRupiah(remaining)} tidak mencukupi untuk total PO ${formatRupiah(total)}`,
+      class: 'text-danger',
+      icon: 'ri-error-warning-line',
+    }
+  }
+  return {
+    text: `Sisa budget: ${formatRupiah(remaining)}`,
+    class: 'text-success',
+    icon: 'ri-checkbox-circle-line',
+  }
+})
+
 const summaryRows = computed<FormPageSummaryRow[]>(() => {
   const f = form.value
   const poTypeLabel = f.poType === 'external' ? 'External' : 'Internal'
@@ -490,6 +579,8 @@ const summaryRows = computed<FormPageSummaryRow[]>(() => {
     { label: 'Tipe PO', value: poTypeLabel },
     { label: 'Vendor', value: findVendorName(f.vendorId) },
     { label: 'Perusahaan', value: isExternalPO.value ? (f.extNamaPerusahaan || '—') : findPerusahaanName(f.perusahaanId) },
+    { label: 'Departemen', value: findDepartemenName(f.departmentId) },
+    { label: 'Budget', value: findBudgetName(f.budgetId) },
     { label: 'Tgl PO', value: formatDateId(f.date) },
     { label: 'Jatuh tempo', value: formatDateId(f.dueDate) },
     { label: 'Jumlah item', value: String(itemCount.value) },
@@ -653,6 +744,8 @@ async function prefillFromPurchaseRequest(prId: string) {
     form.value.description ||
     `PO dari PR ${pr.prNumber || pr.pr_number || pr.id}`
   form.value.purchaseRequestId = Number(pr.id) || null
+  form.value.departmentId = pr.departmentId ?? pr.department_id ?? null
+  form.value.budgetId = pr.budgetId ?? pr.budget_id ?? null
 
   form.value.purchaseOrderItems = items.map((d) => {
     const product = products.value.find((p) => Number(p.id) === Number(d.productId))
@@ -675,11 +768,13 @@ async function loadMasterData() {
   const headers = { Accept: 'application/json' }
   const opts = { headers, credentials: 'include' as const }
 
-  const [vendorRes, perusahaanRes, warehouseRes, productRes] = await Promise.all([
+  const [vendorRes, perusahaanRes, warehouseRes, productRes, depRes, budRes] = await Promise.all([
     fetch($api.dataVendor(), opts),
     fetch($api.dataPerusahaan(), opts),
     fetch($api.dataWarehouse(), opts),
     fetch($api.dataProduct(), opts),
+    fetch($api.dataDepartemen(), opts),
+    fetch($api.dataBudget(), opts),
     loadStockMap(),
   ])
 
@@ -698,6 +793,14 @@ async function loadMasterData() {
   if (productRes.ok) {
     const j = await productRes.json()
     products.value = Array.isArray(j) ? j : (j.data ?? [])
+  }
+  if (depRes.ok) {
+    const j = await depRes.json()
+    departemens.value = Array.isArray(j) ? j : (j.data ?? j)
+  }
+  if (budRes.ok) {
+    const j = await budRes.json()
+    budgets.value = Array.isArray(j) ? j : (j.data ?? [])
   }
 }
 

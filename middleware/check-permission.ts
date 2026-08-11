@@ -27,6 +27,10 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       '/inventory/kategori': 'view_kategori',
       '/inventory/service': 'view_service',
       '/inventory/service-plan': 'view_service_plan',
+      '/inventory/adjustment': 'view_inventory_adjustment',
+      '/inventory/purchase-return': 'view_purchase_return',
+      '/inventory/stock-card': 'view_stock_card',
+      '/inventory/reconciliation': 'view_inventory_reconciliation',
       '/service/service': 'view_service',
       '/service/service-plan': 'view_service_plan',
       '/service/did': 'view_did',
@@ -46,8 +50,6 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       '/accounting/bank-account/': 'view_bank_account',
       '/accounting/expenses/': 'view_expense',
       '/accounting/journals/': 'view_journal',
-      '/accounting/taxes/': 'view_tax',
-      '/finance/taxes': 'view_tax',
       '/finance/tax-masters': 'view_tax_master',
       '/accounting/ap-payments/': 'view_ap_payment',
       '/accounting/ar-receipts/': 'view_ar_receipt',
@@ -123,8 +125,6 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
         requiredPermission = 'show_billing_preparation'
       } else if (/^\/finance\/tax-masters/.test(to.path)) {
         requiredPermission = 'view_tax_master'
-      } else if (/^\/finance\/taxes/.test(to.path)) {
-        requiredPermission = 'view_tax'
       } else if (/^\/finance\/billing-adjustments/.test(to.path)) {
         requiredPermission = 'view_billing_adjustment'
       } else if (/^\/finance\/payment-request\/form(\/.*)?$/.test(to.path)) {

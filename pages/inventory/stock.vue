@@ -246,7 +246,17 @@
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Jumlah</label>
-                        <input type="number" class="form-control" v-model="form.quantity" min="0" />
+                        <input
+                            type="number"
+                            class="form-control"
+                            v-model="form.quantity"
+                            min="0"
+                            :disabled="true"
+                            title="Quantity tidak dapat diubah langsung (Phase 12B). Gunakan Stock In/Out/Transfer/Return."
+                        />
+                        <small class="text-muted">
+                            Quantity tidak dapat diedit langsung. Gunakan dokumen Stock In / Out / Transfer / Return.
+                        </small>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Deskripsi</label>

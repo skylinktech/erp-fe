@@ -42,15 +42,24 @@ export interface Service {
 interface ServiceState {
   services: Service[]
   loading: boolean
+  loadingStats: boolean
   error: any
   totalRecords: number
   totalServices: number
+  statistics: {
+    total: number
+    withPlan: number
+    leased: number
+    addQuota: number
+  }
   params: {
     first: number
     rows: number
     sortField: string | null
     sortOrder: number | null
     search: string
+    serviceLineType: string
+    billingType: string
   }
   form: Partial<Service>
   isEditMode: boolean
@@ -62,15 +71,24 @@ export const useServiceStore = defineStore('service', {
   state: (): ServiceState => ({
     services: [],
     loading: true,
+    loadingStats: false,
     error: null,
     totalRecords: 0,
     totalServices: 0,
+    statistics: {
+      total: 0,
+      withPlan: 0,
+      leased: 0,
+      addQuota: 0,
+    },
     params: {
       first: 0,
       rows: 10,
       sortField: 'id',
       sortOrder: 1,
       search: '',
+      serviceLineType: '',
+      billingType: '',
     },
     form: {
       name: '',
@@ -100,6 +118,12 @@ export const useServiceStore = defineStore('service', {
           sortOrder: this.params.sortOrder === -1 ? 'desc' : 'asc',
           search: this.params.search || '',
         })
+        if (this.params.serviceLineType) {
+          params.set('service_line_type', this.params.serviceLineType)
+        }
+        if (this.params.billingType) {
+          params.set('billing_type', this.params.billingType)
+        }
 
         const response = await fetch(`${$api.service()}?${params.toString()}`, {
           headers: {
@@ -204,8 +228,7 @@ export const useServiceStore = defineStore('service', {
         }
 
         this.closeModal()
-        await this.fetchServices()
-        await this.fetchTotalServices()
+        await Promise.all([this.fetchServices(), this.fetchStatistics()])
         toast.success({
           title: 'Success',
           message: `Service berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
@@ -261,7 +284,7 @@ export const useServiceStore = defineStore('service', {
         }
 
         await this.fetchServices()
-        await this.fetchTotalServices()
+        await Promise.all([this.fetchServices(), this.fetchStatistics()])
         toast.success({
           title: 'Success',
           message: 'Service berhasil dihapus.',
@@ -345,33 +368,33 @@ export const useServiceStore = defineStore('service', {
       this.fetchServices()
     },
 
-    async fetchTotalServices() {
-      const toast = useToast()
+    async fetchStatistics() {
+      this.loadingStats = true
       const { $api } = useNuxtApp()
       try {
-        const response = await fetch(`${$api.service()}/totalServices`, {
-          headers: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-          },
-          credentials: 'include', // Cookie-based auth
+        const response = await fetch($api.serviceStatistics(), {
+          headers: { Accept: 'application/json' },
+          credentials: 'include',
         })
-
-        if (!response.ok) {
-          throw new Error('Gagal memuat total service')
-        }
-
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
         const result = await response.json()
-        this.totalServices = result.total
+        this.statistics = {
+          total: Number(result.total ?? 0),
+          withPlan: Number(result.withPlan ?? 0),
+          leased: Number(result.leased ?? 0),
+          addQuota: Number(result.addQuota ?? 0),
+        }
+        this.totalServices = this.statistics.total
       } catch (error: any) {
-        console.error('Error fetching total services:', error)
-        toast.error({
-          title: 'Error',
-          message: error.message || 'Gagal memuat total service',
-          color: 'red',
-          position: 'bottomRight',
-        })
+        console.error('Error fetching service statistics:', error)
+      } finally {
+        this.loadingStats = false
       }
+    },
+
+    /** @deprecated gunakan fetchStatistics */
+    async fetchTotalServices() {
+      await this.fetchStatistics()
     },
 
     async fetchServicesForExport() {

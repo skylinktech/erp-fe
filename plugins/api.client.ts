@@ -121,7 +121,9 @@ export default defineNuxtPlugin(() => {
     jabatan              : () => `${apiBase}/jabatan`,
     countPegawaiByJabatan: () => `${apiBase}/jabatan/countPegawaiByJabatan`,
     perusahaan           : () => `${apiBase}/perusahaan`,
+    perusahaanStatistics : () => `${apiBase}/perusahaan/statistics`,
     cabang               : () => `${apiBase}/cabang`,
+    cabangStatistics     : () => `${apiBase}/cabang/statistics`,
     divisi               : () => `${apiBase}/divisi`,
     departemen           : () => `${apiBase}/departemen`,
     cuti                 : () => `${apiBase}/cuti`,
@@ -195,6 +197,7 @@ export default defineNuxtPlugin(() => {
     submitPurchaseOrder    : (id: number | string) => `${apiBase}/purchase-order/submitPurchaseOrder/${id}`,
     approvePurchaseOrder   : (id: number | string) => `${apiBase}/purchase-order/approvePurchaseOrder/${id}`,
     rejectPurchaseOrder    : (id: number | string) => `${apiBase}/purchase-order/rejectPurchaseOrder/${id}`,
+    purchaseOrderCancel    : (id: number | string) => `${apiBase}/purchase-order/cancelPurchaseOrder/${id}`,
     purchaseOrderUpdate    : (id: number | string) => `${apiBase}/purchase-order/update/${id}`,
     getPurchaseOrderDetails: (id: number | string) => `${apiBase}/purchase-order/getPurchaseOrderDetails/${id}`,
     countPurchaseOrderByStatus: () => `${apiBase}/purchase-order/countByStatus`,
@@ -203,6 +206,10 @@ export default defineNuxtPlugin(() => {
     purchaseInvoice: () => `${apiBase}/purchase-invoice`,
     purchaseInvoiceShow: (id: number | string) => `${apiBase}/purchase-invoice/${id}`,
     purchaseInvoiceStatistics: () => `${apiBase}/purchase-invoice/statistics`,
+    purchaseInvoiceSubmit: (id: number | string) => `${apiBase}/purchase-invoice/${id}/submit`,
+    purchaseInvoiceApprove: (id: number | string) => `${apiBase}/purchase-invoice/${id}/approve`,
+    purchaseInvoicePost: (id: number | string) => `${apiBase}/purchase-invoice/${id}/post`,
+    purchaseInvoiceCancel: (id: number | string) => `${apiBase}/purchase-invoice/${id}/cancel`,
     
     // Purchase Request
     purchaseRequest: () => `${apiBase}/purchase-request`,
@@ -430,26 +437,45 @@ export default defineNuxtPlugin(() => {
     costCentersTotal: () => `${apiBase}/accounting/cost-centers/total`,
     costCentersExportExcel: () => `${apiBase}/accounting/cost-centers/export-excel`,
 
-    // Taxes
-    taxes: () => `${apiBase}/accounting/taxes`,
-    taxesStore: () => `${apiBase}/accounting/taxes`,
-    taxesUpdate: (id: number | string) => `${apiBase}/accounting/taxes/${id}`,
-    taxesShow: (id: number | string) => `${apiBase}/accounting/taxes/${id}`,
-    taxesDelete: (id: number | string) => `${apiBase}/accounting/taxes/${id}`,
-    taxesActive: () => `${apiBase}/accounting/taxes/active`,
-
     // Journal Entries
     journals: () => `${apiBase}/accounting/journals`,
     journalsPost: (id: number | string) => `${apiBase}/accounting/journals/${id}/post`,
+    journalsReverse: (id: number | string) => `${apiBase}/accounting/journals/${id}/reverse`,
     journalsCancel: (id: number | string) => `${apiBase}/accounting/journals/${id}/cancel`,
+    journalsTrialBalance: (params?: string) =>
+      `${apiBase}/accounting/journals/trial-balance${params ? `?${params}` : ''}`,
     fiscalPeriods: () => `${apiBase}/accounting/fiscal-periods`,
     fiscalPeriodsCurrent: () => `${apiBase}/accounting/fiscal-periods/current`,
     fiscalPeriodsClose: () => `${apiBase}/accounting/fiscal-periods/close`,
     fiscalPeriodsReopen: () => `${apiBase}/accounting/fiscal-periods/reopen`,
+    // Financial reports (GL-derived)
     arAgingReport: (params?: string) =>
       `${apiBase}/accounting/reports/ar-aging${params ? `?${params}` : ''}`,
     apAgingReport: (params?: string) =>
       `${apiBase}/accounting/reports/ap-aging${params ? `?${params}` : ''}`,
+    trialBalance: (params?: string) =>
+      `${apiBase}/accounting/reports/trial-balance${params ? `?${params}` : ''}`,
+    profitLoss: (params?: string) =>
+      `${apiBase}/accounting/reports/profit-loss${params ? `?${params}` : ''}`,
+    balanceSheet: (params?: string) =>
+      `${apiBase}/accounting/reports/balance-sheet${params ? `?${params}` : ''}`,
+    cashFlowGl: (params?: string) =>
+      `${apiBase}/accounting/reports/cash-flow${params ? `?${params}` : ''}`,
+    generalLedger: (params?: string) =>
+      `${apiBase}/accounting/reports/general-ledger${params ? `?${params}` : ''}`,
+    // Reconciliation
+    reconciliationAp: (params?: string) =>
+      `${apiBase}/accounting/reconciliation/ap${params ? `?${params}` : ''}`,
+    reconciliationAr: (params?: string) =>
+      `${apiBase}/accounting/reconciliation/ar${params ? `?${params}` : ''}`,
+    reconciliationBank: (params?: string) =>
+      `${apiBase}/accounting/reconciliation/bank${params ? `?${params}` : ''}`,
+    reconciliationAsset: (params?: string) =>
+      `${apiBase}/accounting/reconciliation/assets${params ? `?${params}` : ''}`,
+    reconciliationTax: (params?: string) =>
+      `${apiBase}/accounting/reconciliation/tax${params ? `?${params}` : ''}`,
+    reconciliationInventory: (params?: string) =>
+      `${apiBase}/accounting/reconciliation/inventory${params ? `?${params}` : ''}`,
     bankStatements: () => `${apiBase}/accounting/bank-statements`,
     bankStatementShow: (id: number | string) => `${apiBase}/accounting/bank-statements/${id}`,
     bankStatementImportLines: (id: number | string) =>
@@ -514,11 +540,13 @@ export default defineNuxtPlugin(() => {
 
     // DID (Delivery, Installation, dll)
     did: () => `${apiBase}/did`,
+    didStatistics: () => `${apiBase}/did/statistics`,
     totalDids: () => `${apiBase}/did/totalDids`,
     exportExcelDids: () => `${apiBase}/did/export-excel`,
 
     // Service
     service: () => `${apiBase}/service`,
+    serviceStatistics: () => `${apiBase}/service/statistics`,
     serviceExportExcel: () => `${apiBase}/service/export-excel`,
 
     // Service Type (Business, Personal - untuk filter & dropdown Service Plan)
@@ -526,6 +554,7 @@ export default defineNuxtPlugin(() => {
 
     // Service Plan
     servicePlan: () => `${apiBase}/service-plan`,
+    servicePlanStatistics: () => `${apiBase}/service-plan/statistics`,
     servicePlanExportExcel: () => `${apiBase}/service-plan/export-excel`,
 
     // Price List
@@ -601,6 +630,23 @@ export default defineNuxtPlugin(() => {
     approveStockTransfer   : (id: number | string) => `${apiBase}/stock-transfer/approveStockTransfer/${id}`,
     rejectStockTransfer    : (id: number | string) => `${apiBase}/stock-transfer/rejectStockTransfer/${id}`,
 
+    // Phase 12C — inventory control
+    purchaseReturn         : () => `${apiBase}/purchase-return`,
+    purchaseReturnEligible : () => `${apiBase}/purchase-return/eligible`,
+    approvePurchaseReturn  : (id: number | string) => `${apiBase}/purchase-return/${id}/approve`,
+    postPurchaseReturn     : (id: number | string) => `${apiBase}/purchase-return/${id}/post`,
+    reversePurchaseReturn  : (id: number | string) => `${apiBase}/purchase-return/${id}/reverse`,
+    inventoryAdjustment    : () => `${apiBase}/inventory-adjustment`,
+    inventoryAdjustmentReasons: () => `${apiBase}/inventory-adjustment/reasons`,
+    approveInventoryAdjustment: (id: number | string) => `${apiBase}/inventory-adjustment/${id}/approve`,
+    postInventoryAdjustment: (id: number | string) => `${apiBase}/inventory-adjustment/${id}/post`,
+    reverseInventoryAdjustment: (id: number | string) => `${apiBase}/inventory-adjustment/${id}/reverse`,
+    stockMovements         : () => `${apiBase}/stock-movements`,
+    stockCard              : () => `${apiBase}/stock-movements/stock-card`,
+    stockReconcile         : () => `${apiBase}/stock-movements/reconcile`,
+    reverseStockMovement   : (id: number | string) => `${apiBase}/stock-movements/${id}/reverse`,
+    inventoryCutover       : () => `${apiBase}/inventory-cutover`,
+
     // Kategori
     categories            : () => `${apiBase}/categories`,
     countProductByCategory: () => `${apiBase}/categories/countProductByCategory`,
@@ -630,6 +676,7 @@ export default defineNuxtPlugin(() => {
 
     // Vendor
     vendor: () => `${apiBase}/vendor`,
+    vendorStatistics: () => `${apiBase}/vendor/statistics`,
 
     // Quotation
     quotation: () => `${apiBase}/quotation`,

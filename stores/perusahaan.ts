@@ -14,6 +14,7 @@ export interface Perusahaan {
   logoPerusahaan: string
   namaBankPerusahaan?: string | null
   nomorRekeningPerusahaan?: string | null
+  cabangCount?: number
   createdAt: string
   updatedAt: string
 }
@@ -21,8 +22,15 @@ export interface Perusahaan {
 interface PerusahaanState {
   perusahaans: Perusahaan[]
   loading: boolean
+  loadingStats: boolean
   error: any
   totalRecords: number
+  statistics: {
+    total: number
+    withCabang: number
+    withBank: number
+    cabangCount: number
+  }
   params: {
     first: number
     rows: number
@@ -41,8 +49,15 @@ export const usePerusahaanStore = defineStore('perusahaan', {
   state: (): PerusahaanState => ({
     perusahaans: [],
     loading: true,
+    loadingStats: false,
     error: null,
     totalRecords: 0,
+    statistics: {
+      total: 0,
+      withCabang: 0,
+      withBank: 0,
+      cabangCount: 0,
+    },
     params: {
         first: 0,
         rows: 10,
@@ -81,7 +96,12 @@ export const usePerusahaanStore = defineStore('perusahaan', {
         if (!response.ok) throw new Error('Gagal mengambil data perusahaan')
         
         const result = await response.json()
-        this.perusahaans = result.data
+        this.perusahaans = (result.data || []).map((row: any) => ({
+          ...row,
+          cabangCount: Number(
+            row.cabangCount ?? row.$extras?.cabang_count ?? row.meta?.cabang_count ?? 0
+          ),
+        }))
         this.totalRecords = result.meta.total
       } catch (error: any) {
         this.error = error.message;
@@ -143,7 +163,7 @@ export const usePerusahaanStore = defineStore('perusahaan', {
            }
 
             this.closeModal();
-            await this.fetchPerusahaans();
+            await Promise.all([this.fetchPerusahaans(), this.fetchStatistics()]);
             const toast = useToast()
             toast.success({
               title: 'Success',
@@ -201,7 +221,7 @@ export const usePerusahaanStore = defineStore('perusahaan', {
               throw new Error(errorData.message || 'Gagal menghapus perusahaan');
           }
 
-          await this.fetchPerusahaans();
+          await Promise.all([this.fetchPerusahaans(), this.fetchStatistics()]);
           const toast = useToast()
           toast.success({
             title: 'Success',
@@ -283,6 +303,28 @@ export const usePerusahaanStore = defineStore('perusahaan', {
         this.params.search = value;
         this.params.first = 0;
         this.fetchPerusahaans();
+    },
+    async fetchStatistics() {
+      this.loadingStats = true
+      const { $api } = useNuxtApp()
+      try {
+        const response = await fetch($api.perusahaanStatistics(), {
+          headers: { Accept: 'application/json' },
+          credentials: 'include',
+        })
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
+        const result = await response.json()
+        this.statistics = {
+          total: Number(result.total ?? 0),
+          withCabang: Number(result.withCabang ?? 0),
+          withBank: Number(result.withBank ?? 0),
+          cabangCount: Number(result.cabangCount ?? 0),
+        }
+      } catch (error: any) {
+        console.error('Error fetching perusahaan statistics:', error)
+      } finally {
+        this.loadingStats = false
+      }
     },
     handleLogoChange(file: File) {
         if (file) {

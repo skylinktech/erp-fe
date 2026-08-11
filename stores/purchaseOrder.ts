@@ -35,6 +35,11 @@ export interface PurchaseOrder {
   vendorId           : number
   perusahaanId       : number
   cabangId           : number
+  purchaseRequestId? : number | null
+  budgetId?          : number | null
+  departmentId?      : number | null
+  rejectionReason?   : string | null
+  budgetExceeded?    : boolean
   date               : string
   dueDate            : string
   status             : string
@@ -61,6 +66,8 @@ export interface PurchaseOrder {
   vendor?            : Vendor
   perusahaan?        : Perusahaan
   cabang?            : Cabang
+  budget?            : { id: number; budgetCode?: string; budgetName?: string; totalAmount?: number | string }
+  department?        : { id: number; nmDepartemen?: string; nm_departemen?: string }
   createdByUser?     : User
   approvedByUser?    : User
   receivedByUser?    : User
@@ -129,6 +136,8 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
         status: 'draft',
         poType: 'internal',
         purchaseRequestId: null as number | null,
+        budgetId: null as number | null,
+        departmentId: null as number | null,
         purchaseOrderItems: []
       },
     stats: {
@@ -228,10 +237,31 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
             delete dataToAppend.vendor;
             delete dataToAppend.perusahaan;
             delete dataToAppend.cabang;
+            delete dataToAppend.budget;
+            delete dataToAppend.department;
+            delete dataToAppend.purchaseRequest;
             delete dataToAppend.createdByUser;
             delete dataToAppend.approvedByUser;
             delete dataToAppend.receivedByUser;
             delete dataToAppend.rejectedByUser;
+            delete dataToAppend.approvalLogs;
+            delete dataToAppend.currentApprovers;
+            delete dataToAppend.budgetCheck;
+            delete dataToAppend.rejectionReason;
+            delete dataToAppend.budgetExceeded;
+            // Lifecycle fields — tidak boleh dikirim dari client; create selalu draft di backend
+            delete dataToAppend.status;
+            delete dataToAppend.approvedBy;
+            delete dataToAppend.rejectedBy;
+            delete dataToAppend.approvedAt;
+            delete dataToAppend.rejectedAt;
+            delete dataToAppend.receivedBy;
+            delete dataToAppend.receivedAt;
+            delete dataToAppend.cancelledAt;
+            delete dataToAppend.cancelledBy;
+            delete dataToAppend.cancellationReason;
+            delete dataToAppend.submittedAt;
+            delete dataToAppend.currentApprovalStep;
             
             // Untuk create, hapus noPo karena di-generate di backend
             if (!this.isEditMode) {
@@ -287,12 +317,6 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
 
             if (!this.isEditMode && userStore.user && userStore.user.id) {
                 formData.append('createdBy', userStore.user.id.toString())
-                if(this.form.status === 'approved') {
-                    formData.append('approvedBy', userStore.user.id.toString())
-                }
-                if(this.form.status === 'rejected') {
-                    formData.append('rejectedBy', userStore.user.id.toString())
-                }
             }
 
             if (this.form.attachment instanceof File) {
@@ -371,14 +395,29 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
                     throw new Error(errorMessage);
                 }
             } else {
+                const result = await response.json().catch(() => ({} as any));
                 this.closeModal();
                 await this.fetchPurchaseOrders();
-                toast.success({
-                  title: 'Success',
-                  message: `Purchase Order berhasil ${this.isEditMode ? 'diperbarui' : 'dibuat'}.`,
-                  color: 'green',
-                  position: 'bottomRight',
-                });
+                const budgetExceeded =
+                  !!(result?.data?.budgetExceeded ?? result?.data?.budget_exceeded) ||
+                  result?.data?.budgetCheck?.ok === false;
+                if (budgetExceeded) {
+                  toast.error({
+                    title: 'Peringatan Budget',
+                    message:
+                      result?.message ||
+                      'Budget untuk departemen ini tidak mencukupi, silakan mengajukan tambahan budget terlebih dahulu',
+                    color: 'orange',
+                    position: 'bottomRight',
+                  });
+                } else {
+                  toast.success({
+                    title: 'Success',
+                    message: `Purchase Order berhasil ${this.isEditMode ? 'diperbarui' : 'dibuat'}.`,
+                    color: 'green',
+                    position: 'bottomRight',
+                  });
+                }
                 return true;
             }
 
@@ -467,6 +506,18 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
           });
           if (!response.ok) {
               const errorData = await response.json().catch(() => ({ message: 'Gagal submit purchase order' }));
+              if (errorData.code === 'BUDGET_EXCEEDED') {
+                await this.fetchPurchaseOrders();
+                toast.error({
+                  title: 'Approval Ditolak',
+                  message:
+                    errorData.message ||
+                    'Budget untuk departemen ini tidak mencukupi, silakan mengajukan tambahan budget terlebih dahulu',
+                  color: 'red',
+                  position: 'bottomRight',
+                });
+                return false;
+              }
               throw new Error(errorData.message || 'Gagal submit purchase order');
           }
           await this.fetchPurchaseOrders();
@@ -498,6 +549,18 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
 
           if (!response.ok) {
               const errorData = await response.json().catch(() => ({ message: 'Gagal mengapprove purchase order' }));
+              if (errorData.code === 'BUDGET_EXCEEDED') {
+                await this.fetchPurchaseOrders();
+                toast.error({
+                  title: 'Approval Ditolak',
+                  message:
+                    errorData.message ||
+                    'Budget untuk departemen ini tidak mencukupi, silakan mengajukan tambahan budget terlebih dahulu',
+                  color: 'red',
+                  position: 'bottomRight',
+                });
+                return false;
+              }
               throw new Error(errorData.message || 'Gagal mengapprove purchase order');
           }
 
@@ -565,7 +628,49 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
       } finally {
           this.loading = false;
       }
-    },    
+    },
+
+    async cancelPurchaseOrder(purchaseOrderId: string, reason?: string) {
+      const toast = useToast();
+      this.loading = true;
+      this.error = null;
+      const { $api } = useNuxtApp();
+      try {
+          const response = await fetch($api.purchaseOrderCancel(purchaseOrderId), {
+              method: 'PATCH',
+              headers: {
+                  'Content-Type': 'application/json',
+                  'Accept': 'application/json',
+              },
+              credentials: 'include',
+              body: JSON.stringify({ reason: reason ?? undefined }),
+          });
+
+          if (!response.ok) {
+              const errorData = await response.json().catch(() => ({ message: 'Gagal membatalkan purchase order' }));
+              throw new Error(errorData.message || 'Gagal membatalkan purchase order');
+          }
+
+          await this.fetchPurchaseOrders();
+          toast.success({
+            title: 'Success',
+            message: 'Purchase Order berhasil dibatalkan.',
+            color: 'green',
+            position: 'bottomRight',
+          });
+          return true;
+      } catch (error: any) {
+          toast.error({
+            title: 'Error',
+            message: error.message || 'Gagal membatalkan purchase order.',
+            color: 'red',
+            position: 'bottomRight',
+          });
+          return false;
+      } finally {
+          this.loading = false;
+      }
+    },
 
     async updateStatusPartial(itemId: string, status: boolean, receivedQty: number) {
       const toast     = useToast();
@@ -884,6 +989,8 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
                 status: 'draft',
                 poType: 'internal', // Default ke internal
                 purchaseRequestId: null,
+                budgetId: null,
+                departmentId: null,
                 purchaseOrderItems: [],
             };
             this.addItem(); // Tambahkan satu item default untuk PO baru
@@ -913,6 +1020,8 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
             status: 'draft',
             poType: 'internal',
             purchaseRequestId: null,
+            budgetId: null,
+            departmentId: null,
             purchaseOrderItems: [],
         };
         this.validationErrors = [];

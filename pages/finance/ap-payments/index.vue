@@ -565,22 +565,13 @@
           <div class="col-md-3">
             <div class="mb-3">
               <label class="form-label">Status</label>
-              <select
-                v-model="apPaymentStore.form.status"
-                class="form-select"
-                
-              >
-                <option
-                  v-for="status in apPaymentStore.statuses"
-                  :key="status.value"
-                  :value="status.value"
-                >
-                  {{ status.label }}
-                </option>
-              </select>
-              <div v-if="hasError('status')" class="invalid-feedback">
-                {{ getError('status') }}
-              </div>
+              <input
+                type="text"
+                class="form-control"
+                :value="getStatusLabel(apPaymentStore.form.status || 'draft')"
+                readonly
+                disabled
+              />
             </div>
           </div>
           <div class="col-md-12">

@@ -19,6 +19,24 @@
                         <strong>Status: {{ purchaseOrder.status?.toUpperCase() }}</strong> - Purchase Order ini sudah selesai dan tidak dapat diubah lagi. Jika ada perubahan yang diperlukan, silakan buat Purchase Return.
                     </div>
                 </div>
+
+                <div
+                    v-if="purchaseOrder.budgetExceeded || purchaseOrder.budget_exceeded"
+                    class="alert alert-danger d-flex align-items-start mb-4"
+                    role="alert"
+                >
+                    <i class="ri-error-warning-line ri-22px me-2 mt-1"></i>
+                    <div>
+                        <strong class="d-block mb-1">Budget tidak mencukupi</strong>
+                        <span>
+                            {{
+                                purchaseOrder.rejectionReason ||
+                                purchaseOrder.rejection_reason ||
+                                'Budget untuk departemen ini tidak mencukupi, silakan mengajukan tambahan budget terlebih dahulu'
+                            }}
+                        </span>
+                    </div>
+                </div>
                 
                 <div class="row invoice-preview">
                 <!-- Invoice -->
@@ -75,6 +93,39 @@
                                         purchaseOrder.purchase_request_id
                                       }}
                                     </NuxtLink>
+                                </div>
+                                <div
+                                  v-if="purchaseOrder.department || purchaseOrder.departmentId || purchaseOrder.department_id"
+                                  class="mb-1"
+                                >
+                                    <span>Departemen: </span>
+                                    <span>
+                                      {{
+                                        purchaseOrder.department?.nmDepartemen ||
+                                        purchaseOrder.department?.nm_departemen ||
+                                        '-'
+                                      }}
+                                    </span>
+                                </div>
+                                <div
+                                  v-if="purchaseOrder.budget || purchaseOrder.budgetId || purchaseOrder.budget_id"
+                                  class="mb-1"
+                                >
+                                    <span>Budget: </span>
+                                    <span>
+                                      {{
+                                        [
+                                          purchaseOrder.budget?.budgetCode || purchaseOrder.budget?.budget_code,
+                                          purchaseOrder.budget?.budgetName || purchaseOrder.budget?.budget_name,
+                                        ].filter(Boolean).join(' — ') || '-'
+                                      }}
+                                    </span>
+                                    <span
+                                      v-if="purchaseOrder.budgetExceeded || purchaseOrder.budget_exceeded"
+                                      class="badge rounded-pill bg-label-danger ms-2"
+                                    >
+                                      Budget tidak cukup
+                                    </span>
                                 </div>
                             </div>
                             </div>

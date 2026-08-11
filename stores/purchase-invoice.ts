@@ -55,6 +55,7 @@ export interface PurchaseInvoice {
   paymentMethod   : string // ✅ NEW: Tambahkan payment method
   dueDate         : string
   status          : string
+  documentStatus? : string
   paidAmount      : number
   remainingAmount : number
   source?         : string
@@ -372,8 +373,7 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
             formData.append('createdBy', this.form.createdBy?.toString() || '');
             formData.append('updatedBy', this.form.updatedBy?.toString() || '');
             
-            formData.append('status', this.form.status || 'unpaid');
-            formData.append('paidAmount', this.form.paidAmount?.toString() || '0');
+            // Payment settlement (status/paid/remaining) derived dari payment — jangan finalize dari form
             formData.append('discountPercent', this.form.discountPercent?.toString() || '0');
             formData.append('taxPercent', this.form.taxPercent?.toString() || '0');
             formData.append('dpp', this.form.dpp?.toString() || '0');
@@ -398,13 +398,8 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
                 grandTotal = totalAfterDiscount + taxAmount;
             }
             
-            // Calculate remaining amount based on grand total
-            const paidAmount = Number(this.form.paidAmount) || 0;
-            const remainingAmount = grandTotal - paidAmount;
-            
             // Send grand total as the final total
             formData.set('total', grandTotal.toString());
-            formData.append('remainingAmount', remainingAmount.toString());
 
             // ✅ ADD: Append sales invoice items to FormData
             if (this.form.purchaseInvoiceItems && Array.isArray(this.form.purchaseInvoiceItems)) {
@@ -531,6 +526,73 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
       } finally {
           this.loading = false;
       }
+    },
+
+    async _lifecycleAction(
+      id: string,
+      urlFn: (id: string | number) => string,
+      successMessage: string,
+      body?: Record<string, unknown>
+    ) {
+      const toast = useToast();
+      this.loading = true;
+      const { $api } = useNuxtApp();
+      try {
+        const response = await fetch(urlFn(id), {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify(body || {}),
+        });
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ message: successMessage.replace('berhasil', 'gagal') }));
+          throw new Error(errorData.message || 'Operasi gagal');
+        }
+        await this.fetchPurchaseInvoices();
+        if (this.purchaseInvoice?.id === id) {
+          await this.fetchPurchaseInvoiceDetails(id);
+        }
+        toast.success({
+          title: 'Success',
+          message: successMessage,
+          color: 'green',
+          position: 'bottomRight',
+        });
+        return true;
+      } catch (error: any) {
+        toast.error({
+          title: 'Error',
+          message: error.message || 'Operasi gagal',
+          color: 'red',
+          position: 'bottomRight',
+        });
+        return false;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async submitPurchaseInvoice(id: string) {
+      const { $api } = useNuxtApp();
+      return this._lifecycleAction(id, $api.purchaseInvoiceSubmit, 'Purchase Invoice berhasil di-submit.');
+    },
+
+    async approvePurchaseInvoice(id: string, remarks?: string) {
+      const { $api } = useNuxtApp();
+      return this._lifecycleAction(id, $api.purchaseInvoiceApprove, 'Purchase Invoice berhasil diapprove.', { remarks });
+    },
+
+    async postPurchaseInvoice(id: string) {
+      const { $api } = useNuxtApp();
+      return this._lifecycleAction(id, $api.purchaseInvoicePost, 'Purchase Invoice berhasil diposting.');
+    },
+
+    async cancelPurchaseInvoice(id: string, reason?: string) {
+      const { $api } = useNuxtApp();
+      return this._lifecycleAction(id, $api.purchaseInvoiceCancel, 'Purchase Invoice berhasil dibatalkan.', { reason });
     },
 
     async openModal(purchaseInvoiceData: PurchaseInvoice | null = null) {

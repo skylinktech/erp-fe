@@ -16,7 +16,8 @@ export interface Journal {
   journalNumber: string
   date: string
   description: string
-  status: 'draft' | 'posted' | 'cancelled'
+  status: 'draft' | 'posted' | 'reversed' | 'cancelled'
+  reversalReason?: string | null
   referenceType?: string | null
   referenceId?: string | null
   createdBy?: number
@@ -30,15 +31,26 @@ interface JournalState {
   journals: Journal[]
   selectedJournal: Journal | null
   loading: boolean
+  loadingStats: boolean
   saving: boolean
   error: any
   totalRecords: number
+  statistics: {
+    total: number
+    draft: number
+    posted: number
+    cancelled: number
+    totalDebit: number
+  }
   params: {
     first: number
     rows: number
     sortField: string | null
     sortOrder: number | null
     search: string
+    status: string
+    startDate: string
+    endDate: string
   }
   form: Partial<Journal>
   isEditMode: boolean
@@ -54,15 +66,26 @@ export const useJournalStore = defineStore('journal', {
     journals: [],
     selectedJournal: null,
     loading: false,
+    loadingStats: false,
     saving: false,
     error: null,
     totalRecords: 0,
+    statistics: {
+      total: 0,
+      draft: 0,
+      posted: 0,
+      cancelled: 0,
+      totalDebit: 0,
+    },
     params: {
       first: 0,
       rows: 10,
       sortField: 'date',
       sortOrder: -1,
       search: '',
+      status: '',
+      startDate: '',
+      endDate: '',
     },
     form: {
       journalNumber: '',
@@ -84,6 +107,7 @@ export const useJournalStore = defineStore('journal', {
     journalStatuses: [
       { value: 'draft', label: 'Draft' },
       { value: 'posted', label: 'Posted' },
+      { value: 'reversed', label: 'Reversed' },
       { value: 'cancelled', label: 'Dibatalkan' }
     ],
     accounts: []
@@ -102,6 +126,15 @@ export const useJournalStore = defineStore('journal', {
           sortOrder: (this.params.sortOrder || 1) > 0 ? 'asc' : 'desc',
           search: this.params.search || '',
         });
+        if (this.params.status) {
+          params.set('status', this.params.status)
+        }
+        if (this.params.startDate) {
+          params.set('startDate', this.params.startDate)
+        }
+        if (this.params.endDate) {
+          params.set('endDate', this.params.endDate)
+        }
 
         const response = await fetch(`${$api.journals()}?${params.toString()}`, {
           headers: {
@@ -185,12 +218,12 @@ export const useJournalStore = defineStore('journal', {
       const { $api } = useNuxtApp()
 
       try {
-        // Validasi field required
-        if (!this.form.journalNumber || !this.form.date || !this.form.description || !this.form.status) {
+        // Validasi field required (status selalu draft di backend — jangan kirim dari client)
+        if (!this.form.date || !this.form.description) {
           const toast = useToast()
           toast.error({
             title: 'Error',
-            message: 'Semua field wajib diisi',
+            message: 'Tanggal dan deskripsi wajib diisi',
             color: 'red',
             position: 'bottomRight',
           });
@@ -247,13 +280,12 @@ export const useJournalStore = defineStore('journal', {
 
         const formData = new FormData()
         
-        const fieldsToSend = ['journalNumber', 'date', 'description', 'status', 'referenceType', 'referenceId'];
+        // Jangan kirim `status` — create/update selalu draft di backend; posting via /post
+        const fieldsToSend = ['journalNumber', 'date', 'description', 'referenceType', 'referenceId'];
         fieldsToSend.forEach(key => {
           const value = this.form[key as keyof typeof this.form];
           if (value !== null && value !== undefined && value !== '') {
             formData.append(key, String(value));
-          } else {
-            console.warn(`Field ${key} is null, undefined, or empty`);
           }
         });
 
@@ -353,7 +385,7 @@ export const useJournalStore = defineStore('journal', {
         }
         
         this.closeModal();
-        await this.fetchJournals();
+        await Promise.all([this.fetchJournals(), this.fetchStatistics()]);
         const toast = useToast()        
         toast.success({
           title: 'Success',
@@ -407,7 +439,7 @@ export const useJournalStore = defineStore('journal', {
             throw new Error(errorData?.message || 'Gagal menghapus jurnal.');
           }
 
-          await this.fetchJournals();
+          await Promise.all([this.fetchJournals(), this.fetchStatistics()]);
           const toast = useToast()          
           toast.success({
             title: 'Success',
@@ -445,7 +477,7 @@ export const useJournalStore = defineStore('journal', {
 
       if (result.isConfirmed) {
         try {
-          const response = await fetch(`${$api.journals()}/${id}/post`, {
+          const response = await fetch($api.journalsPost(id), {
             method: 'PATCH',
             headers: {
               'Content-Type': 'application/json',
@@ -459,7 +491,7 @@ export const useJournalStore = defineStore('journal', {
             throw new Error(errorData?.message || 'Gagal memposting jurnal.');
           }
 
-          await this.fetchJournals();
+          await Promise.all([this.fetchJournals(), this.fetchStatistics()]);
           const toast = useToast()          
           toast.success({
             title: 'Success',
@@ -478,6 +510,65 @@ export const useJournalStore = defineStore('journal', {
         } finally {
           this.loading = false
         }
+      }
+    },
+
+    async reverseJournal(id: number | string, reason?: string) {
+      const { $api } = useNuxtApp();
+      const toast = useToast();
+
+      let reversalReason = reason;
+      if (!reversalReason) {
+        const result = await Swal.fire({
+          title: 'Reverse Jurnal?',
+          text: 'Jurnal posted hanya dapat dikoreksi melalui reversal. Masukkan alasan reverse.',
+          input: 'textarea',
+          inputLabel: 'Alasan reverse (wajib)',
+          inputPlaceholder: 'Tulis alasan reverse...',
+          inputValidator: (value) => (!value?.trim() ? 'Alasan reverse wajib diisi' : undefined),
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#d33',
+          cancelButtonColor: '#6c757d',
+          confirmButtonText: 'Ya, Reverse!',
+          cancelButtonText: 'Batal',
+        });
+        if (!result.isConfirmed) return false;
+        reversalReason = String(result.value || '').trim();
+      }
+
+      try {
+        const response = await fetch($api.journalsReverse(id), {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({ reason: reversalReason }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ message: 'Gagal mereverse jurnal.' }));
+          throw new Error(errorData?.message || 'Gagal mereverse jurnal.');
+        }
+
+        await Promise.all([this.fetchJournals(), this.fetchStatistics()]);
+        toast.success({
+          title: 'Success',
+          message: 'Jurnal berhasil di-reverse.',
+          color: 'green',
+          position: 'bottomRight',
+        });
+        return true;
+      } catch (error: any) {
+        toast.error({
+          title: 'Error',
+          message: error?.message || 'Gagal mereverse jurnal',
+          color: 'red',
+          position: 'bottomRight',
+        });
+        return false;
       }
     },
 
@@ -573,6 +664,40 @@ export const useJournalStore = defineStore('journal', {
       this.params.search = search;
       this.params.first = 0;
       this.fetchJournals();
-    }
+    },
+
+    setFilter(key: 'status' | 'startDate' | 'endDate', value: string) {
+      this.params[key] = value
+      this.params.first = 0
+      this.fetchJournals()
+    },
+
+    async fetchStatistics() {
+      this.loadingStats = true
+      const { $api } = useNuxtApp()
+      try {
+        // Global aggregates (Tax Master pattern) — tidak ikut filter list
+        const response = await fetch($api.journalEntriesSummary(), {
+          headers: { Accept: 'application/json' },
+          credentials: 'include',
+        })
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
+        const json = await response.json()
+        const data = json?.data && typeof json.data === 'object' && !Array.isArray(json.data)
+          ? json.data
+          : json
+        this.statistics = {
+          total: Number(data.total ?? data.totalJournals ?? 0),
+          draft: Number(data.draft ?? data.draftJournals ?? 0),
+          posted: Number(data.posted ?? data.postedJournals ?? 0),
+          cancelled: Number(data.cancelled ?? data.cancelledJournals ?? 0),
+          totalDebit: Number(data.totalDebit ?? data.total_debit ?? 0),
+        }
+      } catch (error: any) {
+        console.error('Error fetching journal statistics:', error)
+      } finally {
+        this.loadingStats = false
+      }
+    },
   }
 })
