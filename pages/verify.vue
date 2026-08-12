@@ -130,9 +130,30 @@
                       <span class="ms-2">{{ formatDate(verificationResult.document.signedAt) }}</span>
                     </div>
 
-                    <div class="detail-item" v-if="verificationResult.document.createdBy || verificationResult.document.approvedBy">
+                    <div
+                      class="detail-item mb-2"
+                      v-if="
+                        verificationResult.document.signedByName ||
+                        verificationResult.document.approvedBy ||
+                        verificationResult.document.createdBy ||
+                        verificationResult.document.transferBy
+                      "
+                    >
                       <strong>Ditandatangani oleh:</strong>
-                      <span class="ms-2">{{ verificationResult.document.approvedBy || verificationResult.document.createdBy || '-' }}</span>
+                      <span class="ms-2">
+                        {{
+                          verificationResult.document.signedByName ||
+                          verificationResult.document.approvedBy ||
+                          verificationResult.document.createdBy ||
+                          verificationResult.document.transferBy ||
+                          '-'
+                        }}
+                      </span>
+                    </div>
+
+                    <div class="detail-item" v-if="verificationResult.document.signatureRole">
+                      <strong>Peran tanda tangan:</strong>
+                      <span class="ms-2">{{ verificationResult.document.signatureRole }}</span>
                     </div>
                   </div>
                 </div>
@@ -208,12 +229,17 @@ const { loading, error, verificationResult } = storeToRefs(verificationStore)
 const manualToken = ref('')
 const formatRupiah = useFormatRupiah()
 
+function verificationOptions() {
+  const type = route.query.type
+  return type ? { type: String(type) } : {}
+}
+
 // Auto verify if token in query params
 onMounted(async () => {
   const token = route.query.token
   if (token) {
     try {
-      await verificationStore.verifyDocument(token)
+      await verificationStore.verifyDocument(String(token), verificationOptions())
     } catch (e) {
       console.error('Verification failed:', e)
     }
@@ -225,7 +251,7 @@ async function handleManualSubmit() {
   if (!manualToken.value) return
   
   try {
-    await verificationStore.verifyDocument(manualToken.value)
+    await verificationStore.verifyDocument(manualToken.value, verificationOptions())
     // Update URL with token
     router.push({ query: { token: manualToken.value } })
   } catch (e) {
@@ -238,7 +264,7 @@ function retryVerification() {
   const token = route.query.token || manualToken.value
   if (token) {
     verificationStore.reset()
-    verificationStore.verifyDocument(token)
+    verificationStore.verifyDocument(String(token), verificationOptions())
   }
 }
 
