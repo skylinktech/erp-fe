@@ -289,7 +289,7 @@ function formatDate(date) {
 <style scoped>
 .verify-document-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #ffffff;
   padding: 2rem 0;
 }
 
@@ -299,11 +299,11 @@ function formatDate(date) {
 }
 
 .card.border-success {
-  border-color: #28a745 !important;
+  border-color: #f8f9fa !important;
 }
 
 .card.border-danger {
-  border-color: #dc3545 !important;
+  border-color: #f8f9fa !important;
 }
 
 .verify-icon {

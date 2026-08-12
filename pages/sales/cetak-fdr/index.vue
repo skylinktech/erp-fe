@@ -37,7 +37,7 @@
       </div>
       <div class="cetak-fdr-title-wrap text-end mt-3">
         <h1 class="cetak-fdr-title fw-bold mb-0">FDR</h1>
-        <div class="text-muted small">Field Development Request</div>
+        <div class="text-muted small">Form Design Request</div>
       </div>
     </div>
 

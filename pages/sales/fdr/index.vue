@@ -191,7 +191,11 @@
                   </Column>
                   <Column field="name" header="Project Name" :sortable="true" class="text-nowrap"></Column>
                   <Column field="customer.name" header="Customer" :sortable="true" class="text-nowrap fw-semibold"></Column>
-                  <Column field="location" header="Lokasi" :sortable="true"></Column>
+                  <Column field="location" header="Lokasi" :sortable="true" class="text-nowrap">
+                    <template #body="slotProps">
+                      <span :title="slotProps.data.location || ''">{{ truncateWords(slotProps.data.location, 4) }}</span>
+                    </template>
+                  </Column>
                   <Column field="businessScheme.name" header="Skema" :sortable="true" class="text-nowrap"></Column>
                   <Column field="priority" header="Priority" :sortable="true">
                     <template #body="slotProps">
@@ -336,6 +340,14 @@ function formatFdrDate(v) {
     if (Number.isNaN(d.getTime())) return '-'
     return d.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' })
   } catch { return '-' }
+}
+
+function truncateWords(text, maxWords = 4) {
+  const value = String(text || '').trim()
+  if (!value) return '-'
+  const words = value.split(/\s+/).filter(Boolean)
+  if (words.length <= maxWords) return value
+  return `${words.slice(0, maxWords).join(' ')} ...`
 }
 
 function getCustomerLabel(c) { return c ? c.name : '' }
