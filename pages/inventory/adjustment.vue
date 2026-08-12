@@ -74,8 +74,27 @@
                     <td>{{ row.reason }}</td>
                     <td><span class="badge bg-label-secondary">{{ row.status }}</span></td>
                     <td class="text-nowrap">
-                      <button v-if="row.status === 'draft'" class="btn btn-xs btn-outline-primary me-1" @click="approve(row.id)">Approve</button>
-                      <button v-if="['draft','approved'].includes(row.status)" class="btn btn-xs btn-outline-success me-1" @click="post(row.id)">Post</button>
+                      <button
+                        v-if="row.status === 'draft' || row.status === 'rejected'"
+                        class="btn btn-xs btn-outline-secondary me-1"
+                        @click="submit(row)"
+                      >Submit</button>
+                      <button
+                        v-if="canApprove(row)"
+                        class="btn btn-xs btn-outline-primary me-1"
+                        @click="approve(row)"
+                      >Approve</button>
+                      <button
+                        v-if="canReject(row)"
+                        class="btn btn-xs btn-outline-danger me-1"
+                        @click="reject(row)"
+                      >Reject</button>
+                      <button
+                        v-if="row.status === 'approved'"
+                        class="btn btn-xs btn-outline-success me-1"
+                        :title="blocksSelfAction(row.createdBy) ? 'Maker-checker: tidak boleh post dokumen sendiri' : ''"
+                        @click="post(row)"
+                      >Post</button>
                       <button v-if="row.status === 'posted'" class="btn btn-xs btn-outline-danger" @click="reverse(row.id)">Reverse</button>
                     </td>
                   </tr>
@@ -84,6 +103,9 @@
                   </tr>
                 </tbody>
               </table>
+              <p class="small text-muted mb-0 mt-2">
+                Approval: submit → workflow. Post tetap maker-checker (kecuali superadmin).
+              </p>
             </div>
           </div>
         </div>
@@ -93,9 +115,18 @@
 </template>
 
 <script setup>
+import { useMakerChecker } from '~/composables/useMakerChecker'
+import { useWorkflowApproval } from '~/composables/useWorkflowApproval'
+
 definePageMeta({ middleware: ['auth', 'check-permission'] })
 
-const { $api, $toast } = useNuxtApp()
+const { $api } = useNuxtApp()
+const toast = useToast()
+const { blocksSelfAction, selfBlockMessage } = useMakerChecker()
+const { canApprove, canReject } = useWorkflowApproval({
+  approvePermission: 'approve_inventory_adjustment',
+  rejectPermission: 'reject_inventory_adjustment',
+})
 const warehouses = ref([])
 const reasons = ref([])
 const rows = ref([])
@@ -108,6 +139,17 @@ const form = reactive({
   quantity: 1,
   direction: 'IN',
 })
+
+function showApiError(e, fallback = 'Terjadi kesalahan') {
+  const message = e?.data?.message || e?.message || fallback
+  const isValidation = /maker-checker/i.test(message) || e?.data?.meta?.code === 'FORBIDDEN'
+  toast.error({
+    title: isValidation ? 'Validasi' : 'Error',
+    message,
+    color: 'red',
+    position: 'bottomRight',
+  })
+}
 
 const loadWarehouses = async () => {
   try {
@@ -134,7 +176,7 @@ const loadList = async () => {
     rows.value = res?.data || res?.meta ? (res.data || []) : (Array.isArray(res) ? res : [])
     if (res?.meta && Array.isArray(res.data)) rows.value = res.data
   } catch (e) {
-    $toast?.error?.(e?.data?.message || 'Gagal load adjustment')
+    showApiError(e, 'Gagal load adjustment')
   }
 }
 
@@ -155,32 +197,65 @@ const createAdjustment = async () => {
         }],
       },
     })
-    $toast?.success?.('Adjustment draft dibuat')
+    toast.success({ title: 'Berhasil', message: 'Adjustment draft dibuat', color: 'green', position: 'bottomRight' })
     await loadList()
   } catch (e) {
-    $toast?.error?.(e?.data?.message || e?.message || 'Gagal create')
+    showApiError(e, 'Gagal create')
   } finally {
     saving.value = false
   }
 }
 
-const approve = async (id) => {
+const approve = async (row) => {
   try {
-    await $fetch($api.approveInventoryAdjustment(id), { method: 'PATCH', credentials: 'include' })
-    $toast?.success?.('Approved')
+    await $fetch($api.approveInventoryAdjustment(row.id), { method: 'PATCH', credentials: 'include' })
+    toast.success({ title: 'Berhasil', message: 'Approved', color: 'green', position: 'bottomRight' })
     await loadList()
   } catch (e) {
-    $toast?.error?.(e?.data?.message || 'Approve gagal')
+    showApiError(e, 'Approve gagal')
   }
 }
 
-const post = async (id) => {
+const submit = async (row) => {
   try {
-    await $fetch($api.postInventoryAdjustment(id), { method: 'POST', credentials: 'include' })
-    $toast?.success?.('Posted ke ledger')
+    await $fetch($api.submitInventoryAdjustment(row.id), { method: 'PATCH', credentials: 'include' })
+    toast.success({ title: 'Berhasil', message: 'Submitted for approval', color: 'green', position: 'bottomRight' })
     await loadList()
   } catch (e) {
-    $toast?.error?.(e?.data?.message || 'Post gagal')
+    showApiError(e, 'Submit gagal')
+  }
+}
+
+const reject = async (row) => {
+  try {
+    await $fetch($api.rejectInventoryAdjustment(row.id), {
+      method: 'PATCH',
+      credentials: 'include',
+      body: { remarks: 'Rejected' },
+    })
+    toast.success({ title: 'Berhasil', message: 'Rejected', color: 'green', position: 'bottomRight' })
+    await loadList()
+  } catch (e) {
+    showApiError(e, 'Reject gagal')
+  }
+}
+
+const post = async (row) => {
+  if (blocksSelfAction(row.createdBy)) {
+    toast.error({
+      title: 'Validasi',
+      message: selfBlockMessage('post inventory adjustment'),
+      color: 'red',
+      position: 'bottomRight',
+    })
+    return
+  }
+  try {
+    await $fetch($api.postInventoryAdjustment(row.id), { method: 'POST', credentials: 'include' })
+    toast.success({ title: 'Berhasil', message: 'Posted ke ledger', color: 'green', position: 'bottomRight' })
+    await loadList()
+  } catch (e) {
+    showApiError(e, 'Post gagal')
   }
 }
 
@@ -193,10 +268,10 @@ const reverse = async (id) => {
       credentials: 'include',
       body: { reason },
     })
-    $toast?.success?.('Reversed')
+    toast.success({ title: 'Berhasil', message: 'Reversed', color: 'green', position: 'bottomRight' })
     await loadList()
   } catch (e) {
-    $toast?.error?.(e?.data?.message || 'Reverse gagal')
+    showApiError(e, 'Reverse gagal')
   }
 }
 

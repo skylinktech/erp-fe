@@ -208,6 +208,7 @@ export default defineNuxtPlugin(() => {
     purchaseInvoiceStatistics: () => `${apiBase}/purchase-invoice/statistics`,
     purchaseInvoiceSubmit: (id: number | string) => `${apiBase}/purchase-invoice/${id}/submit`,
     purchaseInvoiceApprove: (id: number | string) => `${apiBase}/purchase-invoice/${id}/approve`,
+    purchaseInvoiceReject: (id: number | string) => `${apiBase}/purchase-invoice/${id}/reject`,
     purchaseInvoicePost: (id: number | string) => `${apiBase}/purchase-invoice/${id}/post`,
     purchaseInvoiceCancel: (id: number | string) => `${apiBase}/purchase-invoice/${id}/cancel`,
     
@@ -404,6 +405,9 @@ export default defineNuxtPlugin(() => {
     apPaymentsDelete: (id: number | string) => `${apiBase}/accounting/ap-payments/delete/${id}`,
     apPaymentsSummary: () => `${apiBase}/accounting/ap-payments/summary`,
     apPaymentsConfirm: (id: number | string) => `${apiBase}/accounting/ap-payments/${id}/confirm`,
+    apPaymentsSubmit: (id: number | string) => `${apiBase}/accounting/ap-payments/${id}/submit`,
+    apPaymentsApprove: (id: number | string) => `${apiBase}/accounting/ap-payments/${id}/approve`,
+    apPaymentsReject: (id: number | string) => `${apiBase}/accounting/ap-payments/${id}/reject`,
     apPaymentsCancel: (id: number | string) => `${apiBase}/accounting/ap-payments/${id}/cancel`,
     
     // AR Receipts
@@ -439,6 +443,9 @@ export default defineNuxtPlugin(() => {
 
     // Journal Entries
     journals: () => `${apiBase}/accounting/journals`,
+    journalsSubmit: (id: number | string) => `${apiBase}/accounting/journals/${id}/submit`,
+    journalsApprove: (id: number | string) => `${apiBase}/accounting/journals/${id}/approve`,
+    journalsReject: (id: number | string) => `${apiBase}/accounting/journals/${id}/reject`,
     journalsPost: (id: number | string) => `${apiBase}/accounting/journals/${id}/post`,
     journalsReverse: (id: number | string) => `${apiBase}/accounting/journals/${id}/reverse`,
     journalsCancel: (id: number | string) => `${apiBase}/accounting/journals/${id}/cancel`,
@@ -633,19 +640,43 @@ export default defineNuxtPlugin(() => {
     // Phase 12C — inventory control
     purchaseReturn         : () => `${apiBase}/purchase-return`,
     purchaseReturnEligible : () => `${apiBase}/purchase-return/eligible`,
+    submitPurchaseReturn   : (id: number | string) => `${apiBase}/purchase-return/${id}/submit`,
     approvePurchaseReturn  : (id: number | string) => `${apiBase}/purchase-return/${id}/approve`,
+    rejectPurchaseReturn   : (id: number | string) => `${apiBase}/purchase-return/${id}/reject`,
     postPurchaseReturn     : (id: number | string) => `${apiBase}/purchase-return/${id}/post`,
     reversePurchaseReturn  : (id: number | string) => `${apiBase}/purchase-return/${id}/reverse`,
     inventoryAdjustment    : () => `${apiBase}/inventory-adjustment`,
     inventoryAdjustmentReasons: () => `${apiBase}/inventory-adjustment/reasons`,
+    submitInventoryAdjustment: (id: number | string) => `${apiBase}/inventory-adjustment/${id}/submit`,
     approveInventoryAdjustment: (id: number | string) => `${apiBase}/inventory-adjustment/${id}/approve`,
+    rejectInventoryAdjustment: (id: number | string) => `${apiBase}/inventory-adjustment/${id}/reject`,
     postInventoryAdjustment: (id: number | string) => `${apiBase}/inventory-adjustment/${id}/post`,
     reverseInventoryAdjustment: (id: number | string) => `${apiBase}/inventory-adjustment/${id}/reverse`,
     stockMovements         : () => `${apiBase}/stock-movements`,
+    stockMovementShow      : (id: number | string) => `${apiBase}/stock-movements/${id}`,
     stockCard              : () => `${apiBase}/stock-movements/stock-card`,
     stockReconcile         : () => `${apiBase}/stock-movements/reconcile`,
     reverseStockMovement   : (id: number | string) => `${apiBase}/stock-movements/${id}/reverse`,
     inventoryCutover       : () => `${apiBase}/inventory-cutover`,
+
+    // Phase 17 — inventory accounting visibility (VIEW ONLY)
+    inventoryValuation     : () => `${apiBase}/inventory-valuation`,
+    inventoryValuationShow : (id: number | string) => `${apiBase}/inventory-valuation/${id}`,
+    inventoryCostBalances  : () => `${apiBase}/inventory-cost-balances`,
+    inventoryAccountingEvents: () => `${apiBase}/inventory-accounting-events`,
+    inventoryAccountingEventShow: (id: number | string) => `${apiBase}/inventory-accounting-events/${id}`,
+    accountingOutbox       : () => `${apiBase}/accounting/outbox`,
+    accountingOutboxShow   : (id: number | string) => `${apiBase}/accounting/outbox/${id}`,
+    inventoryGrni          : () => `${apiBase}/inventory-grni`,
+    inventoryGrniReconcile : () => `${apiBase}/inventory-grni/reconcile`,
+    inventoryGrniAging     : () => `${apiBase}/inventory-grni/aging`,
+    inventoryCogs          : () => `${apiBase}/inventory-accounting/cogs`,
+    inventoryPpv           : () => `${apiBase}/inventory-accounting/ppv`,
+    inventoryNrv           : () => `${apiBase}/inventory-accounting/nrv`,
+    inventoryNrvAssessments: () => `${apiBase}/inventory-accounting/nrv/assessments`,
+    inventoryAccountingExceptions: () => `${apiBase}/inventory-accounting/exceptions`,
+    inventoryAccountingReconcileInventoryGl: () => `${apiBase}/inventory-accounting/reconcile/inventory-gl`,
+    inventoryAccountingReconcileValuation: () => `${apiBase}/inventory-accounting/reconcile/valuation`,
 
     // Kategori
     categories            : () => `${apiBase}/categories`,
@@ -768,6 +799,11 @@ export default defineNuxtPlugin(() => {
     dataVendor: () => `${apiBase}/data/vendor`,
     dataDepartemen: () => `${apiBase}/data/departemen`,
     dataBudget: () => `${apiBase}/data/budget`,
+    dataPurchaseOrder: (status?: string) => {
+      const url = `${apiBase}/data/purchase-order`
+      if (!status) return url
+      return `${url}?status=${encodeURIComponent(status)}`
+    },
     dataPegawai: (statusPegawai?: number | string) => {
       const url = `${apiBase}/data/pegawai`
       if (statusPegawai === undefined || statusPegawai === null || statusPegawai === '') return url

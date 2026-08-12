@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { useNuxtApp } from '#app'
 import Swal from 'sweetalert2'
+import { guardMakerCheckerAction, resolveCreatedBy } from '~/utils/makerChecker'
 
 export interface JournalLine {
   id?: string
@@ -218,7 +219,7 @@ export const useJournalStore = defineStore('journal', {
       const { $api } = useNuxtApp()
 
       try {
-        // Validasi field required (status selalu draft di backend â€” jangan kirim dari client)
+        // Validasi field required (status selalu draft di backend — jangan kirim dari client)
         if (!this.form.date || !this.form.description) {
           const toast = useToast()
           toast.error({
@@ -280,7 +281,7 @@ export const useJournalStore = defineStore('journal', {
 
         const formData = new FormData()
         
-        // Jangan kirim `status` â€” create/update selalu draft di backend; posting via /post
+        // Jangan kirim `status` — create/update selalu draft di backend; posting via /post
         const fieldsToSend = ['journalNumber', 'date', 'description', 'referenceType', 'referenceId'];
         fieldsToSend.forEach(key => {
           const value = this.form[key as keyof typeof this.form];
@@ -463,7 +464,9 @@ export const useJournalStore = defineStore('journal', {
 
     async postJournal(id: number) {
       const { $api } = useNuxtApp();
-      
+      const journal = this.journals.find((j) => String(j.id) === String(id)) || this.selectedJournal
+      if (!guardMakerCheckerAction(resolveCreatedBy(journal), 'post journal')) return
+
       const result = await Swal.fire({
         title: 'Post Jurnal?',
         text: "Apakah Anda yakin ingin memposting jurnal ini?",
@@ -513,9 +516,103 @@ export const useJournalStore = defineStore('journal', {
       }
     },
 
+    async submitJournal(id: number | string) {
+      const { $api } = useNuxtApp()
+      const toast = useToast()
+      try {
+        const response = await fetch($api.journalsSubmit(id), {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          credentials: 'include',
+        })
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ message: 'Submit gagal' }))
+          throw new Error(errorData?.message || 'Submit gagal')
+        }
+        await this.fetchJournals()
+        toast.success({
+          title: 'Success',
+          message: 'Jurnal di-submit untuk approval.',
+          color: 'green',
+          position: 'bottomRight',
+        })
+      } catch (error: any) {
+        toast.error({
+          title: 'Error',
+          message: error?.message || 'Submit gagal',
+          color: 'red',
+          position: 'bottomRight',
+        })
+      }
+    },
+
+    async approveJournal(id: number | string, remarks?: string) {
+      const { $api } = useNuxtApp()
+      const toast = useToast()
+      try {
+        const response = await fetch($api.journalsApprove(id), {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ remarks }),
+        })
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ message: 'Approve gagal' }))
+          throw new Error(errorData?.message || 'Approve gagal')
+        }
+        await this.fetchJournals()
+        toast.success({
+          title: 'Success',
+          message: 'Jurnal di-approve.',
+          color: 'green',
+          position: 'bottomRight',
+        })
+      } catch (error: any) {
+        toast.error({
+          title: 'Error',
+          message: error?.message || 'Approve gagal',
+          color: 'red',
+          position: 'bottomRight',
+        })
+      }
+    },
+
+    async rejectJournal(id: number | string, remarks?: string) {
+      const { $api } = useNuxtApp()
+      const toast = useToast()
+      try {
+        const response = await fetch($api.journalsReject(id), {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ remarks: remarks || 'Rejected' }),
+        })
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ message: 'Reject gagal' }))
+          throw new Error(errorData?.message || 'Reject gagal')
+        }
+        await this.fetchJournals()
+        toast.success({
+          title: 'Success',
+          message: 'Jurnal di-reject.',
+          color: 'green',
+          position: 'bottomRight',
+        })
+      } catch (error: any) {
+        toast.error({
+          title: 'Error',
+          message: error?.message || 'Reject gagal',
+          color: 'red',
+          position: 'bottomRight',
+        })
+      }
+    },
+
     async reverseJournal(id: number | string, reason?: string) {
       const { $api } = useNuxtApp();
       const toast = useToast();
+      const journal = this.journals.find((j) => String(j.id) === String(id)) || this.selectedJournal
+      if (!guardMakerCheckerAction(resolveCreatedBy(journal), 'reverse journal')) return false
 
       let reversalReason = reason;
       if (!reversalReason) {
@@ -676,7 +773,7 @@ export const useJournalStore = defineStore('journal', {
       this.loadingStats = true
       const { $api } = useNuxtApp()
       try {
-        // Global aggregates (Tax Master pattern) â€” tidak ikut filter list
+        // Global aggregates (Tax Master pattern) — tidak ikut filter list
         const response = await fetch($api.journalEntriesSummary(), {
           headers: { Accept: 'application/json' },
           credentials: 'include',

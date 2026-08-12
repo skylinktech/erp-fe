@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { useNuxtApp } from '#app'
 import Swal from 'sweetalert2'
 import { useUserStore } from '~/stores/user'
+import { guardMakerCheckerAction, resolveCreatedBy } from '~/utils/makerChecker'
 
 export interface APPayment {
   id?: string
@@ -485,7 +486,9 @@ export const useAPPaymentStore = defineStore('apPayment', {
     async confirmPayment(id: string | number) {
       const { $api } = useNuxtApp();
       const toast = useToast();
-      
+      const payment = this.payments.find((p) => String(p.id) === String(id))
+      if (!guardMakerCheckerAction(resolveCreatedBy(payment), 'confirm AP payment')) return
+
       try {
         const url = $api.apPaymentsConfirm?.(id) || ($api.apPayments() + '/' + id + '/confirm');
 
@@ -520,6 +523,104 @@ export const useAPPaymentStore = defineStore('apPayment', {
           position: 'bottomRight',
           layout: 2,
         });
+      }
+    },
+
+    async submitPayment(id: string | number) {
+      const { $api } = useNuxtApp()
+      const toast = useToast()
+      try {
+        const response = await fetch($api.apPaymentsSubmit(id), {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          credentials: 'include',
+        })
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ message: 'Submit gagal' }))
+          throw new Error(errorData.message || 'Submit gagal')
+        }
+        await this.fetchPayments()
+        toast.success({
+          title: 'Success',
+          message: 'AP Payment di-submit untuk approval.',
+          color: 'green',
+          position: 'bottomRight',
+          layout: 2,
+        })
+      } catch (error: any) {
+        toast.error({
+          title: 'Error',
+          message: error.message || 'Submit gagal',
+          color: 'red',
+          position: 'bottomRight',
+          layout: 2,
+        })
+      }
+    },
+
+    async approvePayment(id: string | number, remarks?: string) {
+      const { $api } = useNuxtApp()
+      const toast = useToast()
+      try {
+        const response = await fetch($api.apPaymentsApprove(id), {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ remarks }),
+        })
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ message: 'Approve gagal' }))
+          throw new Error(errorData.message || 'Approve gagal')
+        }
+        await this.fetchPayments()
+        toast.success({
+          title: 'Success',
+          message: 'AP Payment di-approve.',
+          color: 'green',
+          position: 'bottomRight',
+          layout: 2,
+        })
+      } catch (error: any) {
+        toast.error({
+          title: 'Error',
+          message: error.message || 'Approve gagal',
+          color: 'red',
+          position: 'bottomRight',
+          layout: 2,
+        })
+      }
+    },
+
+    async rejectPayment(id: string | number, remarks?: string) {
+      const { $api } = useNuxtApp()
+      const toast = useToast()
+      try {
+        const response = await fetch($api.apPaymentsReject(id), {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ remarks: remarks || 'Rejected' }),
+        })
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ message: 'Reject gagal' }))
+          throw new Error(errorData.message || 'Reject gagal')
+        }
+        await this.fetchPayments()
+        toast.success({
+          title: 'Success',
+          message: 'AP Payment di-reject.',
+          color: 'green',
+          position: 'bottomRight',
+          layout: 2,
+        })
+      } catch (error: any) {
+        toast.error({
+          title: 'Error',
+          message: error.message || 'Reject gagal',
+          color: 'red',
+          position: 'bottomRight',
+          layout: 2,
+        })
       }
     },
 

@@ -127,7 +127,22 @@
                                                         <i class="ri-edit-box-line me-2"></i> Edit
                                                     </a>
                                                 </li>
-                                                <li v-if="(userHasRole('superadmin') || userHasPermission('post_journal')) && slotProps.data.status === 'draft'">
+                                                <li v-if="(userHasRole('superadmin') || userHasPermission('submit_journal') || userHasPermission('post_journal')) && (slotProps.data.status === 'draft' || slotProps.data.status === 'rejected')">
+                                                    <a class="dropdown-item" href="javascript:void(0)" @click="journalStore.submitJournal(slotProps.data.id)">
+                                                        <i class="ri-send-plane-line me-2"></i> Submit
+                                                    </a>
+                                                </li>
+                                                <li v-if="(userHasRole('superadmin') || userHasPermission('approve_journal')) && slotProps.data.status === 'pending'">
+                                                    <a class="dropdown-item text-success" href="javascript:void(0)" @click="journalStore.approveJournal(slotProps.data.id)">
+                                                        <i class="ri-checkbox-circle-line me-2"></i> Approve
+                                                    </a>
+                                                </li>
+                                                <li v-if="(userHasRole('superadmin') || userHasPermission('reject_journal')) && slotProps.data.status === 'pending'">
+                                                    <a class="dropdown-item text-danger" href="javascript:void(0)" @click="journalStore.rejectJournal(slotProps.data.id)">
+                                                        <i class="ri-close-circle-line me-2"></i> Reject
+                                                    </a>
+                                                </li>
+                                                <li v-if="(userHasRole('superadmin') || userHasPermission('post_journal')) && slotProps.data.status === 'approved'">
                                                     <a class="dropdown-item text-success" href="javascript:void(0)" @click="journalStore.postJournal(slotProps.data.id)">
                                                         <i class="ri-check-line me-2"></i> Post
                                                     </a>
@@ -137,7 +152,7 @@
                                                         <i class="ri-arrow-go-back-line me-2"></i> Reverse
                                                     </a>
                                                 </li>
-                                                <li v-if="(userHasRole('superadmin') || userHasPermission('delete_journal')) && slotProps.data.status === 'draft'">
+                                                <li v-if="(userHasRole('superadmin') || userHasPermission('delete_journal')) && (slotProps.data.status === 'draft' || slotProps.data.status === 'rejected')">
                                                     <a class="dropdown-item text-danger" href="javascript:void(0)" @click="journalStore.deleteJournal(slotProps.data.id)">
                                                         <i class="ri-delete-bin-7-line me-2"></i> Hapus
                                                     </a>

@@ -145,6 +145,27 @@ export const erpMenuItems = [
     type: "main"
   },
   {
+    name: "Stock Movements",
+    path: "/inventory/stock-movements",
+    icon: "ri-exchange-line",
+    category: "Inventory",
+    type: "main"
+  },
+  {
+    name: "Inventory Valuation",
+    path: "/inventory/valuation",
+    icon: "ri-funds-line",
+    category: "Inventory",
+    type: "main"
+  },
+  {
+    name: "Inventory Cost Balance",
+    path: "/inventory/cost-balance",
+    icon: "ri-wallet-3-line",
+    category: "Inventory",
+    type: "main"
+  },
+  {
     name: "Rekonsiliasi Stok",
     path: "/inventory/reconciliation",
     icon: "ri-scales-3-line",
@@ -223,6 +244,64 @@ export const erpMenuItems = [
     path: "/purchasing/retur",
     icon: "ri-arrow-go-back-line",
     category: "Purchasing",
+    type: "main"
+  },
+
+  // Finance — Inventory Accounting visibility (Phase 17)
+  {
+    name: "Inventory Accounting Events",
+    path: "/finance/inventory-accounting-events",
+    icon: "ri-calendar-event-line",
+    category: "Finance",
+    type: "main"
+  },
+  {
+    name: "Accounting Processing Monitor",
+    path: "/finance/accounting-processing-monitor",
+    icon: "ri-radar-line",
+    category: "Finance",
+    type: "main"
+  },
+  {
+    name: "Accounting Exceptions",
+    path: "/finance/accounting-exceptions",
+    icon: "ri-error-warning-line",
+    category: "Finance",
+    type: "main"
+  },
+  {
+    name: "GRNI",
+    path: "/finance/grni",
+    icon: "ri-inbox-unarchive-line",
+    category: "Finance",
+    type: "main"
+  },
+  {
+    name: "Inventory COGS",
+    path: "/finance/inventory-cogs",
+    icon: "ri-shopping-bag-3-line",
+    category: "Finance",
+    type: "main"
+  },
+  {
+    name: "Purchase Price Variance",
+    path: "/finance/ppv",
+    icon: "ri-contrast-2-line",
+    category: "Finance",
+    type: "main"
+  },
+  {
+    name: "Inventory NRV",
+    path: "/finance/nrv",
+    icon: "ri-subtract-line",
+    category: "Finance",
+    type: "main"
+  },
+  {
+    name: "Inventory Accounting Reconciliation",
+    path: "/finance/inventory-accounting-reconciliation",
+    icon: "ri-scales-3-line",
+    category: "Finance",
     type: "main"
   },
 

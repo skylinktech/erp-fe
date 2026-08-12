@@ -253,16 +253,25 @@
                     <button @click="viewDetail(slotProps.data)" class="btn btn-sm btn-icon btn-text-secondary rounded-pill btn-icon me-2" v-if="userHasPermission('show_ap_payment')">
                       <i class="ri-eye-line ri-20px"></i>
                     </button>
-                    <button @click="openModal(slotProps.data)" class="btn btn-sm btn-icon btn-text-secondary rounded-pill btn-icon me-2" v-if="userHasPermission('edit_ap_payment') && slotProps.data.status === 'draft'">
+                    <button @click="openModal(slotProps.data)" class="btn btn-sm btn-icon btn-text-secondary rounded-pill btn-icon me-2" v-if="userHasPermission('edit_ap_payment') && (slotProps.data.status === 'draft' || slotProps.data.status === 'rejected')" title="Edit">
                       <i class="ri-edit-box-line ri-20px"></i>
                     </button>
-                    <button @click="confirmPayment(slotProps.data.id)" class="btn btn-sm btn-icon btn-text-secondary rounded-pill btn-icon me-2" v-if="userHasPermission('approve_ap_payment') && slotProps.data.status === 'draft'">
+                    <button @click="submitPayment(slotProps.data.id)" class="btn btn-sm btn-icon btn-text-secondary rounded-pill btn-icon me-2" v-if="userHasPermission('submit_ap_payment') || userHasPermission('approve_ap_payment')" v-show="slotProps.data.status === 'draft' || slotProps.data.status === 'rejected'" title="Submit">
+                      <i class="ri-send-plane-line ri-20px"></i>
+                    </button>
+                    <button @click="approvePayment(slotProps.data.id)" class="btn btn-sm btn-icon btn-text-secondary rounded-pill btn-icon me-2" v-if="userHasPermission('approve_ap_payment') && slotProps.data.status === 'pending'" title="Approve">
                       <i class="ri-checkbox-circle-line ri-20px"></i>
+                    </button>
+                    <button @click="rejectPayment(slotProps.data.id)" class="btn btn-sm btn-icon btn-text-secondary rounded-pill btn-icon me-2" v-if="userHasPermission('reject_ap_payment') || userHasPermission('approve_ap_payment')" v-show="slotProps.data.status === 'pending'" title="Reject">
+                      <i class="ri-close-circle-line ri-20px"></i>
+                    </button>
+                    <button @click="confirmPayment(slotProps.data.id)" class="btn btn-sm btn-icon btn-text-secondary rounded-pill btn-icon me-2" v-if="userHasPermission('approve_ap_payment') && slotProps.data.status === 'approved'" title="Confirm">
+                      <i class="ri-check-double-line ri-20px"></i>
                     </button>
                     <button @click="cancelPayment(slotProps.data.id)" class="btn btn-sm btn-icon btn-text-secondary rounded-pill btn-icon me-2" v-if="userHasPermission('approve_ap_payment') && slotProps.data.status === 'confirmed'" title="Batalkan">
                       <i class="ri-close-circle-line ri-20px"></i>
                     </button>
-                    <button @click="deletePayment(slotProps.data.id)" class="btn btn-sm btn-icon btn-text-secondary rounded-pill btn-icon" v-if="userHasPermission('delete_ap_payment') && slotProps.data.status === 'draft'">
+                    <button @click="deletePayment(slotProps.data.id)" class="btn btn-sm btn-icon btn-text-secondary rounded-pill btn-icon" v-if="userHasPermission('delete_ap_payment') && (slotProps.data.status === 'draft' || slotProps.data.status === 'rejected')">
                       <i class="ri-delete-bin-7-line ri-20px"></i>
                     </button>
                   </template>
@@ -771,6 +780,15 @@ const deletePayment = (id) => {
 
 const confirmPayment = (id) => {
   apPaymentStore.confirmPayment(id)
+}
+const submitPayment = (id) => {
+  apPaymentStore.submitPayment(id)
+}
+const approvePayment = (id) => {
+  apPaymentStore.approvePayment(id)
+}
+const rejectPayment = (id) => {
+  apPaymentStore.rejectPayment(id)
 }
 
 const cancelPayment = (id) => {

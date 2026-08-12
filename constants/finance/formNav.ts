@@ -21,4 +21,12 @@ export const FINANCE_MODULE_NAV: FormPageNavItem[] = [
   { label: 'Billing Preparations', to: '/finance/billing-preparations', icon: 'ri-file-list-3-line' },
   { label: 'Pricing Approval', to: '/finance/pricing-approval', icon: 'ri-price-tag-3-line' },
   { label: 'Tax Master', to: '/finance/tax-masters', icon: 'ri-percent-line' },
+  { label: 'Inventory Accounting Events', to: '/finance/inventory-accounting-events', icon: 'ri-calendar-event-line' },
+  { label: 'Accounting Processing Monitor', to: '/finance/accounting-processing-monitor', icon: 'ri-radar-line' },
+  { label: 'Accounting Exceptions', to: '/finance/accounting-exceptions', icon: 'ri-error-warning-line' },
+  { label: 'GRNI', to: '/finance/grni', icon: 'ri-inbox-unarchive-line' },
+  { label: 'Inventory COGS', to: '/finance/inventory-cogs', icon: 'ri-shopping-bag-3-line' },
+  { label: 'PPV', to: '/finance/ppv', icon: 'ri-contrast-2-line' },
+  { label: 'NRV', to: '/finance/nrv', icon: 'ri-subtract-line' },
+  { label: 'Inv. Accounting Recon', to: '/finance/inventory-accounting-reconciliation', icon: 'ri-scales-3-line' },
 ]

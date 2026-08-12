@@ -46,6 +46,7 @@ export default defineNuxtPlugin((nuxtApp) => {
 
   // @ts-ignore - override instance diperbolehkan
   nuxtApp.$fetch = $fetch.create({
+    credentials: 'include',
     onRequest({ options, request }) {
       const url = typeof request === 'string' ? request : request?.url || ''
       if (token.value && isApiRequest(url)) {

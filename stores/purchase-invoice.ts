@@ -4,6 +4,7 @@ import Swal from 'sweetalert2'
 import { useNuxtApp } from '#app'
 import { useUserStore } from '~/stores/user'
 import type { Vendor } from './vendor'
+import { guardMakerCheckerAction, resolveCreatedBy } from '~/utils/makerChecker'
 
 
 
@@ -582,12 +583,38 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
 
     async approvePurchaseInvoice(id: string, remarks?: string) {
       const { $api } = useNuxtApp();
-      return this._lifecycleAction(id, $api.purchaseInvoiceApprove, 'Purchase Invoice berhasil diapprove.', { remarks });
+      return this._lifecycleAction(
+        id,
+        $api.purchaseInvoiceApprove,
+        'Purchase Invoice berhasil diapprove.',
+        { remarks }
+      );
+    },
+
+    async rejectPurchaseInvoice(id: string, remarks?: string) {
+      const { $api } = useNuxtApp();
+      return this._lifecycleAction(
+        id,
+        $api.purchaseInvoiceReject,
+        'Purchase Invoice berhasil direject.',
+        { remarks }
+      );
     },
 
     async postPurchaseInvoice(id: string) {
       const { $api } = useNuxtApp();
-      return this._lifecycleAction(id, $api.purchaseInvoicePost, 'Purchase Invoice berhasil diposting.');
+      const inv =
+        this.purchaseInvoices.find((row) => String(row.id) === String(id)) ||
+        this.purchaseInvoice ||
+        this.form
+      if (!guardMakerCheckerAction(resolveCreatedBy(inv as any), 'post purchase invoice')) {
+        return false
+      }
+      return this._lifecycleAction(
+        id,
+        $api.purchaseInvoicePost,
+        'Purchase Invoice berhasil diposting.'
+      );
     },
 
     async cancelPurchaseInvoice(id: string, reason?: string) {
