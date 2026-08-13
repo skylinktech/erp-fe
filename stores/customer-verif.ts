@@ -130,8 +130,8 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
   }),
 
   actions: {
-    async fetchCustomerVerifs(suppressError = false) {
-      this.loading = true
+    async fetchCustomerVerifs(suppressError = false, silent = false) {
+      if (!silent) this.loading = true
       this.error = null
       const { $api } = useNuxtApp()
       try {
@@ -184,7 +184,7 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
           })
         }
       } finally {
-        this.loading = false
+        if (!silent) this.loading = false
       }
     },
 
@@ -372,8 +372,8 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
     },
 
     async deleteCustomerVerif(id: number) {
-      this.loading = true
       const { $api } = useNuxtApp()
+      const toast = useToast()
 
       const result = await Swal.fire({
         title: 'Apakah Anda yakin?',
@@ -386,10 +386,10 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
         cancelButtonText: 'Batal'
       })
 
-      if (!result.isConfirmed) {
-        this.loading = false
-        return
-      }
+      if (!result.isConfirmed) return
+
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 15000)
 
       try {
         const response = await fetch(`${$api.customerVerif()}/${id}`, {
@@ -398,16 +398,24 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
             'Accept': 'application/json',
           },
           credentials: 'include',
+          signal: controller.signal,
         })
 
         if (!response.ok) {
-          const errorData = await response.json()
+          const errorData = await response.json().catch(() => ({ message: 'Gagal menghapus Customer Verification' }))
           throw new Error(errorData.message || 'Gagal menghapus Customer Verification')
         }
 
-        await this.fetchCustomerVerifs()
-        await this.fetchStats()
-        const toast = useToast()
+        const removed = this.customerVerifs.find((item) => item.id === id)
+        this.customerVerifs = this.customerVerifs.filter((item) => item.id !== id)
+        this.totalRecords = Math.max(0, this.totalRecords - 1)
+        if (typeof this.stats.total === 'number') {
+          this.stats.total = Math.max(0, this.stats.total - 1)
+        }
+        if (removed?.status && typeof this.stats[removed.status] === 'number') {
+          this.stats[removed.status] = Math.max(0, (this.stats[removed.status] as number) - 1)
+        }
+
         toast.success({
           title: 'Success',
           message: 'Customer Verification berhasil dihapus.',
@@ -415,17 +423,24 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
           position: 'bottomRight',
           layout: 2,
         })
+
+        void Promise.all([
+          this.fetchCustomerVerifs(true, true),
+          this.fetchStats(),
+        ])
       } catch (error: any) {
-        const toast = useToast()
+        const aborted = error?.name === 'AbortError'
         toast.error({
           title: 'Error',
-          message: error.message || 'Gagal menghapus Customer Verification',
+          message: aborted
+            ? 'Penghapusan timeout. Silakan coba lagi.'
+            : (error.message || 'Gagal menghapus Customer Verification'),
           color: 'red',
           position: 'bottomRight',
           layout: 2,
         })
       } finally {
-        this.loading = false
+        clearTimeout(timeoutId)
       }
     },
 
