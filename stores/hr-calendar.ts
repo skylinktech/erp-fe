@@ -176,7 +176,7 @@ export const useHrCalendarStore = defineStore('hr-calendar', {
         text: 'Data yang dihapus tidak dapat dikembalikan.',
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#d33',
+        confirmButtonColor: '#f13636',
         cancelButtonColor: '#6c757d',
         confirmButtonText: 'Ya, hapus',
         cancelButtonText: 'Batal',

@@ -74,7 +74,7 @@
             <!-- Kolom utama -->
             <div class="col-xl-8 col-12">
               <!-- Informasi Umum -->
-              <div class="card mb-4 shadow-sm border-0">
+              <div class="card mb-4">
                 <div class="card-header border-0 bg-transparent px-5 py-4">
                   <h5 class="card-title mb-0 d-flex align-items-center">
                     <i class="ri-information-line me-2 text-primary"></i>
@@ -144,7 +144,7 @@
               </div>
 
               <!-- Compliance Checklist -->
-              <div class="card mb-4 shadow-sm border-0">
+              <div class="card mb-4">
                 <div class="card-header border-0 bg-transparent px-5 py-4">
                   <h5 class="card-title mb-0 d-flex align-items-center">
                     <i class="ri-checkbox-line me-2 text-primary"></i>
@@ -165,7 +165,7 @@
               </div>
 
               <!-- Reference Quotation -->
-              <div v-if="review.quotation" class="card mb-4 shadow-sm border-0">
+              <div v-if="review.quotation" class="card mb-4">
                 <div class="card-header border-0 bg-transparent px-5 py-4">
                   <h5 class="card-title mb-0 d-flex align-items-center">
                     <i class="ri-file-list-3-line me-2 text-primary"></i>
@@ -210,7 +210,7 @@
             <!-- Sidebar: Meta Information -->
             <div class="col-xl-4 col-12">
               <!-- Informasi Review -->
-              <div class="card mb-4 shadow-sm border-0">
+              <div class="card mb-4">
                 <div class="card-header border-0 bg-transparent px-5 py-4">
                   <h5 class="card-title mb-0 d-flex align-items-center">
                     <i class="ri-user-line me-2 text-primary"></i>
@@ -254,7 +254,7 @@
               />
 
               <!-- Customer Information -->
-              <div v-if="review.quotation?.customer" class="card mb-4 shadow-sm border-0">
+              <div v-if="review.quotation?.customer" class="card mb-4">
                 <div class="card-header border-0 bg-transparent px-5 py-4">
                   <h5 class="card-title mb-0 d-flex align-items-center">
                     <i class="ri-user-line me-2 text-primary"></i>

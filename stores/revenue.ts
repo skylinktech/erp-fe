@@ -53,8 +53,8 @@ export const useRevenueStore = defineStore('revenue', {
           {
             label: 'Revenue',
             data: monthly.map((row) => row.total),
-            borderColor: '#696cff',
-            backgroundColor: 'rgba(105, 108, 255, 0.12)',
+            borderColor: '#008fec',
+            backgroundColor: 'rgba(0, 143, 236, 0.12)',
             fill: true,
             tension: 0.35,
             pointRadius: 3,

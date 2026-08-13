@@ -393,7 +393,7 @@ export const useRequestActivationStore = defineStore('requestActivation', {
         text: 'Apakah Anda yakin akan menyetujui Request Activation ini?',
         icon: 'question',
         showCancelButton: true,
-        confirmButtonColor: '#3085d6',
+        confirmButtonColor: '#008fec',
         cancelButtonColor: '#6c757d',
         confirmButtonText: 'Ya, Approve',
         cancelButtonText: 'Batal',

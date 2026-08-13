@@ -1163,7 +1163,7 @@ const rejectInvoice = async (invoice) => {
         showCancelButton: true,
         confirmButtonText: 'Reject',
         cancelButtonText: 'Batal',
-        confirmButtonColor: '#ea5455',
+        confirmButtonColor: '#f13636',
     })
     if (!result.isConfirmed) return
     const ok = await store.rejectInvoice(invoice.id, result.value || '', true)
@@ -1412,8 +1412,8 @@ definePageMeta({
 }
 
 .invoice-filter-card {
-    border: 0;
-    box-shadow: 0 2px 6px rgba(67, 89, 113, 0.12);
+    border: 1px solid var(--bs-card-border-color, #e6e6e8);
+    box-shadow: none;
 }
 
 .invoice-filter-grid {

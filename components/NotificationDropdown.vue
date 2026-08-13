@@ -336,7 +336,7 @@ onUnmounted(() => {
 }
 
 .notification-tab-btn.active {
-  color: var(--bs-primary, #696cff);
+  color: var(--bs-primary, #008fec);
   font-weight: 600;
 }
 
@@ -347,7 +347,7 @@ onUnmounted(() => {
   right: 0;
   bottom: 0;
   height: 2px;
-  background: var(--bs-primary, #696cff);
+  background: var(--bs-primary, #008fec);
   border-radius: 999px;
 }
 
@@ -366,7 +366,7 @@ onUnmounted(() => {
 }
 
 .notification-tab-btn.active .notification-tab-badge {
-  background: var(--bs-primary, #696cff);
+  background: var(--bs-primary, #008fec);
   color: #fff;
 }
 
@@ -382,7 +382,7 @@ onUnmounted(() => {
 }
 
 .notification-item--unread {
-  background: rgba(105, 108, 255, 0.04);
+  background: rgba(0, 143, 236, 0.04);
 }
 
 .notification-avatar-badge {
@@ -392,8 +392,8 @@ onUnmounted(() => {
   width: 2.25rem;
   height: 2.25rem;
   border-radius: 50%;
-  background: rgba(105, 108, 255, 0.12);
-  color: var(--bs-primary, #696cff);
+  background: rgba(0, 143, 236, 0.12);
+  color: var(--bs-primary, #008fec);
   flex-shrink: 0;
 }
 
@@ -416,7 +416,7 @@ onUnmounted(() => {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #696cff;
+  background: #008fec;
 }
 
 .notification-mark-all {
@@ -440,7 +440,7 @@ onUnmounted(() => {
 }
 
 .notification-mark-all:hover:not(:disabled) i {
-  color: var(--bs-primary, #696cff) !important;
+  color: var(--bs-primary, #008fec) !important;
 }
 
 .notification-scroll-sentinel {

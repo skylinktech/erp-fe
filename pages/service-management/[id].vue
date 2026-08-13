@@ -70,7 +70,7 @@
       <div v-else-if="store.error" class="text-danger">{{ store.error }}</div>
       <div v-else-if="row" class="row g-4">
         <div class="col-lg-7">
-          <div class="card border-0 shadow-sm mb-4">
+          <div class="card mb-4">
             <div class="card-body">
               <h6 class="mb-3">Detail</h6>
               <dl class="row mb-0">
@@ -95,7 +95,7 @@
           </div>
         </div>
         <div class="col-lg-5">
-          <div class="card border-0 shadow-sm">
+          <div class="card">
             <div class="card-body">
               <h6 class="mb-3">Timeline Events</h6>
               <ul class="list-unstyled mb-0">

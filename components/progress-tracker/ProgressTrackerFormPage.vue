@@ -30,7 +30,7 @@
 
         <div class="row g-4">
           <div class="col-xl-8 col-12">
-            <div class="card shadow-sm border-0">
+            <div class="card">
               <div class="card-header border-0 bg-transparent py-3">
                 <h5 class="card-title mb-0">Form Progress Tracker</h5>
               </div>

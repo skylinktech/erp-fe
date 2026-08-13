@@ -83,7 +83,7 @@
 
           <div class="row g-4">
             <div class="col-xl-8">
-              <div class="card mb-4 shadow-sm border-0">
+              <div class="card mb-4">
                 <div class="card-header border-0 bg-transparent px-5 py-4">
                   <h5 class="card-title mb-0"><i class="ri-rocket-line me-2 text-primary"></i>Request Aktivasi</h5>
                 </div>
@@ -202,7 +202,7 @@
             </div>
 
             <div class="col-xl-4">
-              <div class="card mb-4 shadow-sm border-0">
+              <div class="card mb-4">
                 <div class="card-header border-0 bg-transparent px-5 py-4">
                   <h5 class="card-title mb-0">Metadata</h5>
                 </div>

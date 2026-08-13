@@ -83,7 +83,7 @@ function shortLabel(label: string) {
 .progress-tracker-status-bar__track {
   height: 0.65rem;
   border-radius: 0.5rem;
-  background-color: rgba(var(--bs-primary-rgb, 105, 108, 255), 0.12);
+  background-color: rgba(var(--bs-primary-rgb, 0, 143, 236), 0.12);
 }
 
 .progress-tracker-status-bar__segments {
@@ -102,14 +102,14 @@ function shortLabel(label: string) {
 }
 
 .progress-tracker-status-bar__segment.is-done {
-  border-color: rgba(var(--bs-success-rgb, 40, 199, 111), 0.45);
-  background: rgba(var(--bs-success-rgb, 40, 199, 111), 0.08);
+  border-color: rgba(var(--bs-success-rgb, 0, 172, 79), 0.45);
+  background: rgba(var(--bs-success-rgb, 0, 172, 79), 0.08);
 }
 
 .progress-tracker-status-bar__segment.is-current {
-  border-color: var(--bs-primary, #696cff);
-  background: rgba(var(--bs-primary-rgb, 105, 108, 255), 0.1);
-  box-shadow: 0 0 0 1px rgba(var(--bs-primary-rgb, 105, 108, 255), 0.25);
+  border-color: var(--bs-primary, #008fec);
+  background: rgba(var(--bs-primary-rgb, 0, 143, 236), 0.1);
+  box-shadow: 0 0 0 1px rgba(var(--bs-primary-rgb, 0, 143, 236), 0.25);
 }
 
 .progress-tracker-status-bar__segment.is-pending {
@@ -125,7 +125,7 @@ function shortLabel(label: string) {
 }
 
 .progress-tracker-status-bar__segment.is-current .progress-tracker-status-bar__segment-num {
-  color: var(--bs-primary, #696cff);
+  color: var(--bs-primary, #008fec);
 }
 
 .progress-tracker-status-bar__segment-label {

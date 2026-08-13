@@ -2,11 +2,11 @@
 * Pages Mixins
 */
 body {
-  background: #f7f7f9;
+  background: #fff;
 }
 
 .bg-body {
-  background: #f7f7f9 !important;
+  background: #fff !important;
 }
 
 .text-primary {
@@ -760,7 +760,7 @@ button.list-group-item-primary.active {
 }
 .form-floating-outline label.bg-body::after,
 .form-floating-outline > span.bg-body::after {
-  background: #f7f7f9 !important;
+  background: #fff !important;
 }
 
 .svg-illustration svg {
@@ -1310,11 +1310,11 @@ li.ui-timepicker-selected,
 }
 
 .layout-navbar-fixed .layout-page:not(.window-scrolled) .layout-navbar.navbar-detached {
-  background: #f7f7f9;
+  background: #fff;
 }
 
 .bg-menu-theme {
-  background-color: #f7f7f9 !important;
+  background-color: #fff !important;
   color: #3b4056;
 }
 .bg-menu-theme .menu-link,
@@ -1359,7 +1359,7 @@ li.ui-timepicker-selected,
   color: #fff;
 }
 .bg-menu-theme .menu-inner-shadow {
-  background: linear-gradient(#f7f7f9 5%, rgba(247, 247, 249, 0.75) 45%, rgba(247, 247, 249, 0.2) 80%, transparent);
+  background: linear-gradient(#fff 5%, rgba(247, 247, 249, 0.75) 45%, rgba(247, 247, 249, 0.2) 80%, transparent);
 }
 .bg-menu-theme .menu-text {
   color: #3b4056;

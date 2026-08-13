@@ -297,7 +297,7 @@
         </div>
 
         <div class="col-xl-4 col-12">
-          <div class="card shadow-sm border-0">
+          <div class="card">
             <div class="card-header border-0 bg-transparent px-5 py-4">
               <h5 class="card-title mb-0 d-flex align-items-center">
                 <i class="ri-menu-2-line me-2 text-primary"></i>
@@ -1093,15 +1093,15 @@ watch([selectedDidPriceListId, selectedPriceListId], async () => {
   background: transparent;
   border: 1px solid #f1aeb5;
   border-radius: 6px;
-  color: #dc3545;
+  color: #f13636;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
   line-height: 1;
 }
 .repeater-delete-btn:hover {
-  background: #dc3545;
+  background: #f13636;
   color: #fff;
-  border-color: #dc3545;
+  border-color: #f13636;
 }
 .repeater-empty {
   padding: 20px 16px;
@@ -1137,7 +1137,7 @@ watch([selectedDidPriceListId, selectedPriceListId], async () => {
 .btn-price-lock.is-overridden:hover { background: #fd7e14; color: #fff; border-color: #fd7e14; }
 .price-input-wrapper.price-override-active .price-field {
   border-color: #fd7e14 !important;
-  box-shadow: 0 0 0 0.15rem rgba(253, 126, 20, 0.15) !important;
+  box-shadow: 0 0 0 0.15rem rgba(255, 186, 47, 0.15) !important;
 }
 .price-field:not(.price-overridden) { background: #f8f9fa !important; color: #6c757d !important; cursor: default; }
 .badge-custom { font-size: 0.6rem; vertical-align: middle; }
@@ -1156,18 +1156,18 @@ watch([selectedDidPriceListId, selectedPriceListId], async () => {
 .price-reason-input {
   flex: 1;
   font-size: 0.78rem;
-  border-color: #ffc107 !important;
+  border-color: var(--bs-warning) !important;
   background: #fffef5 !important;
   color: #856404;
 }
 .price-reason-input::placeholder { color: #c8a800; }
 
 .investment-summary-card {
-  background: linear-gradient(135deg, #f8faff 0%, #f0f4ff 100%);
-  border: 1px solid #e0e7ff;
+  background: var(--bs-primary-bg-subtle);
+  border: 1px solid var(--bs-card-border-color, #e6e6e8);
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.06);
+  box-shadow: none;
 }
 
 .investment-summary-title {
@@ -1175,8 +1175,8 @@ watch([selectedDidPriceListId, selectedPriceListId], async () => {
   padding: 14px 18px;
   font-size: 0.95rem;
   font-weight: 600;
-  color: #4f46e5;
-  background: rgba(99, 102, 241, 0.08);
+  color: #008fec;
+  background: transparent;
   border-bottom: 1px solid #e0e7ff;
 }
 

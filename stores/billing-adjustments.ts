@@ -240,7 +240,7 @@ export const useBillingAdjustmentStore = defineStore('billingAdjustment', {
         icon: 'warning',
         showCancelButton: true,
         confirmButtonText: 'Hapus',
-        confirmButtonColor: '#ea5455',
+        confirmButtonColor: '#f13636',
       })
       if (!ok.isConfirmed) return false
       try {

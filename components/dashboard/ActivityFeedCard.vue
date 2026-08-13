@@ -175,15 +175,15 @@ onUnmounted(() => {
 }
 
 .activity-feed-item--success {
-  border-left: 3px solid #71dd37;
+  border-left: 3px solid #00ac4f;
 }
 
 .activity-feed-item--warning {
-  border-left: 3px solid #ffab00;
+  border-left: 3px solid #ffba2f;
 }
 
 .activity-feed-item--danger {
-  border-left: 3px solid #ff3e1d;
+  border-left: 3px solid #f13636;
 }
 
 .activity-feed-item--secondary {

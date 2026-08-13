@@ -59,7 +59,7 @@
           </div>
 
           <!-- Process Flow -->
-          <div class="card mb-4 shadow-sm border-0">
+          <div class="card mb-4">
             <div class="card-header border-0 bg-transparent px-5 py-4">
               <h5 class="card-title mb-0">Process Flow</h5>
             </div>
@@ -83,7 +83,7 @@
             <!-- Kolom utama -->
             <div class="col-xl-8 col-12">
               <!-- Kartu: Informasi Subscription -->
-              <div class="card mb-4 shadow-sm border-0">
+              <div class="card mb-4">
                 <div class="card-header border-0 bg-transparent px-5 py-4">
                   <h5 class="card-title mb-0 d-flex align-items-center">
                     <i class="ri-information-line me-2 text-primary"></i>
@@ -174,7 +174,7 @@
               </div>
 
               <!-- Service Details -->
-              <div class="card mb-4 shadow-sm border-0">
+              <div class="card mb-4">
                 <div class="card-header border-0 bg-transparent px-5 py-4">
                   <h5 class="card-title mb-0 d-flex align-items-center">
                     <i class="ri-service-line me-2 text-primary"></i>
@@ -228,7 +228,7 @@
               </div>
 
               <!-- Installation Addresses -->
-              <div class="card mb-4 shadow-sm border-0">
+              <div class="card mb-4">
                 <div class="card-header border-0 bg-transparent px-5 py-4">
                   <h5 class="card-title mb-0 d-flex align-items-center">
                     <i class="ri-building-line me-2 text-primary"></i>
@@ -266,7 +266,7 @@
               </div>
 
               <!-- Contact Persons -->
-              <div class="card mb-4 shadow-sm border-0">
+              <div class="card mb-4">
                 <div class="card-header border-0 bg-transparent px-5 py-4">
                   <h5 class="card-title mb-0 d-flex align-items-center">
                     <i class="ri-user-line me-2 text-primary"></i>
@@ -332,7 +332,7 @@
               </div>
 
               <!-- Attachments -->
-              <div class="card mb-4 shadow-sm border-0" v-if="subscriptionAttachments && subscriptionAttachments.length > 0">
+              <div class="card mb-4" v-if="subscriptionAttachments && subscriptionAttachments.length > 0">
                 <div class="card-header border-0 bg-transparent px-5 py-4">
                   <h5 class="card-title mb-0 d-flex align-items-center">
                     <i class="ri-attachment-line me-2 text-primary"></i>
@@ -352,7 +352,7 @@
             <!-- Sidebar: Ringkasan + Customer -->
             <div class="col-xl-4 col-12">
               <!-- Ringkasan Keuangan -->
-              <div class="card mb-4 shadow-sm border-0 subscription-detail-summary">
+              <div class="card mb-4 subscription-detail-summary">
                 <div class="card-header border-0 bg-transparent px-5 py-4">
                   <h5 class="card-title mb-0 d-flex align-items-center">
                     <i class="ri-pie-chart-2-line me-2 text-primary"></i>
@@ -377,7 +377,7 @@
               </div>
 
               <!-- Informasi Customer -->
-              <div class="card mb-4 shadow-sm border-0">
+              <div class="card mb-4">
                 <div class="card-header border-0 bg-transparent px-5 py-4">
                   <h5 class="card-title mb-0 d-flex align-items-center">
                     <i class="ri-user-line me-2 text-primary"></i>
@@ -560,7 +560,7 @@ async function onActivate () {
     text: `Yakin ingin mengubah status subscription ${subscription.value.noSubscription || subscription.value.no_subscription} menjadi Active?`,
     icon: 'question',
     showCancelButton: true,
-    confirmButtonColor: '#198754',
+    confirmButtonColor: '#00ac4f',
     cancelButtonColor: '#6c757d',
     confirmButtonText: 'Ya, Aktifkan',
     cancelButtonText: 'Batal',
@@ -586,7 +586,7 @@ async function onCancel () {
            </div>`,
     icon: 'warning',
     showCancelButton: true,
-    confirmButtonColor: '#d33',
+    confirmButtonColor: '#f13636',
     cancelButtonColor: '#6c757d',
     confirmButtonText: 'Ya, Cancel',
     cancelButtonText: 'Batal',
@@ -647,7 +647,7 @@ definePageMeta({
 }
 
 .process-pill-active {
-  background: var(--bs-primary, #696cff);
+  background: var(--bs-primary, #008fec);
   color: #fff;
   font-weight: 600;
 }

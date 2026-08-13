@@ -443,7 +443,7 @@ export const useFdrStore = defineStore('fdr', {
     async deleteFdr(id: string) {
       this.loading = true
       const { $api } = useNuxtApp()
-      const result = await Swal.fire({ title: 'Apakah Anda yakin?', text: 'Data yang dihapus tidak dapat dikembalikan!', icon: 'warning', showCancelButton: true, confirmButtonColor: '#3085d6', cancelButtonColor: '#d33', confirmButtonText: 'Ya, hapus!', cancelButtonText: 'Batal' })
+      const result = await Swal.fire({ title: 'Apakah Anda yakin?', text: 'Data yang dihapus tidak dapat dikembalikan!', icon: 'warning', showCancelButton: true, confirmButtonColor: '#008fec', cancelButtonColor: '#f13636', confirmButtonText: 'Ya, hapus!', cancelButtonText: 'Batal' })
       if (!result.isConfirmed) {
         this.loading = false
         return false
@@ -472,7 +472,7 @@ export const useFdrStore = defineStore('fdr', {
       this.loading = true
       this.error = null
       const { $api } = useNuxtApp()
-      const result = await Swal.fire({ title: 'Approve FDR', text: 'Apakah Anda yakin akan menyetujui FDR ini?', icon: 'question', showCancelButton: true, confirmButtonColor: '#3085d6', cancelButtonColor: '#6c757d', confirmButtonText: 'Ya, Approve', cancelButtonText: 'Batal' })
+      const result = await Swal.fire({ title: 'Approve FDR', text: 'Apakah Anda yakin akan menyetujui FDR ini?', icon: 'question', showCancelButton: true, confirmButtonColor: '#008fec', cancelButtonColor: '#6c757d', confirmButtonText: 'Ya, Approve', cancelButtonText: 'Batal' })
       if (!result.isConfirmed) {
         this.loading = false
         return false
@@ -501,7 +501,7 @@ export const useFdrStore = defineStore('fdr', {
       this.loading = true
       this.error = null
       const { $api } = useNuxtApp()
-      const result = await Swal.fire({ title: 'Cancel FDR', text: 'Apakah Anda yakin akan membatalkan FDR ini?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', cancelButtonColor: '#6c757d', confirmButtonText: 'Ya, Batalkan', cancelButtonText: 'Batal' })
+      const result = await Swal.fire({ title: 'Cancel FDR', text: 'Apakah Anda yakin akan membatalkan FDR ini?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#f13636', cancelButtonColor: '#6c757d', confirmButtonText: 'Ya, Batalkan', cancelButtonText: 'Batal' })
       if (!result.isConfirmed) {
         this.loading = false
         return false
@@ -530,7 +530,7 @@ export const useFdrStore = defineStore('fdr', {
       this.loading = true
       this.error = null
       const { $api } = useNuxtApp()
-      const result = await Swal.fire({ title: 'Reject FDR', text: 'Apakah Anda yakin akan menolak FDR ini?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', cancelButtonColor: '#6c757d', confirmButtonText: 'Ya, Reject', cancelButtonText: 'Batal' })
+      const result = await Swal.fire({ title: 'Reject FDR', text: 'Apakah Anda yakin akan menolak FDR ini?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#f13636', cancelButtonColor: '#6c757d', confirmButtonText: 'Ya, Reject', cancelButtonText: 'Batal' })
       if (!result.isConfirmed) {
         this.loading = false
         return false
@@ -559,7 +559,7 @@ export const useFdrStore = defineStore('fdr', {
       this.loading = true
       this.error = null
       const { $api } = useNuxtApp()
-      const result = await Swal.fire({ title: 'Submit FDR', text: 'Apakah Anda yakin akan mengirim FDR ini? Status akan berubah menjadi Pending.', icon: 'question', showCancelButton: true, confirmButtonColor: '#3085d6', cancelButtonColor: '#6c757d', confirmButtonText: 'Ya, Submit', cancelButtonText: 'Batal' })
+      const result = await Swal.fire({ title: 'Submit FDR', text: 'Apakah Anda yakin akan mengirim FDR ini? Status akan berubah menjadi Pending.', icon: 'question', showCancelButton: true, confirmButtonColor: '#008fec', cancelButtonColor: '#6c757d', confirmButtonText: 'Ya, Submit', cancelButtonText: 'Batal' })
       if (!result.isConfirmed) {
         this.loading = false
         return false

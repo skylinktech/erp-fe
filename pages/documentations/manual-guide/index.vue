@@ -7,7 +7,7 @@
       </p>
 
       <!-- Card Process Flow (stepper horizontal seperti referensi) -->
-      <div class="card mb-4 shadow-sm border-0 stepper-card">
+      <div class="card mb-4 stepper-card">
         <div class="card-header border-0 bg-transparent px-5 py-4">
           <h5 class="card-title mb-0">Process Flow</h5>
         </div>
@@ -579,19 +579,19 @@ definePageMeta({
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
 }
 .timeline-marker-primary {
-  background-color: #696cff;
+  background-color: #008fec;
 }
 .timeline-marker-success {
-  background-color: #16a34a;
+  background-color: #00ac4f;
 }
 .timeline-marker-dark {
   background-color: #566a7f;
 }
 .timeline-marker-info {
-  background-color: #0891b2;
+  background-color: #27b4e0;
 }
 .timeline-marker-warning {
-  background-color: #d97706;
+  background-color: #ffba2f;
 }
 
 /* Setiap step dalam card sendiri */
@@ -602,8 +602,8 @@ definePageMeta({
   padding: 1rem 1.25rem;
   background: #fff;
   border-radius: 0.75rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: none;
+  border: 1px solid var(--bs-card-border-color, #e6e6e8);
   min-height: 60px;
 }
 .timeline-card-icon {
@@ -618,7 +618,7 @@ definePageMeta({
   font-size: 1.1rem;
 }
 .timeline-card-icon.timeline-marker-primary {
-  background-color: #696cff;
+  background-color: #008fec;
 }
 .timeline-card-icon.timeline-marker-success {
   background-color: #16a34a;
@@ -736,7 +736,7 @@ definePageMeta({
   background-color: #0891b2;
 }
 .stepper-circle.process-pill-primary {
-  background-color: #696cff;
+  background-color: #008fec;
 }
 .stepper-circle.process-pill-warning {
   background-color: #d97706;
@@ -757,7 +757,7 @@ definePageMeta({
   background-color: #0891b2;
 }
 .stepper-connector.process-pill-primary {
-  background-color: #696cff;
+  background-color: #008fec;
 }
 .stepper-connector.process-pill-warning {
   background-color: #d97706;
@@ -816,15 +816,15 @@ definePageMeta({
   color: #16a34a;
 }
 .stepper-step-badge.process-pill-info {
-  background: rgba(3, 195, 236, 0.15);
+  background: rgba(39, 180, 224, 0.15);
   color: #0891b2;
 }
 .stepper-step-badge.process-pill-primary {
-  background: rgba(105, 108, 255, 0.15);
-  color: #696cff;
+  background: rgba(0, 143, 236, 0.15);
+  color: #008fec;
 }
 .stepper-step-badge.process-pill-warning {
-  background: rgba(255, 171, 0, 0.2);
+  background: rgba(255, 186, 47, 0.2);
   color: #b45309;
 }
 .stepper-step-badge.process-pill-default {

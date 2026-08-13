@@ -250,7 +250,7 @@ export const useTaxMasterStore = defineStore('taxMaster', {
         showCancelButton: true,
         confirmButtonText: 'Ya, Hapus',
         cancelButtonText: 'Batal',
-        confirmButtonColor: '#ea5455',
+        confirmButtonColor: '#f13636',
       })
       if (!confirm.isConfirmed) return false
 

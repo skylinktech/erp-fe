@@ -6,7 +6,7 @@
           <!-- Header -->
           <div class="text-center mb-4">
             <div class="verify-icon mb-3">
-              <i class="ri-shield-check-line" style="font-size: 4rem; color: #0d6efd;"></i>
+              <i class="ri-shield-check-line" style="font-size: 4rem; color: var(--bs-primary);"></i>
             </div>
             <h1 class="fw-bold mb-2">Verifikasi Dokumen Digital</h1>
             <p class="text-muted">
@@ -15,7 +15,7 @@
           </div>
 
           <!-- Loading State -->
-          <div v-if="loading" class="card shadow-sm">
+          <div v-if="loading" class="card">
             <div class="card-body text-center py-5">
               <ProgressSpinner
                 style="width: 50px; height: 50px"
@@ -28,7 +28,7 @@
           </div>
 
           <!-- Error State -->
-          <div v-else-if="error" class="card shadow-sm border-danger">
+          <div v-else-if="error" class="card border-danger">
             <div class="card-body text-center py-5">
               <i class="ri-error-warning-line text-danger" style="font-size: 3rem;"></i>
               <h4 class="mt-3 text-danger">Verifikasi Gagal</h4>
@@ -40,7 +40,7 @@
           </div>
 
           <!-- Success/Invalid State -->
-          <div v-else-if="verificationResult" class="card shadow-sm" :class="verificationResult.valid ? 'border-success' : 'border-danger'">
+          <div v-else-if="verificationResult" class="card" :class="verificationResult.valid ? 'border-success' : 'border-danger'">
             <div class="card-body">
               <!-- Status Badge -->
               <div class="text-center mb-4">
@@ -172,7 +172,7 @@
           </div>
 
           <!-- Input Token Manual (jika belum ada token) -->
-          <div v-else class="card shadow-sm">
+          <div v-else class="card">
             <div class="card-body p-4">
               <h5 class="card-title mb-4">Masukkan Token Verifikasi</h5>
               <form @submit.prevent="handleManualSubmit">

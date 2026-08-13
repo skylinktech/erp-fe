@@ -376,7 +376,7 @@ definePageMeta({
 }
 .pegawai-name-link:hover {
   text-decoration: underline !important;
-  color: var(--bs-primary-darker, #0a58ca);
+  color: var(--bs-link-hover-color, #0081d4);
 }
 
 /* Responsive adjustments */

@@ -11,7 +11,7 @@
 
       <div v-if="error" class="alert alert-danger">{{ error }}</div>
 
-      <div class="card border-0 shadow-sm mb-4">
+      <div class="card mb-4">
         <div class="card-body">
           <h6 class="mb-3">Import statement</h6>
           <div class="row g-3">
@@ -74,7 +74,7 @@
         </div>
       </div>
 
-      <div class="card border-0 shadow-sm">
+      <div class="card">
         <div class="card-body">
           <table class="table table-sm">
             <thead>
@@ -105,7 +105,7 @@
         </div>
       </div>
 
-      <div v-if="detail" class="card border-0 shadow-sm mt-4">
+      <div v-if="detail" class="card mt-4">
         <div class="card-header bg-transparent d-flex justify-content-between">
           <h6 class="mb-0">Statement {{ detail.id }}</h6>
           <button class="btn btn-sm btn-outline-secondary" @click="detail = null">Close</button>

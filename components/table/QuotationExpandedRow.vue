@@ -160,11 +160,11 @@ const getTotalQuantity = () => {
 }
 
 .text-success {
-  color: #71dd37 !important;
+  color: #00ac4f !important;
 }
 
 .text-info {
-  color: #03c3ec !important;
+  color: #27b4e0 !important;
 }
 
 .text-secondary {
@@ -172,6 +172,6 @@ const getTotalQuantity = () => {
 }
 
 .text-danger {
-  color: #ff3e1d !important;
+  color: #f13636 !important;
 }
 </style>

@@ -161,8 +161,8 @@ onUnmounted(() => {
 }
 
 .birthday-item:hover {
-  background-color: rgba(255, 171, 0, 0.06);
-  border-color: rgba(255, 171, 0, 0.28);
+  background-color: rgba(255, 186, 47, 0.06);
+  border-color: rgba(255, 186, 47, 0.28);
 }
 
 .birthday-name {

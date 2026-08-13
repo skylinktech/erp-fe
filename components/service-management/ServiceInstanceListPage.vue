@@ -20,7 +20,7 @@
         </div>
       </div>
 
-      <div class="card border-0 shadow-sm">
+      <div class="card">
         <div class="card-body">
           <div v-if="store.loading" class="text-muted">Memuat...</div>
           <div v-else-if="store.error" class="text-danger">{{ store.error }}</div>

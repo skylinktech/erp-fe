@@ -528,5 +528,5 @@ definePageMeta({
 <style scoped>
 .form-label { font-weight: 500; color: #374151; margin-bottom: 0.5rem; }
 .form-control, .form-select { border-radius: 0.375rem; border: 1px solid #d1d5db; padding: 0.75rem; }
-.form-control:focus, .form-select:focus { border-color: #696cff; box-shadow: 0 0 0 0.2rem rgba(105, 108, 255, 0.25); outline: 0; }
+.form-control:focus, .form-select:focus { border-color: #008fec; box-shadow: 0 0 0 0.2rem rgba(0, 143, 236, 0.25); outline: 0; }
 </style>

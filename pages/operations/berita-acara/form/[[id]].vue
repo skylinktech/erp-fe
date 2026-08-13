@@ -19,7 +19,7 @@
       <form v-else @submit.prevent="handleSubmit">
         <div class="row g-4">
           <div class="col-12">
-            <div class="card shadow-sm border-0">
+            <div class="card">
               <div class="card-header bg-transparent border-0 px-5 py-4">
                 <h5 class="card-title mb-0">
                   <i class="ri-file-text-line me-2 text-primary"></i>Informasi Berita Acara
@@ -78,7 +78,7 @@
           </div>
 
           <div class="col-12">
-            <div class="card shadow-sm border-0">
+            <div class="card">
               <div class="card-header bg-transparent border-0 px-5 py-4 d-flex justify-content-between align-items-center">
                 <h5 class="card-title mb-0">
                   <i class="ri-table-line me-2 text-primary"></i>Data Performansi

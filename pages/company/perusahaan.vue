@@ -372,6 +372,6 @@ definePageMeta({
 <style scoped>
 .logo-preview { transition: all 0.3s ease; }
 .logo-preview:hover { transform: scale(1.05); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
-.form-control.is-invalid { border-color: #dc3545; box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25); }
-.invalid-feedback { display: block; width: 100%; margin-top: 0.25rem; font-size: 0.875rem; color: #dc3545; }
+.form-control.is-invalid { border-color: #f13636; box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25); }
+.invalid-feedback { display: block; width: 100%; margin-top: 0.25rem; font-size: 0.875rem; color: #f13636; }
 </style>

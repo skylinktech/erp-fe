@@ -149,24 +149,24 @@ onMounted(async () => {
 }
 
 .important-notification-item:hover {
-  background-color: rgba(105, 108, 255, 0.04);
-  border-color: rgba(105, 108, 255, 0.2);
+  background-color: rgba(0, 143, 236, 0.04);
+  border-color: rgba(0, 143, 236, 0.2);
 }
 
 .important-notification-item--warning {
-  border-left: 3px solid #ffab00;
+  border-left: 3px solid #ffba2f;
 }
 
 .important-notification-item--success {
-  border-left: 3px solid #71dd37;
+  border-left: 3px solid #00ac4f;
 }
 
 .important-notification-item--danger {
-  border-left: 3px solid #ff3e1d;
+  border-left: 3px solid #f13636;
 }
 
 .important-notification-item--info {
-  border-left: 3px solid #696cff;
+  border-left: 3px solid #008fec;
 }
 
 .important-notification-text {
@@ -178,7 +178,7 @@ onMounted(async () => {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background-color: #696cff;
+  background-color: #008fec;
   margin-top: 0.35rem;
 }
 </style>

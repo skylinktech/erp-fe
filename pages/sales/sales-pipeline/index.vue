@@ -2,7 +2,7 @@
   <div class="content-wrapper">
     <div class="container-xxl flex-grow-1 container-py-2">
       <div class="d-flex align-items-center mb-4">
-        <i class="ri-diamond-line me-2" style="font-size: 24px; color: #ffc107;"></i>
+        <i class="ri-diamond-line me-2" style="font-size: 24px; color: var(--bs-warning);"></i>
         <h4 class="mb-0">Sales Pipeline / Deals</h4>
       </div>
       <p class="mb-6">Kelola opportunities dan deals di dalam sales pipeline</p>
@@ -655,16 +655,16 @@ function getInitials(name) {
 
 function getIconColor(name) {
   const colors = [
-    '#696cff',
-    '#71dd37',
-    '#03c3ec',
-    '#ffab00',
-    '#ff3e1d',
+    '#008fec',
+    '#00ac4f',
+    '#27b4e0',
+    '#ffba2f',
+    '#f13636',
     '#233446',
-    '#ea5455',
-    '#28c76f',
-    '#00cfe8',
-    '#ff9f43',
+    '#f13636',
+    '#00ac4f',
+    '#27b4e0',
+    '#ffba2f',
   ]
   const index = name.charCodeAt(0) % colors.length
   return colors[index]
@@ -818,13 +818,13 @@ definePageMeta({
 }
 
 .nav-tabs-custom .nav-link:hover {
-  color: #696cff;
+  color: #008fec;
   border-bottom-color: #e9ecef;
 }
 
 .nav-tabs-custom .nav-link.active {
-  color: #696cff;
-  border-bottom-color: #696cff;
+  color: #008fec;
+  border-bottom-color: #008fec;
   background-color: transparent;
 }
 
@@ -901,9 +901,9 @@ definePageMeta({
 }
 
 .kanban-column-body.is-drop-target {
-  outline: 2px dashed rgba(105, 108, 255, 0.6);
+  outline: 2px dashed rgba(0, 143, 236, 0.6);
   outline-offset: 6px;
-  background: rgba(105, 108, 255, 0.04);
+  background: rgba(0, 143, 236, 0.04);
 }
 
 .probability-badge {
@@ -924,14 +924,14 @@ definePageMeta({
   padding: 16px;
   cursor: pointer;
   transition: all 0.2s ease;
-  border: 1px solid #e9ecef;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--bs-card-border-color, #e6e6e8);
+  box-shadow: none;
 }
 
 .kanban-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  border-color: #696cff;
+  box-shadow: none;
+  border-color: #008fec;
 }
 
 .kanban-card-header {
@@ -990,7 +990,7 @@ definePageMeta({
   align-items: center;
   margin-top: 8px;
   padding-top: 8px;
-  border-top: 1px solid #f3f4f6;
+  border-top: 1px solid var(--bs-card-border-color, #e6e6e8);
 }
 
 .kanban-empty {

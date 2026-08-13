@@ -269,15 +269,15 @@
   }
   
   .text-success {
-    color: #28c76f !important;
+    color: #00ac4f !important;
   }
   
   .text-danger {
-    color: #ea5455 !important;
+    color: #f13636 !important;
   }
   
   .text-warning {
-    color: #ff9f43 !important;
+    color: #ffba2f !important;
   }
   
   .table th {

@@ -137,7 +137,7 @@ onMounted(() => {
 }
 
 .qr-error {
-  color: #dc3545;
+  color: #f13636;
 }
 
 .qr-loading {

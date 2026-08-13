@@ -4,7 +4,7 @@
 
     <div
       v-if="$slots.summary || (summaryRows && summaryRows.length)"
-      class="card shadow-sm border-0 mb-4"
+      class="card mb-4"
     >
       <div class="card-header border-0 bg-transparent px-4 py-3">
         <h6 class="card-title mb-0 d-flex align-items-center gap-2">
@@ -24,7 +24,7 @@
       </div>
     </div>
 
-    <div class="card shadow-sm border-0 mb-4">
+    <div class="card mb-4">
       <div class="card-header border-0 bg-transparent px-4 py-3">
         <h6 class="card-title mb-0 d-flex align-items-center gap-2">
           <i :class="navIcon" class="text-primary"></i>
@@ -83,9 +83,9 @@ function isNavActive(to: string): boolean {
 
 <style scoped>
 .form-page-sidebar :deep(.list-group-item.active) {
-  background-color: rgba(var(--bs-primary-rgb, 105, 108, 255), 0.08);
+  background-color: rgba(var(--bs-primary-rgb, 0, 143, 236), 0.08);
   border-color: transparent;
-  color: var(--bs-primary, #696cff);
+  color: var(--bs-primary, #008fec);
   font-weight: 500;
 }
 

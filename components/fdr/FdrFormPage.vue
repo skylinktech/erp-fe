@@ -250,7 +250,7 @@
         </div>
 
         <div class="col-xl-4 col-12">
-          <div class="card shadow-sm border-0">
+          <div class="card">
             <div class="card-header border-0 bg-transparent px-5 py-4">
               <h5 class="card-title mb-0 d-flex align-items-center"><i class="ri-menu-2-line me-2 text-primary"></i>Modul Sales</h5>
             </div>
@@ -356,15 +356,15 @@
   background     : transparent;
   border         : 1px solid #f1aeb5;
   border-radius  : 6px;
-  color          : #dc3545;
+  color          : #f13636;
   cursor         : pointer;
   transition     : background 0.15s, color 0.15s;
   line-height    : 1;
 }
 .repeater-delete-btn:hover {
-  background  : #dc3545;
+  background  : #f13636;
   color       : #fff;
-  border-color: #dc3545;
+  border-color: #f13636;
 }
 
 /* ── Empty state ── */
@@ -402,7 +402,7 @@
 .btn-price-lock.is-overridden:hover { background: #fd7e14; color: #fff; border-color: #fd7e14; }
 .price-input-wrapper.price-override-active .price-field {
   border-color: #fd7e14 !important;
-  box-shadow: 0 0 0 0.15rem rgba(253, 126, 20, 0.15) !important;
+  box-shadow: 0 0 0 0.15rem rgba(255, 186, 47, 0.15) !important;
 }
 .price-field:not(.price-overridden) { background: #f8f9fa !important; color: #6c757d !important; cursor: default; }
 .badge-custom { font-size: 0.6rem; vertical-align: middle; }
@@ -421,7 +421,7 @@
 .price-reason-input {
   flex: 1;
   font-size: 0.78rem;
-  border-color: #ffc107 !important;
+  border-color: var(--bs-warning) !important;
   background: #fffef5 !important;
   color: #856404;
 }

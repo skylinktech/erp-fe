@@ -246,7 +246,7 @@
         </div>
 
         <div class="col-xl-4 col-12">
-          <div class="card shadow-sm border-0">
+          <div class="card">
             <div class="card-header border-0 bg-transparent px-5 py-4">
               <h5 class="card-title mb-0 d-flex align-items-center">
                 <i class="ri-menu-2-line me-2 text-primary"></i>

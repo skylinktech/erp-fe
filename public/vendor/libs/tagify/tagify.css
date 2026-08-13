@@ -18,12 +18,12 @@
   --tag-text-color--edit: black;
   --tag-pad: 0.3em 0.5em;
   --tag-inset-shadow-size: 2em;
-  --tag-invalid-color: #ff4d49;
-  --tag-invalid-bg: rgba(255, 77, 73, 0.5);
+  --tag-invalid-color: #f13636;
+  --tag-invalid-bg: rgba(241, 54, 54, 0.5);
   --tag--min-width: 1ch;
   --tag--max-width: auto;
   --tag-hide-transition: 0.3s;
-  --tag-remove-bg: rgba(255, 77, 73, 0.3);
+  --tag-remove-bg: rgba(241, 54, 54, 0.3);
   --tag-remove-btn-color: #7d808e;
   --tag-remove-btn-bg: none;
   --tag-remove-btn-bg--hover: #ff3430;
@@ -284,7 +284,7 @@
   opacity: 0.5;
 }
 .tagify__tag__removeBtn:hover + div::before {
-  box-shadow: 0 0 0 var(--tag-inset-shadow-size) var(--tag-remove-bg, rgba(255, 77, 73, 0.3)) inset !important;
+  box-shadow: 0 0 0 var(--tag-inset-shadow-size) var(--tag-remove-bg, rgba(241, 54, 54, 0.3)) inset !important;
   transition: box-shadow 0.2s;
 }
 .tagify:not(.tagify--mix) .tagify__input br {
@@ -437,7 +437,7 @@
   transition: 0s;
 }
 .tagify--invalid {
-  --tags-border-color: #ff4d49;
+  --tags-border-color: #f13636;
 }
 .tagify__dropdown {
   position: absolute;
@@ -601,10 +601,10 @@
 }
 
 .light-style .tagify__dropdown.users-list .tagify__dropdown__item__avatar-wrap {
-  background: #f7f7f9;
+  background: #fff;
 }
 .light-style .tagify__tag .tagify__tag__avatar-wrap {
-  background: #f7f7f9;
+  background: #fff;
 }
 .light-style .tagify__dropdown.users-list .addAll {
   border-bottom: 1px solid #e5e6e8;
@@ -811,7 +811,7 @@
   color: #3b4056;
 }
 .light-style .tagify__tag__removeBtn:hover + div::before {
-  background: rgba(255, 77, 73, 0.3);
+  background: rgba(241, 54, 54, 0.3);
 }
 .light-style .tagify:hover:not([readonly]) {
   border-color: #cfd0d6;
@@ -841,7 +841,7 @@
   color: #9fa1b8;
 }
 .dark-style .tagify__tag__removeBtn:hover + div::before {
-  background: rgba(255, 77, 73, 0.3);
+  background: rgba(241, 54, 54, 0.3);
 }
 .dark-style .tagify:hover:not([readonly]) {
   border-color: #595b75;

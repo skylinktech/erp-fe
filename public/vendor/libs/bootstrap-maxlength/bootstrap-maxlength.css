@@ -14,7 +14,7 @@
 }
 .light-style .bootstrap-maxlength.label-danger {
   color: #fff;
-  background: #ff4d49;
+  background: #f13636;
 }
 
 .dark-style .bootstrap-maxlength {
@@ -27,5 +27,5 @@
 }
 .dark-style .bootstrap-maxlength.label-danger {
   color: #fff;
-  background: #ff4d49;
+  background: #f13636;
 }

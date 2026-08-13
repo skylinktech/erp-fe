@@ -10,36 +10,36 @@
 // JS global variables
 window.config = {
   colors: {
-    primary: '#666cff',
-    secondary: '#6d788d',
-    success: '#72e128',
-    info: '#26c6f9',
-    warning: '#fdb528',
-    danger: '#ff4d49',
+    primary: '#008fec',
+    secondary: '#b6bbcc',
+    success: '#00ac4f',
+    info: '#27b4e0',
+    warning: '#ffba2f',
+    danger: '#f13636',
     dark: '#4b4b4b',
     black: '#000',
     white: '#fff',
     cardColor: '#fff',
     bodyBg: '#f7f7f9',
     bodyColor: '#676a7b',
-    headingColor: '#3b4055',
+    headingColor: '#080808',
     textMuted: '#a8aab4',
-    borderColor: '#e5e5e8'
+    borderColor: '#e6e6e8'
   },
   colors_label: {
-    primary: '#666cff29',
-    secondary: '#6d788d29',
-    success: '#72e12829',
-    info: '#26c6f929',
-    warning: '#fdb52829',
-    danger: '#ff4d4929',
+    primary: '#008fec29',
+    secondary: '#b6bbcc29',
+    success: '#00ac4f29',
+    info: '#27b4e029',
+    warning: '#ffba2f29',
+    danger: '#f1363629',
     dark: '#4b4b4b29'
   },
   colors_dark: {
     cardColor: '#30334e',
-    bodyBg: '#282a42',
+    bodyBg: '#141820',
     bodyColor: '#b2b3ca',
-    headingColor: '#d7d8ee',
+    headingColor: '#f6f7f8',
     textMuted: '#7b7d95',
     borderColor: '#464964'
   },

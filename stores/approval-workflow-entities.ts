@@ -195,7 +195,7 @@ export const useApprovalWorkflowEntitiesStore = defineStore('approval-workflow-e
         text: 'Entity yang masih dipakai workflow tidak dapat dihapus.',
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#d33',
+        confirmButtonColor: '#f13636',
         cancelButtonColor: '#6c757d',
         confirmButtonText: 'Ya, Hapus',
       })

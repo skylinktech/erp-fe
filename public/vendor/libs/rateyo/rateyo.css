@@ -52,10 +52,10 @@
   fill: #dcdde1;
 }
 .light-style:not([dir=rtl]) .jq-ry-container:not(.multi-color-ratings) .jq-ry-rated-group svg {
-  fill: #fdb528;
+  fill: #ffba2f;
 }
 .light-style[dir=rtl] .jq-ry-container:not(.multi-color-ratings) .jq-ry-normal-group svg {
-  fill: #fdb528;
+  fill: #ffba2f;
 }
 .light-style[dir=rtl] .jq-ry-container .jq-ry-rated-group svg {
   fill: #dcdde1;
@@ -65,10 +65,10 @@
   fill: #4e506a;
 }
 .dark-style:not([dir=rtl]) .jq-ry-container:not(.multi-color-ratings) .jq-ry-rated-group svg {
-  fill: #fdb528;
+  fill: #ffba2f;
 }
 .dark-style[dir=rtl] .jq-ry-container:not(.multi-color-ratings) .jq-ry-normal-group svg {
-  fill: #fdb528;
+  fill: #ffba2f;
 }
 .dark-style[dir=rtl] .jq-ry-container .jq-ry-rated-group svg {
   fill: #4e506a;

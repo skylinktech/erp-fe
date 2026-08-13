@@ -38,7 +38,7 @@
 
         <div class="row g-4">
           <div class="col-xl-8 col-12">
-            <div class="card po-form-card shadow-sm border-0">
+            <div class="card po-form-card">
               <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2 py-3 border-0 bg-transparent">
                 <h5 class="card-title mb-0">Form Purchase Order</h5>
                 <span class="text-muted small">Informasi header &amp; daftar produk</span>
@@ -943,7 +943,7 @@ watch(
 }
 
 .po-item-block__head {
-  background: rgba(var(--bs-primary-rgb, 105, 108, 255), 0.04);
+  background: rgba(var(--bs-primary-rgb, 0, 143, 236), 0.04);
 }
 
 .po-item-block .col-form-label {

@@ -62,7 +62,7 @@
           </div>
 
           <!-- Process Flow -->
-          <div class="card mb-4 shadow-sm border-0">
+          <div class="card mb-4">
             <div class="card-header border-0 bg-transparent px-5 py-4">
               <h5 class="card-title mb-0">Process Flow</h5>
             </div>
@@ -90,7 +90,7 @@
             <!-- Kolom utama -->
             <div class="col-xl-8 col-12">
               <!-- Kartu: Informasi Quotation -->
-              <div class="card mb-4 shadow-sm border-0">
+              <div class="card mb-4">
                 <div class="card-header border-0 bg-transparent px-5 py-4">
                   <h5 class="card-title mb-0 d-flex align-items-center">
                     <i class="ri-information-line me-2 text-primary"></i>
@@ -168,7 +168,7 @@
               </div>
 
               <!-- DID (Direct Inward Dialing) -->
-              <div v-if="didItems.length > 0" class="card mb-4 shadow-sm border-0">
+              <div v-if="didItems.length > 0" class="card mb-4">
                 <div class="card-header border-0 bg-transparent px-5 py-4">
                   <h5 class="card-title mb-0 d-flex align-items-center">
                     <i class="ri-phone-line me-2 text-primary"></i>
@@ -205,7 +205,7 @@
               </div>
 
               <!-- Cost Breakdown (dari quotationItems by product.billing_type) -->
-              <div class="card mb-4 shadow-sm border-0">
+              <div class="card mb-4">
                 <div class="card-header border-0 bg-transparent px-5 py-4">
                   <h5 class="card-title mb-0 d-flex align-items-center">
                     <i class="ri-money-dollar-circle-line me-2 text-primary"></i>
@@ -290,7 +290,7 @@
             <!-- Sidebar: Ringkasan + Customer -->
             <div class="col-xl-4 col-12">
               <!-- Ringkasan Keuangan -->
-              <div class="card mb-4 shadow-sm border-0 qo-detail-summary">
+              <div class="card mb-4 qo-detail-summary">
                 <div class="card-header border-0 bg-transparent px-5 py-4">
                   <h5 class="card-title mb-0 d-flex align-items-center">
                     <i class="ri-pie-chart-2-line me-2 text-primary"></i>
@@ -346,7 +346,7 @@
               />
 
               <!-- Informasi Customer -->
-              <div class="card mb-4 shadow-sm border-0">
+              <div class="card mb-4">
                 <div class="card-header border-0 bg-transparent px-5 py-4">
                   <h5 class="card-title mb-0 d-flex align-items-center">
                     <i class="ri-user-line me-2 text-primary"></i>
@@ -697,7 +697,7 @@ definePageMeta({
 }
 
 .process-pill-active {
-  background: var(--bs-primary, #696cff);
+  background: var(--bs-primary, #008fec);
   color: #fff;
   font-weight: 600;
 }

@@ -293,8 +293,8 @@ export const useAccountStore = defineStore('account', {
         text: "Data akun yang dihapus tidak dapat dikembalikan!",
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
+        confirmButtonColor: '#f13636',
+        cancelButtonColor: '#008fec',
         confirmButtonText: 'Ya, hapus!',
         cancelButtonText: 'Batal'
       });

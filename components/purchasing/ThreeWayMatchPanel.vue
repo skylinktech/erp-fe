@@ -65,7 +65,7 @@ watch(
 </script>
 
 <template>
-  <div class="card border-0 shadow-sm">
+  <div class="card">
     <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
       <h6 class="mb-0">3-Way Match</h6>
       <button type="button" class="btn btn-sm btn-outline-secondary" :disabled="loading" @click="load">

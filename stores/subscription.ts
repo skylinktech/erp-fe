@@ -403,7 +403,7 @@ export const useSubscriptionStore = defineStore('subscription', {
       const toast = useToast()
       this.loading = true
       const { $api } = useNuxtApp()
-      const ok = await Swal.fire({ title: 'Yakin?', text: 'Data yang dihapus tidak dapat dikembalikan.', icon: 'warning', showCancelButton: true, confirmButtonColor: '#3085d6', cancelButtonColor: '#d33', confirmButtonText: 'Ya, hapus!', cancelButtonText: 'Batal' })
+      const ok = await Swal.fire({ title: 'Yakin?', text: 'Data yang dihapus tidak dapat dikembalikan.', icon: 'warning', showCancelButton: true, confirmButtonColor: '#008fec', cancelButtonColor: '#f13636', confirmButtonText: 'Ya, hapus!', cancelButtonText: 'Batal' })
       if (!ok.isConfirmed) { this.loading = false; return }
       try {
         const res = await fetch(`${$api.subscription()}/${id}`, { method: 'DELETE', headers: { Accept: 'application/json' }, credentials: 'include' })

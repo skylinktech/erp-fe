@@ -52,7 +52,7 @@
 
           <div class="row g-4">
             <div class="col-xl-8">
-              <div class="card mb-4 shadow-sm border-0">
+              <div class="card mb-4">
                 <div class="card-header border-0 bg-transparent px-5 py-4">
                   <h5 class="card-title mb-0">Informasi ARF</h5>
                 </div>
@@ -111,7 +111,7 @@
                 </div>
               </div>
 
-              <div v-if="employeeList.length" class="card mb-4 shadow-sm border-0">
+              <div v-if="employeeList.length" class="card mb-4">
                 <div class="card-header border-0 bg-transparent px-5 py-4">
                   <h5 class="card-title mb-0">Rincian Pegawai & Gaji</h5>
                 </div>
@@ -149,7 +149,7 @@
                 </div>
               </div>
 
-              <div class="card mb-4 shadow-sm border-0">
+              <div class="card mb-4">
                 <div class="card-header border-0 bg-transparent px-5 py-4">
                   <h5 class="card-title mb-0">Rincian Item Budget</h5>
                 </div>

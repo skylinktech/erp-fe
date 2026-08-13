@@ -220,7 +220,7 @@ export const useJournalStore = defineStore('journal', {
       const { $api } = useNuxtApp()
 
       try {
-        // Validasi field required (status selalu draft di backend ù jangan kirim dari client)
+        // Validasi field required (status selalu draft di backend ÔøΩ jangan kirim dari client)
         if (!this.form.date || !this.form.description) {
           const toast = useToast()
           toast.error({
@@ -282,7 +282,7 @@ export const useJournalStore = defineStore('journal', {
 
         const formData = new FormData()
         
-        // Jangan kirim `status` ù create/update selalu draft di backend; posting via /post
+        // Jangan kirim `status` ÔøΩ create/update selalu draft di backend; posting via /post
         const fieldsToSend = ['journalNumber', 'date', 'description', 'referenceType', 'referenceId'];
         fieldsToSend.forEach(key => {
           const value = this.form[key as keyof typeof this.form];
@@ -415,8 +415,8 @@ export const useJournalStore = defineStore('journal', {
         text: "Data jurnal yang dihapus tidak dapat dikembalikan!",
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
+        confirmButtonColor: '#f13636',
+        cancelButtonColor: '#008fec',
         confirmButtonText: 'Ya, hapus!',
         cancelButtonText: 'Batal'
       });
@@ -622,7 +622,7 @@ export const useJournalStore = defineStore('journal', {
           inputValidator: (value) => (!value?.trim() ? 'Alasan reverse wajib diisi' : undefined),
           icon: 'warning',
           showCancelButton: true,
-          confirmButtonColor: '#d33',
+          confirmButtonColor: '#f13636',
           cancelButtonColor: '#6c757d',
           confirmButtonText: 'Ya, Reverse!',
           cancelButtonText: 'Batal',
@@ -770,7 +770,7 @@ export const useJournalStore = defineStore('journal', {
       this.loadingStats = true
       const { $api } = useNuxtApp()
       try {
-        // Global aggregates (Tax Master pattern) ù tidak ikut filter list
+        // Global aggregates (Tax Master pattern) ÔøΩ tidak ikut filter list
         const response = await fetch($api.journalEntriesSummary(), {
           headers: { Accept: 'application/json' },
           credentials: 'include',

@@ -1074,7 +1074,7 @@ onMounted(async () => {
       
     .received-qty-input:focus {
         border-color: #007bff !important;
-        box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25), inset 0 1px 2px rgba(0, 0, 0, 0.075) !important;
+        box-shadow: 0 0 0 0.25rem rgba(0, 143, 236, 0.25), inset 0 1px 2px rgba(0, 0, 0, 0.075) !important;
         color: #212529 !important;
         background-color: #ffffff !important;
         outline: none !important;
@@ -1136,7 +1136,7 @@ onMounted(async () => {
 
     .modal-qty-input:focus {
         border-color: #007bff !important;
-        box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25) !important;
+        box-shadow: 0 0 0 0.25rem rgba(0, 143, 236, 0.25) !important;
         background-color: #ffffff !important;
         outline: none !important;
     }

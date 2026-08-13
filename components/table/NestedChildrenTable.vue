@@ -164,7 +164,7 @@ const getTypeLabel = (category) => {
 }
 
 .text-primary {
-  color: #0d6efd !important;
+  color: var(--bs-primary) !important;
 }
 
 /* Styling untuk nested expansion dengan warna berbeda untuk setiap level */

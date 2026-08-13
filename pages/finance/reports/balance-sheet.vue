@@ -19,7 +19,7 @@
 
       <div class="row g-3 mb-4" v-if="report">
         <div class="col-md-4">
-          <div class="card border-0 shadow-sm h-100">
+          <div class="card h-100">
             <div class="card-body">
               <div class="text-muted small">Assets</div>
               <div class="fs-5 fw-semibold">{{ formatMoney(summary.assets) }}</div>
@@ -27,7 +27,7 @@
           </div>
         </div>
         <div class="col-md-4">
-          <div class="card border-0 shadow-sm h-100">
+          <div class="card h-100">
             <div class="card-body">
               <div class="text-muted small">Liabilities</div>
               <div class="fs-5 fw-semibold">{{ formatMoney(summary.liabilities) }}</div>
@@ -35,7 +35,7 @@
           </div>
         </div>
         <div class="col-md-4">
-          <div class="card border-0 shadow-sm h-100">
+          <div class="card h-100">
             <div class="card-body">
               <div class="text-muted small">Equity</div>
               <div class="fs-5 fw-semibold">{{ formatMoney(summary.equity) }}</div>
@@ -44,7 +44,7 @@
         </div>
       </div>
 
-      <div class="card border-0 shadow-sm">
+      <div class="card">
         <div class="card-body">
           <div class="table-responsive">
             <table class="table table-sm">

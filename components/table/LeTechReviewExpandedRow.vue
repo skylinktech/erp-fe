@@ -30,7 +30,7 @@ defineProps({
 .expanded-row-content {
   padding: 1rem 1.5rem;
   background-color: #f8f9fa;
-  border-left: 3px solid #696cff;
+  border-left: 3px solid #008fec;
   margin-left: 1rem;
 }
 </style>

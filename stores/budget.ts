@@ -298,8 +298,8 @@ export const useBudgetStore = defineStore('budget', {
         text: 'Data budget yang dihapus tidak dapat dikembalikan!',
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
+        confirmButtonColor: '#f13636',
+        cancelButtonColor: '#008fec',
         confirmButtonText: 'Ya, hapus!',
         cancelButtonText: 'Batal',
         customClass: {
@@ -375,8 +375,8 @@ export const useBudgetStore = defineStore('budget', {
           text: alertText,
           icon: 'warning',
           showCancelButton: true,
-          confirmButtonColor: '#3085d6',
-          cancelButtonColor: '#d33',
+          confirmButtonColor: '#008fec',
+          cancelButtonColor: '#f13636',
           confirmButtonText: 'Ya, Approve!',
           cancelButtonText: 'Batal',
           customClass: {
@@ -437,8 +437,8 @@ export const useBudgetStore = defineStore('budget', {
         text: 'Apakah Anda yakin ingin menolak budget ini?',
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
+        confirmButtonColor: '#f13636',
+        cancelButtonColor: '#008fec',
         confirmButtonText: 'Ya, Tolak!',
         cancelButtonText: 'Batal',
         customClass: {

@@ -152,14 +152,14 @@ watch(user, (nextUser) => {
 }
 
 .notification-prompt-card {
-  border: 1px solid rgba(102, 108, 255, 0.18);
+  border: 1px solid rgba(0, 143, 236, 0.18);
   background: #fff;
 }
 
 .notification-prompt-icon {
   width: 2.75rem;
   height: 2.75rem;
-  background: rgba(102, 108, 255, 0.12);
+  background: rgba(0, 143, 236, 0.12);
 }
 
 .notification-prompt-close {

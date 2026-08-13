@@ -85,8 +85,8 @@ function emitReset() {
 
 <style scoped>
 .collapsible-filter-card {
-  border: 0;
-  box-shadow: 0 2px 6px rgba(67, 89, 113, 0.12);
+  border: 1px solid var(--bs-card-border-color, #e6e6e8);
+  box-shadow: none;
 }
 
 .collapsible-filter-card__header {

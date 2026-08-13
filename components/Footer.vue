@@ -11,7 +11,7 @@
               Versi {{ versionLabel }}
             </span>
             <span class="footer-brand-skylink">
-              CoreX by Skylink
+              SkyFlow by Skylink
             </span>
           </div>
         </div>
@@ -54,7 +54,7 @@
     font-size: 14px;
     letter-spacing: 0.05em;
     font-weight: 400;
-    font-family: 'Poppins', sans-serif;
+    font-family: var(--bs-font-sans-serif);
     color: #666666;
     text-align: center;
     margin-top: 20px;

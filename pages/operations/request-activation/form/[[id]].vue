@@ -19,7 +19,7 @@
       <form v-else @submit.prevent="handleSubmit">
         <div class="row g-4">
           <div class="col-12">
-            <div class="card shadow-sm border-0">
+            <div class="card">
               <div class="card-header bg-transparent border-0 px-5 py-4">
                 <h5 class="card-title mb-0">
                   <i class="ri-building-line me-2 text-primary"></i>Informasi Customer &amp; Layanan
@@ -93,7 +93,7 @@
           </div>
 
           <div class="col-12">
-            <div class="card shadow-sm border-0">
+            <div class="card">
               <div class="card-header bg-transparent border-0 px-5 py-4">
                 <h5 class="card-title mb-0">
                   <i class="ri-user-location-line me-2 text-primary"></i>PIC, Alamat &amp; Kontak

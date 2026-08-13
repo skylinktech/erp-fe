@@ -7,15 +7,33 @@ import Dropdown from 'primevue/dropdown';
 import InputText from 'primevue/inputtext';
 import Editor from 'primevue/editor';
 import ProgressSpinner from 'primevue/progressspinner';
+import { definePreset } from '@primeuix/themes';
 import Aura from '@primeuix/themes/aura';
 import 'primeicons/primeicons.css';
 
-// Konfigurasi tema PrimeVue dengan preset Aura agar tabel PrimeVue menggunakan tema tersebut
+const SkylinkPreset = definePreset(Aura, {
+  semantic: {
+    primary: {
+      50: '#ebf6fd',
+      100: '#cce9fb',
+      200: '#99d2f7',
+      300: '#66bcf4',
+      400: '#33a5f0',
+      500: '#008fec',
+      600: '#0081d4',
+      700: '#0072bd',
+      800: '#00568e',
+      900: '#00395e',
+      950: '#001d2f',
+    },
+  },
+});
+
 export default defineNuxtPlugin((nuxtApp) => {
   nuxtApp.vueApp.use(PrimeVue, {
     ripple: true,
     theme: {
-      preset: Aura,
+      preset: SkylinkPreset,
       options: {
         prefix: 'p',
         darkModeSelector: '.app-light',

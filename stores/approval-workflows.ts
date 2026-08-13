@@ -259,7 +259,7 @@ export const useApprovalWorkflowsStore = defineStore('approval-workflows', {
         text: 'Workflow dan semua step akan dihapus. Tindakan ini tidak dapat dibatalkan.',
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#d33',
+        confirmButtonColor: '#f13636',
         cancelButtonColor: '#6c757d',
         confirmButtonText: 'Ya, Hapus',
       })

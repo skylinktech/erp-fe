@@ -55,7 +55,7 @@
 
           <div class="row g-4">
             <div class="col-xl-8">
-              <div class="card mb-4 shadow-sm border-0">
+              <div class="card mb-4">
                 <div class="card-header border-0 bg-transparent px-5 py-4"><h5 class="card-title mb-0">Informasi Purchase Request</h5></div>
                 <hr class="mx-5 my-0" style="border-width: 2px;">
                 <div class="card-body px-5 pt-4 pb-5">
@@ -84,7 +84,7 @@
                 </div>
               </div>
 
-              <div class="card mb-4 shadow-sm border-0">
+              <div class="card mb-4">
                 <div class="card-header border-0 bg-transparent px-5 py-4"><h5 class="card-title mb-0">Daftar Item Yang Diminta</h5></div>
                 <hr class="mx-5 my-0" style="border-width: 2px;">
                 <div class="card-body px-5 pt-4 pb-5">
@@ -132,7 +132,7 @@
               </div>
             </div>
             <div class="col-xl-4">
-              <div class="card mb-4 shadow-sm border-0">
+              <div class="card mb-4">
                 <div class="card-header border-0 bg-transparent px-5 py-4"><h5 class="card-title mb-0">Ringkasan</h5></div>
                 <div class="card-body px-5 pt-4 pb-4">
                   <div class="d-flex justify-content-between py-1"><span class="text-muted">Jumlah item</span><span class="fw-medium">{{ itemList.length }}</span></div>
@@ -141,7 +141,7 @@
                 </div>
               </div>
 
-              <div class="card mb-4 shadow-sm border-0">
+              <div class="card mb-4">
                 <div class="card-header border-0 bg-transparent px-5 py-4"><h5 class="card-title mb-0">Metadata</h5></div>
                 <div class="card-body px-5 pt-4 pb-4">
                   <div class="mb-3">

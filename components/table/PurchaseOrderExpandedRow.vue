@@ -220,11 +220,11 @@ const getPendingItems = () => {
 }
 
 .text-success {
-  color: #71dd37 !important;
+  color: #00ac4f !important;
 }
 
 .text-warning {
-  color: #ffab00 !important;
+  color: #ffba2f !important;
 }
 
 .text-secondary {

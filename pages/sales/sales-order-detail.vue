@@ -1201,16 +1201,16 @@ onMounted(async () => {
         left: 0;
         right: 0;
         bottom: 0;
-        background-color: rgba(40, 199, 111, 0.1);
+        background-color: rgba(0, 172, 79, 0.1);
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 1.2rem;
         font-weight: bold;
-        color: #28c76f;
+        color: #00ac4f;
         z-index: 10;
         border-radius: 0.5rem;
-        border: 2px solid #28c76f;
+        border: 2px solid #00ac4f;
     }
     
     /* ✅ CSS untuk disabled checkbox styling */
@@ -1240,7 +1240,7 @@ onMounted(async () => {
     
     .delivered-qty-input:focus {
         border-color: #007bff !important;
-        box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25), inset 0 1px 2px rgba(0, 0, 0, 0.075) !important;
+        box-shadow: 0 0 0 0.25rem rgba(0, 143, 236, 0.25), inset 0 1px 2px rgba(0, 0, 0, 0.075) !important;
         color: #212529 !important;
         background-color: #ffffff !important;
         outline: none !important;
@@ -1302,7 +1302,7 @@ onMounted(async () => {
 
     .modal-qty-input:focus {
         border-color: #007bff !important;
-        box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25) !important;
+        box-shadow: 0 0 0 0.25rem rgba(0, 143, 236, 0.25) !important;
         background-color: #ffffff !important;
         outline: none !important;
     }

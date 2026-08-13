@@ -272,7 +272,7 @@ definePageMeta({
 }
 
 .org-pegawai-link:hover {
-  background: rgba(105, 108, 255, 0.06);
+  background: rgba(0, 143, 236, 0.06);
   color: var(--bs-primary);
 }
 

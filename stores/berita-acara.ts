@@ -397,7 +397,7 @@ export const useBeritaAcaraStore = defineStore('beritaAcara', {
         text: 'Apakah Anda yakin akan menyetujui Berita Acara ini?',
         icon: 'question',
         showCancelButton: true,
-        confirmButtonColor: '#3085d6',
+        confirmButtonColor: '#008fec',
         cancelButtonColor: '#6c757d',
         confirmButtonText: 'Ya, Approve',
         cancelButtonText: 'Batal',

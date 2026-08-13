@@ -20,7 +20,7 @@
         <div class="row g-4">
           <!-- Informasi Site -->
           <div class="col-12">
-            <div class="card shadow-sm border-0">
+            <div class="card">
               <div class="card-header bg-transparent border-0 px-5 py-4">
                 <h5 class="card-title mb-0">
                   <i class="ri-map-pin-2-line me-2 text-primary"></i>Informasi Site
@@ -127,7 +127,7 @@
 
           <!-- Detail Pekerjaan -->
           <div class="col-12">
-            <div class="card shadow-sm border-0">
+            <div class="card">
               <div class="card-header bg-transparent border-0 px-5 py-4">
                 <h5 class="card-title mb-0">
                   <i class="ri-tools-line me-2 text-primary"></i>Detail Pekerjaan

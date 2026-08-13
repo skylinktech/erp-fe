@@ -157,7 +157,7 @@
                           <span class="fw-medium mb-1 text-success" style="color: #6c757d !important;">{{ formatRupiah(salesInvoice?.paidAmount || 0) }}</span>
                           <span class="fw-medium mb-0 pt-2"
                                 
-                                :style="(salesInvoice?.remainingAmount || 0) > 0 ? 'color:#ea5455' : 'color:#28c76f'">
+                                :style="(salesInvoice?.remainingAmount || 0) > 0 ? 'color:#f13636' : 'color:#00ac4f'">
                             {{ formatRupiah(salesInvoice?.remainingAmount || 0) }}
                           </span>
                         </div>
@@ -429,15 +429,15 @@ watch(() => salesInvoice.value, (newSalesInvoice) => {
 }
 
 .text-success {
-  color: #28c76f !important;
+  color: #00ac4f !important;
 }
 
 .text-danger {
-  color: #ea5455 !important;
+  color: #f13636 !important;
 }
 
 .text-warning {
-  color: #ff9f43 !important;
+  color: #ffba2f !important;
 }
 
 .table th {

@@ -801,7 +801,7 @@ const deletePermission = async (permissionId) => {
         text: 'This action cannot be undone!',
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#666CFF',
+        confirmButtonColor: '#008fec',
         cancelButtonColor: '#A7A9B3',
         confirmButtonText: 'Yes, delete it!',
         cancelButtonText: 'Cancel'
@@ -855,7 +855,7 @@ const deleteBatchPermissions = async () => {
         text: `Anda yakin ingin menghapus ${selectedPermissions.value.length} permission yang dipilih? Tindakan ini tidak dapat dibatalkan!`,
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#dc3545',
+        confirmButtonColor: '#f13636',
         cancelButtonColor: '#6c757d',
         confirmButtonText: 'Ya, Hapus Semua!',
         cancelButtonText: 'Batal',

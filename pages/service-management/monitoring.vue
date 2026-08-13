@@ -12,7 +12,7 @@
       <div v-if="error" class="text-danger mb-3">{{ error }}</div>
       <div class="row g-3">
         <div class="col-md-4">
-          <div class="card border-0 shadow-sm h-100">
+          <div class="card h-100">
             <div class="card-body">
               <h6>Pending SLA</h6>
               <p class="mb-1">Over 7d: <strong>{{ data?.pendingSla?.over7d ?? 0 }}</strong></p>
@@ -21,7 +21,7 @@
           </div>
         </div>
         <div class="col-md-4">
-          <div class="card border-0 shadow-sm h-100">
+          <div class="card h-100">
             <div class="card-body">
               <h6>Suspended Aging</h6>
               <p class="mb-1">Over 7d: <strong>{{ data?.suspendedAging?.over7d ?? 0 }}</strong></p>
@@ -30,7 +30,7 @@
           </div>
         </div>
         <div class="col-md-4">
-          <div class="card border-0 shadow-sm h-100">
+          <div class="card h-100">
             <div class="card-body">
               <h6>Billable Mismatch</h6>
               <p class="mb-0 fs-3 fw-semibold">{{ data?.billableMismatch ?? 0 }}</p>

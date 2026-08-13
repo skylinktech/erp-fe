@@ -249,7 +249,7 @@
                                         <template #body="slotProps">
                                             <a 
                                                 @click="navigateTo(`/sales/site-investment/detail/${slotProps.data.id}`)" 
-                                                style="cursor: pointer; color: #666bff; text-decoration: underline;"
+                                                style="cursor: pointer; color: #008fec; text-decoration: underline;"
                                                 title="View detail"
                                                 class="text-primary"
                                             >

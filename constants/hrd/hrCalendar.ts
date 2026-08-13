@@ -16,9 +16,9 @@ export const HR_CALENDAR_TIPE_OPTIONS = [
 ] as const
 
 export const HR_CALENDAR_DEFAULT_COLORS: Record<HrCalendarTipe, string> = {
-  [HR_CALENDAR_TIPE_LIBUR_NASIONAL]: '#dc3545',
-  [HR_CALENDAR_TIPE_EVENT]: '#696cff',
-  [HR_CALENDAR_TIPE_CUTI_BERSAMA]: '#ff9f43',
+  [HR_CALENDAR_TIPE_LIBUR_NASIONAL]: '#f13636',
+  [HR_CALENDAR_TIPE_EVENT]: '#008fec',
+  [HR_CALENDAR_TIPE_CUTI_BERSAMA]: '#ffba2f',
 }
 
 export interface HrCalendarEventRow {

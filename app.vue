@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- ✅ Nuxt Loading Indicator untuk transisi halaman -->
-    <NuxtLoadingIndicator color="#666CFF" :height="3" :duration="2000" :throttle="200" />
+    <NuxtLoadingIndicator color="#008fec" :height="3" :duration="2000" :throttle="200" />
     
     <LoadingOverlay />
     

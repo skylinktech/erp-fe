@@ -16,7 +16,7 @@ export const useDashboardStore = defineStore('dashboard', {
       datasets: [
         {
           label: 'Confidence',
-          backgroundColor: '#696CFF',
+          backgroundColor: '#008fec',
           data: [] as number[],
         },
       ],
@@ -97,7 +97,7 @@ export const useDashboardStore = defineStore('dashboard', {
             datasets: [
               {
                 label: 'Confidence',
-                backgroundColor: '#696CFF',
+                backgroundColor: '#008fec',
                 data: confidences,
               },
             ],
@@ -110,7 +110,7 @@ export const useDashboardStore = defineStore('dashboard', {
             datasets: [
               {
                 label: 'Confidence',
-                backgroundColor: '#696CFF',
+                backgroundColor: '#008fec',
                 data: [],
               },
             ],
@@ -124,7 +124,7 @@ export const useDashboardStore = defineStore('dashboard', {
           datasets: [
             {
               label: 'Confidence',
-              backgroundColor: '#696CFF',
+              backgroundColor: '#008fec',
               data: [],
             },
           ],

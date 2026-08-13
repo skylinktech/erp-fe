@@ -71,7 +71,7 @@
           </div>
 
           <!-- Process Flow -->
-          <div class="card mb-4 shadow-sm border-0">
+          <div class="card mb-4">
             <div class="card-header border-0 bg-transparent px-5 py-4">
               <h5 class="card-title mb-0">Process Flow</h5>
             </div>
@@ -101,7 +101,7 @@
             <!-- Kolom utama -->
             <div class="col-xl-8 col-12">
               <!-- Informasi PKS -->
-              <div class="card mb-4 shadow-sm border-0">
+              <div class="card mb-4">
                 <div class="card-header border-0 bg-transparent px-5 py-4">
                   <h5 class="card-title mb-0 d-flex align-items-center">
                     <i class="ri-information-line me-2 text-primary"></i>
@@ -168,7 +168,7 @@
               </div>
 
               <!-- Subscriptions -->
-              <div class="card mb-4 shadow-sm border-0">
+              <div class="card mb-4">
                 <div class="card-header border-0 bg-transparent px-5 py-4 d-flex justify-content-between align-items-center">
                   <h5 class="card-title mb-0 d-flex align-items-center">
                     <i class="ri-file-list-3-line me-2 text-primary"></i>
@@ -218,7 +218,7 @@
               </div>
 
               <!-- Documents -->
-              <div class="card mb-4 shadow-sm border-0">
+              <div class="card mb-4">
                 <div class="card-header border-0 bg-transparent px-5 py-4 d-flex justify-content-between align-items-center">
                   <h5 class="card-title mb-0 d-flex align-items-center">
                     <i class="ri-attachment-line me-2 text-primary"></i>
@@ -254,7 +254,7 @@
             <!-- Sidebar -->
             <div class="col-xl-4 col-12">
               <!-- Ringkasan -->
-              <div class="card mb-4 shadow-sm border-0 pks-detail-summary">
+              <div class="card mb-4 pks-detail-summary">
                 <div class="card-header border-0 bg-transparent px-5 py-4">
                   <h5 class="card-title mb-0 d-flex align-items-center">
                     <i class="ri-file-text-line me-2 text-primary"></i>
@@ -278,7 +278,7 @@
               </div>
 
               <!-- Informasi Customer -->
-              <div class="card mb-4 shadow-sm border-0">
+              <div class="card mb-4">
                 <div class="card-header border-0 bg-transparent px-5 py-4">
                   <h5 class="card-title mb-0 d-flex align-items-center">
                     <i class="ri-user-line me-2 text-primary"></i>
@@ -455,7 +455,7 @@ definePageMeta({
 }
 
 .process-pill-active {
-  background: var(--bs-primary, #696cff);
+  background: var(--bs-primary, #008fec);
   color: #fff;
   font-weight: 600;
 }

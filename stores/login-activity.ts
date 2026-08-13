@@ -50,8 +50,8 @@ export const useLoginActivityStore = defineStore('loginActivity', {
           {
             label: 'Total Login',
             data: daily.map((item) => item.logins),
-            borderColor: '#696cff',
-            backgroundColor: 'rgba(105, 108, 255, 0.1)',
+            borderColor: '#008fec',
+            backgroundColor: 'rgba(0, 143, 236, 0.1)',
             fill: true,
             tension: 0.35,
             pointRadius: 3,
@@ -60,8 +60,8 @@ export const useLoginActivityStore = defineStore('loginActivity', {
           {
             label: 'User Unik',
             data: daily.map((item) => item.uniqueUsers),
-            borderColor: '#71dd37',
-            backgroundColor: 'rgba(113, 221, 55, 0.08)',
+            borderColor: '#00ac4f',
+            backgroundColor: 'rgba(0, 172, 79, 0.08)',
             fill: false,
             tension: 0.35,
             pointRadius: 3,

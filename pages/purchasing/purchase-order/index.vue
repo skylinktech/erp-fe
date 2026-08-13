@@ -198,7 +198,7 @@
                                         <template #body="slotProps">
                                             <a 
                                                 @click="navigateTo(`/purchasing/purchase-order-detail?id=${slotProps.data.id}`)" 
-                                                style="cursor: pointer; color: #666bff; text-decoration: underline;"
+                                                style="cursor: pointer; color: #008fec; text-decoration: underline;"
                                                 title="View detail"
                                                 class="text-primary"
                                             >
@@ -1931,8 +1931,8 @@ definePageMeta({
 
     /* Validation Styles */
     .is-invalid {
-        border-color: #dc3545 !important;
-        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+        border-color: #f13636 !important;
+        box-shadow: 0 0 0 0.2rem rgba(241, 54, 54, 0.25) !important;
     }
 
     /* Responsive adjustments */
@@ -1955,8 +1955,8 @@ definePageMeta({
 
     /* Focus states for better accessibility */
     .form-control:focus {
-        border-color: #696cff;
-        box-shadow: 0 0 0 3px rgba(105, 108, 255, 0.1);
+        border-color: #008fec;
+        box-shadow: 0 0 0 3px rgba(0, 143, 236, 0.1);
     }
 
     /* Small text styling */
@@ -1973,8 +1973,8 @@ definePageMeta({
     }
 
     .btn-primary {
-        background-color: #696cff;
-        border-color: #696cff;
+        background-color: #008fec;
+        border-color: #008fec;
     }
 
     .btn-primary:hover {
@@ -1996,8 +1996,8 @@ definePageMeta({
     }
 
     .nav-tabs .nav-link.active {
-        color: #696cff;
-        border-color: #696cff #696cff transparent;
+        color: #008fec;
+        border-color: #008fec #008fec transparent;
         background-color: #f8f9ff;
     }
 
@@ -2011,7 +2011,8 @@ definePageMeta({
     }
 
     .repeater-item:hover {
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        border-color: #f3f4f6;
+        box-shadow: none;
     }
 
     /* High contrast mode support */

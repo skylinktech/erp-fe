@@ -749,7 +749,7 @@ const onReject = async () => {
     showCancelButton: true,
     confirmButtonText: 'Reject',
     cancelButtonText: 'Batal',
-    confirmButtonColor: '#ea5455',
+    confirmButtonColor: '#f13636',
   })
   if (!result.isConfirmed) return
   submitting.value = true

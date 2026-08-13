@@ -73,7 +73,7 @@
           </div>
 
           <!-- Process Flow -->
-          <div class="card mb-4 shadow-sm border-0">
+          <div class="card mb-4">
             <div class="card-header border-0 bg-transparent px-5 py-4">
               <h5 class="card-title mb-0">Process Flow</h5>
             </div>
@@ -100,7 +100,7 @@
             <!-- Kolom utama -->
             <div class="col-xl-8 col-12">
               <!-- Kartu: Informasi Umum -->
-              <div class="card mb-4 shadow-sm border-0">
+              <div class="card mb-4">
                 <div class="card-header border-0 bg-transparent px-5 py-4">
                   <h5 class="card-title mb-0 d-flex align-items-center">
                     <i class="ri-information-line me-2 text-primary"></i>
@@ -175,7 +175,7 @@
               </div>
 
               <!-- Material -->
-              <div class="card mb-4 shadow-sm border-0">
+              <div class="card mb-4">
                 <div class="card-header border-0 bg-transparent px-5 py-4 d-flex justify-content-between align-items-center">
                   <h5 class="card-title mb-0 d-flex align-items-center">
                     <i class="ri-product-hunt-line me-2 text-primary"></i>
@@ -212,7 +212,7 @@
               </div>
 
               <!-- Services -->
-              <div class="card mb-4 shadow-sm border-0">
+              <div class="card mb-4">
                 <div class="card-header border-0 bg-transparent px-5 py-4 d-flex justify-content-between align-items-center">
                   <h5 class="card-title mb-0 d-flex align-items-center">
                     <i class="ri-service-line me-2 text-primary"></i>
@@ -249,7 +249,7 @@
               </div>
 
               <!-- DID -->
-              <div class="card mb-4 shadow-sm border-0">
+              <div class="card mb-4">
                 <div class="card-header border-0 bg-transparent px-5 py-4 d-flex justify-content-between align-items-center">
                   <h5 class="card-title mb-0 d-flex align-items-center">
                     <i class="ri-truck-line me-2 text-primary"></i>
@@ -324,7 +324,7 @@
             <!-- Sidebar: Ringkasan Keuangan + Meta -->
             <div class="col-xl-4 col-12">
               <!-- Ringkasan Keuangan -->
-              <div class="card mb-4 shadow-sm border-0 si-detail-summary">
+              <div class="card mb-4 si-detail-summary">
                 <div class="card-header border-0 bg-transparent px-5 py-4">
                   <h5 class="card-title mb-0 d-flex align-items-center">
                     <i class="ri-pie-chart-2-line me-2 text-primary"></i>
@@ -353,7 +353,7 @@
               </div>
 
               <!-- Customer Information -->
-              <div class="card mb-4 shadow-sm border-0">
+              <div class="card mb-4">
                 <div class="card-header border-0 bg-transparent px-5 py-4">
                   <h5 class="card-title mb-0 d-flex align-items-center">
                     <i class="ri-user-line me-2 text-primary"></i>
@@ -385,7 +385,7 @@
               </div>
 
               <!-- Informasi Approval -->
-              <div class="card mb-4 shadow-sm border-0">
+              <div class="card mb-4">
                 <div class="card-header border-0 bg-transparent px-5 py-4">
                   <h5 class="card-title mb-0 d-flex align-items-center">
                     <i class="ri-checkbox-circle-line me-2 text-primary"></i>

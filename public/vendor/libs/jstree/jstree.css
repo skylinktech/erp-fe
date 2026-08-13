@@ -2824,10 +2824,10 @@
 
 .light-style .jstree .jstree-container-ul .jstree-icon.ri-folder-3-line,
 .light-style .jstree .jstree-container-ul .ion-ios-folder {
-  color: #fdb528;
+  color: #ffba2f;
 }
 .light-style .jstree .jstree-container-ul .jstree-icon.ri-file-text-line {
-  color: #666cff;
+  color: #008fec;
 }
 .light-style .jstree .jstree-container-ul .jstree-anchor {
   color: #3b4056;
@@ -2872,15 +2872,15 @@
 .light-style .jstree-context,
 .light-style .jstree-wholerow-clicked,
 .light-style .jstree-default-responsive .jstree-wholerow-clicked {
-  background-color: rgba(102, 108, 255, 0.08);
+  background-color: rgba(22, 43, 169, 0.08);
 }
 
 .dark-style .jstree .jstree-container-ul .jstree-icon.ri-folder-3-line,
 .dark-style .jstree .jstree-container-ul .ion-ios-folder {
-  color: #fdb528;
+  color: #ffba2f;
 }
 .dark-style .jstree .jstree-container-ul .jstree-icon.ri-file-text-line {
-  color: #666cff;
+  color: #008fec;
 }
 .dark-style .jstree .jstree-container-ul .jstree-anchor {
   color: #d7d8ed;
@@ -2922,7 +2922,7 @@
 .dark-style .jstree-context,
 .dark-style .jstree-wholerow-clicked,
 .dark-style .jstree-default-responsive .jstree-wholerow-clicked {
-  background-color: rgba(102, 108, 255, 0.08);
+  background-color: rgba(22, 43, 169, 0.08);
 }
 
 .jstree-default-dark .jstree-anchor {

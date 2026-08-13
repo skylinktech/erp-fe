@@ -470,14 +470,14 @@ html:not([dir=rtl]) .noUi-horizontal .noUi-handle {
   opacity: 0.45;
 }
 [disabled] .noUi-connect {
-  background: #666cff;
+  background: #008fec;
 }
 
 [disabled].noUi-target,
 [disabled].noUi-handle,
 [disabled] .noUi-handle {
   cursor: not-allowed;
-  border-color: #666cff;
+  border-color: #008fec;
 }
 
 .noUi-pips,
@@ -634,79 +634,79 @@ html:not([dir=rtl]) .noUi-horizontal .noUi-handle {
   border-left: 8px solid transparent;
 }
 .light-style .noUi-secondary.noUi-target {
-  background: rgba(109, 120, 141, 0.16) !important;
+  background: rgba(207, 235, 247, 0.16) !important;
 }
 .light-style .noUi-secondary.noUi-target .noUi-connect {
-  background: #6d788d;
+  background: #b6bbcc;
 }
 .light-style .noUi-secondary.noUi-target .noUi-handle {
-  border-color: #6d788d;
+  border-color: #b6bbcc;
 }
 .light-style .noUi-secondary.noUi-target .noUi-handle:hover {
-  box-shadow: 0 0 0 8px rgba(109, 120, 141, 0.16);
+  box-shadow: 0 0 0 8px rgba(207, 235, 247, 0.16);
 }
 .light-style .noUi-secondary.noUi-target .noUi-handle:active, .light-style .noUi-secondary.noUi-target .noUi-handle:focus {
-  box-shadow: 0 0 0 13px rgba(109, 120, 141, 0.16);
+  box-shadow: 0 0 0 13px rgba(207, 235, 247, 0.16);
 }
 .light-style .noUi-success.noUi-target {
-  background: rgba(114, 225, 40, 0.16) !important;
+  background: rgba(0, 172, 79, 0.16) !important;
 }
 .light-style .noUi-success.noUi-target .noUi-connect {
-  background: #72e128;
+  background: #00ac4f;
 }
 .light-style .noUi-success.noUi-target .noUi-handle {
-  border-color: #72e128;
+  border-color: #00ac4f;
 }
 .light-style .noUi-success.noUi-target .noUi-handle:hover {
-  box-shadow: 0 0 0 8px rgba(114, 225, 40, 0.16);
+  box-shadow: 0 0 0 8px rgba(0, 172, 79, 0.16);
 }
 .light-style .noUi-success.noUi-target .noUi-handle:active, .light-style .noUi-success.noUi-target .noUi-handle:focus {
-  box-shadow: 0 0 0 13px rgba(114, 225, 40, 0.16);
+  box-shadow: 0 0 0 13px rgba(0, 172, 79, 0.16);
 }
 .light-style .noUi-info.noUi-target {
-  background: rgba(38, 198, 249, 0.16) !important;
+  background: rgba(2, 156, 245, 0.16) !important;
 }
 .light-style .noUi-info.noUi-target .noUi-connect {
-  background: #26c6f9;
+  background: #27b4e0;
 }
 .light-style .noUi-info.noUi-target .noUi-handle {
-  border-color: #26c6f9;
+  border-color: #27b4e0;
 }
 .light-style .noUi-info.noUi-target .noUi-handle:hover {
-  box-shadow: 0 0 0 8px rgba(38, 198, 249, 0.16);
+  box-shadow: 0 0 0 8px rgba(2, 156, 245, 0.16);
 }
 .light-style .noUi-info.noUi-target .noUi-handle:active, .light-style .noUi-info.noUi-target .noUi-handle:focus {
-  box-shadow: 0 0 0 13px rgba(38, 198, 249, 0.16);
+  box-shadow: 0 0 0 13px rgba(2, 156, 245, 0.16);
 }
 .light-style .noUi-warning.noUi-target {
-  background: rgba(253, 181, 40, 0.16) !important;
+  background: rgba(255, 186, 47, 0.16) !important;
 }
 .light-style .noUi-warning.noUi-target .noUi-connect {
-  background: #fdb528;
+  background: #ffba2f;
 }
 .light-style .noUi-warning.noUi-target .noUi-handle {
-  border-color: #fdb528;
+  border-color: #ffba2f;
 }
 .light-style .noUi-warning.noUi-target .noUi-handle:hover {
-  box-shadow: 0 0 0 8px rgba(253, 181, 40, 0.16);
+  box-shadow: 0 0 0 8px rgba(255, 186, 47, 0.16);
 }
 .light-style .noUi-warning.noUi-target .noUi-handle:active, .light-style .noUi-warning.noUi-target .noUi-handle:focus {
-  box-shadow: 0 0 0 13px rgba(253, 181, 40, 0.16);
+  box-shadow: 0 0 0 13px rgba(255, 186, 47, 0.16);
 }
 .light-style .noUi-danger.noUi-target {
-  background: rgba(255, 77, 73, 0.16) !important;
+  background: rgba(241, 54, 54, 0.16) !important;
 }
 .light-style .noUi-danger.noUi-target .noUi-connect {
-  background: #ff4d49;
+  background: #f13636;
 }
 .light-style .noUi-danger.noUi-target .noUi-handle {
-  border-color: #ff4d49;
+  border-color: #f13636;
 }
 .light-style .noUi-danger.noUi-target .noUi-handle:hover {
-  box-shadow: 0 0 0 8px rgba(255, 77, 73, 0.16);
+  box-shadow: 0 0 0 8px rgba(241, 54, 54, 0.16);
 }
 .light-style .noUi-danger.noUi-target .noUi-handle:active, .light-style .noUi-danger.noUi-target .noUi-handle:focus {
-  box-shadow: 0 0 0 13px rgba(255, 77, 73, 0.16);
+  box-shadow: 0 0 0 13px rgba(241, 54, 54, 0.16);
 }
 .light-style .noUi-light.noUi-target {
   background: rgba(223, 223, 227, 0.16) !important;
@@ -780,79 +780,79 @@ html:not([dir=rtl]) .noUi-horizontal .noUi-handle {
   border-left: 8px solid transparent;
 }
 .dark-style .noUi-secondary.noUi-target {
-  background: rgba(109, 120, 141, 0.16) !important;
+  background: rgba(207, 235, 247, 0.16) !important;
 }
 .dark-style .noUi-secondary.noUi-target .noUi-connect {
-  background: #6d788d;
+  background: #b6bbcc;
 }
 .dark-style .noUi-secondary.noUi-target .noUi-handle {
-  border-color: #6d788d;
+  border-color: #b6bbcc;
 }
 .dark-style .noUi-secondary.noUi-target .noUi-handle:hover {
-  box-shadow: 0 0 0 8px rgba(109, 120, 141, 0.16);
+  box-shadow: 0 0 0 8px rgba(207, 235, 247, 0.16);
 }
 .dark-style .noUi-secondary.noUi-target .noUi-handle:active, .dark-style .noUi-secondary.noUi-target .noUi-handle:focus {
-  box-shadow: 0 0 0 13px rgba(109, 120, 141, 0.16);
+  box-shadow: 0 0 0 13px rgba(207, 235, 247, 0.16);
 }
 .dark-style .noUi-success.noUi-target {
-  background: rgba(114, 225, 40, 0.16) !important;
+  background: rgba(0, 172, 79, 0.16) !important;
 }
 .dark-style .noUi-success.noUi-target .noUi-connect {
-  background: #72e128;
+  background: #00ac4f;
 }
 .dark-style .noUi-success.noUi-target .noUi-handle {
-  border-color: #72e128;
+  border-color: #00ac4f;
 }
 .dark-style .noUi-success.noUi-target .noUi-handle:hover {
-  box-shadow: 0 0 0 8px rgba(114, 225, 40, 0.16);
+  box-shadow: 0 0 0 8px rgba(0, 172, 79, 0.16);
 }
 .dark-style .noUi-success.noUi-target .noUi-handle:active, .dark-style .noUi-success.noUi-target .noUi-handle:focus {
-  box-shadow: 0 0 0 13px rgba(114, 225, 40, 0.16);
+  box-shadow: 0 0 0 13px rgba(0, 172, 79, 0.16);
 }
 .dark-style .noUi-info.noUi-target {
-  background: rgba(38, 198, 249, 0.16) !important;
+  background: rgba(2, 156, 245, 0.16) !important;
 }
 .dark-style .noUi-info.noUi-target .noUi-connect {
-  background: #26c6f9;
+  background: #27b4e0;
 }
 .dark-style .noUi-info.noUi-target .noUi-handle {
-  border-color: #26c6f9;
+  border-color: #27b4e0;
 }
 .dark-style .noUi-info.noUi-target .noUi-handle:hover {
-  box-shadow: 0 0 0 8px rgba(38, 198, 249, 0.16);
+  box-shadow: 0 0 0 8px rgba(2, 156, 245, 0.16);
 }
 .dark-style .noUi-info.noUi-target .noUi-handle:active, .dark-style .noUi-info.noUi-target .noUi-handle:focus {
-  box-shadow: 0 0 0 13px rgba(38, 198, 249, 0.16);
+  box-shadow: 0 0 0 13px rgba(2, 156, 245, 0.16);
 }
 .dark-style .noUi-warning.noUi-target {
-  background: rgba(253, 181, 40, 0.16) !important;
+  background: rgba(255, 186, 47, 0.16) !important;
 }
 .dark-style .noUi-warning.noUi-target .noUi-connect {
-  background: #fdb528;
+  background: #ffba2f;
 }
 .dark-style .noUi-warning.noUi-target .noUi-handle {
-  border-color: #fdb528;
+  border-color: #ffba2f;
 }
 .dark-style .noUi-warning.noUi-target .noUi-handle:hover {
-  box-shadow: 0 0 0 8px rgba(253, 181, 40, 0.16);
+  box-shadow: 0 0 0 8px rgba(255, 186, 47, 0.16);
 }
 .dark-style .noUi-warning.noUi-target .noUi-handle:active, .dark-style .noUi-warning.noUi-target .noUi-handle:focus {
-  box-shadow: 0 0 0 13px rgba(253, 181, 40, 0.16);
+  box-shadow: 0 0 0 13px rgba(255, 186, 47, 0.16);
 }
 .dark-style .noUi-danger.noUi-target {
-  background: rgba(255, 77, 73, 0.16) !important;
+  background: rgba(241, 54, 54, 0.16) !important;
 }
 .dark-style .noUi-danger.noUi-target .noUi-connect {
-  background: #ff4d49;
+  background: #f13636;
 }
 .dark-style .noUi-danger.noUi-target .noUi-handle {
-  border-color: #ff4d49;
+  border-color: #f13636;
 }
 .dark-style .noUi-danger.noUi-target .noUi-handle:hover {
-  box-shadow: 0 0 0 8px rgba(255, 77, 73, 0.16);
+  box-shadow: 0 0 0 8px rgba(241, 54, 54, 0.16);
 }
 .dark-style .noUi-danger.noUi-target .noUi-handle:active, .dark-style .noUi-danger.noUi-target .noUi-handle:focus {
-  box-shadow: 0 0 0 13px rgba(255, 77, 73, 0.16);
+  box-shadow: 0 0 0 13px rgba(241, 54, 54, 0.16);
 }
 .dark-style .noUi-light.noUi-target {
   background: rgba(70, 68, 91, 0.16) !important;

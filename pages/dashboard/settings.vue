@@ -199,8 +199,8 @@ onMounted(init)
 }
 
 .widget-catalog-item:hover {
-  background: var(--bs-primary-bg-subtle, rgba(105, 108, 255, 0.08));
-  border-color: var(--bs-primary, #696cff);
+  background: var(--bs-primary-bg-subtle, rgba(0, 143, 236, 0.08));
+  border-color: var(--bs-primary, #008fec);
 }
 
 .dashboard-page {

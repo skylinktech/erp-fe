@@ -145,7 +145,7 @@ onErrorCaptured((err) => {
 }
 
 .dashboard-widget-host--editable {
-  outline: 1px dashed var(--bs-primary, #696cff);
+  outline: 1px dashed var(--bs-primary, #008fec);
   outline-offset: 2px;
   border-radius: 0.5rem;
 }
@@ -168,7 +168,7 @@ onErrorCaptured((err) => {
   justify-content: center;
   border: none;
   border-radius: 50%;
-  background: var(--bs-primary, #696cff);
+  background: var(--bs-primary, #008fec);
   color: #fff;
   cursor: pointer;
   opacity: 0.85;
@@ -179,7 +179,7 @@ onErrorCaptured((err) => {
 }
 
 .dashboard-widget-action--danger {
-  background: var(--bs-danger, #ff3e1d);
+  background: var(--bs-danger, #f13636);
 }
 
 .dashboard-widget-action:hover {

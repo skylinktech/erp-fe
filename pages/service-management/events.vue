@@ -8,7 +8,7 @@
         </div>
         <button class="btn btn-outline-secondary btn-sm" @click="load">Refresh</button>
       </div>
-      <div class="card border-0 shadow-sm">
+      <div class="card">
         <div class="card-body table-responsive">
           <table class="table">
             <thead>

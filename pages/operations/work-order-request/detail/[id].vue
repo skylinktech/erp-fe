@@ -96,7 +96,7 @@
             <!-- Main Content -->
             <div class="col-xl-8">
               <!-- Informasi Site -->
-              <div class="card mb-4 shadow-sm border-0">
+              <div class="card mb-4">
                 <div class="card-header border-0 bg-transparent px-5 py-4">
                   <h5 class="card-title mb-0"><i class="ri-map-pin-2-line me-2 text-primary"></i>Informasi Site</h5>
                 </div>
@@ -153,7 +153,7 @@
               </div>
 
               <!-- Detail Pekerjaan -->
-              <div class="card mb-4 shadow-sm border-0">
+              <div class="card mb-4">
                 <div class="card-header border-0 bg-transparent px-5 py-4">
                   <h5 class="card-title mb-0"><i class="ri-tools-line me-2 text-primary"></i>Detail Pekerjaan</h5>
                 </div>
@@ -206,7 +206,7 @@
             <!-- Sidebar -->
             <div class="col-xl-4">
               <!-- Metadata -->
-              <div class="card mb-4 shadow-sm border-0">
+              <div class="card mb-4">
                 <div class="card-header border-0 bg-transparent px-5 py-4">
                   <h5 class="card-title mb-0">Metadata</h5>
                 </div>
@@ -243,7 +243,7 @@
               />
 
               <!-- Digital Signature Card -->
-              <div class="card shadow-sm border-0 mt-4">
+              <div class="card mt-4">
                 <div class="card-header border-0 bg-transparent px-5 py-4">
                   <h5 class="card-title mb-0"><i class="ri-pen-nib-line me-2 text-primary"></i>Tanda Tangan Digital</h5>
                 </div>

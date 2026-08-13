@@ -97,7 +97,7 @@ onMounted(() => {
 <style scoped>
 .hr-calendar-wrapper :deep(.fc) {
   --fc-border-color: rgba(67, 89, 113, 0.12);
-  --fc-today-bg-color: rgba(105, 108, 255, 0.08);
+  --fc-today-bg-color: rgba(0, 143, 236, 0.08);
   font-size: 0.9rem;
 }
 

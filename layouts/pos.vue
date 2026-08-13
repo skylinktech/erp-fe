@@ -68,7 +68,7 @@ function signOut() {
 .pos-layout {
   display: flex;
   min-height: 100vh;
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--bs-font-sans-serif);
   background: #fff;
 }
 
@@ -138,12 +138,12 @@ function signOut() {
 }
 
 .pos-nav-item.active {
-  background: var(--pos-primary-light, rgba(102, 108, 255, 0.12));
-  color: var(--pos-primary, #666cff);
+  background: var(--pos-primary-light, rgba(0, 143, 236, 0.12));
+  color: var(--pos-primary, #008fec);
 }
 
 .pos-nav-item.active .pos-nav-icon {
-  color: var(--pos-primary, #666cff);
+  color: var(--pos-primary, #008fec);
 }
 
 .pos-nav-icon {

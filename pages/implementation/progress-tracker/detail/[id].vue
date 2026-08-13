@@ -103,7 +103,7 @@
 
         <div class="row g-4 mb-4">
           <div class="col-xl-8">
-            <div class="card shadow-sm border-0">
+            <div class="card">
               <div class="card-body">
                 <div class="row g-3">
                   <div class="col-md-6">
@@ -168,7 +168,7 @@
               :current-approvers="project.currentApprovers ?? project.current_approvers"
               :approval-logs="approvalLogs"
             />
-            <div class="card shadow-sm border-0">
+            <div class="card">
               <div class="card-body">
                 <h6 class="mb-3">Ringkasan Node per Status</h6>
                 <div v-for="opt in PROGRESS_TRACKER_STATUS_OPTIONS" :key="opt.value" class="d-flex justify-content-between small mb-1">
@@ -182,7 +182,7 @@
 
         <div class="row g-4 align-items-start">
           <div :class="project.siteInvestment ? 'col-xl-8' : 'col-12'">
-            <div class="card shadow-sm border-0 h-100">
+            <div class="card h-100">
               <div class="card-header border-0 bg-transparent pt-4 pb-2 px-4">
                 <h5 class="mb-4">Progress per Node / Network</h5>
                 <div v-if="!(project.nodes?.length)" class="text-muted small pb-2">
@@ -243,7 +243,7 @@
           </div>
 
           <div v-if="project.siteInvestment" class="col-xl-4">
-            <div class="card shadow-sm border-0 h-100">
+            <div class="card h-100">
               <div class="card-body px-4 py-4">
                 <ProgressTrackerSiteInvestmentItems :site-investment="project.siteInvestment" />
               </div>

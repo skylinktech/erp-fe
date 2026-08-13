@@ -733,7 +733,7 @@ const deleteStockIn = async (id) => {
         text: 'Tindakan ini tidak bisa dibatalkan!',
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#666CFF',
+        confirmButtonColor: '#008fec',
         cancelButtonColor: '#A7A9B3',
         confirmButtonText: 'Ya, hapus!',
         cancelButtonText: 'Batal'

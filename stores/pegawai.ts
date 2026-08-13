@@ -266,7 +266,7 @@ export const usePegawaiStore = defineStore('pegawai', {
                 text: "Data yang dihapus tidak dapat dikembalikan!",
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonColor: '#666CFF',
+                confirmButtonColor: '#008fec',
                 cancelButtonColor: '#A7A9B3',
                 confirmButtonText: 'Ya, hapus!',
                 cancelButtonText: 'Batal'

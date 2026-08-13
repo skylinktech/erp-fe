@@ -27,7 +27,7 @@
 
         <div class="row g-4">
           <div class="col-xl-8 col-12">
-            <div class="card shadow-sm border-0">
+            <div class="card">
               <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2 py-3 border-0 bg-transparent">
                 <h5 class="card-title mb-0">Form Payment Request</h5>
                 <span class="text-muted small">Pengajuan dana ke Direktur Utama</span>

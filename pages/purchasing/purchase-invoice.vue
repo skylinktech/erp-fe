@@ -154,7 +154,7 @@
                                         <template #body="slotProps">
                                             <a 
                                                 @click="navigateTo(`/purchasing/purchase-invoice-detail?id=${slotProps.data.id}`)" 
-                                                style="cursor: pointer; color: #666bff; text-decoration: underline;"
+                                                style="cursor: pointer; color: #008fec; text-decoration: underline;"
                                                 class="text-primary"
                                                 title="View detail"
                                             >

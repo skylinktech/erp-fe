@@ -461,7 +461,7 @@ export const useBillingPreparationStore = defineStore('billingPreparation', {
         icon: 'warning',
         showCancelButton: true,
         confirmButtonText: 'Hapus',
-        confirmButtonColor: '#ea5455',
+        confirmButtonColor: '#f13636',
       })
       if (!ok.isConfirmed) return false
       try {

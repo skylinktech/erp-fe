@@ -478,7 +478,7 @@ export const useFinanceInvoiceStore = defineStore('financeInvoice', {
         showCancelButton: true,
         confirmButtonText: 'Ya, Hapus',
         cancelButtonText: 'Batal',
-        confirmButtonColor: '#ea5455',
+        confirmButtonColor: '#f13636',
       })
 
       if (!confirm.isConfirmed) return false
@@ -807,7 +807,7 @@ export const useFinanceInvoiceStore = defineStore('financeInvoice', {
           showCancelButton: true,
           confirmButtonText: 'Ya, Reject',
           cancelButtonText: 'Batal',
-          confirmButtonColor: '#ea5455',
+          confirmButtonColor: '#f13636',
         })
         if (!confirm.isConfirmed) return false
       }

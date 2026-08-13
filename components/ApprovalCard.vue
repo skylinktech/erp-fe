@@ -1,5 +1,5 @@
 <template>
-  <div class="card mb-4 shadow-sm border-0">
+  <div class="card mb-4">
     <div class="card-header border-0 bg-transparent px-5 py-4">
       <h5 class="card-title mb-0">Approval</h5>
     </div>

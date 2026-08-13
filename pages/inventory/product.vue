@@ -897,8 +897,8 @@ definePageMeta({
 }
 
 .form-control:focus {
-    border-color: #696cff;
-    box-shadow: 0 0 0 0.2rem rgba(105, 108, 255, 0.25);
+    border-color: #008fec;
+    box-shadow: 0 0 0 0.2rem rgba(0, 143, 236, 0.25);
     outline: 0;
 }
 

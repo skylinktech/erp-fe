@@ -467,7 +467,7 @@ div.dt-button-collection .dt-button:not(.dt-btn-split-drop) {
   background-color: #fff;
 }
 .light-style .dataTable a:not([href]):not([tabindex]) {
-  color: #72e128;
+  color: #00ac4f;
 }
 .light-style .dt-button-info {
   box-shadow: 0px 5px 5px -3px rgba(38, 43, 67, 0.2), 0px 8px 10px 1px rgba(38, 43, 67, 0.14), 0px 3px 14px 2px rgba(38, 43, 67, 0.12);
@@ -483,7 +483,7 @@ div.dt-button-collection .dt-button:not(.dt-btn-split-drop) {
   background-color: #30334e;
 }
 .dark-style .dataTable a:not([href]):not([tabindex]) {
-  color: #72e128;
+  color: #00ac4f;
 }
 .dark-style .dt-button-info {
   box-shadow: 0px 5px 5px -3px rgba(48, 51, 78, 0.2), 0px 8px 10px 1px rgba(48, 51, 78, 0.14), 0px 3px 14px 2px rgba(48, 51, 78, 0.12);

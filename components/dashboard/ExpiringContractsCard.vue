@@ -197,20 +197,20 @@ onUnmounted(() => {
 }
 
 .expiring-item:hover {
-  background-color: rgba(105, 108, 255, 0.04);
-  border-color: rgba(105, 108, 255, 0.2);
+  background-color: rgba(0, 143, 236, 0.04);
+  border-color: rgba(0, 143, 236, 0.2);
 }
 
 .expiring-item--critical {
-  border-left: 3px solid #ff3e1d;
+  border-left: 3px solid #f13636;
 }
 
 .expiring-item--warning {
-  border-left: 3px solid #ffab00;
+  border-left: 3px solid #ffba2f;
 }
 
 .expiring-item--info {
-  border-left: 3px solid #696cff;
+  border-left: 3px solid #008fec;
 }
 
 .expiring-text {

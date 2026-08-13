@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="d-flex align-items-center mb-3">
-      <i class="ri-diamond-line me-2" style="font-size: 24px; color: #ffc107;"></i>
+      <i class="ri-diamond-line me-2" style="font-size: 24px; color: var(--bs-warning);"></i>
       <h5 class="mb-0">Sales Pipeline / Deals</h5>
     </div>
     <p class="mb-4 text-muted">Ringkasan opportunity dan deals langsung dari dashboard.</p>
@@ -814,16 +814,16 @@ function getInitials(name) {
 
 function getIconColor(name) {
   const colors = [
-    '#696cff',
-    '#71dd37',
-    '#03c3ec',
-    '#ffab00',
-    '#ff3e1d',
+    '#008fec',
+    '#00ac4f',
+    '#27b4e0',
+    '#ffba2f',
+    '#f13636',
     '#233446',
-    '#ea5455',
-    '#28c76f',
-    '#00cfe8',
-    '#ff9f43',
+    '#f13636',
+    '#00ac4f',
+    '#27b4e0',
+    '#ffba2f',
   ]
   const index = name.charCodeAt(0) % colors.length
   return colors[index]
@@ -987,9 +987,9 @@ onMounted(async () => {
 }
 
 .kanban-column-body.is-drop-target {
-  outline: 2px dashed rgba(105, 108, 255, 0.6);
+  outline: 2px dashed rgba(0, 143, 236, 0.6);
   outline-offset: 6px;
-  background: rgba(105, 108, 255, 0.04);
+  background: rgba(0, 143, 236, 0.04);
 }
 
 .kanban-card {
@@ -998,14 +998,14 @@ onMounted(async () => {
   padding: 16px;
   cursor: pointer;
   transition: all 0.2s ease;
-  border: 1px solid #e9ecef;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--bs-card-border-color, #e6e6e8);
+  box-shadow: none;
 }
 
 .kanban-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  border-color: #696cff;
+  box-shadow: none;
+  border-color: #008fec;
 }
 
 .kanban-card-overdue {
@@ -1069,7 +1069,7 @@ onMounted(async () => {
   gap: 8px;
   margin-top: 8px;
   padding-top: 8px;
-  border-top: 1px solid #f3f4f6;
+  border-top: 1px solid var(--bs-card-border-color, #e6e6e8);
 }
 
 .kanban-empty {

@@ -25,7 +25,7 @@
 
       <div v-if="error" class="alert alert-danger">{{ error }}</div>
 
-      <div class="card border-0 shadow-sm">
+      <div class="card">
         <div class="card-body">
           <div class="table-responsive">
             <table class="table table-sm">

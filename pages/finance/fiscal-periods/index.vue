@@ -12,7 +12,7 @@
         </div>
       </div>
 
-      <div class="card border-0 shadow-sm mb-4">
+      <div class="card mb-4">
         <div class="card-body">
           <div class="row g-3 align-items-end">
             <div class="col-md-2">
@@ -35,7 +35,7 @@
         </div>
       </div>
 
-      <div class="card border-0 shadow-sm">
+      <div class="card">
         <div class="card-body">
           <div v-if="error" class="text-danger mb-2">{{ error }}</div>
           <table class="table">

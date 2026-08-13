@@ -62,7 +62,7 @@ html:not([dir=rtl]) .authentication-wrapper.authentication-cover .authentication
   }
 }
 #twoStepsForm .fv-plugins-bootstrap5-row-invalid .form-control {
-  border-color: #ff4d49;
+  border-color: #f13636;
 }
 
 @media (max-width: 575.98px) {

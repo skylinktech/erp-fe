@@ -696,7 +696,7 @@
   position: absolute;
   top: -2px;
   right: -2px;
-  background: #dc3545;
+  background: #f13636;
   color: white;
   border-radius: 50%;
   min-width: 18px;
@@ -821,7 +821,7 @@
 
 .search-input:focus {
   border-color: #e4e4e7;
-  box-shadow: 0 0 0 3px rgba(105, 108, 255, 0.1);
+  box-shadow: 0 0 0 3px rgba(0, 143, 236, 0.1);
 }
 
 .search-close-btn {
@@ -882,7 +882,7 @@
 .result-icon {
   width: 32px;
   height: 32px;
-  background: #666bff;
+  background: #008fec;
   border-radius: 6px;
   display: flex;
   align-items: center;
@@ -905,7 +905,7 @@
 }
 
 .search-mark {
-  background-color: rgba(105, 108, 255, 0.2);
+  background-color: rgba(0, 143, 236, 0.2);
   color: inherit;
   padding: 0 2px;
   border-radius: 3px;

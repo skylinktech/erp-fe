@@ -312,7 +312,7 @@ export const useCutiBalanceStore = defineStore('cuti-balance', {
         text: 'Data saldo cuti akan dihapus permanen. Pastikan tidak ada cuti terpakai.',
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#d33',
+        confirmButtonColor: '#f13636',
         cancelButtonColor: '#6c757d',
         confirmButtonText: 'Ya, hapus',
         cancelButtonText: 'Batal',

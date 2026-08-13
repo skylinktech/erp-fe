@@ -222,7 +222,7 @@ const getTypeLabel = (category) => {
 
 .children-expansion-content {
   background-color: #f8f9fa;
-  border-left: 3px solid #198754;
+  border-left: 3px solid var(--bs-success);
   margin-left: 2rem;
 }
 
@@ -231,6 +231,6 @@ const getTypeLabel = (category) => {
 }
 
 .text-primary {
-  color: #0d6efd !important;
+  color: var(--bs-primary) !important;
 }
 </style>

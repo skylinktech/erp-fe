@@ -326,7 +326,7 @@ async function deleteStep(stepId: number) {
     text: 'Step ini akan dihapus dari workflow.',
     icon: 'warning',
     showCancelButton: true,
-    confirmButtonColor: '#d33',
+    confirmButtonColor: '#f13636',
     cancelButtonColor: '#6c757d',
     confirmButtonText: 'Ya, Hapus',
   })
