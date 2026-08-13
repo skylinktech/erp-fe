@@ -248,25 +248,19 @@
                 size="xl"
             >
                 <template #default>
-                    <form @submit.prevent="priceListStore.savePriceList()">
+                    <form ref="formRoot" @submit.prevent="onFormSubmit" novalidate>
                         <div class="row">
                             <div class="col">
-                                <ul class="nav nav-tabs" role="tablist">
-                                    <li class="nav-item">
-                                        <button class="nav-link" :class="{ active: activeTab === 'info' }" @click="activeTab = 'info'" type="button">
-                                            <i class="ri-price-tag-3-line me-1"></i> Informasi Price List
-                                        </button>
-                                    </li>
-                                    <li class="nav-item">
-                                        <button class="nav-link" :class="{ active: activeTab === 'lines' }" @click="activeTab = 'lines'" type="button">
-                                            <i class="ri-list-check me-1"></i> Item Lines ({{ form.lines.length }})
-                                        </button>
-                                    </li>
-                                </ul>
+                                <TabbedFormNav
+                                    :steps="visibleSteps"
+                                    :current-index="currentIndex"
+                                    :disabled="navigating || saving"
+                                    @select="goTo"
+                                />
 
                                 <div class="tab-content pt-4">
                                     <!-- Tab Price List Info -->
-                                    <div v-if="activeTab === 'info'" class="tab-pane fade show active" role="tabpanel">
+                                    <div v-show="isCurrent('info')" class="tab-pane fade" data-step-id="info" role="tabpanel" :class="paneClass('info')">
                                         <div class="row mb-4">
                                             <div class="col-md-6">
                                                 <div class="form-floating form-floating-outline">
@@ -330,7 +324,7 @@
                                     </div>
 
                                     <!-- Lines Tab -->
-                                    <div v-if="activeTab === 'lines'" class="tab-pane fade show active">
+                                    <div v-show="isCurrent('lines')" class="tab-pane fade" data-step-id="lines" :class="paneClass('lines')">
                                         <div v-if="form.lines.length === 0" class="text-center text-muted py-4">Belum ada item. Klik tombol di bawah untuk menambah.</div>
                                         <div v-for="(line, index) in form.lines" :key="index" class="repeater-item mb-4">
                                             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -504,13 +498,16 @@
                                     </div>
                                 </div>
 
-                                <div class="modal-footer mt-4">
-                                    <button type="button" class="btn btn-outline-secondary" @click="priceListStore.closeModal()">Tutup</button>
-                                    <button type="submit" class="btn btn-primary" :disabled="saving">
-                                        <span v-if="saving" class="spinner-border spinner-border-sm me-2"></span>
-                                        Simpan
-                                    </button>
-                                </div>
+                                <TabbedFormActions
+                                    :is-first-step="isFirstStep"
+                                    :is-last-step="isLastStep"
+                                    :loading="navigating"
+                                    :saving="saving"
+                                    cancel-label="Tutup"
+                                    @next="next"
+                                    @previous="previous"
+                                    @cancel="priceListStore.closeModal()"
+                                />
                             </div>
                         </div>
                     </form>
@@ -528,6 +525,9 @@ import { usePriceListStore } from '~/stores/price_list'
 import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
+import TabbedFormNav from '~/components/form/TabbedFormNav.vue'
+import TabbedFormActions from '~/components/form/TabbedFormActions.vue'
+import { useTabbedFormNavigation } from '~/composables/useTabbedFormNavigation'
 import Dropdown from 'primevue/dropdown'
 import InputText from 'primevue/inputtext'
 import Column from 'primevue/column'
@@ -548,7 +548,25 @@ const priceListStore = usePriceListStore()
 
 const { priceLists, loading, saving, totalRecords, params, form, isEditMode, showModal, validationErrors } = storeToRefs(priceListStore)
 
-const activeTab = ref('info')
+const formRoot = ref(null)
+const formSteps = computed(() => [
+  { id: 'info', label: 'Informasi Price List', icon: 'ri-price-tag-3-line' },
+  { id: 'lines', label: 'Item Lines', icon: 'ri-list-check', badge: form.value.lines?.length || null },
+])
+const {
+  currentIndex,
+  visibleSteps,
+  isFirstStep,
+  isLastStep,
+  navigating,
+  next,
+  previous,
+  goTo,
+  goToId,
+  isCurrent,
+  paneClass,
+  validateAll,
+} = useTabbedFormNavigation({ steps: formSteps, formRoot })
 const rowsPerPageOptionsArray = ref([10, 25, 50, 100])
 
 // Table controls state
@@ -952,9 +970,18 @@ async function editPriceList(priceList) {
 
 // Modal instance
 let modalInstance = null
+async function onFormSubmit() {
+    if (!isLastStep.value) {
+        await next()
+        return
+    }
+    if (!(await validateAll())) return
+    await priceListStore.savePriceList()
+}
+
 watch(showModal, async (newValue) => {
     if (newValue) {
-        activeTab.value = isEditMode.value ? 'info' : 'lines'
+        await goToId(isEditMode.value ? 'info' : 'lines', { skipValidation: true })
         if (isEditMode.value && form.value.lines?.length) {
             for (const line of form.value.lines) {
                 if (line.priceableType === 'did' && line.priceableId) {

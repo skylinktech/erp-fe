@@ -13,34 +13,24 @@
 
       <div class="card">
         <div class="card-body">
-          <form @submit.prevent="handleSubmit">
-            <div class="row">
-              <div class="col">
-                <ul class="nav nav-tabs" role="tablist">
-                  <li class="nav-item">
-                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#pi-tabs-info" role="tab" type="button">
-                      <span class="ri-user-line ri-20px d-sm-none"></span>
-                      <span class="d-none d-sm-block">Informasi Purchase Invoice</span>
-                    </button>
-                  </li>
-                  <li class="nav-item">
-                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#pi-tabs-items" role="tab" type="button">
-                      <span class="ri-folder-user-line ri-20px d-sm-none"></span>
-                      <span class="d-none d-sm-block">List Product</span>
-                    </button>
-                  </li>
-                </ul>
-              </div>
-            </div>
+          <form ref="formRoot" @submit.prevent="onFormSubmit" novalidate>
+            <TabbedFormNav
+              :steps="visibleSteps"
+              :current-index="currentIndex"
+              :disabled="navigating || saving"
+              @select="goTo"
+            />
 
             <div class="tab-content pt-4">
-              <div id="pi-tabs-info" class="tab-pane fade active show" role="tabpanel">
+              <div id="pi-tabs-info" data-step-id="pi-tabs-info" role="tabpanel" :class="paneClass('pi-tabs-info')">
                 <div class="row g-4">
                   <div class="col-md-6">
                     <CustomSelect2 v-model="form.purchaseOrderId" :options="purchaseOrders || []" :get-option-label="getPurchaseOrderLabel" :reduce="option => option.id" placeholder="Pilih Purchase Order" searchable clearable />
                   </div>
                   <div class="col-md-6">
+                    <FormLabel required>Vendor</FormLabel>
                     <CustomSelect2 v-model="form.vendorId" :options="vendors || []" :get-option-label="option => option.name" :reduce="option => option.id" searchable clearable placeholder="Pilih Vendor" :disabled="!!form.purchaseOrderId" />
+                    <div v-if="uiErrors.vendorId" class="invalid-feedback d-block">{{ uiErrors.vendorId }}</div>
                   </div>
                   <div class="col-md-6">
                     <CustomSelect2 v-model="form.perusahaanId" :options="perusahaans || []" :get-option-label="option => option.nmPerusahaan" :reduce="option => option.id" searchable clearable placeholder="Pilih Perusahaan" />
@@ -50,9 +40,10 @@
                   </div>
                   <div class="col-md-3">
                     <div class="form-floating form-floating-outline">
-                      <input type="date" v-model="form.paymentDate" class="form-control">
-                      <label>Tanggal Pembayaran</label>
+                      <input id="pi-payment-date" type="date" v-model="form.paymentDate" class="form-control" :class="{ 'is-invalid': uiErrors.paymentDate }" aria-required="true">
+                      <label for="pi-payment-date">Tanggal Pembayaran <span class="text-danger" aria-hidden="true">*</span></label>
                     </div>
+                    <div v-if="uiErrors.paymentDate" class="invalid-feedback d-block">{{ uiErrors.paymentDate }}</div>
                   </div>
                   <div class="col-md-3">
                     <div class="form-floating form-floating-outline">
@@ -79,7 +70,9 @@
                     </div>
                   </div>
                   <div class="col-md-3">
+                    <FormLabel required>Metode Pembayaran</FormLabel>
                     <CustomSelect2 v-model="form.paymentMethod" :options="paymentMethodOptions" :get-option-label="o => o.label" :reduce="o => o.value" searchable clearable :clearable="false" placeholder="Metode Pembayaran" />
+                    <div v-if="uiErrors.paymentMethod" class="invalid-feedback d-block">{{ uiErrors.paymentMethod }}</div>
                   </div>
                   <div class="col-md-3">
                     <div class="form-floating form-floating-outline">
@@ -126,7 +119,7 @@
                 </div>
               </div>
 
-              <div id="pi-tabs-items" class="tab-pane fade" role="tabpanel">
+              <div id="pi-tabs-items" data-step-id="pi-tabs-items" role="tabpanel" :class="paneClass('pi-tabs-items')">
                 <div v-for="(item, index) in (form.purchaseInvoiceItems || [])" :key="index" class="repeater-item mb-4">
                   <div class="row g-3">
                     <div class="col-md-6">
@@ -184,55 +177,55 @@
               </div>
             </div>
 
-            <div class="d-flex justify-content-end flex-wrap gap-2 mt-4">
-              <button type="button" class="btn btn-outline-secondary" @click="navigateTo('/purchasing/purchase-invoice')">Tutup</button>
-              <template v-if="form.id && form.documentStatus">
-                <button
-                  v-if="form.documentStatus === 'draft'"
-                  type="button"
-                  class="btn btn-outline-info"
-                  :disabled="saving || loading"
-                  @click="runLifecycle('submit')"
-                >
-                  Submit
-                </button>
-                <button
-                  v-if="form.documentStatus === 'submitted'"
-                  type="button"
-                  class="btn btn-outline-success"
-                  :disabled="saving || loading"
-                  @click="runLifecycle('approve')"
-                >
-                  Approve
-                </button>
-                <button
-                  v-if="form.documentStatus === 'approved'"
-                  type="button"
-                  class="btn btn-outline-primary"
-                  :disabled="saving || loading"
-                  @click="runLifecycle('post')"
-                >
-                  Post
-                </button>
-                <button
-                  v-if="['draft', 'submitted', 'approved', 'posted'].includes(form.documentStatus)"
-                  type="button"
-                  class="btn btn-outline-danger"
-                  :disabled="saving || loading"
-                  @click="runLifecycle('cancel')"
-                >
-                  Cancel
-                </button>
-              </template>
+            <div v-if="form.id && form.documentStatus" class="d-flex justify-content-end flex-wrap gap-2 mt-4">
               <button
-                type="submit"
-                class="btn btn-primary"
-                :disabled="saving || (form.documentStatus && form.documentStatus !== 'draft')"
+                v-if="form.documentStatus === 'draft'"
+                type="button"
+                class="btn btn-outline-info"
+                :disabled="saving || loading"
+                @click="runLifecycle('submit')"
               >
-                <span v-if="saving" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                Simpan
+                Submit
+              </button>
+              <button
+                v-if="form.documentStatus === 'submitted'"
+                type="button"
+                class="btn btn-outline-success"
+                :disabled="saving || loading"
+                @click="runLifecycle('approve')"
+              >
+                Approve
+              </button>
+              <button
+                v-if="form.documentStatus === 'approved'"
+                type="button"
+                class="btn btn-outline-primary"
+                :disabled="saving || loading"
+                @click="runLifecycle('post')"
+              >
+                Post
+              </button>
+              <button
+                v-if="['draft', 'submitted', 'approved', 'posted'].includes(form.documentStatus)"
+                type="button"
+                class="btn btn-outline-danger"
+                :disabled="saving || loading"
+                @click="runLifecycle('cancel')"
+              >
+                Cancel
               </button>
             </div>
+            <TabbedFormActions
+              :is-first-step="isFirstStep"
+              :is-last-step="isLastStep"
+              :loading="navigating"
+              :saving="saving"
+              :submit-disabled="!!form.documentStatus && form.documentStatus !== 'draft'"
+              cancel-label="Tutup"
+              @cancel="navigateTo('/purchasing/purchase-invoice')"
+              @next="next"
+              @previous="previous"
+            />
           </form>
         </div>
       </div>
@@ -244,6 +237,11 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
+import TabbedFormNav from '~/components/form/TabbedFormNav.vue'
+import TabbedFormActions from '~/components/form/TabbedFormActions.vue'
+import FormLabel from '~/components/form/FormLabel.vue'
+import { useTabbedFormNavigation } from '~/composables/useTabbedFormNavigation'
+import { routeSaveFailure } from '~/utils/apiError'
 import { usePurchaseInvoiceStore } from '~/stores/purchase-invoice'
 import { useVendorStore } from '~/stores/vendor'
 import { usePerusahaanStore } from '~/stores/perusahaan'
@@ -261,6 +259,42 @@ const warehouseStore = useWarehouseStore()
 const formatRupiah = useFormatRupiah()
 
 const { form, isEditMode, saving, loading } = storeToRefs(purchaseInvoiceStore)
+const formRoot = ref(null)
+const uiErrors = ref({})
+const formSteps = [
+  { id: 'pi-tabs-info', label: 'Informasi Purchase Invoice', icon: 'ri-user-line' },
+  { id: 'pi-tabs-items', label: 'List Product', icon: 'ri-folder-user-line' },
+]
+function validatePurchaseInvoiceStep(step) {
+  uiErrors.value = {}
+  if (step.id !== 'pi-tabs-info') return true
+  if (!form.value?.vendorId) uiErrors.value.vendorId = 'Vendor wajib dipilih.'
+  if (!form.value?.paymentDate) uiErrors.value.paymentDate = 'Tanggal Pembayaran wajib diisi.'
+  if (!form.value?.paymentMethod) uiErrors.value.paymentMethod = 'Metode Pembayaran wajib dipilih.'
+  return Object.keys(uiErrors.value).length === 0
+}
+const {
+  currentIndex,
+  visibleSteps,
+  isFirstStep,
+  isLastStep,
+  navigating,
+  next,
+  previous,
+  goTo,
+  goToId,
+  paneClass,
+  validateAll,
+} = useTabbedFormNavigation({ steps: formSteps, formRoot, validateStep: validatePurchaseInvoiceStep })
+const PI_FIELD_TABS = {
+  vendorId: 'pi-tabs-info',
+  paymentDate: 'pi-tabs-info',
+  paymentMethod: 'pi-tabs-info',
+  perusahaanId: 'pi-tabs-info',
+  purchaseInvoiceItems: 'pi-tabs-items',
+  productId: 'pi-tabs-items',
+  quantity: 'pi-tabs-items',
+}
 const { vendors } = storeToRefs(vendorStore)
 const { perusahaans } = storeToRefs(perusahaanStore)
 const { cabangs } = storeToRefs(cabangStore)
@@ -395,9 +429,22 @@ function removePurchaseInvoiceItem(index) {
   form.value.purchaseInvoiceItems.splice(index, 1)
 }
 
+async function onFormSubmit() {
+  if (!isLastStep.value) {
+    await next()
+    return
+  }
+  if (!(await validateAll())) return
+  await handleSubmit()
+}
+
 async function handleSubmit() {
   const ok = await purchaseInvoiceStore.savePurchaseInvoice()
-  if (ok) navigateTo('/purchasing/purchase-invoice')
+  if (ok) {
+    navigateTo('/purchasing/purchase-invoice')
+    return
+  }
+  routeSaveFailure(purchaseInvoiceStore.validationErrors, uiErrors.value, PI_FIELD_TABS, goToId)
 }
 
 watch(purchaseInvoiceItemsTotal, (newSubtotal) => {

@@ -328,7 +328,7 @@
                                     placeholder="Masukkan nama aset"
                                     
                                 >
-                                <label>Nama Aset *</label>
+                                <label>Nama Aset <span class="text-danger" aria-hidden="true">*</span></label>
                             </div>
                         </div>
                         <div class="col-md-3">
@@ -355,7 +355,7 @@
                                     <option value="land">Land</option>
                                     <option value="other">Other</option>
                                 </select>
-                                <label>Kategori *</label>
+                                <label>Kategori <span class="text-danger" aria-hidden="true">*</span></label>
                             </div>
                         </div>
                         <div class="col-md-3">
@@ -366,7 +366,7 @@
                                     v-model="form.acquisitionDate" 
                                     
                                 >
-                                <label>Tanggal Pembelian *</label>
+                                <label>Tanggal Pembelian <span class="text-danger" aria-hidden="true">*</span></label>
                             </div>
                         </div>
                         <div class="col-md-3">
@@ -379,7 +379,7 @@
                                     placeholder="Masukkan nilai pembelian"
                                     
                                 >
-                                <label>Nilai Pembelian *</label>
+                                <label>Nilai Pembelian <span class="text-danger" aria-hidden="true">*</span></label>
                             </div>
                         </div>
                         <div class="col-md-3">
@@ -392,7 +392,7 @@
                                     placeholder="Masukkan nilai sisa"
                                     
                                 >
-                                <label>Nilai Sisa *</label>
+                                <label>Nilai Sisa <span class="text-danger" aria-hidden="true">*</span></label>
                             </div>
                         </div>
 
@@ -408,7 +408,7 @@
                                         {{ method.label }}
                                     </option>
                                 </select>
-                                <label>Metode Penyusutan *</label>
+                                <label>Metode Penyusutan <span class="text-danger" aria-hidden="true">*</span></label>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -421,7 +421,7 @@
                                     min="1"
                                     
                                 >
-                                <label>Umur Ekonomis (Tahun) *</label>
+                                <label>Umur Ekonomis (Tahun) <span class="text-danger" aria-hidden="true">*</span></label>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -433,7 +433,7 @@
                                     placeholder="Masukkan lokasi aset"
                                     
                                 >
-                                <label>Lokasi *</label>
+                                <label>Lokasi <span class="text-danger" aria-hidden="true">*</span></label>
                             </div>
                         </div>
                         <div class="col-md-3">
@@ -448,7 +448,7 @@
                                         {{ status.label }}
                                     </option>
                                 </select>
-                                <label>Status *</label>
+                                <label>Status <span class="text-danger" aria-hidden="true">*</span></label>
                             </div>
                         </div>
                         <div class="col-md-3">

@@ -33,68 +33,23 @@
                 <span class="text-muted small">Pengajuan dana ke Direktur Utama</span>
               </div>
               <div class="card-body pt-0">
-                <form @submit.prevent="handleSubmit">
-                  <ul class="nav nav-tabs mb-0" role="tablist">
-                    <li class="nav-item">
-                      <button
-                        class="nav-link"
-                        :class="{ active: activeTab === 'info' }"
-                        type="button"
-                        @click="activeTab = 'info'"
-                      >
-                        <i class="ri-information-line me-1"></i>Informasi
-                      </button>
-                    </li>
-                    <li class="nav-item">
-                      <button
-                        class="nav-link"
-                        :class="{ active: activeTab === 'payee' }"
-                        type="button"
-                        @click="activeTab = 'payee'"
-                      >
-                        <i class="ri-bank-line me-1"></i>Penerima
-                      </button>
-                    </li>
-                    <li class="nav-item">
-                      <button
-                        class="nav-link"
-                        :class="{ active: activeTab === 'items' }"
-                        type="button"
-                        @click="activeTab = 'items'"
-                      >
-                        <i class="ri-list-check-2 me-1"></i>
-                        Item
-                        <span v-if="itemCount" class="badge bg-primary ms-1">{{ itemCount }}</span>
-                      </button>
-                    </li>
-                    <li v-if="showEmployeesTab" class="nav-item">
-                      <button
-                        class="nav-link"
-                        :class="{ active: activeTab === 'employees' }"
-                        type="button"
-                        @click="activeTab = 'employees'"
-                      >
-                        <i class="ri-user-line me-1"></i>
-                        Pegawai
-                        <span v-if="employeeCount" class="badge bg-info ms-1">{{ employeeCount }}</span>
-                      </button>
-                    </li>
-                    <li class="nav-item">
-                      <button
-                        class="nav-link"
-                        :class="{ active: activeTab === 'other' }"
-                        type="button"
-                        @click="activeTab = 'other'"
-                      >
-                        <i class="ri-truck-line me-1"></i>
-                        Biaya lainnya
-                        <span v-if="otherChargeCount" class="badge bg-secondary ms-1">{{ otherChargeCount }}</span>
-                      </button>
-                    </li>
-                  </ul>
+                <form ref="formRoot" @submit.prevent="onFormSubmit" novalidate>
+                  <div v-if="validationErrors?.length" class="alert alert-warning mb-4">
+                    <ul class="mb-0 ps-3">
+                      <li v-for="(error, index) in validationErrors" :key="index">{{ error?.message || error }}</li>
+                    </ul>
+                  </div>
+                  <TabbedFormNav
+                    :steps="visibleSteps"
+                    :current-index="currentIndex"
+                    :disabled="navigating || saving"
+                    :compact-mobile="false"
+                    show-desktop-icon
+                    @select="goTo"
+                  />
 
                   <div class="tab-content pt-4">
-                    <div v-show="activeTab === 'info'" class="tab-pane-vue">
+                    <div v-show="isCurrent('info')" class="tab-pane-vue" data-step-id="info">
                       <div class="row mb-3">
                         <label class="col-sm-3 col-form-label">Tipe Request</label>
                         <div class="col-sm-9">
@@ -418,7 +373,7 @@
                       </div>
                     </div>
 
-                    <div v-show="activeTab === 'payee'" class="tab-pane-vue">
+                    <div v-show="isCurrent('payee')" class="tab-pane-vue" data-step-id="payee">
                       <div class="row mb-3">
                         <label class="col-sm-3 col-form-label">Nama Penerima</label>
                         <div class="col-sm-9">
@@ -445,7 +400,7 @@
                       </div>
                     </div>
 
-                    <div v-show="activeTab === 'items'" class="tab-pane-vue">
+                    <div v-show="isCurrent('items')" class="tab-pane-vue" data-step-id="items">
                       <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
                         <p class="mb-0 text-muted small">
                           Item pengajuan dana (opsional). Bisa dimuat otomatis dari dokumen sumber.
@@ -574,7 +529,7 @@
                       </div>
                     </div>
 
-                    <div v-if="showEmployeesTab" v-show="activeTab === 'employees'" class="tab-pane-vue">
+                    <div v-if="showEmployeesTab" v-show="isCurrent('employees')" class="tab-pane-vue" data-step-id="employees">
                       <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
                         <p class="mb-0 text-muted small">
                           Daftar pegawai yang terlibat pada pengajuan ini (opsional), termasuk nominal gaji harian.
@@ -653,7 +608,7 @@
                       </div>
                     </div>
 
-                    <div v-show="activeTab === 'other'" class="tab-pane-vue">
+                    <div v-show="isCurrent('other')" class="tab-pane-vue" data-step-id="other">
                       <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
                         <p class="mb-0 text-muted small">
                           Biaya di luar dokumen sumber (ongkir, transportasi, materai, dll). Tidak terhapus saat muat ulang sumber.
@@ -737,14 +692,15 @@
                     </div>
                   </div>
 
-                  <div class="d-flex flex-wrap justify-content-end gap-2 mt-4 pt-3 border-top">
-                    <NuxtLink to="/finance/payment-request" class="btn btn-outline-secondary">Batal</NuxtLink>
-                    <button type="submit" class="btn btn-primary" :disabled="saving">
-                      <span v-if="saving" class="spinner-border spinner-border-sm me-1"></span>
-                      <i v-else class="ri-save-line me-1"></i>
-                      Simpan
-                    </button>
-                  </div>
+                  <TabbedFormActions
+                    :is-first-step="isFirstStep"
+                    :is-last-step="isLastStep"
+                    :loading="navigating"
+                    :saving="saving"
+                    cancel-href="/finance/payment-request"
+                    @next="next"
+                    @previous="previous"
+                  />
                 </form>
               </div>
             </div>
@@ -803,6 +759,10 @@ import { useTaxMasterStore } from '~/stores/tax-masters'
 import { parseRupiahToNumber } from '~/composables/formatRupiah'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
 import FormPageSidebar from '~/components/form/FormPageSidebar.vue'
+import TabbedFormNav from '~/components/form/TabbedFormNav.vue'
+import TabbedFormActions from '~/components/form/TabbedFormActions.vue'
+import { useTabbedFormNavigation } from '~/composables/useTabbedFormNavigation'
+import { routeSaveFailure } from '~/utils/apiError'
 import { FINANCE_MODULE_NAV } from '~/constants/finance/formNav'
 import type { FormPageSummaryRow } from '~/types/form-page'
 import { apiFetch } from '~/utils/apiFetch'
@@ -814,9 +774,10 @@ const taxMasterStore = useTaxMasterStore()
 const formatRupiah = useFormatRupiah()
 const { getAttachmentUrl, getFileIcon, isImageFile } = useImageUrl()
 
-const { form, isEditMode, loading, saving } = storeToRefs(paymentRequestStore)
+const { form, isEditMode, loading, saving, validationErrors } = storeToRefs(paymentRequestStore)
+const uiErrors = ref<Record<string, string>>({})
 const formReady = ref(false)
-const activeTab = ref<'info' | 'payee' | 'items' | 'employees' | 'other'>('info')
+const formRoot = ref<HTMLFormElement | null>(null)
 const loadingSource = ref(false)
 const loadingTaxes = ref(false)
 const loadingServiceInstances = ref(false)
@@ -847,6 +808,41 @@ const otherChargeCount = computed(() => form.value?.otherCharges?.length ?? 0)
 const employeeCount = computed(
   () => (form.value?.employees || []).filter((e) => e.employeeId != null).length
 )
+const formSteps = computed(() => [
+  { id: 'info', label: 'Informasi', icon: 'ri-information-line' },
+  { id: 'payee', label: 'Penerima', icon: 'ri-bank-line' },
+  { id: 'items', label: 'Item', icon: 'ri-list-check-2', badge: itemCount.value || null },
+  { id: 'employees', label: 'Pegawai', icon: 'ri-user-line', badge: employeeCount.value || null, visible: showEmployeesTab.value },
+  { id: 'other', label: 'Biaya lainnya', icon: 'ri-truck-line', badge: otherChargeCount.value || null, badgeClass: 'bg-secondary' },
+])
+const {
+  currentIndex,
+  currentStep,
+  visibleSteps,
+  isFirstStep,
+  isLastStep,
+  navigating,
+  next,
+  previous,
+  goTo,
+  goToId,
+  isCurrent,
+  validateAll,
+} = useTabbedFormNavigation({ steps: formSteps, formRoot })
+const PAYMENT_REQUEST_FIELD_TABS: Record<string, string> = {
+  sourceType: 'info',
+  sourceId: 'info',
+  paymentMethod: 'info',
+  paymentDate: 'info',
+  description: 'info',
+  penerima: 'payee',
+  bankName: 'payee',
+  accountNumber: 'payee',
+  paymentRequestItems: 'items',
+  employees: 'employees',
+  employeeId: 'employees',
+  otherCharges: 'other',
+}
 const attachmentPreviewUrl = computed(() => {
   const preview = form.value.attachmentPreview
   if (!preview) return null
@@ -1211,14 +1207,10 @@ watch(
   () => paymentRequestStore.syncEstimatedDuration()
 )
 
-watch(activeTab, async (tab) => {
-  if (tab === 'employees' && showEmployeesTab.value && !pegawaiOptions.value.length) {
+watch(currentStep, async (step) => {
+  if (step?.id === 'employees' && showEmployeesTab.value && !pegawaiOptions.value.length) {
     await loadPegawaiOptions()
   }
-})
-
-watch(showEmployeesTab, (show) => {
-  if (!show && activeTab.value === 'employees') activeTab.value = 'info'
 })
 
 async function loadTaxMasters() {
@@ -1251,9 +1243,22 @@ async function loadMasterData() {
   ])
 }
 
+async function onFormSubmit() {
+  if (!isLastStep.value) {
+    await next()
+    return
+  }
+  if (!(await validateAll())) return
+  await handleSubmit()
+}
+
 async function handleSubmit() {
   const savedId = await paymentRequestStore.savePaymentRequest()
-  if (savedId) navigateTo(`/finance/payment-request/detail/${savedId}`)
+  if (savedId) {
+    navigateTo(`/finance/payment-request/detail/${savedId}`)
+    return
+  }
+  routeSaveFailure(paymentRequestStore.validationErrors, uiErrors.value, PAYMENT_REQUEST_FIELD_TABS, goToId)
 }
 
 onMounted(async () => {

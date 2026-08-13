@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { useNuxtApp } from '#app'
 import Swal from 'sweetalert2'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 
 export interface Divisi {
   id: number
@@ -118,12 +119,13 @@ export const useDivisiStore = defineStore('divisi', {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            if (response.status === 422) {
-                this.validationErrors = Object.values(errorData.errors).flat();
-                throw new Error('Data validasi tidak valid');
-            }
-            throw new Error(errorData.message || 'Gagal menyimpan data divisi');
+            const err = await normalizeFailedResponse(
+                response,
+                this.isEditMode ? 'Divisi gagal diperbarui.' : 'Divisi gagal dibuat.'
+            )
+            this.validationErrors = err.fieldErrorList
+            toastNormalizedError(err)
+            return false
         }
         
         this.closeModal();
@@ -137,15 +139,9 @@ export const useDivisiStore = defineStore('divisi', {
         });
 
       } catch (error: any) {
-        if (error.message !== 'Data validasi tidak valid') {
-            const toast = useToast()            
-            toast.error({
-            title: 'Error',
-            message: error.message || 'Operasi gagal',
-            color: 'red',
-            position: 'bottomRight',
-          });
-        }
+        const err = normalizeApiError(error, 'Divisi gagal disimpan.')
+        toastNormalizedError(err)
+        return false
       } finally {
         this.loading = false;
       }
@@ -181,8 +177,9 @@ export const useDivisiStore = defineStore('divisi', {
           });
 
           if (!response.ok) {
-              const errorData = await response.json();
-              throw new Error(errorData.message || 'Gagal menghapus divisi');
+              const err = await normalizeFailedResponse(response, 'Divisi gagal dihapus.')
+              toastNormalizedError(err)
+              return false
           }
 
           await this.fetchDivisis();
@@ -194,14 +191,8 @@ export const useDivisiStore = defineStore('divisi', {
             position: 'bottomRight',
           });
       } catch (error: any) {
-          console.error('Gagal menghapus divisi:', error);
-          const toast = useToast()          
-          toast.error({
-            title: 'Error',
-            message: error.message || 'Gagal menghapus divisi',
-            color: 'red',
-            position: 'bottomRight',
-          });
+          const err = normalizeApiError(error, 'Divisi gagal dihapus.')
+          toastNormalizedError(err)
       } finally {
           this.loading = false;
       }

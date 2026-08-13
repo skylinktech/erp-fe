@@ -117,6 +117,7 @@
 <script setup>
 import { useMakerChecker } from '~/composables/useMakerChecker'
 import { useWorkflowApproval } from '~/composables/useWorkflowApproval'
+import { getApiErrorMessage } from '~/utils/apiError'
 
 definePageMeta({ middleware: ['auth', 'check-permission'] })
 
@@ -141,7 +142,7 @@ const form = reactive({
 })
 
 function showApiError(e, fallback = 'Terjadi kesalahan') {
-  const message = e?.data?.message || e?.message || fallback
+  const message = getApiErrorMessage(e, fallback)
   const isValidation = /maker-checker/i.test(message) || e?.data?.meta?.code === 'FORBIDDEN'
   toast.error({
     title: isValidation ? 'Validasi' : 'Error',

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { useNuxtApp } from '#app'
 import { apiFetch } from '~/utils/apiFetch'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 import Swal from 'sweetalert2'
 import type { ApprovalWorkflowEntity } from '~/stores/approval-workflows'
 
@@ -177,16 +178,12 @@ export const useApprovalWorkflowEntitiesStore = defineStore('approval-workflow-e
         const wfStore = useApprovalWorkflowsStore()
         await wfStore.fetchEntities(true)
       } catch (e: any) {
-        const errData = e?.data || e
-        this.validationErrors = errData?.errors
-          ? (Object.values(errData.errors).flat() as string[])
-          : [errData?.message || e.message || 'Gagal menyimpan']
-        toast.error({
-          title: 'Error',
-          message: this.validationErrors[0] || 'Gagal menyimpan',
-          color: 'red',
-          position: 'bottomRight',
-        })
+        const err = normalizeApiError(
+          e,
+          this.isEditMode ? 'Approval Workflow gagal diperbarui.' : 'Approval Workflow gagal dibuat.'
+        )
+        this.validationErrors = err.fieldErrorList
+        toastNormalizedError(err)
       } finally {
         this.loading = false
       }
@@ -210,13 +207,18 @@ export const useApprovalWorkflowEntitiesStore = defineStore('approval-workflow-e
           method: 'DELETE',
           credentials: 'include',
         })
-        if (!res.ok) throw new Error((await res.json()).message || 'Gagal menghapus')
+        if (!res.ok) {
+          const err = await normalizeFailedResponse(res, 'Approval Workflow gagal dihapus.')
+          toastNormalizedError(err)
+          return false
+        }
         toast.success({ title: 'Berhasil', message: 'Entity berhasil dihapus', color: 'green', position: 'bottomRight' })
         await Promise.all([this.fetchEntities(), this.fetchStats()])
         const wfStore = useApprovalWorkflowsStore()
         await wfStore.fetchEntities(true)
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message || 'Gagal menghapus', color: 'red', position: 'bottomRight' })
+        const err = normalizeApiError(e, 'Approval Workflow gagal dihapus.')
+        toastNormalizedError(err)
       }
     },
   },

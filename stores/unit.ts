@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { useNuxtApp } from '#app'
 import Swal from 'sweetalert2'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 
 export interface Unit {
   id: number
@@ -114,12 +115,13 @@ export const useUnitStore = defineStore('unit', {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            if (response.status === 422) {
-                this.validationErrors = Object.values(errorData.errors).flat();
-                throw new Error('Data validasi tidak valid');
-            }
-            throw new Error(errorData.message || 'Gagal menyimpan data unit');
+            const err = await normalizeFailedResponse(
+                response,
+                this.isEditMode ? 'Satuan gagal diperbarui.' : 'Satuan gagal dibuat.'
+            )
+            this.validationErrors = err.fieldErrorList
+            toastNormalizedError(err)
+            return false
         }
         
         this.closeModal();
@@ -131,13 +133,9 @@ export const useUnitStore = defineStore('unit', {
         });
 
       } catch (error: any) {
-        if (error.message !== 'Data validasi tidak valid') {
-            toast.error({
-              title: 'Error',
-              message: error.message || 'Operasi gagal',
-              color: 'red'
-            });
-        }
+        const err = normalizeApiError(error, 'Satuan gagal disimpan.')
+        toastNormalizedError(err)
+        return false
       } finally {
         this.loading = false;
       }
@@ -174,8 +172,9 @@ export const useUnitStore = defineStore('unit', {
           });
 
           if (!response.ok) {
-              const errorData = await response.json();
-              throw new Error(errorData.message || 'Gagal menghapus unit');
+              const err = await normalizeFailedResponse(response, 'Satuan gagal dihapus.')
+              toastNormalizedError(err)
+              return false
           }
 
           await this.fetchUnit();
@@ -185,12 +184,8 @@ export const useUnitStore = defineStore('unit', {
             color: 'green'
           });
       } catch (error: any) {
-          console.error('Gagal menghapus unit:', error);
-          toast.error({
-            title: 'Error',
-            message: error.message || 'Gagal menghapus unit',
-            color: 'red'
-          });
+          const err = normalizeApiError(error, 'Satuan gagal dihapus.')
+          toastNormalizedError(err)
       } finally {
           this.loading = false;
       }

@@ -27,149 +27,88 @@
           <div class="col-xl-8 col-12">
             <div class="card">
               <div class="card-body">
-                <form @submit.prevent="handleSubmit" novalidate>
+                <form ref="formRoot" @submit.prevent="onFormSubmit" novalidate>
                   <div v-if="validationErrors?.length" class="alert alert-warning mb-4">
                     <ul class="mb-0 ps-3">
-                      <li v-for="(error, index) in validationErrors" :key="index">{{ error }}</li>
+                      <li v-for="(error, index) in validationErrors" :key="index">{{ formatValidationErrorItem(error) }}</li>
                     </ul>
                   </div>
 
-                  <div class="row">
-                    <div class="col">
-                      <ul class="nav nav-tabs pegawai-form-tabs" role="tablist">
-                        <li class="nav-item">
-                          <button
-                            class="nav-link active"
-                            data-bs-toggle="tab"
-                            data-bs-target="#pegawai-fp-tab-personal"
-                            role="tab"
-                            type="button"
-                          >
-                            <span class="ri-user-line ri-20px d-sm-none"></span>
-                            <span class="d-none d-sm-block">Informasi Pribadi</span>
-                          </button>
-                        </li>
-                        <li class="nav-item">
-                          <button
-                            class="nav-link"
-                            data-bs-toggle="tab"
-                            data-bs-target="#pegawai-fp-tab-perusahaan"
-                            role="tab"
-                            type="button"
-                          >
-                            <span class="ri-folder-user-line ri-20px d-sm-none"></span>
-                            <span class="d-none d-sm-block">Informasi Perusahaan</span>
-                          </button>
-                        </li>
-                        <li class="nav-item">
-                          <button
-                            class="nav-link"
-                            data-bs-toggle="tab"
-                            data-bs-target="#pegawai-fp-tab-social"
-                            role="tab"
-                            type="button"
-                          >
-                            <span class="ri-facebook-fill ri-20px d-sm-none"></span>
-                            <span class="d-none d-sm-block">Detail Keluarga</span>
-                          </button>
-                        </li>
-                        <li class="nav-item">
-                          <button
-                            class="nav-link"
-                            data-bs-toggle="tab"
-                            data-bs-target="#pegawai-fp-tab-dokumen"
-                            role="tab"
-                            type="button"
-                          >
-                            <span class="ri-file-upload-line ri-20px d-sm-none"></span>
-                            <span class="d-none d-sm-block">Dokumen & BPJS</span>
-                          </button>
-                        </li>
-                        <li v-if="pegawaiIdParam" class="nav-item">
-                          <button
-                            class="nav-link"
-                            data-bs-toggle="tab"
-                            data-bs-target="#pegawai-fp-tab-kontrak"
-                            role="tab"
-                            type="button"
-                          >
-                            <span class="ri-draft-line ri-20px d-sm-none"></span>
-                            <span class="d-none d-sm-block">Kontrak</span>
-                          </button>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
+                  <TabbedFormNav
+                    :steps="visibleSteps"
+                    :current-index="currentIndex"
+                    :disabled="navigating || loading"
+                    nav-class="pegawai-form-tabs"
+                    @select="goTo"
+                  />
 
                   <div class="tab-content pt-4">
-                    <div id="pegawai-fp-tab-personal" class="tab-pane fade show active" role="tabpanel">
+                    <div id="pegawai-fp-tab-personal" data-step-id="pegawai-fp-tab-personal" class="tab-pane fade" role="tabpanel" :class="paneClass('pegawai-fp-tab-personal')">
                       <div class="row g-3">
                         <div class="col-md-6">
                           <div class="form-floating form-floating-outline">
                             <input id="pegawai-fp-nm" v-model="form.nm_pegawai" type="text" class="form-control" placeholder="Nama Lengkap" name="nm_pegawai" />
-                            <label for="pegawai-fp-nm">Nama Lengkap</label>
+                            <label for="pegawai-fp-nm">Nama Lengkap <span class="text-danger" aria-hidden="true">*</span></label>
                           </div>
                         </div>
                         <div class="col-md-6">
                           <div class="form-floating form-floating-outline">
                             <input id="pegawai-fp-tlp" v-model="form.no_tlp_pegawai" type="text" class="form-control" placeholder="No. Tlp/HP Pegawai" name="no_tlp_pegawai" />
-                            <label for="pegawai-fp-tlp">No. Tlp/HP Pegawai</label>
+                            <label for="pegawai-fp-tlp">No. Tlp/HP Pegawai <span class="text-danger" aria-hidden="true">*</span></label>
                           </div>
                         </div>
                         <div class="col-md-6">
                           <div class="form-floating form-floating-outline">
                             <input id="pegawai-fp-tmp" v-model="form.tmp_lahir_pegawai" type="text" class="form-control" placeholder="Tempat Lahir" name="tmp_lahir_pegawai" />
-                            <label for="pegawai-fp-tmp">Tempat Lahir</label>
+                            <label for="pegawai-fp-tmp">Tempat Lahir <span class="text-danger" aria-hidden="true">*</span></label>
                           </div>
                         </div>
                         <div class="col-md-3">
                           <div class="form-floating form-floating-outline">
                             <input id="pegawai-fp-tgl-lahir" v-model="form.tgl_lahir_pegawai" type="date" class="form-control" name="tgl_lahir_pegawai" />
-                            <label for="pegawai-fp-tgl-lahir">Tanggal Lahir</label>
+                            <label for="pegawai-fp-tgl-lahir">Tanggal Lahir <span class="text-danger" aria-hidden="true">*</span></label>
                           </div>
                         </div>
                         <div class="col-md-3">
-                          <div class="form-floating form-floating-outline">
-                            <CustomSelect2
-                              id="pegawai-fp-pendidikan"
-                              v-model="form.pendidikan_pegawai"
-                              :options="pendidikanOptions"
-                              :get-option-label="(o) => o.label"
-                              :reduce="(o) => Number(o.value)"
-                              searchable
-                              clearable
-                              placeholder="-- Pilih Pendidikan --"
-                              class="select-pendidikan"
-                            />
-                          </div>
+                          <FormLabel required html-for="pegawai-fp-pendidikan">Pendidikan</FormLabel>
+                          <CustomSelect2
+                            id="pegawai-fp-pendidikan"
+                            v-model="form.pendidikan_pegawai"
+                            :options="pendidikanOptions"
+                            :get-option-label="(o) => o.label"
+                            :reduce="(o) => Number(o.value)"
+                            searchable
+                            clearable
+                            placeholder="-- Pilih Pendidikan --"
+                            class="select-pendidikan"
+                          />
                         </div>
                         <div class="col-md-6">
                           <div class="form-floating form-floating-outline">
                             <input id="pegawai-fp-ktp" v-model="form.no_ktp_pegawai" type="text" class="form-control" name="no_ktp_pegawai" />
-                            <label for="pegawai-fp-ktp">No. KTP Pegawai</label>
+                            <label for="pegawai-fp-ktp">No. KTP Pegawai <span class="text-danger" aria-hidden="true">*</span></label>
                           </div>
                         </div>
                         <div class="col-md-6">
                           <div class="form-floating form-floating-outline">
                             <input id="pegawai-fp-npwp" v-model="form.npwp_pegawai" type="text" class="form-control" name="npwp_pegawai" />
-                            <label for="pegawai-fp-npwp">No. NPWP Pegawai</label>
+                            <label for="pegawai-fp-npwp">No. NPWP Pegawai <span class="text-danger" aria-hidden="true">*</span></label>
                           </div>
                         </div>
                         <div class="col-md-6">
-                          <div class="form-floating form-floating-outline">
-                            <CustomSelect2
-                              id="pegawai-fp-jk"
-                              v-model="form.jenis_kelamin_pegawai"
-                              :options="jenisKelaminOptions"
-                              :get-option-label="(o) => o.label"
-                              :reduce="(o) => o.value"
-                              :get-option-key="(o) => o.value"
-                              searchable
-                              clearable
-                              placeholder="-- Pilih Jenis Kelamin --"
-                              class="select-jenis-kelamin"
-                            />
-                          </div>
+                          <FormLabel required html-for="pegawai-fp-jk">Jenis Kelamin</FormLabel>
+                          <CustomSelect2
+                            id="pegawai-fp-jk"
+                            v-model="form.jenis_kelamin_pegawai"
+                            :options="jenisKelaminOptions"
+                            :get-option-label="(o) => o.label"
+                            :reduce="(o) => o.value"
+                            :get-option-key="(o) => o.value"
+                            searchable
+                            clearable
+                            placeholder="-- Pilih Jenis Kelamin --"
+                            class="select-jenis-kelamin"
+                          />
                         </div>
                         <div class="col-md-6">
                           <div class="form-floating form-floating-outline">
@@ -205,13 +144,13 @@
                         <div class="col-md-12">
                           <div class="form-floating form-floating-outline">
                             <textarea id="pegawai-fp-alamat" v-model="form.alamat_pegawai" class="form-control h-px-100" placeholder="Alamat"></textarea>
-                            <label for="pegawai-fp-alamat">Alamat</label>
+                            <label for="pegawai-fp-alamat">Alamat <span class="text-danger" aria-hidden="true">*</span></label>
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    <div id="pegawai-fp-tab-perusahaan" class="tab-pane fade" role="tabpanel">
+                    <div id="pegawai-fp-tab-perusahaan" data-step-id="pegawai-fp-tab-perusahaan" class="tab-pane fade" role="tabpanel" :class="paneClass('pegawai-fp-tab-perusahaan')">
                       <div class="row g-3">
                         <div class="col-12">
                           <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center gap-2">
@@ -296,6 +235,7 @@
                           </div>
                         </div>
                         <div class="col-md-6">
+                          <FormLabel required html-for="pegawai-fp-jabatan">Jabatan</FormLabel>
                           <CustomSelect2
                             id="pegawai-fp-jabatan"
                             v-model="form.jabatan_id"
@@ -310,6 +250,7 @@
                           />
                         </div>
                         <div class="col-md-6">
+                          <FormLabel required html-for="pegawai-fp-perusahaan">Perusahaan</FormLabel>
                           <CustomSelect2
                             id="pegawai-fp-perusahaan"
                             v-model="form.perusahaan_id"
@@ -325,6 +266,7 @@
                           />
                         </div>
                         <div class="col-md-6">
+                          <FormLabel required html-for="pegawai-fp-cabang">Cabang</FormLabel>
                           <CustomSelect2
                             id="pegawai-fp-cabang"
                             v-model="form.cabang_id"
@@ -339,6 +281,7 @@
                           />
                         </div>
                         <div class="col-md-6">
+                          <FormLabel required html-for="pegawai-fp-divisi">Divisi</FormLabel>
                           <CustomSelect2
                             id="pegawai-fp-divisi"
                             v-model="form.divisi_id"
@@ -354,6 +297,7 @@
                           />
                         </div>
                         <div class="col-md-6">
+                          <FormLabel required html-for="pegawai-fp-departemen">Departemen</FormLabel>
                           <CustomSelect2
                             id="pegawai-fp-departemen"
                             v-model="form.departemen_id"
@@ -370,7 +314,7 @@
                         <div class="col-md-6">
                           <div class="form-floating form-floating-outline">
                             <input id="pegawai-fp-tgl-masuk" v-model="form.tgl_masuk_pegawai" type="date" class="form-control" name="tgl_masuk_pegawai" />
-                            <label for="pegawai-fp-tgl-masuk">Tanggal Masuk Pegawai</label>
+                            <label for="pegawai-fp-tgl-masuk">Tanggal Masuk Pegawai <span class="text-danger" aria-hidden="true">*</span></label>
                           </div>
                         </div>
                         <div class="col-md-6">
@@ -390,7 +334,7 @@
                               :value="gajiPegawaiFormatted"
                               @input="handleGajiInput"
                             />
-                            <label for="pegawai-fp-gaji">Gaji Pegawai</label>
+                            <label for="pegawai-fp-gaji">Gaji Pegawai <span class="text-danger" aria-hidden="true">*</span></label>
                           </div>
                         </div>
                         <div class="col-md-6">
@@ -403,29 +347,28 @@
                               :value="tunjanganPegawaiFormatted"
                               @input="handleTunjanganInput"
                             />
-                            <label for="pegawai-fp-tunjangan">Tunjangan Pegawai</label>
+                            <label for="pegawai-fp-tunjangan">Tunjangan Pegawai <span class="text-danger" aria-hidden="true">*</span></label>
                           </div>
                         </div>
                         <div class="col-md-6">
-                          <div class="form-floating form-floating-outline">
-                            <CustomSelect2
-                              id="pegawai-fp-status"
-                              v-model="form.status_pegawai"
-                              :options="statusPegawaiOptions"
-                              :get-option-label="(o) => o.label"
-                              :reduce="(o) => o.value"
-                              :get-option-key="(o) => o.value"
-                              searchable
-                              clearable
-                              placeholder="-- Pilih Status Pegawai --"
-                              class="select-status-pegawai"
-                            />
-                          </div>
+                          <FormLabel required html-for="pegawai-fp-status">Status Pegawai</FormLabel>
+                          <CustomSelect2
+                            id="pegawai-fp-status"
+                            v-model="form.status_pegawai"
+                            :options="statusPegawaiOptions"
+                            :get-option-label="(o) => o.label"
+                            :reduce="(o) => o.value"
+                            :get-option-key="(o) => o.value"
+                            searchable
+                            clearable
+                            placeholder="-- Pilih Status Pegawai --"
+                            class="select-status-pegawai"
+                          />
                         </div>
                       </div>
                     </div>
 
-                    <div id="pegawai-fp-tab-social" class="tab-pane fade" role="tabpanel">
+                    <div id="pegawai-fp-tab-social" data-step-id="pegawai-fp-tab-social" class="tab-pane fade" role="tabpanel" :class="paneClass('pegawai-fp-tab-social')">
                       <div class="row g-3">
                         <div class="col-md-3">
                           <div class="form-floating form-floating-outline">
@@ -460,7 +403,7 @@
                       </div>
                     </div>
 
-                    <div id="pegawai-fp-tab-dokumen" class="tab-pane fade" role="tabpanel">
+                    <div id="pegawai-fp-tab-dokumen" data-step-id="pegawai-fp-tab-dokumen" class="tab-pane fade" role="tabpanel" :class="paneClass('pegawai-fp-tab-dokumen')">
                       <div class="row g-3">
                         <div class="col-md-6">
                           <label class="form-label" for="pegawai-fp-cv">CV (PDF / gambar / Word)</label>
@@ -501,8 +444,10 @@
                     <div
                       v-if="pegawaiIdParam"
                       id="pegawai-fp-tab-kontrak"
+                      data-step-id="pegawai-fp-tab-kontrak"
                       class="tab-pane fade"
                       role="tabpanel"
+                      :class="paneClass('pegawai-fp-tab-kontrak')"
                     >
                       <p class="text-muted small mb-3">
                         PKWT dapat diperpanjang berkali-kali (tiap periode = satu baris kontrak). PKWTT tanpa tanggal selesai.
@@ -616,7 +561,7 @@
                               placeholder="Jenis kontrak"
                               class="select-kontrak-jenis"
                             />
-                            <label for="pegawai-fp-kontrak-jenis">Jenis kontrak</label>
+                            <label for="pegawai-fp-kontrak-jenis">Jenis kontrak <span class="text-danger" aria-hidden="true">*</span></label>
                           </div>
                         </div>
                         <div class="col-md-6 mb-3">
@@ -639,7 +584,7 @@
                               type="date"
                               class="form-control"
                             />
-                            <label for="pegawai-fp-kontrak-mulai">Tanggal mulai</label>
+                            <label for="pegawai-fp-kontrak-mulai">Tanggal mulai <span class="text-danger" aria-hidden="true">*</span></label>
                           </div>
                         </div>
                         <div v-if="kontrakDraft.jenis_kontrak === 2" class="col-md-3">
@@ -650,7 +595,7 @@
                               type="date"
                               class="form-control"
                             />
-                            <label for="pegawai-fp-kontrak-selesai">Tanggal selesai (PKWT)</label>
+                            <label for="pegawai-fp-kontrak-selesai">Tanggal selesai (PKWT) <span class="text-danger" aria-hidden="true">*</span></label>
                           </div>
                         </div>
                         <div class="col-md-6">
@@ -699,13 +644,15 @@
                     </div>
                   </div>
 
-                  <div class="d-flex justify-content-end gap-2 pt-4 mt-2 border-top">
-                    <NuxtLink to="/hrd/pegawai" class="btn btn-outline-secondary">Batal</NuxtLink>
-                    <button type="submit" class="btn btn-primary" :disabled="loading">
-                      <span v-if="loading" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-                      Simpan
-                    </button>
-                  </div>
+                  <TabbedFormActions
+                    :is-first-step="isFirstStep"
+                    :is-last-step="isLastStep"
+                    :loading="navigating"
+                    :saving="loading"
+                    cancel-href="/hrd/pegawai"
+                    @next="next"
+                    @previous="previous"
+                  />
                 </form>
               </div>
             </div>
@@ -751,6 +698,11 @@ import { storeToRefs } from 'pinia'
 import { useRoute } from 'vue-router'
 import { useDebounceFn } from '@vueuse/core'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
+import FormLabel from '~/components/form/FormLabel.vue'
+import TabbedFormNav from '~/components/form/TabbedFormNav.vue'
+import TabbedFormActions from '~/components/form/TabbedFormActions.vue'
+import { useTabbedFormNavigation } from '~/composables/useTabbedFormNavigation'
+import { formatValidationErrorItem, routeSaveFailure } from '~/utils/apiError'
 import { useImageUrl } from '~/composables/useImageUrl'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import {
@@ -835,6 +787,102 @@ const pageTitle = computed(() => (pegawaiIdParam.value ? 'Edit Pegawai' : 'Tamba
 const pageSubtitle = computed(() =>
   pegawaiIdParam.value ? 'Perbarui data pegawai dan lampiran.' : 'Lengkapi data pegawai baru.',
 )
+
+const formRoot = ref<HTMLFormElement | null>(null)
+const formSteps = computed(() => [
+  { id: 'pegawai-fp-tab-personal', label: 'Informasi Pribadi', icon: 'ri-user-line' },
+  { id: 'pegawai-fp-tab-perusahaan', label: 'Informasi Perusahaan', icon: 'ri-folder-user-line' },
+  { id: 'pegawai-fp-tab-social', label: 'Detail Keluarga', icon: 'ri-facebook-fill' },
+  { id: 'pegawai-fp-tab-dokumen', label: 'Dokumen & BPJS', icon: 'ri-file-upload-line' },
+  { id: 'pegawai-fp-tab-kontrak', label: 'Kontrak', icon: 'ri-draft-line', visible: !!pegawaiIdParam.value },
+])
+
+function isEmptyPegawaiField(value: unknown) {
+  return value === null || value === undefined || String(value).trim() === ''
+}
+
+function validatePegawaiStep(step: { id: string }): boolean {
+  const f = form.value
+  const toast = useToast()
+  const fail = (message: string) => {
+    toast.error({ title: 'Validasi', message, color: 'red' })
+    return false
+  }
+
+  if (step.id === 'pegawai-fp-tab-personal') {
+    const checks: [unknown, string][] = [
+      [f.nm_pegawai, 'Nama Lengkap wajib diisi.'],
+      [f.no_tlp_pegawai, 'No. Tlp/HP Pegawai wajib diisi.'],
+      [f.tmp_lahir_pegawai, 'Tempat Lahir wajib diisi.'],
+      [f.tgl_lahir_pegawai, 'Tanggal Lahir wajib diisi.'],
+      [f.pendidikan_pegawai, 'Pendidikan wajib dipilih.'],
+      [f.no_ktp_pegawai, 'No. KTP Pegawai wajib diisi.'],
+      [f.npwp_pegawai, 'No. NPWP Pegawai wajib diisi.'],
+      [f.jenis_kelamin_pegawai, 'Jenis Kelamin wajib dipilih.'],
+      [f.alamat_pegawai, 'Alamat wajib diisi.'],
+    ]
+    for (const [value, message] of checks) {
+      if (isEmptyPegawaiField(value)) return fail(message)
+    }
+    return true
+  }
+
+  if (step.id === 'pegawai-fp-tab-perusahaan') {
+    const checks: [unknown, string][] = []
+    checks.push(
+      [f.jabatan_id, 'Jabatan wajib dipilih.'],
+      [f.perusahaan_id, 'Perusahaan wajib dipilih.'],
+      [f.cabang_id, 'Cabang wajib dipilih.'],
+      [f.divisi_id, 'Divisi wajib dipilih.'],
+      [f.departemen_id, 'Departemen wajib dipilih.'],
+      [f.tgl_masuk_pegawai, 'Tanggal Masuk Pegawai wajib diisi.'],
+      [f.gaji_pegawai, 'Gaji Pegawai wajib diisi.'],
+      [f.tunjangan_pegawai, 'Tunjangan Pegawai wajib diisi.'],
+      [f.status_pegawai, 'Status Pegawai wajib dipilih.'],
+    )
+    for (const [value, message] of checks) {
+      if (isEmptyPegawaiField(value)) return fail(message)
+    }
+    return true
+  }
+
+  return true
+}
+
+const {
+  currentIndex,
+  visibleSteps,
+  isFirstStep,
+  isLastStep,
+  navigating,
+  next,
+  previous,
+  goTo,
+  goToId,
+  paneClass,
+  validateAll,
+} = useTabbedFormNavigation({ steps: formSteps, formRoot, validateStep: validatePegawaiStep })
+const PEGAWAI_FIELD_TABS: Record<string, string> = {
+  nama_pegawai: 'pegawai-fp-tab-personal',
+  namaPegawai: 'pegawai-fp-tab-personal',
+  email_pegawai: 'pegawai-fp-tab-personal',
+  emailPegawai: 'pegawai-fp-tab-personal',
+  no_hp_pegawai: 'pegawai-fp-tab-personal',
+  jenis_kelamin_pegawai: 'pegawai-fp-tab-personal',
+  alamat_pegawai: 'pegawai-fp-tab-personal',
+  jabatan_id: 'pegawai-fp-tab-perusahaan',
+  jabatanId: 'pegawai-fp-tab-perusahaan',
+  perusahaan_id: 'pegawai-fp-tab-perusahaan',
+  perusahaanId: 'pegawai-fp-tab-perusahaan',
+  cabang_id: 'pegawai-fp-tab-perusahaan',
+  cabangId: 'pegawai-fp-tab-perusahaan',
+  divisi_id: 'pegawai-fp-tab-perusahaan',
+  departemen_id: 'pegawai-fp-tab-perusahaan',
+  tgl_masuk_pegawai: 'pegawai-fp-tab-perusahaan',
+  gaji_pegawai: 'pegawai-fp-tab-perusahaan',
+  tunjangan_pegawai: 'pegawai-fp-tab-perusahaan',
+  status_pegawai: 'pegawai-fp-tab-perusahaan',
+}
 
 const moduleNavItems = [...HRD_MODULE_NAV]
 
@@ -1316,8 +1364,20 @@ function handleTunjanganInput(e: Event) {
   form.value.tunjangan_pegawai = t.value.replace(/[^0-9]/g, '')
 }
 
+async function onFormSubmit() {
+  if (!isLastStep.value) {
+    await next()
+    return
+  }
+  if (!(await validateAll())) return
+  await handleSubmit()
+}
+
 async function handleSubmit() {
-  await pegawaiStore.savePegawai({ navigateTo: '/hrd/pegawai' })
+  const saved = await pegawaiStore.savePegawai({ navigateTo: '/hrd/pegawai' })
+  if (saved === false) {
+    routeSaveFailure(pegawaiStore.validationErrors, {}, PEGAWAI_FIELD_TABS, goToId)
+  }
 }
 
 watch(

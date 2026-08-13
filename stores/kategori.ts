@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { useNuxtApp } from '#app'
 import Swal from 'sweetalert2'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 import { apiFetch } from '~/utils/apiFetch'
 
 export interface Category {
@@ -157,10 +158,13 @@ export const useKategoriStore = defineStore('kategori', {
             });
 
             if (!response.ok) {
-                if (response.status === 404) {
-                    throw new Error('Endpoint tidak ditemukan. Pastikan endpoint dan method sudah benar.');
-                }
-                throw new Error('Gagal menyimpan data kategori');
+                const err = await normalizeFailedResponse(
+                    response,
+                    this.isEditMode ? 'Kategori gagal diperbarui.' : 'Kategori gagal dibuat.'
+                )
+                this.validationErrors = err.fieldErrorList
+                toastNormalizedError(err)
+                return false
             }
 
             const result = await response.json();
@@ -177,13 +181,9 @@ export const useKategoriStore = defineStore('kategori', {
             });
 
         } catch (error: any) {
-            const toast = useToast()
-            toast.error({
-              title: 'Error',
-              message: error.message || 'Operasi gagal',
-              color: 'red',
-              position: 'bottomRight',
-            });
+            const err = normalizeApiError(error, 'Kategori gagal disimpan.')
+            toastNormalizedError(err)
+            return false
         } finally {
             this.loading = false;
         }
@@ -218,8 +218,9 @@ export const useKategoriStore = defineStore('kategori', {
           });
 
           if (!response.ok) {
-              const errorData = await response.json();
-              throw new Error(errorData.message || 'Gagal menghapus kategori');
+              const err = await normalizeFailedResponse(response, 'Kategori gagal dihapus.')
+              toastNormalizedError(err)
+              return false
           }
 
           await this.fetchKategori();
@@ -231,14 +232,8 @@ export const useKategoriStore = defineStore('kategori', {
             position: 'bottomRight',
           });
       } catch (error: any) {
-          console.error('Gagal menghapus kategori:', error);
-          const toast = useToast()
-          toast.error({
-            title: 'Error',
-            message: error.message || 'Gagal menghapus kategori',
-            color: 'red',
-            position: 'bottomRight',
-          });
+          const err = normalizeApiError(error, 'Kategori gagal dihapus.')
+          toastNormalizedError(err)
       } finally {
           this.loading = false;
       }

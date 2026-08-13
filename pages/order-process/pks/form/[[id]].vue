@@ -32,7 +32,7 @@
           <div class="col-xl-8 col-12">
             <div class="card">
               <div class="card-body">
-                <form @submit.prevent="handleSubmit" novalidate>
+                <form ref="formRoot" @submit.prevent="onFormSubmit" novalidate>
                   <div v-if="validationErrors?.length" class="alert alert-warning mb-4">
                     <ul class="mb-0 ps-3">
                       <li v-for="(err, i) in validationErrors" :key="i">{{ err }}</li>
@@ -77,31 +77,17 @@
                   <div v-if="form.isInternal">
                     <div class="row">
                     <div class="col">
-                      <ul class="nav nav-tabs" role="tablist">
-                        <li class="nav-item">
-                          <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#pks-form-tabs-info" role="tab" type="button">
-                            <span class="ri-information-line ri-20px d-sm-none"></span>
-                            <span class="d-none d-sm-block">Informasi</span>
-                          </button>
-                        </li>
-                        <li class="nav-item">
-                          <button class="nav-link" data-bs-toggle="tab" data-bs-target="#pks-form-tabs-subscriptions" role="tab" type="button">
-                            <span class="ri-file-list-3-line ri-20px d-sm-none"></span>
-                            <span class="d-none d-sm-block">Subscriptions</span>
-                          </button>
-                        </li>
-                        <li class="nav-item">
-                          <button class="nav-link" data-bs-toggle="tab" data-bs-target="#pks-form-tabs-documents" role="tab" type="button">
-                            <span class="ri-file-paper-line ri-20px d-sm-none"></span>
-                            <span class="d-none d-sm-block">Documents</span>
-                          </button>
-                        </li>
-                      </ul>
+                      <TabbedFormNav
+                        :steps="visibleSteps"
+                        :current-index="currentIndex"
+                        :disabled="navigating || saving"
+                        @select="goTo"
+                      />
                     </div>
                   </div>
 
                   <div class="tab-content pt-4">
-                    <div class="tab-pane fade active show" id="pks-form-tabs-info" role="tabpanel">
+                    <div class="tab-pane fade" id="pks-form-tabs-info" data-step-id="pks-form-tabs-info" role="tabpanel" :class="paneClass('pks-form-tabs-info')">
                       <div class="row g-4">
                         <div class="col-md-12">
                           <label class="form-label text-muted">Customer</label>
@@ -155,15 +141,15 @@
                       </div>
                     </div>
 
-                    <div class="tab-pane fade" id="pks-form-tabs-subscriptions" role="tabpanel">
+                    <div class="tab-pane fade" id="pks-form-tabs-subscriptions" data-step-id="pks-form-tabs-subscriptions" role="tabpanel" :class="paneClass('pks-form-tabs-subscriptions')">
                       <div class="alert alert-info mb-4">
                         <i class="ri-information-line me-2"></i>
-                        <strong>Info:</strong> Subscription bersifat <strong>opsional</strong>. Jika diisi, subscription harus memiliki status <strong>signed</strong>.
+                        <strong>Info:</strong> Jika baris subscription ditambahkan, pilih subscription dengan status <strong>signed</strong>.
                       </div>
                       <div v-for="(pksSub, index) in form.pksSubscriptions" :key="index" class="repeater-item mb-4">
                         <div class="row g-3">
                           <div class="col-md-10">
-                            <label class="form-label text-muted">Subscription {{ form.pksSubscriptions.length > 1 ? `#${index + 1}` : '' }}</label>
+                            <label class="form-label text-muted">Subscription {{ form.pksSubscriptions.length > 1 ? `#${index + 1}` : '' }} <span class="text-danger" aria-hidden="true">*</span></label>
                             <CustomSelect2
                               v-model="pksSub.subscriptionId"
                               :options="subscriptionsSigned"
@@ -198,7 +184,7 @@
                       </div>
                     </div>
 
-                    <div class="tab-pane fade" id="pks-form-tabs-documents" role="tabpanel">
+                    <div class="tab-pane fade" id="pks-form-tabs-documents" data-step-id="pks-form-tabs-documents" role="tabpanel" :class="paneClass('pks-form-tabs-documents')">
                       <div class="alert alert-info mb-4">
                         <i class="ri-information-line me-2"></i>
                         <strong>Info:</strong> Documents bersifat <strong>opsional</strong>. Anda bisa simpan PKS tanpa upload dokumen.
@@ -299,15 +285,16 @@
                     </div>
                   </div>
 
-                  <div class="d-flex justify-content-end gap-2 mt-6 pt-2 border-top">
-                    <button type="button" class="btn btn-outline-secondary" @click="handleCancel">
-                      Batal
-                    </button>
-                    <button type="submit" class="btn btn-primary" :disabled="saving">
-                      <span v-if="saving" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                      Simpan
-                    </button>
-                  </div>
+                  <TabbedFormActions
+                    :is-first-step="isFirstStep"
+                    :is-last-step="isLastStep"
+                    :loading="navigating"
+                    :saving="saving"
+                    cancel-label="Batal"
+                    @next="next"
+                    @previous="previous"
+                    @cancel="handleCancel"
+                  />
                 </form>
               </div>
             </div>
@@ -356,6 +343,9 @@ import { useCustomerStore } from '~/stores/customer'
 import { useVendorStore } from '~/stores/vendor'
 import { usePurchaseOrderStore } from '~/stores/purchaseOrder'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
+import TabbedFormNav from '~/components/form/TabbedFormNav.vue'
+import TabbedFormActions from '~/components/form/TabbedFormActions.vue'
+import { useTabbedFormNavigation } from '~/composables/useTabbedFormNavigation'
 import { useImageUrl } from '~/composables/useImageUrl'
 
 const route = useRoute()
@@ -371,6 +361,27 @@ const { isImageFile } = useImageUrl()
 
 const subscriptionsSigned = ref<any[]>([])
 const loadError = ref<string | null>(null)
+const formRoot = ref<HTMLFormElement | null>(null)
+const formSteps = computed(() => {
+  if (!form.value?.isInternal) return []
+  return [
+    { id: 'pks-form-tabs-info', label: 'Informasi', icon: 'ri-information-line' },
+    { id: 'pks-form-tabs-subscriptions', label: 'Subscriptions', icon: 'ri-file-list-3-line' },
+    { id: 'pks-form-tabs-documents', label: 'Documents', icon: 'ri-file-paper-line' },
+  ]
+})
+const {
+  currentIndex,
+  visibleSteps,
+  isFirstStep,
+  isLastStep,
+  navigating,
+  next,
+  previous,
+  goTo,
+  paneClass,
+  validateAll,
+} = useTabbedFormNavigation({ steps: formSteps, formRoot })
 
 const pksIdParam = computed(() => {
   const raw = route.params.id
@@ -622,6 +633,15 @@ async function loadForm() {
       await fetchExternalOptions()
     }
   }
+}
+
+async function onFormSubmit() {
+  if (!isLastStep.value) {
+    await next()
+    return
+  }
+  if (!(await validateAll())) return
+  await handleSubmit()
 }
 
 async function handleSubmit() {

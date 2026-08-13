@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { useNuxtApp } from '#app'
 import Swal from 'sweetalert2'
+import { normalizeFailedResponse } from '~/utils/apiError'
 
 /** Price type for price_list_lines: default = sell price; starlink/skylink = context; terminal_access_charge, open_service_line, additional_data */
 export type PriceType =
@@ -216,16 +217,20 @@ export const usePriceListStore = defineStore('priceList', {
           body: JSON.stringify(payload),
         })
 
-        const result = await response.json()
-
         if (!response.ok) {
-          if (result.errors) {
-            this.validationErrors = Object.entries(result.errors).map(([field, messages]) => ({
-              field,
-              message: Array.isArray(messages) ? messages[0] : messages,
-            }))
-          }
-          throw new Error(result.message || 'Gagal menyimpan price list')
+          const err = await normalizeFailedResponse(
+            response,
+            this.isEditMode ? 'Price list gagal diperbarui.' : 'Price list gagal dibuat.'
+          )
+          this.validationErrors = err.fieldErrorList
+          toast.error({
+            title: err.type === 'validation' ? 'Validasi' : 'Error',
+            message: err.message,
+            color: 'red',
+            position: 'bottomRight',
+            layout: 2,
+          })
+          return false
         }
 
         toast.success({
@@ -277,8 +282,8 @@ export const usePriceListStore = defineStore('priceList', {
           })
 
           if (!response.ok) {
-            const errorData = await response.json()
-            throw new Error(errorData.message || 'Gagal menghapus price list')
+            const err = await normalizeFailedResponse(response, 'Price list gagal dihapus.')
+            throw new Error(err.message)
           }
 
           toast.success({

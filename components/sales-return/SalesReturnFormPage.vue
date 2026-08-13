@@ -11,32 +11,26 @@
 
       <div class="card">
         <div class="card-body">
-          <form @submit.prevent="handleSubmit">
-            <div class="row">
-              <div class="col">
-                <ul class="nav nav-tabs" role="tablist">
-                  <li class="nav-item">
-                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#form-tabs-info-page" role="tab" type="button">
-                      <span class="d-none d-sm-block">Informasi Sales Return</span>
-                    </button>
-                  </li>
-                  <li class="nav-item">
-                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#form-tabs-items-page" role="tab" type="button">
-                      <span class="d-none d-sm-block">List Product</span>
-                    </button>
-                  </li>
-                </ul>
-              </div>
-            </div>
+          <form ref="formRoot" @submit.prevent="onFormSubmit" novalidate>
+            <TabbedFormNav
+              :steps="visibleSteps"
+              :current-index="currentIndex"
+              :disabled="navigating || saving"
+              @select="goTo"
+            />
 
             <div class="tab-content pt-4">
-              <div class="tab-pane fade active show" id="form-tabs-info-page" role="tabpanel">
+              <div id="form-tabs-info-page" data-step-id="form-tabs-info-page" role="tabpanel" :class="paneClass('form-tabs-info-page')">
                 <div class="row g-4">
                   <div class="col-md-6">
+                    <FormLabel required>Customer</FormLabel>
                     <CustomSelect2 v-model="form.customerId" :options="customers || []" :get-option-label="option => option.name" :reduce="option => option.id" searchable clearable placeholder="Pilih Customer" />
+                    <div v-if="uiErrors.customerId" class="invalid-feedback d-block">{{ uiErrors.customerId }}</div>
                   </div>
                   <div class="col-md-6">
+                    <FormLabel required>Sales Order</FormLabel>
                     <CustomSelect2 v-model="form.salesOrderId" :options="salesOrders || []" :get-option-label="option => option.noSo" :reduce="option => option.id" searchable clearable placeholder="Pilih Sales Order" :disabled="!form.customerId" />
+                    <div v-if="uiErrors.salesOrderId" class="invalid-feedback d-block">{{ uiErrors.salesOrderId }}</div>
                   </div>
                   <div class="col-md-6">
                     <div class="form-floating form-floating-outline">
@@ -46,9 +40,10 @@
                   </div>
                   <div class="col-md-6">
                     <div class="form-floating form-floating-outline">
-                      <input type="date" v-model="form.returnDate" class="form-control">
-                      <label>Tanggal Pengembalian</label>
+                      <input id="sr-return-date" type="date" v-model="form.returnDate" class="form-control" :class="{ 'is-invalid': uiErrors.returnDate }" aria-required="true">
+                      <label for="sr-return-date">Tanggal Pengembalian <span class="text-danger" aria-hidden="true">*</span></label>
                     </div>
+                    <div v-if="uiErrors.returnDate" class="invalid-feedback d-block">{{ uiErrors.returnDate }}</div>
                   </div>
                   <div class="col-md-6">
                     <CustomSelect2 v-model="form.perusahaanId" :options="perusahaans || []" :get-option-label="option => option.nmPerusahaan" :reduce="option => option.id" searchable clearable placeholder="Pilih Perusahaan" readonly />
@@ -78,7 +73,8 @@
                 </div>
               </div>
 
-              <div class="tab-pane fade" id="form-tabs-items-page" role="tabpanel">
+              <div id="form-tabs-items-page" data-step-id="form-tabs-items-page" role="tabpanel" :class="paneClass('form-tabs-items-page')">
+                <div v-if="uiErrors.salesReturnItems" class="alert alert-danger py-2 mb-3"><i class="ri-error-warning-line me-1"></i>{{ uiErrors.salesReturnItems }}</div>
                 <div v-for="(item, index) in form.salesReturnItems" :key="index" class="repeater-item mb-4">
                   <div class="row g-3">
                     <div class="col-6">
@@ -120,13 +116,16 @@
               </div>
             </div>
 
-            <div class="d-flex justify-content-end gap-2 mt-4">
-              <button type="button" class="btn btn-outline-secondary" @click="navigateTo('/sales/sales-return')">Tutup</button>
-              <button type="submit" class="btn btn-primary" :disabled="saving">
-                <span v-if="saving" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                Simpan
-              </button>
-            </div>
+            <TabbedFormActions
+              :is-first-step="isFirstStep"
+              :is-last-step="isLastStep"
+              :loading="navigating"
+              :saving="saving"
+              cancel-label="Tutup"
+              @cancel="navigateTo('/sales/sales-return')"
+              @next="next"
+              @previous="previous"
+            />
           </form>
         </div>
       </div>
@@ -138,6 +137,11 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
+import TabbedFormNav from '~/components/form/TabbedFormNav.vue'
+import TabbedFormActions from '~/components/form/TabbedFormActions.vue'
+import FormLabel from '~/components/form/FormLabel.vue'
+import { useTabbedFormNavigation } from '~/composables/useTabbedFormNavigation'
+import { routeSaveFailure } from '~/utils/apiError'
 import { useSalesReturnStore } from '~/stores/sales-return'
 import { useCustomerStore } from '~/stores/customer'
 import { usePerusahaanStore } from '~/stores/perusahaan'
@@ -157,6 +161,51 @@ const formatRupiah = useFormatRupiah()
 const attachmentPreview = ref(null)
 
 const { form, isEditMode, salesOrders, allAvailableProducts, saving } = storeToRefs(salesReturnStore)
+const formRoot = ref(null)
+const uiErrors = ref({})
+const formSteps = [
+  { id: 'form-tabs-info-page', label: 'Informasi Sales Return', icon: 'ri-information-line' },
+  { id: 'form-tabs-items-page', label: 'List Product', icon: 'ri-box-3-line' },
+]
+function validateSalesReturnStep(step) {
+  uiErrors.value = {}
+  if (step.id === 'form-tabs-info-page') {
+    if (!form.value?.customerId) uiErrors.value.customerId = 'Customer wajib dipilih.'
+    if (!form.value?.salesOrderId) uiErrors.value.salesOrderId = 'Sales Order wajib dipilih.'
+    if (!form.value?.returnDate) uiErrors.value.returnDate = 'Tanggal Pengembalian wajib diisi.'
+    return Object.keys(uiErrors.value).length === 0
+  }
+  if (step.id === 'form-tabs-items-page') {
+    const items = form.value?.salesReturnItems || []
+    const validItems = items.filter((i) => i.productId)
+    if (validItems.length < 1) {
+      uiErrors.value.salesReturnItems = 'Minimal satu item harus ditambahkan.'
+    }
+    return Object.keys(uiErrors.value).length === 0
+  }
+  return true
+}
+const {
+  currentIndex,
+  visibleSteps,
+  isFirstStep,
+  isLastStep,
+  navigating,
+  next,
+  previous,
+  goTo,
+  goToId,
+  paneClass,
+  validateAll,
+} = useTabbedFormNavigation({ steps: formSteps, formRoot, validateStep: validateSalesReturnStep })
+const SR_FIELD_TABS = {
+  customerId: 'form-tabs-info-page',
+  salesOrderId: 'form-tabs-info-page',
+  returnDate: 'form-tabs-info-page',
+  salesReturnItems: 'form-tabs-items-page',
+  productId: 'form-tabs-items-page',
+  quantity: 'form-tabs-items-page',
+}
 const { customers } = storeToRefs(customerStore)
 const { perusahaans } = storeToRefs(perusahaanStore)
 const { cabangs } = storeToRefs(cabangStore)
@@ -194,9 +243,22 @@ const onProductChange = (index) => {
   }
 }
 
+async function onFormSubmit() {
+  if (!isLastStep.value) {
+    await next()
+    return
+  }
+  if (!(await validateAll())) return
+  await handleSubmit()
+}
+
 async function handleSubmit() {
   const ok = await salesReturnStore.saveSalesReturn()
-  if (ok) navigateTo('/sales/sales-return')
+  if (ok) {
+    navigateTo('/sales/sales-return')
+    return
+  }
+  routeSaveFailure(salesReturnStore.validationErrors, uiErrors.value, SR_FIELD_TABS, goToId)
 }
 
 watch(() => form.value.customerId, (newCustomerId, oldCustomerId) => {

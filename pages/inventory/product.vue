@@ -315,46 +315,31 @@
                 :validationErrorsFromParent="validationErrors"
             >
                 <template #default>
-                    <form @submit.prevent="productStore.saveProduct()">
-                        <ul class="nav nav-tabs mb-4" role="tablist">
-                            <li class="nav-item" role="presentation">
-                                <button
-                                    class="nav-link"
-                                    :class="{ active: activeProductModalTab === 'product-info' }"
-                                    type="button"
-                                    @click="activeProductModalTab = 'product-info'"
-                                >
-                                    Informasi Produk
-                                </button>
-                            </li>
-                            <li v-if="form.isKit" class="nav-item" role="presentation">
-                                <button
-                                    class="nav-link"
-                                    :class="{ active: activeProductModalTab === 'product-kit' }"
-                                    type="button"
-                                    @click="activeProductModalTab = 'product-kit'"
-                                >
-                                    Product Kit
-                                </button>
-                            </li>
-                        </ul>
-                        <div v-show="activeProductModalTab === 'product-info'" class="row g-4">
+                    <form ref="formRoot" @submit.prevent="onFormSubmit" novalidate>
+                        <TabbedFormNav
+                            :steps="visibleSteps"
+                            :current-index="currentIndex"
+                            :disabled="navigating || loading"
+                            nav-class="mb-4"
+                            @select="goTo"
+                        />
+                        <div v-show="isCurrent('product-info')" class="row g-4" data-step-id="product-info">
                             <div class="col-md-6">
-                                <label class="form-label">Part Number</label>
+                                <label class="form-label">Part Number <span class="text-danger" aria-hidden="true">*</span></label>
                                 <input type="text" class="form-control" v-model="form.sku" placeholder="Masukkan part number" id="sku">
                                 <div v-if="hasFieldError('sku')" class="invalid-feedback">
                                     {{ getFieldError('sku') }}
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Nama Barang</label>
+                                <label class="form-label">Nama Barang <span class="text-danger" aria-hidden="true">*</span></label>
                                 <input type="text" class="form-control" v-model="form.name" placeholder="Masukkan nama barang" id="name" @input="form.name = $event.target.value.toUpperCase()">
                                 <div v-if="hasFieldError('name')" class="invalid-feedback">
                                     {{ getFieldError('name') }}
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Satuan</label>
+                                <label class="form-label">Satuan <span class="text-danger" aria-hidden="true">*</span></label>
                                 <CustomSelect2
                                     v-model="form.unitId"
                                     :options="units"
@@ -368,7 +353,7 @@
                                 />
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Kategori</label>
+                                <label class="form-label">Kategori <span class="text-danger" aria-hidden="true">*</span></label>
                                 <CustomSelect2
                                     v-model="form.categoryId"
                                     :options="kategori"
@@ -430,7 +415,7 @@
                             </div>
                         </div>
 
-                        <div v-if="form.isKit && activeProductModalTab === 'product-kit'" class="mt-2">
+                        <div v-if="form.isKit" v-show="isCurrent('product-kit')" class="mt-2" data-step-id="product-kit">
                             <div class="alert alert-secondary mb-4">
                                 Tambahkan komponen kit di bawah ini.
                             </div>
@@ -443,7 +428,7 @@
                                 </div>
                                 <div class="row g-3">
                                     <div class="col-md-4">
-                                        <label class="form-label">Name</label>
+                                        <label class="form-label">Name <span v-if="form.isKit" class="text-danger" aria-hidden="true">*</span></label>
                                         <input type="text" class="form-control" v-model="item.name" placeholder="Nama komponen kit">
                                     </div>
                                     <div class="col-md-4">
@@ -469,13 +454,16 @@
                                 Tambah Item Kit
                             </button>
                         </div>
-                        <div class="modal-footer mt-6">
-                            <button type="button" class="btn btn-outline-secondary" @click="productStore.closeModal()">Tutup</button>
-                            <button type="submit" class="btn btn-primary" :disabled="loading">
-                                <span v-if="loading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                Simpan
-                            </button>
-                        </div>
+                        <TabbedFormActions
+                            :is-first-step="isFirstStep"
+                            :is-last-step="isLastStep"
+                            :loading="navigating"
+                            :saving="loading"
+                            cancel-label="Tutup"
+                            @next="next"
+                            @previous="previous"
+                            @cancel="productStore.closeModal()"
+                        />
                     </form>
                 </template>
             </Modal>
@@ -498,6 +486,9 @@ import CollapsibleFilterCard from '~/components/list/CollapsibleFilterCard.vue'
 import FilterFieldsRow from '~/components/list/FilterFieldsRow.vue'
 import FilterField from '~/components/list/FilterField.vue'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
+import TabbedFormNav from '~/components/form/TabbedFormNav.vue'
+import TabbedFormActions from '~/components/form/TabbedFormActions.vue'
+import { useTabbedFormNavigation } from '~/composables/useTabbedFormNavigation'
 import Column from 'primevue/column'
 import { useDebounceFn } from '@vueuse/core'
 import { usePermissions } from '~/composables/usePermissions'
@@ -522,7 +513,54 @@ const { units } = storeToRefs(unitStore)
 
 const globalFilterValue = ref('')
 const rowsPerPageOptionsArray = [10, 25, 50, 100]
-const activeProductModalTab = ref('product-info')
+const formRoot = ref(null)
+const formSteps = computed(() => [
+  { id: 'product-info', label: 'Informasi Produk' },
+  { id: 'product-kit', label: 'Product Kit', visible: !!form.value.isKit },
+])
+function isEmptyProductField(value) {
+  return value === null || value === undefined || String(value).trim() === ''
+}
+
+function validateProductStep(step) {
+  const toast = useToast()
+  const fail = (message) => {
+    toast.error({ title: 'Validasi', message, color: 'red' })
+    return false
+  }
+
+  if (step.id === 'product-info') {
+    if (isEmptyProductField(form.value.sku)) return fail('Part Number wajib diisi.')
+    if (isEmptyProductField(form.value.name)) return fail('Nama Barang wajib diisi.')
+    if (isEmptyProductField(form.value.unitId)) return fail('Satuan wajib dipilih.')
+    if (isEmptyProductField(form.value.categoryId)) return fail('Kategori wajib dipilih.')
+    return true
+  }
+
+  if (step.id === 'product-kit' && form.value.isKit) {
+    const kits = form.value.productKits || []
+    if (kits.some((item) => isEmptyProductField(item?.name))) {
+      return fail('Nama komponen kit wajib diisi.')
+    }
+  }
+
+  return true
+}
+
+const {
+  currentIndex,
+  visibleSteps,
+  isFirstStep,
+  isLastStep,
+  navigating,
+  next,
+  previous,
+  goTo,
+  goToId,
+  isCurrent,
+  reset,
+  validateAll,
+} = useTabbedFormNavigation({ steps: formSteps, formRoot, validateStep: validateProductStep })
 const expandedRows = ref({})
 const tableControls = ref({ rows: 10, search: '' })
 
@@ -684,9 +722,18 @@ onMounted(async () => {
     setListTitle('Product', statistics.value.total)
 })
 
+async function onFormSubmit() {
+    if (!isLastStep.value) {
+        await next()
+        return
+    }
+    if (!(await validateAll())) return
+    await productStore.saveProduct()
+}
+
 watch(showModal, (newValue) => {
     if (newValue) {
-        activeProductModalTab.value = 'product-info'
+        reset()
         modalInstance?.show()
     } else {
         modalInstance?.hide()
@@ -712,10 +759,10 @@ const onKitToggle = () => {
         if (!Array.isArray(form.value.productKits) || form.value.productKits.length === 0) {
             productStore.addProductKit()
         }
-        activeProductModalTab.value = 'product-kit'
+        goToId('product-kit', { skipValidation: true })
     } else {
         form.value.productKits = []
-        activeProductModalTab.value = 'product-info'
+        goToId('product-info', { skipValidation: true })
     }
 }
 

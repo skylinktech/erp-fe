@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { useNuxtApp } from '#app'
 import Swal from 'sweetalert2'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 import type { Permission } from './permissions'
 
 export interface Role {
@@ -162,14 +163,13 @@ export const useRolesStore = defineStore('roles', {
                 });
 
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    if (response.status === 422 || errorData.errors) {
-                        this.validationErrors = Array.isArray(errorData.errors)
-                            ? errorData.errors
-                            : Object.values(errorData.errors).flat();
-                        throw new Error('Data validasi tidak valid');
-                    }
-                    throw new Error(errorData.message || 'Gagal menyimpan data role');
+                    const err = await normalizeFailedResponse(
+                        response,
+                        this.isEditMode ? 'Role gagal diperbarui.' : 'Role gagal dibuat.'
+                    )
+                    this.validationErrors = err.fieldErrorList
+                    toastNormalizedError(err)
+                    return false
                 }
                 
                 this.closeModal();
@@ -185,16 +185,9 @@ export const useRolesStore = defineStore('roles', {
                 });
 
             } catch (error: any) {
-                if (error.message !== 'Data validasi tidak valid') {
-                    toast.error({
-                        title: 'Error',
-                        message: error.message || 'Operasi gagal',
-                        color: 'red',
-                        position: 'bottomRight',
-                        layout: 2,
-                        icon: 'error',
-                    });
-                }
+                const err = normalizeApiError(error, 'Role gagal disimpan.')
+                toastNormalizedError(err)
+                return false
             } finally {
                 this.loading = false;
             }
@@ -229,8 +222,9 @@ export const useRolesStore = defineStore('roles', {
                 });
 
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || 'Gagal menghapus role');
+                    const err = await normalizeFailedResponse(response, 'Role gagal dihapus.')
+                    toastNormalizedError(err)
+                    return false
                 }
 
                 await this.fetchRoles();
@@ -243,14 +237,8 @@ export const useRolesStore = defineStore('roles', {
                     icon: 'success',
                 });
             } catch (error: any) {
-                toast.error({
-                    title: 'Error',
-                    message: error.message || 'Gagal menghapus role',
-                    color: 'red',
-                    position: 'bottomRight',
-                    layout: 2,
-                    icon: 'error',
-                });
+                const err = normalizeApiError(error, 'Role gagal dihapus.')
+                toastNormalizedError(err)
             } finally {
                 this.loading = false;
             }

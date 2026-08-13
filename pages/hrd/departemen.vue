@@ -113,18 +113,17 @@
                                         placeholder="Masukkan nama departemen"
                                         
                                     >
-                                    <label>Nama Departemen</label>
+                                    <label>Nama Departemen <span class="text-danger" aria-hidden="true">*</span></label>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="form-floating form-floating-outline">
-                                    <CustomSelect2 v-model="form.divisiId" :options="divisis"
-                                        :get-option-label="option => option.nmDivisi"
-                                        :reduce="option => option.id" searchable clearable
-                                        placeholder="-- Pilih Divisi --"
-                                        class="select-divisi"
-                                    />   
-                                </div>
+                                <FormLabel required>Divisi</FormLabel>
+                                <CustomSelect2 v-model="form.divisiId" :options="divisis"
+                                    :get-option-label="option => option.nmDivisi"
+                                    :reduce="option => option.id" searchable clearable
+                                    placeholder="-- Pilih Divisi --"
+                                    class="select-divisi"
+                                />
                             </div>
                         </div>
                         <div class="modal-footer mt-6">
@@ -153,6 +152,7 @@ import { usePermissions } from '~/composables/usePermissions'
 import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
+import FormLabel from '~/components/form/FormLabel.vue'
 import Dropdown from 'primevue/dropdown'
 import Column from 'primevue/column'
 import Menu from 'primevue/menu'

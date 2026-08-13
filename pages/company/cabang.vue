@@ -112,7 +112,7 @@
                                     placeholder="Masukkan kode cabang"
                                     
                                 >
-                                <label for="kodeCabang">Kode Cabang</label>
+                                <label for="kodeCabang">Kode Cabang <span class="text-danger" aria-hidden="true">*</span></label>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -125,7 +125,7 @@
                                     placeholder="Masukkan nama cabang"
                                     
                                 >
-                                <label for="nmCabang">Nama Cabang</label>
+                                <label for="nmCabang">Nama Cabang <span class="text-danger" aria-hidden="true">*</span></label>
                             </div>
                         </div>
                         <div class="col-12">
@@ -137,7 +137,7 @@
                                     placeholder="Masukkan alamat lengkap"
                                     rows="4"
                                 ></textarea>
-                                <label for="alamatCabang">Alamat</label>
+                                <label for="alamatCabang">Alamat <span class="text-danger" aria-hidden="true">*</span></label>
                             </div>
                         </div>
                         <div class="col-12">
@@ -150,7 +150,7 @@
                                         {{ perusahaan.nmPerusahaan }}
                                     </option>
                                 </select>
-                                <label for="perusahaanId">Perusahaan</label>
+                                <label for="perusahaanId">Perusahaan <span class="text-danger" aria-hidden="true">*</span></label>
                                 <small v-if="!perusahaans || perusahaans.length === 0" class="text-muted">
                                     Sedang memuat data perusahaan...
                                 </small>

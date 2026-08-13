@@ -1,65 +1,10 @@
 import { defineStore, storeToRefs } from 'pinia'
 import { apiFetch } from '~/utils/apiFetch'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 import Swal from 'sweetalert2'
 import { useNuxtApp } from '#app'
 import { useUserStore } from '~/stores/user'
 import type { Customer } from './customer'
-
-// ✅ Helper function untuk format field name menjadi lebih user-friendly
-const formatFieldName = (fieldName: string): string => {
-  const fieldMap: Record<string, string> = {
-    'customerId': 'Customer',
-    'perusahaanId': 'Perusahaan',
-    'cabangId': 'Cabang',
-    'salesOrderId': 'Sales Order',
-    'date': 'Tanggal Invoice',
-    'dueDate': 'Jatuh Tempo',
-    'up': 'UP',
-    'email': 'Email Penagihan',
-    'status': 'Status',
-    'discountPercent': 'Discount (%)',
-    'taxPercent': 'Tax (%)',
-    'dpp': 'DPP',
-    'total': 'Total',
-    'paidAmount': 'Jumlah Dibayar',
-    'remainingAmount': 'Sisa Pembayaran',
-    'description': 'Deskripsi',
-    'ttdDigital': 'TTD Digital',
-    'salesInvoiceItems': 'Item Invoice',
-    'productId': 'Produk',
-    'warehouseId': 'Gudang',
-    'quantity': 'Jumlah',
-    'price': 'Harga',
-    'subtotal': 'Subtotal',
-    'deliveredQty': 'Jumlah Terkirim',
-    'isReturned': 'Status Retur'
-  };
-  
-  return fieldMap[fieldName] || fieldName
-    .replace(/([A-Z])/g, ' $1')
-    .replace(/^./, str => str.toUpperCase())
-    .trim();
-};
-
-// ✅ Helper function untuk mendapatkan error message dari rule
-const getErrorMessageFromRule = (rule: string, fieldName: string): string => {
-  const ruleMessages: Record<string, string> = {
-    'required': `${fieldName} wajib diisi`,
-    'number': `${fieldName} harus berupa angka`,
-    'string': `${fieldName} harus berupa teks`,
-    'date': `${fieldName} harus berupa tanggal yang valid`,
-    'enum': `${fieldName} tidak valid`,
-    'min': `${fieldName} terlalu kecil`,
-    'max': `${fieldName} terlalu besar`,
-    'minLength': `${fieldName} terlalu pendek`,
-    'maxLength': `${fieldName} terlalu panjang`,
-    'email': `${fieldName} harus berupa email yang valid`,
-    'exists': `Data ${fieldName} tidak ditemukan`,
-    'unique': `Data ${fieldName} sudah ada`
-  };
-  
-  return ruleMessages[rule] || `${fieldName} tidak valid`;
-};
 
 
 
@@ -538,83 +483,19 @@ export const useSalesInvoiceStore = defineStore('salesInvoice', {
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
-                if (response.status === 422) {
-                    
-                    // ✅ VineJS error structure: errors adalah array of objects dengan format { field, message, rule }
-                    this.validationErrors = errorData.errors || [];
-                    
-                    // ✅ Create user-friendly error message dari VineJS errors dengan format yang lebih spesifik
-                    const errorMessages: string[] = [];
-                    const errorFields: Record<string, string[]> = {};
-                    
-                    (errorData.errors || []).forEach((e: any) => {
-                        let fieldName = 'Field';
-                        let errorMessage = 'Error validasi tidak dikenal';
-                        
-                        if (typeof e === 'object' && e !== null) {
-                            // Format: { field: 'customerId', message: 'Field customerId wajib diisi', rule: 'required' }
-                            fieldName = e.field || e.name || 'Field';
-                            
-                            // Format field name menjadi lebih user-friendly
-                            const friendlyFieldName = formatFieldName(fieldName);
-                            
-                            // Ambil message, jika tidak ada buat dari rule
-                            if (e.message) {
-                                errorMessage = e.message;
-                            } else if (e.rule) {
-                                errorMessage = getErrorMessageFromRule(e.rule, friendlyFieldName);
-                            } else {
-                                errorMessage = `${friendlyFieldName} tidak valid`;
-                            }
-                            
-                            // Group by field untuk menghindari duplikasi
-                            if (!errorFields[fieldName]) {
-                                errorFields[fieldName] = [];
-                            }
-                            errorFields[fieldName].push(errorMessage);
-                        } else if (typeof e === 'string') {
-                            // Jika error berupa string, langsung tambahkan ke errorMessages
-                            errorMessages.push(e);
-                        }
-                    });
-                    
-                    // Buat list error messages yang unik per field
-                    Object.keys(errorFields).forEach(field => {
-                        const friendlyFieldName = formatFieldName(field);
-                        const messages = errorFields[field];
-                        if (messages.length > 0) {
-                            // Jika ada multiple errors untuk field yang sama, gabungkan
-                            errorMessages.push(`<strong>${friendlyFieldName}:</strong> ${messages.join(', ')}`);
-                        }
-                    });
-                    
-                    // Jika tidak ada error yang terformat, gunakan summary atau message default
-                    if (errorMessages.length === 0) {
-                        if (errorData.summary) {
-                            errorMessages.push(errorData.summary);
-                        } else if (errorData.message) {
-                            errorMessages.push(errorData.message);
-                        } else {
-                            errorMessages.push('Data yang dikirim tidak valid. Silakan periksa kembali form yang diisi.');
-                        }
-                    }
-                    
-                    // Tampilkan toast dengan format yang lebih baik
-                    const toastMessage = errorMessages.length > 0 
-                        ? errorMessages.join('<br>')
-                        : 'Data yang dikirim tidak valid. Silakan periksa kembali form yang diisi.';
-                    
-                    toast.error({
-                      title: 'Error Validasi',
-                      message: toastMessage,
-                      color: 'red',
-                      duration: 5000 // Tampilkan lebih lama untuk error validasi
-                    });
-                    return false;
-                } else {
-                    throw new Error(errorData.message || 'Gagal menyimpan data salesInvoice');
-                }
+                const err = await normalizeFailedResponse(
+                    response,
+                    this.isEditMode ? 'Sales Invoice gagal diperbarui.' : 'Sales Invoice gagal dibuat.'
+                )
+                this.validationErrors = err.fieldErrorList
+                toast.error({
+                    title: err.type === 'validation' ? 'Validasi' : 'Error',
+                    message: err.message,
+                    color: 'red',
+                    position: 'bottomRight',
+                    layout: 2,
+                })
+                return false
             } else {
                 this.closeModal();
                 await this.fetchSalesInvoices();
@@ -627,14 +508,9 @@ export const useSalesInvoiceStore = defineStore('salesInvoice', {
             }
 
         } catch (error: any) {
-            // Clear validation errors on new general error
-            this.validationErrors = [];
-            toast.error({
-              title: 'Error',
-              message: error.message || 'Operasi gagal',
-              color: 'red'
-            });
-            return false;
+            const err = normalizeApiError(error, 'Sales Invoice gagal disimpan.')
+            toastNormalizedError(err)
+            return false
         } finally {
             this.saving = false;
         }
@@ -671,8 +547,8 @@ export const useSalesInvoiceStore = defineStore('salesInvoice', {
           });
 
           if (!response.ok) {
-              const errorData = await response.json();
-              throw new Error(errorData.message || 'Gagal menghapus Sales Invoice');
+              const err = await normalizeFailedResponse(response, 'Sales Invoice gagal dihapus.')
+              throw new Error(err.message)
           }
 
           await this.fetchSalesInvoices();
@@ -682,11 +558,8 @@ export const useSalesInvoiceStore = defineStore('salesInvoice', {
             color: 'green'
           });
       } catch (error: any) {
-          toast.error({
-            title: 'Error',
-            message: error.message || 'Gagal menghapus Sales Invoice',
-            color: 'red'
-          });
+          const err = normalizeApiError(error, 'Sales Invoice gagal dihapus.')
+          toastNormalizedError(err)
       } finally {
           this.loading = false;
       }
@@ -814,26 +687,9 @@ export const useSalesInvoiceStore = defineStore('salesInvoice', {
           throw new Error('Struktur data tidak valid diterima dari API.');
         }
       } catch (e: any) {
-        
-        this.error = e;
-        
-        // Create more specific error messages
-        let errorMessage = 'Gagal mengambil detail sales invoice';
-        
-        if (e.status === 404) {
-          errorMessage = `Sales Invoice dengan ID ${invoiceId} tidak ditemukan`;
-        } else if (e.status === 401) {
-          errorMessage = 'Tidak memiliki akses untuk melihat Sales Invoice ini';
-        } else if (e.status === 403) {
-          errorMessage = 'Tidak memiliki izin untuk melihat Sales Invoice ini';
-        } else if (e.status === 500) {
-          errorMessage = 'Terjadi kesalahan server, silakan coba lagi';
-        } else if (e.message) {
-          errorMessage = e.message;
-        }
-        
-        // Throw error with more specific message
-        throw new Error(errorMessage);
+        this.error = e
+        const err = normalizeApiError(e, 'Gagal mengambil detail sales invoice')
+        throw new Error(err.message)
       } finally {
         this.loading = false;
       }
@@ -862,26 +718,9 @@ export const useSalesInvoiceStore = defineStore('salesInvoice', {
           throw new Error('Struktur data tidak valid diterima dari API.');
         }
       } catch (e: any) {
-        
-        this.error = e;
-        
-        // Create more specific error messages
-        let errorMessage = 'Gagal mengambil detail sales invoice';
-        
-        if (e.status === 404) {
-          errorMessage = `Sales Invoice dengan ID ${invoiceId} tidak ditemukan`;
-        } else if (e.status === 401) {
-          errorMessage = 'Tidak memiliki akses untuk melihat Sales Invoice ini';
-        } else if (e.status === 403) {
-          errorMessage = 'Tidak memiliki izin untuk melihat Sales Invoice ini';
-        } else if (e.status === 500) {
-          errorMessage = 'Terjadi kesalahan server, silakan coba lagi';
-        } else if (e.message) {
-          errorMessage = e.message;
-        }
-        
-        // Throw error dengan specific message
-        throw new Error(errorMessage);
+        this.error = e
+        const err = normalizeApiError(e, 'Gagal mengambil detail sales invoice')
+        throw new Error(err.message)
       } finally {
         this.loading = false;
       }

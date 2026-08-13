@@ -285,7 +285,7 @@
                 />
               </div>
               <div class="col-6">
-                <label class="form-label text-muted">Quotation</label>
+                <label class="form-label text-muted">Quotation <span class="text-danger" aria-hidden="true">*</span></label>
                 <CustomSelect2
                   v-model="form.quotationId"
                   :options="quotationsForSelect"

@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { apiFetch } from '~/utils/apiFetch'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 import Swal from 'sweetalert2'
 import { useNuxtApp } from '#app'
 import { useUserStore } from '~/stores/user'
@@ -370,16 +371,14 @@ export const useSubscriptionStore = defineStore('subscription', {
         })
         
         console.log('saveSubscription: Got response', res.status, res.statusText)
-        const responseData = await res.json().catch(() => ({}))
-        console.log('saveSubscription: Response data', responseData)
         
         if (!res.ok) {
-          console.error('Subscription save error:', responseData)
-          this.validationErrors = responseData.errors || []
-          const errorMessage = responseData.message || (this.isEditMode ? 'Gagal memperbarui Subscription' : 'Gagal menyimpan Subscription')
-          toast.error({ title: 'Error', message: errorMessage, color: 'red', position: 'bottomRight', layout: 2 })
-          console.log('saveSubscription: Returning false (not ok)')
-          this.saving = false
+          const err = await normalizeFailedResponse(
+            res,
+            this.isEditMode ? 'Subscription gagal diperbarui.' : 'Subscription gagal dibuat.'
+          )
+          this.validationErrors = err.fieldErrorList
+          toastNormalizedError(err)
           return false
         }
         
@@ -391,8 +390,8 @@ export const useSubscriptionStore = defineStore('subscription', {
         console.log('saveSubscription: Returning true')
         return true
       } catch (e: any) {
-        console.error('saveSubscription: Caught error', e)
-        toast.error({ title: 'Error', message: e.message || 'Operasi gagal', color: 'red', position: 'bottomRight', layout: 2 })
+        const err = normalizeApiError(e, 'Subscription gagal disimpan.')
+        toastNormalizedError(err)
         return false
       } finally {
         console.log('saveSubscription: Finally block, setting saving to false')
@@ -408,12 +407,17 @@ export const useSubscriptionStore = defineStore('subscription', {
       if (!ok.isConfirmed) { this.loading = false; return }
       try {
         const res = await fetch(`${$api.subscription()}/${id}`, { method: 'DELETE', headers: { Accept: 'application/json' }, credentials: 'include' })
-        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message || 'Gagal menghapus Subscription')
+        if (!res.ok) {
+          const err = await normalizeFailedResponse(res, 'Subscription gagal dihapus.')
+          toastNormalizedError(err)
+          return false
+        }
         await this.fetchSubscriptions()
         await this.fetchStatistics()
         toast.success({ title: 'Sukses', message: 'Subscription berhasil dihapus', color: 'green', position: 'bottomRight', layout: 2 })
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message || 'Gagal menghapus Subscription', color: 'red', position: 'bottomRight', layout: 2 })
+        const err = normalizeApiError(e, 'Subscription gagal dihapus.')
+        toastNormalizedError(err)
       } finally {
         this.loading = false
       }
@@ -424,13 +428,18 @@ export const useSubscriptionStore = defineStore('subscription', {
       const { $api } = useNuxtApp()
       try {
         const res = await fetch($api.submitSubscription(id), { method: 'PATCH', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, credentials: 'include' })
-        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message || 'Gagal submit Subscription')
+        if (!res.ok) {
+          const err = await normalizeFailedResponse(res, 'Subscription gagal disubmit.')
+          toastNormalizedError(err)
+          return false
+        }
         await this.fetchSubscriptions()
         await this.fetchStatistics()
         toast.success({ title: 'Sukses', message: 'Subscription berhasil di-submit', color: 'green', position: 'bottomRight', layout: 2 })
         return true
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message || 'Gagal submit Subscription', color: 'red', position: 'bottomRight', layout: 2 })
+        const err = normalizeApiError(e, 'Subscription gagal disubmit.')
+        toastNormalizedError(err)
         return false
       }
     },
@@ -444,13 +453,18 @@ export const useSubscriptionStore = defineStore('subscription', {
           headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
           credentials: 'include',
         })
-        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message || 'Gagal mengaktifkan Subscription')
+        if (!res.ok) {
+          const err = await normalizeFailedResponse(res, 'Subscription gagal diaktifkan.')
+          toastNormalizedError(err)
+          return false
+        }
         await this.fetchSubscriptions()
         await this.fetchStatistics()
         toast.success({ title: 'Sukses', message: 'Subscription berhasil diaktifkan', color: 'green', position: 'bottomRight', layout: 2 })
         return true
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message || 'Gagal mengaktifkan Subscription', color: 'red', position: 'bottomRight', layout: 2 })
+        const err = normalizeApiError(e, 'Subscription gagal diaktifkan.')
+        toastNormalizedError(err)
         return false
       }
     },
@@ -461,13 +475,18 @@ export const useSubscriptionStore = defineStore('subscription', {
       try {
         const body = JSON.stringify({ reasonCancel: reasonCancel ?? '' })
         const res = await fetch($api.cancelSubscription(id), { method: 'PATCH', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, credentials: 'include', body })
-        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message || 'Gagal cancel Subscription')
+        if (!res.ok) {
+          const err = await normalizeFailedResponse(res, 'Subscription gagal dibatalkan.')
+          toastNormalizedError(err)
+          return false
+        }
         await this.fetchSubscriptions()
         await this.fetchStatistics()
         toast.success({ title: 'Sukses', message: 'Subscription berhasil di-cancel', color: 'green', position: 'bottomRight', layout: 2 })
         return true
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message || 'Gagal cancel Subscription', color: 'red', position: 'bottomRight', layout: 2 })
+        const err = normalizeApiError(e, 'Subscription gagal dibatalkan.')
+        toastNormalizedError(err)
         return false
       }
     },

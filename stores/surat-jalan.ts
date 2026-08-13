@@ -1,5 +1,6 @@
 import { defineStore, storeToRefs } from 'pinia'
 import { apiFetch } from '~/utils/apiFetch'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 import Swal from 'sweetalert2'
 import { useNuxtApp } from '#app'
 import { useUserStore } from '~/stores/user'
@@ -380,19 +381,13 @@ export const useSuratJalanStore = defineStore('suratJalan', {
             });
 
             if (!response.ok) {
-              const errorData = await response.json();
-              if (response.status === 422) {
-                  this.validationErrors = errorData.errors;
-                  toast.error({
-                    title: 'Error',
-                    message: errorData.errors.map((e: any) => e.message).join('<br>'),
-                    color: 'red',
-                    position: 'bottomRight'
-                  });
-                  return false;
-              } else {
-                  throw new Error(errorData.message || 'Gagal menyimpan data suratJalan');
-              }
+              const err = await normalizeFailedResponse(
+                response,
+                this.isEditMode ? 'Surat Jalan gagal diperbarui.' : 'Surat Jalan gagal dibuat.'
+              )
+              this.validationErrors = err.fieldErrorList
+              toastNormalizedError(err)
+              return false
             } else {
               this.closeModal();
               this.suratJalan = null;
@@ -410,17 +405,9 @@ export const useSuratJalanStore = defineStore('suratJalan', {
             }
 
         } catch (error: any) {
-            // Error saving surat jalan
-            // Clear validation errors on new general error
-            this.validationErrors = [];
-            
-            toast.error({
-              title: 'Error',
-              message: error.message || 'Operasi gagal',
-              color: 'red',
-              position: 'bottomRight'
-            });
-            return false;
+            const err = normalizeApiError(error, 'Surat Jalan gagal disimpan.')
+            toastNormalizedError(err)
+            return false
         } finally {
             this.saving = false;
         }
@@ -460,8 +447,9 @@ export const useSuratJalanStore = defineStore('suratJalan', {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Gagal menghapus Surat Jalan');
+            const err = await normalizeFailedResponse(response, 'Surat Jalan gagal dihapus.')
+            toastNormalizedError(err)
+            return false
         }
 
         // Optimistic update - remove from list immediately
@@ -483,18 +471,8 @@ export const useSuratJalanStore = defineStore('suratJalan', {
         });
 
       } catch (error: any) {
-          let errorMessage = 'Gagal menghapus Surat Jalan';
-          
-          if (error?.message) {
-            errorMessage = error.message;
-          }
-          
-          toast.error({
-            title: 'Error',
-            message: errorMessage,
-            color: 'red',
-            position: 'bottomRight'
-          });
+          const err = normalizeApiError(error, 'Surat Jalan gagal dihapus.')
+          toastNormalizedError(err)
       } finally {
           this.loading = false;
       }
@@ -715,27 +693,9 @@ export const useSuratJalanStore = defineStore('suratJalan', {
           throw new Error('Struktur data tidak valid diterima dari API.');
         }
       } catch (e: any) {
-        // Error fetching surat jalan by ID
-        
-        this.error = e;
-        
-        // Create more specific error messages
-        let errorMessage = 'Gagal mengambil detail surat jalan';
-        
-        if (e.status === 404) {
-          errorMessage = `Surat Jalan dengan ID ${suratJalanId} tidak ditemukan`;
-        } else if (e.status === 401) {
-            errorMessage = 'Tidak memiliki akses untuk melihat Surat Jalan ini';
-        } else if (e.status === 403) {
-          errorMessage = 'Tidak memiliki izin untuk melihat Surat Jalan ini';
-        } else if (e.status === 500) {
-          errorMessage = 'Terjadi kesalahan server, silakan coba lagi';
-        } else if (e.message) {
-          errorMessage = e.message;
-        }
-        
-        // Throw error with more specific message
-        throw new Error(errorMessage);
+        this.error = e
+        const err = normalizeApiError(e, 'Gagal mengambil detail surat jalan')
+        throw new Error(err.message)
       } finally {
         this.loading = false;
       }
@@ -764,27 +724,9 @@ export const useSuratJalanStore = defineStore('suratJalan', {
           throw new Error('Struktur data tidak valid diterima dari API.');
         }
       } catch (e: any) {
-        // Error fetching surat jalan detail with items
-        
-        this.error = e;
-        
-        // Create more specific error messages
-        let errorMessage = 'Gagal mengambil detail surat jalan';
-        
-        if (e.status === 404) {
-          errorMessage = `Surat Jalan dengan ID ${suratJalanId} tidak ditemukan`;
-        } else if (e.status === 401) {
-          errorMessage = 'Tidak memiliki akses untuk melihat Surat Jalan ini';
-        } else if (e.status === 403) {
-          errorMessage = 'Tidak memiliki izin untuk melihat Surat Jalan ini';
-        } else if (e.status === 500) {
-          errorMessage = 'Terjadi kesalahan server, silakan coba lagi';
-        } else if (e.message) {
-          errorMessage = e.message;
-        }
-        
-        // Throw error dengan specific message
-        throw new Error(errorMessage);
+        this.error = e
+        const err = normalizeApiError(e, 'Gagal mengambil detail surat jalan')
+        throw new Error(err.message)
       } finally {
         this.loading = false;
       }

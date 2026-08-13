@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { useNuxtApp } from '#app'
 import Swal from 'sweetalert2'
+import { normalizeFailedResponse } from '~/utils/apiError'
 import { useImageUrl } from '~/composables/useImageUrl'
 
 export interface Vendor {
@@ -153,15 +154,19 @@ export const useVendorStore = defineStore('vendor', {
             });
 
             if (!response.ok) {
-                // Jika validasi gagal (422), ambil error detail
-                if (response.status === 422) {
-                    const errorData = await response.json();
-                    this.validationErrors = Object.values(errorData.errors).flat();
-                    return;
-                } else {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || 'Gagal menyimpan data vendor');
-                }
+                const err = await normalizeFailedResponse(
+                    response,
+                    this.isEditMode ? 'Vendor gagal diperbarui.' : 'Vendor gagal dibuat.'
+                )
+                this.validationErrors = err.fieldErrorList
+                toast.error({
+                    title: err.type === 'validation' ? 'Validasi' : 'Error',
+                    message: err.message,
+                    color: 'red',
+                    position: 'bottomRight',
+                    layout: 2,
+                })
+                return false
             }
 
             this.closeModal();
@@ -214,8 +219,8 @@ export const useVendorStore = defineStore('vendor', {
           });
 
           if (!response.ok) {
-              const errorData = await response.json();
-              throw new Error(errorData.message || 'Gagal menghapus vendor');
+              const err = await normalizeFailedResponse(response, 'Vendor gagal dihapus.')
+              throw new Error(err.message)
           }
 
           await Promise.all([this.fetchVendors(), this.fetchStatistics()]);

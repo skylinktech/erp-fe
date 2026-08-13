@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { useNuxtApp } from '#app'
 import Swal from 'sweetalert2'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 import type { Permission } from './permissions'
 import type { Role } from './roles'
 
@@ -207,11 +208,13 @@ export const useUserManagementStore = defineStore('user-management', {
             });
 
             if (!response.ok) {
-                 const errorData = await response.json();
-                 if (errorData.errors) {
-                    this.validationErrors = Object.values(errorData.errors).flat();
-                 }
-                throw new Error(errorData.message || 'Gagal menyimpan data user');
+                const err = await normalizeFailedResponse(
+                    response,
+                    this.isEditMode ? 'User gagal diperbarui.' : 'User gagal dibuat.'
+                )
+                this.validationErrors = err.fieldErrorList
+                toastNormalizedError(err)
+                return false
             }
 
             this.closeModal();
@@ -224,11 +227,9 @@ export const useUserManagementStore = defineStore('user-management', {
             });
 
         } catch (error: any) {
-            toast.error({
-              title: 'Error',
-              message: error.message || 'Operasi gagal',
-              color: 'red'
-            });
+            const err = normalizeApiError(error, 'User gagal disimpan.')
+            toastNormalizedError(err)
+            return false
         } finally {
             this.loading = false;
         }
@@ -264,8 +265,9 @@ export const useUserManagementStore = defineStore('user-management', {
           });
 
           if (!response.ok) {
-              const errorData = await response.json();
-              throw new Error(errorData.message || 'Gagal menghapus user');
+              const err = await normalizeFailedResponse(response, 'User gagal dihapus.')
+              toastNormalizedError(err)
+              return false
           }
 
           await this.fetchUsers();
@@ -276,11 +278,8 @@ export const useUserManagementStore = defineStore('user-management', {
             color: 'green'
           });
       } catch (error: any) {
-        toast.error({
-          title: 'Error',
-          message: error.message || 'Gagal menghapus user',
-          color: 'red'
-        });
+        const err = normalizeApiError(error, 'User gagal dihapus.')
+        toastNormalizedError(err)
       } finally {
           this.loading = false;
       }

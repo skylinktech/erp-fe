@@ -33,28 +33,21 @@
                 <span class="text-muted small">Informasi header &amp; daftar item</span>
               </div>
               <div class="card-body pt-0">
-                <form @submit.prevent="handleSubmit">
-                  <ul class="nav nav-tabs mb-0" role="tablist">
-                    <li class="nav-item">
-                      <button class="nav-link active" type="button" data-bs-toggle="tab" data-bs-target="#pr-tab-info">
-                        <i class="ri-information-line me-1"></i>Informasi
-                      </button>
-                    </li>
-                    <li class="nav-item">
-                      <button class="nav-link" type="button" data-bs-toggle="tab" data-bs-target="#pr-tab-items">
-                        <i class="ri-box-3-line me-1"></i>
-                        Item
-                        <span v-if="itemCount" class="badge bg-primary ms-1">{{ itemCount }}</span>
-                      </button>
-                    </li>
-                  </ul>
+                <form ref="formRoot" @submit.prevent="onFormSubmit" novalidate>
+                  <TabbedFormNav
+                    :steps="visibleSteps"
+                    :current-index="currentIndex"
+                    :disabled="navigating || saving"
+                    nav-class="mb-0"
+                    @select="goTo"
+                  />
 
                   <div class="tab-content pt-4">
-                    <div id="pr-tab-info" class="tab-pane fade show active">
+                    <div id="pr-tab-info" data-step-id="pr-tab-info" :class="paneClass('pr-tab-info')">
                       <div class="row mb-3">
                         <label class="col-sm-3 col-form-label">Tanggal Request</label>
                         <div class="col-sm-9">
-                          <input v-model="form.requestDate" type="date" class="form-control" required />
+                          <input v-model="form.requestDate" type="date" class="form-control" />
                         </div>
                       </div>
                       <div class="row mb-3">
@@ -107,7 +100,10 @@
                       </div>
                     </div>
 
-                    <div id="pr-tab-items" class="tab-pane fade">
+                    <div id="pr-tab-items" data-step-id="pr-tab-items" :class="paneClass('pr-tab-items')">
+                      <div v-if="uiErrors.purchaseRequestItems || uiErrors.productName || uiErrors.quantity" class="alert alert-danger py-2 mb-3">
+                        <i class="ri-error-warning-line me-1"></i>{{ uiErrors.purchaseRequestItems || uiErrors.productName || uiErrors.quantity }}
+                      </div>
                       <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
                         <p class="mb-0 text-muted small flex-grow-1" style="min-width: 0">
                           Isi nama barang/jasa, qty, satuan, dan harga estimasi. Untuk tipe <strong>Barang</strong> dengan produk katalog, stok dicek per gudang.
@@ -184,9 +180,9 @@
                             </div>
                           </div>
                           <div class="row mb-3">
-                            <label class="col-sm-3 col-form-label">Nama barang/jasa <span class="text-danger">*</span></label>
+                            <FormLabel required label-class="col-sm-3 col-form-label">Nama barang/jasa</FormLabel>
                             <div class="col-sm-9">
-                              <input v-model="row.productName" type="text" class="form-control" placeholder="Nama barang atau jasa" required />
+                              <input v-model="row.productName" type="text" class="form-control" placeholder="Nama barang atau jasa" aria-required="true" />
                             </div>
                           </div>
                           <div class="row mb-3">
@@ -219,9 +215,9 @@
                           </div>
 
                           <div class="row mb-3">
-                            <label class="col-sm-3 col-form-label">Qty</label>
+                            <FormLabel required label-class="col-sm-3 col-form-label">Qty</FormLabel>
                             <div class="col-sm-9 col-md-4">
-                              <input v-model.number="row.qty" type="number" min="0.01" step="0.01" class="form-control" @input="purchaseRequestStore.onQtyOrPriceChange(idx)" />
+                              <input v-model.number="row.qty" type="number" min="0.01" step="0.01" class="form-control" aria-required="true" @input="purchaseRequestStore.onQtyOrPriceChange(idx)" />
                             </div>
                           </div>
                           <div class="row mb-3">
@@ -269,13 +265,15 @@
                     </div>
                   </div>
 
-                  <div class="d-flex justify-content-end gap-2 mt-4 pt-4 border-top">
-                    <NuxtLink to="/purchasing/purchase-request" class="btn btn-outline-secondary">Batal</NuxtLink>
-                    <button type="submit" class="btn btn-primary" :disabled="saving">
-                      <span v-if="saving" class="spinner-border spinner-border-sm me-1"></span>
-                      Simpan
-                    </button>
-                  </div>
+                  <TabbedFormActions
+                    :is-first-step="isFirstStep"
+                    :is-last-step="isLastStep"
+                    :loading="navigating"
+                    :saving="saving"
+                    cancel-href="/purchasing/purchase-request"
+                    @next="next"
+                    @previous="previous"
+                  />
                 </form>
               </div>
             </div>
@@ -344,6 +342,11 @@ import { computed, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { usePurchaseRequestStore } from '~/stores/purchase-request'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
+import TabbedFormNav from '~/components/form/TabbedFormNav.vue'
+import TabbedFormActions from '~/components/form/TabbedFormActions.vue'
+import FormLabel from '~/components/form/FormLabel.vue'
+import { useTabbedFormNavigation } from '~/composables/useTabbedFormNavigation'
+import { routeSaveFailure } from '~/utils/apiError'
 import FormPageSidebar from '~/components/form/FormPageSidebar.vue'
 import StockAvailabilityAlert from '~/components/purchasing/StockAvailabilityAlert.vue'
 import PrItemStockInfo from '~/components/purchase-request/PrItemStockInfo.vue'
@@ -361,6 +364,46 @@ const formatRupiah = useFormatRupiah()
 const { userHasPermission, userHasRole } = usePermissions()
 
 const { form, isEditMode, loading, saving } = storeToRefs(purchaseRequestStore)
+const formRoot = ref<HTMLFormElement | null>(null)
+const uiErrors = ref<Record<string, string>>({})
+const formSteps = [
+  { id: 'pr-tab-info', label: 'Informasi', icon: 'ri-information-line' },
+  { id: 'pr-tab-items', label: 'Item', icon: 'ri-box-3-line' },
+]
+function validatePurchaseRequestStep(step: { id: string }): boolean {
+  uiErrors.value = {}
+  if (step.id !== 'pr-tab-items') return true
+  const items = form.value?.purchaseRequestItems || []
+  const validItems = items.filter((i) => String(i.productName || '').trim() && Number(i.qty) > 0)
+  if (validItems.length < 1) {
+    const hasNameNoQty = items.some((i) => String(i.productName || '').trim() && !(Number(i.qty) > 0))
+    const hasQtyNoName = items.some((i) => Number(i.qty) > 0 && !String(i.productName || '').trim())
+    if (hasNameNoQty) uiErrors.value.quantity = 'Quantity minimal 1.'
+    else if (hasQtyNoName) uiErrors.value.productName = 'Nama barang/jasa wajib diisi.'
+    else uiErrors.value.purchaseRequestItems = 'Minimal satu item harus ditambahkan.'
+  }
+  return Object.keys(uiErrors.value).length === 0
+}
+const {
+  currentIndex,
+  visibleSteps,
+  isFirstStep,
+  isLastStep,
+  navigating,
+  next,
+  previous,
+  goTo,
+  goToId,
+  paneClass,
+  validateAll,
+} = useTabbedFormNavigation({ steps: formSteps, formRoot, validateStep: validatePurchaseRequestStep })
+const PR_FIELD_TABS: Record<string, string> = {
+  departmentId: 'pr-tab-info',
+  neededDate: 'pr-tab-info',
+  purchaseRequestItems: 'pr-tab-items',
+  productName: 'pr-tab-items',
+  quantity: 'pr-tab-items',
+}
 const formReady = ref(false)
 const stockMap = ref<Map<string, number>>(new Map())
 const products = ref<any[]>([])
@@ -619,9 +662,22 @@ async function loadMasterData() {
   }
 }
 
+async function onFormSubmit() {
+  if (!isLastStep.value) {
+    await next()
+    return
+  }
+  if (!(await validateAll())) return
+  await handleSubmit()
+}
+
 async function handleSubmit() {
   const ok = await purchaseRequestStore.savePurchaseRequest()
-  if (ok) navigateTo('/purchasing/purchase-request')
+  if (ok) {
+    navigateTo('/purchasing/purchase-request')
+    return
+  }
+  routeSaveFailure(purchaseRequestStore.validationErrors, uiErrors.value, PR_FIELD_TABS, goToId)
 }
 
 onMounted(async () => {

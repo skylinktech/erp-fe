@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { useNuxtApp } from '#app'
 import Swal from 'sweetalert2'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 
 export interface CostCenter {
   id?: number | string
@@ -153,20 +154,14 @@ export const useCostCenterStore = defineStore('cost-center', {
           credentials: 'include',
         })
 
-        let result: any
-        try {
-          result = await response.json()
-        } catch (parseError) {
-          console.error('Failed to parse response as JSON:', parseError)
-          throw new Error('Respons server tidak valid')
-        }
-
         if (!response.ok) {
-          if (response.status === 422 && result.errors) {
-            this.validationErrors = Object.values(result.errors).flat()
-            return
-          }
-          throw new Error(result.message || 'Gagal menyimpan data cost center')
+          const err = await normalizeFailedResponse(
+            response,
+            this.isEditMode ? 'Cost Center gagal diperbarui.' : 'Cost Center gagal dibuat.'
+          )
+          this.validationErrors = err.fieldErrorList
+          toastNormalizedError(err)
+          return false
         }
 
         this.closeModal()
@@ -180,16 +175,9 @@ export const useCostCenterStore = defineStore('cost-center', {
           layout: 2,
         })
       } catch (error: any) {
-        console.error('Error saving cost center:', error)
-        if (this.validationErrors.length === 0) {
-          toast.error({
-            title: 'Error',
-            message: error.message || 'Operasi gagal',
-            color: 'red',
-            position: 'bottomRight',
-            layout: 2,
-          })
-        }
+        const err = normalizeApiError(error, 'Cost Center gagal disimpan.')
+        toastNormalizedError(err)
+        return false
       } finally {
         this.saving = false
       }
@@ -225,22 +213,9 @@ export const useCostCenterStore = defineStore('cost-center', {
           })
 
           if (!response.ok) {
-            const errorData = await response.json().catch(() => ({
-              message: 'Gagal menghapus cost center.',
-            }))
-
-            if (response.status === 401) {
-              throw new Error('Sesi Anda telah berakhir. Silakan login kembali.')
-            } else if (response.status === 404) {
-              throw new Error('Cost center tidak ditemukan atau sudah dihapus.')
-            } else if (response.status === 400) {
-              throw new Error(
-                errorData.message ||
-                  'Tidak dapat menghapus cost center. Pastikan cost center tidak digunakan pada transaksi lain.'
-              )
-            } else {
-              throw new Error(errorData.message || 'Gagal menghapus cost center.')
-            }
+            const err = await normalizeFailedResponse(response, 'Cost Center gagal dihapus.')
+            toastNormalizedError(err)
+            return false
           }
 
           await this.fetchCostCenters(true)
@@ -253,14 +228,8 @@ export const useCostCenterStore = defineStore('cost-center', {
             layout: 2,
           })
         } catch (error: any) {
-          console.error('Error deleting cost center:', error)
-          toast.error({
-            title: 'Error',
-            message: error.message || 'Gagal menghapus cost center',
-            color: 'red',
-            position: 'bottomRight',
-            layout: 2,
-          })
+          const err = normalizeApiError(error, 'Cost Center gagal dihapus.')
+          toastNormalizedError(err)
         } finally {
           this.loading = false
         }

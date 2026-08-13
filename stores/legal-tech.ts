@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import type { ApprovalLogEntry } from '~/types/approval'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 import Swal from 'sweetalert2'
 import { useNuxtApp } from '#app'
 import { useUserStore } from '~/stores/user'
@@ -339,18 +340,23 @@ export const useLegalTechStore = defineStore('legal-tech', {
           credentials: 'include',
           body: formData,
         })
-        const ed = await res.json().catch(() => ({}))
         if (!res.ok) {
-          this.validationErrors = ed.errors || []
-          toast.error({ title: 'Error', message: ed.message || (this.isEditMode ? 'Gagal memperbarui' : 'Gagal menyimpan'), color: 'red', position: 'bottomRight', layout: 2 })
-          return
+          const err = await normalizeFailedResponse(
+            res,
+            this.isEditMode ? 'Legal Tech gagal diperbarui.' : 'Legal Tech gagal dibuat.'
+          )
+          this.validationErrors = err.fieldErrorList
+          toastNormalizedError(err)
+          return false
         }
         this.closeModal()
         await this.fetchLeTechReviews()
         await this.fetchStatistics()
         toast.success({ title: 'Sukses', message: `Legal-Tech Review berhasil ${this.isEditMode ? 'diperbarui' : 'dibuat'}`, color: 'green', position: 'bottomRight', layout: 2 })
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message || 'Operasi gagal', color: 'red', position: 'bottomRight', layout: 2 })
+        const err = normalizeApiError(e, 'Legal Tech gagal disimpan.')
+        toastNormalizedError(err)
+        return false
       } finally {
         this.saving = false
       }
@@ -364,12 +370,17 @@ export const useLegalTechStore = defineStore('legal-tech', {
       if (!ok.isConfirmed) { this.loading = false; return }
       try {
         const r = await fetch(`${$api.leTechReview()}/${id}`, { method: 'DELETE', headers: { Accept: 'application/json' }, credentials: 'include' })
-        if (!r.ok) throw new Error((await r.json().catch(() => ({}))).message || 'Gagal menghapus')
+        if (!r.ok) {
+          const err = await normalizeFailedResponse(r, 'Legal Tech gagal dihapus.')
+          toastNormalizedError(err)
+          return false
+        }
         await this.fetchLeTechReviews()
         await this.fetchStatistics()
         toast.success({ title: 'Sukses', message: 'Legal-Tech Review berhasil dihapus', color: 'green', position: 'bottomRight', layout: 2 })
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message || 'Gagal menghapus', color: 'red', position: 'bottomRight', layout: 2 })
+        const err = normalizeApiError(e, 'Legal Tech gagal dihapus.')
+        toastNormalizedError(err)
       } finally {
         this.loading = false
       }
@@ -380,13 +391,18 @@ export const useLegalTechStore = defineStore('legal-tech', {
       const { $api } = useNuxtApp()
       try {
         const r = await fetch($api.submitLeTechReview(id), { method: 'PATCH', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, credentials: 'include' })
-        if (!r.ok) throw new Error((await r.json().catch(() => ({}))).message || 'Gagal submit')
+        if (!r.ok) {
+          const err = await normalizeFailedResponse(r, 'Legal Tech gagal disubmit.')
+          toastNormalizedError(err)
+          return false
+        }
         await this.fetchLeTechReviews()
         await this.fetchStatistics()
         toast.success({ title: 'Sukses', message: 'Legal-Tech Review berhasil di-submit', color: 'green', position: 'bottomRight', layout: 2 })
         return true
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message || 'Gagal submit', color: 'red', position: 'bottomRight', layout: 2 })
+        const err = normalizeApiError(e, 'Legal Tech gagal disubmit.')
+        toastNormalizedError(err)
         return false
       }
     },
@@ -397,13 +413,18 @@ export const useLegalTechStore = defineStore('legal-tech', {
       const { $api } = useNuxtApp()
       try {
         const r = await fetch($api.approveLeTechReview(id), { method: 'PATCH', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, credentials: 'include' })
-        if (!r.ok) throw new Error((await r.json().catch(() => ({}))).message || 'Gagal approve')
+        if (!r.ok) {
+          const err = await normalizeFailedResponse(r, 'Legal Tech gagal disetujui.')
+          toastNormalizedError(err)
+          return false
+        }
         await this.fetchLeTechReviews()
         await this.fetchStatistics()
         toast.success({ title: 'Sukses', message: 'Legal-Tech Review berhasil diapprove', color: 'green', position: 'bottomRight', layout: 2 })
         return true
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message || 'Gagal approve', color: 'red', position: 'bottomRight', layout: 2 })
+        const err = normalizeApiError(e, 'Legal Tech gagal disetujui.')
+        toastNormalizedError(err)
         return false
       } finally {
         this.loading = false
@@ -416,13 +437,18 @@ export const useLegalTechStore = defineStore('legal-tech', {
       const { $api } = useNuxtApp()
       try {
         const r = await fetch($api.rejectLeTechReview(id), { method: 'PATCH', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, credentials: 'include' })
-        if (!r.ok) throw new Error((await r.json().catch(() => ({}))).message || 'Gagal reject')
+        if (!r.ok) {
+          const err = await normalizeFailedResponse(r, 'Legal Tech gagal ditolak.')
+          toastNormalizedError(err)
+          return false
+        }
         await this.fetchLeTechReviews()
         await this.fetchStatistics()
         toast.success({ title: 'Sukses', message: 'Legal-Tech Review berhasil direject', color: 'green', position: 'bottomRight', layout: 2 })
         return true
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message || 'Gagal reject', color: 'red', position: 'bottomRight', layout: 2 })
+        const err = normalizeApiError(e, 'Legal Tech gagal ditolak.')
+        toastNormalizedError(err)
         return false
       } finally {
         this.loading = false

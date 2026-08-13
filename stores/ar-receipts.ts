@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { useNuxtApp } from '#app'
 import Swal from 'sweetalert2'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 
 export interface ARReceipt {
   id?: string
@@ -292,20 +293,14 @@ export const useARReceiptStore = defineStore('arReceipt', {
           credentials: 'include',
         })
 
-        let result;
-        try {
-          result = await response.json();
-        } catch (parseError) {
-          console.error('Failed to parse response as JSON:', parseError);
-          throw new Error('Server response tidak valid');
-        }
-
         if (!response.ok) {
-          if (response.status === 422 && result.errors) {
-            this.validationErrors = Object.values(result.errors).flat();
-            return;
-          }
-          throw new Error(result.message || 'Gagal menyimpan data penerimaan');
+          const err = await normalizeFailedResponse(
+            response,
+            this.isEditMode ? 'AR Receipt gagal diperbarui.' : 'AR Receipt gagal dibuat.'
+          )
+          this.validationErrors = err.fieldErrorList
+          toastNormalizedError(err)
+          return false
         }
         
         this.closeModal();
@@ -319,16 +314,9 @@ export const useARReceiptStore = defineStore('arReceipt', {
         });
 
       } catch (error: any) {
-        console.error('Error saving receipt:', error)
-        if (this.validationErrors.length === 0) {
-          toast.error({
-            title: 'Error',
-            message: error.message || 'Operasi gagal',
-            color: 'red',
-            position: 'bottomRight',
-            layout: 2,
-          });
-        }
+        const err = normalizeApiError(error, 'AR Receipt gagal disimpan.')
+        toastNormalizedError(err)
+        return false
       } finally {
         this.saving = false
       }
@@ -363,17 +351,9 @@ export const useARReceiptStore = defineStore('arReceipt', {
           });
 
           if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ message: 'Gagal menghapus penerimaan.' }));
-            console.error('Delete response error:', errorData);
-            if (response.status === 401) {
-              throw new Error('Sesi Anda telah berakhir. Silakan login kembali.');
-            } else if (response.status === 404) {
-              throw new Error('Penerimaan tidak ditemukan atau sudah dihapus.');
-            } else if (response.status === 400) {
-              throw new Error(errorData.message || 'Tidak dapat menghapus penerimaan.');
-            } else {
-              throw new Error(errorData.message || 'Gagal menghapus penerimaan.');
-            }
+            const err = await normalizeFailedResponse(response, 'AR Receipt gagal dihapus.')
+            toastNormalizedError(err)
+            return false
           }
 
           await this.fetchReceipts();
@@ -385,14 +365,8 @@ export const useARReceiptStore = defineStore('arReceipt', {
             layout: 2,
           });
         } catch (error: any) {
-          console.error('Error deleting receipt:', error)
-          toast.error({
-            title: 'Error',
-            message: error.message || 'Gagal menghapus penerimaan',
-            color: 'red',
-            position: 'bottomRight',
-            layout: 2,
-          });
+          const err = normalizeApiError(error, 'AR Receipt gagal dihapus.')
+          toastNormalizedError(err)
         } finally {
           this.loading = false;
         }
@@ -418,8 +392,9 @@ export const useARReceiptStore = defineStore('arReceipt', {
         });
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: 'Gagal mengkonfirmasi penerimaan.' }));
-          throw new Error(errorData.message || 'Gagal mengkonfirmasi penerimaan.');
+          const err = await normalizeFailedResponse(response, 'AR Receipt gagal dikonfirmasi.')
+          toastNormalizedError(err)
+          return false
         }
 
         await this.fetchReceipts();
@@ -431,14 +406,8 @@ export const useARReceiptStore = defineStore('arReceipt', {
           layout: 2,
         });
       } catch (error: any) {
-        console.error('Error confirming receipt:', error)
-        toast.error({
-          title: 'Error',
-          message: error.message || 'Gagal mengkonfirmasi penerimaan',
-          color: 'red',
-          position: 'bottomRight',
-          layout: 2,
-        });
+        const err = normalizeApiError(error, 'AR Receipt gagal dikonfirmasi.')
+        toastNormalizedError(err)
       }
     },
 
@@ -473,8 +442,9 @@ export const useARReceiptStore = defineStore('arReceipt', {
         });
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: 'Gagal membatalkan penerimaan.' }));
-          throw new Error(errorData.message || 'Gagal membatalkan penerimaan.');
+          const err = await normalizeFailedResponse(response, 'AR Receipt gagal dibatalkan.')
+          toastNormalizedError(err)
+          return false
         }
 
         await this.fetchReceipts();
@@ -486,14 +456,8 @@ export const useARReceiptStore = defineStore('arReceipt', {
           layout: 2,
         });
       } catch (error: any) {
-        console.error('Error cancelling receipt:', error)
-        toast.error({
-          title: 'Error',
-          message: error.message || 'Gagal membatalkan penerimaan',
-          color: 'red',
-          position: 'bottomRight',
-          layout: 2,
-        });
+        const err = normalizeApiError(error, 'AR Receipt gagal dibatalkan.')
+        toastNormalizedError(err)
       }
     },
 

@@ -1,5 +1,6 @@
 import { defineStore, storeToRefs } from 'pinia'
 import { apiFetch } from '~/utils/apiFetch'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 import Swal from 'sweetalert2'
 import { useNuxtApp } from '#app'
 import { useUserStore } from '~/stores/user'
@@ -351,18 +352,13 @@ export const useSalesReturnStore = defineStore('salesReturn', {
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
-                if (response.status === 422) {
-                    this.validationErrors = errorData.errors;
-                    toast.error({
-                      title: 'Error',
-                      message: errorData.message || 'Terdapat kesalahan validasi data',
-                      color: 'red'
-                    });
-                    return false;
-                } else {
-                    throw new Error(errorData.message || 'Gagal menyimpan data salesReturn');
-                }
+                const err = await normalizeFailedResponse(
+                    response,
+                    this.isEditMode ? 'Sales Return gagal diperbarui.' : 'Sales Return gagal dibuat.'
+                )
+                this.validationErrors = err.fieldErrorList
+                toastNormalizedError(err)
+                return false
             } else {
                 this.closeModal();
                 await this.fetchSalesReturns();
@@ -376,14 +372,9 @@ export const useSalesReturnStore = defineStore('salesReturn', {
 
 
         } catch (error: any) {
-            // Clear validation errors on new general error
-            this.validationErrors = [];
-            toast.error({
-              title: 'Error',
-              message: error.message || 'Operasi gagal',
-              color: 'red'
-            });
-            return false;
+            const err = normalizeApiError(error, 'Sales Return gagal disimpan.')
+            toastNormalizedError(err)
+            return false
         } finally {
             this.saving = false;
         }
@@ -420,8 +411,9 @@ export const useSalesReturnStore = defineStore('salesReturn', {
           });
 
           if (!response.ok) {
-              const errorData = await response.json();
-              throw new Error(errorData.message || 'Gagal menghapus Sales Return');
+              const err = await normalizeFailedResponse(response, 'Sales Return gagal dihapus.')
+              toastNormalizedError(err)
+              return false
           }
 
           await this.fetchSalesReturns();
@@ -431,11 +423,8 @@ export const useSalesReturnStore = defineStore('salesReturn', {
             color: 'green'
           });
       } catch (error: any) {
-          toast.error({
-            title: 'Error',
-            message: error.message || 'Gagal menghapus Sales Return',
-            color: 'red'
-          });
+          const err = normalizeApiError(error, 'Sales Return gagal dihapus.')
+          toastNormalizedError(err)
       } finally {
           this.loading = false;
       }
@@ -457,8 +446,9 @@ export const useSalesReturnStore = defineStore('salesReturn', {
           });
 
           if (!response.ok) {
-              const errorData = await response.json().catch(() => ({ message: 'Gagal mengapprove sales return' }));
-              throw new Error(errorData.message || 'Gagal mengapprove sales return');
+              const err = await normalizeFailedResponse(response, 'Sales Return gagal disetujui.')
+              toastNormalizedError(err)
+              return false
           }
 
           await this.fetchSalesReturns();
@@ -470,13 +460,9 @@ export const useSalesReturnStore = defineStore('salesReturn', {
 
           return true;
       } catch (error: any) {
-          console.error('Error approving sales return:', error);
-          toast.error({
-            title: 'Error',
-            message: error.message || 'Gagal mengapprove sales return.',
-            color: 'red'
-          });
-          return false;
+          const err = normalizeApiError(error, 'Sales Return gagal disetujui.')
+          toastNormalizedError(err)
+          return false
       } finally {
           this.loading = false;
       }
@@ -498,8 +484,9 @@ export const useSalesReturnStore = defineStore('salesReturn', {
           });
 
           if (!response.ok) {
-              const errorData = await response.json().catch(() => ({ message: 'Gagal mereject sales return' }));
-              throw new Error(errorData.message || 'Gagal mereject sales return');
+              const err = await normalizeFailedResponse(response, 'Sales Return gagal ditolak.')
+              toastNormalizedError(err)
+              return false
           }
 
           await this.fetchSalesReturns();
@@ -511,13 +498,9 @@ export const useSalesReturnStore = defineStore('salesReturn', {
 
           return true;
       } catch (error: any) {
-          console.error('Error rejecting sales return:', error);
-          toast.error({
-            title: 'Error',
-            message: error.message || 'Gagal mereject sales return.',
-            color: 'red'
-          });
-          return false;
+          const err = normalizeApiError(error, 'Sales Return gagal ditolak.')
+          toastNormalizedError(err)
+          return false
       } finally {
           this.loading = false;
       }

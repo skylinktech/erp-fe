@@ -212,7 +212,7 @@
                                         placeholder="Masukkan username"
                                         
                                     >
-                                    <label for="username">Username</label>
+                                    <label for="username">Username <span class="text-danger" aria-hidden="true">*</span></label>
                                 </div>
                             </div>
                             <div class="col-md-12">
@@ -225,7 +225,7 @@
                                         placeholder="Masukkan nama user"
                                         
                                     >
-                                    <label for="full_name">Nama Lengkap</label>
+                                    <label for="full_name">Nama Lengkap <span class="text-danger" aria-hidden="true">*</span></label>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -237,7 +237,7 @@
                                     v-model="form.email" 
                                     placeholder="Masukkan email"
                                     >
-                                    <label for="email">Email</label>
+                                    <label for="email">Email <span class="text-danger" aria-hidden="true">*</span></label>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -250,13 +250,14 @@
                                     placeholder="Masukkan password"
                                     aria-describedby="passwordHelp"
                                     >
-                                    <label for="password">Password</label>
+                                    <label for="password">Password <span v-if="!isEditMode" class="text-danger" aria-hidden="true">*</span></label>
                                 </div>
                                 <div v-if="isEditMode" id="passwordHelp" class="form-text">
                                     Kosongkan jika tidak ingin mengubah password.
                                 </div>
                             </div>
                             <div class="col-md-6">
+                                <FormLabel required html-for="role_ids">Role</FormLabel>
                                 <div class="form-floating form-floating-outline">
                                     <CustomSelect2 v-model="form.role_ids" :options="roles"
                                         :get-option-label="option => option.name"
@@ -321,6 +322,7 @@ import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
 import { useUserManagementStore } from '~/stores/userManagement'
 import vSelect from 'vue-select'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
+import FormLabel from '~/components/form/FormLabel.vue'
 import 'vue-select/dist/vue-select.css'
 import { useDebounceFn } from '@vueuse/core'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'

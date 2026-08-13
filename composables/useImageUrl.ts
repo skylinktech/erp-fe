@@ -1,56 +1,104 @@
 export const useImageUrl = () => {
   const config = useRuntimeConfig()
-  
+
+  const getApiBase = () => String(config.public.apiBase || '').replace(/\/$/, '')
+
+  const getApiOrigin = () => {
+    const apiBase = getApiBase()
+    if (apiBase.endsWith('/api')) {
+      return apiBase.slice(0, -4)
+    }
+    if (apiBase.includes('/api/')) {
+      return apiBase.replace('/api/', '/')
+    }
+    return apiBase
+  }
+
+  const isRemoteObjectUrl = (path: string) =>
+    path.includes('storage.googleapis.com') ||
+    path.includes('s3.amazonaws.com') ||
+    path.includes('s3.')
+
+  /**
+   * Path lokal public/uploads — disajikan lewat /api/uploads/* agar lolos API gateway.
+   */
+  const toLocalUploadPath = (path: string): string | null => {
+    let pathname = path.trim()
+
+    if (pathname.startsWith('http://') || pathname.startsWith('https://')) {
+      try {
+        pathname = new URL(pathname).pathname
+      } catch {
+        return null
+      }
+    }
+
+    pathname = pathname.replace(/^\/+/, '')
+    if (pathname.startsWith('api/')) {
+      pathname = pathname.slice(4)
+    }
+
+    if (pathname.startsWith('uploads/')) {
+      return pathname
+    }
+
+    return null
+  }
+
   /**
    * Get image URL dengan fallback ke default image
    */
   const getImageUrl = (path: string | null | undefined, defaultImage: string = '/img/default-avatar.png') => {
     if (!path) return defaultImage
-    
-    // Jika path sudah berupa full URL (GCS/S3), gunakan langsung
-    if (path.startsWith('http')) {
-      // Untuk Google Cloud Storage, pastikan CORS headers
-      if (path.includes('storage.googleapis.com')) {
-        // Tambahkan timestamp untuk cache busting jika diperlukan
-        const url = new URL(path)
+
+    const trimmed = String(path).trim()
+    if (!trimmed) return defaultImage
+
+    if (isRemoteObjectUrl(trimmed)) {
+      if (trimmed.includes('storage.googleapis.com')) {
+        const url = new URL(trimmed)
         if (!url.searchParams.has('t')) {
           url.searchParams.set('t', Date.now().toString())
         }
         return url.toString()
       }
-      return path
+      return trimmed
     }
-    
-    // Jika local storage, gabungkan dengan API base
-    const apiBase = config.public.apiBase || ''
-    let baseUrl = apiBase
-    
-    // Perbaiki cara menghapus /api dari URL
-    if (baseUrl.endsWith('/api')) {
-      baseUrl = baseUrl.replace('/api', '')
-    } else if (baseUrl.includes('/api/')) {
-      baseUrl = baseUrl.replace('/api/', '/')
+
+    const uploadPath = toLocalUploadPath(trimmed)
+    const apiBase = getApiBase()
+
+    if (uploadPath) {
+      if (apiBase) {
+        return `${apiBase}/${uploadPath}`
+      }
+      return `/${uploadPath}`
     }
-    
-    // Pastikan baseUrl tidak kosong
-    if (!baseUrl) {
-      console.warn('API base URL tidak ditemukan, menggunakan path asli:', path)
-      return path
+
+    const origin = getApiOrigin()
+    const cleanPath = trimmed.startsWith('/') ? trimmed.substring(1) : trimmed
+    if (!origin) {
+      return `/${cleanPath}`
     }
-    
-    // Pastikan path tidak dimulai dengan slash ganda
-    const cleanPath = path.startsWith('/') ? path.substring(1) : path
-    const fullUrl = `${baseUrl}/${cleanPath}`
-    
-    
-    return fullUrl
+    return `${origin}/${cleanPath}`
   }
 
   /**
    * Get image URL untuk customer logo
    */
   const getCustomerLogo = (logoPath: string | null | undefined) => {
-    return getImageUrl(logoPath, '/img/default-customer-logo.png')
+    if (!logoPath) return '/img/default-customer-logo.png'
+
+    const trimmed = String(logoPath).trim()
+    const isAbsolute = trimmed.startsWith('http://') || trimmed.startsWith('https://')
+    const isUpload = trimmed.includes('/uploads/') || trimmed.startsWith('uploads/')
+
+    // Data seeder lama hanya menyimpan nama file, tanpa folder uploads/customers
+    if (!isAbsolute && !isUpload && !trimmed.includes('/')) {
+      return getImageUrl(`uploads/customers/${trimmed}`, '/img/default-customer-logo.png')
+    }
+
+    return getImageUrl(trimmed, '/img/default-customer-logo.png')
   }
 
   /**
@@ -149,10 +197,10 @@ export const useImageUrl = () => {
    */
   const handleImageError = (event: Event, fallbackSrc: string = '/img/default-avatar.png') => {
     const target = event.target as HTMLImageElement
-    if (target.src !== fallbackSrc) {
-      console.warn('Image failed to load:', target.src, 'falling back to:', fallbackSrc)
-      target.src = fallbackSrc
-    }
+    if (target.dataset.fallbackApplied === '1') return
+    target.dataset.fallbackApplied = '1'
+    console.warn('Image failed to load:', target.src, 'falling back to:', fallbackSrc)
+    target.src = fallbackSrc
   }
 
   /**

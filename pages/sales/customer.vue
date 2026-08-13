@@ -229,24 +229,34 @@
                                     <input 
                                         type="email" 
                                         class="form-control" 
-                                        v-model="form.email" 
+                                        :class="{ 'is-invalid': hasEmailError }"
+                                        v-model.trim="form.email" 
                                         placeholder="Masukkan email customer"
-                                        
+                                        required
+                                        autocomplete="email"
+                                        inputmode="email"
                                     >
                                     <label>Email Customer <span class="text-danger">*</span></label>
                                 </div>
+                                <div v-if="hasEmailError" class="text-danger small mt-1">Email harus menggunakan format email yang valid.</div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-floating form-floating-outline">
                                     <input 
-                                    type="text" 
+                                    type="tel" 
                                     class="form-control" 
-                                    v-model="form.phone" 
+                                    :class="{ 'is-invalid': hasPhoneError }"
+                                    :value="form.phone"
+                                    @input="onPhoneInput"
                                     placeholder="Masukkan no. telp customer"
-                                    
+                                    required
+                                    inputmode="numeric"
+                                    pattern="[0-9]*"
+                                    autocomplete="tel"
                                     >
                                     <label>No. Telp Customer <span class="text-danger">*</span></label>
                                 </div>
+                                <div v-if="hasPhoneError" class="text-danger small mt-1">Nomor telepon hanya boleh berisi angka.</div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-floating form-floating-outline">
@@ -451,6 +461,22 @@ const exportData = (format) => {
         });
     }
 };
+
+const hasEmailError = computed(() =>
+  (validationErrors.value || []).some((err) => String(err).toLowerCase().includes('email'))
+)
+const hasPhoneError = computed(() =>
+  (validationErrors.value || []).some((err) => {
+    const text = String(err).toLowerCase()
+    return text.includes('telepon') || text.includes('telp') || text.includes('phone')
+  })
+)
+
+function onPhoneInput(e) {
+  const digits = String(e.target.value || '').replace(/\D/g, '')
+  form.value.phone = digits
+  e.target.value = digits
+}
 
 function onLogoChange(e) {
   const file = e.target.files[0];

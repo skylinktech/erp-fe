@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { useNuxtApp } from '#app'
 import Swal from 'sweetalert2'
 import { apiFetch } from '~/utils/apiFetch'
+import { normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 import type { CutiBersamaBreakdownItem, CutiTypeRow } from '~/stores/cuti'
 
 export interface CutiBalanceRow {
@@ -295,20 +296,9 @@ export const useCutiBalanceStore = defineStore('cuti-balance', {
         await this.fetchRows()
         return true
       } catch (error: any) {
-        const data = error?.data
-        if (data?.errors) {
-          const errs = data.errors
-          this.validationErrors = Array.isArray(errs)
-            ? errs.map(String)
-            : Object.values(errs).flat().map(String)
-        } else if (data?.error) {
-          this.validationErrors = [String(data.error)]
-        }
-        toast.error({
-          title: 'Error',
-          message: data?.message || data?.error || error.message || 'Gagal menyimpan saldo cuti',
-          color: 'red',
-        })
+        const err = normalizeApiError(error, 'Saldo Cuti gagal disimpan.')
+        this.validationErrors = err.fieldErrorList
+        toastNormalizedError(err)
         return false
       } finally {
         this.saving = false
@@ -342,11 +332,8 @@ export const useCutiBalanceStore = defineStore('cuti-balance', {
         await this.fetchRows()
         return true
       } catch (error: any) {
-        useToast().error({
-          title: 'Error',
-          message: error?.data?.error || error.message || 'Gagal menghapus saldo cuti',
-          color: 'red',
-        })
+        const err = normalizeApiError(error, 'Saldo Cuti gagal dihapus.')
+        toastNormalizedError(err)
         return false
       }
     },

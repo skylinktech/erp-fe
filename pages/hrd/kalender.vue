@@ -128,10 +128,11 @@
                 required
                 maxlength="255"
               />
-              <label for="hr-kal-nama">Nama</label>
+              <label for="hr-kal-nama">Nama <span class="text-danger" aria-hidden="true">*</span></label>
             </div>
           </div>
           <div class="col-md-6">
+            <FormLabel required>Tipe</FormLabel>
             <select
               v-model="store.form.tipe"
               class="form-select"
@@ -147,7 +148,7 @@
             </select>
           </div>
           <div class="col-md-6">
-            <label class="form-label">Tanggal Mulai</label>
+            <label class="form-label">Tanggal Mulai <span class="text-danger" aria-hidden="true">*</span></label>
             <input
               v-model="store.form.tanggal_mulai"
               type="date"
@@ -246,6 +247,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import Modal from '~/components/modal/Modal.vue'
+import FormLabel from '~/components/form/FormLabel.vue'
 import HrCalendarView from '~/components/hrd/HrCalendarView.vue'
 import { useHrCalendarStore } from '~/stores/hr-calendar'
 import { usePermissions } from '~/composables/usePermissions'

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { useNuxtApp } from '#app'
 import Swal from 'sweetalert2'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 
 export interface Account {
   id?: string
@@ -254,20 +255,14 @@ export const useAccountStore = defineStore('account', {
           credentials: 'include', // Cookie-based auth
         })
 
-        let result;
-        try {
-          result = await response.json();
-        } catch (parseError) {
-          console.error('Failed to parse response as JSON:', parseError);
-          throw new Error('Server response tidak valid');
-        }
-
         if (!response.ok) {
-          if (response.status === 422 && result.errors) {
-            this.validationErrors = Object.values(result.errors).flat();
-            return;
-          }
-          throw new Error(result.message || 'Gagal menyimpan data akun');
+          const err = await normalizeFailedResponse(
+            response,
+            this.isEditMode ? 'Akun gagal diperbarui.' : 'Akun gagal dibuat.'
+          )
+          this.validationErrors = err.fieldErrorList
+          toastNormalizedError(err)
+          return false
         }
         
         this.closeModal();
@@ -281,16 +276,9 @@ export const useAccountStore = defineStore('account', {
         });
 
       } catch (error: any) {
-        console.error('Error saving account:', error)
-        if (this.validationErrors.length === 0) {
-          toast.error({
-            title: 'Error',
-            message: error.message || 'Operasi gagal',
-            color: 'red',
-            position: 'bottomRight',
-            layout: 2,
-          });
-        }
+        const err = normalizeApiError(error, 'Akun gagal disimpan.')
+        toastNormalizedError(err)
+        return false
       } finally {
         this.saving = false
       }
@@ -325,17 +313,9 @@ export const useAccountStore = defineStore('account', {
           });
 
           if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ message: 'Gagal menghapus akun.' }));
-            console.error('Delete response error:', errorData);
-            if (response.status === 401) {
-              throw new Error('Sesi Anda telah berakhir. Silakan login kembali.');
-            } else if (response.status === 404) {
-              throw new Error('Akun tidak ditemukan atau sudah dihapus.');
-            } else if (response.status === 400) {
-              throw new Error(errorData.message || 'Tidak dapat menghapus akun. Pastikan akun tidak memiliki sub-akun atau digunakan dalam jurnal.');
-            } else {
-              throw new Error(errorData.message || 'Gagal menghapus akun.');
-            }
+            const err = await normalizeFailedResponse(response, 'Akun gagal dihapus.')
+            toastNormalizedError(err)
+            return false
           }
 
           await this.fetchAccounts();
@@ -347,14 +327,8 @@ export const useAccountStore = defineStore('account', {
             layout: 2,
           });
         } catch (error: any) {
-          console.error('Error deleting account:', error)
-          toast.error({
-            title: 'Error',
-            message: error.message || 'Gagal menghapus akun',
-            color: 'red',
-            position: 'bottomRight',
-            layout: 2,
-          });
+          const err = normalizeApiError(error, 'Akun gagal dihapus.')
+          toastNormalizedError(err)
         } finally {
           this.loading = false;
         }

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { useNuxtApp } from '#app'
 import Swal from 'sweetalert2'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 import { useImageUrl } from '~/composables/useImageUrl'
 
 export interface Perusahaan {
@@ -146,20 +147,14 @@ export const usePerusahaanStore = defineStore('perusahaan', {
                 credentials: 'include', // Cookie-based auth
             });
 
-            // Handle response parsing dengan error catching
-            let errorData;
             if (!response.ok) {
-                try {
-                    errorData = await response.json();
-                } catch (parseError) {
-                    throw new Error('Server response tidak valid');
-                }
-                
-                if (response.status === 422 && errorData.errors) {
-                   this.validationErrors = Object.values(errorData.errors).flat();
-                   return; // Stop execution - jangan throw error agar validation error muncul di modal
-                }
-               throw new Error(errorData.message || 'Gagal menyimpan data perusahaan');
+                const err = await normalizeFailedResponse(
+                    response,
+                    this.isEditMode ? 'Perusahaan gagal diperbarui.' : 'Perusahaan gagal dibuat.'
+                )
+                this.validationErrors = err.fieldErrorList
+                toastNormalizedError(err)
+                return false
            }
 
             this.closeModal();
@@ -173,16 +168,9 @@ export const usePerusahaanStore = defineStore('perusahaan', {
             });
 
         } catch (error: any) {
-            // Jangan tampilkan Swal jika ada validation errors (sudah ditampilkan di modal)
-            if (this.validationErrors.length === 0) {
-                const toast = useToast()
-                toast.error({
-                  title: 'Error',
-                  message: error.message || 'Operasi gagal',
-                  color: 'red',
-                  position: 'bottomRight',
-                });
-            }
+            const err = normalizeApiError(error, 'Perusahaan gagal disimpan.')
+            toastNormalizedError(err)
+            return false
         } finally {
             this.loading = false;
         }
@@ -217,8 +205,9 @@ export const usePerusahaanStore = defineStore('perusahaan', {
           });
 
           if (!response.ok) {
-              const errorData = await response.json();
-              throw new Error(errorData.message || 'Gagal menghapus perusahaan');
+              const err = await normalizeFailedResponse(response, 'Perusahaan gagal dihapus.')
+              toastNormalizedError(err)
+              return false
           }
 
           await Promise.all([this.fetchPerusahaans(), this.fetchStatistics()]);
@@ -230,13 +219,8 @@ export const usePerusahaanStore = defineStore('perusahaan', {
             position: 'bottomRight',
           });
       } catch (error: any) {
-          const toast = useToast()
-          toast.error({
-            title: 'Error',
-            message: error.message || 'Gagal menghapus perusahaan',
-            color: 'red',
-            position: 'bottomRight',
-          });
+          const err = normalizeApiError(error, 'Perusahaan gagal dihapus.')
+          toastNormalizedError(err)
       } finally {
           this.loading = false;
       }

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { useNuxtApp } from '#app'
 import Swal from 'sweetalert2'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 import { useUserStore } from './user'
 import type { MenuDetail } from './menu-detail'
 
@@ -178,12 +179,13 @@ export const useMenuGroupStore = defineStore('menu-group', {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            if (response.status === 422) {
-                this.validationErrors = Object.values(errorData.errors).flat();
-                throw new Error('Data validasi tidak valid');
-            }
-            throw new Error(errorData.message || 'Gagal menyimpan data menu group');
+            const err = await normalizeFailedResponse(
+                response,
+                this.isEditMode ? 'Menu Group gagal diperbarui.' : 'Menu Group gagal dibuat.'
+            )
+            this.validationErrors = err.fieldErrorList
+            toastNormalizedError(err)
+            return false
         }
         
         this.closeModal();
@@ -197,15 +199,9 @@ export const useMenuGroupStore = defineStore('menu-group', {
         });
 
       } catch (error: any) {
-        if (error.message !== 'Data validasi tidak valid') {
-            const toast = useToast()            
-            toast.error({
-              title: 'Error',
-              message: error.message || 'Operasi gagal',
-              color: 'red',
-              position: 'bottomRight',
-            });
-        }
+        const err = normalizeApiError(error, 'Menu Group gagal disimpan.')
+        toastNormalizedError(err)
+        return false
       } finally {
         this.loading = false;
       }
@@ -241,8 +237,9 @@ export const useMenuGroupStore = defineStore('menu-group', {
           });
 
           if (!response.ok) {
-              const errorData = await response.json();
-              throw new Error(errorData.message || 'Gagal menghapus menu group');
+              const err = await normalizeFailedResponse(response, 'Menu Group gagal dihapus.')
+              toastNormalizedError(err)
+              return false
           }
 
           await this.fetchMenuGroups();
@@ -254,14 +251,8 @@ export const useMenuGroupStore = defineStore('menu-group', {
             position: 'bottomRight',
           });
       } catch (error: any) {
-          console.error('Gagal menghapus menu group:', error);
-          const toast = useToast()          
-          toast.error({
-            title: 'Error',
-            message: error.message || 'Gagal menghapus menu group',
-            color: 'red',
-            position: 'bottomRight',
-          });
+          const err = normalizeApiError(error, 'Menu Group gagal dihapus.')
+          toastNormalizedError(err)
       } finally {
           this.loading = false;
       }

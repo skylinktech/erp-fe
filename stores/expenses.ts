@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { useNuxtApp } from '#app'
 import Swal from 'sweetalert2'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 
 export interface Expense {
   id?: string
@@ -208,20 +209,14 @@ export const useExpenseStore = defineStore('expense', {
           credentials: 'include', // Cookie-based auth
         })
 
-        let result;
-        try {
-          result = await response.json();
-        } catch (parseError) {
-          console.error('Failed to parse response as JSON:', parseError);
-          throw new Error('Server response tidak valid');
-        }
-
         if (!response.ok) {
-          if (response.status === 422 && result.errors) {
-            this.validationErrors = Object.values(result.errors).flat();
-            return;
-          }
-          throw new Error(result.message || 'Gagal menyimpan data pengeluaran');
+          const err = await normalizeFailedResponse(
+            response,
+            this.isEditMode ? 'Pengeluaran gagal diperbarui.' : 'Pengeluaran gagal dibuat.'
+          )
+          this.validationErrors = err.fieldErrorList
+          toastNormalizedError(err)
+          return false
         }
         
         this.closeModal();
@@ -235,15 +230,9 @@ export const useExpenseStore = defineStore('expense', {
         });
 
       } catch (error: any) {
-        if (this.validationErrors.length === 0) {
-          const toast = useToast()          
-          toast.error({
-            title: 'Error',
-            message: error.message || 'Operasi gagal',
-            color: 'red',
-            position: 'bottomRight',
-          });
-        }
+        const err = normalizeApiError(error, 'Pengeluaran gagal disimpan.')
+        toastNormalizedError(err)
+        return false
       } finally {
         this.saving = false
       }
@@ -275,8 +264,9 @@ export const useExpenseStore = defineStore('expense', {
           });
 
           if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ message: 'Gagal menghapus pengeluaran.' }));
-            throw new Error(errorData.message || 'Gagal menghapus pengeluaran.');
+            const err = await normalizeFailedResponse(response, 'Pengeluaran gagal dihapus.')
+            toastNormalizedError(err)
+            return false
           }
 
           await this.fetchExpenses();
@@ -288,13 +278,8 @@ export const useExpenseStore = defineStore('expense', {
             position: 'bottomRight',
           });
         } catch (error: any) {
-          const toast = useToast()          
-          toast.error({
-            title: 'Error',
-            message: error.message || 'Gagal menghapus pengeluaran',
-            color: 'red',
-            position: 'bottomRight',
-          });
+          const err = normalizeApiError(error, 'Pengeluaran gagal dihapus.')
+          toastNormalizedError(err)
         }
       }
     },

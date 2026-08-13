@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { useNuxtApp } from '#app'
 import Swal from 'sweetalert2'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 import type { MenuGroup } from './menu-group'
 import { useMenuGroupStore } from './menu-group'
 
@@ -211,16 +212,13 @@ export const useMenuDetailStore = defineStore('menu-detail', {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            if (response.status === 422) {
-                if (errorData.errors) {
-                  this.validationErrors = Object.values(errorData.errors).flat();
-                } else if (errorData.message) {
-                  this.validationErrors = [errorData.message];
-                }
-                throw new Error(errorData.message || 'Data validasi tidak valid');
-            }
-            throw new Error(errorData.message || 'Gagal menyimpan data menu detail');
+            const err = await normalizeFailedResponse(
+                response,
+                this.isEditMode ? 'Menu Detail gagal diperbarui.' : 'Menu Detail gagal dibuat.'
+            )
+            this.validationErrors = err.fieldErrorList
+            toastNormalizedError(err)
+            return false
         }
         
         this.closeModal();
@@ -239,16 +237,9 @@ export const useMenuDetailStore = defineStore('menu-detail', {
         })
 
       } catch (error: any) {
-        if (!this.validationErrors.length) {
-            toast.error({
-                title: 'Error',
-                icon: 'ri-close-line',
-                message: error.message || 'Operasi gagal',
-                timeout: 3000,
-                position: 'bottomRight',
-                layout: 2,
-            })
-        }
+        const err = normalizeApiError(error, 'Menu Detail gagal disimpan.')
+        toastNormalizedError(err)
+        return false
       } finally {
         this.loading = false;
       }
@@ -284,8 +275,9 @@ export const useMenuDetailStore = defineStore('menu-detail', {
           });
 
           if (!response.ok) {
-              const errorData = await response.json();
-              throw new Error(errorData.message || 'Gagal menghapus menu detail');
+              const err = await normalizeFailedResponse(response, 'Menu Detail gagal dihapus.')
+              toastNormalizedError(err)
+              return false
           }
 
           await this.fetchMenuDetails();
@@ -301,15 +293,8 @@ export const useMenuDetailStore = defineStore('menu-detail', {
             layout: 2,
           })
       } catch (error: any) {
-          console.error('Gagal menghapus menu detail:', error);
-          toast.error({
-            title: 'Error',
-            icon: 'ri-close-line',
-            message: error.message || 'Gagal menghapus menu detail',
-            timeout: 3000,
-            position: 'bottomRight',
-            layout: 2,
-          })
+          const err = normalizeApiError(error, 'Menu Detail gagal dihapus.')
+          toastNormalizedError(err)
       } finally {
           this.loading = false;
       }

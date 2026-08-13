@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { apiFetch } from '~/utils/apiFetch'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 import Swal from 'sweetalert2'
 import { useNuxtApp } from '#app'
 import { useUserStore } from '~/stores/user'
@@ -326,8 +327,12 @@ export const usePurchaseRequestStore = defineStore('purchaseRequest', {
           body: JSON.stringify(body),
         })
         if (!res.ok) {
-          const ed = await res.json().catch(() => ({}))
-          toast.error({ title: 'Error', message: ed.message || 'Gagal menyimpan', color: 'red', position: 'bottomRight', layout: 2 })
+          const err = await normalizeFailedResponse(
+            res,
+            this.isEditMode ? 'Purchase Request gagal diperbarui.' : 'Purchase Request gagal dibuat.'
+          )
+          this.validationErrors = err.fieldErrorList
+          toastNormalizedError(err)
           return false
         }
         this.closeModal()
@@ -336,7 +341,8 @@ export const usePurchaseRequestStore = defineStore('purchaseRequest', {
         toast.success({ title: 'Sukses', message: `Purchase Request berhasil ${this.isEditMode ? 'diperbarui' : 'dibuat'}`, color: 'green', position: 'bottomRight', layout: 2 })
         return true
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight', layout: 2 })
+        const err = normalizeApiError(e, 'Purchase Request gagal disimpan.')
+        toastNormalizedError(err)
         return false
       } finally {
         this.saving = false
@@ -351,12 +357,17 @@ export const usePurchaseRequestStore = defineStore('purchaseRequest', {
       if (!ok.isConfirmed) { this.loading = false; return }
       try {
         const res = await fetch(`${api.list()}/${id}`, { method: 'DELETE', headers: { Accept: 'application/json' }, credentials: 'include' })
-        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message)
+        if (!res.ok) {
+          const err = await normalizeFailedResponse(res, 'Purchase Request gagal dihapus.')
+          toastNormalizedError(err)
+          return false
+        }
         await this.fetchPurchaseRequests()
         await this.fetchStatistics()
         toast.success({ title: 'Sukses', message: 'Purchase Request dihapus', color: 'green', position: 'bottomRight', layout: 2 })
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight', layout: 2 })
+        const err = normalizeApiError(e, 'Purchase Request gagal dihapus.')
+        toastNormalizedError(err)
       } finally {
         this.loading = false
       }
@@ -368,13 +379,18 @@ export const usePurchaseRequestStore = defineStore('purchaseRequest', {
       const api = this.apiEndpoints()
       try {
         const res = await fetch(api.approve(id), { method: 'PATCH', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, credentials: 'include', body: JSON.stringify({ remarks }) })
-        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message)
+        if (!res.ok) {
+          const err = await normalizeFailedResponse(res, 'Purchase Request gagal disetujui.')
+          toastNormalizedError(err)
+          return false
+        }
         await this.fetchPurchaseRequests()
         await this.fetchStatistics()
         toast.success({ title: 'Sukses', message: 'Berhasil diapprove', color: 'green', position: 'bottomRight', layout: 2 })
         return true
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight', layout: 2 })
+        const err = normalizeApiError(e, 'Purchase Request gagal disetujui.')
+        toastNormalizedError(err)
         return false
       } finally {
         this.loading = false
@@ -387,13 +403,18 @@ export const usePurchaseRequestStore = defineStore('purchaseRequest', {
       const api = this.apiEndpoints()
       try {
         const res = await fetch(api.reject(id), { method: 'PATCH', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, credentials: 'include', body: JSON.stringify({ rejection_reason: reason, reject_reason: reason }) })
-        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message)
+        if (!res.ok) {
+          const err = await normalizeFailedResponse(res, 'Purchase Request gagal ditolak.')
+          toastNormalizedError(err)
+          return false
+        }
         await this.fetchPurchaseRequests()
         await this.fetchStatistics()
         toast.success({ title: 'Sukses', message: 'Berhasil direject', color: 'green', position: 'bottomRight', layout: 2 })
         return true
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight', layout: 2 })
+        const err = normalizeApiError(e, 'Purchase Request gagal ditolak.')
+        toastNormalizedError(err)
         return false
       } finally {
         this.loading = false
@@ -405,13 +426,18 @@ export const usePurchaseRequestStore = defineStore('purchaseRequest', {
       const api = this.apiEndpoints()
       try {
         const res = await fetch(api.submit(id), { method: 'PATCH', headers: { Accept: 'application/json' }, credentials: 'include' })
-        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message)
+        if (!res.ok) {
+          const err = await normalizeFailedResponse(res, 'Purchase Request gagal disubmit.')
+          toastNormalizedError(err)
+          return false
+        }
         await this.fetchPurchaseRequests()
         await this.fetchStatistics()
         toast.success({ title: 'Sukses', message: 'Berhasil di-submit', color: 'green', position: 'bottomRight', layout: 2 })
         return true
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight', layout: 2 })
+        const err = normalizeApiError(e, 'Purchase Request gagal disubmit.')
+        toastNormalizedError(err)
         return false
       }
     },

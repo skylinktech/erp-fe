@@ -168,7 +168,7 @@
                                         placeholder="Masukkan nama category"
                                         
                                     >
-                                    <label>Nama Category</label>
+                                    <label>Nama Category <span class="text-danger" aria-hidden="true">*</span></label>
                                 </div>
                             </div>
                             <div class="col-md-6">

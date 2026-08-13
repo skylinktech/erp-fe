@@ -112,7 +112,7 @@
                                         placeholder="Masukkan nama divisi"
                                         
                                     >
-                                    <label>Nama Divisi</label>
+                                    <label>Nama Divisi <span class="text-danger" aria-hidden="true">*</span></label>
                                 </div>
                             </div>
                         </div>

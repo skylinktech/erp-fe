@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { useNuxtApp } from '#app'
 import Swal from 'sweetalert2'
+import { normalizeFailedResponse } from '~/utils/apiError'
 import type { Category } from './kategori'
 import type { Customer } from './customer'
 import type { Unit } from './unit'
@@ -439,40 +440,20 @@ export const useProductStore = defineStore('product', {
               credentials: 'include', // Cookie-based auth
           });
 
-          // Handle response parsing dengan error catching
-          let result;
-          try {
-              result = await response.json();
-          } catch (parseError) {
-              toast.error({
-                title: 'Error',
-                message: 'Server response tidak valid',
-                color: 'red'
-              });
-              throw new Error('Server response tidak valid');
-          }
-
           if (!response.ok) {
-              if (response.status === 422 && result.errors) {
-                  const errors = result.errors as unknown;
-                  if (Array.isArray(errors)) {
-                      // Sudah dalam format [{ field, rule, message }, ...]
-                      this.validationErrors = errors as any[];
-                  } else if (errors && typeof errors === 'object') {
-                      // Normalisasi format { field: ["msg1", "msg2"], ... } -> [{ field, message, rule }]
-                      this.validationErrors = Object.entries(errors as Record<string, string | string[]>)
-                        .flatMap(([field, messages]) => {
-                          const messageList = Array.isArray(messages) ? messages : [messages];
-                          return messageList
-                            .filter(Boolean)
-                            .map((message) => ({ field, message, rule: 'unique' }));
-                        });
-                  } else {
-                      this.validationErrors = [];
-                  }
-                  return; // Stop execution - jangan throw error agar validation error muncul di modal
-              }
-              throw new Error(result.message || 'Gagal menyimpan data produk');
+              const err = await normalizeFailedResponse(
+                  response,
+                  this.isEditMode ? 'Produk gagal diperbarui.' : 'Produk gagal dibuat.'
+              )
+              this.validationErrors = err.fieldErrorList
+              toast.error({
+                title: err.type === 'validation' ? 'Validasi' : 'Error',
+                message: err.message,
+                color: 'red',
+                position: 'bottomRight',
+                layout: 2,
+              })
+              return false
           }
           
           this.closeModal();
@@ -531,8 +512,8 @@ export const useProductStore = defineStore('product', {
           });
 
           if (!response.ok) {
-              const errorData = await response.json();
-              throw new Error(errorData.message || 'Gagal menghapus produk');
+              const err = await normalizeFailedResponse(response, 'Produk gagal dihapus.')
+              throw new Error(err.message)
           }
 
           await this.fetchProducts();

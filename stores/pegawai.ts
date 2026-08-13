@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { navigateTo, useNuxtApp } from '#app'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 import { useDepartemenStore } from '~/stores/departemen'
 import { useImageUrl } from '~/composables/useImageUrl'
 import { mapPegawaiShowResponseToListRow } from '~/utils/pegawaiApiMapper'
@@ -230,30 +231,26 @@ export const usePegawaiStore = defineStore('pegawai', {
                     if (opts?.navigateTo) {
                         await navigateTo(opts.navigateTo);
                     }
+                    return true
                 } else {
-                    const errorData = await response.json();
-                    if (response.status === 422) {
-                        if (errorData.errors && typeof errorData.errors === 'object') {
-                            this.validationErrors = Object.values(errorData.errors).flat();
-                        } else {
-                            this.validationErrors = [];
-                        }
-                        toast.error({
-                            title: 'Error',
-                            message: 'Gagal Validasi',
-                            color: 'red'
-                        });
-                    } else {
-                        throw new Error(errorData.message || 'Gagal menyimpan data pegawai');
-                    }
+                    const err = await normalizeFailedResponse(
+                        response,
+                        this.isEditMode ? 'Pegawai gagal diperbarui.' : 'Pegawai gagal dibuat.'
+                    )
+                    this.validationErrors = err.fieldErrorList
+                    toast.error({
+                        title: err.type === 'validation' ? 'Validasi' : 'Error',
+                        message: err.message,
+                        color: 'red',
+                        position: 'bottomRight',
+                        layout: 2,
+                    })
+                    return false
                 }
             } catch (error: any) {
-                this.validationErrors = [];
-                toast.error({
-                    title: 'Error',
-                    message: error.message || 'Operasi gagal',
-                    color: 'red'
-                });
+                const err = normalizeApiError(error, 'Pegawai gagal disimpan.')
+                toastNormalizedError(err)
+                return false
             } finally {
                 this.loading = false;
             }
@@ -286,8 +283,8 @@ export const usePegawaiStore = defineStore('pegawai', {
                     });
 
                     if (!response.ok) {
-                        const errorData = await response.json();
-                        throw new Error(errorData.message || 'Gagal menghapus pegawai');
+                        const err = await normalizeFailedResponse(response, 'Pegawai gagal dihapus.')
+                        throw new Error(err.message)
                     }
 
                     await this.fetchPegawais();
@@ -754,8 +751,11 @@ export const usePegawaiStore = defineStore('pegawai', {
                 credentials: 'include',
             })
             if (!response.ok) {
-                const err = await response.json().catch(() => ({ message: 'Gagal menyimpan kontrak' }))
-                throw new Error(err.message || err.error || 'Gagal menyimpan kontrak')
+                const err = await normalizeFailedResponse(
+                    response,
+                    opts.editingKontrakId ? 'Kontrak gagal diperbarui.' : 'Kontrak gagal dibuat.'
+                )
+                throw new Error(err.message)
             }
             toast.success({
                 title: 'Berhasil',
@@ -774,8 +774,8 @@ export const usePegawaiStore = defineStore('pegawai', {
                 credentials: 'include',
             })
             if (!response.ok) {
-                const err = await response.json().catch(() => ({ message: 'Gagal mengaktifkan kontrak' }))
-                throw new Error(err.message || err.error || 'Gagal mengaktifkan kontrak')
+                const err = await normalizeFailedResponse(response, 'Kontrak gagal diaktifkan.')
+                throw new Error(err.message)
             }
             toast.success({
                 title: 'Berhasil',
@@ -795,8 +795,8 @@ export const usePegawaiStore = defineStore('pegawai', {
                 credentials: 'include',
             })
             if (!response.ok) {
-                const err = await response.json().catch(() => ({ message: 'Gagal membatalkan draft' }))
-                throw new Error(err.message || err.error || 'Gagal membatalkan draft')
+                const err = await normalizeFailedResponse(response, 'Draft kontrak gagal dibatalkan.')
+                throw new Error(err.message)
             }
             toast.success({ title: 'Berhasil', message: 'Draft kontrak dibatalkan.', color: 'green' })
             await this.fetchPegawaiKontraks(pegawaiId)
@@ -811,8 +811,8 @@ export const usePegawaiStore = defineStore('pegawai', {
                 credentials: 'include',
             })
             if (!response.ok) {
-                const err = await response.json().catch(() => ({ message: 'Gagal menghapus draft' }))
-                throw new Error(err.message || err.error || 'Gagal menghapus draft')
+                const err = await normalizeFailedResponse(response, 'Draft kontrak gagal dihapus.')
+                throw new Error(err.message)
             }
             toast.success({ title: 'Berhasil', message: 'Draft kontrak dihapus.', color: 'green' })
             await this.fetchPegawaiKontraks(pegawaiId)
@@ -827,8 +827,8 @@ export const usePegawaiStore = defineStore('pegawai', {
                 credentials: 'include',
             })
             if (!response.ok) {
-                const err = await response.json().catch(() => ({ message: 'Gagal mengajukan persetujuan' }))
-                throw new Error(err.message || err.error || 'Gagal mengajukan persetujuan')
+                const err = await normalizeFailedResponse(response, 'Kontrak gagal disubmit.')
+                throw new Error(err.message)
             }
             toast.success({
                 title: 'Berhasil',
@@ -848,8 +848,8 @@ export const usePegawaiStore = defineStore('pegawai', {
                 body: JSON.stringify({ remarks: remarks ?? '' }),
             })
             if (!response.ok) {
-                const err = await response.json().catch(() => ({ message: 'Gagal approve' }))
-                throw new Error(err.message || err.error || 'Gagal approve')
+                const err = await normalizeFailedResponse(response, 'Kontrak gagal disetujui.')
+                throw new Error(err.message)
             }
             const body = await response.json().catch(() => ({} as Record<string, unknown>))
             toast.success({
@@ -873,8 +873,8 @@ export const usePegawaiStore = defineStore('pegawai', {
                 body: JSON.stringify({ remarks }),
             })
             if (!response.ok) {
-                const err = await response.json().catch(() => ({ message: 'Gagal menolak' }))
-                throw new Error(err.message || err.error || 'Gagal menolak')
+                const err = await normalizeFailedResponse(response, 'Kontrak gagal ditolak.')
+                throw new Error(err.message)
             }
             toast.success({ title: 'Berhasil', message: 'Kontrak ditolak.', color: 'green' })
             await this.fetchPegawaiKontraks(pegawaiId)
@@ -889,8 +889,8 @@ export const usePegawaiStore = defineStore('pegawai', {
                 credentials: 'include',
             })
             if (!response.ok) {
-                const err = await response.json().catch(() => ({ message: 'Gagal membatalkan pengajuan' }))
-                throw new Error(err.message || err.error || 'Gagal membatalkan pengajuan')
+                const err = await normalizeFailedResponse(response, 'Pengajuan kontrak gagal dibatalkan.')
+                throw new Error(err.message)
             }
             toast.success({ title: 'Berhasil', message: 'Pengajuan kontrak dibatalkan.', color: 'green' })
             await this.fetchPegawaiKontraks(pegawaiId)

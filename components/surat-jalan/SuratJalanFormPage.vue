@@ -11,50 +11,45 @@
 
       <div class="card">
         <div class="card-body">
-          <form @submit.prevent="handleSubmit">
-            <div class="row">
-              <div class="col">
-                <ul class="nav nav-tabs" role="tablist">
-                  <li class="nav-item">
-                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#sj-form-tabs-info" role="tab" type="button">
-                      <span class="d-none d-sm-block">Informasi Surat Jalan</span>
-                    </button>
-                  </li>
-                  <li class="nav-item">
-                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#sj-form-tabs-items" role="tab" type="button">
-                      <span class="d-none d-sm-block">List Produk</span>
-                    </button>
-                  </li>
-                </ul>
-              </div>
-            </div>
+          <form ref="formRoot" @submit.prevent="onFormSubmit" novalidate>
+            <TabbedFormNav
+              :steps="visibleSteps"
+              :current-index="currentIndex"
+              :disabled="navigating || saving"
+              @select="goTo"
+            />
 
             <div class="tab-content pt-4">
-              <div class="tab-pane fade active show" id="sj-form-tabs-info" role="tabpanel">
+              <div id="sj-form-tabs-info" data-step-id="sj-form-tabs-info" role="tabpanel" :class="paneClass('sj-form-tabs-info')">
                 <div class="row g-4">
                   <div class="col-md-6">
                     <CustomSelect2 v-model="form.salesOrderId" :options="filteredSalesOrders" :get-option-label="getSalesOrderLabel" :reduce="option => option.id" placeholder="Pilih Sales Order" searchable clearable />
                   </div>
                   <div class="col-md-6">
+                    <FormLabel required>Customer</FormLabel>
                     <CustomSelect2 v-model="form.customerId" :options="customersOptions" :get-option-label="getCustomerLabel" :reduce="option => option?.id" placeholder="Pilih Customer" searchable clearable :disabled="!!form.salesOrderId" />
+                    <div v-if="uiErrors.customerId" class="invalid-feedback d-block">{{ uiErrors.customerId }}</div>
                   </div>
                   <div class="col-md-3">
                     <div class="form-floating form-floating-outline">
-                      <input type="date" v-model="form.date" class="form-control">
-                      <label>Tanggal Surat Jalan</label>
+                      <input id="sj-date" type="date" v-model="form.date" class="form-control" :class="{ 'is-invalid': uiErrors.date }" aria-required="true">
+                      <label for="sj-date">Tanggal Surat Jalan <span class="text-danger" aria-hidden="true">*</span></label>
                     </div>
+                    <div v-if="uiErrors.date" class="invalid-feedback d-block">{{ uiErrors.date }}</div>
                   </div>
                   <div class="col-md-3">
                     <div class="form-floating form-floating-outline">
-                      <input type="text" v-model="form.picName" class="form-control" placeholder="Nama PIC">
-                      <label>Nama PIC</label>
+                      <input id="sj-pic" type="text" v-model="form.picName" class="form-control" :class="{ 'is-invalid': uiErrors.picName }" placeholder="Nama PIC" aria-required="true">
+                      <label for="sj-pic">Nama PIC <span class="text-danger" aria-hidden="true">*</span></label>
                     </div>
+                    <div v-if="uiErrors.picName" class="invalid-feedback d-block">{{ uiErrors.picName }}</div>
                   </div>
                   <div class="col-md-6">
                     <div class="form-floating form-floating-outline">
-                      <input type="text" v-model="form.penerima" class="form-control" placeholder="Nama Penerima">
-                      <label>Nama Penerima</label>
+                      <input id="sj-penerima" type="text" v-model="form.penerima" class="form-control" :class="{ 'is-invalid': uiErrors.penerima }" placeholder="Nama Penerima" aria-required="true">
+                      <label for="sj-penerima">Nama Penerima <span class="text-danger" aria-hidden="true">*</span></label>
                     </div>
+                    <div v-if="uiErrors.penerima" class="invalid-feedback d-block">{{ uiErrors.penerima }}</div>
                   </div>
                   <div class="col-md-6 d-flex align-items-center">
                     <div class="form-check form-switch mt-3">
@@ -83,7 +78,7 @@
                 </div>
               </div>
 
-              <div class="tab-pane fade" id="sj-form-tabs-items" role="tabpanel">
+              <div id="sj-form-tabs-items" data-step-id="sj-form-tabs-items" role="tabpanel" :class="paneClass('sj-form-tabs-items')">
                 <div v-for="(item, index) in (form.suratJalanItems || [])" :key="index" class="repeater-item mb-4">
                   <div class="row g-3">
                     <div class="col-md-6">
@@ -122,13 +117,16 @@
               </div>
             </div>
 
-            <div class="d-flex justify-content-end gap-2 mt-4">
-              <button type="button" class="btn btn-outline-secondary" @click="navigateTo('/sales/surat-jalan')">Tutup</button>
-              <button type="submit" class="btn btn-primary" :disabled="saving">
-                <span v-if="saving" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                Simpan
-              </button>
-            </div>
+            <TabbedFormActions
+              :is-first-step="isFirstStep"
+              :is-last-step="isLastStep"
+              :loading="navigating"
+              :saving="saving"
+              cancel-label="Tutup"
+              @cancel="navigateTo('/sales/surat-jalan')"
+              @next="next"
+              @previous="previous"
+            />
           </form>
         </div>
       </div>
@@ -140,6 +138,11 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
+import TabbedFormNav from '~/components/form/TabbedFormNav.vue'
+import TabbedFormActions from '~/components/form/TabbedFormActions.vue'
+import FormLabel from '~/components/form/FormLabel.vue'
+import { useTabbedFormNavigation } from '~/composables/useTabbedFormNavigation'
+import { routeSaveFailure } from '~/utils/apiError'
 import { useSuratJalanStore } from '~/stores/surat-jalan'
 import { useCustomerStore } from '~/stores/customer'
 import { useWarehouseStore } from '~/stores/warehouse'
@@ -154,6 +157,43 @@ const salesOrderStore = useSalesOrderStore()
 const stocksStore = useStocksStore()
 
 const { form, isEditMode, saving } = storeToRefs(suratJalanStore)
+const formRoot = ref(null)
+const uiErrors = ref({})
+const formSteps = [
+  { id: 'sj-form-tabs-info', label: 'Informasi Surat Jalan', icon: 'ri-information-line' },
+  { id: 'sj-form-tabs-items', label: 'List Produk', icon: 'ri-box-3-line' },
+]
+function validateSuratJalanStep(step) {
+  uiErrors.value = {}
+  if (step.id !== 'sj-form-tabs-info') return true
+  if (!form.value?.customerId) uiErrors.value.customerId = 'Customer wajib dipilih.'
+  if (!form.value?.date) uiErrors.value.date = 'Tanggal Surat Jalan wajib diisi.'
+  if (!String(form.value?.picName || '').trim()) uiErrors.value.picName = 'Nama PIC wajib diisi.'
+  if (!String(form.value?.penerima || '').trim()) uiErrors.value.penerima = 'Nama Penerima wajib diisi.'
+  return Object.keys(uiErrors.value).length === 0
+}
+const {
+  currentIndex,
+  visibleSteps,
+  isFirstStep,
+  isLastStep,
+  navigating,
+  next,
+  previous,
+  goTo,
+  goToId,
+  paneClass,
+  validateAll,
+} = useTabbedFormNavigation({ steps: formSteps, formRoot, validateStep: validateSuratJalanStep })
+const SJ_FIELD_TABS = {
+  customerId: 'sj-form-tabs-info',
+  date: 'sj-form-tabs-info',
+  picName: 'sj-form-tabs-info',
+  penerima: 'sj-form-tabs-info',
+  suratJalanItems: 'sj-form-tabs-items',
+  productId: 'sj-form-tabs-items',
+  quantity: 'sj-form-tabs-items',
+}
 const { customers } = storeToRefs(customerStore)
 const { salesOrders, customerProducts } = storeToRefs(salesOrderStore)
 const { warehouses } = storeToRefs(warehouseStore)
@@ -240,9 +280,22 @@ watch(() => form.value.customerId, async (newCustomerId, oldCustomerId) => {
   }
 })
 
+const onFormSubmit = async () => {
+  if (!isLastStep.value) {
+    await next()
+    return
+  }
+  if (!(await validateAll())) return
+  await handleSubmit()
+}
+
 const handleSubmit = async () => {
   const ok = await suratJalanStore.saveSuratJalan()
-  if (ok) navigateTo('/sales/surat-jalan')
+  if (ok) {
+    navigateTo('/sales/surat-jalan')
+    return
+  }
+  routeSaveFailure(suratJalanStore.validationErrors, uiErrors.value, SJ_FIELD_TABS, goToId)
 }
 
 onMounted(async () => {

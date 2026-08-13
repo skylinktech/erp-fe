@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { useNuxtApp } from '#app'
 import { apiFetch } from '~/utils/apiFetch'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 
 /* ------------------------------------------------------------------
  * Type
@@ -427,11 +428,16 @@ export const useCutiStore = defineStore('cuti', {
           credentials: 'include',
           body: fd,
         })
-        const result = await res.json().catch(() => ({} as any))
         if (!res.ok) {
-          if (result?.errors) this.validationErrors = result.errors
-          throw new Error(result?.message || 'Gagal menyimpan pengajuan cuti')
+          const err = await normalizeFailedResponse(
+            res,
+            this.isEditMode ? 'Cuti gagal diperbarui.' : 'Cuti gagal dibuat.'
+          )
+          this.validationErrors = err.fieldErrorList
+          toastNormalizedError(err)
+          return null
         }
+        const result = await res.json().catch(() => ({} as any))
         toast.success({
           title: 'Berhasil',
           message: result?.message || (this.isEditMode ? 'Cuti diperbarui' : 'Cuti dibuat'),
@@ -440,11 +446,8 @@ export const useCutiStore = defineStore('cuti', {
         await Promise.all([this.fetchCutis(), this.fetchStats()])
         return result?.data as CutiRow
       } catch (error: any) {
-        toast.error({
-          title: 'Error',
-          message: error.message || String(error),
-          color: 'red',
-        })
+        const err = normalizeApiError(error, 'Cuti gagal disimpan.')
+        toastNormalizedError(err)
         return null
       } finally {
         this.saving = false
@@ -463,11 +466,8 @@ export const useCutiStore = defineStore('cuti', {
         await Promise.all([this.fetchCutis(), this.fetchStats()])
         return true
       } catch (error: any) {
-        toast.error({
-          title: 'Error',
-          message: error?.data?.message || error?.message || 'Gagal menghapus pengajuan cuti',
-          color: 'red',
-        })
+        const err = normalizeApiError(error, 'Cuti gagal dihapus.')
+        toastNormalizedError(err)
         return false
       }
     },
@@ -517,11 +517,16 @@ export const useCutiStore = defineStore('cuti', {
         await Promise.all([this.fetchCutis(), this.fetchStats()])
         return true
       } catch (error: any) {
-        toast.error({
-          title: 'Error',
-          message: error?.data?.message || error?.message || 'Aksi gagal',
-          color: 'red',
-        })
+        const fallback =
+          apiKey === 'cutiApprove'
+            ? 'Cuti gagal disetujui.'
+            : apiKey === 'cutiReject'
+              ? 'Cuti gagal ditolak.'
+              : apiKey === 'cutiSubmitApproval'
+                ? 'Cuti gagal disubmit.'
+                : 'Cuti gagal dibatalkan.'
+        const err = normalizeApiError(error, fallback)
+        toastNormalizedError(err)
         return false
       }
     },

@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import { apiFetch } from '~/utils/apiFetch'
+import { getApiErrorMessage } from '~/utils/apiError'
 
 export type TopDashboardRow = {
   dashboardCode: string
@@ -48,10 +49,6 @@ export type WidgetAnalyticsDetail = {
   usedInDashboards: { dashboardCode: string; views: number }[]
 }
 
-function extractErrorMessage(err: any, fallback: string): string {
-  return err?.data?.message || err?.response?._data?.message || err?.message || fallback
-}
-
 /** Widget & Dashboard Analytics — client admin (halaman overview & detail). */
 export function useDashboardAnalyticsAdmin() {
   const loading = ref(false)
@@ -66,7 +63,7 @@ export function useDashboardAnalyticsAdmin() {
         params: { days },
       })
     } catch (err: any) {
-      error.value = extractErrorMessage(err, 'Gagal memuat ringkasan analytics')
+      error.value = getApiErrorMessage(err, 'Gagal memuat ringkasan analytics')
       return null
     } finally {
       loading.value = false
@@ -85,7 +82,7 @@ export function useDashboardAnalyticsAdmin() {
         params: { days },
       })
     } catch (err: any) {
-      error.value = extractErrorMessage(err, 'Gagal memuat analytics dashboard')
+      error.value = getApiErrorMessage(err, 'Gagal memuat analytics dashboard')
       return null
     } finally {
       loading.value = false
@@ -104,7 +101,7 @@ export function useDashboardAnalyticsAdmin() {
         params: { days },
       })
     } catch (err: any) {
-      error.value = extractErrorMessage(err, 'Gagal memuat analytics widget')
+      error.value = getApiErrorMessage(err, 'Gagal memuat analytics widget')
       return null
     } finally {
       loading.value = false

@@ -152,7 +152,7 @@
                                         placeholder="Masukkan kode perusahaan"
                                         
                                     >
-                                    <label for="kodePerusahaan">Kode Perusahaan</label>
+                                    <label for="kodePerusahaan">Kode Perusahaan <span class="text-danger" aria-hidden="true">*</span></label>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -165,7 +165,7 @@
                                         placeholder="Masukkan nama perusahaan"
                                         :class="{ 'is-invalid': hasFieldError('nmPerusahaan') }"
                                     >
-                                    <label for="nmPerusahaan">Nama Perusahaan</label>
+                                    <label for="nmPerusahaan">Nama Perusahaan <span class="text-danger" aria-hidden="true">*</span></label>
                                     <div v-if="hasFieldError('nmPerusahaan')" class="invalid-feedback">
                                         {{ getFieldError('nmPerusahaan') }}
                                     </div>
@@ -180,7 +180,7 @@
                                         v-model="form.tlpPerusahaan"
                                         placeholder="Masukkan no telp perusahaan"
                                     >
-                                    <label for="tlpPerusahaan">No. Telp Perusahaan</label>
+                                    <label for="tlpPerusahaan">No. Telp Perusahaan <span class="text-danger" aria-hidden="true">*</span></label>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -193,7 +193,7 @@
                                         placeholder="Masukkan email perusahaan"
                                         :class="{ 'is-invalid': hasFieldError('emailPerusahaan') }"
                                     >
-                                    <label for="emailPerusahaan">Email Perusahaan</label>
+                                    <label for="emailPerusahaan">Email Perusahaan <span class="text-danger" aria-hidden="true">*</span></label>
                                     <div v-if="hasFieldError('emailPerusahaan')" class="invalid-feedback">
                                         {{ getFieldError('emailPerusahaan') }}
                                     </div>
@@ -209,7 +209,7 @@
                                     placeholder="Masukkan npwp perusahaan"
                                     
                                     >
-                                    <label for="npwpPerusahaan">NPWP Perusahaan</label>
+                                    <label for="npwpPerusahaan">NPWP Perusahaan <span class="text-danger" aria-hidden="true">*</span></label>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -246,7 +246,7 @@
                                         placeholder="Alamat Perusahaan"
                                         v-model="form.alamatPerusahaan">
                                     </textarea>
-                                    <label for="alamatPerusahaan">Alamat Perusahaan</label>
+                                    <label for="alamatPerusahaan">Alamat Perusahaan <span class="text-danger" aria-hidden="true">*</span></label>
                                 </div>
                             </div>
                             <div class="modal-footer mt-6">

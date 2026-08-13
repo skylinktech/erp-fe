@@ -20,49 +20,25 @@
         <div class="col-xl-8 col-12">
           <div class="card">
             <div class="card-body">
-              <form @submit.prevent="handleSubmit" novalidate>
+              <form ref="formRoot" @submit.prevent="onFormSubmit" novalidate>
             <div v-if="validationErrors?.length" class="alert alert-warning mb-4">
               <ul class="mb-0 ps-3">
-                <li v-for="(error, index) in validationErrors" :key="index">{{ JSON.stringify(error) }}</li>
+                <li v-for="(error, index) in validationErrors" :key="index">{{ error?.message || error }}</li>
               </ul>
             </div>
-            <div class="row">
-              <div class="col">
-                <ul class="nav nav-tabs" role="tablist">
-                  <li class="nav-item">
-                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#si-tab-info" role="tab" type="button">
-                      <span class="d-none d-sm-block">Informasi</span>
-                      <span class="d-sm-none ri-information-line"></span>
-                    </button>
-                  </li>
-                  <li class="nav-item">
-                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#si-tab-materials" role="tab" type="button">
-                      <span class="d-none d-sm-block">Material/Product</span>
-                      <span class="d-sm-none ri-box-3-line"></span>
-                    </button>
-                  </li>
-                  <li class="nav-item">
-                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#si-tab-services" role="tab" type="button">
-                      <span class="d-none d-sm-block">Services</span>
-                      <span class="d-sm-none ri-service-line"></span>
-                    </button>
-                  </li>
-                  <li class="nav-item">
-                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#si-tab-dids" role="tab" type="button">
-                      <span class="d-none d-sm-block">DID</span>
-                      <span class="d-sm-none ri-phone-line"></span>
-                    </button>
-                  </li>
-                </ul>
-              </div>
-            </div>
+            <TabbedFormNav
+              :steps="visibleSteps"
+              :current-index="currentIndex"
+              :disabled="navigating || saving"
+              @select="goTo"
+            />
 
             <div class="tab-content pt-4">
-              <div id="si-tab-info" class="tab-pane fade show active" role="tabpanel">
+              <div id="si-tab-info" data-step-id="si-tab-info" class="tab-pane fade" role="tabpanel" :class="paneClass('si-tab-info')">
                 <div class="row g-3">
                   <div class="col-md-6">
-                    <label class="form-label">Nama Site Investment</label>
-                    <input v-model="form.name" class="form-control" :class="{ 'is-invalid': uiErrors.name }" placeholder="Nama Site Investment">
+                    <FormLabel required html-for="si-name">Nama Site Investment</FormLabel>
+                    <input id="si-name" v-model="form.name" class="form-control" :class="{ 'is-invalid': uiErrors.name }" placeholder="Nama Site Investment" aria-required="true">
                     <div v-if="uiErrors.name" class="invalid-feedback d-block">{{ uiErrors.name }}</div>
                   </div>
                   <div class="col-md-6">
@@ -88,8 +64,8 @@
                     <small class="text-muted">Pilih Price List untuk autofill material, service, dan DID.</small>
                   </div>
                   <div class="col-md-4">
-                    <label class="form-label">Lokasi</label>
-                    <input v-model="form.location" class="form-control" :class="{ 'is-invalid': uiErrors.location }" placeholder="Lokasi">
+                    <FormLabel required html-for="si-location">Lokasi</FormLabel>
+                    <input id="si-location" v-model="form.location" class="form-control" :class="{ 'is-invalid': uiErrors.location }" placeholder="Lokasi" aria-required="true">
                     <div v-if="uiErrors.location" class="invalid-feedback d-block">{{ uiErrors.location }}</div>
                   </div>
                   <div class="col-md-2">
@@ -101,12 +77,13 @@
                     <input type="date" v-model="form.siDate" class="form-control">
                   </div>
                   <div class="col-md-3">
-                    <label class="form-label">Estimasi Mulai</label>
-                    <input type="date" v-model="form.estimatedStartDate" class="form-control">
+                    <FormLabel html-for="si-est-start">Estimasi Mulai</FormLabel>
+                    <input id="si-est-start" type="date" v-model="form.estimatedStartDate" class="form-control">
                   </div>
                   <div class="col-md-3">
-                    <label class="form-label">Estimasi Selesai</label>
-                    <input type="date" v-model="form.estimatedCompletionDate" class="form-control">
+                    <FormLabel html-for="si-est-end">Estimasi Selesai</FormLabel>
+                    <input id="si-est-end" type="date" v-model="form.estimatedCompletionDate" class="form-control" :class="{ 'is-invalid': uiErrors.estimatedCompletionDate }">
+                    <div v-if="uiErrors.estimatedCompletionDate" class="invalid-feedback d-block">{{ uiErrors.estimatedCompletionDate }}</div>
                   </div>
                   <div class="col-md-3">
                     <label class="form-label">Latitude</label>
@@ -177,7 +154,7 @@
               </div>
 
               <!-- ── TAB MATERIAL ── -->
-              <div id="si-tab-materials" class="tab-pane fade" role="tabpanel">
+              <div id="si-tab-materials" data-step-id="si-tab-materials" class="tab-pane fade" role="tabpanel" :class="paneClass('si-tab-materials')">
                 <div v-if="uiErrors.siteInvestMaterials" class="alert alert-danger py-2 mb-3"><i class="ri-error-warning-line me-1"></i>{{ uiErrors.siteInvestMaterials }}</div>
                 <div class="repeater-table">
                   <div class="repeater-table-head d-none d-md-grid repeater-cols-4">
@@ -218,7 +195,7 @@
               </div>
 
               <!-- ── TAB SERVICE ── -->
-              <div id="si-tab-services" class="tab-pane fade" role="tabpanel">
+              <div id="si-tab-services" data-step-id="si-tab-services" class="tab-pane fade" role="tabpanel" :class="paneClass('si-tab-services')">
                 <div v-if="uiErrors.siteInvestServices" class="alert alert-danger py-2 mb-3"><i class="ri-error-warning-line me-1"></i>{{ uiErrors.siteInvestServices }}</div>
                 <div class="repeater-table">
                   <div class="repeater-table-head d-none d-md-grid repeater-cols-4">
@@ -259,7 +236,7 @@
               </div>
 
               <!-- ── TAB DID ── -->
-              <div id="si-tab-dids" class="tab-pane fade" role="tabpanel">
+              <div id="si-tab-dids" data-step-id="si-tab-dids" class="tab-pane fade" role="tabpanel" :class="paneClass('si-tab-dids')">
                 <div v-if="uiErrors.siteInvestDids" class="alert alert-danger py-2 mb-3"><i class="ri-error-warning-line me-1"></i>{{ uiErrors.siteInvestDids }}</div>
                 <div class="mb-3">
                   <label class="form-label fw-semibold text-muted small text-uppercase">Filter Price List DID</label>
@@ -305,10 +282,15 @@
 
             </div>
 
-                <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
-                  <NuxtLink to="/sales/site-investment" class="btn btn-outline-secondary">Batal</NuxtLink>
-                  <button type="submit" class="btn btn-primary" :disabled="saving">{{ saving ? 'Menyimpan...' : 'Simpan' }}</button>
-                </div>
+                <TabbedFormActions
+                  :is-first-step="isFirstStep"
+                  :is-last-step="isLastStep"
+                  :loading="navigating"
+                  :saving="saving"
+                  cancel-href="/sales/site-investment"
+                  @next="next"
+                  @previous="previous"
+                />
               </form>
             </div>
           </div>
@@ -354,6 +336,10 @@ import { useSiteInvestStore } from '~/stores/site-invest'
 import { useFdrStore } from '~/stores/fdr'
 import { useCustomerStore } from '~/stores/customer'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
+import TabbedFormNav from '~/components/form/TabbedFormNav.vue'
+import TabbedFormActions from '~/components/form/TabbedFormActions.vue'
+import FormLabel from '~/components/form/FormLabel.vue'
+import { useTabbedFormNavigation } from '~/composables/useTabbedFormNavigation'
 import {
   getLinePriceListId,
   getDidLineLabel,
@@ -361,6 +347,7 @@ import {
   filterLinesByPriceListId,
 } from '~/utils/priceListLines'
 import { lineSubtotal } from '~/utils/lineSubtotal'
+import { firstErrorTab } from '~/utils/apiError'
 
 const route = useRoute()
 const siteInvestStore = useSiteInvestStore()
@@ -369,8 +356,39 @@ const customerStore = useCustomerStore()
 const formatRupiah = useFormatRupiah()
 const toast = useToast()
 const uiErrors = ref({})
+const SI_FIELD_TABS = {
+  name: 'si-tab-info',
+  location: 'si-tab-info',
+  siteInvestMaterials: 'si-tab-materials',
+  siteInvestServices: 'si-tab-services',
+  siteInvestDids: 'si-tab-dids',
+}
 
 const { loading, saving, form, isEditMode, validationErrors } = storeToRefs(siteInvestStore)
+const formRoot = ref(null)
+const formSteps = [
+  { id: 'si-tab-info', label: 'Informasi', icon: 'ri-information-line' },
+  { id: 'si-tab-materials', label: 'Material/Product', icon: 'ri-box-3-line' },
+  { id: 'si-tab-services', label: 'Services', icon: 'ri-service-line' },
+  { id: 'si-tab-dids', label: 'DID', icon: 'ri-phone-line' },
+]
+const {
+  currentIndex,
+  visibleSteps,
+  isFirstStep,
+  isLastStep,
+  navigating,
+  next,
+  previous,
+  goTo,
+  goToId,
+  paneClass,
+  validateAll,
+} = useTabbedFormNavigation({
+  steps: formSteps,
+  formRoot,
+  validateStep: validateSiteInvestStep,
+})
 const { customers } = storeToRefs(customerStore)
 
 const quotationId = computed(() => route.params.id ? String(route.params.id) : null)
@@ -474,11 +492,53 @@ function isModuleNavActive(to) {
 }
 
 function activateTab(tabId) {
-  if (typeof window === 'undefined') return
-  const trigger = document.querySelector(`button[data-bs-target="#${tabId}"]`)
-  if (!trigger || !window.bootstrap?.Tab) return
-  const tab = new window.bootstrap.Tab(trigger)
-  tab.show()
+  void goToId(tabId, { skipValidation: true })
+}
+
+function validateSiteInvestStep(step) {
+  if (step.id === 'si-tab-info') {
+    uiErrors.value = {}
+    if (!String(form.value?.name || '').trim()) {
+      uiErrors.value.name = 'Nama Site Investment wajib diisi'
+    }
+    if (!String(form.value?.location || '').trim()) {
+      uiErrors.value.location = 'Lokasi wajib diisi'
+    }
+    const start = String(form.value?.estimatedStartDate || '')
+    const end = String(form.value?.estimatedCompletionDate || '')
+    if (start && end && end < start) {
+      uiErrors.value.estimatedCompletionDate = 'Estimasi Selesai tidak boleh lebih awal dari Estimasi Mulai.'
+    }
+    return !uiErrors.value.name && !uiErrors.value.location && !uiErrors.value.estimatedCompletionDate
+  }
+  if (step.id === 'si-tab-materials') {
+    const materials = Array.isArray(form.value?.siteInvestMaterials) ? form.value.siteInvestMaterials : []
+    const materialInvalid = materials.some((item) => (Number(item?.quantity) || 0) > 0 && Number(item?.priceListLineId || 0) <= 0)
+    if (materialInvalid) {
+      uiErrors.value = { ...uiErrors.value, siteInvestMaterials: 'Material dengan quantity > 0 wajib memilih price list line' }
+      return false
+    }
+    return true
+  }
+  if (step.id === 'si-tab-services') {
+    const services = Array.isArray(form.value?.siteInvestServices) ? form.value.siteInvestServices : []
+    const serviceInvalid = services.some((item) => (Number(item?.quantity) || 0) > 0 && Number(item?.priceListLineId || 0) <= 0)
+    if (serviceInvalid) {
+      uiErrors.value = { ...uiErrors.value, siteInvestServices: 'Service dengan quantity > 0 wajib memilih price list line' }
+      return false
+    }
+    return true
+  }
+  if (step.id === 'si-tab-dids') {
+    const dids = Array.isArray(form.value?.siteInvestDids) ? form.value.siteInvestDids : []
+    const didInvalid = dids.some((item) => (Number(item?.quantity) || 0) > 0 && Number(item?.priceListLineId || 0) <= 0)
+    if (didInvalid) {
+      uiErrors.value = { ...uiErrors.value, siteInvestDids: 'DID dengan quantity > 0 wajib memilih price list line' }
+      return false
+    }
+    return true
+  }
+  return true
 }
 
 function validateBeforeSubmit() {
@@ -492,6 +552,12 @@ function validateBeforeSubmit() {
   if (!String(form.value?.location || '').trim()) {
     errors.push({ field: 'location', message: 'Lokasi wajib diisi' })
     uiErrors.value.location = 'Lokasi wajib diisi'
+  }
+  const start = String(form.value?.estimatedStartDate || '')
+  const end = String(form.value?.estimatedCompletionDate || '')
+  if (start && end && end < start) {
+    errors.push({ field: 'estimatedCompletionDate', message: 'Estimasi Selesai tidak boleh lebih awal dari Estimasi Mulai.' })
+    uiErrors.value.estimatedCompletionDate = 'Estimasi Selesai tidak boleh lebih awal dari Estimasi Mulai.'
   }
   if (errors.length > 0) {
     activateTab('si-tab-info')
@@ -910,6 +976,15 @@ async function initForm() {
   await ensureDidLinesForSelectedPriceList()
 }
 
+async function onFormSubmit() {
+  if (!isLastStep.value) {
+    await next()
+    return
+  }
+  if (!(await validateAll())) return
+  await handleSubmit()
+}
+
 async function handleSubmit() {
   const preErrors = validateBeforeSubmit()
   if (preErrors.length > 0) {
@@ -925,7 +1000,15 @@ async function handleSubmit() {
   }
 
   form.value.marketingFee = parseRupiahToNumber(form.value.marketingFee) || 0
-  await siteInvestStore.saveSiteInvest({ navigateToList: true })
+  const saved = await siteInvestStore.saveSiteInvest({ navigateToList: true })
+  if (!saved) {
+    const list = Array.isArray(siteInvestStore.validationErrors) ? siteInvestStore.validationErrors : []
+    for (const item of list) {
+      if (item?.field && item?.message) uiErrors.value[item.field] = item.message
+    }
+    const tab = firstErrorTab(list, SI_FIELD_TABS)
+    if (tab) activateTab(tab)
+  }
 }
 
 onMounted(async () => {

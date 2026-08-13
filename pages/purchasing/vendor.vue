@@ -94,7 +94,7 @@
                 :validation-errors-from-parent="validationErrors"
             >
                 <template #default>
-                    <form @submit.prevent="vendorStore.saveVendor()">
+                    <form @submit.prevent="onSubmitVendor">
                         <div class="row g-4">
                             <div class="col-md-6">
                                 <div class="form-floating form-floating-outline">
@@ -127,7 +127,7 @@
                                         placeholder="Masukkan nama vendor"
                                         
                                     >
-                                    <label>Nama Vendor</label>
+                                    <label>Nama Vendor <span class="text-danger" aria-hidden="true">*</span></label>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -139,7 +139,7 @@
                                         placeholder="Masukkan email vendor"
                                         
                                     >
-                                    <label>Email Vendor</label>
+                                    <label>Email Vendor <span class="text-danger" aria-hidden="true">*</span></label>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -151,7 +151,7 @@
                                     placeholder="Masukkan no. telp vendor"
                                     
                                     >
-                                    <label>No. Telp Vendor</label>
+                                    <label>No. Telp Vendor <span class="text-danger" aria-hidden="true">*</span></label>
                                 </div>
                             </div>
                             <div class="col-md-12">
@@ -172,7 +172,7 @@
                                         placeholder="Alamat Vendor"
                                         v-model="form.address">
                                     </textarea>
-                                    <label>Alamat Vendor</label>
+                                    <label>Alamat Vendor <span class="text-danger" aria-hidden="true">*</span></label>
                                 </div>
                             </div>
                         </div>
@@ -261,6 +261,36 @@ const onSort = (event) => vendorStore.setSort(event)
 
 const exportData = (format) => {
   if (format === 'csv') myDataTableRef.value.exportCSV()
+}
+
+function isEmptyVendorField(value) {
+  return value === null || value === undefined || String(value).trim() === ''
+}
+
+function onSubmitVendor() {
+  const toast = useToast()
+  const f = form.value
+  if (isEmptyVendorField(f.name)) {
+    toast.error({ title: 'Validasi', message: 'Nama Vendor wajib diisi.', color: 'red' })
+    return
+  }
+  if (isEmptyVendorField(f.email)) {
+    toast.error({ title: 'Validasi', message: 'Email Vendor wajib diisi.', color: 'red' })
+    return
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(f.email).trim())) {
+    toast.error({ title: 'Validasi', message: 'Email harus menggunakan format email yang valid.', color: 'red' })
+    return
+  }
+  if (isEmptyVendorField(f.phone)) {
+    toast.error({ title: 'Validasi', message: 'No. Telp Vendor wajib diisi.', color: 'red' })
+    return
+  }
+  if (isEmptyVendorField(f.address)) {
+    toast.error({ title: 'Validasi', message: 'Alamat Vendor wajib diisi.', color: 'red' })
+    return
+  }
+  vendorStore.saveVendor()
 }
 
 function onLogoChange(e) {

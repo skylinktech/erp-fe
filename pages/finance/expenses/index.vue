@@ -290,7 +290,7 @@
                                     placeholder="Masukkan nomor referensi"
                                     
                                 >
-                                <label>No. Referensi *</label>
+                                <label>No. Referensi <span class="text-danger" aria-hidden="true">*</span></label>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -301,7 +301,7 @@
                                     v-model="form.date" 
                                     
                                 >
-                                <label>Tanggal *</label>
+                                <label>Tanggal <span class="text-danger" aria-hidden="true">*</span></label>
                             </div>
                         </div>
                         <div class="col-md-12">
@@ -313,7 +313,7 @@
                                     placeholder="Masukkan deskripsi pengeluaran"
                                     
                                 >
-                                <label>Deskripsi *</label>
+                                <label>Deskripsi <span class="text-danger" aria-hidden="true">*</span></label>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -327,7 +327,7 @@
                                     min="0"
                                     
                                 >
-                                <label>Jumlah *</label>
+                                <label>Jumlah <span class="text-danger" aria-hidden="true">*</span></label>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -342,7 +342,7 @@
                                         {{ method.label }}
                                     </option>
                                 </select>
-                                <label>Metode Pembayaran *</label>
+                                <label>Metode Pembayaran <span class="text-danger" aria-hidden="true">*</span></label>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -357,7 +357,7 @@
                                         {{ dept.nmDepartemen }}
                                     </option>
                                 </select>
-                                <label>Departemen *</label>
+                                <label>Departemen <span class="text-danger" aria-hidden="true">*</span></label>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -372,7 +372,7 @@
                                         {{ account.accountName }} - {{ account.accountNumber }}
                                     </option>
                                 </select>
-                                <label>Rekening Bank *</label>
+                                <label>Rekening Bank <span class="text-danger" aria-hidden="true">*</span></label>
                             </div>
                         </div>
                     </div>

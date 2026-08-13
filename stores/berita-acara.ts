@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { apiFetch } from '~/utils/apiFetch'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 import Swal from 'sweetalert2'
 import { useNuxtApp } from '#app'
 import { useUserStore } from '~/stores/user'
@@ -74,6 +75,7 @@ interface BeritaAcaraState {
   saving: boolean
   sending: boolean
   error: any
+  validationErrors: any[]
   totalRecords: number
   params: {
     first: number
@@ -144,6 +146,7 @@ export const useBeritaAcaraStore = defineStore('beritaAcara', {
     saving: false,
     sending: false,
     error: null,
+    validationErrors: [],
     totalRecords: 0,
     params: {
       first: 0,
@@ -284,14 +287,12 @@ export const useBeritaAcaraStore = defineStore('beritaAcara', {
           body: JSON.stringify(body),
         })
         if (!res.ok) {
-          const ed = await res.json().catch(() => ({}))
-          toast.error({
-            title: 'Error',
-            message: ed.message || 'Gagal menyimpan',
-            color: 'red',
-            position: 'bottomRight',
-            layout: 2,
-          })
+          const err = await normalizeFailedResponse(
+            res,
+            isEdit ? 'Berita Acara gagal diperbarui.' : 'Berita Acara gagal dibuat.'
+          )
+          this.validationErrors = err.fieldErrorList
+          toastNormalizedError(err)
           return false
         }
         const result = await res.json()
@@ -304,13 +305,8 @@ export const useBeritaAcaraStore = defineStore('beritaAcara', {
         })
         return result?.data?.id ?? true
       } catch (e: any) {
-        toast.error({
-          title: 'Error',
-          message: e.message,
-          color: 'red',
-          position: 'bottomRight',
-          layout: 2,
-        })
+        const err = normalizeApiError(e, 'Berita Acara gagal disimpan.')
+        toastNormalizedError(err)
         return false
       } finally {
         this.saving = false
@@ -339,7 +335,11 @@ export const useBeritaAcaraStore = defineStore('beritaAcara', {
           headers: { Accept: 'application/json' },
           credentials: 'include',
         })
-        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message)
+        if (!res.ok) {
+          const err = await normalizeFailedResponse(res, 'Berita Acara gagal dihapus.')
+          toastNormalizedError(err)
+          return false
+        }
         await this.fetchBeritaAcaras()
         await this.fetchStatistics()
         toast.success({
@@ -350,13 +350,8 @@ export const useBeritaAcaraStore = defineStore('beritaAcara', {
           layout: 2,
         })
       } catch (e: any) {
-        toast.error({
-          title: 'Error',
-          message: e.message,
-          color: 'red',
-          position: 'bottomRight',
-          layout: 2,
-        })
+        const err = normalizeApiError(e, 'Berita Acara gagal dihapus.')
+        toastNormalizedError(err)
       } finally {
         this.loading = false
       }
@@ -371,7 +366,11 @@ export const useBeritaAcaraStore = defineStore('beritaAcara', {
           headers: { Accept: 'application/json' },
           credentials: 'include',
         })
-        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message)
+        if (!res.ok) {
+          const err = await normalizeFailedResponse(res, 'Berita Acara gagal disubmit.')
+          toastNormalizedError(err)
+          return false
+        }
         await this.fetchBeritaAcaras()
         await this.fetchStatistics()
         toast.success({
@@ -383,13 +382,8 @@ export const useBeritaAcaraStore = defineStore('beritaAcara', {
         })
         return true
       } catch (e: any) {
-        toast.error({
-          title: 'Error',
-          message: e.message,
-          color: 'red',
-          position: 'bottomRight',
-          layout: 2,
-        })
+        const err = normalizeApiError(e, 'Berita Acara gagal disubmit.')
+        toastNormalizedError(err)
         return false
       }
     },
@@ -417,7 +411,11 @@ export const useBeritaAcaraStore = defineStore('beritaAcara', {
           credentials: 'include',
           body: JSON.stringify({ remarks }),
         })
-        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message)
+        if (!res.ok) {
+          const err = await normalizeFailedResponse(res, 'Berita Acara gagal disetujui.')
+          toastNormalizedError(err)
+          return false
+        }
         const json = await res.json().catch(() => ({}))
         await this.fetchBeritaAcaras()
         await this.fetchStatistics()
@@ -430,13 +428,8 @@ export const useBeritaAcaraStore = defineStore('beritaAcara', {
         })
         return true
       } catch (e: any) {
-        toast.error({
-          title: 'Error',
-          message: e.message,
-          color: 'red',
-          position: 'bottomRight',
-          layout: 2,
-        })
+        const err = normalizeApiError(e, 'Berita Acara gagal disetujui.')
+        toastNormalizedError(err)
         return false
       }
     },
@@ -451,7 +444,11 @@ export const useBeritaAcaraStore = defineStore('beritaAcara', {
           credentials: 'include',
           body: JSON.stringify({ rejection_reason: reason }),
         })
-        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message)
+        if (!res.ok) {
+          const err = await normalizeFailedResponse(res, 'Berita Acara gagal ditolak.')
+          toastNormalizedError(err)
+          return false
+        }
         await this.fetchBeritaAcaras()
         await this.fetchStatistics()
         toast.success({
@@ -463,13 +460,8 @@ export const useBeritaAcaraStore = defineStore('beritaAcara', {
         })
         return true
       } catch (e: any) {
-        toast.error({
-          title: 'Error',
-          message: e.message,
-          color: 'red',
-          position: 'bottomRight',
-          layout: 2,
-        })
+        const err = normalizeApiError(e, 'Berita Acara gagal ditolak.')
+        toastNormalizedError(err)
         return false
       }
     },
@@ -483,7 +475,11 @@ export const useBeritaAcaraStore = defineStore('beritaAcara', {
           headers: { Accept: 'application/json' },
           credentials: 'include',
         })
-        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message)
+        if (!res.ok) {
+          const err = await normalizeFailedResponse(res, 'Berita Acara gagal diselesaikan.')
+          toastNormalizedError(err)
+          return false
+        }
         await this.fetchBeritaAcaras()
         await this.fetchStatistics()
         toast.success({
@@ -495,13 +491,8 @@ export const useBeritaAcaraStore = defineStore('beritaAcara', {
         })
         return true
       } catch (e: any) {
-        toast.error({
-          title: 'Error',
-          message: e.message,
-          color: 'red',
-          position: 'bottomRight',
-          layout: 2,
-        })
+        const err = normalizeApiError(e, 'Berita Acara gagal diselesaikan.')
+        toastNormalizedError(err)
         return false
       }
     },
@@ -542,10 +533,12 @@ export const useBeritaAcaraStore = defineStore('beritaAcara', {
           credentials: 'include',
         })
 
-        const result = await response.json().catch(() => ({}))
         if (!response.ok) {
-          throw new Error(result.message || `HTTP ${response.status}`)
+          const err = await normalizeFailedResponse(response, 'Berita Acara gagal dikirim.')
+          toastNormalizedError(err)
+          return false
         }
+        const result = await response.json().catch(() => ({}))
 
         const sentAt = result.data?.sentAt || new Date().toISOString()
         this.applySentAt(id, sentAt)
@@ -558,12 +551,8 @@ export const useBeritaAcaraStore = defineStore('beritaAcara', {
         })
         return true
       } catch (error: any) {
-        useToast().error({
-          title: 'Error',
-          message: error.message || 'Gagal mengirim Berita Acara',
-          color: 'red',
-          position: 'bottomRight',
-        })
+        const err = normalizeApiError(error, 'Berita Acara gagal dikirim.')
+        toastNormalizedError(err)
         return false
       } finally {
         this.sending = false
@@ -673,12 +662,8 @@ export const useBeritaAcaraStore = defineStore('beritaAcara', {
 
         return data
       } catch (error: any) {
-        useToast().error({
-          title: 'Error',
-          message: error.message || 'Gagal mengirim Berita Acara bulk',
-          color: 'red',
-          position: 'bottomRight',
-        })
+        const err = normalizeApiError(error, 'Berita Acara gagal dikirim.')
+        toastNormalizedError(err)
         return null
       } finally {
         this.sending = false

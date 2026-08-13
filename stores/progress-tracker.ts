@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { apiFetch } from '~/utils/apiFetch'
+import { normalizeApiError } from '~/utils/apiError'
 import Swal from 'sweetalert2'
 import { useNuxtApp } from '#app'
 import {
@@ -422,6 +423,12 @@ export const useProgressTrackerStore = defineStore('progressTracker', {
           showConfirmButton: false,
         })
         return data?.id ?? this.form.id
+      } catch (e: any) {
+        const err = normalizeApiError(
+          e,
+          this.isEditMode ? 'Progress Tracker gagal diperbarui.' : 'Progress Tracker gagal dibuat.'
+        )
+        throw new Error(err.message)
       } finally {
         this.saving = false
       }
@@ -438,9 +445,14 @@ export const useProgressTrackerStore = defineStore('progressTracker', {
         cancelButtonText: 'Batal',
       })
       if (!confirm.isConfirmed) return false
-      await apiFetch($api.progressTrackerShow(id), { method: 'DELETE' })
-      await Swal.fire({ icon: 'success', title: 'Terhapus', timer: 1500, showConfirmButton: false })
-      return true
+      try {
+        await apiFetch($api.progressTrackerShow(id), { method: 'DELETE' })
+        await Swal.fire({ icon: 'success', title: 'Terhapus', timer: 1500, showConfirmButton: false })
+        return true
+      } catch (e: any) {
+        const err = normalizeApiError(e, 'Progress Tracker gagal dihapus.')
+        throw new Error(err.message)
+      }
     },
 
     async updateNodeStatus(

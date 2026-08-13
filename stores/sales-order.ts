@@ -1,5 +1,6 @@
 import { defineStore, storeToRefs } from 'pinia'
 import { apiFetch } from '~/utils/apiFetch'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 import Swal from 'sweetalert2'
 import { useNuxtApp } from '#app'
 import { useImageUrl } from '~/composables/useImageUrl'
@@ -480,18 +481,20 @@ export const useSalesOrderStore = defineStore('salesOrder', {
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
-                if (response.status === 422) {
-                    this.validationErrors = errorData.errors;
-                    const toast = useToast();
-                    toast.error({
-                      title: 'Error',
-                      message: 'Gagal Validasi',
-                      color: 'red'
-                    });
-                } else {
-                    throw new Error(errorData.message || 'Gagal menyimpan data salesOrder');
-                }
+                const err = await normalizeFailedResponse(
+                    response,
+                    this.isEditMode ? 'Sales Order gagal diperbarui.' : 'Sales Order gagal dibuat.'
+                )
+                this.validationErrors = err.fieldErrorList
+                const toast = useToast();
+                toast.error({
+                  title: err.type === 'validation' ? 'Validasi' : 'Error',
+                  message: err.message,
+                  color: 'red',
+                  position: 'bottomRight',
+                  layout: 2,
+                })
+                return false
             } else {
                 this.closeModal();
                 await this.fetchSalesOrders();
@@ -503,20 +506,14 @@ export const useSalesOrderStore = defineStore('salesOrder', {
                   position: 'bottomRight',
                   layout: 2,
                 });
+                return true
             }
 
 
         } catch (error: any) {
-            // Clear validation errors on new general error
-            this.validationErrors = [];
-            const toast = useToast();
-            toast.error({
-              title: 'Error',
-              message: error.message || 'Operasi gagal',
-              color: 'red',
-              position: 'bottomRight',
-              layout: 2,
-            });
+            const err = normalizeApiError(error, 'Sales Order gagal disimpan.')
+            toastNormalizedError(err)
+            return false
         } finally {
             this.saving = false;
         }
@@ -552,8 +549,8 @@ export const useSalesOrderStore = defineStore('salesOrder', {
           });
 
           if (!response.ok) {
-              const errorData = await response.json();
-              throw new Error(errorData.message || 'Gagal menghapus Sales Order');
+              const err = await normalizeFailedResponse(response, 'Sales Order gagal dihapus.')
+              throw new Error(err.message)
           }
 
           await this.fetchSalesOrders();
@@ -566,14 +563,8 @@ export const useSalesOrderStore = defineStore('salesOrder', {
             layout: 2,
           });
       } catch (error: any) {
-          const toast = useToast();
-          toast.error({
-            title: 'Error',
-            message: error.message || 'Gagal menghapus Sales Order',
-            color: 'red',
-            position: 'bottomRight',
-            layout: 2,
-          });
+          const err = normalizeApiError(error, 'Sales Order gagal dihapus.')
+          toastNormalizedError(err)
       } finally {
           this.loading = false;
       }
@@ -591,8 +582,8 @@ export const useSalesOrderStore = defineStore('salesOrder', {
               body: JSON.stringify({}),
           });
           if (!response.ok) {
-              const errorData = await response.json().catch(() => ({ message: 'Gagal submit sales order' }));
-              throw new Error(errorData.message || 'Gagal submit sales order');
+              const err = await normalizeFailedResponse(response, 'Sales Order gagal disubmit.')
+              throw new Error(err.message)
           }
           await this.fetchSalesOrders();
           const toast = useToast();
@@ -600,7 +591,8 @@ export const useSalesOrderStore = defineStore('salesOrder', {
           return true;
       } catch (error: any) {
           const toast = useToast();
-          toast.error({ title: 'Error', message: error.message || 'Gagal submit sales order.', color: 'red', position: 'bottomRight', layout: 2 });
+          const err = normalizeApiError(error, 'Sales Order gagal disubmit.')
+          toastNormalizedError(err)
           return false;
       } finally {
           this.loading = false;
@@ -623,8 +615,8 @@ export const useSalesOrderStore = defineStore('salesOrder', {
           });
 
           if (!response.ok) {
-              const errorData = await response.json().catch(() => ({ message: 'Gagal mengapprove sales order' }));
-              throw new Error(errorData.message || 'Gagal mengapprove sales order');
+              const err = await normalizeFailedResponse(response, 'Sales Order gagal disetujui.')
+              throw new Error(err.message)
           }
 
           await this.fetchSalesOrders();
@@ -639,15 +631,8 @@ export const useSalesOrderStore = defineStore('salesOrder', {
 
           return true;
       } catch (error: any) {
-          console.error('Error approving sales order:', error);
-          const toast = useToast();
-          toast.error({
-            title: 'Error',
-            message: error.message || 'Gagal mengapprove sales order.',
-            color: 'red',
-            position: 'bottomRight',
-            layout: 2,
-          });
+          const err = normalizeApiError(error, 'Sales Order gagal disetujui.')
+          toastNormalizedError(err)
           return false;
       } finally {
           this.loading = false;
@@ -670,8 +655,8 @@ export const useSalesOrderStore = defineStore('salesOrder', {
           });
 
           if (!response.ok) {
-              const errorData = await response.json().catch(() => ({ message: 'Gagal mereject sales order' }));
-              throw new Error(errorData.message || 'Gagal mereject sales order');
+              const err = await normalizeFailedResponse(response, 'Sales Order gagal ditolak.')
+              throw new Error(err.message)
           }
 
           await this.fetchSalesOrders();
@@ -686,15 +671,8 @@ export const useSalesOrderStore = defineStore('salesOrder', {
 
           return true;
       } catch (error: any) {
-          console.error('Error rejecting sales order:', error);
-          const toast = useToast();
-          toast.error({
-            title: 'Error',
-            message: error.message || 'Gagal mereject sales order.',
-            color: 'red',
-            position: 'bottomRight',
-            layout: 2,
-          });
+          const err = normalizeApiError(error, 'Sales Order gagal ditolak.')
+          toastNormalizedError(err)
           return false;
       } finally {
           this.loading = false;
@@ -733,17 +711,10 @@ export const useSalesOrderStore = defineStore('salesOrder', {
             }
             
         } catch (error: any) {
-            console.error('Gagal memperbarui status item SO atau SO:', error);
             this.error = error;
-            const toast = useToast();
-            toast.error({
-              title: 'Error',
-              message: error.data?.message || error.message || 'Operasi gagal',
-              color: 'red',
-              position: 'bottomRight',
-              layout: 2,
-            });
-            throw error;
+            const err = normalizeApiError(error, 'Sales Order gagal diproses.')
+            toastNormalizedError(err)
+            throw new Error(err.message)
         } finally {
             this.loading = false;
         }
@@ -1044,15 +1015,10 @@ export const useSalesOrderStore = defineStore('salesOrder', {
 
           return result;
       } catch (error: any) {
-          console.error('Error delivering all items:', error);
           this.error = error;
-          const toast = useToast();
-          toast.error({
-            title: 'Error',
-            message: error.message || 'Gagal mengirim semua item sales order.',
-            color: 'red'
-          });
-          throw error;
+          const err = normalizeApiError(error, 'Sales Order gagal diproses.')
+          toastNormalizedError(err)
+          throw new Error(err.message)
       } finally {
           this.loading = false;
       }
@@ -1169,25 +1135,9 @@ export const useSalesOrderStore = defineStore('salesOrder', {
           }
         }
         
-        this.error = e;
-        
-        // Create more specific error messages
-        let errorMessage = 'Gagal mengambil detail sales order';
-        
-        if (e.status === 404) {
-          errorMessage = `Sales Order dengan ID ${soId} tidak ditemukan`;
-        } else if (e.status === 401) {
-          errorMessage = 'Tidak memiliki akses untuk melihat Sales Order ini';
-        } else if (e.status === 403) {
-          errorMessage = 'Tidak memiliki izin untuk melihat Sales Order ini';
-        } else if (e.status === 500) {
-          errorMessage = 'Terjadi kesalahan server, silakan coba lagi';
-        } else if (e.message) {
-          errorMessage = e.message;
-        }
-        
-        // Throw error with more specific message
-        throw new Error(errorMessage);
+        this.error = e
+        const err = normalizeApiError(e, 'Gagal mengambil detail sales order')
+        throw new Error(err.message)
       } finally {
         this.loading = false;
       }

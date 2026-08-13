@@ -33,26 +33,19 @@
                 <span class="text-muted small">Informasi header &amp; daftar item</span>
               </div>
               <div class="card-body pt-0">
-                <form @submit.prevent="handleSubmit">
-                  <ul class="nav nav-tabs mb-0" role="tablist">
-                    <li class="nav-item">
-                      <button class="nav-link active" type="button" data-bs-toggle="tab" data-bs-target="#mrf-tab-info">
-                        <i class="ri-information-line me-1"></i>Informasi
-                      </button>
-                    </li>
-                    <li class="nav-item">
-                      <button class="nav-link" type="button" data-bs-toggle="tab" data-bs-target="#mrf-tab-items">
-                        <i class="ri-box-3-line me-1"></i>
-                        Item
-                        <span v-if="itemCount" class="badge bg-primary ms-1">{{ itemCount }}</span>
-                      </button>
-                    </li>
-                  </ul>
+                <form ref="formRoot" @submit.prevent="onFormSubmit" novalidate>
+                  <TabbedFormNav
+                    :steps="visibleSteps"
+                    :current-index="currentIndex"
+                    :disabled="navigating || saving"
+                    nav-class="mb-0"
+                    @select="goTo"
+                  />
 
                   <div class="tab-content pt-4">
-                    <div id="mrf-tab-info" class="tab-pane fade show active">
+                    <div id="mrf-tab-info" data-step-id="mrf-tab-info" :class="paneClass('mrf-tab-info')">
                       <div class="row mb-3">
-                        <label class="col-sm-3 col-form-label">Site Investment <span class="text-danger">*</span></label>
+                        <FormLabel required label-class="col-sm-3 col-form-label">Site Investment</FormLabel>
                         <div class="col-sm-9">
                           <CustomSelect2
                             v-model="form.siteInvestmentId"
@@ -62,16 +55,16 @@
                             searchable
                             clearable
                             placeholder="Pilih Site Investment (approved)"
-                            required
                             @search="onSiSearch"
                           />
+                          <div v-if="uiErrors.siteInvestmentId" class="invalid-feedback d-block">{{ uiErrors.siteInvestmentId }}</div>
                           <small class="text-muted">Material request terkait proyek eksternal dari SI yang sudah disetujui.</small>
                         </div>
                       </div>
                       <div class="row mb-3">
                         <label class="col-sm-3 col-form-label">Tanggal Request</label>
                         <div class="col-sm-9">
-                          <input v-model="form.requestDate" type="date" class="form-control" required />
+                          <input v-model="form.requestDate" type="date" class="form-control" />
                         </div>
                       </div>
                       <div class="row mb-3">
@@ -112,7 +105,10 @@
                       </div>
                     </div>
 
-                    <div id="mrf-tab-items" class="tab-pane fade">
+                    <div id="mrf-tab-items" data-step-id="mrf-tab-items" :class="paneClass('mrf-tab-items')">
+                      <div v-if="uiErrors.materialRequestItems || uiErrors.productName || uiErrors.quantity" class="alert alert-danger py-2 mb-3">
+                        <i class="ri-error-warning-line me-1"></i>{{ uiErrors.materialRequestItems || uiErrors.productName || uiErrors.quantity }}
+                      </div>
                       <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
                         <p class="mb-0 text-muted small">
                           Isi nama material, spesifikasi, qty, satuan, dan harga estimasi. Atau muat item dari Site Investment.
@@ -145,9 +141,9 @@
                             <tr>
                               <th style="width: 40px;">#</th>
                               <th style="min-width: 180px;">Produk Katalog</th>
-                              <th>Nama Material</th>
+                              <th>Nama Material <span class="text-danger" aria-hidden="true">*</span></th>
                               <th>Spesifikasi</th>
-                              <th style="width: 90px;">Qty</th>
+                              <th style="width: 90px;">Qty <span class="text-danger" aria-hidden="true">*</span></th>
                               <th style="width: 140px;">Satuan</th>
                               <th style="width: 150px;">Harga Estimasi</th>
                               <th style="width: 150px;">Subtotal</th>
@@ -170,7 +166,7 @@
                                 />
                               </td>
                               <td>
-                                <input v-model="row.productName" type="text" class="form-control form-control-sm" placeholder="Nama material" required />
+                                <input v-model="row.productName" type="text" class="form-control form-control-sm" placeholder="Nama material" aria-required="true" />
                               </td>
                               <td>
                                 <input v-model="row.specification" type="text" class="form-control form-control-sm" placeholder="Merk, model, detail" />
@@ -229,13 +225,15 @@
                     </div>
                   </div>
 
-                  <div class="d-flex justify-content-end gap-2 mt-4 pt-4 border-top">
-                    <NuxtLink to="/purchasing/material-request" class="btn btn-outline-secondary">Batal</NuxtLink>
-                    <button type="submit" class="btn btn-primary" :disabled="saving">
-                      <span v-if="saving" class="spinner-border spinner-border-sm me-1"></span>
-                      Simpan
-                    </button>
-                  </div>
+                  <TabbedFormActions
+                    :is-first-step="isFirstStep"
+                    :is-last-step="isLastStep"
+                    :loading="navigating"
+                    :saving="saving"
+                    cancel-href="/purchasing/material-request"
+                    @next="next"
+                    @previous="previous"
+                  />
                 </form>
               </div>
             </div>
@@ -278,6 +276,11 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useMaterialRequestStore } from '~/stores/material-request'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
+import TabbedFormNav from '~/components/form/TabbedFormNav.vue'
+import TabbedFormActions from '~/components/form/TabbedFormActions.vue'
+import FormLabel from '~/components/form/FormLabel.vue'
+import { useTabbedFormNavigation } from '~/composables/useTabbedFormNavigation'
+import { routeSaveFailure } from '~/utils/apiError'
 import FormPageSidebar from '~/components/form/FormPageSidebar.vue'
 import { PURCHASING_MODULE_NAV } from '~/constants/purchasing/formNav'
 import type { FormPageSummaryRow } from '~/types/form-page'
@@ -287,6 +290,51 @@ const materialRequestStore = useMaterialRequestStore()
 const formatRupiah = useFormatRupiah()
 
 const { form, isEditMode, loading, saving } = storeToRefs(materialRequestStore)
+const formRoot = ref<HTMLFormElement | null>(null)
+const uiErrors = ref<Record<string, string>>({})
+const formSteps = [
+  { id: 'mrf-tab-info', label: 'Informasi', icon: 'ri-information-line' },
+  { id: 'mrf-tab-items', label: 'Item', icon: 'ri-box-3-line' },
+]
+function validateMaterialRequestStep(step: { id: string }): boolean {
+  uiErrors.value = {}
+  if (step.id === 'mrf-tab-info') {
+    if (!form.value?.siteInvestmentId) uiErrors.value.siteInvestmentId = 'Site Investment wajib dipilih.'
+    return Object.keys(uiErrors.value).length === 0
+  }
+  if (step.id === 'mrf-tab-items') {
+    const items = form.value?.materialRequestItems || []
+    const validItems = items.filter((i) => String(i.productName || '').trim() && Number(i.qty) > 0)
+    if (validItems.length < 1) {
+      const hasNameNoQty = items.some((i) => String(i.productName || '').trim() && !(Number(i.qty) > 0))
+      const hasQtyNoName = items.some((i) => Number(i.qty) > 0 && !String(i.productName || '').trim())
+      if (hasNameNoQty) uiErrors.value.quantity = 'Quantity minimal 1.'
+      else if (hasQtyNoName) uiErrors.value.productName = 'Nama material wajib diisi.'
+      else uiErrors.value.materialRequestItems = 'Minimal satu item harus ditambahkan.'
+    }
+    return Object.keys(uiErrors.value).length === 0
+  }
+  return true
+}
+const {
+  currentIndex,
+  visibleSteps,
+  isFirstStep,
+  isLastStep,
+  navigating,
+  next,
+  previous,
+  goTo,
+  goToId,
+  paneClass,
+  validateAll,
+} = useTabbedFormNavigation({ steps: formSteps, formRoot, validateStep: validateMaterialRequestStep })
+const MR_FIELD_TABS: Record<string, string> = {
+  siteInvestmentId: 'mrf-tab-info',
+  materialRequestItems: 'mrf-tab-items',
+  productName: 'mrf-tab-items',
+  quantity: 'mrf-tab-items',
+}
 const formReady = ref(false)
 const loadingSiItems = ref(false)
 const siteInvestments = ref<any[]>([])
@@ -462,6 +510,15 @@ async function loadMasterData() {
   }
 }
 
+async function onFormSubmit() {
+  if (!isLastStep.value) {
+    await next()
+    return
+  }
+  if (!(await validateAll())) return
+  await handleSubmit()
+}
+
 async function handleSubmit() {
   if (!form.value.siteInvestmentId) {
     useToast().error({
@@ -474,7 +531,11 @@ async function handleSubmit() {
     return
   }
   const ok = await materialRequestStore.saveMaterialRequest()
-  if (ok) navigateTo('/purchasing/material-request')
+  if (ok) {
+    navigateTo('/purchasing/material-request')
+    return
+  }
+  routeSaveFailure(materialRequestStore.validationErrors, uiErrors.value, MR_FIELD_TABS, goToId)
 }
 
 onMounted(async () => {

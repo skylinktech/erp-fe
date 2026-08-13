@@ -20,24 +20,16 @@
         <div class="col-xl-8 col-12">
           <div class="card">
             <div class="card-body">
-              <form @submit.prevent="handleSubmit" novalidate>
-            <ul class="nav nav-tabs" role="tablist">
-              <li class="nav-item">
-                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#subscription-tab-info" role="tab" type="button">
-                  <span class="ri-information-line ri-20px d-sm-none"></span>
-                  <span class="d-none d-sm-block">Informasi</span>
-                </button>
-              </li>
-              <li class="nav-item">
-                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#subscription-tab-installation" role="tab" type="button">
-                  <span class="ri-building-line ri-20px d-sm-none"></span>
-                  <span class="d-none d-sm-block">Installation & Contact</span>
-                </button>
-              </li>
-            </ul>
+              <form ref="formRoot" @submit.prevent="onFormSubmit" novalidate>
+            <TabbedFormNav
+              :steps="visibleSteps"
+              :current-index="currentIndex"
+              :disabled="navigating || saving"
+              @select="goTo"
+            />
 
             <div class="tab-content pt-4">
-              <div id="subscription-tab-info" class="tab-pane fade active show" role="tabpanel">
+              <div id="subscription-tab-info" data-step-id="subscription-tab-info" role="tabpanel" :class="paneClass('subscription-tab-info')">
                 <div class="row g-4">
                   <div class="col-12">
                     <div v-if="!isEditMode && !prefilledQuotationId" class="alert alert-info mb-2">
@@ -53,7 +45,7 @@
                         </span>
                       </div>
                     </div>
-                    <label class="form-label text-muted">Quotation (approved)</label>
+                    <FormLabel required>Quotation (approved)</FormLabel>
                     <CustomSelect2
                       v-model="localForm.quotationId"
                       :options="quotationsApproved"
@@ -65,13 +57,15 @@
                       placeholder="Pilih Quotation"
                       @update:modelValue="onQuotationChange"
                     />
+                    <div v-if="uiErrors.quotationId" class="invalid-feedback d-block">{{ uiErrors.quotationId }}</div>
                   </div>
                 </div>
 
                 <div class="row g-4 mt-2">
                   <div class="col-md-6">
-                    <label class="form-label text-muted">Customer Name</label>
-                    <input type="text" :value="localForm.customerName" class="form-control bg-light" readonly />
+                    <FormLabel required html-for="sub-customer-name">Customer Name</FormLabel>
+                    <input id="sub-customer-name" type="text" :value="localForm.customerName" class="form-control bg-light" :class="{ 'is-invalid': uiErrors.customerName || uiErrors.customerId }" readonly />
+                    <div v-if="uiErrors.customerName || uiErrors.customerId" class="invalid-feedback d-block">{{ uiErrors.customerName || uiErrors.customerId }}</div>
                   </div>
                   <div class="col-md-6">
                     <label class="form-label text-muted">Status</label>
@@ -85,8 +79,9 @@
                     />
                   </div>
                   <div class="col-md-6">
-                    <label class="form-label text-muted">Service Plan</label>
-                    <input type="text" :value="servicePlanNameFromQuotation" class="form-control bg-light" readonly />
+                    <FormLabel required html-for="sub-service-plan">Service Plan</FormLabel>
+                    <input id="sub-service-plan" type="text" :value="servicePlanNameFromQuotation" class="form-control bg-light" :class="{ 'is-invalid': uiErrors.subscriptionServices }" readonly />
+                    <div v-if="uiErrors.subscriptionServices" class="invalid-feedback d-block">{{ uiErrors.subscriptionServices }}</div>
                   </div>
                   <div class="col-md-6">
                     <label class="form-label text-muted">One Time Charge (OTC)</label>
@@ -97,12 +92,14 @@
                     <input type="text" :value="localForm.subscriptionServices && localForm.subscriptionServices.length > 0 ? formatRupiah(localForm.subscriptionServices[0].mrcAmount) : formatRupiah(0)" class="form-control bg-light" readonly />
                   </div>
                   <div class="col-md-6">
-                    <label class="form-label text-muted">Payment Method</label>
-                    <input v-model="localForm.paymentMethod" type="text" class="form-control" placeholder="Payment Method" />
+                    <FormLabel required html-for="sub-payment-method">Payment Method</FormLabel>
+                    <input id="sub-payment-method" v-model="localForm.paymentMethod" type="text" class="form-control" :class="{ 'is-invalid': uiErrors.paymentMethod }" placeholder="Payment Method" aria-required="true" />
+                    <div v-if="uiErrors.paymentMethod" class="invalid-feedback d-block">{{ uiErrors.paymentMethod }}</div>
                   </div>
                   <div class="col-md-6">
-                    <label class="form-label text-muted">Term of Payment</label>
-                    <input type="text" :value="localForm.termOfPayment" class="form-control bg-light" readonly />
+                    <FormLabel required html-for="sub-term-of-payment">Term of Payment</FormLabel>
+                    <input id="sub-term-of-payment" type="text" :value="localForm.termOfPayment" class="form-control bg-light" :class="{ 'is-invalid': uiErrors.termOfPayment }" readonly />
+                    <div v-if="uiErrors.termOfPayment" class="invalid-feedback d-block">{{ uiErrors.termOfPayment }}</div>
                   </div>
                   <div class="col-md-6">
                     <label class="form-label text-muted">PO Reference</label>
@@ -126,8 +123,9 @@
                     </div>
                   </div>
                   <div class="col-md-6">
-                    <label class="form-label text-muted">Contract Period (Months)</label>
-                    <input v-model.number="localForm.contractPeriod" type="number" class="form-control" min="1" placeholder="12" @input="calculateContractEndDate" />
+                    <FormLabel required html-for="sub-contract-period">Contract Period (Months)</FormLabel>
+                    <input id="sub-contract-period" v-model.number="localForm.contractPeriod" type="number" class="form-control" :class="{ 'is-invalid': uiErrors.contractPeriod }" min="1" placeholder="12" aria-required="true" @input="calculateContractEndDate" />
+                    <div v-if="uiErrors.contractPeriod" class="invalid-feedback d-block">{{ uiErrors.contractPeriod }}</div>
                   </div>
                 </div>
 
@@ -160,7 +158,8 @@
                 </div>
               </div>
 
-              <div id="subscription-tab-installation" class="tab-pane fade" role="tabpanel">
+              <div id="subscription-tab-installation" data-step-id="subscription-tab-installation" role="tabpanel" :class="paneClass('subscription-tab-installation')">
+                <div v-if="uiErrors.subscriptionInstallations" class="alert alert-danger py-2 mb-3"><i class="ri-error-warning-line me-1"></i>{{ uiErrors.subscriptionInstallations }}</div>
                 <div class="row g-4">
                   <div class="col-12">
                     <div v-for="(installation, index) in localForm.subscriptionInstallations" :key="index" class="repeater-item mb-4">
@@ -170,8 +169,8 @@
                       <hr class="repeater-hr mt-0 mb-3" />
                       <div class="row g-3">
                         <div class="col-12">
-                          <label class="form-label text-muted">Alamat Instalasi</label>
-                          <textarea v-model="installation.installAddress" class="form-control" rows="3" placeholder="Full address for installation..."></textarea>
+                          <FormLabel required>Alamat Instalasi</FormLabel>
+                          <textarea v-model="installation.installAddress" class="form-control" :class="{ 'is-invalid': uiErrors.subscriptionInstallations }" rows="3" placeholder="Full address for installation..." aria-required="true"></textarea>
                         </div>
                         <div class="col-12 d-flex justify-content-end" v-if="localForm.subscriptionInstallations.length > 1">
                           <button type="button" class="btn btn-outline-danger" @click.prevent="removeInstallation(index)"><i class="ri-delete-bin-line me-1"></i> Hapus</button>
@@ -231,13 +230,16 @@
               </div>
             </div>
 
-            <div class="d-flex justify-content-end mt-6">
-              <button type="button" class="btn btn-outline-secondary" @click="navigateTo('/order-process/subscription')">Tutup</button>
-              <button type="submit" class="btn btn-primary ms-2" :disabled="saving">
-                <span v-if="saving" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                Simpan
-              </button>
-            </div>
+            <TabbedFormActions
+              :is-first-step="isFirstStep"
+              :is-last-step="isLastStep"
+              :loading="navigating"
+              :saving="saving"
+              cancel-label="Tutup"
+              @cancel="navigateTo('/order-process/subscription')"
+              @next="next"
+              @previous="previous"
+            />
               </form>
             </div>
           </div>
@@ -280,6 +282,11 @@ import { computed, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useSubscriptionStore } from '~/stores/subscription'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
+import TabbedFormNav from '~/components/form/TabbedFormNav.vue'
+import TabbedFormActions from '~/components/form/TabbedFormActions.vue'
+import FormLabel from '~/components/form/FormLabel.vue'
+import { useTabbedFormNavigation } from '~/composables/useTabbedFormNavigation'
+import { routeSaveFailure } from '~/utils/apiError'
 import { useImageUrl } from '~/composables/useImageUrl'
 
 const route = useRoute()
@@ -287,6 +294,63 @@ const subscriptionStore = useSubscriptionStore()
 const formatRupiah = useFormatRupiah()
 const { getAttachmentUrl } = useImageUrl()
 const { form, isEditMode, saving } = storeToRefs(subscriptionStore)
+const formRoot = ref<HTMLFormElement | null>(null)
+const uiErrors = ref<Record<string, string>>({})
+const formSteps = [
+  { id: 'subscription-tab-info', label: 'Informasi', icon: 'ri-information-line' },
+  { id: 'subscription-tab-installation', label: 'Installation & Contact', icon: 'ri-building-line' },
+]
+function validateSubscriptionStep(step: { id: string }): boolean {
+  uiErrors.value = {}
+  if (step.id === 'subscription-tab-info') {
+    if (!form.value?.quotationId) uiErrors.value.quotationId = 'Quotation wajib dipilih.'
+    if (!form.value?.customerId) uiErrors.value.customerId = 'Customer wajib dipilih.'
+    if (!String(form.value?.customerName || '').trim()) uiErrors.value.customerName = 'Customer Name wajib diisi.'
+    if (!form.value?.contractPeriod) uiErrors.value.contractPeriod = 'Contract Period wajib diisi.'
+    if (!String(form.value?.paymentMethod || '').trim()) uiErrors.value.paymentMethod = 'Payment Method wajib diisi.'
+    if (!String(form.value?.termOfPayment || '').trim()) uiErrors.value.termOfPayment = 'Term of Payment wajib diisi.'
+    const services = form.value?.subscriptionServices || []
+    const validServices = services.filter((s: any) => String(s.planName || s.servicePlan || '').trim())
+    if (validServices.length < 1) {
+      uiErrors.value.subscriptionServices = 'Minimal satu item harus ditambahkan.'
+    }
+    return Object.keys(uiErrors.value).length === 0
+  }
+  if (step.id === 'subscription-tab-installation') {
+    const installations = form.value?.subscriptionInstallations || []
+    const validInstallations = installations.filter((i: any) => String(i.installAddress || '').trim())
+    if (validInstallations.length < 1) {
+      uiErrors.value.subscriptionInstallations = installations.length
+        ? 'Alamat Instalasi wajib diisi.'
+        : 'Minimal satu item harus ditambahkan.'
+    }
+    return Object.keys(uiErrors.value).length === 0
+  }
+  return true
+}
+const {
+  currentIndex,
+  visibleSteps,
+  isFirstStep,
+  isLastStep,
+  navigating,
+  next,
+  previous,
+  goTo,
+  goToId,
+  paneClass,
+  validateAll,
+} = useTabbedFormNavigation({ steps: formSteps, formRoot, validateStep: validateSubscriptionStep })
+const SUB_FIELD_TABS: Record<string, string> = {
+  quotationId: 'subscription-tab-info',
+  customerId: 'subscription-tab-info',
+  customerName: 'subscription-tab-info',
+  contractPeriod: 'subscription-tab-info',
+  paymentMethod: 'subscription-tab-info',
+  termOfPayment: 'subscription-tab-info',
+  subscriptionServices: 'subscription-tab-info',
+  subscriptionInstallations: 'subscription-tab-installation',
+}
 
 const quotationsApproved = ref<any[]>([])
 const selectedQuotation = ref<any>(null)
@@ -475,9 +539,22 @@ function isModuleNavActive(to: string) {
   return route.path === to || route.path.startsWith(`${to}/`)
 }
 
+async function onFormSubmit() {
+  if (!isLastStep.value) {
+    await next()
+    return
+  }
+  if (!(await validateAll())) return
+  await handleSubmit()
+}
+
 async function handleSubmit() {
   const ok = await subscriptionStore.saveSubscription()
-  if (ok) navigateTo('/order-process/subscription')
+  if (ok) {
+    navigateTo('/order-process/subscription')
+    return
+  }
+  routeSaveFailure(subscriptionStore.validationErrors, uiErrors.value, SUB_FIELD_TABS, goToId)
 }
 
 function ensureDefaultRepeaters() {

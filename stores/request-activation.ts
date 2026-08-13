@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { apiFetch } from '~/utils/apiFetch'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 import Swal from 'sweetalert2'
 import { useNuxtApp } from '#app'
 import { useUserStore } from '~/stores/user'
@@ -73,6 +74,7 @@ interface RequestActivationState {
   loading: boolean
   saving: boolean
   error: any
+  validationErrors: any[]
   totalRecords: number
   params: {
     first: number
@@ -147,6 +149,7 @@ export const useRequestActivationStore = defineStore('requestActivation', {
     loading: false,
     saving: false,
     error: null,
+    validationErrors: [],
     totalRecords: 0,
     params: {
       first: 0,
@@ -280,14 +283,12 @@ export const useRequestActivationStore = defineStore('requestActivation', {
           body: JSON.stringify(body),
         })
         if (!res.ok) {
-          const ed = await res.json().catch(() => ({}))
-          toast.error({
-            title: 'Error',
-            message: ed.message || 'Gagal menyimpan',
-            color: 'red',
-            position: 'bottomRight',
-            layout: 2,
-          })
+          const err = await normalizeFailedResponse(
+            res,
+            isEdit ? 'Request Activation gagal diperbarui.' : 'Request Activation gagal dibuat.'
+          )
+          this.validationErrors = err.fieldErrorList
+          toastNormalizedError(err)
           return false
         }
         const result = await res.json()
@@ -300,13 +301,8 @@ export const useRequestActivationStore = defineStore('requestActivation', {
         })
         return result?.data?.id ?? true
       } catch (e: any) {
-        toast.error({
-          title: 'Error',
-          message: e.message,
-          color: 'red',
-          position: 'bottomRight',
-          layout: 2,
-        })
+        const err = normalizeApiError(e, 'Request Activation gagal disimpan.')
+        toastNormalizedError(err)
         return false
       } finally {
         this.saving = false
@@ -335,7 +331,11 @@ export const useRequestActivationStore = defineStore('requestActivation', {
           headers: { Accept: 'application/json' },
           credentials: 'include',
         })
-        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message)
+        if (!res.ok) {
+          const err = await normalizeFailedResponse(res, 'Request Activation gagal dihapus.')
+          toastNormalizedError(err)
+          return false
+        }
         await this.fetchRequestActivations()
         await this.fetchStatistics()
         toast.success({
@@ -346,13 +346,8 @@ export const useRequestActivationStore = defineStore('requestActivation', {
           layout: 2,
         })
       } catch (e: any) {
-        toast.error({
-          title: 'Error',
-          message: e.message,
-          color: 'red',
-          position: 'bottomRight',
-          layout: 2,
-        })
+        const err = normalizeApiError(e, 'Request Activation gagal dihapus.')
+        toastNormalizedError(err)
       } finally {
         this.loading = false
       }
@@ -367,7 +362,11 @@ export const useRequestActivationStore = defineStore('requestActivation', {
           headers: { Accept: 'application/json' },
           credentials: 'include',
         })
-        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message)
+        if (!res.ok) {
+          const err = await normalizeFailedResponse(res, 'Request Activation gagal disubmit.')
+          toastNormalizedError(err)
+          return false
+        }
         await this.fetchRequestActivations()
         await this.fetchStatistics()
         toast.success({
@@ -379,13 +378,8 @@ export const useRequestActivationStore = defineStore('requestActivation', {
         })
         return true
       } catch (e: any) {
-        toast.error({
-          title: 'Error',
-          message: e.message,
-          color: 'red',
-          position: 'bottomRight',
-          layout: 2,
-        })
+        const err = normalizeApiError(e, 'Request Activation gagal disubmit.')
+        toastNormalizedError(err)
         return false
       }
     },
@@ -413,7 +407,11 @@ export const useRequestActivationStore = defineStore('requestActivation', {
           credentials: 'include',
           body: JSON.stringify({ remarks }),
         })
-        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message)
+        if (!res.ok) {
+          const err = await normalizeFailedResponse(res, 'Request Activation gagal disetujui.')
+          toastNormalizedError(err)
+          return false
+        }
         const json = await res.json().catch(() => ({}))
         await this.fetchRequestActivations()
         await this.fetchStatistics()
@@ -426,13 +424,8 @@ export const useRequestActivationStore = defineStore('requestActivation', {
         })
         return true
       } catch (e: any) {
-        toast.error({
-          title: 'Error',
-          message: e.message,
-          color: 'red',
-          position: 'bottomRight',
-          layout: 2,
-        })
+        const err = normalizeApiError(e, 'Request Activation gagal disetujui.')
+        toastNormalizedError(err)
         return false
       }
     },
@@ -447,7 +440,11 @@ export const useRequestActivationStore = defineStore('requestActivation', {
           credentials: 'include',
           body: JSON.stringify({ rejection_reason: reason }),
         })
-        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message)
+        if (!res.ok) {
+          const err = await normalizeFailedResponse(res, 'Request Activation gagal ditolak.')
+          toastNormalizedError(err)
+          return false
+        }
         await this.fetchRequestActivations()
         await this.fetchStatistics()
         toast.success({
@@ -459,13 +456,8 @@ export const useRequestActivationStore = defineStore('requestActivation', {
         })
         return true
       } catch (e: any) {
-        toast.error({
-          title: 'Error',
-          message: e.message,
-          color: 'red',
-          position: 'bottomRight',
-          layout: 2,
-        })
+        const err = normalizeApiError(e, 'Request Activation gagal ditolak.')
+        toastNormalizedError(err)
         return false
       }
     },
@@ -485,7 +477,11 @@ export const useRequestActivationStore = defineStore('requestActivation', {
             subscriptionId: subscriptionId || this.form.subscriptionId || null,
           }),
         })
-        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message)
+        if (!res.ok) {
+          const err = await normalizeFailedResponse(res, 'Request Activation gagal diselesaikan.')
+          toastNormalizedError(err)
+          return false
+        }
         await this.fetchRequestActivations()
         await this.fetchStatistics()
         toast.success({
@@ -497,13 +493,8 @@ export const useRequestActivationStore = defineStore('requestActivation', {
         })
         return true
       } catch (e: any) {
-        toast.error({
-          title: 'Error',
-          message: e.message,
-          color: 'red',
-          position: 'bottomRight',
-          layout: 2,
-        })
+        const err = normalizeApiError(e, 'Request Activation gagal diselesaikan.')
+        toastNormalizedError(err)
         return false
       }
     },

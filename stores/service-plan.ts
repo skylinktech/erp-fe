@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { useNuxtApp } from '#app'
 import Swal from 'sweetalert2'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 
 export interface ServiceType {
   id: number
@@ -192,39 +193,14 @@ export const useServicePlanStore = defineStore('servicePlan', {
           credentials: 'include',
         })
 
-        let result
-        try {
-          result = await response.json()
-        } catch (parseError) {
-          toast.error({
-            title: 'Error',
-            message: 'Server response tidak valid',
-            color: 'red',
-          })
-          throw new Error('Server response tidak valid')
-        }
-
         if (!response.ok) {
-          if (response.status === 422 && result.errors) {
-            const errors = result.errors as unknown
-            if (Array.isArray(errors)) {
-              this.validationErrors = errors as any[]
-            } else if (errors && typeof errors === 'object') {
-              this.validationErrors = Object.entries(
-                errors as Record<string, string | string[]>
-              )
-                .flatMap(([field, messages]) => {
-                  const messageList = Array.isArray(messages) ? messages : [messages]
-                  return messageList
-                    .filter(Boolean)
-                    .map((message) => ({ field, message, rule: 'unique' }))
-                })
-            } else {
-              this.validationErrors = []
-            }
-            return
-          }
-          throw new Error(result.message || 'Gagal menyimpan data service plan')
+          const err = await normalizeFailedResponse(
+            response,
+            this.isEditMode ? 'Service Plan gagal diperbarui.' : 'Service Plan gagal dibuat.'
+          )
+          this.validationErrors = err.fieldErrorList
+          toastNormalizedError(err)
+          return false
         }
 
         this.closeModal()
@@ -236,14 +212,9 @@ export const useServicePlanStore = defineStore('servicePlan', {
           position: 'bottomRight',
         })
       } catch (error: any) {
-        if (this.validationErrors.length === 0) {
-          toast.error({
-            title: 'Error',
-            message: error.message || 'Operasi gagal',
-            color: 'red',
-            position: 'bottomRight',
-          })
-        }
+        const err = normalizeApiError(error, 'Service Plan gagal disimpan.')
+        toastNormalizedError(err)
+        return false
       } finally {
         this.loading = false
       }
@@ -279,8 +250,9 @@ export const useServicePlanStore = defineStore('servicePlan', {
         })
 
         if (!response.ok) {
-          const errorData = await response.json()
-          throw new Error(errorData.message || 'Gagal menghapus service plan')
+          const err = await normalizeFailedResponse(response, 'Service Plan gagal dihapus.')
+          toastNormalizedError(err)
+          return false
         }
 
         await Promise.all([this.fetchServicePlans(), this.fetchStatistics()])
@@ -291,13 +263,8 @@ export const useServicePlanStore = defineStore('servicePlan', {
           position: 'bottomRight',
         })
       } catch (error: any) {
-        console.error('Gagal menghapus service plan:', error)
-        toast.error({
-          title: 'Error',
-          message: error.message || 'Gagal menghapus service plan',
-          color: 'red',
-          position: 'bottomRight',
-        })
+        const err = normalizeApiError(error, 'Service Plan gagal dihapus.')
+        toastNormalizedError(err)
       } finally {
         this.loading = false
       }

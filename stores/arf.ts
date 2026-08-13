@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { apiFetch } from '~/utils/apiFetch'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 import Swal from 'sweetalert2'
 import { useNuxtApp } from '#app'
 import { useUserStore } from '~/stores/user'
@@ -113,6 +114,7 @@ interface ArfState {
     arfEmployees: ArfEmployeeForm[]
   }
   isEditMode: boolean
+  validationErrors: any[]
   statistics: {
     totalArfs: number
     approvedArfs: number
@@ -189,6 +191,7 @@ export const useArfStore = defineStore('arf', {
       arfEmployees: [],
     },
     isEditMode: false,
+    validationErrors: [],
     statistics: {
       totalArfs: 0,
       approvedArfs: 0,
@@ -455,14 +458,12 @@ export const useArfStore = defineStore('arf', {
           body: JSON.stringify(body),
         })
         if (!res.ok) {
-          const ed = await res.json().catch(() => ({}))
-          toast.error({
-            title: 'Error',
-            message: ed.message || 'Gagal menyimpan',
-            color: 'red',
-            position: 'bottomRight',
-            layout: 2,
-          })
+          const err = await normalizeFailedResponse(
+            res,
+            this.isEditMode ? 'ARF gagal diperbarui.' : 'ARF gagal dibuat.'
+          )
+          this.validationErrors = err.fieldErrorList
+          toastNormalizedError(err)
           return false
         }
         const saved = await res.json().catch(() => ({}))
@@ -479,7 +480,8 @@ export const useArfStore = defineStore('arf', {
         })
         return true
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight', layout: 2 })
+        const err = normalizeApiError(e, 'ARF gagal disimpan.')
+        toastNormalizedError(err)
         return false
       } finally {
         this.saving = false
@@ -507,18 +509,23 @@ export const useArfStore = defineStore('arf', {
           headers: { Accept: 'application/json' },
           credentials: 'include',
         })
-        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message)
+        if (!res.ok) {
+          const err = await normalizeFailedResponse(res, 'ARF gagal dihapus.')
+          toastNormalizedError(err)
+          return false
+        }
         await this.fetchArfs()
         await this.fetchStatistics()
         toast.success({
           title: 'Sukses',
-          message: 'ARF dihapus',
+          message: 'ARF berhasil dihapus.',
           color: 'green',
           position: 'bottomRight',
           layout: 2,
         })
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight', layout: 2 })
+        const err = normalizeApiError(e, 'ARF gagal dihapus.')
+        toastNormalizedError(err)
       } finally {
         this.loading = false
       }
@@ -535,7 +542,11 @@ export const useArfStore = defineStore('arf', {
           credentials: 'include',
           body: JSON.stringify({ remarks }),
         })
-        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message)
+        if (!res.ok) {
+          const err = await normalizeFailedResponse(res, 'ARF gagal disetujui.')
+          toastNormalizedError(err)
+          return false
+        }
         await this.fetchArfs()
         await this.fetchStatistics()
         toast.success({
@@ -547,7 +558,8 @@ export const useArfStore = defineStore('arf', {
         })
         return true
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight', layout: 2 })
+        const err = normalizeApiError(e, 'ARF gagal disetujui.')
+        toastNormalizedError(err)
         return false
       } finally {
         this.loading = false
@@ -565,7 +577,11 @@ export const useArfStore = defineStore('arf', {
           credentials: 'include',
           body: JSON.stringify({ rejection_reason: reason, reject_reason: reason }),
         })
-        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message)
+        if (!res.ok) {
+          const err = await normalizeFailedResponse(res, 'ARF gagal ditolak.')
+          toastNormalizedError(err)
+          return false
+        }
         await this.fetchArfs()
         await this.fetchStatistics()
         toast.success({
@@ -577,7 +593,8 @@ export const useArfStore = defineStore('arf', {
         })
         return true
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight', layout: 2 })
+        const err = normalizeApiError(e, 'ARF gagal ditolak.')
+        toastNormalizedError(err)
         return false
       } finally {
         this.loading = false
@@ -594,7 +611,11 @@ export const useArfStore = defineStore('arf', {
           headers: { Accept: 'application/json' },
           credentials: 'include',
         })
-        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message)
+        if (!res.ok) {
+          const err = await normalizeFailedResponse(res, 'ARF gagal disubmit.')
+          toastNormalizedError(err)
+          return false
+        }
         await this.fetchArfs()
         await this.fetchStatistics()
         toast.success({
@@ -606,7 +627,8 @@ export const useArfStore = defineStore('arf', {
         })
         return true
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight', layout: 2 })
+        const err = normalizeApiError(e, 'ARF gagal disubmit.')
+        toastNormalizedError(err)
         return false
       } finally {
         this.loading = false

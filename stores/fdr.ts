@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { apiFetch } from '~/utils/apiFetch'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 import { resolveSiteFormState, resolveSitePayload } from '~/utils/fdrSiteSelect'
 import Swal from 'sweetalert2'
 import { useNuxtApp } from '#app'
@@ -407,28 +408,33 @@ export const useFdrStore = defineStore('fdr', {
         const response = await fetch(url, { method: 'POST', headers: { Accept: 'application/json' }, body: formData, credentials: 'include' })
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}))
-          if (response.status === 422) {
-            this.validationErrors = errorData.errors ?? []
-            const toast = useToast()
-            toast.error({ title: 'Error', message: 'Gagal Validasi', color: 'red' })
-          } else {
-            throw new Error(errorData.message || 'Gagal menyimpan data FDR')
-          }
-        } else {
-          this.closeModal()
-          await this.fetchFdrs()
-          await this.fetchStats()
+          const err = await normalizeFailedResponse(
+            response,
+            this.isEditMode ? 'FDR gagal diperbarui.' : 'FDR gagal dibuat.'
+          )
+          this.validationErrors = err.fieldErrorList
           const toast = useToast()
-          toast.success({ title: 'Success', message: `FDR berhasil ${this.isEditMode ? 'diperbarui' : 'dibuat'}.`, color: 'green', position: 'bottomRight', layout: 2 })
-          if (options?.navigateToList) {
-            await navigateTo('/sales/fdr')
-          }
+          toast.error({
+            title: err.type === 'validation' ? 'Validasi' : 'Error',
+            message: err.message,
+            color: 'red',
+            position: 'bottomRight',
+            layout: 2,
+          })
+          return false
         }
-      } catch (error: any) {
-        this.validationErrors = []
+        this.closeModal()
+        await this.fetchFdrs()
+        await this.fetchStats()
         const toast = useToast()
-        toast.error({ title: 'Error', message: error.message || 'Operasi gagal', color: 'red', position: 'bottomRight', layout: 2 })
+        toast.success({ title: 'Success', message: `FDR berhasil ${this.isEditMode ? 'diperbarui' : 'dibuat'}.`, color: 'green', position: 'bottomRight', layout: 2 })
+        if (options?.navigateToList) {
+          await navigateTo('/sales/fdr')
+        }
+        return true
+      } catch (error: any) {
+        toastNormalizedError(normalizeApiError(error, 'FDR gagal disimpan.'))
+        return false
       } finally {
         this.saving = false
       }
@@ -445,8 +451,8 @@ export const useFdrStore = defineStore('fdr', {
       try {
         const response = await fetch(`${$api.fdr()}/${id}`, { method: 'DELETE', headers: { Accept: 'application/json' }, credentials: 'include' })
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}))
-          throw new Error(errorData.message || 'Gagal menghapus FDR')
+          const err = await normalizeFailedResponse(response, 'FDR gagal dihapus.')
+          throw new Error(err.message)
         }
         await this.fetchFdrs()
         await this.fetchStats()
@@ -474,8 +480,8 @@ export const useFdrStore = defineStore('fdr', {
       try {
         const response = await fetch($api.approveFdr(fdrId), { method: 'PATCH', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, credentials: 'include' })
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}))
-          throw new Error(errorData.message || 'Gagal mengapprove FDR')
+          const err = await normalizeFailedResponse(response, 'FDR gagal disetujui.')
+          throw new Error(err.message)
         }
         await this.fetchFdrs()
         await this.fetchStats()
@@ -503,8 +509,8 @@ export const useFdrStore = defineStore('fdr', {
       try {
         const response = await fetch($api.cancelFdr(fdrId), { method: 'PATCH', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, credentials: 'include' })
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}))
-          throw new Error(errorData.message || 'Gagal membatalkan FDR')
+          const err = await normalizeFailedResponse(response, 'FDR gagal dibatalkan.')
+          throw new Error(err.message)
         }
         await this.fetchFdrs()
         await this.fetchStats()
@@ -532,8 +538,8 @@ export const useFdrStore = defineStore('fdr', {
       try {
         const response = await fetch($api.rejectFdr(fdrId), { method: 'PATCH', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, credentials: 'include' })
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}))
-          throw new Error(errorData.message || 'Gagal mereject FDR')
+          const err = await normalizeFailedResponse(response, 'FDR gagal ditolak.')
+          throw new Error(err.message)
         }
         await this.fetchFdrs()
         await this.fetchStats()
@@ -561,8 +567,8 @@ export const useFdrStore = defineStore('fdr', {
       try {
         const response = await fetch($api.submitFdr(fdrId), { method: 'PATCH', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, credentials: 'include' })
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}))
-          throw new Error(errorData.message || 'Gagal submit FDR')
+          const err = await normalizeFailedResponse(response, 'FDR gagal disubmit.')
+          throw new Error(err.message)
         }
         await this.fetchFdrs()
         await this.fetchStats()

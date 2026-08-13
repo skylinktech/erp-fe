@@ -284,7 +284,7 @@
                                     placeholder="Masukkan nama rekening"
                                     
                                 >
-                                <label>Nama Rekening *</label>
+                                <label>Nama Rekening <span class="text-danger" aria-hidden="true">*</span></label>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -296,7 +296,7 @@
                                     placeholder="Masukkan nama bank"
                                     
                                 >
-                                <label>Nama Bank *</label>
+                                <label>Nama Bank <span class="text-danger" aria-hidden="true">*</span></label>
                             </div>
                         </div>
                         <div class="col-md-3">
@@ -308,7 +308,7 @@
                                     placeholder="Masukkan nomor rekening"
                                     
                                 >
-                                <label>Nomor Rekening *</label>
+                                <label>Nomor Rekening <span class="text-danger" aria-hidden="true">*</span></label>
                             </div>
                         </div>
 
@@ -324,7 +324,7 @@
                                         {{ currency.label }}
                                     </option>
                                 </select>
-                                <label>Mata Uang *</label>
+                                <label>Mata Uang <span class="text-danger" aria-hidden="true">*</span></label>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -338,7 +338,7 @@
                                     min="0"
                                     
                                 >
-                                <label>Saldo Awal *</label>
+                                <label>Saldo Awal <span class="text-danger" aria-hidden="true">*</span></label>
                             </div>
                         </div>
 

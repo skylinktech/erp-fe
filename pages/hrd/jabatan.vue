@@ -192,11 +192,11 @@
                                         placeholder="Masukkan nama jabatan"
                                         
                                     >
-                                    <label for="name">Nama Jabatan</label>
+                                    <label for="name">Nama Jabatan <span class="text-danger" aria-hidden="true">*</span></label>
                                 </div>
                             </div>
                             <div class="col-md-12">
-                                <label class="form-label" for="jabatan-level">Level Organisasi</label>
+                                <label class="form-label" for="jabatan-level">Level Organisasi <span class="text-danger" aria-hidden="true">*</span></label>
                                 <select id="jabatan-level" v-model.number="form.level" class="form-select" required>
                                     <option v-for="opt in JABATAN_LEVEL_OPTIONS" :key="opt.value" :value="opt.value">
                                         {{ opt.label }}

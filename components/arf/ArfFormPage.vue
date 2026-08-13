@@ -30,35 +30,20 @@
                 <h5 class="card-title mb-0">Form Advanced Request Form</h5>
               </div>
               <div class="card-body pt-0">
-                <form @submit.prevent="handleSubmit">
-                  <ul class="nav nav-tabs mb-0" role="tablist">
-                    <li class="nav-item">
-                      <button class="nav-link active" type="button" data-bs-toggle="tab" data-bs-target="#arf-tab-info">
-                        <i class="ri-information-line me-1"></i>Informasi
-                      </button>
-                    </li>
-                    <li class="nav-item">
-                      <button class="nav-link" type="button" data-bs-toggle="tab" data-bs-target="#arf-tab-items">
-                        <i class="ri-list-check me-1"></i>
-                        Item Budget
-                        <span v-if="itemCount" class="badge bg-primary ms-1">{{ itemCount }}</span>
-                      </button>
-                    </li>
-                    <li class="nav-item">
-                      <button class="nav-link" type="button" data-bs-toggle="tab" data-bs-target="#arf-tab-employees">
-                        <i class="ri-team-line me-1"></i>
-                        Pegawai
-                        <span v-if="employeeCount" class="badge bg-primary ms-1">{{ employeeCount }}</span>
-                      </button>
-                    </li>
-                  </ul>
+                <form ref="formRoot" @submit.prevent="onFormSubmit" novalidate>
+                  <TabbedFormNav
+                    :steps="visibleSteps"
+                    :current-index="currentIndex"
+                    :disabled="navigating || saving"
+                    @select="goTo"
+                  />
 
                   <div class="tab-content pt-4">
-                    <div id="arf-tab-info" class="tab-pane fade show active">
+                    <div id="arf-tab-info" data-step-id="arf-tab-info" class="tab-pane fade" :class="paneClass('arf-tab-info')">
                       <div class="row mb-3">
                         <label class="col-sm-3 col-form-label">Tanggal Pengajuan</label>
                         <div class="col-sm-9">
-                          <input v-model="form.requestDate" type="date" class="form-control" required />
+                          <input v-model="form.requestDate" type="date" class="form-control" />
                         </div>
                       </div>
                       <div class="row mb-3">
@@ -123,7 +108,10 @@
                       </div>
                     </div>
 
-                    <div id="arf-tab-items" class="tab-pane fade">
+                    <div id="arf-tab-items" data-step-id="arf-tab-items" class="tab-pane fade" :class="paneClass('arf-tab-items')">
+                      <div v-if="uiErrors.arfItems || uiErrors.description || uiErrors.quantity" class="alert alert-danger py-2 mb-3">
+                        <i class="ri-error-warning-line me-1"></i>{{ uiErrors.arfItems || uiErrors.description || uiErrors.quantity }}
+                      </div>
                       <div class="d-flex justify-content-between align-items-center mb-4">
                         <p class="mb-0 text-muted small">Rincian kebutuhan budget per kategori.</p>
                         <button type="button" class="btn btn-sm btn-primary" @click="arfStore.addItem()">
@@ -162,23 +150,24 @@
                             />
                           </div>
                           <div class="col-12">
-                            <label class="form-label">Deskripsi Kebutuhan</label>
+                            <FormLabel required>Deskripsi Kebutuhan</FormLabel>
                             <textarea
                               :value="row.description"
                               class="form-control"
                               rows="2"
-                              required
+                              aria-required="true"
                               @input="arfStore.updateItemField(idx, 'description', ($event.target as HTMLTextAreaElement).value)"
                             />
                           </div>
                           <div class="col-md-3">
-                            <label class="form-label">Qty</label>
+                            <FormLabel required>Qty</FormLabel>
                             <input
                               :value="row.qty"
                               type="number"
                               min="0.01"
                               step="any"
                               class="form-control"
+                              aria-required="true"
                               @input="arfStore.updateItemField(idx, 'qty', Number(($event.target as HTMLInputElement).value))"
                             />
                           </div>
@@ -225,7 +214,7 @@
                       </div>
                     </div>
 
-                    <div id="arf-tab-employees" class="tab-pane fade">
+                    <div id="arf-tab-employees" data-step-id="arf-tab-employees" class="tab-pane fade" :class="paneClass('arf-tab-employees')">
                       <div class="d-flex justify-content-between align-items-center mb-4">
                         <p class="mb-0 text-muted small">Rincian pegawai freelance dan nominal gaji terkait ARF.</p>
                         <button type="button" class="btn btn-sm btn-primary" @click="arfStore.addEmployee()">
@@ -299,13 +288,15 @@
                     <strong class="text-primary fs-5">{{ formatRupiah(formGrandTotal) }}</strong>
                   </div>
 
-                  <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
-                    <NuxtLink to="/implementation/arf" class="btn btn-outline-secondary">Batal</NuxtLink>
-                    <button type="submit" class="btn btn-primary" :disabled="saving">
-                      <span v-if="saving" class="spinner-border spinner-border-sm me-1"></span>
-                      Simpan
-                    </button>
-                  </div>
+                  <TabbedFormActions
+                    :is-first-step="isFirstStep"
+                    :is-last-step="isLastStep"
+                    :loading="navigating"
+                    :saving="saving"
+                    cancel-href="/implementation/arf"
+                    @next="next"
+                    @previous="previous"
+                  />
                 </form>
               </div>
             </div>
@@ -331,6 +322,11 @@ import { useRoute, useRouter } from 'vue-router'
 import { useArfStore, ARF_TYPE_OPTIONS } from '~/stores/arf'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
 import FormPageSidebar from '~/components/form/FormPageSidebar.vue'
+import TabbedFormNav from '~/components/form/TabbedFormNav.vue'
+import TabbedFormActions from '~/components/form/TabbedFormActions.vue'
+import FormLabel from '~/components/form/FormLabel.vue'
+import { useTabbedFormNavigation } from '~/composables/useTabbedFormNavigation'
+import { routeSaveFailure } from '~/utils/apiError'
 import { IMPLEMENTATION_MODULE_NAV } from '~/constants/implementation/formNav'
 import { apiFetch } from '~/utils/apiFetch'
 
@@ -366,6 +362,49 @@ const pageSubtitle = computed(() =>
 )
 const itemCount = computed(() => form.value.arfItems.length)
 const employeeCount = computed(() => form.value.arfEmployees.length)
+const formRoot = ref<HTMLFormElement | null>(null)
+const uiErrors = ref<Record<string, string>>({})
+const formSteps = computed(() => [
+  { id: 'arf-tab-info', label: 'Informasi', icon: 'ri-information-line' },
+  { id: 'arf-tab-items', label: 'Item Budget', icon: 'ri-list-check', badge: itemCount.value || null },
+  { id: 'arf-tab-employees', label: 'Pegawai', icon: 'ri-team-line', badge: employeeCount.value || null },
+])
+function validateArfStep(step: { id: string }): boolean {
+  uiErrors.value = {}
+  if (step.id !== 'arf-tab-items') return true
+  const items = form.value?.arfItems || []
+  const validItems = items.filter((i) => String(i.description || '').trim() && Number(i.qty) > 0)
+  if (validItems.length < 1) {
+    const hasDescNoQty = items.some((i) => String(i.description || '').trim() && !(Number(i.qty) > 0))
+    const hasQtyNoDesc = items.some((i) => Number(i.qty) > 0 && !String(i.description || '').trim())
+    if (hasDescNoQty) uiErrors.value.quantity = 'Quantity minimal 1.'
+    else if (hasQtyNoDesc) uiErrors.value.description = 'Deskripsi wajib diisi.'
+    else uiErrors.value.arfItems = 'Minimal satu item harus ditambahkan.'
+  }
+  return Object.keys(uiErrors.value).length === 0
+}
+const {
+  currentIndex,
+  visibleSteps,
+  isFirstStep,
+  isLastStep,
+  navigating,
+  next,
+  previous,
+  goTo,
+  goToId,
+  paneClass,
+  validateAll,
+} = useTabbedFormNavigation({ steps: formSteps, formRoot, validateStep: validateArfStep })
+const ARF_FIELD_TABS: Record<string, string> = {
+  siteInvestmentId: 'arf-tab-info',
+  type: 'arf-tab-info',
+  arfItems: 'arf-tab-items',
+  description: 'arf-tab-items',
+  quantity: 'arf-tab-items',
+  arfEmployees: 'arf-tab-employees',
+  pegawaiId: 'arf-tab-employees',
+}
 
 /** Freelance + pegawai terpilih saat edit (jika bukan freelance). */
 const pegawaiOptions = computed(() => {
@@ -440,13 +479,24 @@ async function loadAssociations() {
   siteInvestments.value = siRes?.data ?? []
 }
 
+async function onFormSubmit() {
+  if (!isLastStep.value) {
+    await next()
+    return
+  }
+  if (!(await validateAll())) return
+  await handleSubmit()
+}
+
 async function handleSubmit() {
   const ok = await arfStore.saveArf()
   if (ok) {
     const id = arfStore.form.id
     if (id) await router.push(`/implementation/arf/detail/${id}`)
     else await router.push('/implementation/arf')
+    return
   }
+  routeSaveFailure(arfStore.validationErrors, uiErrors.value, ARF_FIELD_TABS, goToId)
 }
 
 onMounted(async () => {

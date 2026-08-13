@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { useNuxtApp } from '#app'
 import Swal from 'sweetalert2'
+import { normalizeFailedResponse } from '~/utils/apiError'
 import { useUserStore } from '~/stores/user'
 import { guardMakerCheckerAction, resolveCreatedBy } from '~/utils/makerChecker'
 
@@ -371,21 +372,20 @@ export const useAPPaymentStore = defineStore('apPayment', {
         
         
 
-        let result;
-        try {
-          result = await response.json();
-        } catch (parseError) {
-          console.error('❌ Frontend - Failed to parse response as JSON:', parseError);
-          throw new Error('Server response tidak valid');
-        }
-
         if (!response.ok) {
-          console.error('❌ Frontend - Response not OK:', response.status, result)
-          if (response.status === 422 && result.errors) {
-            this.validationErrors = Object.values(result.errors).flat();
-            return;
-          }
-          throw new Error(result.message || 'Gagal menyimpan data pembayaran');
+          const err = await normalizeFailedResponse(
+            response,
+            this.isEditMode ? 'Pembayaran gagal diperbarui.' : 'Pembayaran gagal dibuat.'
+          )
+          this.validationErrors = err.fieldErrorList
+          toast.error({
+            title: err.type === 'validation' ? 'Validasi' : 'Error',
+            message: err.message,
+            color: 'red',
+            position: 'bottomRight',
+            layout: 2,
+          })
+          return false
         }
         
         this.closeModal();
@@ -445,17 +445,8 @@ export const useAPPaymentStore = defineStore('apPayment', {
           });
 
           if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ message: 'Gagal menghapus pembayaran.' }));
-            console.error('Delete response error:', errorData);
-            if (response.status === 401) {
-              throw new Error('Sesi Anda telah berakhir. Silakan login kembali.');
-            } else if (response.status === 404) {
-              throw new Error('Pembayaran tidak ditemukan atau sudah dihapus.');
-            } else if (response.status === 400) {
-              throw new Error(errorData.message || 'Tidak dapat menghapus pembayaran.');
-            } else {
-              throw new Error(errorData.message || 'Gagal menghapus pembayaran.');
-            }
+            const err = await normalizeFailedResponse(response, 'Pembayaran gagal dihapus.')
+            throw new Error(err.message)
           }
 
           await this.fetchPayments();
@@ -502,8 +493,8 @@ export const useAPPaymentStore = defineStore('apPayment', {
         });
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: 'Gagal mengkonfirmasi pembayaran.' }));
-          throw new Error(errorData.message || 'Gagal mengkonfirmasi pembayaran.');
+          const err = await normalizeFailedResponse(response, 'Pembayaran gagal dikonfirmasi.')
+          throw new Error(err.message)
         }
 
         await this.fetchPayments();
@@ -536,8 +527,8 @@ export const useAPPaymentStore = defineStore('apPayment', {
           credentials: 'include',
         })
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: 'Submit gagal' }))
-          throw new Error(errorData.message || 'Submit gagal')
+          const err = await normalizeFailedResponse(response, 'AP Payment gagal disubmit.')
+          throw new Error(err.message)
         }
         await this.fetchPayments()
         toast.success({
@@ -569,8 +560,8 @@ export const useAPPaymentStore = defineStore('apPayment', {
           body: JSON.stringify({ remarks }),
         })
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: 'Approve gagal' }))
-          throw new Error(errorData.message || 'Approve gagal')
+          const err = await normalizeFailedResponse(response, 'AP Payment gagal disetujui.')
+          throw new Error(err.message)
         }
         await this.fetchPayments()
         toast.success({
@@ -602,8 +593,8 @@ export const useAPPaymentStore = defineStore('apPayment', {
           body: JSON.stringify({ remarks: remarks || 'Rejected' }),
         })
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: 'Reject gagal' }))
-          throw new Error(errorData.message || 'Reject gagal')
+          const err = await normalizeFailedResponse(response, 'AP Payment gagal ditolak.')
+          throw new Error(err.message)
         }
         await this.fetchPayments()
         toast.success({
@@ -655,8 +646,8 @@ export const useAPPaymentStore = defineStore('apPayment', {
         });
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: 'Gagal membatalkan pembayaran.' }));
-          throw new Error(errorData.message || 'Gagal membatalkan pembayaran.');
+          const err = await normalizeFailedResponse(response, 'Pembayaran gagal dibatalkan.')
+          throw new Error(err.message)
         }
 
         await this.fetchPayments();

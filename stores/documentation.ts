@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { useNuxtApp } from '#app'
 import Swal from 'sweetalert2'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 
 export interface DocumentationItem {
   id: number
@@ -187,8 +188,13 @@ export const useDocumentationStore = defineStore('documentation', {
           credentials: 'include',
         })
         if (!response.ok) {
-          const errData = await response.json().catch(() => ({}))
-          throw new Error(errData.message || 'Gagal menyimpan dokumentasi')
+          const err = await normalizeFailedResponse(
+            response,
+            this.isEditMode ? 'Dokumentasi gagal diperbarui.' : 'Dokumentasi gagal dibuat.'
+          )
+          this.validationErrors = err.fieldErrorList
+          toastNormalizedError(err)
+          return false
         }
         this.closeModal()
         await this.fetchDocumentations()
@@ -196,8 +202,9 @@ export const useDocumentationStore = defineStore('documentation', {
         const toast = useToast()
         toast?.success?.({ title: 'Berhasil', message: `Dokumentasi berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.` })
       } catch (error: any) {
-        const toast = useToast()
-        toast?.error?.({ title: 'Error', message: error.message || 'Operasi gagal' })
+        const err = normalizeApiError(error, 'Dokumentasi gagal disimpan.')
+        toastNormalizedError(err)
+        return false
       } finally {
         this.loading = false
       }
@@ -223,14 +230,18 @@ export const useDocumentationStore = defineStore('documentation', {
           headers: { Accept: 'application/json' },
           credentials: 'include',
         })
-        if (!response.ok) throw new Error('Gagal menghapus dokumentasi')
+        if (!response.ok) {
+          const err = await normalizeFailedResponse(response, 'Dokumentasi gagal dihapus.')
+          toastNormalizedError(err)
+          return false
+        }
         await this.fetchDocumentations()
         await this.fetchFlowSteps()
         const toast = useToast()
         toast?.success?.({ title: 'Berhasil', message: 'Dokumentasi berhasil dihapus.' })
       } catch (error: any) {
-        const toast = useToast()
-        toast?.error?.({ title: 'Error', message: error.message || 'Gagal menghapus' })
+        const err = normalizeApiError(error, 'Dokumentasi gagal dihapus.')
+        toastNormalizedError(err)
       } finally {
         this.loading = false
       }

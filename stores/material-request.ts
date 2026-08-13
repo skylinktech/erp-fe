@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { apiFetch } from '~/utils/apiFetch'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 import Swal from 'sweetalert2'
 import { useNuxtApp } from '#app'
 import { useUserStore } from '~/stores/user'
@@ -377,8 +378,12 @@ export const useMaterialRequestStore = defineStore('materialRequest', {
           body: JSON.stringify(body),
         })
         if (!res.ok) {
-          const ed = await res.json().catch(() => ({}))
-          toast.error({ title: 'Error', message: ed.message || 'Gagal menyimpan', color: 'red', position: 'bottomRight', layout: 2 })
+          const err = await normalizeFailedResponse(
+            res,
+            this.isEditMode ? 'Material Request gagal diperbarui.' : 'Material Request gagal dibuat.'
+          )
+          this.validationErrors = err.fieldErrorList
+          toastNormalizedError(err)
           return false
         }
         this.closeModal()
@@ -393,7 +398,8 @@ export const useMaterialRequestStore = defineStore('materialRequest', {
         })
         return true
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight', layout: 2 })
+        const err = normalizeApiError(e, 'Material Request gagal disimpan.')
+        toastNormalizedError(err)
         return false
       } finally {
         this.saving = false
@@ -417,12 +423,17 @@ export const useMaterialRequestStore = defineStore('materialRequest', {
       }
       try {
         const res = await fetch(`${api.list()}/${id}`, { method: 'DELETE', headers: { Accept: 'application/json' }, credentials: 'include' })
-        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message)
+        if (!res.ok) {
+          const err = await normalizeFailedResponse(res, 'Material Request gagal dihapus.')
+          toastNormalizedError(err)
+          return false
+        }
         await this.fetchMaterialRequests()
         await this.fetchStatistics()
         toast.success({ title: 'Sukses', message: 'Material Request Form dihapus', color: 'green', position: 'bottomRight', layout: 2 })
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight', layout: 2 })
+        const err = normalizeApiError(e, 'Material Request gagal dihapus.')
+        toastNormalizedError(err)
       } finally {
         this.loading = false
       }
@@ -440,13 +451,18 @@ export const useMaterialRequestStore = defineStore('materialRequest', {
           credentials: 'include',
           body: JSON.stringify({ remarks }),
         })
-        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message)
+        if (!res.ok) {
+          const err = await normalizeFailedResponse(res, 'Material Request gagal disetujui.')
+          toastNormalizedError(err)
+          return false
+        }
         if (refreshList) await this.fetchMaterialRequests()
         await this.fetchStatistics()
         toast.success({ title: 'Sukses', message: 'Berhasil diapprove', color: 'green', position: 'bottomRight', layout: 2 })
         return true
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight', layout: 2 })
+        const err = normalizeApiError(e, 'Material Request gagal disetujui.')
+        toastNormalizedError(err)
         return false
       } finally {
         this.loading = false
@@ -465,13 +481,18 @@ export const useMaterialRequestStore = defineStore('materialRequest', {
           credentials: 'include',
           body: JSON.stringify({ rejection_reason: reason, reject_reason: reason }),
         })
-        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message)
+        if (!res.ok) {
+          const err = await normalizeFailedResponse(res, 'Material Request gagal ditolak.')
+          toastNormalizedError(err)
+          return false
+        }
         if (refreshList) await this.fetchMaterialRequests()
         await this.fetchStatistics()
         toast.success({ title: 'Sukses', message: 'Berhasil direject', color: 'green', position: 'bottomRight', layout: 2 })
         return true
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight', layout: 2 })
+        const err = normalizeApiError(e, 'Material Request gagal ditolak.')
+        toastNormalizedError(err)
         return false
       } finally {
         this.loading = false
@@ -484,13 +505,18 @@ export const useMaterialRequestStore = defineStore('materialRequest', {
       const refreshList = options?.refreshList !== false
       try {
         const res = await fetch(api.submit(id), { method: 'PATCH', headers: { Accept: 'application/json' }, credentials: 'include' })
-        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message)
+        if (!res.ok) {
+          const err = await normalizeFailedResponse(res, 'Material Request gagal disubmit.')
+          toastNormalizedError(err)
+          return false
+        }
         if (refreshList) await this.fetchMaterialRequests()
         await this.fetchStatistics()
         toast.success({ title: 'Sukses', message: 'Berhasil di-submit', color: 'green', position: 'bottomRight', layout: 2 })
         return true
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight', layout: 2 })
+        const err = normalizeApiError(e, 'Material Request gagal disubmit.')
+        toastNormalizedError(err)
         return false
       }
     },

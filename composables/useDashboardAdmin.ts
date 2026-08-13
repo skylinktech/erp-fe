@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import { apiFetch } from '~/utils/apiFetch'
+import { getApiErrorMessage } from '~/utils/apiError'
 import type { DashboardWidgetConfigField } from '~/composables/useDashboardEngine'
 
 /**
@@ -30,15 +31,6 @@ export type AdminDashboardPayload = {
   sortOrder?: number
 }
 
-function extractErrorMessage(err: any, fallback: string): string {
-  return (
-    err?.data?.message ||
-    err?.response?._data?.message ||
-    err?.message ||
-    fallback
-  )
-}
-
 export function useDashboardAdmin() {
   const dashboards = ref<AdminDashboardRow[]>([])
   const loading = ref(false)
@@ -61,7 +53,7 @@ export function useDashboardAdmin() {
       dashboards.value = result?.data ?? []
       totalRecords.value = result?.meta?.total ?? dashboards.value.length
     } catch (err: any) {
-      error.value = extractErrorMessage(err, 'Gagal memuat daftar dashboard')
+      error.value = getApiErrorMessage(err, 'Gagal memuat daftar dashboard')
     } finally {
       loading.value = false
     }
@@ -157,7 +149,7 @@ export function useDashboardWidgetAdmin() {
       widgets.value = result?.data ?? []
       totalRecords.value = result?.meta?.total ?? widgets.value.length
     } catch (err: any) {
-      error.value = extractErrorMessage(err, 'Gagal memuat katalog widget')
+      error.value = getApiErrorMessage(err, 'Gagal memuat katalog widget')
     } finally {
       loading.value = false
     }

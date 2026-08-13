@@ -88,7 +88,7 @@
                                         placeholder="Masukkan nama unit"
                                         
                                     >
-                                    <label>Nama Satuan</label>
+                                    <label>Nama Satuan <span class="text-danger" aria-hidden="true">*</span></label>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -100,7 +100,7 @@
                                         placeholder="Masukkan simbol unit"
                                         
                                     >
-                                    <label>Simbol Satuan</label>
+                                    <label>Simbol Satuan <span class="text-danger" aria-hidden="true">*</span></label>
                                 </div>
                             </div>
                         </div>

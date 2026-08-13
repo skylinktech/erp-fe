@@ -44,26 +44,19 @@
                 <span class="text-muted small">Informasi header &amp; daftar produk</span>
               </div>
               <div class="card-body pt-0">
-                <form @submit.prevent="handleSubmit">
-                  <ul class="nav nav-tabs mb-0" role="tablist">
-                    <li class="nav-item">
-                      <button class="nav-link active" type="button" data-bs-toggle="tab" data-bs-target="#po-tab-info">
-                        <i class="ri-information-line me-1"></i>Informasi
-                      </button>
-                    </li>
-                    <li class="nav-item">
-                      <button class="nav-link" type="button" data-bs-toggle="tab" data-bs-target="#po-tab-items">
-                        <i class="ri-shopping-cart-line me-1"></i>
-                        Item
-                        <span v-if="itemCount" class="badge bg-primary ms-1">{{ itemCount }}</span>
-                      </button>
-                    </li>
-                  </ul>
+                <form ref="formRoot" @submit.prevent="onFormSubmit" novalidate>
+                  <TabbedFormNav
+                    :steps="visibleSteps"
+                    :current-index="currentIndex"
+                    :disabled="navigating || saving"
+                    nav-class="mb-0"
+                    @select="goTo"
+                  />
 
                   <div class="tab-content pt-4">
-                    <div id="po-tab-info" class="tab-pane fade show active">
+                    <div id="po-tab-info" data-step-id="po-tab-info" :class="paneClass('po-tab-info')">
                       <div class="row mb-3 align-items-center">
-                        <label class="col-sm-3 col-form-label mb-0">Tipe PO</label>
+                        <FormLabel required label-class="col-sm-3 col-form-label mb-0">Tipe PO</FormLabel>
                         <div class="col-sm-9">
                           <div class="po-type-options d-flex flex-wrap align-items-center gap-4">
                             <label class="po-type-option" for="po-type-internal">
@@ -91,6 +84,7 @@
                               <span>External</span>
                             </label>
                           </div>
+                          <div v-if="uiErrors.poType" class="invalid-feedback d-block">{{ uiErrors.poType }}</div>
                         </div>
                       </div>
                       <div v-if="isExternalPO" class="row mb-3">
@@ -100,7 +94,7 @@
                         </div>
                       </div>
                       <div class="row mb-3">
-                        <label class="col-sm-3 col-form-label">Vendor</label>
+                        <FormLabel required label-class="col-sm-3 col-form-label">Vendor</FormLabel>
                         <div class="col-sm-9">
                           <CustomSelect2
                             v-model="form.vendorId"
@@ -111,24 +105,28 @@
                             clearable
                             placeholder="Pilih vendor"
                           />
+                          <div v-if="uiErrors.vendorId" class="invalid-feedback d-block">{{ uiErrors.vendorId }}</div>
                         </div>
                       </div>
                       <div class="row mb-3">
-                        <label class="col-sm-3 col-form-label">Untuk Perhatian</label>
+                        <FormLabel required html-for="po-up" label-class="col-sm-3 col-form-label">Untuk Perhatian</FormLabel>
                         <div class="col-sm-9">
-                          <input v-model="form.up" type="text" class="form-control" />
+                          <input id="po-up" v-model="form.up" type="text" class="form-control" :class="{ 'is-invalid': uiErrors.up }" aria-required="true" />
+                          <div v-if="uiErrors.up" class="invalid-feedback d-block">{{ uiErrors.up }}</div>
                         </div>
                       </div>
                       <div class="row mb-3">
-                        <label class="col-sm-3 col-form-label">Tanggal PO</label>
+                        <FormLabel required html-for="po-date" label-class="col-sm-3 col-form-label">Tanggal PO</FormLabel>
                         <div class="col-sm-9 col-md-6">
-                          <input v-model="form.date" type="date" class="form-control" required />
+                          <input id="po-date" v-model="form.date" type="date" class="form-control" :class="{ 'is-invalid': uiErrors.date }" aria-required="true" />
+                          <div v-if="uiErrors.date" class="invalid-feedback d-block">{{ uiErrors.date }}</div>
                         </div>
                       </div>
                       <div class="row mb-3">
-                        <label class="col-sm-3 col-form-label">Jatuh Tempo</label>
+                        <FormLabel required html-for="po-due-date" label-class="col-sm-3 col-form-label">Jatuh Tempo</FormLabel>
                         <div class="col-sm-9 col-md-6">
-                          <input v-model="form.dueDate" type="date" class="form-control" />
+                          <input id="po-due-date" v-model="form.dueDate" type="date" class="form-control" :class="{ 'is-invalid': uiErrors.dueDate }" aria-required="true" />
+                          <div v-if="uiErrors.dueDate" class="invalid-feedback d-block">{{ uiErrors.dueDate }}</div>
                         </div>
                       </div>
                       <div class="row mb-3">
@@ -247,7 +245,10 @@
                       </div>
                     </div>
 
-                    <div id="po-tab-items" class="tab-pane fade">
+                    <div id="po-tab-items" data-step-id="po-tab-items" :class="paneClass('po-tab-items')">
+                      <div v-if="uiErrors.purchaseOrderItems || uiErrors.warehouseId || uiErrors.quantity" class="alert alert-danger py-2 mb-3">
+                        <i class="ri-error-warning-line me-1"></i>{{ uiErrors.purchaseOrderItems || uiErrors.warehouseId || uiErrors.quantity }}
+                      </div>
                       <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
                         <p class="mb-0 text-muted small flex-grow-1" style="min-width: 0">
                           Tambah produk, qty, dan harga per baris.
@@ -293,7 +294,7 @@
                                 :reduce="(w) => w?.id"
                                 searchable
                                 clearable
-                                placeholder="Opsional"
+                                placeholder="Pilih gudang"
                                 @update:modelValue="() => onWarehouseChange(idx)"
                               />
                             </div>
@@ -366,13 +367,15 @@
                     </div>
                   </div>
 
-                  <div class="d-flex justify-content-end gap-2 mt-4 pt-4 border-top">
-                    <NuxtLink to="/purchasing/purchase-order" class="btn btn-outline-secondary">Batal</NuxtLink>
-                    <button type="submit" class="btn btn-primary" :disabled="saving">
-                      <span v-if="saving" class="spinner-border spinner-border-sm me-1"></span>
-                      Simpan
-                    </button>
-                  </div>
+                  <TabbedFormActions
+                    :is-first-step="isFirstStep"
+                    :is-last-step="isLastStep"
+                    :loading="navigating"
+                    :saving="saving"
+                    cancel-href="/purchasing/purchase-order"
+                    @next="next"
+                    @previous="previous"
+                  />
                 </form>
               </div>
             </div>
@@ -417,6 +420,11 @@ import { storeToRefs } from 'pinia'
 import { usePurchaseOrderStore } from '~/stores/purchaseOrder'
 import { useImageUrl } from '~/composables/useImageUrl'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
+import TabbedFormNav from '~/components/form/TabbedFormNav.vue'
+import TabbedFormActions from '~/components/form/TabbedFormActions.vue'
+import FormLabel from '~/components/form/FormLabel.vue'
+import { useTabbedFormNavigation } from '~/composables/useTabbedFormNavigation'
+import { routeSaveFailure } from '~/utils/apiError'
 import FormPageSidebar from '~/components/form/FormPageSidebar.vue'
 import StockAvailabilityAlert from '~/components/purchasing/StockAvailabilityAlert.vue'
 import { PURCHASING_MODULE_NAV } from '~/constants/purchasing/formNav'
@@ -431,6 +439,68 @@ const { isImageFile } = useImageUrl()
 const formatRupiah = useFormatRupiah()
 
 const { form, isEditMode, loading, saving } = storeToRefs(purchaseOrderStore)
+
+const formRoot = ref<HTMLFormElement | null>(null)
+const uiErrors = ref<Record<string, string>>({})
+const formSteps = [
+  { id: 'po-tab-info', label: 'Informasi', icon: 'ri-information-line' },
+  { id: 'po-tab-items', label: 'Items', icon: 'ri-shopping-cart-line' },
+]
+function validatePurchaseOrderStep(step: { id: string }): boolean {
+  uiErrors.value = {}
+  if (step.id === 'po-tab-info') {
+    if (!form.value?.poType) uiErrors.value.poType = 'Tipe PO wajib dipilih.'
+    if (!form.value?.vendorId) uiErrors.value.vendorId = 'Vendor wajib dipilih.'
+    if (!String(form.value?.up || '').trim()) uiErrors.value.up = 'Untuk Perhatian wajib diisi.'
+    if (!form.value?.date) uiErrors.value.date = 'Tanggal PO wajib diisi.'
+    if (!form.value?.dueDate) uiErrors.value.dueDate = 'Jatuh Tempo wajib diisi.'
+    if (form.value?.date && form.value?.dueDate && String(form.value.dueDate) < String(form.value.date)) {
+      uiErrors.value.dueDate = 'Jatuh Tempo tidak boleh lebih awal dari Tanggal PO.'
+    }
+    return Object.keys(uiErrors.value).length === 0
+  }
+  if (step.id === 'po-tab-items') {
+    const items = form.value?.purchaseOrderItems || []
+    const validItems = items.filter((i) => i.productId && Number(i.quantity) > 0)
+    if (validItems.length < 1) {
+      const hasProductNoQty = items.some((i) => i.productId && !(Number(i.quantity) > 0))
+      uiErrors.value.purchaseOrderItems = hasProductNoQty
+        ? 'Quantity minimal 1.'
+        : 'Minimal satu item harus ditambahkan.'
+    }
+    if (items.some((i) => i.productId && !i.warehouseId)) {
+      uiErrors.value.warehouseId = 'Gudang wajib dipilih.'
+    }
+    return Object.keys(uiErrors.value).length === 0
+  }
+  return true
+}
+const {
+  currentIndex,
+  visibleSteps,
+  isFirstStep,
+  isLastStep,
+  navigating,
+  next,
+  previous,
+  goTo,
+  goToId,
+  paneClass,
+  validateAll,
+} = useTabbedFormNavigation({ steps: formSteps, formRoot, validateStep: validatePurchaseOrderStep })
+const PO_FIELD_TABS: Record<string, string> = {
+  poType: 'po-tab-info',
+  vendorId: 'po-tab-info',
+  up: 'po-tab-info',
+  date: 'po-tab-info',
+  dueDate: 'po-tab-info',
+  perusahaanId: 'po-tab-info',
+  cabangId: 'po-tab-info',
+  purchaseOrderItems: 'po-tab-items',
+  warehouseId: 'po-tab-items',
+  quantity: 'po-tab-items',
+  productId: 'po-tab-items',
+}
 
 const formReady = ref(false)
 const vendors = ref<any[]>([])
@@ -804,9 +874,22 @@ async function loadMasterData() {
   }
 }
 
+async function onFormSubmit() {
+  if (!isLastStep.value) {
+    await next()
+    return
+  }
+  if (!(await validateAll())) return
+  await handleSubmit()
+}
+
 async function handleSubmit() {
   const ok = await purchaseOrderStore.savePurchaseOrder()
-  if (ok) navigateTo('/purchasing/purchase-order')
+  if (ok) {
+    navigateTo('/purchasing/purchase-order')
+    return
+  }
+  routeSaveFailure(purchaseOrderStore.validationErrors, uiErrors.value, PO_FIELD_TABS, goToId)
 }
 
 onMounted(async () => {

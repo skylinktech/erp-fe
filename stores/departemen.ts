@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { useNuxtApp } from '#app'
 import Swal from 'sweetalert2'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 import type { Divisi } from './divisi'
 
 export interface Departemen {
@@ -145,12 +146,13 @@ export const useDepartemenStore = defineStore('departemen', {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            if (response.status === 422) {
-                this.validationErrors = Object.values(errorData.errors).flat();
-                throw new Error('Data validasi tidak valid');
-            }
-            throw new Error(errorData.message || 'Gagal menyimpan data departemen');
+            const err = await normalizeFailedResponse(
+                response,
+                this.isEditMode ? 'Departemen gagal diperbarui.' : 'Departemen gagal dibuat.'
+            )
+            this.validationErrors = err.fieldErrorList
+            toastNormalizedError(err)
+            return false
         }
         
         this.closeModal();
@@ -164,15 +166,9 @@ export const useDepartemenStore = defineStore('departemen', {
         });
 
       } catch (error: any) {
-        if (error.message !== 'Data validasi tidak valid') {
-            const toast = useToast()
-            toast.error({
-              title: 'Error',
-              message: error.message || 'Operasi gagal',
-              color: 'red',
-              position: 'bottomRight',
-            });
-        }
+        const err = normalizeApiError(error, 'Departemen gagal disimpan.')
+        toastNormalizedError(err)
+        return false
       } finally {
         this.loading = false;
       }
@@ -208,8 +204,9 @@ export const useDepartemenStore = defineStore('departemen', {
           });
 
           if (!response.ok) {
-              const errorData = await response.json();
-              throw new Error(errorData.message || 'Gagal menghapus departemen');
+              const err = await normalizeFailedResponse(response, 'Departemen gagal dihapus.')
+              toastNormalizedError(err)
+              return false
           }
 
           await this.fetchDepartemens();
@@ -221,14 +218,8 @@ export const useDepartemenStore = defineStore('departemen', {
             position: 'bottomRight',
           });
       } catch (error: any) {
-          console.error('Gagal menghapus departemen:', error);
-          const toast = useToast()          
-          toast.error({
-            title: 'Error',
-            message: error.message || 'Gagal menghapus departemen',
-            color: 'red',
-            position: 'bottomRight',
-          });
+          const err = normalizeApiError(error, 'Departemen gagal dihapus.')
+          toastNormalizedError(err)
       } finally {
           this.loading = false;
       }

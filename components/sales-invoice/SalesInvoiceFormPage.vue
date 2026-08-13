@@ -13,50 +13,46 @@
 
       <div class="card">
         <div class="card-body">
-          <form @submit.prevent="handleSubmit">
-            <div class="row">
-              <div class="col">
-                <ul class="nav nav-tabs" role="tablist">
-                  <li class="nav-item">
-                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#si-tabs-info" role="tab" type="button">
-                      <span class="d-none d-sm-block">Informasi Sales Invoice</span>
-                    </button>
-                  </li>
-                  <li class="nav-item">
-                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#si-tabs-items" role="tab" type="button">
-                      <span class="d-none d-sm-block">List Product</span>
-                    </button>
-                  </li>
-                </ul>
-              </div>
-            </div>
+          <form ref="formRoot" @submit.prevent="onFormSubmit" novalidate>
+            <TabbedFormNav
+              :steps="visibleSteps"
+              :current-index="currentIndex"
+              :disabled="navigating || saving"
+              @select="goTo"
+            />
 
             <div class="tab-content pt-4">
-              <div id="si-tabs-info" class="tab-pane fade active show" role="tabpanel">
+              <div id="si-tabs-info" data-step-id="si-tabs-info" role="tabpanel" :class="paneClass('si-tabs-info')">
                 <div class="row g-4">
                   <div class="col-md-6">
                     <CustomSelect2 v-model="form.salesOrderId" :options="salesOrdersForSelect || []" :get-option-label="getSalesOrderLabel" :reduce="so => so.id" placeholder="Pilih Sales Order" searchable clearable />
                   </div>
                   <div class="col-md-6">
+                    <FormLabel required>Customer</FormLabel>
                     <CustomSelect2 v-model="form.customerId" :options="customers || []" :get-option-label="c => c.name" :reduce="c => c.id" placeholder="Pilih Customer" searchable clearable :disabled="!!form.salesOrderId" />
+                    <div v-if="uiErrors.customerId" class="invalid-feedback d-block">{{ uiErrors.customerId }}</div>
                   </div>
                   <div class="col-md-6">
+                    <FormLabel required>Perusahaan</FormLabel>
                     <CustomSelect2 v-model="form.perusahaanId" :options="perusahaans || []" :get-option-label="p => p.nmPerusahaan" :reduce="p => p.id" placeholder="Pilih Perusahaan" searchable clearable :disabled="!!form.salesOrderId" />
+                    <div v-if="uiErrors.perusahaanId" class="invalid-feedback d-block">{{ uiErrors.perusahaanId }}</div>
                   </div>
                   <div class="col-md-6">
                     <CustomSelect2 v-model="form.cabangId" :options="filteredCabangs" :get-option-label="c => c.nmCabang" :reduce="c => c.id" placeholder="Pilih Cabang" searchable clearable :disabled="!!form.salesOrderId || !form.perusahaanId" />
                   </div>
                   <div class="col-md-3">
                     <div class="form-floating form-floating-outline">
-                      <input type="date" v-model="form.date" class="form-control">
-                      <label>Tanggal Invoice</label>
+                      <input id="si-date" type="date" v-model="form.date" class="form-control" :class="{ 'is-invalid': uiErrors.date }" aria-required="true">
+                      <label for="si-date">Tanggal Invoice <span class="text-danger" aria-hidden="true">*</span></label>
                     </div>
+                    <div v-if="uiErrors.date" class="invalid-feedback d-block">{{ uiErrors.date }}</div>
                   </div>
                   <div class="col-md-3">
                     <div class="form-floating form-floating-outline">
-                      <input type="date" v-model="form.dueDate" class="form-control">
-                      <label>Jatuh Tempo Invoice</label>
+                      <input id="si-due-date" type="date" v-model="form.dueDate" class="form-control" :class="{ 'is-invalid': uiErrors.dueDate }" aria-required="true">
+                      <label for="si-due-date">Jatuh Tempo Invoice <span class="text-danger" aria-hidden="true">*</span></label>
                     </div>
+                    <div v-if="uiErrors.dueDate" class="invalid-feedback d-block">{{ uiErrors.dueDate }}</div>
                   </div>
                   <div class="col-md-3">
                     <div class="form-floating form-floating-outline">
@@ -111,14 +107,15 @@
                   </div>
                   <div class="col-md-12">
                     <div class="form-floating form-floating-outline">
-                      <textarea v-model="form.description" class="form-control" placeholder="Deskripsi Invoice"></textarea>
-                      <label>Deskripsi Invoice</label>
+                      <textarea id="si-description" v-model="form.description" class="form-control" :class="{ 'is-invalid': uiErrors.description }" placeholder="Deskripsi Invoice" aria-required="true"></textarea>
+                      <label for="si-description">Deskripsi Invoice <span class="text-danger" aria-hidden="true">*</span></label>
                     </div>
+                    <div v-if="uiErrors.description" class="invalid-feedback d-block">{{ uiErrors.description }}</div>
                   </div>
                 </div>
               </div>
 
-              <div id="si-tabs-items" class="tab-pane fade" role="tabpanel">
+              <div id="si-tabs-items" data-step-id="si-tabs-items" role="tabpanel" :class="paneClass('si-tabs-items')">
                 <div v-for="(item, index) in (form.salesInvoiceItems || [])" :key="index" class="repeater-item mb-4">
                   <div class="row g-3">
                     <div class="col-md-6">
@@ -170,13 +167,16 @@
               </div>
             </div>
 
-            <div class="d-flex justify-content-end mt-4">
-              <button type="button" class="btn btn-outline-secondary" @click="navigateTo('/sales/sales-invoice')">Tutup</button>
-              <button type="submit" class="btn btn-primary ms-2" :disabled="saving">
-                <span v-if="saving" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                Simpan
-              </button>
-            </div>
+            <TabbedFormActions
+              :is-first-step="isFirstStep"
+              :is-last-step="isLastStep"
+              :loading="navigating"
+              :saving="saving"
+              cancel-label="Tutup"
+              @cancel="navigateTo('/sales/sales-invoice')"
+              @next="next"
+              @previous="previous"
+            />
           </form>
         </div>
       </div>
@@ -185,9 +185,14 @@
 </template>
 
 <script setup>
-import { computed, onMounted, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
+import TabbedFormNav from '~/components/form/TabbedFormNav.vue'
+import TabbedFormActions from '~/components/form/TabbedFormActions.vue'
+import FormLabel from '~/components/form/FormLabel.vue'
+import { useTabbedFormNavigation } from '~/composables/useTabbedFormNavigation'
+import { routeSaveFailure } from '~/utils/apiError'
 import { useSalesInvoiceStore } from '~/stores/sales-invoice'
 import { useCustomerStore } from '~/stores/customer'
 import { useSalesOrderStore } from '~/stores/sales-order'
@@ -205,6 +210,48 @@ const warehouseStore = useWarehouseStore()
 const formatRupiah = useFormatRupiah()
 
 const { form, isEditMode, saving } = storeToRefs(salesInvoiceStore)
+const formRoot = ref(null)
+const uiErrors = ref({})
+const formSteps = [
+  { id: 'si-tabs-info', label: 'Informasi Sales Invoice', icon: 'ri-information-line' },
+  { id: 'si-tabs-items', label: 'List Product', icon: 'ri-box-3-line' },
+]
+function validateSalesInvoiceStep(step) {
+  uiErrors.value = {}
+  if (step.id !== 'si-tabs-info') return true
+  if (!form.value?.customerId) uiErrors.value.customerId = 'Customer wajib dipilih.'
+  if (!form.value?.perusahaanId) uiErrors.value.perusahaanId = 'Perusahaan wajib dipilih.'
+  if (!form.value?.date) uiErrors.value.date = 'Tanggal Invoice wajib diisi.'
+  if (!form.value?.dueDate) uiErrors.value.dueDate = 'Jatuh Tempo wajib diisi.'
+  if (!String(form.value?.description || '').trim()) uiErrors.value.description = 'Deskripsi Invoice wajib diisi.'
+  if (form.value?.date && form.value?.dueDate && String(form.value.dueDate) < String(form.value.date)) {
+    uiErrors.value.dueDate = 'Jatuh Tempo tidak boleh lebih awal dari Tanggal Invoice.'
+  }
+  return Object.keys(uiErrors.value).length === 0
+}
+const {
+  currentIndex,
+  visibleSteps,
+  isFirstStep,
+  isLastStep,
+  navigating,
+  next,
+  previous,
+  goTo,
+  goToId,
+  paneClass,
+  validateAll,
+} = useTabbedFormNavigation({ steps: formSteps, formRoot, validateStep: validateSalesInvoiceStep })
+const SI_FIELD_TABS = {
+  customerId: 'si-tabs-info',
+  perusahaanId: 'si-tabs-info',
+  date: 'si-tabs-info',
+  dueDate: 'si-tabs-info',
+  description: 'si-tabs-info',
+  salesInvoiceItems: 'si-tabs-items',
+  productId: 'si-tabs-items',
+  quantity: 'si-tabs-items',
+}
 const { customers } = storeToRefs(customerStore)
 const { salesOrdersForSelect, customerProducts } = storeToRefs(salesOrderStore)
 const { perusahaans } = storeToRefs(perusahaanStore)
@@ -263,9 +310,22 @@ function removeSalesInvoiceItem(index) {
   form.value.salesInvoiceItems.splice(index, 1)
 }
 
+async function onFormSubmit() {
+  if (!isLastStep.value) {
+    await next()
+    return
+  }
+  if (!(await validateAll())) return
+  await handleSubmit()
+}
+
 async function handleSubmit() {
   const ok = await salesInvoiceStore.saveSalesInvoice()
-  if (ok) navigateTo('/sales/sales-invoice')
+  if (ok) {
+    navigateTo('/sales/sales-invoice')
+    return
+  }
+  routeSaveFailure(salesInvoiceStore.validationErrors, uiErrors.value, SI_FIELD_TABS, goToId)
 }
 
 watch(salesInvoiceItemsTotal, (newSubtotal) => {

@@ -1,5 +1,6 @@
 import { computed, ref } from 'vue'
 import { apiFetch } from '~/utils/apiFetch'
+import { getApiErrorMessage } from '~/utils/apiError'
 import type {
   DashboardLayoutDTO,
   DashboardLayoutWidgetDTO,
@@ -26,10 +27,6 @@ export type LayoutVersionSummary = {
   isDefault: boolean
   publishedAt: string | null
   widgetCount?: number
-}
-
-function extractErrorMessage(err: any, fallback: string): string {
-  return err?.data?.message || err?.response?._data?.message || err?.message || fallback
 }
 
 function genInstanceKey(widgetCode: string): string {
@@ -116,7 +113,7 @@ export function useDashboardLayoutBuilder() {
       hasUnsavedChanges.value = false
       await loadVersions(dashboardId)
     } catch (err: any) {
-      error.value = extractErrorMessage(err, 'Gagal memuat draft layout')
+      error.value = getApiErrorMessage(err, 'Gagal memuat draft layout')
     } finally {
       loading.value = false
     }
@@ -224,7 +221,7 @@ export function useDashboardLayoutBuilder() {
       )
       hasUnsavedChanges.value = false
     } catch (err: any) {
-      error.value = extractErrorMessage(err, 'Gagal menyimpan draft layout')
+      error.value = getApiErrorMessage(err, 'Gagal menyimpan draft layout')
       throw err
     } finally {
       saving.value = false
@@ -247,7 +244,7 @@ export function useDashboardLayoutBuilder() {
       })
       await loadVersions(dashboardId)
     } catch (err: any) {
-      error.value = extractErrorMessage(err, 'Gagal publish layout')
+      error.value = getApiErrorMessage(err, 'Gagal publish layout')
       throw err
     } finally {
       publishing.value = false
@@ -315,7 +312,7 @@ export function useDashboardLayoutBuilder() {
       hasUnsavedChanges.value = false
       await loadVersions(dashboardId)
     } catch (err: any) {
-      error.value = extractErrorMessage(err, 'Gagal rollback ke versi ini')
+      error.value = getApiErrorMessage(err, 'Gagal rollback ke versi ini')
       throw err
     } finally {
       rollingBack.value = false

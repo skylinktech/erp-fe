@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { apiFetch } from '~/utils/apiFetch'
+import { normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 import Swal from 'sweetalert2'
 
 export interface SalesPipelineStage {
@@ -270,16 +271,12 @@ export const useSalesPipelineStore = defineStore('salesPipeline', {
         await this.fetchOpportunities()
       } catch (error: any) {
         this.error = error
-        const errorData = error?.data || error?.response?._data
-        if (errorData?.errors) {
-          this.validationErrors = errorData.errors
-        } else {
-          await Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: errorData?.message || 'Terjadi kesalahan saat menyimpan opportunity',
-          })
-        }
+        const err = normalizeApiError(
+          error,
+          this.isEditMode ? 'Opportunity gagal diperbarui.' : 'Opportunity gagal dibuat.'
+        )
+        this.validationErrors = err.fieldErrorList
+        toastNormalizedError(err)
       } finally {
         this.loading = false
       }
@@ -298,12 +295,8 @@ export const useSalesPipelineStore = defineStore('salesPipeline', {
         await this.fetchOpportunities()
       } catch (error: any) {
         this.error = error
-        const errorData = error?.data || error?.response?._data
-        await Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: errorData?.message || 'Terjadi kesalahan saat memindahkan stage',
-        })
+        const err = normalizeApiError(error, 'Opportunity gagal diproses.')
+        toastNormalizedError(err)
       } finally {
         this.loading = false
       }
@@ -327,12 +320,8 @@ export const useSalesPipelineStore = defineStore('salesPipeline', {
         await this.fetchOpportunity(opportunityId)
       } catch (error: any) {
         this.error = error
-        const errorData = error?.data || error?.response?._data
-        await Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: errorData?.message || 'Terjadi kesalahan saat menambahkan activity',
-        })
+        const err = normalizeApiError(error, 'Opportunity gagal diproses.')
+        toastNormalizedError(err)
       } finally {
         this.loading = false
       }
@@ -359,28 +348,16 @@ export const useSalesPipelineStore = defineStore('salesPipeline', {
           method: 'DELETE',
         })
 
-        if (response.ok) {
-          await Swal.fire({
-            icon: 'success',
-            title: 'Berhasil',
-            text: 'Opportunity berhasil dihapus',
-          })
-          await this.fetchOpportunities()
-        } else {
-          const errorData = await response.json()
-          await Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: errorData.message || 'Terjadi kesalahan',
-          })
-        }
+        await Swal.fire({
+          icon: 'success',
+          title: 'Berhasil',
+          text: 'Opportunity berhasil dihapus',
+        })
+        await this.fetchOpportunities()
       } catch (error) {
         this.error = error
-        await Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: 'Terjadi kesalahan saat menghapus opportunity',
-        })
+        const err = normalizeApiError(error, 'Opportunity gagal dihapus.')
+        toastNormalizedError(err)
       } finally {
         this.loading = false
       }

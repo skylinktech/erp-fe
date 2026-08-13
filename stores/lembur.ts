@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { useNuxtApp } from '#app'
 import { apiFetch } from '~/utils/apiFetch'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 
 export interface LemburRow {
   id: number
@@ -293,11 +294,16 @@ export const useLemburStore = defineStore('lembur', {
         if (this.isEditMode) fd.append('_method', 'PUT')
 
         const res = await fetch(url, { method: 'POST', credentials: 'include', body: fd })
-        const result = await res.json().catch(() => ({} as any))
         if (!res.ok) {
-          if (result?.errors) this.validationErrors = result.errors
-          throw new Error(result?.message || 'Gagal menyimpan pengajuan lembur')
+          const err = await normalizeFailedResponse(
+            res,
+            this.isEditMode ? 'Lembur gagal diperbarui.' : 'Lembur gagal dibuat.'
+          )
+          this.validationErrors = err.fieldErrorList
+          toastNormalizedError(err)
+          return null
         }
+        const result = await res.json().catch(() => ({} as any))
 
         toast.success({
           title: 'Berhasil',
@@ -307,7 +313,8 @@ export const useLemburStore = defineStore('lembur', {
         await Promise.all([this.fetchLemburs(), this.fetchStats(), this.fetchWeeklySummary(this.form.tanggal)])
         return result?.data as LemburRow
       } catch (error: any) {
-        toast.error({ title: 'Error', message: error.message || String(error), color: 'red' })
+        const err = normalizeApiError(error, 'Lembur gagal disimpan.')
+        toastNormalizedError(err)
         return null
       } finally {
         this.saving = false
@@ -323,11 +330,8 @@ export const useLemburStore = defineStore('lembur', {
         await Promise.all([this.fetchLemburs(), this.fetchStats()])
         return true
       } catch (error: any) {
-        toast.error({
-          title: 'Error',
-          message: error?.data?.message || error?.message || 'Gagal menghapus',
-          color: 'red',
-        })
+        const err = normalizeApiError(error, 'Lembur gagal dihapus.')
+        toastNormalizedError(err)
         return false
       }
     },
@@ -372,11 +376,8 @@ export const useLemburStore = defineStore('lembur', {
         await Promise.all([this.fetchLemburs(), this.fetchStats()])
         return true
       } catch (error: any) {
-        toast.error({
-          title: 'Error',
-          message: error?.data?.message || error?.message || 'Aksi gagal',
-          color: 'red',
-        })
+        const err = normalizeApiError(error, 'Lembur gagal diproses.')
+        toastNormalizedError(err)
         return false
       }
     },

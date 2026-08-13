@@ -250,45 +250,19 @@
           :validation-errors-from-parent="validationErrors"
         >
           <template #default>
-            <form @submit.prevent="budgetStore.saveBudget()">
-              <!-- Nav tabs -->
-              <ul class="nav nav-tabs mb-4" role="tablist">
-                <li class="nav-item" role="presentation">
-                  <button
-                    class="nav-link active"
-                    id="budget-info-tab"
-                    data-bs-toggle="tab"
-                    data-bs-target="#budget-info"
-                    type="button"
-                    role="tab"
-                    aria-controls="budget-info"
-                    aria-selected="true"
-                  >
-                    <i class="ri-information-line me-2"></i>
-                    Informasi Budget
-                  </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                  <button
-                    class="nav-link"
-                    id="allocations-tab"
-                    data-bs-toggle="tab"
-                    data-bs-target="#allocations"
-                    type="button"
-                    role="tab"
-                    aria-controls="allocations"
-                    aria-selected="false"
-                  >
-                    <i class="ri-pie-chart-line me-2"></i>
-                    Alokasi Budget
-                  </button>
-                </li>
-              </ul>
+            <form ref="formRoot" @submit.prevent="onFormSubmit" novalidate>
+              <TabbedFormNav
+                :steps="visibleSteps"
+                :current-index="currentIndex"
+                :disabled="navigating || saving"
+                nav-class="mb-4"
+                @select="goTo"
+              />
 
               <!-- Tab content -->
               <div class="tab-content">
                 <!-- Budget Info Tab -->
-                <div class="tab-pane fade show active" id="budget-info" role="tabpanel" aria-labelledby="budget-info-tab">
+                <div class="tab-pane fade" id="budget-info" data-step-id="budget-info" role="tabpanel" aria-labelledby="budget-info-tab" :class="paneClass('budget-info')">
                   <div class="row g-6">
                     <div class="col-md-12">
                       <div class="form-floating form-floating-outline">
@@ -299,7 +273,7 @@
                           placeholder="Masukkan nama budget"
                           required
                         />
-                        <label>Nama Budget *</label>
+                        <label>Nama Budget <span class="text-danger" aria-hidden="true">*</span></label>
                       </div>
                     </div>
                     <div class="col-md-6">
@@ -327,7 +301,7 @@
                           placeholder="Masukkan total budget"
                           required
                         />
-                        <label>Total Budget *</label>
+                        <label>Total Budget <span class="text-danger" aria-hidden="true">*</span></label>
                       </div>
                     </div>
                     <div class="col-md-6">
@@ -354,7 +328,7 @@
                 </div>
 
                 <!-- Allocations Tab -->
-                <div class="tab-pane fade" id="allocations" role="tabpanel" aria-labelledby="allocations-tab">
+                <div class="tab-pane fade" id="allocations" data-step-id="allocations" role="tabpanel" aria-labelledby="allocations-tab" :class="paneClass('allocations')">
                   <div class="row g-3">
                     <div class="col-12">
                       <div class="table-responsive">
@@ -435,16 +409,17 @@
                 </div>
               </div>
 
-              <div class="mt-4 d-flex justify-content-end gap-2">
-                <button type="button" class="btn btn-outline-secondary" @click="budgetStore.closeModal()">
-                  Tutup
-                </button>
-                <!-- Biarkan user tetap bisa menyimpan walaupun alokasi > budget, hanya tampilkan alert -->
-                <button type="submit" class="btn btn-primary" :disabled="saving">
-                  <span v-if="saving" class="spinner-border spinner-border-sm me-2"></span>
-                  {{ isEditMode ? 'Update' : 'Simpan' }}
-                </button>
-              </div>
+              <TabbedFormActions
+                :is-first-step="isFirstStep"
+                :is-last-step="isLastStep"
+                :loading="navigating"
+                :saving="saving"
+                cancel-label="Tutup"
+                :submit-label="isEditMode ? 'Update' : 'Simpan'"
+                @next="next"
+                @previous="previous"
+                @cancel="budgetStore.closeModal()"
+              />
             </form>
           </template>
         </Modal>
@@ -464,6 +439,9 @@ import { usePermissionsStore } from '~/stores/permissions'
 import { usePermissions } from '~/composables/usePermissions'
 import { useDebounceFn } from '@vueuse/core'
 import Modal from '~/components/modal/Modal.vue'
+import TabbedFormNav from '~/components/form/TabbedFormNav.vue'
+import TabbedFormActions from '~/components/form/TabbedFormActions.vue'
+import { useTabbedFormNavigation } from '~/composables/useTabbedFormNavigation'
 import Column from 'primevue/column'
 import Dropdown from 'primevue/dropdown'
 import InputText from 'primevue/inputtext'
@@ -483,6 +461,24 @@ const permissionStore = usePermissionsStore()
 
 // Refs
 const myDataTableRef = ref()
+const formRoot = ref(null)
+const formSteps = [
+  { id: 'budget-info', label: 'Informasi Budget', icon: 'ri-information-line' },
+  { id: 'allocations', label: 'Alokasi Budget', icon: 'ri-pie-chart-line' },
+]
+const {
+  currentIndex,
+  visibleSteps,
+  isFirstStep,
+  isLastStep,
+  navigating,
+  next,
+  previous,
+  goTo,
+  paneClass,
+  reset,
+  validateAll,
+} = useTabbedFormNavigation({ steps: formSteps, formRoot })
 const globalFilterValue = ref('')
 const rowsPerPageOptionsArray = ref([10, 25, 50, 100])
 
@@ -623,8 +619,18 @@ onMounted(async () => {
 })
 
 // Watch modal visibility untuk bootstrap modal
+async function onFormSubmit() {
+  if (!isLastStep.value) {
+    await next()
+    return
+  }
+  if (!(await validateAll())) return
+  await budgetStore.saveBudget()
+}
+
 watch(showModal, (newValue) => {
   if (newValue) {
+    reset()
     nextTick(() => {
       const modalElement = document.getElementById('BudgetModal')
       if (modalElement && !modalInstance) {

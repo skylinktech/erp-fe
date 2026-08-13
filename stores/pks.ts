@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { apiFetch } from '~/utils/apiFetch'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 import Swal from 'sweetalert2'
 import { navigateTo, useNuxtApp } from '#app'
 import { useUserStore } from '~/stores/user'
@@ -293,10 +294,12 @@ export const usePksStore = defineStore('pks', {
           signal: controller.signal,
         })
         if (!res.ok) {
-          const ed = await res.json().catch(() => ({}))
-          this.validationErrors = ed.errors || []
-          toast.error({ title: 'Error', message: ed.message || (this.isEditMode ? 'Gagal memperbarui PKS' : 'Gagal menyimpan PKS'), color: 'red', position: 'bottomRight', layout: 2 })
-          this.saving = false
+          const err = await normalizeFailedResponse(
+            res,
+            this.isEditMode ? 'PKS gagal diperbarui.' : 'PKS gagal dibuat.'
+          )
+          this.validationErrors = err.fieldErrorList
+          toastNormalizedError(err)
           return false
         }
         this.closeModal()
@@ -310,12 +313,8 @@ export const usePksStore = defineStore('pks', {
         }
         return true
       } catch (e: any) {
-        if (e?.name === 'AbortError') {
-          toast.error({ title: 'Timeout', message: 'Proses simpan terlalu lama. Silakan coba lagi.', color: 'red', position: 'bottomRight', layout: 2 })
-        } else {
-          toast.error({ title: 'Error', message: e.message || 'Operasi gagal', color: 'red', position: 'bottomRight', layout: 2 })
-        }
-        this.saving = false
+        const err = normalizeApiError(e, 'PKS gagal disimpan.')
+        toastNormalizedError(err)
         return false
       } finally {
         if (timeoutId) clearTimeout(timeoutId)
@@ -331,12 +330,17 @@ export const usePksStore = defineStore('pks', {
       if (!ok.isConfirmed) { this.loading = false; return }
       try {
         const res = await fetch(`${$api.pks()}/${id}`, { method: 'DELETE', headers: { Accept: 'application/json' }, credentials: 'include' })
-        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message || 'Gagal menghapus PKS')
+        if (!res.ok) {
+          const err = await normalizeFailedResponse(res, 'PKS gagal dihapus.')
+          toastNormalizedError(err)
+          return false
+        }
         await this.fetchPks()
         await this.fetchStatistics()
         toast.success({ title: 'Sukses', message: 'PKS berhasil dihapus', color: 'green', position: 'bottomRight', layout: 2 })
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message || 'Gagal menghapus PKS', color: 'red', position: 'bottomRight', layout: 2 })
+        const err = normalizeApiError(e, 'PKS gagal dihapus.')
+        toastNormalizedError(err)
       } finally {
         this.loading = false
       }
@@ -352,13 +356,18 @@ export const usePksStore = defineStore('pks', {
           headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
           credentials: 'include',
         })
-        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message || 'Gagal signed PKS')
+        if (!res.ok) {
+          const err = await normalizeFailedResponse(res, 'PKS gagal disubmit.')
+          toastNormalizedError(err)
+          return false
+        }
         await this.fetchPks()
         await this.fetchStatistics()
         toast.success({ title: 'Sukses', message: 'PKS berhasil di-signed', color: 'green', position: 'bottomRight', layout: 2 })
         return true
       } catch (e: any) {
-        toast.error({ title: 'Error', message: e.message || 'Gagal signed PKS', color: 'red', position: 'bottomRight', layout: 2 })
+        const err = normalizeApiError(e, 'PKS gagal disubmit.')
+        toastNormalizedError(err)
         return false
       } finally {
         this.loading = false

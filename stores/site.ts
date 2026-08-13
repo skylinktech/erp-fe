@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { useNuxtApp } from '#app'
 import Swal from 'sweetalert2'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 
 export interface Site {
   id?: number | string
@@ -190,20 +191,14 @@ export const useSiteStore = defineStore('site', {
           credentials: 'include',
         })
 
-        let result: any
-        try {
-          result = await response.json()
-        } catch (parseError) {
-          console.error('Failed to parse response as JSON:', parseError)
-          throw new Error('Respons server tidak valid')
-        }
-
         if (!response.ok) {
-          if (response.status === 422 && result.errors) {
-            this.validationErrors = Object.values(result.errors).flat()
-            return
-          }
-          throw new Error(result.message || 'Gagal menyimpan data site')
+          const err = await normalizeFailedResponse(
+            response,
+            this.isEditMode ? 'Site gagal diperbarui.' : 'Site gagal dibuat.'
+          )
+          this.validationErrors = err.fieldErrorList
+          toastNormalizedError(err)
+          return false
         }
 
         this.closeModal()
@@ -217,16 +212,9 @@ export const useSiteStore = defineStore('site', {
           layout: 2,
         })
       } catch (error: any) {
-        console.error('Error saving site:', error)
-        if (this.validationErrors.length === 0) {
-          toast.error({
-            title: 'Error',
-            message: error.message || 'Operasi gagal',
-            color: 'red',
-            position: 'bottomRight',
-            layout: 2,
-          })
-        }
+        const err = normalizeApiError(error, 'Site gagal disimpan.')
+        toastNormalizedError(err)
+        return false
       } finally {
         this.loading = false
       }
@@ -262,22 +250,9 @@ export const useSiteStore = defineStore('site', {
           })
 
           if (!response.ok) {
-            const errorData = await response.json().catch(() => ({
-              message: 'Gagal menghapus site.',
-            }))
-
-            if (response.status === 401) {
-              throw new Error('Sesi Anda telah berakhir. Silakan login kembali.')
-            } else if (response.status === 404) {
-              throw new Error('Site tidak ditemukan atau sudah dihapus.')
-            } else if (response.status === 400) {
-              throw new Error(
-                errorData.message ||
-                  'Tidak dapat menghapus site. Pastikan site tidak digunakan pada transaksi lain.'
-              )
-            } else {
-              throw new Error(errorData.message || 'Gagal menghapus site.')
-            }
+            const err = await normalizeFailedResponse(response, 'Site gagal dihapus.')
+            toastNormalizedError(err)
+            return false
           }
 
           await this.fetchSites(true)
@@ -290,14 +265,8 @@ export const useSiteStore = defineStore('site', {
             layout: 2,
           })
         } catch (error: any) {
-          console.error('Error deleting site:', error)
-          toast.error({
-            title: 'Error',
-            message: error.message || 'Gagal menghapus site',
-            color: 'red',
-            position: 'bottomRight',
-            layout: 2,
-          })
+          const err = normalizeApiError(error, 'Site gagal dihapus.')
+          toastNormalizedError(err)
         } finally {
           this.loading = false
         }

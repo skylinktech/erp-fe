@@ -1,5 +1,6 @@
 import { computed, ref } from 'vue'
 import { apiFetch } from '~/utils/apiFetch'
+import { getApiErrorMessage } from '~/utils/apiError'
 import type {
   DashboardDTO,
   DashboardLayoutDTO,
@@ -10,10 +11,6 @@ import type {
 type PersonalDashboardResponse = {
   dashboard: DashboardDTO
   activeLayout: DashboardLayoutDTO | null
-}
-
-function extractErrorMessage(err: any, fallback: string): string {
-  return err?.data?.message || err?.response?._data?.message || err?.message || fallback
 }
 
 function genInstanceKey(widgetCode: string): string {
@@ -51,7 +48,7 @@ export function usePersonalDashboard() {
       layout.value = result.activeLayout
       hasUnsavedChanges.value = false
     } catch (err: any) {
-      error.value = extractErrorMessage(err, 'Gagal memuat dashboard personal')
+      error.value = getApiErrorMessage(err, 'Gagal memuat dashboard personal')
     } finally {
       loading.value = false
     }
@@ -64,7 +61,7 @@ export function usePersonalDashboard() {
       const result = await apiFetch<{ data: DashboardWidgetDTO[] }>($api.myDashboardWidgetCatalog())
       catalog.value = result?.data ?? []
     } catch (err: any) {
-      error.value = extractErrorMessage(err, 'Gagal mengambil katalog widget')
+      error.value = getApiErrorMessage(err, 'Gagal mengambil katalog widget')
     } finally {
       loadingCatalog.value = false
     }
@@ -152,7 +149,7 @@ export function usePersonalDashboard() {
       layout.value = result.activeLayout
       hasUnsavedChanges.value = false
     } catch (err: any) {
-      error.value = extractErrorMessage(err, 'Gagal menyimpan dashboard personal')
+      error.value = getApiErrorMessage(err, 'Gagal menyimpan dashboard personal')
       throw err
     } finally {
       saving.value = false

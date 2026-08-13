@@ -237,44 +237,40 @@
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="form-floating form-floating-outline">
-                                    <CustomSelect2 v-model="form.perusahaanId" :options="perusahaans"
-                                        :get-option-label="option => option.nmPerusahaan"
-                                        :reduce="option => option.id" searchable clearable
-                                        placeholder="-- Pilih Perusahaan --"
-                                        class="perusahaan-select"
-                                    />
-                                </div>
+                                <FormLabel required>Perusahaan</FormLabel>
+                                <CustomSelect2 v-model="form.perusahaanId" :options="perusahaans"
+                                    :get-option-label="option => option.nmPerusahaan"
+                                    :reduce="option => option.id" searchable clearable
+                                    placeholder="-- Pilih Perusahaan --"
+                                    class="perusahaan-select"
+                                />
                             </div>
                             <div class="col-md-6">
-                                <div class="form-floating form-floating-outline">
-                                    <CustomSelect2 v-model="form.cabangId" :options="filteredCabangs"
-                                        :get-option-label="option => option.nmCabang"
-                                        :reduce="option => option.id" searchable clearable 
-                                        placeholder="-- Pilih Cabang --"
-                                        class="cabang-select"
-                                    />
-                                </div>
+                                <FormLabel required>Cabang</FormLabel>
+                                <CustomSelect2 v-model="form.cabangId" :options="filteredCabangs"
+                                    :get-option-label="option => option.nmCabang"
+                                    :reduce="option => option.id" searchable clearable 
+                                    placeholder="-- Pilih Cabang --"
+                                    class="cabang-select"
+                                />
                             </div>
                             <div class="col-md-6">
-                                <div class="form-floating form-floating-outline">
-                                    <CustomSelect2 v-model="form.fromWarehouseId" :options="warehouses"
-                                        :get-option-label="option => option.name"
-                                        :reduce="option => option.id" searchable clearable 
-                                        placeholder="-- Pilih Gudang Asal --"
-                                        class="warehouse-select"
-                                    />
-                                </div>
+                                <FormLabel required>Gudang Asal</FormLabel>
+                                <CustomSelect2 v-model="form.fromWarehouseId" :options="warehouses"
+                                    :get-option-label="option => option.name"
+                                    :reduce="option => option.id" searchable clearable 
+                                    placeholder="-- Pilih Gudang Asal --"
+                                    class="warehouse-select"
+                                />
                             </div>
                             <div class="col-md-6">
-                                <div class="form-floating form-floating-outline">
-                                    <CustomSelect2 v-model="form.toWarehouseId" :options="warehouses"
-                                        :get-option-label="option => option.name"
-                                        :reduce="option => option.id" searchable clearable 
-                                        placeholder="-- Pilih Gudang Tujuan --"
-                                        class="warehouse-select"
-                                    />
-                                </div>
+                                <FormLabel required>Gudang Tujuan</FormLabel>
+                                <CustomSelect2 v-model="form.toWarehouseId" :options="warehouses"
+                                    :get-option-label="option => option.name"
+                                    :reduce="option => option.id" searchable clearable 
+                                    placeholder="-- Pilih Gudang Tujuan --"
+                                    class="warehouse-select"
+                                />
                             </div>
                             <div class="col-md-6">
                                 <div class="form-floating form-floating-outline">
@@ -286,7 +282,7 @@
                                         placeholder="Masukkan tanggal"
                                         
                                     >
-                                    <label for="name">Tanggal</label>
+                                    <label for="name">Tanggal <span class="text-danger" aria-hidden="true">*</span></label>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -298,7 +294,7 @@
                                         v-model="form.penerima" 
                                         placeholder="Masukkan Nama Penerima"
                                     >
-                                    <label for="penerima">Nama Penerima</label>
+                                    <label for="penerima">Nama Penerima <span class="text-danger" aria-hidden="true">*</span></label>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -324,25 +320,25 @@
                             <div v-for="(item, index) in form.stockTransferItems" :key="index" class="repeater-item">
                                 <div class="row">
                                     <div class="mb-4 col-lg-4 col-xl-4 col-12 mb-0">
-                                        <div class="form-floating form-floating-outline stock-transfer-item-select">
-                                            <CustomSelect2 v-model="item.stock" :options="productsInWarehouse"
-                                                :get-option-label="option => {
-                                                    if (!option) return '';
-                                                    const sku = option.product?.sku || '';
-                                                    const name = option.product?.name || '';
-                                                    return `${sku} | ${name}`;
-                                                }" 
-                                                searchable clearable
-                                                placeholder="-- Pilih Produk --"
-                                                :filter-by="(option, label, search) => {
-                                                    if (!option || !option.product) return false;
-                                                    const product = option.product;
-                                                    const searchLower = search.toLowerCase();
-                                                    return (product?.name && product.name.toLowerCase().includes(searchLower)) || 
-                                                           (product?.sku && product.sku.toLowerCase().includes(searchLower));
-                                                }"
-                                            />
-                                        </div>
+                                        <FormLabel required>Produk</FormLabel>
+                                        <CustomSelect2 v-model="item.stock" :options="productsInWarehouse"
+                                            :get-option-label="option => {
+                                                if (!option) return '';
+                                                const sku = option.product?.sku || '';
+                                                const name = option.product?.name || '';
+                                                return `${sku} | ${name}`;
+                                            }" 
+                                            searchable clearable
+                                            placeholder="-- Pilih Produk --"
+                                            class="stock-transfer-item-select"
+                                            :filter-by="(option, label, search) => {
+                                                if (!option || !option.product) return false;
+                                                const product = option.product;
+                                                const searchLower = search.toLowerCase();
+                                                return (product?.name && product.name.toLowerCase().includes(searchLower)) || 
+                                                       (product?.sku && product.sku.toLowerCase().includes(searchLower));
+                                            }"
+                                        />
                                     </div>
                                     <div class="mb-4 col-lg-2 col-xl-2 col-2 mb-0">
                                         <div class="form-floating form-floating-outline">
@@ -362,7 +358,7 @@
                                                     item.quantity = angka;
                                                 }"
                                             />
-                                            <label>Jumlah</label>
+                                            <label>Jumlah <span class="text-danger" aria-hidden="true">*</span></label>
                                         </div>
                                     </div>
                                     <div class="col-lg-2 col-xl-3 col-12 mt-1">
@@ -411,11 +407,13 @@ import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
 import Swal from 'sweetalert2'
 import vSelect from 'vue-select'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
+import FormLabel from '~/components/form/FormLabel.vue'
 import 'vue-select/dist/vue-select.css'
 import { useRouter } from 'vue-router'
 import { usePermissionsStore } from '~/stores/permissions'
 import { usePermissions } from '~/composables/usePermissions'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
+import { normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 
 // Composables
 const { setListTitle, setFormTitle } = useDynamicTitle()
@@ -556,17 +554,9 @@ const handleSaveStockTransfer = async () => {
             'success'
         );
     } catch (error) {
-        const errorData = error;
-        if (errorData.errors) {
-            stockTransferStore.validationErrors = Array.isArray(errorData.errors)
-                ? errorData.errors
-                : Object.values(errorData.errors).flat();
-            toast.fire('Gagal', 'Terdapat kesalahan validasi data.', 'error');
-        } else if(errorData.status === 422) {
-            stockTransferStore.validationErrors = errorData.errors;
-        } else {
-            errorData.errors
-        }
+        const err = normalizeApiError(error, 'Stock Transfer gagal disimpan.')
+        stockTransferStore.validationErrors = err.fieldErrorList
+        toastNormalizedError(err)
     }
 };
 
@@ -575,28 +565,8 @@ const approveStockTransfer = async (id) => {
         await stockTransferStore.approveStockTransfer(id);
         await stockTransferStore.fetchStockTransfersPaginated();
     } catch (error) {
-        let errorMessage = 'Gagal menyetujui Stock Transfer';
-        if (error instanceof Error) {
-            errorMessage = error.message;
-        } else if (typeof error === 'string') {
-            errorMessage = error;
-        }
-        
-        // Coba parsing error jika itu adalah string JSON
-        try {
-            const parsedError = JSON.parse(errorMessage);
-            if (parsedError.errors) {
-                 stockTransferStore.validationErrors = Array.isArray(parsedError.errors)
-                    ? parsedError.errors
-                    : Object.values(parsedError.errors).flat();
-                return toast.fire('Gagal', 'Terdapat kesalahan validasi data.', 'error');
-            }
-             errorMessage = parsedError.message || errorMessage;
-        } catch (e) {
-            // Biarkan errorMessage seperti apa adanya jika bukan JSON
-        }
-        
-        await toast.fire('Error', errorMessage, 'error');
+        const err = normalizeApiError(error, 'Stock Transfer gagal disetujui.')
+        toastNormalizedError(err)
     }
 };
 

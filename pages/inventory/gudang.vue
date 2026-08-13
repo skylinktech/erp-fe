@@ -102,7 +102,7 @@
                 :validation-errors-from-parent="validationErrors"
             >
                 <template #default>
-                    <form @submit.prevent="warehouseStore.saveWarehouse()">
+                    <form @submit.prevent="onSubmitWarehouse">
                         <div class="row g-6">
                             <div class="col-md-6">
                                 <div class="form-floating form-floating-outline">
@@ -114,7 +114,7 @@
                                         placeholder="Masukkan kode gudang"
                                         
                                     >
-                                    <label for="kodeGudang">Kode Gudang</label>
+                                    <label for="kodeGudang">Kode Gudang <span class="text-danger" aria-hidden="true">*</span></label>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -127,7 +127,7 @@
                                         placeholder="Masukkan nama gudang"
                                         
                                     >
-                                    <label for="nmGudang">Nama Gudang</label>
+                                    <label for="nmGudang">Nama Gudang <span class="text-danger" aria-hidden="true">*</span></label>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -140,7 +140,7 @@
                                         placeholder="Masukkan email gudang"
                                         
                                     >
-                                    <label for="emailGudang">Email Gudang</label>
+                                    <label for="emailGudang">Email Gudang <span class="text-danger" aria-hidden="true">*</span></label>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -153,7 +153,7 @@
                                         placeholder="Masukkan no. telepon gudang"
                                         
                                     >
-                                    <label for="phoneGudang">No. Telepon Gudang</label>
+                                    <label for="phoneGudang">No. Telepon Gudang <span class="text-danger" aria-hidden="true">*</span></label>
                                 </div>
                             </div>
                             <div class="col-md-12">
@@ -164,7 +164,7 @@
                                         placeholder="Masukkan alamat gudang"
                                         v-model="form.address">
                                     </textarea>
-                                    <label for="alamatGudang">Alamat Gudang</label>
+                                    <label for="alamatGudang">Alamat Gudang <span class="text-danger" aria-hidden="true">*</span></label>
                                 </div>
                             </div>
                         </div>
@@ -256,6 +256,36 @@ const onGudangToolbarRows = (v) => {
 };
 
 const onSort = (event) => warehouseStore.setSort(event);
+
+function isEmptyWarehouseField(value) {
+    return value === null || value === undefined || String(value).trim() === ''
+}
+
+function onSubmitWarehouse() {
+    const toast = useToast()
+    const f = form.value
+    if (isEmptyWarehouseField(f.code)) {
+        toast.error({ title: 'Validasi', message: 'Kode Gudang wajib diisi.', color: 'red' })
+        return
+    }
+    if (isEmptyWarehouseField(f.name)) {
+        toast.error({ title: 'Validasi', message: 'Nama Gudang wajib diisi.', color: 'red' })
+        return
+    }
+    if (isEmptyWarehouseField(f.email)) {
+        toast.error({ title: 'Validasi', message: 'Email Gudang wajib diisi.', color: 'red' })
+        return
+    }
+    if (isEmptyWarehouseField(f.phone)) {
+        toast.error({ title: 'Validasi', message: 'No. Telepon Gudang wajib diisi.', color: 'red' })
+        return
+    }
+    if (isEmptyWarehouseField(f.address)) {
+        toast.error({ title: 'Validasi', message: 'Alamat Gudang wajib diisi.', color: 'red' })
+        return
+    }
+    warehouseStore.saveWarehouse()
+}
 
 const exportData = (format) => {
     if (format === 'excel' || format === 'csv') {

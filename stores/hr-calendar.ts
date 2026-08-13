@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { useNuxtApp } from '#app'
 import Swal from 'sweetalert2'
 import { apiFetch } from '~/utils/apiFetch'
+import { normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 import {
   createEmptyHrCalendarForm,
   getHrCalendarColor,
@@ -159,18 +160,9 @@ export const useHrCalendarStore = defineStore('hr-calendar', {
         await this.refreshVisibleRange()
         return true
       } catch (error: any) {
-        const data = error?.data
-        if (data?.errors) {
-          const errs = data.errors
-          this.validationErrors = Array.isArray(errs)
-            ? errs.map(String)
-            : Object.values(errs).flat().map(String)
-        }
-        useToast().error({
-          title: 'Error',
-          message: data?.message || data?.error || error.message || 'Gagal menyimpan event',
-          color: 'red',
-        })
+        const err = normalizeApiError(error, 'Event Kalender gagal disimpan.')
+        this.validationErrors = err.fieldErrorList
+        toastNormalizedError(err)
         return false
       } finally {
         this.saving = false
@@ -206,11 +198,8 @@ export const useHrCalendarStore = defineStore('hr-calendar', {
         await this.refreshVisibleRange()
         return true
       } catch (error: any) {
-        useToast().error({
-          title: 'Error',
-          message: error.message || 'Gagal menghapus event',
-          color: 'red',
-        })
+        const err = normalizeApiError(error, 'Event Kalender gagal dihapus.')
+        toastNormalizedError(err)
         return false
       }
     },

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { useNuxtApp } from '#app'
 import Swal from 'sweetalert2'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 
 export interface Customer {
   id?: number
@@ -115,7 +116,36 @@ export const useCustomerStore = defineStore('customer', {
       }
       await this.fetchCustomers();
     },
+    validateCustomerForm(): string[] {
+      const errors: string[] = []
+      this.form.email = String(this.form.email || '').trim()
+      this.form.phone = String(this.form.phone || '').replace(/\D/g, '')
+
+      const email = this.form.email
+      const phone = this.form.phone
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+      if (!email) {
+        errors.push('Email wajib diisi')
+      } else if (!emailPattern.test(email)) {
+        errors.push('Email harus menggunakan format email yang valid')
+      }
+
+      if (!phone) {
+        errors.push('Nomor telepon wajib diisi')
+      } else if (!/^\d+$/.test(phone)) {
+        errors.push('Nomor telepon hanya boleh berisi angka, tidak boleh ada karakter lain')
+      }
+
+      return errors
+    },
+
     async saveCustomer() {
+      this.validationErrors = this.validateCustomerForm()
+      if (this.validationErrors.length > 0) {
+        return
+      }
+
       this.loading = true
       this.validationErrors = [];
       const { $api } = useNuxtApp()
@@ -159,21 +189,21 @@ export const useCustomerStore = defineStore('customer', {
           credentials: 'include', // Cookie-based auth
         })
 
-        // Handle response parsing dengan error catching
-        let result;
-        try {
-            result = await response.json();
-        } catch (parseError) {
-            console.error('Failed to parse response as JSON:', parseError);
-            throw new Error('Server response tidak valid');
-        }
-
         if (!response.ok) {
-            if (response.status === 422 && result.errors) {
-                this.validationErrors = Object.values(result.errors).flat();
-                return; // Stop execution - jangan throw error agar validation error muncul di modal
-            }
-            throw new Error(result.message || 'Gagal menyimpan data pelanggan');
+            const err = await normalizeFailedResponse(
+                response,
+                this.isEditMode ? 'Customer gagal diperbarui.' : 'Customer gagal dibuat.'
+            )
+            this.validationErrors = err.fieldErrorList
+            const toast = useToast()
+            toast.error({
+              title: err.type === 'validation' ? 'Validasi' : 'Error',
+              message: err.message,
+              color: 'red',
+              position: 'bottomRight',
+              layout: 2,
+            })
+            return false
         }
         
         this.closeModal();
@@ -187,15 +217,8 @@ export const useCustomerStore = defineStore('customer', {
         });
 
       } catch (error: any) {
-        // Jangan tampilkan Swal jika ada validation errors (sudah ditampilkan di modal)
         if (this.validationErrors.length === 0) {
-            const toast = useToast()            
-            toast.error({
-              title: 'Error',
-              message: error.message || 'Operasi gagal',
-              color: 'red',
-              position: 'bottomRight',
-            });
+            toastNormalizedError(normalizeApiError(error, 'Customer gagal disimpan.'))
         }
       } finally {
         this.loading = false
@@ -229,8 +252,8 @@ export const useCustomerStore = defineStore('customer', {
           });
 
           if (!response.ok) {
-              const errorData = await response.json();
-              throw new Error(errorData.message || 'Gagal menghapus pelanggan');
+              const err = await normalizeFailedResponse(response, 'Customer gagal dihapus.')
+              throw new Error(err.message)
           }
 
           await this.fetchCustomers();

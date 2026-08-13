@@ -126,29 +126,17 @@
         :validation-errors-from-parent="validationErrors"
       >
         <template #default>
-          <form @submit.prevent="didStore.saveDid()">
-            <div class="row">
-              <div class="col">
-                <ul class="nav nav-tabs" role="tablist">
-                  <li class="nav-item">
-                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#did-tabs-info" role="tab" aria-selected="true" type="button">
-                      <span class="ri-information-line ri-20px d-sm-none"></span>
-                      <span class="d-none d-sm-block">Informasi</span>
-                    </button>
-                  </li>
-                  <li class="nav-item">
-                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#did-tabs-services" role="tab" aria-selected="false" type="button">
-                      <span class="ri-service-line ri-20px d-sm-none"></span>
-                      <span class="d-none d-sm-block">Services</span>
-                    </button>
-                  </li>
-                </ul>
-              </div>
-            </div>
+          <form ref="formRoot" @submit.prevent="onFormSubmit" novalidate>
+            <TabbedFormNav
+              :steps="visibleSteps"
+              :current-index="currentIndex"
+              :disabled="navigating || loading"
+              @select="goTo"
+            />
 
             <div class="tab-content pt-6">
               <!-- Tab Info -->
-              <div class="tab-pane fade active show" id="did-tabs-info" role="tabpanel">
+              <div class="tab-pane fade" id="did-tabs-info" data-step-id="did-tabs-info" role="tabpanel" :class="paneClass('did-tabs-info')">
                 <div class="row g-4">
                   <div class="col-md-6">
                     <label class="form-label">Kode <span class="text-danger">*</span></label>
@@ -228,7 +216,7 @@
               </div>
 
               <!-- Tab Services -->
-              <div class="tab-pane fade" id="did-tabs-services" role="tabpanel">
+              <div class="tab-pane fade" id="did-tabs-services" data-step-id="did-tabs-services" role="tabpanel" :class="paneClass('did-tabs-services')">
                 <div v-for="(item, index) in form.services" :key="index" class="repeater-item mb-4">
                   <div class="row g-3">
                     <div class="col-md-6">
@@ -273,15 +261,16 @@
               </div>
             </div>
 
-            <div class="modal-footer mt-6">
-              <button type="button" class="btn btn-outline-secondary" @click="didStore.closeModal()">
-                Tutup
-              </button>
-              <button type="submit" class="btn btn-primary" :disabled="loading">
-                <span v-if="loading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                Simpan
-              </button>
-            </div>
+            <TabbedFormActions
+              :is-first-step="isFirstStep"
+              :is-last-step="isLastStep"
+              :loading="navigating"
+              :saving="loading"
+              cancel-label="Tutup"
+              @next="next"
+              @previous="previous"
+              @cancel="didStore.closeModal()"
+            />
           </form>
         </template>
       </Modal>
@@ -300,6 +289,9 @@ import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import DidExpandedRow from '~/components/table/DidExpandedRow.vue'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
+import TabbedFormNav from '~/components/form/TabbedFormNav.vue'
+import TabbedFormActions from '~/components/form/TabbedFormActions.vue'
+import { useTabbedFormNavigation } from '~/composables/useTabbedFormNavigation'
 import Column from 'primevue/column'
 import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
 import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
@@ -322,6 +314,24 @@ const { dids, loading, loadingStats, totalRecords, statistics, params, form, isE
 const globalFilterValue = ref('')
 const rowsPerPageOptionsArray = ref([10, 25, 50, 100])
 const expandedRows = ref({})
+const formRoot = ref(null)
+const formSteps = [
+  { id: 'did-tabs-info', label: 'Informasi', icon: 'ri-information-line' },
+  { id: 'did-tabs-services', label: 'Services', icon: 'ri-service-line' },
+]
+const {
+  currentIndex,
+  visibleSteps,
+  isFirstStep,
+  isLastStep,
+  navigating,
+  next,
+  previous,
+  goTo,
+  paneClass,
+  reset,
+  validateAll,
+} = useTabbedFormNavigation({ steps: formSteps, formRoot })
 
 const statItems = computed(() => [
   { key: 'total', label: 'Total DID', value: statistics.value.total, icon: 'ri-list-check-2', iconBgClass: 'bg-label-primary', subtitle: 'Semua DID' },
@@ -438,8 +448,18 @@ onMounted(() => {
   setListTitle('DID', totalRecords.value)
 })
 
+async function onFormSubmit() {
+  if (!isLastStep.value) {
+    await next()
+    return
+  }
+  if (!(await validateAll())) return
+  await didStore.saveDid()
+}
+
 watch(showModal, async (newValue) => {
   if (newValue) {
+    reset()
     modalInstance?.show()
     if (provinceOptions.value.length === 0) await fetchProvinceOptions()
     if (regencyOptions.value.length === 0) await fetchRegencyOptions()

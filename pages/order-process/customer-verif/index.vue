@@ -315,29 +315,17 @@
                     class="modal-xl"
                 >
                     <template #default>
-                        <form @submit.prevent="handleSubmit" novalidate>
-                            <div class="row">
-                                <div class="col">
-                                    <ul class="nav nav-tabs" role="tablist">
-                                        <li class="nav-item">
-                                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#form-tabs-info" role="tab" aria-selected="true" type="button">
-                                                <span class="ri-information-line ri-20px d-sm-none"></span>
-                                                <span class="d-none d-sm-block">Informasi</span>
-                                            </button>
-                                        </li>
-                                        <li class="nav-item">
-                                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#form-tabs-docs" role="tab" aria-selected="false" type="button">
-                                                <span class="ri-file-text-line ri-20px d-sm-none"></span>
-                                                <span class="d-none d-sm-block">Dokumen Verifikasi</span>
-                                            </button>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
+                        <form ref="formRoot" @submit.prevent="onFormSubmit" novalidate>
+                            <TabbedFormNav
+                                :steps="visibleSteps"
+                                :current-index="currentIndex"
+                                :disabled="navigating || saving"
+                                @select="goTo"
+                            />
 
                             <div class="tab-content pt-6">
                                 <!-- Tab Informasi -->
-                                <div class="tab-pane fade active show" id="form-tabs-info" role="tabpanel">
+                                <div class="tab-pane fade" id="form-tabs-info" data-step-id="form-tabs-info" role="tabpanel" :class="paneClass('form-tabs-info')">
                                     <div class="row g-4">
                                         <div class="col-md-12">
                                             <label class="form-label text-muted mb-2">Pilih Site Investment (Status: Approved)</label>
@@ -417,7 +405,7 @@
                                 </div>
 
                                 <!-- Tab Dokumen Verifikasi -->
-                                <div class="tab-pane fade" id="form-tabs-docs" role="tabpanel">
+                                <div class="tab-pane fade" id="form-tabs-docs" data-step-id="form-tabs-docs" role="tabpanel" :class="paneClass('form-tabs-docs')">
                                     <div class="row g-4">
                                         <div class="col-12">
                                             <h6 class="mb-3">Dokumen Verifikasi</h6>
@@ -489,13 +477,16 @@
                                 </div>
                             </div>
 
-                            <div class="modal-footer mt-6">
-                                <button type="button" class="btn btn-outline-secondary" @click="customerVerifStore.closeModal()">Tutup</button>
-                                <button type="submit" class="btn btn-primary ms-2" :disabled="saving">
-                                    <span v-if="saving" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                    Simpan
-                                </button>
-                            </div>
+                            <TabbedFormActions
+                                :is-first-step="isFirstStep"
+                                :is-last-step="isLastStep"
+                                :loading="navigating"
+                                :saving="saving"
+                                cancel-label="Tutup"
+                                @next="next"
+                                @previous="previous"
+                                @cancel="customerVerifStore.closeModal()"
+                            />
                         </form>
                     </template>
                 </Modal>
@@ -519,6 +510,9 @@ import Column from 'primevue/column'
 import Dropdown from 'primevue/dropdown'
 import InputText from 'primevue/inputtext'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
+import TabbedFormNav from '~/components/form/TabbedFormNav.vue'
+import TabbedFormActions from '~/components/form/TabbedFormActions.vue'
+import { useTabbedFormNavigation } from '~/composables/useTabbedFormNavigation'
 import { useDebounceFn } from '@vueuse/core'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import { formatSiteInvestmentOptionLabel } from '~/constants/labels/sales'
@@ -539,6 +533,24 @@ const { customers } = storeToRefs(customerStore)
 const { permissions } = storeToRefs(permissionStore)
 
 const myDataTableRef = ref(null)
+const formRoot = ref(null)
+const formSteps = [
+  { id: 'form-tabs-info', label: 'Informasi', icon: 'ri-information-line' },
+  { id: 'form-tabs-docs', label: 'Dokumen Verifikasi', icon: 'ri-file-text-line' },
+]
+const {
+  currentIndex,
+  visibleSteps,
+  isFirstStep,
+  isLastStep,
+  navigating,
+  next,
+  previous,
+  goTo,
+  paneClass,
+  reset,
+  validateAll,
+} = useTabbedFormNavigation({ steps: formSteps, formRoot })
 const filters = ref({
     status: null,
     siteInvestmentId: null,
@@ -620,6 +632,7 @@ watch(() => globalFilterValue.value, (newValue) => {
 
 watch(showModal, async (newValue) => {
     if (newValue) {
+        reset()
         loadingSiteInvestments.value = true
         await customerVerifStore.fetchApprovedSiteInvestments()
 
@@ -731,6 +744,15 @@ function onAttachmentChange(e) {
         form.value.attachmentPreview = null
     }
     e.target.value = ''
+}
+
+async function onFormSubmit() {
+    if (!isLastStep.value) {
+        await next()
+        return
+    }
+    if (!(await validateAll())) return
+    handleSubmit()
 }
 
 const handleSubmit = () => {

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { useNuxtApp } from '#app'
 import Swal from 'sweetalert2'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 
 export interface Jabatan {
   id: number
@@ -161,11 +162,13 @@ export const useJabatanStore = defineStore('jabatan', {
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
-                if (errorData.errors) {
-                   this.validationErrors = Object.values(errorData.errors).flat();
-                }
-               throw new Error(errorData.message || 'Gagal menyimpan data jabatan');
+                const err = await normalizeFailedResponse(
+                    response,
+                    this.isEditMode ? 'Jabatan gagal diperbarui.' : 'Jabatan gagal dibuat.'
+                )
+                this.validationErrors = err.fieldErrorList
+                toastNormalizedError(err)
+                return false
            }
 
             this.closeModal();
@@ -180,13 +183,9 @@ export const useJabatanStore = defineStore('jabatan', {
             });
 
         } catch (error: any) {
-            const toast = useToast()            
-            toast.error({
-              title: 'Error',
-              message: error.message || 'Operasi gagal',
-              color: 'red',
-              position: 'bottomRight',
-            });
+            const err = normalizeApiError(error, 'Jabatan gagal disimpan.')
+            toastNormalizedError(err)
+            return false
         } finally {
             this.loading = false;
         }
@@ -221,8 +220,9 @@ export const useJabatanStore = defineStore('jabatan', {
           });
 
           if (!response.ok) {
-              const errorData = await response.json();
-              throw new Error(errorData.message || 'Gagal menghapus jabatan');
+              const err = await normalizeFailedResponse(response, 'Jabatan gagal dihapus.')
+              toastNormalizedError(err)
+              return false
           }
 
           await this.fetchJabatans();
@@ -235,13 +235,8 @@ export const useJabatanStore = defineStore('jabatan', {
             position: 'bottomRight',
           });
       } catch (error: any) {
-          const toast = useToast()          
-          toast.error({
-            title: 'Error',
-            message: error.message || 'Gagal menghapus jabatan',
-            color: 'red',
-            position: 'bottomRight',
-          });
+          const err = normalizeApiError(error, 'Jabatan gagal dihapus.')
+          toastNormalizedError(err)
       } finally {
           this.loading = false;
       }

@@ -35,44 +35,30 @@
                 <h5 class="card-title mb-0">Form Progress Tracker</h5>
               </div>
               <div class="card-body pt-0">
-                <form @submit.prevent="handleSubmit">
-                  <ul class="nav nav-tabs mb-0" role="tablist">
-                    <li class="nav-item">
-                      <button
-                        class="nav-link active"
-                        type="button"
-                        data-bs-toggle="tab"
-                        data-bs-target="#pt-tab-info"
-                      >
-                        <i class="ri-information-line me-1"></i>Informasi
-                      </button>
-                    </li>
-                    <li class="nav-item">
-                      <button
-                        class="nav-link"
-                        type="button"
-                        data-bs-toggle="tab"
-                        data-bs-target="#pt-tab-nodes"
-                      >
-                        <i class="ri-node-tree me-1"></i>
-                        Node / Network
-                        <span v-if="nodeCount" class="badge bg-primary ms-1">{{ nodeCount }}</span>
-                      </button>
-                    </li>
-                  </ul>
+                <form ref="formRoot" @submit.prevent="onFormSubmit" novalidate>
+                  <TabbedFormNav
+                    :steps="visibleSteps"
+                    :current-index="currentIndex"
+                    :disabled="navigating || saving"
+                    nav-class="mb-0"
+                    @select="goTo"
+                  />
 
                   <div class="tab-content pt-4">
-                    <div id="pt-tab-info" class="tab-pane fade show active">
+                    <div id="pt-tab-info" data-step-id="pt-tab-info" :class="paneClass('pt-tab-info')">
                       <div class="row mb-3">
-                        <label class="col-sm-3 col-form-label">Nama Project</label>
+                        <FormLabel required html-for="pt-name" label-class="col-sm-3 col-form-label">Nama Project</FormLabel>
                         <div class="col-sm-9">
                           <input
+                            id="pt-name"
                             v-model="form.name"
                             type="text"
                             class="form-control"
+                            :class="{ 'is-invalid': uiErrors.name }"
                             placeholder="Nama project implementation"
-                            required
+                            aria-required="true"
                           />
+                          <div v-if="uiErrors.name" class="invalid-feedback d-block">{{ uiErrors.name }}</div>
                         </div>
                       </div>
                       <div class="row mb-3">
@@ -131,7 +117,10 @@
                       </div>
                     </div>
 
-                    <div id="pt-tab-nodes" class="tab-pane fade">
+                    <div id="pt-tab-nodes" data-step-id="pt-tab-nodes" :class="paneClass('pt-tab-nodes')">
+                      <div v-if="uiErrors.nodes" class="alert alert-danger py-2 mb-3">
+                        <i class="ri-error-warning-line me-1"></i>{{ uiErrors.nodes }}
+                      </div>
                       <div class="d-flex justify-content-between align-items-center mb-4">
                         <p class="mb-0 text-muted small">
                           Daftar node/network untuk melacak progress per lokasi atau jaringan.
@@ -176,13 +165,14 @@
                             />
                           </div>
                           <div class="col-md-6">
-                            <label class="form-label">Nama Node / Network</label>
+                            <FormLabel required>Nama Node / Network</FormLabel>
                             <input
                               v-model="node.name"
                               type="text"
                               class="form-control"
+                              :class="{ 'is-invalid': uiErrors.nodes }"
                               placeholder="Nama lokasi atau network"
-                              required
+                              aria-required="true"
                             />
                           </div>
                           <div class="col-md-6">
@@ -231,15 +221,15 @@
                     </div>
                   </div>
 
-                  <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
-                    <NuxtLink to="/implementation/progress-tracker" class="btn btn-outline-secondary">
-                      Batal
-                    </NuxtLink>
-                    <button type="submit" class="btn btn-primary" :disabled="saving">
-                      <span v-if="saving" class="spinner-border spinner-border-sm me-1"></span>
-                      Simpan
-                    </button>
-                  </div>
+                  <TabbedFormActions
+                    :is-first-step="isFirstStep"
+                    :is-last-step="isLastStep"
+                    :loading="navigating"
+                    :saving="saving"
+                    cancel-href="/implementation/progress-tracker"
+                    @next="next"
+                    @previous="previous"
+                  />
                 </form>
               </div>
             </div>
@@ -266,6 +256,10 @@ import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { useProgressTrackerStore } from '~/stores/progress-tracker'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
+import TabbedFormNav from '~/components/form/TabbedFormNav.vue'
+import TabbedFormActions from '~/components/form/TabbedFormActions.vue'
+import FormLabel from '~/components/form/FormLabel.vue'
+import { useTabbedFormNavigation } from '~/composables/useTabbedFormNavigation'
 import FormPageSidebar from '~/components/form/FormPageSidebar.vue'
 import { IMPLEMENTATION_MODULE_NAV } from '~/constants/implementation/formNav'
 import {
@@ -273,6 +267,7 @@ import {
   PROGRESS_TRACKER_STATUS_OPTIONS,
 } from '~/constants/implementation/progressTrackerStatuses'
 import { apiFetch } from '~/utils/apiFetch'
+import { getApiErrorMessage } from '~/utils/apiError'
 import type { FormPageSummaryRow } from '~/types/form-page'
 
 const props = defineProps<{ editId?: string }>()
@@ -281,6 +276,43 @@ const router = useRouter()
 const store = useProgressTrackerStore()
 const { form, saving, loading, isEditMode } = storeToRefs(store)
 const { $api } = useNuxtApp()
+
+const formRoot = ref<HTMLFormElement | null>(null)
+const uiErrors = ref<Record<string, string>>({})
+const formSteps = [
+  { id: 'pt-tab-info', label: 'Informasi', icon: 'ri-information-line' },
+  { id: 'pt-tab-nodes', label: 'Node / Network', icon: 'ri-node-tree' },
+]
+function validateProgressTrackerStep(step: { id: string }): boolean {
+  uiErrors.value = {}
+  if (step.id === 'pt-tab-info') {
+    if (!String(form.value?.name || '').trim()) uiErrors.value.name = 'Nama Project wajib diisi.'
+    return Object.keys(uiErrors.value).length === 0
+  }
+  if (step.id === 'pt-tab-nodes') {
+    const nodes = form.value?.nodes || []
+    const validNodes = nodes.filter((n) => String(n.name || '').trim())
+    if (validNodes.length < 1) {
+      uiErrors.value.nodes = nodes.length
+        ? 'Nama Node wajib diisi.'
+        : 'Minimal satu item harus ditambahkan.'
+    }
+    return Object.keys(uiErrors.value).length === 0
+  }
+  return true
+}
+const {
+  currentIndex,
+  visibleSteps,
+  isFirstStep,
+  isLastStep,
+  navigating,
+  next,
+  previous,
+  goTo,
+  paneClass,
+  validateAll,
+} = useTabbedFormNavigation({ steps: formSteps, formRoot, validateStep: validateProgressTrackerStep })
 
 const formReady = ref(false)
 const siteInvestments = ref<any[]>([])
@@ -385,6 +417,15 @@ function onSiteInvestChange(id: string | null) {
   }
 }
 
+async function onFormSubmit() {
+  if (!isLastStep.value) {
+    await next()
+    return
+  }
+  if (!(await validateAll())) return
+  await handleSubmit()
+}
+
 async function handleSubmit() {
   try {
     const id = await store.saveProject()
@@ -396,8 +437,8 @@ async function handleSubmit() {
   } catch (e: any) {
     await Swal.fire({
       icon: 'error',
-      title: 'Gagal menyimpan',
-      text: e?.data?.message || e?.message || 'Periksa data form',
+      title: 'Progress Tracker gagal disimpan',
+      text: getApiErrorMessage(e, 'Progress Tracker gagal disimpan.'),
     })
   }
 }

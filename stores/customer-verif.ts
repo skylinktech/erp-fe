@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { apiFetch } from '~/utils/apiFetch'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 import Swal from 'sweetalert2'
 import { useNuxtApp } from '#app'
 import { useUserStore } from '~/stores/user'
@@ -334,18 +335,20 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
         })
 
         if (!response.ok) {
-          const errorData = await response.json()
-          if (response.status === 422) {
-            this.validationErrors = errorData.errors
-            const toast = useToast()
-            toast.error({
-              title: 'Error',
-              message: 'Gagal Validasi',
-              color: 'red'
-            })
-          } else {
-            throw new Error(errorData.message || 'Gagal menyimpan data customer verification')
-          }
+          const err = await normalizeFailedResponse(
+            response,
+            this.isEditMode ? 'Customer Verification gagal diperbarui.' : 'Customer Verification gagal dibuat.'
+          )
+          this.validationErrors = err.fieldErrorList
+          const toast = useToast()
+          toast.error({
+            title: err.type === 'validation' ? 'Validasi' : 'Error',
+            message: err.message,
+            color: 'red',
+            position: 'bottomRight',
+            layout: 2,
+          })
+          return false
         } else {
           this.closeModal()
           await this.fetchCustomerVerifs()
@@ -360,15 +363,9 @@ export const useCustomerVerifStore = defineStore('customerVerif', {
           })
         }
       } catch (error: any) {
-        this.validationErrors = []
-        const toast = useToast()
-        toast.error({
-          title: 'Error',
-          message: error.message || 'Operasi gagal',
-          color: 'red',
-          position: 'bottomRight',
-          layout: 2,
-        })
+        const err = normalizeApiError(error, 'Customer Verification gagal disimpan.')
+        toastNormalizedError(err)
+        return false
       } finally {
         this.saving = false
       }

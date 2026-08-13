@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 import type { Warehouse } from './warehouse'
 import type { Product } from './product'
 import Swal from 'sweetalert2'
@@ -185,14 +186,13 @@ export const useStockTransferStore = defineStore('stockTransfer', {
         }
   
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: `Gagal ${this.isEditMode ? 'memperbarui' : 'membuat'} stock transfer` }))
-          if(response.status === 422) {
-            this.validationErrors = errorData.errors;
-          } else if (errorData.message) {
-            // Menangkap error custom dari backend (misal: stok tidak cukup)
-            this.validationErrors = [{ message: errorData.message }];
-          }
-          throw new Error(errorData.message || 'Terjadi kesalahan');
+          const err = await normalizeFailedResponse(
+            response,
+            this.isEditMode ? 'Stock Transfer gagal diperbarui.' : 'Stock Transfer gagal dibuat.'
+          )
+          this.validationErrors = err.fieldErrorList
+          toastNormalizedError(err)
+          return false
         } else {
           this.closeModal();
           this.selectedStockTransfer = null;
@@ -204,13 +204,9 @@ export const useStockTransferStore = defineStore('stockTransfer', {
           });
         }
       } catch (error: any) {
-        // Clear validation errors on new general error
-        this.validationErrors = [];
-        toast.error({
-          title: 'Error',
-          message: error.message || 'Operasi gagal',
-          color: 'red'
-        });
+        const err = normalizeApiError(error, 'Stock Transfer gagal disimpan.')
+        toastNormalizedError(err)
+        return false
       } finally {
           this.loading = false;
       }
@@ -262,15 +258,15 @@ export const useStockTransferStore = defineStore('stockTransfer', {
         })
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: 'Gagal menghapus stock transfer' }))
-          throw new Error(errorData.message)
+          const err = await normalizeFailedResponse(response, 'Stock Transfer gagal dihapus.')
+          throw new Error(err.message)
         }
 
         return true
       }
       catch (e: any) {
-        console.error('Terjadi kesalahan saat menghapus stock transfer:', e)
-        throw e
+        const err = normalizeApiError(e, 'Stock Transfer gagal dihapus.')
+        throw new Error(err.message)
       }
         finally {
           this.loading = false
@@ -292,8 +288,9 @@ export const useStockTransferStore = defineStore('stockTransfer', {
           });
 
           if (!response.ok) {
-              const errorData = await response.json().catch(() => ({ message: 'Gagal mengapprove stock transfer' }));
-              throw new Error(errorData.message || 'Gagal mengapprove stock transfer');
+              const err = await normalizeFailedResponse(response, 'Stock Transfer gagal disetujui.')
+              toastNormalizedError(err)
+              return false
           }
 
           await this.fetchStockTransfers();
@@ -305,13 +302,9 @@ export const useStockTransferStore = defineStore('stockTransfer', {
 
           return true;
       } catch (error: any) {
-          console.error('Error approving stock transfer:', error);
-          await toast.error({
-            title: 'Error',
-            message: error.message || 'Gagal mengapprove stock transfer.',
-            color: 'red'
-          });
-          return false;
+          const err = normalizeApiError(error, 'Stock Transfer gagal disetujui.')
+          toastNormalizedError(err)
+          return false
       } finally {
           this.loading = false;
       }

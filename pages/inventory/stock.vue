@@ -223,7 +223,7 @@
             <form @submit.prevent="stocksStore.saveStock()">
                 <div class="row g-4">
                     <div class="col-md-6">
-                        <label class="form-label">Produk</label>
+                        <label class="form-label">Produk <span class="text-danger" aria-hidden="true">*</span></label>
                         <CustomSelect2 
                             v-model="form.productId" 
                             :options="allProducts"
@@ -234,7 +234,7 @@
                         />
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">Gudang</label>
+                        <label class="form-label">Gudang <span class="text-danger" aria-hidden="true">*</span></label>
                         <CustomSelect2 
                             v-model="form.warehouseId" 
                             :options="warehouseList"
@@ -245,7 +245,7 @@
                         />
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">Jumlah</label>
+                        <label class="form-label">Jumlah <span class="text-danger" aria-hidden="true">*</span></label>
                         <input
                             type="number"
                             class="form-control"

@@ -172,27 +172,15 @@
                     :validation-errors-from-parent="validationErrors"
                 >
                     <template #default>
-                        <form @submit.prevent="journalStore.saveJournal()">
-                            <div class="row">
-                                <div class="col">
-                                    <ul class="nav nav-tabs" role="tablist">
-                                        <li class="nav-item">
-                                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#form-tabs-info" role="tab" aria-selected="true" type="button">
-                                                <span class="ri-user-line ri-20px d-sm-none"></span>
-                                                <span class="d-none d-sm-block">Informasi Jurnal</span>
-                                            </button>
-                                        </li>
-                                        <li class="nav-item">
-                                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#form-tabs-lines" role="tab" aria-selected="false" type="button">
-                                                <span class="ri-file-text-line ri-20px d-sm-none"></span>
-                                                <span class="d-none d-sm-block">Detail Jurnal</span>
-                                            </button>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
+                        <form ref="formRoot" @submit.prevent="onFormSubmit" novalidate>
+                            <TabbedFormNav
+                                :steps="visibleSteps"
+                                :current-index="currentIndex"
+                                :disabled="navigating || saving"
+                                @select="goTo"
+                            />
                             <div class="tab-content pt-4">
-                                <div class="tab-pane fade active show" id="form-tabs-info" role="tabpanel">
+                                <div class="tab-pane fade" id="form-tabs-info" data-step-id="form-tabs-info" role="tabpanel" :class="paneClass('form-tabs-info')">
                                     <div class="row g-4">
                                         <div class="col-md-6">
                                             <div class="form-floating form-floating-outline">
@@ -214,7 +202,7 @@
                                                     v-model="form.date" 
                                                     
                                                 >
-                                                <label>Tanggal *</label>
+                                                <label>Tanggal <span class="text-danger" aria-hidden="true">*</span></label>
                                             </div>
                                         </div>
                                         <div class="col-md-6">
@@ -249,12 +237,12 @@
                                                     placeholder="Masukkan deskripsi jurnal"
                                                     
                                                 >
-                                                <label>Deskripsi *</label>
+                                                <label>Deskripsi <span class="text-danger" aria-hidden="true">*</span></label>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="tab-pane fade" id="form-tabs-lines" role="tabpanel">
+                                <div class="tab-pane fade" id="form-tabs-lines" data-step-id="form-tabs-lines" role="tabpanel" :class="paneClass('form-tabs-lines')">
                                     <div v-for="(line, index) in form.journalLines" :key="index" class="repeater-item mb-4">
                                         <div class="row g-3">
                                             <div class="col-md-4">
@@ -351,15 +339,17 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="mt-4 d-flex justify-content-end gap-2">
-                                <button type="button" class="btn btn-outline-secondary" @click="journalStore.closeModal()">
-                                    Tutup
-                                </button>
-                                <button type="submit" class="btn btn-primary" :disabled="saving">
-                                    <span v-if="saving" class="spinner-border spinner-border-sm me-2"></span>
-                                    {{ isEditMode ? 'Update' : 'Simpan' }}
-                                </button>
-                            </div>
+                            <TabbedFormActions
+                                :is-first-step="isFirstStep"
+                                :is-last-step="isLastStep"
+                                :loading="navigating"
+                                :saving="saving"
+                                cancel-label="Tutup"
+                                :submit-label="isEditMode ? 'Update' : 'Simpan'"
+                                @next="next"
+                                @previous="previous"
+                                @cancel="journalStore.closeModal()"
+                            />
                         </form>
                     </template>
                 </Modal>
@@ -381,6 +371,9 @@ import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import Column from 'primevue/column'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
+import TabbedFormNav from '~/components/form/TabbedFormNav.vue'
+import TabbedFormActions from '~/components/form/TabbedFormActions.vue'
+import { useTabbedFormNavigation } from '~/composables/useTabbedFormNavigation'
 import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
 import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
 import CollapsibleFilterCard from '~/components/list/CollapsibleFilterCard.vue'
@@ -408,6 +401,24 @@ const formatRupiah = useFormatRupiah()
 const router = useRouter()
 
 const myDataTableRef = ref()
+const formRoot = ref(null)
+const formSteps = [
+  { id: 'form-tabs-info', label: 'Informasi Jurnal', icon: 'ri-user-line' },
+  { id: 'form-tabs-lines', label: 'Detail Jurnal', icon: 'ri-file-text-line' },
+]
+const {
+  currentIndex,
+  visibleSteps,
+  isFirstStep,
+  isLastStep,
+  navigating,
+  next,
+  previous,
+  goTo,
+  paneClass,
+  reset,
+  validateAll,
+} = useTabbedFormNavigation({ steps: formSteps, formRoot })
 const globalFilterValue = ref('')
 const rowsPerPageOptionsArray = ref([10, 25, 50, 100])
 const filterStatus = ref('')
@@ -505,8 +516,18 @@ onUnmounted(() => {
   }
 })
 
+async function onFormSubmit() {
+  if (!isLastStep.value) {
+    await next()
+    return
+  }
+  if (!(await validateAll())) return
+  await journalStore.saveJournal()
+}
+
 watch(showModal, (newValue) => {
   if (newValue) {
+    reset()
     nextTick(() => {
       const modalElement = document.getElementById('JournalModal')
       if (modalElement) {

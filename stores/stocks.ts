@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 import type { PurchaseOrder } from './purchaseOrder'
 import type { Warehouse } from './warehouse'
 import type { User } from './userManagement'
@@ -211,11 +212,13 @@ export const useStocksStore = defineStore('stocks', {
         })
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: 'Gagal menyimpan stock' }))
-          if (errorData?.errors) {
-            this.validationErrors = Array.isArray(errorData.errors) ? errorData.errors : Object.values(errorData.errors).flat()
-          }
-          throw new Error(errorData.message || 'Gagal menyimpan stock')
+          const err = await normalizeFailedResponse(
+            response,
+            this.isEditMode ? 'Stock gagal diperbarui.' : 'Stock gagal dibuat.'
+          )
+          this.validationErrors = err.fieldErrorList
+          toastNormalizedError(err)
+          return false
         }
 
         this.closeModal()
@@ -223,8 +226,9 @@ export const useStocksStore = defineStore('stocks', {
         await this.fetchStats()
         toast.success({ title: 'Success', message: `Stock berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}`, color: 'green' })
       } catch (error: any) {
-        toast.error({ title: 'Error', message: error.message || 'Operasi gagal', color: 'red' })
-        throw error
+        const err = normalizeApiError(error, 'Stock gagal disimpan.')
+        toastNormalizedError(err)
+        return false
       } finally {
         this.loading = false
       }
@@ -348,15 +352,15 @@ export const useStocksStore = defineStore('stocks', {
         })
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: 'Gagal menghapus stock' }))
-          throw new Error(errorData.message)
+          const err = await normalizeFailedResponse(response, 'Stock gagal dihapus.')
+          throw new Error(err.message)
         }
 
         return true
       }
       catch (e: any) {
-        console.error('Terjadi kesalahan saat menghapus stock:', e)
-        throw e
+        const err = normalizeApiError(e, 'Stock gagal dihapus.')
+        throw new Error(err.message)
       }
         finally {
           this.loading = false

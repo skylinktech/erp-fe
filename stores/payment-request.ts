@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { apiFetch } from '~/utils/apiFetch'
+import { normalizeFailedResponse, normalizeApiError } from '~/utils/apiError'
 import Swal from 'sweetalert2'
 import { useNuxtApp } from '#app'
 import { useUserStore } from '~/stores/user'
@@ -965,6 +966,7 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
     async savePaymentRequest(): Promise<string | false> {
       const toast = useToast()
       this.saving = true
+      this.validationErrors = []
       const api = this.apiEndpoints()
       const userStore = useUserStore()
       const requestType = this.form.requestType || 'project'
@@ -1146,10 +1148,14 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
             body: JSON.stringify(body),
           })
           if (!res.ok) {
-            const ed = await res.json().catch(() => ({}))
+            const err = await normalizeFailedResponse(
+              res,
+              this.isEditMode ? 'Payment Request gagal diperbarui.' : 'Payment Request gagal dibuat.'
+            )
+            this.validationErrors = err.fieldErrorList
             toast.error({
-              title: 'Error',
-              message: ed.message || 'Gagal menyimpan',
+              title: err.type === 'validation' ? 'Validasi' : 'Error',
+              message: err.message,
               color: 'red',
               position: 'bottomRight',
               layout: 2,
@@ -1171,9 +1177,14 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
         })
         return savedId
       } catch (e: any) {
+        const err = normalizeApiError(
+          e,
+          this.isEditMode ? 'Payment Request gagal diperbarui.' : 'Payment Request gagal dibuat.'
+        )
+        this.validationErrors = err.fieldErrorList
         toast.error({
-          title: 'Error',
-          message: e?.data?.message || e.message || 'Gagal menyimpan',
+          title: err.type === 'validation' ? 'Validasi' : 'Error',
+          message: err.message,
           color: 'red',
           position: 'bottomRight',
           layout: 2,
@@ -1205,7 +1216,10 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
           headers: { Accept: 'application/json' },
           credentials: 'include',
         })
-        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message)
+        if (!res.ok) {
+          const err = await normalizeFailedResponse(res, 'Payment Request gagal dihapus.')
+          throw new Error(err.message)
+        }
         await this.fetchPaymentRequests()
         await this.fetchStatistics()
         toast.success({
@@ -1234,7 +1248,10 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
           credentials: 'include',
           body: JSON.stringify({ remarks }),
         })
-        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message)
+        if (!res.ok) {
+          const err = await normalizeFailedResponse(res, 'Payment Request gagal disetujui.')
+          throw new Error(err.message)
+        }
         if (refreshList) await this.fetchPaymentRequests()
         await this.fetchStatistics()
         toast.success({
@@ -1265,7 +1282,10 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
           credentials: 'include',
           body: JSON.stringify({ rejection_reason: reason }),
         })
-        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message)
+        if (!res.ok) {
+          const err = await normalizeFailedResponse(res, 'Payment Request gagal ditolak.')
+          throw new Error(err.message)
+        }
         if (refreshList) await this.fetchPaymentRequests()
         await this.fetchStatistics()
         toast.success({
@@ -1295,7 +1315,10 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
           headers: { Accept: 'application/json' },
           credentials: 'include',
         })
-        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message)
+        if (!res.ok) {
+          const err = await normalizeFailedResponse(res, 'Payment Request gagal disubmit.')
+          throw new Error(err.message)
+        }
         if (refreshList) await this.fetchPaymentRequests()
         await this.fetchStatistics()
         toast.success({

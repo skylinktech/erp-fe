@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { useNuxtApp } from '#app'
 import Swal from 'sweetalert2'
+import { normalizeFailedResponse } from '~/utils/apiError'
 import { guardMakerCheckerAction, resolveCreatedBy } from '~/utils/makerChecker'
 
 export interface JournalLine {
@@ -219,7 +220,7 @@ export const useJournalStore = defineStore('journal', {
       const { $api } = useNuxtApp()
 
       try {
-        // Validasi field required (status selalu draft di backend ó jangan kirim dari client)
+        // Validasi field required (status selalu draft di backend ù jangan kirim dari client)
         if (!this.form.date || !this.form.description) {
           const toast = useToast()
           toast.error({
@@ -281,7 +282,7 @@ export const useJournalStore = defineStore('journal', {
 
         const formData = new FormData()
         
-        // Jangan kirim `status` ó create/update selalu draft di backend; posting via /post
+        // Jangan kirim `status` ù create/update selalu draft di backend; posting via /post
         const fieldsToSend = ['journalNumber', 'date', 'description', 'referenceType', 'referenceId'];
         fieldsToSend.forEach(key => {
           const value = this.form[key as keyof typeof this.form];
@@ -364,25 +365,21 @@ export const useJournalStore = defineStore('journal', {
         console.log('Response status:', response.status);
         console.log('Response headers:', response.headers);
 
-        let result;
-        try {
-          result = await response.json();
-          console.log('Response result:', result);
-        } catch (parseError) {
-          console.error('Failed to parse response as JSON:', parseError);
-          const responseText = await response.text();
-          console.error('Raw response:', responseText);
-          throw new Error('Server response tidak valid');
-        }
-
         if (!response.ok) {
-          console.error('Response not OK:', response.status, result);
-          if (response.status === 422 && result?.errors) {
-            console.error('Validation errors:', result.errors);
-            this.validationErrors = Object.values(result.errors || {}).flat();
-            return;
-          }
-          throw new Error(result?.message || 'Gagal menyimpan data jurnal');
+          const err = await normalizeFailedResponse(
+            response,
+            this.isEditMode ? 'Jurnal gagal diperbarui.' : 'Jurnal gagal dibuat.'
+          )
+          this.validationErrors = err.fieldErrorList
+          const toast = useToast()
+          toast.error({
+            title: err.type === 'validation' ? 'Validasi' : 'Error',
+            message: err.message,
+            color: 'red',
+            position: 'bottomRight',
+            layout: 2,
+          })
+          return false
         }
         
         this.closeModal();
@@ -436,8 +433,8 @@ export const useJournalStore = defineStore('journal', {
           });
 
           if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ message: 'Gagal menghapus jurnal.' }));
-            throw new Error(errorData?.message || 'Gagal menghapus jurnal.');
+            const err = await normalizeFailedResponse(response, 'Jurnal gagal dihapus.')
+            throw new Error(err.message)
           }
 
           await Promise.all([this.fetchJournals(), this.fetchStatistics()]);
@@ -490,8 +487,8 @@ export const useJournalStore = defineStore('journal', {
           });
 
           if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ message: 'Gagal memposting jurnal.' }));
-            throw new Error(errorData?.message || 'Gagal memposting jurnal.');
+            const err = await normalizeFailedResponse(response, 'Jurnal gagal diposting.')
+            throw new Error(err.message)
           }
 
           await Promise.all([this.fetchJournals(), this.fetchStatistics()]);
@@ -526,8 +523,8 @@ export const useJournalStore = defineStore('journal', {
           credentials: 'include',
         })
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: 'Submit gagal' }))
-          throw new Error(errorData?.message || 'Submit gagal')
+          const err = await normalizeFailedResponse(response, 'Jurnal gagal disubmit.')
+          throw new Error(err.message)
         }
         await this.fetchJournals()
         toast.success({
@@ -557,8 +554,8 @@ export const useJournalStore = defineStore('journal', {
           body: JSON.stringify({ remarks }),
         })
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: 'Approve gagal' }))
-          throw new Error(errorData?.message || 'Approve gagal')
+          const err = await normalizeFailedResponse(response, 'Jurnal gagal disetujui.')
+          throw new Error(err.message)
         }
         await this.fetchJournals()
         toast.success({
@@ -588,8 +585,8 @@ export const useJournalStore = defineStore('journal', {
           body: JSON.stringify({ remarks: remarks || 'Rejected' }),
         })
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: 'Reject gagal' }))
-          throw new Error(errorData?.message || 'Reject gagal')
+          const err = await normalizeFailedResponse(response, 'Jurnal gagal ditolak.')
+          throw new Error(err.message)
         }
         await this.fetchJournals()
         toast.success({
@@ -646,8 +643,8 @@ export const useJournalStore = defineStore('journal', {
         });
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: 'Gagal mereverse jurnal.' }));
-          throw new Error(errorData?.message || 'Gagal mereverse jurnal.');
+          const err = await normalizeFailedResponse(response, 'Jurnal gagal di-reverse.')
+          throw new Error(err.message)
         }
 
         await Promise.all([this.fetchJournals(), this.fetchStatistics()]);
@@ -773,7 +770,7 @@ export const useJournalStore = defineStore('journal', {
       this.loadingStats = true
       const { $api } = useNuxtApp()
       try {
-        // Global aggregates (Tax Master pattern) ó tidak ikut filter list
+        // Global aggregates (Tax Master pattern) ù tidak ikut filter list
         const response = await fetch($api.journalEntriesSummary(), {
           headers: { Accept: 'application/json' },
           credentials: 'include',

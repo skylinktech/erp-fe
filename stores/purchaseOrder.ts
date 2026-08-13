@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { apiFetch } from '~/utils/apiFetch'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 import Swal from 'sweetalert2'
 import { useNuxtApp } from '#app'
 import { useImageUrl } from '~/composables/useImageUrl'
@@ -366,34 +367,19 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
-                console.error('Server Error Response:', errorData);
-                if (response.status === 422) {
-                    this.validationErrors = errorData.errors;
-                     toast.error({
-                      title: 'Error',
-                      message: errorData.errors.map((e: any) => e.message).join('<br>'),
-                      color: 'red',
-                      position: 'bottomRight',
-                      layout: 2,
-                    });
-                    return false;
-                } else {
-                    // Tampilkan detail error jika ada
-                    let errorMessage = errorData.message || 'Gagal menyimpan data purchaseOrder';
-                    if (errorData.error) {
-                        // errorData.error bisa berupa string atau object
-                        if (typeof errorData.error === 'string') {
-                            errorMessage += `\nDetail: ${errorData.error}`;
-                        } else if (errorData.error.message) {
-                            errorMessage += `\nDetail: ${errorData.error.message}`;
-                            if (errorData.error.constraint) {
-                                errorMessage += `\nConstraint: ${errorData.error.constraint}`;
-                            }
-                        }
-                    }
-                    throw new Error(errorMessage);
-                }
+                const err = await normalizeFailedResponse(
+                    response,
+                    this.isEditMode ? 'Purchase Order gagal diperbarui.' : 'Purchase Order gagal dibuat.'
+                )
+                this.validationErrors = err.fieldErrorList
+                toast.error({
+                    title: err.type === 'validation' ? 'Validasi' : 'Error',
+                    message: err.message,
+                    color: 'red',
+                    position: 'bottomRight',
+                    layout: 2,
+                })
+                return false
             } else {
                 const result = await response.json().catch(() => ({} as any));
                 this.closeModal();
@@ -423,15 +409,8 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
 
 
         } catch (error: any) {
-            // Clear validation errors on new general error
-            this.validationErrors = [];
-            console.error('Save Purchase Order Error:', error);
-            toast.error({
-              title: 'Error',
-              message: error.message || 'Operasi gagal',
-              color: 'red',
-              position: 'bottomRight',
-            });
+            const err = normalizeApiError(error, 'Purchase Order gagal disimpan.')
+            toastNormalizedError(err)
             return false;
         } finally {
             this.saving = false;
@@ -469,8 +448,8 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
             });
   
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Gagal menghapus Sales Order');
+                const err = await normalizeFailedResponse(response, 'Purchase Order gagal dihapus.')
+                throw new Error(err.message)
             }
   
             await this.fetchPurchaseOrders();
@@ -505,20 +484,8 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
               body: JSON.stringify({}),
           });
           if (!response.ok) {
-              const errorData = await response.json().catch(() => ({ message: 'Gagal submit purchase order' }));
-              if (errorData.code === 'BUDGET_EXCEEDED') {
-                await this.fetchPurchaseOrders();
-                toast.error({
-                  title: 'Approval Ditolak',
-                  message:
-                    errorData.message ||
-                    'Budget untuk departemen ini tidak mencukupi, silakan mengajukan tambahan budget terlebih dahulu',
-                  color: 'red',
-                  position: 'bottomRight',
-                });
-                return false;
-              }
-              throw new Error(errorData.message || 'Gagal submit purchase order');
+              const err = await normalizeFailedResponse(response, 'Purchase Order gagal disubmit.')
+              throw new Error(err.message)
           }
           await this.fetchPurchaseOrders();
           toast.success({ title: 'Success', message: 'Purchase Order berhasil di-submit.', color: 'green', position: 'bottomRight' });
@@ -548,20 +515,8 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
           });
 
           if (!response.ok) {
-              const errorData = await response.json().catch(() => ({ message: 'Gagal mengapprove purchase order' }));
-              if (errorData.code === 'BUDGET_EXCEEDED') {
-                await this.fetchPurchaseOrders();
-                toast.error({
-                  title: 'Approval Ditolak',
-                  message:
-                    errorData.message ||
-                    'Budget untuk departemen ini tidak mencukupi, silakan mengajukan tambahan budget terlebih dahulu',
-                  color: 'red',
-                  position: 'bottomRight',
-                });
-                return false;
-              }
-              throw new Error(errorData.message || 'Gagal mengapprove purchase order');
+              const err = await normalizeFailedResponse(response, 'Purchase Order gagal disetujui.')
+              throw new Error(err.message)
           }
 
           await this.fetchPurchaseOrders();
@@ -603,8 +558,8 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
           });
 
           if (!response.ok) {
-              const errorData = await response.json().catch(() => ({ message: 'Gagal mereject purchase order' }));
-              throw new Error(errorData.message || 'Gagal mereject purchase order');
+              const err = await normalizeFailedResponse(response, 'Purchase Order gagal ditolak.')
+              throw new Error(err.message)
           }
 
           await this.fetchPurchaseOrders();
@@ -647,8 +602,8 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
           });
 
           if (!response.ok) {
-              const errorData = await response.json().catch(() => ({ message: 'Gagal membatalkan purchase order' }));
-              throw new Error(errorData.message || 'Gagal membatalkan purchase order');
+              const err = await normalizeFailedResponse(response, 'Purchase Order gagal dibatalkan.')
+              throw new Error(err.message)
           }
 
           await this.fetchPurchaseOrders();

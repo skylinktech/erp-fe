@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { useNuxtApp } from '#app'
 import Swal from 'sweetalert2'
+import { normalizeFailedResponse } from '~/utils/apiError'
 
 export interface BudgetAllo {
   id?: number
@@ -245,20 +246,20 @@ export const useBudgetStore = defineStore('budget', {
           credentials: 'include',
         })
 
-        let result: any
-        try {
-          result = await response.json()
-        } catch (parseError) {
-          console.error('Failed to parse response as JSON:', parseError)
-          throw new Error('Respons server tidak valid')
-        }
-
         if (!response.ok) {
-          if (response.status === 422 && result.errors) {
-            this.validationErrors = Object.values(result.errors).flat()
-            return
-          }
-          throw new Error(result.message || 'Gagal menyimpan data budget')
+          const err = await normalizeFailedResponse(
+            response,
+            this.isEditMode ? 'Budget gagal diperbarui.' : 'Budget gagal dibuat.'
+          )
+          this.validationErrors = err.fieldErrorList
+          toast.error({
+            title: err.type === 'validation' ? 'Validasi' : 'Error',
+            message: err.message,
+            color: 'red',
+            position: 'bottomRight',
+            layout: 2,
+          })
+          return false
         }
 
         this.closeModal()
@@ -322,22 +323,8 @@ export const useBudgetStore = defineStore('budget', {
           })
 
           if (!response.ok) {
-            const errorData = await response.json().catch(() => ({
-              message: 'Gagal menghapus budget.',
-            }))
-
-            if (response.status === 401) {
-              throw new Error('Sesi Anda telah berakhir. Silakan login kembali.')
-            } else if (response.status === 404) {
-              throw new Error('Budget tidak ditemukan atau sudah dihapus.')
-            } else if (response.status === 400) {
-              throw new Error(
-                errorData.message ||
-                  'Tidak dapat menghapus budget. Pastikan budget masih dalam status draft.'
-              )
-            } else {
-              throw new Error(errorData.message || 'Gagal menghapus budget.')
-            }
+            const err = await normalizeFailedResponse(response, 'Budget gagal dihapus.')
+            throw new Error(err.message)
           }
 
           await this.fetchBudgets(true)
@@ -413,10 +400,8 @@ export const useBudgetStore = defineStore('budget', {
         })
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({
-            message: 'Gagal approve budget.',
-          }))
-          throw new Error(errorData.message || 'Gagal approve budget.')
+          const err = await normalizeFailedResponse(response, 'Budget gagal disetujui.')
+          throw new Error(err.message)
         }
 
         await this.fetchBudgets(true)
@@ -475,10 +460,8 @@ export const useBudgetStore = defineStore('budget', {
           })
 
           if (!response.ok) {
-            const errorData = await response.json().catch(() => ({
-              message: 'Gagal reject budget.',
-            }))
-            throw new Error(errorData.message || 'Gagal reject budget.')
+            const err = await normalizeFailedResponse(response, 'Budget gagal ditolak.')
+            throw new Error(err.message)
           }
 
           await this.fetchBudgets(true)

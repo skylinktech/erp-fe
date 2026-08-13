@@ -316,7 +316,7 @@
                                             placeholder="Masukkan kode akun"
                                             
                                         >
-                                        <label>Kode Akun *</label>
+                                        <label>Kode Akun <span class="text-danger" aria-hidden="true">*</span></label>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
@@ -328,7 +328,7 @@
                                             placeholder="Masukkan nama akun"
                                             
                                         >
-                                        <label>Nama Akun *</label>
+                                        <label>Nama Akun <span class="text-danger" aria-hidden="true">*</span></label>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
@@ -343,7 +343,7 @@
                                                 {{ category.label }}
                                             </option>
                                         </select>
-                                        <label>Kategori *</label>
+                                        <label>Kategori <span class="text-danger" aria-hidden="true">*</span></label>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
@@ -357,7 +357,7 @@
                                             <option value="debit">Debit</option>
                                             <option value="credit">Credit</option>
                                         </select>
-                                        <label>Normal Balance *</label>
+                                        <label>Normal Balance <span class="text-danger" aria-hidden="true">*</span></label>
                                     </div>
                                 </div>
                                 <div class="col-md-12">

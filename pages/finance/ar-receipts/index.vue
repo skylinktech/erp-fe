@@ -283,7 +283,7 @@
                                             placeholder="Masukkan nomor referensi"
                                             
                                         >
-                                        <label>Nomor Referensi *</label>
+                                        <label>Nomor Referensi <span class="text-danger" aria-hidden="true">*</span></label>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
@@ -294,7 +294,7 @@
                                             v-model="form.date" 
                                             
                                         >
-                                        <label>Tanggal *</label>
+                                        <label>Tanggal <span class="text-danger" aria-hidden="true">*</span></label>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
@@ -309,7 +309,7 @@
                                                 {{ customer.name }}
                                             </option>
                                         </select>
-                                        <label>Pelanggan *</label>
+                                        <label>Pelanggan <span class="text-danger" aria-hidden="true">*</span></label>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
@@ -339,7 +339,7 @@
                                                 {{ method.label }}
                                             </option>
                                         </select>
-                                        <label>Metode Pembayaran *</label>
+                                        <label>Metode Pembayaran <span class="text-danger" aria-hidden="true">*</span></label>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
@@ -367,7 +367,7 @@
                                             placeholder="Masukkan jumlah"
                                             @change="receiptStore.syncPrimaryAllocation()"
                                         >
-                                        <label>Jumlah *</label>
+                                        <label>Jumlah <span class="text-danger" aria-hidden="true">*</span></label>
                                     </div>
                                 </div>
                                 <div class="col-12">
@@ -424,7 +424,7 @@
                                                 {{ currency.label }}
                                             </option>
                                         </select>
-                                        <label>Mata Uang *</label>
+                                        <label>Mata Uang <span class="text-danger" aria-hidden="true">*</span></label>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
@@ -438,7 +438,7 @@
                                             placeholder="Masukkan kurs tukar"
                                             
                                         >
-                                        <label>Kurs Tukar *</label>
+                                        <label>Kurs Tukar <span class="text-danger" aria-hidden="true">*</span></label>
                                     </div>
                                 </div>
                                 <div class="col-md-6">

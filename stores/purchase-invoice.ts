@@ -1,5 +1,6 @@
 import { defineStore, storeToRefs } from 'pinia'
 import { apiFetch } from '~/utils/apiFetch'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 import Swal from 'sweetalert2'
 import { useNuxtApp } from '#app'
 import { useUserStore } from '~/stores/user'
@@ -430,20 +431,19 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
-                if (response.status === 422) {
-                    this.validationErrors = errorData.errors;
-                    toast.error({
-                      title: 'Error',
-                      message: errorData.errors.map((e: any) => e.message).join('<br>'),
-                      color: 'red',
-                      position: 'bottomRight',
-                      layout: 2
-                    });
-                    return false;
-                } else {
-                    throw new Error(errorData.message || 'Gagal menyimpan data Purchase Invoice');
-                }
+                const err = await normalizeFailedResponse(
+                    response,
+                    this.isEditMode ? 'Purchase Invoice gagal diperbarui.' : 'Purchase Invoice gagal dibuat.'
+                )
+                this.validationErrors = err.fieldErrorList
+                toast.error({
+                  title: err.type === 'validation' ? 'Validasi' : 'Error',
+                  message: err.message,
+                  color: 'red',
+                  position: 'bottomRight',
+                  layout: 2,
+                })
+                return false
             } else {
                 this.closeModal();
                 await this.fetchPurchaseInvoices();
@@ -458,16 +458,9 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
             }
 
         } catch (error: any) {
-            // Clear validation errors on new general error
-            this.validationErrors = [];
-            toast.error({
-              title: 'Error',
-              message: error.message || 'Operasi gagal',
-              color: 'red',
-              position: 'bottomRight',
-              layout: 2
-            });
-            return false;
+            const err = normalizeApiError(error, 'Purchase Invoice gagal disimpan.')
+            toastNormalizedError(err)
+            return false
         } finally {
             this.saving = false;
         }
@@ -504,8 +497,8 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
           });
 
           if (!response.ok) {
-              const errorData = await response.json();
-              throw new Error(errorData.message || 'Gagal menghapus Purchase Invoice');
+              const err = await normalizeFailedResponse(response, 'Purchase Invoice gagal dihapus.')
+              throw new Error(err.message)
           }
 
           await this.fetchPurchaseInvoices();
@@ -517,13 +510,8 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
             layout: 2
           });
       } catch (error: any) {
-          toast.error({
-            title: 'Error',
-            message: error.message || 'Gagal menghapus Purchase Invoice',
-            color: 'red',
-            position: 'bottomRight',
-            layout: 2
-          });
+          const err = normalizeApiError(error, 'Purchase Invoice gagal dihapus.')
+          toastNormalizedError(err)
       } finally {
           this.loading = false;
       }
@@ -533,7 +521,8 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
       id: string,
       urlFn: (id: string | number) => string,
       successMessage: string,
-      body?: Record<string, unknown>
+      body?: Record<string, unknown>,
+      fallbackMessage?: string
     ) {
       const toast = useToast();
       this.loading = true;
@@ -549,8 +538,11 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
           body: JSON.stringify(body || {}),
         });
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: successMessage.replace('berhasil', 'gagal') }));
-          throw new Error(errorData.message || 'Operasi gagal');
+          const err = await normalizeFailedResponse(
+            response,
+            fallbackMessage || 'Purchase Invoice gagal diproses.'
+          )
+          throw new Error(err.message)
         }
         await this.fetchPurchaseInvoices();
         if (this.purchaseInvoice?.id === id) {
@@ -564,13 +556,9 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
         });
         return true;
       } catch (error: any) {
-        toast.error({
-          title: 'Error',
-          message: error.message || 'Operasi gagal',
-          color: 'red',
-          position: 'bottomRight',
-        });
-        return false;
+        const err = normalizeApiError(error, fallbackMessage || 'Purchase Invoice gagal diproses.')
+        toastNormalizedError(err)
+        return false
       } finally {
         this.loading = false;
       }
@@ -578,7 +566,7 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
 
     async submitPurchaseInvoice(id: string) {
       const { $api } = useNuxtApp();
-      return this._lifecycleAction(id, $api.purchaseInvoiceSubmit, 'Purchase Invoice berhasil di-submit.');
+      return this._lifecycleAction(id, $api.purchaseInvoiceSubmit, 'Purchase Invoice berhasil di-submit.', undefined, 'Purchase Invoice gagal disubmit.');
     },
 
     async approvePurchaseInvoice(id: string, remarks?: string) {
@@ -587,7 +575,8 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
         id,
         $api.purchaseInvoiceApprove,
         'Purchase Invoice berhasil diapprove.',
-        { remarks }
+        { remarks },
+        'Purchase Invoice gagal disetujui.'
       );
     },
 
@@ -597,7 +586,8 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
         id,
         $api.purchaseInvoiceReject,
         'Purchase Invoice berhasil direject.',
-        { remarks }
+        { remarks },
+        'Purchase Invoice gagal ditolak.'
       );
     },
 
@@ -613,13 +603,15 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
       return this._lifecycleAction(
         id,
         $api.purchaseInvoicePost,
-        'Purchase Invoice berhasil diposting.'
+        'Purchase Invoice berhasil diposting.',
+        undefined,
+        'Purchase Invoice gagal diposting.'
       );
     },
 
     async cancelPurchaseInvoice(id: string, reason?: string) {
       const { $api } = useNuxtApp();
-      return this._lifecycleAction(id, $api.purchaseInvoiceCancel, 'Purchase Invoice berhasil dibatalkan.', { reason });
+      return this._lifecycleAction(id, $api.purchaseInvoiceCancel, 'Purchase Invoice berhasil dibatalkan.', { reason }, 'Purchase Invoice gagal dibatalkan.');
     },
 
     async openModal(purchaseInvoiceData: PurchaseInvoice | null = null) {
@@ -748,26 +740,9 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
           throw new Error('Struktur data tidak valid diterima dari API.');
         }
       } catch (e: any) {
-        
-        this.error = e;
-        
-        // Create more specific error messages
-        let errorMessage = 'Gagal mengambil detail purchase invoice';
-        
-        if (e.status === 404) {
-          errorMessage = `Purchase Invoice dengan ID ${invoiceId} tidak ditemukan`;
-        } else if (e.status === 401) {
-          errorMessage = 'Tidak memiliki akses untuk melihat Purchase Invoice ini';
-        } else if (e.status === 403) {
-          errorMessage = 'Tidak memiliki izin untuk melihat Purchase Invoice ini';
-        } else if (e.status === 500) {
-          errorMessage = 'Terjadi kesalahan server, silakan coba lagi';
-        } else if (e.message) {
-          errorMessage = e.message;
-        }
-        
-        // Throw error with more specific message
-        throw new Error(errorMessage);
+        this.error = e
+        const err = normalizeApiError(e, 'Gagal mengambil detail purchase invoice')
+        throw new Error(err.message)
       } finally {
         this.loading = false;
       }
@@ -796,26 +771,9 @@ export const usePurchaseInvoiceStore = defineStore('purchaseInvoice', {
           throw new Error('Struktur data tidak valid diterima dari API.');
         }
       } catch (e: any) {
-        
-        this.error = e;
-        
-        // Create more specific error messages
-        let errorMessage = 'Gagal mengambil detail purchase invoice';
-        
-        if (e.status === 404) {
-          errorMessage = `Purchase Invoice dengan ID ${invoiceId} tidak ditemukan`;
-        } else if (e.status === 401) {
-          errorMessage = 'Tidak memiliki akses untuk melihat Purchase Invoice ini';
-        } else if (e.status === 403) {
-          errorMessage = 'Tidak memiliki izin untuk melihat Purchase Invoice ini';
-        } else if (e.status === 500) {
-          errorMessage = 'Terjadi kesalahan server, silakan coba lagi';
-        } else if (e.message) {
-          errorMessage = e.message;
-        }
-        
-        // Throw error dengan specific message
-        throw new Error(errorMessage);
+        this.error = e
+        const err = normalizeApiError(e, 'Gagal mengambil detail purchase invoice')
+        throw new Error(err.message)
       } finally {
         this.loading = false;
       }

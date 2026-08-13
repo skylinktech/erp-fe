@@ -178,6 +178,7 @@
 import CustomSelect2 from '~/components/CustomSelect2.vue'
 import { useMakerChecker } from '~/composables/useMakerChecker'
 import { useWorkflowApproval } from '~/composables/useWorkflowApproval'
+import { getApiErrorMessage } from '~/utils/apiError'
 
 definePageMeta({ middleware: ['auth', 'check-permission'] })
 
@@ -267,12 +268,8 @@ function unwrapList(res) {
   return []
 }
 
-function apiErrorMessage(e, fallback = 'Terjadi kesalahan') {
-  return e?.data?.message || e?.response?._data?.message || e?.message || fallback
-}
-
 function showApiError(e, fallback = 'Terjadi kesalahan') {
-  const message = apiErrorMessage(e, fallback)
+  const message = getApiErrorMessage(e, fallback)
   const code = e?.data?.meta?.code || e?.data?.code
   const isValidation = code === 'FORBIDDEN' || /maker-checker/i.test(message)
   toast.error({

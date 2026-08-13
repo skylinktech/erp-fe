@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { apiFetch } from '~/utils/apiFetch'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 import Swal from 'sweetalert2'
 import { useNuxtApp } from '#app'
 import { useUserStore } from '~/stores/user'
@@ -478,19 +479,20 @@ export const useSiteInvestStore = defineStore('siteInvest', {
         })
 
         if (!response.ok) {
-          const errorData = await response.json()
-          if (response.status === 422) {
-            this.validationErrors = errorData.errors
-            const toast = useToast()
-            toast.error({
-              title: 'Error',
-              message: 'Gagal Validasi',
-              color: 'red'
-            })
-            return false
-          } else {
-            throw new Error(errorData.message || 'Gagal menyimpan data site investment')
-          }
+          const err = await normalizeFailedResponse(
+            response,
+            this.isEditMode ? 'Site Investment gagal diperbarui.' : 'Site Investment gagal dibuat.'
+          )
+          this.validationErrors = err.fieldErrorList
+          const toast = useToast()
+          toast.error({
+            title: err.type === 'validation' ? 'Validasi' : 'Error',
+            message: err.message,
+            color: 'red',
+            position: 'bottomRight',
+            layout: 2,
+          })
+          return false
         } else {
           this.closeModal()
           await this.fetchSiteInvests()
@@ -509,15 +511,8 @@ export const useSiteInvestStore = defineStore('siteInvest', {
           return true
         }
       } catch (error: any) {
-        this.validationErrors = []
-        const toast = useToast()
-        toast.error({
-          title: 'Error',
-          message: error.message || 'Operasi gagal',
-          color: 'red',
-          position: 'bottomRight',
-          layout: 2,
-        })
+        const err = normalizeApiError(error, 'Site Investment gagal disimpan.')
+        toastNormalizedError(err)
         return false
       } finally {
         this.saving = false
@@ -566,8 +561,8 @@ export const useSiteInvestStore = defineStore('siteInvest', {
         })
 
         if (!response.ok) {
-          const errorData = await response.json()
-          throw new Error(errorData.message || 'Gagal menghapus Site Investment')
+          const err = await normalizeFailedResponse(response, 'Site Investment gagal dihapus.')
+          throw new Error(err.message)
         }
 
         await this.fetchSiteInvests()
@@ -635,24 +630,8 @@ export const useSiteInvestStore = defineStore('siteInvest', {
         })
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: 'Gagal mengapprove site investment' }))
-          
-          // Handle error stock tidak mencukupi
-          if (response.status === 400 && errorData.errors && Array.isArray(errorData.errors)) {
-            const errorMessages = errorData.errors.join('\n')
-            const toast = useToast()
-            toast.error({
-              title: 'Stock Tidak Mencukupi',
-              message: errorMessages,
-              color: 'red',
-              position: 'bottomRight',
-              layout: 2,
-              duration: 5000,
-            })
-            throw new Error(errorMessages)
-          }
-          
-          throw new Error(errorData.message || 'Gagal mengapprove site investment')
+          const err = await normalizeFailedResponse(response, 'Site Investment gagal disetujui.')
+          throw new Error(err.message)
         }
 
         this.params.status = null
@@ -670,17 +649,14 @@ export const useSiteInvestStore = defineStore('siteInvest', {
         return true
       } catch (error: any) {
         console.error('Error approving site investment:', error)
-        // Jangan tampilkan toast lagi jika sudah ditampilkan di atas
-        if (!error.message || !error.message.includes('Stock')) {
-          const toast = useToast()
-          toast.error({
-            title: 'Error',
-            message: error.message || 'Gagal mengapprove site investment.',
-            color: 'red',
-            position: 'bottomRight',
-            layout: 2,
-          })
-        }
+        const toast = useToast()
+        toast.error({
+          title: 'Error',
+          message: error.message || 'Gagal mengapprove site investment.',
+          color: 'red',
+          position: 'bottomRight',
+          layout: 2,
+        })
         return false
       } finally {
         this.loading = false
@@ -721,8 +697,8 @@ export const useSiteInvestStore = defineStore('siteInvest', {
         })
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: 'Gagal membatalkan site investment' }))
-          throw new Error(errorData.message || 'Gagal membatalkan site investment')
+          const err = await normalizeFailedResponse(response, 'Site Investment gagal dibatalkan.')
+          throw new Error(err.message)
         }
 
         this.params.status = null
@@ -811,8 +787,8 @@ export const useSiteInvestStore = defineStore('siteInvest', {
         })
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: 'Gagal mereject site investment' }))
-          throw new Error(errorData.message || 'Gagal mereject site investment')
+          const err = await normalizeFailedResponse(response, 'Site Investment gagal ditolak.')
+          throw new Error(err.message)
         }
 
         this.params.status = null
@@ -878,8 +854,8 @@ export const useSiteInvestStore = defineStore('siteInvest', {
         })
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: 'Gagal submit site investment' }))
-          throw new Error(errorData.message || 'Gagal submit site investment')
+          const err = await normalizeFailedResponse(response, 'Site Investment gagal disubmit.')
+          throw new Error(err.message)
         }
 
         this.params.status = null

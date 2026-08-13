@@ -20,50 +20,30 @@
         <div class="col-xl-8 col-12">
           <div class="card">
             <div class="card-body">
-              <form @submit.prevent="onSubmit">
+              <form ref="formRoot" @submit.prevent="onFormSubmit" novalidate>
             <div v-if="validationErrors?.length" class="alert alert-warning mb-4">
               <ul class="mb-0 ps-3">
                 <li v-for="(err, i) in validationErrors" :key="i">{{ err?.message || err }}</li>
               </ul>
             </div>
 
-            <ul class="nav nav-tabs" role="tablist">
-              <li class="nav-item">
-                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#quotation-tab-info" role="tab" type="button">
-                  <span class="d-none d-sm-block">Informasi</span>
-                  <span class="d-sm-none ri-information-line"></span>
-                </button>
-              </li>
-              <li class="nav-item">
-                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#quotation-tab-product" role="tab" type="button">
-                  <span class="d-none d-sm-block">Products</span>
-                  <span class="d-sm-none ri-box-3-line"></span>
-                </button>
-              </li>
-              <li class="nav-item">
-                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#quotation-tab-services" role="tab" type="button">
-                  <span class="d-none d-sm-block">Services</span>
-                  <span class="d-sm-none ri-service-line"></span>
-                </button>
-              </li>
-              <li class="nav-item">
-                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#quotation-tab-did" role="tab" type="button">
-                  <span class="d-none d-sm-block">DID</span>
-                  <span class="d-sm-none ri-phone-line"></span>
-                </button>
-              </li>
-            </ul>
+            <TabbedFormNav
+              :steps="visibleSteps"
+              :current-index="currentIndex"
+              :disabled="navigating || saving"
+              @select="goTo"
+            />
 
             <div class="tab-content pt-4">
-              <div class="tab-pane fade show active" id="quotation-tab-info" role="tabpanel">
+              <div class="tab-pane fade" id="quotation-tab-info" data-step-id="quotation-tab-info" role="tabpanel" :class="paneClass('quotation-tab-info')">
                 <div class="row g-3">
-                  <div class="col-md-3"><label class="form-label">Site Investment</label><CustomSelect2 v-model="form.siteInvestId" :options="siteInvests" :get-option-label="s => s ? `${s.siNumber || ''} - ${s.name || ''}` : ''" :reduce="s => s?.id" searchable clearable placeholder="Pilih Site Investment" @update:model-value="onSiteInvestChange" /></div>
-                  <div class="col-md-3"><label class="form-label">Customer</label><CustomSelect2 v-model="form.customerId" :options="customers || []" :get-option-label="c => c?.name || ''" :reduce="c => c?.id" searchable clearable placeholder="Pilih Customer" /></div>
-                  <div class="col-md-3"><label class="form-label">Site</label><CustomSelect2 v-model="form.siteId" :options="sites" :get-option-label="s => s ? `${s.code || ''} - ${s.name || ''}` : ''" :reduce="s => s?.id" searchable clearable placeholder="Pilih Site" /></div>
-                  <div class="col-md-3"><label class="form-label">Cost Center</label><CustomSelect2 v-model="form.costCenterId" :options="costCenters" :get-option-label="c => c ? `${c.code || ''} - ${c.name || ''}` : ''" :reduce="c => c?.id" searchable clearable placeholder="Pilih Cost Center" /></div>
-                  <div class="col-md-3"><label class="form-label">UP</label><input v-model="form.up" class="form-control" type="text" /></div>
-                  <div class="col-md-3"><label class="form-label">Tanggal Quotation</label><input v-model="form.date" class="form-control" type="date" /></div>
-                  <div class="col-md-3"><label class="form-label">Valid Until</label><input v-model="form.validUntil" class="form-control" type="date" /></div>
+                  <div class="col-md-3"><FormLabel required>Site Investment</FormLabel><CustomSelect2 v-model="form.siteInvestId" :options="siteInvests" :get-option-label="s => s ? `${s.siNumber || ''} - ${s.name || ''}` : ''" :reduce="s => s?.id" searchable clearable placeholder="Pilih Site Investment" @update:model-value="onSiteInvestChange" /><div v-if="uiErrors.siteInvestId" class="invalid-feedback d-block">{{ uiErrors.siteInvestId }}</div></div>
+                  <div class="col-md-3"><FormLabel required>Customer</FormLabel><CustomSelect2 v-model="form.customerId" :options="customers || []" :get-option-label="c => c?.name || ''" :reduce="c => c?.id" searchable clearable placeholder="Pilih Customer" /><div v-if="uiErrors.customerId" class="invalid-feedback d-block">{{ uiErrors.customerId }}</div></div>
+                  <div class="col-md-3"><FormLabel required>Site</FormLabel><CustomSelect2 v-model="form.siteId" :options="sites" :get-option-label="s => s ? `${s.code || ''} - ${s.name || ''}` : ''" :reduce="s => s?.id" searchable clearable placeholder="Pilih Site" /><div v-if="uiErrors.siteId" class="invalid-feedback d-block">{{ uiErrors.siteId }}</div></div>
+                  <div class="col-md-3"><FormLabel required>Cost Center</FormLabel><CustomSelect2 v-model="form.costCenterId" :options="costCenters" :get-option-label="c => c ? `${c.code || ''} - ${c.name || ''}` : ''" :reduce="c => c?.id" searchable clearable placeholder="Pilih Cost Center" /><div v-if="uiErrors.costCenterId" class="invalid-feedback d-block">{{ uiErrors.costCenterId }}</div></div>
+                  <div class="col-md-3"><FormLabel required html-for="quotation-up">UP</FormLabel><input id="quotation-up" v-model="form.up" class="form-control" :class="{ 'is-invalid': uiErrors.up }" type="text" aria-required="true" /><div v-if="uiErrors.up" class="invalid-feedback d-block">{{ uiErrors.up }}</div></div>
+                  <div class="col-md-3"><FormLabel required html-for="quotation-date">Tanggal Quotation</FormLabel><input id="quotation-date" v-model="form.date" class="form-control" :class="{ 'is-invalid': uiErrors.date }" type="date" aria-required="true" /><div v-if="uiErrors.date" class="invalid-feedback d-block">{{ uiErrors.date }}</div></div>
+                  <div class="col-md-3"><FormLabel required html-for="quotation-valid-until">Valid Until</FormLabel><input id="quotation-valid-until" v-model="form.validUntil" class="form-control" :class="{ 'is-invalid': uiErrors.validUntil }" type="date" aria-required="true" /><div v-if="uiErrors.validUntil" class="invalid-feedback d-block">{{ uiErrors.validUntil }}</div></div>
                   <div class="col-md-3"><label class="form-label">Terms of Payment</label><CustomSelect2 v-model="form.termsOfPayment" :options="termsOfPaymentOptions" :get-option-label="o => o.label" :reduce="o => o.value" /></div>
                   <div class="col-md-3"><label class="form-label">Discount (%)</label><input v-model.number="form.discountPercent" class="form-control" type="number" /></div>
                   <div class="col-md-3"><label class="form-label">PPN (%)</label><input v-model.number="form.taxPercent" class="form-control" type="number" /></div>
@@ -80,7 +60,7 @@
               </div>
 
               <!-- ── TAB PRODUK ── -->
-              <div class="tab-pane fade" id="quotation-tab-product" role="tabpanel">
+              <div class="tab-pane fade" id="quotation-tab-product" data-step-id="quotation-tab-product" role="tabpanel" :class="paneClass('quotation-tab-product')">
                 <div class="repeater-table">
                   <div class="repeater-table-head d-none d-md-grid repeater-cols-4">
                     <span>Produk (SKU | Nama)</span><span>Qty</span><span>Harga Satuan</span><span>Subtotal</span>
@@ -120,7 +100,7 @@
               </div>
 
               <!-- ── TAB SERVICE ── -->
-              <div class="tab-pane fade" id="quotation-tab-services" role="tabpanel">
+              <div class="tab-pane fade" id="quotation-tab-services" data-step-id="quotation-tab-services" role="tabpanel" :class="paneClass('quotation-tab-services')">
                 <div class="repeater-table">
                   <div class="repeater-table-head d-none d-md-grid repeater-cols-5">
                     <span>Service</span><span>Unit</span><span>Qty</span><span>Harga Satuan</span><span>Subtotal</span>
@@ -164,7 +144,7 @@
               </div>
 
               <!-- ── TAB DID ── -->
-              <div class="tab-pane fade" id="quotation-tab-did" role="tabpanel">
+              <div class="tab-pane fade" id="quotation-tab-did" data-step-id="quotation-tab-did" role="tabpanel" :class="paneClass('quotation-tab-did')">
                 <div class="repeater-table">
                   <div class="repeater-table-head d-none d-md-grid repeater-cols-4">
                     <span>DID (Delivery / Installation)</span><span>Qty</span><span>Harga Satuan</span><span>Subtotal</span>
@@ -204,10 +184,15 @@
               </div>
             </div>
 
-                <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
-                  <NuxtLink to="/sales/quotation" class="btn btn-outline-secondary">Batal</NuxtLink>
-                  <button type="submit" class="btn btn-primary" :disabled="saving"><span v-if="saving" class="spinner-border spinner-border-sm me-2"></span>Simpan</button>
-                </div>
+                <TabbedFormActions
+                  :is-first-step="isFirstStep"
+                  :is-last-step="isLastStep"
+                  :loading="navigating"
+                  :saving="saving"
+                  cancel-href="/sales/quotation"
+                  @next="next"
+                  @previous="previous"
+                />
               </form>
             </div>
           </div>
@@ -394,8 +379,13 @@ import { useQuotationStore } from '~/stores/quotation'
 import { useCustomerStore } from '~/stores/customer'
 import { useServiceStore } from '~/stores/service'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
+import TabbedFormNav from '~/components/form/TabbedFormNav.vue'
+import TabbedFormActions from '~/components/form/TabbedFormActions.vue'
+import FormLabel from '~/components/form/FormLabel.vue'
+import { useTabbedFormNavigation } from '~/composables/useTabbedFormNavigation'
 import { parseRupiahToNumber } from '~/composables/formatRupiah'
 import { lineSubtotal } from '~/utils/lineSubtotal'
+import { firstErrorTab } from '~/utils/apiError'
 
 const route = useRoute()
 const formatRupiah = useFormatRupiah()
@@ -403,6 +393,54 @@ const quotationStore = useQuotationStore()
 const customerStore = useCustomerStore()
 const serviceStore = useServiceStore()
 const { form, saving, validationErrors, customerProducts } = storeToRefs(quotationStore)
+const formRoot = ref<HTMLFormElement | null>(null)
+const uiErrors = ref<Record<string, string>>({})
+const QUOTATION_FIELD_TABS: Record<string, string> = {
+  siteInvestId: 'quotation-tab-info',
+  customerId: 'quotation-tab-info',
+  siteId: 'quotation-tab-info',
+  costCenterId: 'quotation-tab-info',
+  up: 'quotation-tab-info',
+  date: 'quotation-tab-info',
+  validUntil: 'quotation-tab-info',
+  quotationItems: 'quotation-tab-product',
+  quotationServices: 'quotation-tab-services',
+  quotationDids: 'quotation-tab-did',
+}
+const formSteps = [
+  { id: 'quotation-tab-info', label: 'Informasi', icon: 'ri-information-line' },
+  { id: 'quotation-tab-product', label: 'Products', icon: 'ri-box-3-line' },
+  { id: 'quotation-tab-services', label: 'Services', icon: 'ri-service-line' },
+  { id: 'quotation-tab-did', label: 'DID', icon: 'ri-phone-line' },
+]
+function validateQuotationStep(step: { id: string }): boolean {
+  uiErrors.value = {}
+  if (step.id !== 'quotation-tab-info') return true
+  if (!form.value?.siteInvestId) uiErrors.value.siteInvestId = 'Site Investment wajib dipilih.'
+  if (!form.value?.customerId) uiErrors.value.customerId = 'Customer wajib dipilih.'
+  if (!form.value?.siteId) uiErrors.value.siteId = 'Site wajib dipilih.'
+  if (!form.value?.costCenterId) uiErrors.value.costCenterId = 'Cost Center wajib dipilih.'
+  if (!String(form.value?.up || '').trim()) uiErrors.value.up = 'UP wajib diisi.'
+  if (!form.value?.date) uiErrors.value.date = 'Tanggal Quotation wajib diisi.'
+  if (!form.value?.validUntil) uiErrors.value.validUntil = 'Valid Until wajib diisi.'
+  if (form.value?.date && form.value?.validUntil && String(form.value.validUntil) < String(form.value.date)) {
+    uiErrors.value.validUntil = 'Valid Until tidak boleh lebih awal dari Tanggal Quotation.'
+  }
+  return Object.keys(uiErrors.value).length === 0
+}
+const {
+  currentIndex,
+  visibleSteps,
+  isFirstStep,
+  isLastStep,
+  navigating,
+  next,
+  previous,
+  goTo,
+  goToId,
+  paneClass,
+  validateAll,
+} = useTabbedFormNavigation({ steps: formSteps, formRoot, validateStep: validateQuotationStep })
 const { customers } = storeToRefs(customerStore)
 const { services } = storeToRefs(serviceStore)
 
@@ -561,8 +599,25 @@ async function loadForm() {
   skipSiteInvestPrefill.value = false
 }
 
+async function onFormSubmit() {
+  if (!isLastStep.value) {
+    await next()
+    return
+  }
+  if (!(await validateAll())) return
+  await onSubmit()
+}
+
 async function onSubmit() {
-  await quotationStore.saveQuotation({ navigateToList: true })
+  const saved = await quotationStore.saveQuotation({ navigateToList: true })
+  if (!saved) {
+    const list = Array.isArray(quotationStore.validationErrors) ? quotationStore.validationErrors : []
+    for (const item of list as any[]) {
+      if (item?.field && item?.message) uiErrors.value[item.field] = item.message
+    }
+    const tab = firstErrorTab(list as any, QUOTATION_FIELD_TABS)
+    if (tab) void goToId(tab, { skipValidation: true })
+  }
 }
 
 watch(() => form.value?.customerId, async (customerId) => {

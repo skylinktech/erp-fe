@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { useNuxtApp } from '#app'
 import Swal from 'sweetalert2'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 
 export interface Asset {
   id?: number
@@ -213,20 +214,14 @@ export const useAssetStore = defineStore('asset', {
           credentials: 'include', // Cookie-based auth
         })
 
-        let result;
-        try {
-          result = await response.json();
-        } catch (parseError) {
-          console.error('Failed to parse response as JSON:', parseError);
-          throw new Error('Server response tidak valid');
-        }
-
         if (!response.ok) {
-          if (response.status === 422 && result.errors) {
-            this.validationErrors = Object.values(result.errors).flat();
-            return;
-          }
-          throw new Error(result.message || 'Gagal menyimpan data aset');
+          const err = await normalizeFailedResponse(
+            response,
+            this.isEditMode ? 'Aset gagal diperbarui.' : 'Aset gagal dibuat.'
+          )
+          this.validationErrors = err.fieldErrorList
+          toastNormalizedError(err)
+          return false
         }
         
         this.closeModal();
@@ -240,15 +235,9 @@ export const useAssetStore = defineStore('asset', {
         });
 
       } catch (error: any) {
-        if (this.validationErrors.length === 0) {
-          toast.error({
-            title: 'Error',
-            message: error.message || 'Operasi gagal',
-            color: 'red',
-            position: 'bottomRight',
-            layout: 2,
-          });
-        }
+        const err = normalizeApiError(error, 'Aset gagal disimpan.')
+        toastNormalizedError(err)
+        return false
       } finally {
         this.saving = false
       }
@@ -281,8 +270,9 @@ export const useAssetStore = defineStore('asset', {
           });
 
           if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ message: 'Gagal menghapus aset.' }));
-            throw new Error(errorData.message || 'Gagal menghapus aset.');
+            const err = await normalizeFailedResponse(response, 'Aset gagal dihapus.')
+            toastNormalizedError(err)
+            return false
           }
 
           await this.fetchAssets();
@@ -294,13 +284,8 @@ export const useAssetStore = defineStore('asset', {
             layout: 2,
           });
         } catch (error: any) {
-          toast.error({
-            title: 'Error',
-            message: error.message || 'Gagal menghapus aset',
-            color: 'red',
-            position: 'bottomRight',
-            layout: 2,
-          });
+          const err = normalizeApiError(error, 'Aset gagal dihapus.')
+          toastNormalizedError(err)
         }
       }
     },

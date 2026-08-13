@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 
 export interface Permission {
     id: number
@@ -121,17 +122,21 @@ export const usePermissionsStore = defineStore('permissions', {
                 })
 
                 if (!response.ok) {
-                    const errorData = await response.json()
-                    if (errorData.errors) {
-                        this.validationErrors = Object.values(errorData.errors).flat()
-                    }
-                    throw new Error(errorData.message || 'Gagal menyimpan permission')
+                    const err = await normalizeFailedResponse(
+                        response,
+                        payload.id ? 'Permission gagal diperbarui.' : 'Permission gagal dibuat.'
+                    )
+                    this.validationErrors = err.fieldErrorList
+                    toastNormalizedError(err)
+                    return { success: false }
                 }
 
                 await this.fetchPermissions()
                 return { success: true }
             } catch (error: any) {
-                throw error
+                const err = normalizeApiError(error, 'Permission gagal disimpan.')
+                toastNormalizedError(err)
+                return { success: false }
             } finally {
                 this.loading = false
             }
@@ -152,14 +157,17 @@ export const usePermissionsStore = defineStore('permissions', {
                 })
 
                 if (!response.ok) {
-                    const errorData = await response.json()
-                    throw new Error(errorData.message || 'Gagal menghapus permission')
+                    const err = await normalizeFailedResponse(response, 'Permission gagal dihapus.')
+                    toastNormalizedError(err)
+                    return { success: false }
                 }
 
                 await this.fetchPermissions()
                 return { success: true }
             } catch (error: any) {
-                throw error
+                const err = normalizeApiError(error, 'Permission gagal dihapus.')
+                toastNormalizedError(err)
+                return { success: false }
             } finally {
                 this.loading = false
             }
@@ -180,8 +188,8 @@ export const usePermissionsStore = defineStore('permissions', {
                     })
                     
                     if (!response.ok) {
-                        const errorData = await response.json()
-                        throw new Error(`Gagal menghapus permission ID ${permissionId}: ${errorData.message || 'Unknown error'}`)
+                        const err = await normalizeFailedResponse(response, 'Permission gagal dihapus.')
+                        throw new Error(err.message)
                     }
                     
                     return { id: permissionId, success: true }

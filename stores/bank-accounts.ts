@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { useNuxtApp } from '#app'
 import Swal from 'sweetalert2'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 
 export interface BankAccount {
   id?: number
@@ -148,20 +149,14 @@ export const useBankAccountStore = defineStore('bankAccount', {
           credentials: 'include', // Cookie-based auth
         })
 
-        let result;
-        try {
-          result = await response.json();
-        } catch (parseError) {
-          console.error('Failed to parse response as JSON:', parseError);
-          throw new Error('Server response tidak valid');
-        }
-
         if (!response.ok) {
-          if (response.status === 422 && result.errors) {
-            this.validationErrors = Object.values(result.errors).flat();
-            return;
-          }
-          throw new Error(result.message || 'Gagal menyimpan data rekening bank');
+          const err = await normalizeFailedResponse(
+            response,
+            this.isEditMode ? 'Rekening Bank gagal diperbarui.' : 'Rekening Bank gagal dibuat.'
+          )
+          this.validationErrors = err.fieldErrorList
+          toastNormalizedError(err)
+          return false
         }
         
         this.closeModal();
@@ -175,15 +170,9 @@ export const useBankAccountStore = defineStore('bankAccount', {
         });
 
       } catch (error: any) {
-        if (this.validationErrors.length === 0) {
-          const toast = useToast()          
-          toast.error({
-            title: 'Error',
-            message: error.message || 'Operasi gagal',
-            color: 'red',
-            position: 'bottomRight',
-          });
-        }
+        const err = normalizeApiError(error, 'Rekening Bank gagal disimpan.')
+        toastNormalizedError(err)
+        return false
       } finally {
         this.saving = false
       }
@@ -215,8 +204,9 @@ export const useBankAccountStore = defineStore('bankAccount', {
           });
 
           if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ message: 'Gagal menghapus rekening bank.' }));
-            throw new Error(errorData.message || 'Gagal menghapus rekening bank.');
+            const err = await normalizeFailedResponse(response, 'Rekening Bank gagal dihapus.')
+            toastNormalizedError(err)
+            return false
           }
 
           await this.fetchBankAccounts();
@@ -228,13 +218,8 @@ export const useBankAccountStore = defineStore('bankAccount', {
             position: 'bottomRight',
           });
         } catch (error: any) {
-          const toast = useToast()          
-          toast.error({
-            title: 'Error',
-            message: error.message || 'Gagal menghapus rekening bank',
-            color: 'red',
-            position: 'bottomRight',
-          });
+          const err = normalizeApiError(error, 'Rekening Bank gagal dihapus.')
+          toastNormalizedError(err)
         }
       }
     },

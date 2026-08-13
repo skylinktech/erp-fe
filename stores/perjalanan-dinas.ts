@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { useNuxtApp } from '#app'
 import { apiFetch } from '~/utils/apiFetch'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 
 export interface PerjalananDinasRow {
   id: string
@@ -305,11 +306,16 @@ export const usePerjalananDinasStore = defineStore('perjalanan-dinas', {
         if (this.isEditMode) fd.append('_method', 'PUT')
 
         const res = await fetch(url, { method: 'POST', credentials: 'include', body: fd })
-        const result = await res.json().catch(() => ({} as any))
         if (!res.ok) {
-          if (result?.errors) this.validationErrors = result.errors
-          throw new Error(result?.message || 'Gagal menyimpan pengajuan perjalanan dinas')
+          const err = await normalizeFailedResponse(
+            res,
+            this.isEditMode ? 'Perjalanan Dinas gagal diperbarui.' : 'Perjalanan Dinas gagal dibuat.'
+          )
+          this.validationErrors = err.fieldErrorList
+          toastNormalizedError(err)
+          return null
         }
+        const result = await res.json().catch(() => ({} as any))
 
         toast.success({
           title: 'Berhasil',
@@ -321,7 +327,8 @@ export const usePerjalananDinasStore = defineStore('perjalanan-dinas', {
         await Promise.all([this.fetchList(), this.fetchStats()])
         return result?.data as PerjalananDinasRow
       } catch (error: any) {
-        toast.error({ title: 'Error', message: error.message || String(error), color: 'red' })
+        const err = normalizeApiError(error, 'Perjalanan Dinas gagal disimpan.')
+        toastNormalizedError(err)
         return null
       } finally {
         this.saving = false
@@ -337,11 +344,8 @@ export const usePerjalananDinasStore = defineStore('perjalanan-dinas', {
         await Promise.all([this.fetchList(), this.fetchStats()])
         return true
       } catch (error: any) {
-        toast.error({
-          title: 'Error',
-          message: error?.data?.message || error?.message || 'Gagal menghapus',
-          color: 'red',
-        })
+        const err = normalizeApiError(error, 'Perjalanan Dinas gagal dihapus.')
+        toastNormalizedError(err)
         return false
       }
     },
@@ -386,11 +390,8 @@ export const usePerjalananDinasStore = defineStore('perjalanan-dinas', {
         await Promise.all([this.fetchList(), this.fetchStats()])
         return true
       } catch (error: any) {
-        toast.error({
-          title: 'Error',
-          message: error?.data?.message || error?.message || 'Aksi gagal',
-          color: 'red',
-        })
+        const err = normalizeApiError(error, 'Perjalanan Dinas gagal diproses.')
+        toastNormalizedError(err)
         return false
       }
     },

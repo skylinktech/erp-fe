@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { apiFetch } from '~/utils/apiFetch'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 import Swal from 'sweetalert2'
 import { useNuxtApp } from '#app'
 import { useUserStore } from '~/stores/user'
@@ -426,61 +427,40 @@ export const useQuotationStore = defineStore('quotation', {
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
-                console.error('Server Error Response:', errorData);
-                if (response.status === 422) {
-                    this.validationErrors = errorData.errors;
-                     toast.error({
-                      title: 'Error',
-                      message: errorData.errors.map((e: any) => e.message).join('<br>'),
-                      color: 'red',
-                      position: 'bottomRight',
-                      layout: 2,
-                    });
-                } else {
-                    // Tampilkan detail error jika ada
-                    let errorMessage = errorData.message || 'Gagal menyimpan data quotation';
-                    if (errorData.error) {
-                        // errorData.error bisa berupa string atau object
-                        if (typeof errorData.error === 'string') {
-                            errorMessage += `\nDetail: ${errorData.error}`;
-                        } else if (errorData.error.message) {
-                            errorMessage += `\nDetail: ${errorData.error.message}`;
-                            if (errorData.error.constraint) {
-                                errorMessage += `\nConstraint: ${errorData.error.constraint}`;
-                            }
-                        }
-                    }
-                    throw new Error(errorMessage);
-                }
-            } else {
-                this.closeModal();
-                await this.fetchQuotations();
-                await this.fetchStatistics(); // Refresh statistik setelah save
-                toast.success({
-                  title: 'Success',
-                  message: `Quotation berhasil ${this.isEditMode ? 'diperbarui' : 'dibuat'}.`,
-                  color: 'green',
-                  position: 'bottomRight',
-                  layout: 2,
-                });
-                if (options?.navigateToList) {
-                  await navigateTo('/sales/quotation')
-                }
+                const err = await normalizeFailedResponse(
+                    response,
+                    this.isEditMode ? 'Quotation gagal diperbarui.' : 'Quotation gagal dibuat.'
+                )
+                this.validationErrors = err.fieldErrorList
+                toast.error({
+                    title: err.type === 'validation' ? 'Validasi' : 'Error',
+                    message: err.message,
+                    color: 'red',
+                    position: 'bottomRight',
+                    layout: 2,
+                })
+                return false
             }
 
-
-        } catch (error: any) {
-            // Clear validation errors on new general error
-            this.validationErrors = [];
-            console.error('Save Quotation Error:', error);
-            toast.error({
-              title: 'Error',
-              message: error.message || 'Operasi gagal',
-              color: 'red',
+            this.closeModal();
+            await this.fetchQuotations();
+            await this.fetchStatistics(); // Refresh statistik setelah save
+            toast.success({
+              title: 'Success',
+              message: `Quotation berhasil ${this.isEditMode ? 'diperbarui' : 'dibuat'}.`,
+              color: 'green',
               position: 'bottomRight',
               layout: 2,
             });
+            if (options?.navigateToList) {
+              await navigateTo('/sales/quotation')
+            }
+            return true
+
+        } catch (error: any) {
+            const err = normalizeApiError(error, 'Quotation gagal disimpan.')
+            toastNormalizedError(err)
+            return false
         } finally {
             this.saving = false;
         }
@@ -517,8 +497,8 @@ export const useQuotationStore = defineStore('quotation', {
             });
   
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Gagal menghapus Quotation');
+                const err = await normalizeFailedResponse(response, 'Quotation gagal dihapus.')
+                throw new Error(err.message)
             }
   
             await this.fetchQuotations();
@@ -578,8 +558,8 @@ export const useQuotationStore = defineStore('quotation', {
           });
 
           if (!response.ok) {
-              const errorData = await response.json().catch(() => ({ message: 'Gagal mengapprove quotation' }));
-              throw new Error(errorData.message || 'Gagal mengapprove quotation');
+              const err = await normalizeFailedResponse(response, 'Quotation gagal disetujui.')
+              throw new Error(err.message)
           }
 
           await this.fetchQuotations();
@@ -657,8 +637,8 @@ export const useQuotationStore = defineStore('quotation', {
           });
 
           if (!response.ok) {
-              const errorData = await response.json().catch(() => ({ message: 'Gagal mereject quotation' }));
-              throw new Error(errorData.message || 'Gagal mereject quotation');
+              const err = await normalizeFailedResponse(response, 'Quotation gagal ditolak.')
+              throw new Error(err.message)
           }
 
           await this.fetchQuotations();
@@ -713,8 +693,8 @@ export const useQuotationStore = defineStore('quotation', {
         });
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: 'Gagal submit quotation' }));
-          throw new Error(errorData.message || 'Gagal submit quotation');
+          const err = await normalizeFailedResponse(response, 'Quotation gagal disubmit.')
+          throw new Error(err.message)
         }
 
         await this.fetchQuotations();

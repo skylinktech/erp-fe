@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { useNuxtApp } from '#app'
 import Swal from 'sweetalert2'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 
 export interface AccessRequestForm {
   pegawaiId: number | null
@@ -30,6 +31,7 @@ interface AccessRequestState {
   isEditMode: boolean
   showModal: boolean
   selectedRequest: any
+  validationErrors: any[]
 }
 
 export const useAccessRequestStore = defineStore('accessRequest', {
@@ -59,6 +61,7 @@ export const useAccessRequestStore = defineStore('accessRequest', {
     isEditMode: false,
     showModal: false,
     selectedRequest: null,
+    validationErrors: [],
   }),
   actions: {
     async fetchAccessRequests(suppressError = false) {
@@ -166,8 +169,13 @@ export const useAccessRequestStore = defineStore('accessRequest', {
         })
 
         if (!response.ok) {
-          const errData = await response.json()
-          throw new Error(errData.message || 'Gagal menyimpan')
+          const err = await normalizeFailedResponse(
+            response,
+            this.isEditMode ? 'Access Request gagal diperbarui.' : 'Access Request gagal dibuat.'
+          )
+          this.validationErrors = err.fieldErrorList
+          toastNormalizedError(err)
+          return false
         }
 
         this.closeModal()
@@ -181,14 +189,9 @@ export const useAccessRequestStore = defineStore('accessRequest', {
           icon: 'success',
         })
       } catch (e: any) {
-        toast.error({
-          title: 'Error',
-          message: e.message || 'Gagal menyimpan',
-          color: 'red',
-          position: 'bottomRight',
-          layout: 2,
-          icon: 'error',
-        })
+        const err = normalizeApiError(e, 'Access Request gagal disimpan.')
+        toastNormalizedError(err)
+        return false
       } finally {
         this.loading = false
       }
@@ -203,8 +206,9 @@ export const useAccessRequestStore = defineStore('accessRequest', {
           credentials: 'include',
         })
         if (!response.ok) {
-          const err = await response.json()
-          throw new Error(err.message || 'Gagal submit')
+          const err = await normalizeFailedResponse(response, 'Access Request gagal disubmit.')
+          toastNormalizedError(err)
+          return false
         }
         toast.success({
           title: 'Berhasil',
@@ -216,14 +220,8 @@ export const useAccessRequestStore = defineStore('accessRequest', {
         })
         return true
       } catch (e: any) {
-        toast.error({
-          title: 'Error',
-          message: e.message || 'Gagal submit',
-          color: 'red',
-          position: 'bottomRight',
-          layout: 2,
-          icon: 'error',
-        })
+        const err = normalizeApiError(e, 'Access Request gagal disubmit.')
+        toastNormalizedError(err)
         return false
       }
     },
@@ -238,8 +236,9 @@ export const useAccessRequestStore = defineStore('accessRequest', {
           credentials: 'include',
         })
         if (!response.ok) {
-          const err = await response.json()
-          throw new Error(err.message || 'Gagal approve')
+          const err = await normalizeFailedResponse(response, 'Access Request gagal disetujui.')
+          toastNormalizedError(err)
+          return false
         }
         toast.success({
           title: 'Berhasil',
@@ -251,14 +250,8 @@ export const useAccessRequestStore = defineStore('accessRequest', {
         })
         return true
       } catch (e: any) {
-        toast.error({
-          title: 'Error',
-          message: e.message || 'Gagal approve',
-          color: 'red',
-          position: 'bottomRight',
-          layout: 2,
-          icon: 'error',
-        })
+        const err = normalizeApiError(e, 'Access Request gagal disetujui.')
+        toastNormalizedError(err)
         return false
       }
     },
@@ -273,8 +266,9 @@ export const useAccessRequestStore = defineStore('accessRequest', {
           credentials: 'include',
         })
         if (!response.ok) {
-          const err = await response.json()
-          throw new Error(err.message || 'Gagal reject')
+          const err = await normalizeFailedResponse(response, 'Access Request gagal ditolak.')
+          toastNormalizedError(err)
+          return false
         }
         toast.success({
           title: 'Berhasil',
@@ -286,14 +280,8 @@ export const useAccessRequestStore = defineStore('accessRequest', {
         })
         return true
       } catch (e: any) {
-        toast.error({
-          title: 'Error',
-          message: e.message || 'Gagal reject',
-          color: 'red',
-          position: 'bottomRight',
-          layout: 2,
-          icon: 'error',
-        })
+        const err = normalizeApiError(e, 'Access Request gagal ditolak.')
+        toastNormalizedError(err)
         return false
       }
     },
@@ -307,8 +295,9 @@ export const useAccessRequestStore = defineStore('accessRequest', {
           credentials: 'include',
         })
         if (!response.ok) {
-          const err = await response.json()
-          throw new Error(err.message || 'Gagal membatalkan')
+          const err = await normalizeFailedResponse(response, 'Access Request gagal dibatalkan.')
+          toastNormalizedError(err)
+          return false
         }
         toast.success({
           title: 'Berhasil',
@@ -320,14 +309,8 @@ export const useAccessRequestStore = defineStore('accessRequest', {
         })
         return true
       } catch (e: any) {
-        toast.error({
-          title: 'Error',
-          message: e.message || 'Gagal membatalkan',
-          color: 'red',
-          position: 'bottomRight',
-          layout: 2,
-          icon: 'error',
-        })
+        const err = normalizeApiError(e, 'Access Request gagal dibatalkan.')
+        toastNormalizedError(err)
         return false
       }
     },
@@ -353,8 +336,9 @@ export const useAccessRequestStore = defineStore('accessRequest', {
           credentials: 'include',
         })
         if (!response.ok) {
-          const err = await response.json()
-          throw new Error(err.message || 'Gagal menghapus')
+          const err = await normalizeFailedResponse(response, 'Access Request gagal dihapus.')
+          toastNormalizedError(err)
+          return false
         }
         toast.success({
           title: 'Berhasil',
@@ -367,14 +351,8 @@ export const useAccessRequestStore = defineStore('accessRequest', {
         await this.fetchAccessRequests()
         return true
       } catch (e: any) {
-        toast.error({
-          title: 'Error',
-          message: e.message || 'Gagal menghapus',
-          color: 'red',
-          position: 'bottomRight',
-          layout: 2,
-          icon: 'error',
-        })
+        const err = normalizeApiError(e, 'Access Request gagal dihapus.')
+        toastNormalizedError(err)
         return false
       }
     },

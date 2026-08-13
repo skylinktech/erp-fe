@@ -201,7 +201,7 @@
                       v-model="form.name"
                       placeholder="Masukkan nama cost center"
                     />
-                    <label>Nama Cost Center *</label>
+                    <label>Nama Cost Center <span class="text-danger" aria-hidden="true">*</span></label>
                   </div>
                 </div>
                 <div class="col-md-6">
@@ -215,7 +215,7 @@
                         {{ option.label }}
                       </option>
                     </select>
-                    <label>Tipe Cost Center *</label>
+                    <label>Tipe Cost Center <span class="text-danger" aria-hidden="true">*</span></label>
                   </div>
                 </div>
                 <div class="col-md-6">

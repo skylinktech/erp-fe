@@ -195,7 +195,7 @@
                       v-model="form.name"
                       placeholder="Masukkan nama site"
                     />
-                    <label>Nama Site <span class="text-danger">*</span></label>
+                    <label>Nama Site <span class="text-danger" aria-hidden="true">*</span></label>
                   </div>
                 </div>
                 <div class="col-md-6">
@@ -206,7 +206,7 @@
                         {{ option.label }}
                       </option>
                     </select>
-                    <label>Tipe Site <span class="text-danger">*</span></label>
+                    <label>Tipe Site <span class="text-danger" aria-hidden="true">*</span></label>
                   </div>
                 </div>
                 <div class="col-md-12">
@@ -275,9 +275,9 @@
                       v-model="form.latitude"
                       placeholder="-6.2088"
                     />
-                    <label>Latitude <span class="text-danger">*</span></label>
+                    <label>Latitude</label>
                   </div>
-                  <small class="text-muted d-block mt-1">Wajib. Range: -90 s/d 90 (contoh: -6.2088)</small>
+                  <small class="text-muted d-block mt-1">Range: -90 s/d 90 (contoh: -6.2088)</small>
                 </div>
                 <div class="col-md-6">
                   <div class="form-floating form-floating-outline">
@@ -290,9 +290,9 @@
                       v-model="form.longitude"
                       placeholder="106.8456"
                     />
-                    <label>Longitude <span class="text-danger">*</span></label>
+                    <label>Longitude</label>
                   </div>
-                  <small class="text-muted d-block mt-1">Wajib. Range: -180 s/d 180 (contoh: 106.8456)</small>
+                  <small class="text-muted d-block mt-1">Range: -180 s/d 180 (contoh: 106.8456)</small>
                 </div>
                 <div class="col-md-6">
                   <div class="form-floating form-floating-outline">

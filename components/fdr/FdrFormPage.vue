@@ -20,51 +20,31 @@
         <div class="col-xl-8 col-12">
           <div class="card">
             <div class="card-body">
-              <form @submit.prevent="onSubmit">
-                <div v-if="validationErrors?.length" class="alert alert-warning mb-4">
+              <form ref="formRoot" @submit.prevent="onFormSubmit" novalidate>
+                <div v-if="validationErrorMessages.length" class="alert alert-warning mb-4">
                   <ul class="mb-0 ps-3">
-                    <li v-for="(err, i) in validationErrors" :key="i">{{ err?.message || JSON.stringify(err) }}</li>
+                    <li v-for="(msg, i) in validationErrorMessages" :key="i">{{ msg }}</li>
                   </ul>
                 </div>
 
-                <ul class="nav nav-tabs" role="tablist">
-                  <li class="nav-item">
-                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#fdr-tab-info" type="button">
-                      <span class="d-none d-sm-block">Informasi</span>
-                      <span class="d-sm-none ri-information-line"></span>
-                    </button>
-                  </li>
-                  <li class="nav-item">
-                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#fdr-tab-materials" type="button">
-                      <span class="d-none d-sm-block">Material/Product</span>
-                      <span class="d-sm-none ri-box-3-line"></span>
-                    </button>
-                  </li>
-                  <li class="nav-item">
-                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#fdr-tab-services" type="button">
-                      <span class="d-none d-sm-block">Services</span>
-                      <span class="d-sm-none ri-service-line"></span>
-                    </button>
-                  </li>
-                  <li class="nav-item">
-                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#fdr-tab-dids" type="button">
-                      <span class="d-none d-sm-block">DID</span>
-                      <span class="d-sm-none ri-phone-line"></span>
-                    </button>
-                  </li>
-                </ul>
+                <TabbedFormNav
+                  :steps="visibleSteps"
+                  :current-index="currentIndex"
+                  :disabled="navigating || saving"
+                  @select="goTo"
+                />
 
                 <div class="tab-content pt-4">
-                  <div id="fdr-tab-info" class="tab-pane fade show active">
+                  <div id="fdr-tab-info" data-step-id="fdr-tab-info" :class="paneClass('fdr-tab-info')">
                     <div class="row g-3">
                       <div class="col-md-6">
-                        <label class="form-label">Nama Project</label>
-                        <input v-model="form.name" class="form-control" :class="{ 'is-invalid': uiErrors.name }" placeholder="Nama">
+                        <FormLabel required html-for="fdr-name">Nama Project</FormLabel>
+                        <input id="fdr-name" v-model="form.name" class="form-control" :class="{ 'is-invalid': uiErrors.name }" placeholder="Nama" aria-required="true">
                         <div v-if="uiErrors.name" class="invalid-feedback d-block">{{ uiErrors.name }}</div>
                       </div>
-                      <div class="col-md-6"><label class="form-label">Customer</label><CustomSelect2 v-model="form.customerId" :options="customers" :get-option-label="getCustomerLabel" :reduce="getCustomerId" searchable clearable placeholder="Pilih Customer" /></div>
+                      <div class="col-md-6"><FormLabel>Customer</FormLabel><CustomSelect2 v-model="form.customerId" :options="customers" :get-option-label="getCustomerLabel" :reduce="getCustomerId" searchable clearable placeholder="Pilih Customer" /></div>
                       <div class="col-md-6">
-                        <label class="form-label">Site</label>
+                        <FormLabel :required="isManualSite">Site</FormLabel>
                         <CustomSelect2
                           v-model="form.siteId"
                           :options="siteSelectOptions"
@@ -112,15 +92,19 @@
                         <small class="text-muted">Autofill material, service, dan DID dari Price List.</small>
                       </div>
                       <div class="col-md-4">
-                        <label class="form-label">Lokasi</label>
-                        <input v-model="form.location" class="form-control" :class="{ 'is-invalid': uiErrors.location }" placeholder="Lokasi">
+                        <FormLabel required html-for="fdr-location">Lokasi</FormLabel>
+                        <input id="fdr-location" v-model="form.location" class="form-control" :class="{ 'is-invalid': uiErrors.location }" placeholder="Lokasi" aria-required="true">
                         <div v-if="uiErrors.location" class="invalid-feedback d-block">{{ uiErrors.location }}</div>
                       </div>
                       <div class="col-md-4"><label class="form-label">Priority</label><CustomSelect2 v-model="form.priority" :options="priorityOptions" :get-option-label="getOptionLabel" :reduce="getOptionValue" clearable /></div>
                       <div class="col-md-4"><label class="form-label">Quantity</label><input type="number" v-model.number="form.quantity" class="form-control" min="1"></div>
                       <div class="col-md-4"><label class="form-label">Tanggal FDR</label><input type="date" v-model="form.fdrDate" class="form-control"></div>
-                      <div class="col-md-4"><label class="form-label">Estimasi Mulai</label><input type="date" v-model="form.estimatedStartDate" class="form-control"></div>
-                      <div class="col-md-4"><label class="form-label">Estimasi Selesai</label><input type="date" v-model="form.estimatedCompletionDate" class="form-control"></div>
+                      <div class="col-md-4"><FormLabel html-for="fdr-est-start">Estimasi Mulai</FormLabel><input id="fdr-est-start" type="date" v-model="form.estimatedStartDate" class="form-control" :class="{ 'is-invalid': uiErrors.estimatedStartDate }"></div>
+                      <div class="col-md-4">
+                        <FormLabel html-for="fdr-est-end">Estimasi Selesai</FormLabel>
+                        <input id="fdr-est-end" type="date" v-model="form.estimatedCompletionDate" class="form-control" :class="{ 'is-invalid': uiErrors.estimatedCompletionDate }">
+                        <div v-if="uiErrors.estimatedCompletionDate" class="invalid-feedback d-block">{{ uiErrors.estimatedCompletionDate }}</div>
+                      </div>
                       <div class="col-md-12"><div class="form-check form-switch"><input id="pocNeededForm" class="form-check-input" type="checkbox" v-model="form.pocNeeded"><label class="form-check-label" for="pocNeededForm">POC Needed</label></div></div>
                       <div class="col-md-12"><label class="form-label">Notes</label><textarea v-model="form.notes" class="form-control" rows="3"></textarea></div>
                       <div class="col-md-12"><label class="form-label">Attachment</label><input type="file" @change="onAttachmentChange" class="form-control" accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx,.csv"></div>
@@ -128,7 +112,7 @@
                   </div>
 
                   <!-- ── TAB MATERIAL ── -->
-                  <div id="fdr-tab-materials" class="tab-pane fade">
+                  <div id="fdr-tab-materials" data-step-id="fdr-tab-materials" :class="paneClass('fdr-tab-materials')">
                     <div v-if="uiErrors.fdrItems" class="alert alert-danger py-2 mb-3"><i class="ri-error-warning-line me-1"></i>{{ uiErrors.fdrItems }}</div>
                     <div class="repeater-table">
                       <div class="repeater-table-head d-none d-md-grid repeater-cols-4">
@@ -169,7 +153,7 @@
                   </div>
 
                   <!-- ── TAB SERVICE ── -->
-                  <div id="fdr-tab-services" class="tab-pane fade">
+                  <div id="fdr-tab-services" data-step-id="fdr-tab-services" :class="paneClass('fdr-tab-services')">
                     <div v-if="uiErrors.fdrServices" class="alert alert-danger py-2 mb-3"><i class="ri-error-warning-line me-1"></i>{{ uiErrors.fdrServices }}</div>
                     <div class="repeater-table">
                       <div class="repeater-table-head d-none d-md-grid repeater-cols-4">
@@ -210,7 +194,7 @@
                   </div>
 
                   <!-- ── TAB DID ── -->
-                  <div id="fdr-tab-dids" class="tab-pane fade">
+                  <div id="fdr-tab-dids" data-step-id="fdr-tab-dids" :class="paneClass('fdr-tab-dids')">
                     <div v-if="uiErrors.fdrDids" class="alert alert-danger py-2 mb-3"><i class="ri-error-warning-line me-1"></i>{{ uiErrors.fdrDids }}</div>
                     <div class="repeater-table">
                       <div class="repeater-table-head d-none d-md-grid repeater-cols-4">
@@ -251,10 +235,15 @@
                   </div>
                 </div>
 
-                <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
-                  <NuxtLink to="/sales/fdr" class="btn btn-outline-secondary">Batal</NuxtLink>
-                  <button type="submit" class="btn btn-primary" :disabled="saving"><span v-if="saving" class="spinner-border spinner-border-sm me-2"></span>Simpan</button>
-                </div>
+                <TabbedFormActions
+                  :is-first-step="isFirstStep"
+                  :is-last-step="isLastStep"
+                  :loading="navigating"
+                  :saving="saving"
+                  cancel-href="/sales/fdr"
+                  @next="next"
+                  @previous="previous"
+                />
               </form>
             </div>
           </div>
@@ -461,6 +450,10 @@ import { storeToRefs } from 'pinia'
 import { useFdrStore } from '~/stores/fdr'
 import { useCustomerStore } from '~/stores/customer'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
+import TabbedFormNav from '~/components/form/TabbedFormNav.vue'
+import TabbedFormActions from '~/components/form/TabbedFormActions.vue'
+import FormLabel from '~/components/form/FormLabel.vue'
+import { useTabbedFormNavigation } from '~/composables/useTabbedFormNavigation'
 import {
   getDidLineLabel,
   getLinePriceListId,
@@ -468,6 +461,7 @@ import {
   filterLinesByPriceListId,
 } from '~/utils/priceListLines'
 import { lineSubtotal } from '~/utils/lineSubtotal'
+import { firstErrorTab } from '~/utils/apiError'
 import {
   MANUAL_SITE_ID,
   MANUAL_SITE_OPTION,
@@ -483,7 +477,61 @@ const customerStore = useCustomerStore()
 const formatRupiah = useFormatRupiah()
 const toast = useToast()
 const uiErrors = ref<Record<string, string>>({})
+const formRoot = ref<HTMLFormElement | null>(null)
 const { form, saving, validationErrors } = storeToRefs(fdrStore)
+const validationErrorMessages = computed(() => {
+  const list = validationErrors.value || []
+  return list
+    .map((err: any) => {
+      if (typeof err === 'string') return err
+      if (err?.message) return err.message
+      if (err && typeof err === 'object') {
+        const first = Object.values(err).flat?.() || Object.values(err)
+        const item = Array.isArray(first) ? first[0] : first
+        return typeof item === 'string' ? item : ''
+      }
+      return ''
+    })
+    .filter(Boolean)
+})
+const FDR_FIELD_TABS: Record<string, string> = {
+  name: 'fdr-tab-info',
+  location: 'fdr-tab-info',
+  siteName: 'fdr-tab-info',
+  siteId: 'fdr-tab-info',
+  customerId: 'fdr-tab-info',
+  businessSchemeId: 'fdr-tab-info',
+  fdrDate: 'fdr-tab-info',
+  estimatedStartDate: 'fdr-tab-info',
+  estimatedCompletionDate: 'fdr-tab-info',
+  fdrItems: 'fdr-tab-materials',
+  fdrServices: 'fdr-tab-services',
+  fdrDids: 'fdr-tab-dids',
+  priceListLineId: 'fdr-tab-materials',
+}
+const formSteps = [
+  { id: 'fdr-tab-info', label: 'Informasi', icon: 'ri-information-line' },
+  { id: 'fdr-tab-materials', label: 'Material/Product', icon: 'ri-box-3-line' },
+  { id: 'fdr-tab-services', label: 'Services', icon: 'ri-service-line' },
+  { id: 'fdr-tab-dids', label: 'DID', icon: 'ri-phone-line' },
+]
+const {
+  currentIndex,
+  visibleSteps,
+  isFirstStep,
+  isLastStep,
+  navigating,
+  next,
+  previous,
+  goTo,
+  goToId,
+  paneClass,
+  validateAll,
+} = useTabbedFormNavigation({
+  steps: formSteps,
+  formRoot,
+  validateStep: validateFdrStep,
+})
 const { customers } = storeToRefs(customerStore)
 
 const fdrId = computed(() => route.params.id ? String(route.params.id) : null)
@@ -541,10 +589,53 @@ function isModuleNavActive(to: string) { return route.path === to || route.path.
 function toNum(v: any) { return (v !== null && v !== undefined && v !== '') ? Number(v) : 0 }
 function parseRupiahToNumber(s: any) { return !s ? 0 : Number(String(s).replace(/[Rp\s.]/g, '').replace(',', '.')) || 0 }
 function activateTab(tabId: string) {
-  if (typeof window === 'undefined') return
-  const trigger = document.querySelector(`button[data-bs-target="#${tabId}"]`)
-  if (!trigger || !(window as any).bootstrap?.Tab) return
-  new (window as any).bootstrap.Tab(trigger).show()
+  void goToId(tabId, { skipValidation: true })
+}
+
+function validateFdrStep(step: { id: string }): boolean {
+  uiErrors.value = {}
+  if (step.id === 'fdr-tab-info') {
+    if (!String(form.value?.name || '').trim()) {
+      uiErrors.value.name = 'Nama Project wajib diisi'
+    }
+    if (!String(form.value?.location || '').trim()) {
+      uiErrors.value.location = 'Lokasi wajib diisi'
+    }
+    if (isManualSiteSelection(form.value?.siteId) && !String(form.value?.siteName || '').trim()) {
+      uiErrors.value.siteName = 'Nama Site wajib diisi'
+    }
+    const start = String(form.value?.estimatedStartDate || '')
+    const end = String(form.value?.estimatedCompletionDate || '')
+    if (start && end && end < start) {
+      uiErrors.value.estimatedCompletionDate = 'Estimasi Selesai tidak boleh lebih awal dari Estimasi Mulai.'
+    }
+    return !uiErrors.value.name && !uiErrors.value.location && !uiErrors.value.siteName && !uiErrors.value.estimatedCompletionDate
+  }
+  if (step.id === 'fdr-tab-materials') {
+    const items = Array.isArray(form.value?.fdrItems) ? form.value.fdrItems : []
+    const itemInvalid = items.some((it: any) => (Number(it?.quantity) || 0) > 0 && Number(it?.priceListLineId || 0) <= 0)
+    if (itemInvalid) {
+      uiErrors.value.fdrItems = 'Material dengan quantity > 0 wajib memilih price list line'
+      return false
+    }
+  }
+  if (step.id === 'fdr-tab-services') {
+    const services = Array.isArray(form.value?.fdrServices) ? form.value.fdrServices : []
+    const serviceInvalid = services.some((it: any) => (Number(it?.quantity) || 0) > 0 && Number(it?.priceListLineId || 0) <= 0)
+    if (serviceInvalid) {
+      uiErrors.value.fdrServices = 'Service dengan quantity > 0 wajib memilih price list line'
+      return false
+    }
+  }
+  if (step.id === 'fdr-tab-dids') {
+    const dids = Array.isArray(form.value?.fdrDids) ? form.value.fdrDids : []
+    const didInvalid = dids.some((it: any) => (Number(it?.quantity) || 0) > 0 && Number(it?.priceListLineId || 0) <= 0)
+    if (didInvalid) {
+      uiErrors.value.fdrDids = 'DID dengan quantity > 0 wajib memilih price list line'
+      return false
+    }
+  }
+  return true
 }
 function getServiceLineEffectivePriceFromLine(line: any) {
   const base = toNum(line?.price) || 0
@@ -795,6 +886,15 @@ async function initForm() {
   await ensureDidLinesForSelectedPriceList()
 }
 
+async function onFormSubmit() {
+  if (!isLastStep.value) {
+    await next()
+    return
+  }
+  if (!(await validateAll())) return
+  await onSubmit()
+}
+
 async function onSubmit() {
   uiErrors.value = {}
   const errors: Array<{ field: string; message: string; tab: string }> = []
@@ -810,6 +910,12 @@ async function onSubmit() {
     errors.push({ field: 'siteName', message: 'Nama Site wajib diisi', tab: 'fdr-tab-info' })
     uiErrors.value.siteName = 'Nama Site wajib diisi'
   }
+  const start = String(form.value?.estimatedStartDate || '')
+  const end = String(form.value?.estimatedCompletionDate || '')
+  if (start && end && end < start) {
+    errors.push({ field: 'estimatedCompletionDate', message: 'Estimasi Selesai tidak boleh lebih awal dari Estimasi Mulai.', tab: 'fdr-tab-info' })
+    uiErrors.value.estimatedCompletionDate = 'Estimasi Selesai tidak boleh lebih awal dari Estimasi Mulai.'
+  }
   const items = Array.isArray(form.value?.fdrItems) ? form.value.fdrItems : []
   const services = Array.isArray(form.value?.fdrServices) ? form.value.fdrServices : []
   const dids = Array.isArray(form.value?.fdrDids) ? form.value.fdrDids : []
@@ -824,12 +930,26 @@ async function onSubmit() {
     uiErrors.value.fdrItems = 'Minimal isi satu item Material/Service/DID'
   }
   if (errors.length > 0) {
-    fdrStore.validationErrors = errors.map((e) => ({ [e.field]: [e.message] }))
+    fdrStore.validationErrors = errors.map((e) => ({ field: e.field, message: e.message }))
     activateTab(errors[0].tab)
-    toast.error({ title: 'Validasi', message: errors[0].message, color: 'red', position: 'bottomRight', layout: 2 })
+    toast.error({
+      title: 'Validasi',
+      message: errors.length > 1 ? 'Mohon periksa kembali data yang belum valid.' : errors[0].message,
+      color: 'red',
+      position: 'bottomRight',
+      layout: 2,
+    })
     return
   }
-  await fdrStore.saveFdr({ navigateToList: true })
+  const saved = await fdrStore.saveFdr({ navigateToList: true })
+  if (!saved) {
+    const list = Array.isArray(fdrStore.validationErrors) ? fdrStore.validationErrors : []
+    for (const item of list as any[]) {
+      if (item?.field && item?.message) uiErrors.value[item.field] = item.message
+    }
+    const tab = firstErrorTab(list as any, FDR_FIELD_TABS)
+    if (tab) activateTab(tab)
+  }
 }
 
 onMounted(initForm)

@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { apiFetch } from '~/utils/apiFetch'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 import Swal from 'sweetalert2'
 import { useNuxtApp } from '#app'
 import { useUserStore } from '~/stores/user'
@@ -82,6 +83,7 @@ interface WorkOrderRequestState {
   loading: boolean
   saving: boolean
   error: any
+  validationErrors: any[]
   totalRecords: number
   params: {
     first: number
@@ -156,6 +158,7 @@ export const useWorkOrderRequestStore = defineStore('workOrderRequest', {
     loading: false,
     saving: false,
     error: null,
+    validationErrors: [],
     totalRecords: 0,
     params: {
       first: 0,
@@ -291,14 +294,12 @@ export const useWorkOrderRequestStore = defineStore('workOrderRequest', {
           body: JSON.stringify(body),
         })
         if (!res.ok) {
-          const ed = await res.json().catch(() => ({}))
-          toast.error({
-            title: 'Error',
-            message: ed.message || 'Gagal menyimpan',
-            color: 'red',
-            position: 'bottomRight',
-            layout: 2,
-          })
+          const err = await normalizeFailedResponse(
+            res,
+            isEdit ? 'Work Order Request gagal diperbarui.' : 'Work Order Request gagal dibuat.'
+          )
+          this.validationErrors = err.fieldErrorList
+          toastNormalizedError(err)
           return false
         }
         const result = await res.json()
@@ -311,13 +312,8 @@ export const useWorkOrderRequestStore = defineStore('workOrderRequest', {
         })
         return result?.data?.id ?? true
       } catch (e: any) {
-        toast.error({
-          title: 'Error',
-          message: e.message,
-          color: 'red',
-          position: 'bottomRight',
-          layout: 2,
-        })
+        const err = normalizeApiError(e, 'Work Order Request gagal disimpan.')
+        toastNormalizedError(err)
         return false
       } finally {
         this.saving = false
@@ -346,7 +342,11 @@ export const useWorkOrderRequestStore = defineStore('workOrderRequest', {
           headers: { Accept: 'application/json' },
           credentials: 'include',
         })
-        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message)
+        if (!res.ok) {
+          const err = await normalizeFailedResponse(res, 'Work Order Request gagal dihapus.')
+          toastNormalizedError(err)
+          return false
+        }
         await this.fetchWorkOrderRequests()
         await this.fetchStatistics()
         toast.success({
@@ -357,13 +357,8 @@ export const useWorkOrderRequestStore = defineStore('workOrderRequest', {
           layout: 2,
         })
       } catch (e: any) {
-        toast.error({
-          title: 'Error',
-          message: e.message,
-          color: 'red',
-          position: 'bottomRight',
-          layout: 2,
-        })
+        const err = normalizeApiError(e, 'Work Order Request gagal dihapus.')
+        toastNormalizedError(err)
       } finally {
         this.loading = false
       }
@@ -378,7 +373,11 @@ export const useWorkOrderRequestStore = defineStore('workOrderRequest', {
           headers: { Accept: 'application/json' },
           credentials: 'include',
         })
-        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message)
+        if (!res.ok) {
+          const err = await normalizeFailedResponse(res, 'Work Order Request gagal disubmit.')
+          toastNormalizedError(err)
+          return false
+        }
         await this.fetchWorkOrderRequests()
         await this.fetchStatistics()
         toast.success({
@@ -390,13 +389,8 @@ export const useWorkOrderRequestStore = defineStore('workOrderRequest', {
         })
         return true
       } catch (e: any) {
-        toast.error({
-          title: 'Error',
-          message: e.message,
-          color: 'red',
-          position: 'bottomRight',
-          layout: 2,
-        })
+        const err = normalizeApiError(e, 'Work Order Request gagal disubmit.')
+        toastNormalizedError(err)
         return false
       }
     },
@@ -424,7 +418,11 @@ export const useWorkOrderRequestStore = defineStore('workOrderRequest', {
           credentials: 'include',
           body: JSON.stringify({ remarks }),
         })
-        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message)
+        if (!res.ok) {
+          const err = await normalizeFailedResponse(res, 'Work Order Request gagal disetujui.')
+          toastNormalizedError(err)
+          return false
+        }
         const json = await res.json().catch(() => ({}))
         await this.fetchWorkOrderRequests()
         await this.fetchStatistics()
@@ -437,13 +435,8 @@ export const useWorkOrderRequestStore = defineStore('workOrderRequest', {
         })
         return true
       } catch (e: any) {
-        toast.error({
-          title: 'Error',
-          message: e.message,
-          color: 'red',
-          position: 'bottomRight',
-          layout: 2,
-        })
+        const err = normalizeApiError(e, 'Work Order Request gagal disetujui.')
+        toastNormalizedError(err)
         return false
       }
     },
@@ -458,7 +451,11 @@ export const useWorkOrderRequestStore = defineStore('workOrderRequest', {
           credentials: 'include',
           body: JSON.stringify({ rejection_reason: reason }),
         })
-        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message)
+        if (!res.ok) {
+          const err = await normalizeFailedResponse(res, 'Work Order Request gagal ditolak.')
+          toastNormalizedError(err)
+          return false
+        }
         await this.fetchWorkOrderRequests()
         await this.fetchStatistics()
         toast.success({
@@ -470,13 +467,8 @@ export const useWorkOrderRequestStore = defineStore('workOrderRequest', {
         })
         return true
       } catch (e: any) {
-        toast.error({
-          title: 'Error',
-          message: e.message,
-          color: 'red',
-          position: 'bottomRight',
-          layout: 2,
-        })
+        const err = normalizeApiError(e, 'Work Order Request gagal ditolak.')
+        toastNormalizedError(err)
         return false
       }
     },
@@ -490,7 +482,11 @@ export const useWorkOrderRequestStore = defineStore('workOrderRequest', {
           headers: { Accept: 'application/json' },
           credentials: 'include',
         })
-        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message)
+        if (!res.ok) {
+          const err = await normalizeFailedResponse(res, 'Work Order Request gagal diselesaikan.')
+          toastNormalizedError(err)
+          return false
+        }
         await this.fetchWorkOrderRequests()
         await this.fetchStatistics()
         toast.success({
@@ -502,13 +498,8 @@ export const useWorkOrderRequestStore = defineStore('workOrderRequest', {
         })
         return true
       } catch (e: any) {
-        toast.error({
-          title: 'Error',
-          message: e.message,
-          color: 'red',
-          position: 'bottomRight',
-          layout: 2,
-        })
+        const err = normalizeApiError(e, 'Work Order Request gagal diselesaikan.')
+        toastNormalizedError(err)
         return false
       }
     },

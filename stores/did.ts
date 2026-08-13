@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { useNuxtApp } from '#app'
 import Swal from 'sweetalert2'
+import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 
 export interface DidService {
   id?: number
@@ -166,37 +167,14 @@ export const useDidStore = defineStore('did', {
           credentials: 'include',
         })
 
-        let result
-        try {
-          result = await response.json()
-        } catch {
-          toast.error({
-            title: 'Error',
-            message: 'Server response tidak valid',
-            color: 'red',
-          })
-          throw new Error('Server response tidak valid')
-        }
-
         if (!response.ok) {
-          if (response.status === 422 && result.errors) {
-            const errors = result.errors
-            if (Array.isArray(errors)) {
-              this.validationErrors = errors
-            } else if (errors && typeof errors === 'object') {
-              this.validationErrors = Object.entries(errors as Record<string, string | string[]>)
-                .flatMap(([field, messages]) => {
-                  const messageList = Array.isArray(messages) ? messages : [messages]
-                  return messageList
-                    .filter(Boolean)
-                    .map((message) => ({ field, message, rule: 'unique' }))
-                })
-            } else {
-              this.validationErrors = []
-            }
-            return
-          }
-          throw new Error(result.message || 'Gagal menyimpan data DID')
+          const err = await normalizeFailedResponse(
+            response,
+            this.isEditMode ? 'DID gagal diperbarui.' : 'DID gagal dibuat.'
+          )
+          this.validationErrors = err.fieldErrorList
+          toastNormalizedError(err)
+          return false
         }
 
         this.closeModal()
@@ -208,14 +186,9 @@ export const useDidStore = defineStore('did', {
           position: 'bottomRight',
         })
       } catch (error: any) {
-        if (this.validationErrors.length === 0) {
-          toast.error({
-            title: 'Error',
-            message: error.message || 'Operasi gagal',
-            color: 'red',
-            position: 'bottomRight',
-          })
-        }
+        const err = normalizeApiError(error, 'DID gagal disimpan.')
+        toastNormalizedError(err)
+        return false
       } finally {
         this.loading = false
       }
@@ -247,8 +220,9 @@ export const useDidStore = defineStore('did', {
         })
 
         if (!response.ok) {
-          const errorData = await response.json()
-          throw new Error(errorData.message || 'Gagal menghapus DID')
+          const err = await normalizeFailedResponse(response, 'DID gagal dihapus.')
+          toastNormalizedError(err)
+          return false
         }
 
         await Promise.all([this.fetchDids(), this.fetchStatistics()])
@@ -259,13 +233,8 @@ export const useDidStore = defineStore('did', {
           position: 'bottomRight',
         })
       } catch (error: any) {
-        console.error('Gagal menghapus DID:', error)
-        toast.error({
-          title: 'Error',
-          message: error.message || 'Gagal menghapus DID',
-          color: 'red',
-          position: 'bottomRight',
-        })
+        const err = normalizeApiError(error, 'DID gagal dihapus.')
+        toastNormalizedError(err)
       } finally {
         this.loading = false
       }
