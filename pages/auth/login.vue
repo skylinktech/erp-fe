@@ -8,12 +8,12 @@
               <span class="app-brand-logo demo">
                 <img src="/img/branding/logo.png" alt="" height="60" />
               </span>
-              <span class="app-brand-text demo text-heading fw-bold" style="font-size: 24px;">Skylink ERP</span>
+              <span class="app-brand-text demo text-heading fw-bold" style="font-size: 24px;">SkyFlow</span>
             </a>
           </div>
           <small class="manage-by mt-3 text-center text-muted">by PT Sinergi Innovate Pratama</small>
           <div class="card-body mt-1">
-            <h4 class="mb-1">Welcome to Skylink ERP! 👋</h4>
+            <h4 class="mb-1">Welcome to SkyFlow! 👋</h4>
             <p class="mb-5">Please sign-in to your account and start the adventure</p>
 
             <form class="mb-5" @submit.prevent="handleLogin">
@@ -90,7 +90,7 @@
       middleware: 'redirect-auth',
       title: 'Login',
       description: 'Login',
-      keywords: 'Login, Skylink ERP',
+      keywords: 'Login, SkyFlow',
       author: 'KaiFlow',
       robots: 'index, follow',
       viewport: 'width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0',
