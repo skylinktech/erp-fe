@@ -1,80 +1,17 @@
 <template>
-  <div v-if="loadingDetail" class="text-center p-6">
-    <ProgressSpinner
-      style="width: 50px; height: 50px"
-      strokeWidth="4"
-      fill="transparent"
-      animationDuration="1s"
-    />
-    <div class="mt-3 text-muted">Memuat data...</div>
-  </div>
-
-  <div v-else-if="error" class="alert alert-danger m-6">{{ error.message }}</div>
-
-  <div v-else-if="invoice" class="p-6">
-    <div class="d-flex justify-content-between align-items-start mb-6">
-      <div class="logo-section">
-        <div class="d-flex align-items-center gap-2 mb-3">
-          <img
-            v-if="invoice.perusahaan?.logoPerusahaan"
-            :src="getCompanyLogo(invoice.perusahaan.logoPerusahaan)"
-            alt="logo Perusahaan"
-            class="cetak-invoice-logo"
-            @error="(e) => handleImageError(e, '/img/default-company-logo.png')"
-          >
-          <img
-            v-else
-            src="/img/branding/logo.png"
-            alt="logo"
-            class="cetak-invoice-logo"
-          >
-        </div>
-        <div class="text-start text-secondary-medium" style="font-size: 12px; width: 220px;">
-          <p class="mb-2 fw-bold text-heading" style="font-size: 14px;">
-            {{ invoice.perusahaan?.nmPerusahaan || '—' }}
-          </p>
-          <p class="mb-0">Alamat: {{ invoice.perusahaan?.alamatPerusahaan || '—' }}</p>
-          <p class="mb-0">Telepon: {{ invoice.perusahaan?.tlpPerusahaan || '—' }}</p>
-          <p class="mb-0">Email: {{ invoice.perusahaan?.emailPerusahaan || '—' }}</p>
-        </div>
-      </div>
-
-      <div class="invoice-header text-end">
-        <h2 class="mb-0 text-capitalize fw-bold">INVOICE</h2>
-        <p class="mb-2 fw-bold" style="font-size: 12px;">
-          <NuxtLink
-            :to="`/finance/invoices/detail/${invoice.id}`"
-            class="text-decoration-underline"
-          >
-            {{ invoice.noInvoice }}
-          </NuxtLink>
-        </p>
-        <table style="font-size: 12px; width: auto; margin-left: auto;">
-          <tr>
-            <td style="text-align: right;">Tanggal</td>
-            <td>:</td>
-            <td>{{ formatDate(invoice.date) }}</td>
-          </tr>
-          <tr>
-            <td style="text-align: right;">Jatuh Tempo</td>
-            <td>:</td>
-            <td>{{ formatDate(invoice.dueDate) }}</td>
-          </tr>
-          <tr v-if="invoice.billingPeriod">
-            <td style="text-align: right;">Periode</td>
-            <td>:</td>
-            <td>{{ invoice.billingPeriod }}</td>
-          </tr>
-          <tr>
-            <td style="text-align: right;">PO Reference</td>
-            <td>:</td>
-            <td>{{ poReference || '—' }}</td>
-          </tr>
-        </table>
-      </div>
-    </div>
-
-    <hr class="my-6" />
+  <CetakDocument
+    type="FINANCE_INVOICE"
+    :document-number="invoice?.noInvoice || ''"
+    :status="invoice?.documentStatus ?? invoice?.document_status"
+    :company="invoice?.perusahaan"
+    :header-meta="headerMeta"
+    :loading="loadingDetail"
+    :error="error"
+    :not-found="!loadingDetail && !error && !invoice"
+    :auto-print="route.query.print === 'true'"
+    show-number-under-title
+  >
+    <template v-if="invoice">
 
     <div class="customer-info-section mb-6">
       <div class="row">
@@ -362,11 +299,8 @@
         </tbody>
       </table>
     </div>
-  </div>
-
-  <div v-else class="alert alert-danger m-6" role="alert">
-    Invoice tidak ditemukan.
-  </div>
+    </template>
+  </CetakDocument>
 </template>
 
 <script setup>
@@ -380,7 +314,6 @@ import { storeToRefs } from 'pinia'
 import { useFinanceInvoiceStore } from '~/stores/finance-invoices'
 import { useFormatRupiah } from '~/composables/formatRupiah'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
-import { useImageUrl } from '~/composables/useImageUrl'
 import MultiSignatureDisplay from '~/components/MultiSignatureDisplay.vue'
 import {
   groupFinanceInvoiceItems,
@@ -394,11 +327,6 @@ const store = useFinanceInvoiceStore()
 const { selectedInvoice: invoice, loadingDetail, error } = storeToRefs(store)
 const formatRupiah = useFormatRupiah()
 const { setDetailTitle } = useDynamicTitle()
-const { getCompanyLogo, handleImageError } = useImageUrl()
-
-useRegisterCetakDraftStatus(
-  () => invoice.value?.documentStatus ?? invoice.value?.document_status
-)
 
 const invoiceId = computed(() => String(route.query.id || ''))
 
@@ -490,14 +418,24 @@ const formatDate = (dateStr) => {
   }
 }
 
+const headerMeta = computed(() => {
+  if (!invoice.value) return []
+  const items = [
+    { label: 'Tanggal', value: formatDate(invoice.value.date) },
+    { label: 'Jatuh Tempo', value: formatDate(invoice.value.dueDate) },
+  ]
+  if (invoice.value.billingPeriod) {
+    items.push({ label: 'Periode', value: invoice.value.billingPeriod })
+  }
+  items.push({ label: 'PO Reference', value: poReference.value || '—' })
+  return items
+})
+
 const loadAndMaybePrint = async () => {
   if (!invoiceId.value) return
   await store.fetchInvoiceById(invoiceId.value)
   if (invoice.value?.noInvoice) {
     setDetailTitle(`Cetak Invoice ${invoice.value.noInvoice}`)
-  }
-  if (route.query.print === 'true' && invoice.value) {
-    setTimeout(() => window.print(), 400)
   }
 }
 
@@ -506,20 +444,6 @@ onMounted(loadAndMaybePrint)
 </script>
 
 <style>
-.cetak-invoice-logo {
-  display: block;
-  height: 60px !important;
-  width: auto !important;
-  max-width: 220px !important;
-  max-height: 60px !important;
-  object-fit: contain;
-}
-
-.invoice-header {
-  flex-shrink: 0;
-  min-width: 280px;
-}
-
 .invoice-cetak-signature {
   display: flex;
   flex-direction: column;
@@ -614,19 +538,8 @@ onMounted(loadAndMaybePrint)
 }
 
 @media print {
-  .no-print {
-    display: none !important;
-  }
-
-  .cetak-invoice-logo {
-    height: 60px !important;
-    max-width: 220px !important;
-    max-height: 60px !important;
-  }
-
   .term-conditions-table thead.table-dark th,
-  .payment-instructions-table thead.table-dark th,
-  .table-dark th {
+  .payment-instructions-table thead.table-dark th {
     background-color: #4b4b4b !important;
     color: #fff !important;
     -webkit-print-color-adjust: exact !important;

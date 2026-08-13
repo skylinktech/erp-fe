@@ -1,70 +1,15 @@
 <template>
-    <div v-if="loading" class="text-center p-6">
-      <ProgressSpinner 
-        style="width: 50px; height: 50px" 
-        strokeWidth="4"
-        fill="transparent"
-        animationDuration="1s"
-    />
-    <div class="mt-3 text-muted">Memuat data...</div>
-    </div>
-    <div v-else-if="error" class="alert alert-danger m-6">{{ error.message }}</div>
-    <div v-else-if="salesInvoice" class="p-6">
-      <!-- Header Section -->
-      <div class="d-flex justify-content-between align-items-start align-content-center mb-6">
-        <!-- Logo Section - Left -->
-        <div v-if="salesInvoice.salesOrder?.perusahaan" class="logo-section">
-          <div class="d-flex svg-illustration align-content-center gap-2 mb-4">
-            <span class="app-brand-logo demo">
-              <img
-                :src="getCompanyLogo(salesInvoice.salesOrder.perusahaan.logoPerusahaan)" 
-                alt="logo Perusahaan" 
-                style="height: 60px; max-width: 200px; object-fit: contain; cursor: pointer;" 
-                @error="(e) => handleImageError(e, '/img/default-company-logo.png')"
-                @click="perusahaanStore.openImageInNewTab(salesInvoice.salesOrder.perusahaan.logoPerusahaan)"
-                @load="debugImageUrl(salesInvoice.salesOrder.perusahaan.logoPerusahaan)"
-                title="Klik untuk melihat gambar lengkap"
-              >
-            </span>
-          </div>
-          <div class="text-start text-secondary-medium mt-6 mb-0" style="font-size: 12px; width: 220px; min-width: 220px;">
-            <p class="mb-2 fw-bold text-heading" style="font-size: 14px;">
-              {{ salesInvoice.salesOrder.perusahaan?.nmPerusahaan || '-' }}
-            </p>
-            <p class="mb-0">
-              Alamat: {{ salesInvoice.salesOrder.perusahaan?.alamatPerusahaan || '-' }}
-            </p>
-            <p class="mb-0">
-              Telepon: {{ salesInvoice.salesOrder.perusahaan?.tlpPerusahaan || '-' }}
-            </p>
-            <p class="mb-0">
-              Email: {{ salesInvoice.salesOrder.perusahaan?.emailPerusahaan || '-' }}
-            </p>
-            <p class="mb-0">
-              NPWP: {{ salesInvoice.salesOrder.perusahaan?.npwpPerusahaan || '-' }}
-            </p>
-          </div>
-        </div>
-        
-        <!-- Invoice Header - Right -->
-        <div class="invoice-header text-end">
-          <h2 class="mb-4 text-capitalize fw-bold">INVOICE</h2>
-          <table style="font-size: 12px; width: 100%;">
-            <tr>
-              <td style="text-align: right;">No. Invoice</td>
-              <td style="width: 20px;">:</td>
-              <td style="width: 30%;">{{ salesInvoice.noInvoice }}</td>
-            </tr>
-            <tr>
-              <td style="text-align: right;">Tanggal</td>
-              <td style="width: 20px;">:</td>
-              <td style="width: 30%;">{{ new Date(salesInvoice.date).toLocaleDateString('id-ID') }}</td>
-            </tr>
-          </table>
-        </div>
-      </div>
-
-      <hr class="my-6" />
+    <CetakDocument
+      type="SALES_INVOICE"
+      :document-number="salesInvoice?.noInvoice || ''"
+      :status="salesInvoice?.documentStatus ?? salesInvoice?.document_status ?? salesInvoice?.status"
+      :company="salesInvoice?.salesOrder?.perusahaan"
+      :header-meta="headerMeta"
+      :loading="loading"
+      :error="error"
+      :not-found="!loading && !error && !salesInvoice"
+    >
+    <template v-if="salesInvoice">
 
       <!-- Customer Information Section -->
        <div class="customer-info-section mb-6">
@@ -288,10 +233,8 @@
           </tbody>
         </table>
       </div>
-    </div>
-    <div v-else class="alert alert-danger m-6" role="alert">
-      Sales Invoice tidak ditemukan.
-    </div>
+    </template>
+    </CetakDocument>
 </template>
 
 <script setup>
@@ -300,16 +243,13 @@
   })
   import { onMounted, computed } from 'vue';
   import { useSalesInvoiceStore } from '~/stores/sales-invoice';
-  import { usePerusahaanStore } from '~/stores/perusahaan';
   import { storeToRefs } from 'pinia';
   import { useRoute } from 'vue-router';
-  import Swal from 'sweetalert2';
   import { useDynamicTitle } from '~/composables/useDynamicTitle'
   import { useImageUrl } from '~/composables/useImageUrl'
 
-  // Composables
   const { setDetailTitle } = useDynamicTitle()
-  const { getCompanyLogo, handleImageError, debugImageUrl } = useImageUrl()
+  const { handleImageError } = useImageUrl()
 
   const config = useRuntimeConfig();
   const publicPath = (p) => {
@@ -320,30 +260,18 @@
     return joined;
   };
   const salesInvoiceStore = useSalesInvoiceStore();
-  const perusahaanStore = usePerusahaanStore();
   const route = useRoute();
   const formatRupiah = useFormatRupiah();
 
   const { selectedSalesInvoice: salesInvoice, loading, error } = storeToRefs(salesInvoiceStore);
 
-  useRegisterCetakDraftStatus(
-    () => salesInvoice.value?.documentStatus ?? salesInvoice.value?.document_status
-  )
-
-  const getLogoUrl = (logoPath) => {
-    if (!logoPath || typeof logoPath !== 'string') {
-        return null;
-    }
-    if (logoPath.startsWith('http')) {
-        return logoPath;
-    }
-    if (!config.public.apiBase) {
-        return logoPath;
-    }
-    const origin = new URL(config.public.apiBase).origin;
-    const imageUrl = `${origin}/${logoPath}`;
-    return imageUrl;
-  };
+  const headerMeta = computed(() => {
+    if (!salesInvoice.value) return []
+    return [
+      { label: 'No. Invoice', value: salesInvoice.value.noInvoice || '—' },
+      { label: 'Tanggal', value: salesInvoice.value.date ? new Date(salesInvoice.value.date).toLocaleDateString('id-ID') : '—' },
+    ]
+  })
 
   const calculateSubtotal = () => {
     if (!salesInvoice.value) return 0;
@@ -400,17 +328,6 @@
 </script>
 
 <style>
-  /* Layout styles */
-  .logo-section {
-    flex: 1;
-    max-width: 50%;
-  }
-
-  .invoice-header {
-    flex: 1;
-    max-width: 50%;
-  }
-
   .customer-info-section {
     margin-top: 2rem;
   }
@@ -427,92 +344,27 @@
     padding: 0 0 0 1rem;
   }
 
-  /* Custom styles for print */
   @media print {
-    .ttd-container {
-      position: relative;
-    }
-
     .ttd-container .ttd-image {
-      position: relative;
       height: 90px !important;
-      z-index: 1;
       margin: 0 auto !important;
       display: block !important;
     }
 
     .ttd-container .andara-image {
-      position: relative;
-      z-index: 2; /* pastikan logo di atas ttd jika overlap */
-      margin: -70px auto 0 !important; /* samakan dengan tampilan layar */
+      margin: -70px auto 0 !important;
       display: block !important;
       height: 40px !important;
       object-fit: contain !important;
     }
-    .no-print {
-      display: none !important;
-    }
-    
-    /* Hide alert info when printing */
-    .alert {
-      display: none !important;
-    }
 
-    /* Remove borders from customer info table */
-    .table-borderless td, 
+    .table-borderless td,
     .table-borderless th,
     .customer-info-table td,
-    .customer-info-table th {
-      border: none !important;
-    }
-
-    /* Remove borders from subtotal section */
-    .table-borderless .d-flex {
-      border: none !important;
-    }
-
-    /* Remove borders from catatan section */
-    .table-borderless p {
-      border: none !important;
-    }
-
-    /* Ensure only the main items table has borders */
-    .table-responsive.border table td,
-    .table-responsive.border table th {
-      border: none !important;
-    }
-
-    /* Remove borders from all other tables */
-    .table-responsive:not(.border) table td,
-    .table-responsive:not(.border) table th,
-    .summary-table td,
-    .summary-table th {
-      border: none !important;
-    }
-
-    /* Override the general table border rule for specific sections */
+    .customer-info-table th,
     .table-borderless,
     .table-borderless * {
       border: none !important;
-    }
-
-    /* Ensure proper layout in print */
-    .logo-section,
-    .invoice-header {
-      max-width: 50% !important;
-    }
-
-    /* Logo styling for print */
-    .logo-section img {
-      max-height: 60px !important;
-      max-width: 200px !important;
-      object-fit: contain !important;
-    }
-
-    /* Ensure logo is visible in print */
-    .app-brand-logo img {
-      -webkit-print-color-adjust: exact !important;
-      print-color-adjust: exact !important;
     }
   }
 </style> 

@@ -1,0 +1,742 @@
+/**
+ * Centralized print design tokens and paged-media rules.
+ * Loaded only by layouts/cetak.vue.
+ */
+
+.cetak-layout {
+  --print-page-margin-x: 15mm;
+  --print-page-margin-top: 12mm;
+  --print-page-margin-bottom: 16mm;
+  --print-font-size: 12px;
+  --print-line-height: 1.4;
+  --print-header-gap: 1rem;
+  --print-footer-height: 12mm;
+  --print-accent: #3b4056;
+  --print-border: #e5e7eb;
+  --print-muted: #666;
+  --print-heading: #2f3349;
+  --print-logo-height: 56px;
+  --print-title-size: 1.5rem;
+  --print-stripe: #f4f5f7;
+  --print-table-header: #3b4056;
+  --print-table-outline: #e5e7eb;
+  --print-table-row-border: #eceef1;
+  --print-table-radius: 10px;
+  --print-table-pad-y: 10px;
+  --print-table-pad-x: 14px;
+  background: #fff;
+  color: var(--print-heading);
+  font-size: var(--print-font-size);
+  line-height: var(--print-line-height);
+  min-width: 0;
+}
+
+.cetak-print-root {
+  min-width: 0;
+  background: #fff;
+}
+
+.cetak-document {
+  position: relative;
+  padding: 1rem 1.5rem calc(var(--print-footer-height) + 6mm);
+  max-width: 100%;
+}
+
+.cetak-document--landscape {
+  min-width: 0;
+}
+
+.cetak-print-btn {
+  position: fixed;
+  top: 12px;
+  right: 25px;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  color: #fff !important;
+}
+
+.cetak-print-btn:hover {
+  color: #adb5bd !important;
+}
+
+.cetak-print-btn i {
+  color: inherit !important;
+}
+
+.cetak-header {
+  min-height: 60px;
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.cetak-header__brand-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.cetak-header__logo {
+  height: var(--print-logo-height);
+  max-width: 160px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.cetak-header__brand {
+  font-weight: 700;
+  font-size: 1.35rem;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+  margin: 0;
+}
+
+.cetak-header__title {
+  font-size: var(--print-title-size);
+  letter-spacing: 0.02em;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.cetak-header__subtitle {
+  font-size: 12px;
+  color: var(--print-muted);
+  margin: 0.15rem 0 0;
+}
+
+.cetak-header__company-name {
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0 0 0.35rem;
+}
+
+.cetak-header__company-meta {
+  font-size: 12px;
+  width: 220px;
+  min-width: 220px;
+}
+
+.cetak-header__company-meta p {
+  margin: 0;
+}
+
+.cetak-header__meta-table {
+  font-size: 12px;
+  margin-left: auto;
+}
+
+.cetak-hr {
+  border: none;
+  border-top: 1pt solid var(--print-accent);
+  margin: 1rem 0;
+}
+
+.cetak-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding: 0.5rem 0;
+  font-size: 11px;
+  color: var(--print-muted);
+  border-top: 1px solid #e0e0e0;
+}
+
+.cetak-info-grid {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+  font-size: 12px;
+}
+
+.cetak-info-grid__col p {
+  margin-bottom: 0.25rem;
+}
+
+.cetak-section {
+  margin-bottom: 1rem;
+}
+
+.cetak-notes {
+  border: 1px solid var(--print-table-outline);
+  border-radius: var(--print-table-radius);
+  overflow: hidden;
+}
+
+.cetak-section__title {
+  background-color: var(--print-table-header);
+  color: #fff !important;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.cetak-notes__body {
+  font-size: 12px;
+  border: none;
+  padding: 12px;
+  min-height: 40px;
+  white-space: pre-wrap;
+}
+
+.cetak-cuti-section-header,
+.cetak-lembur-section-header,
+.cetak-pd-section-header,
+.cetak-arf-section-header,
+.cetak-payment-request-section-header,
+.cetak-payment-request-terms-header {
+  border-radius: var(--print-table-radius) var(--print-table-radius) 0 0;
+  overflow: hidden;
+}
+
+.cetak-arf-section-header + .cetak-arf-notes {
+  border: 1px solid var(--print-table-outline);
+  border-top: none;
+  border-radius: 0 0 var(--print-table-radius) var(--print-table-radius);
+  overflow: hidden;
+}
+
+.cetak-table-wrap {
+  border: 1px solid var(--print-table-outline);
+  border-radius: var(--print-table-radius);
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.cetak-table,
+.cetak-document table.table:not(.table-borderless):not(.term-conditions-table):not(.customer-info-table):not(.vendor-info-table):not(.summary-table):not(.payment-instructions-table) {
+  width: 100%;
+  font-size: 12px;
+  margin: 0;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--print-table-outline);
+  border-radius: var(--print-table-radius);
+  overflow: hidden;
+  background: #fff;
+}
+
+.cetak-table-wrap .cetak-table,
+.cetak-document .table-responsive:has(> table:first-child):not(.cetak-table-wrap) > table.table {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.cetak-document .table-responsive:has(> table:first-child):not(.cetak-table-wrap) {
+  border: 1px solid var(--print-table-outline);
+  border-radius: var(--print-table-radius);
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.cetak-cuti-section-header + .table-responsive,
+.cetak-cuti-section-header + table,
+.cetak-lembur-section-header + .table-responsive,
+.cetak-lembur-section-header + table,
+.cetak-pd-section-header + .table-responsive,
+.cetak-pd-section-header + table,
+.cetak-arf-section-header + .table-responsive,
+.cetak-arf-section-header + table,
+.cetak-payment-request-section-header + .table-responsive,
+.cetak-payment-request-section-header + table,
+.cetak-payment-request-terms-header + .table-responsive,
+.cetak-payment-request-terms-header + table {
+  border-top: none;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.cetak-table thead tr:first-child th:first-child,
+.cetak-document table.table:not(.table-borderless):not(.term-conditions-table):not(.customer-info-table):not(.vendor-info-table):not(.summary-table):not(.payment-instructions-table) thead tr:first-child th:first-child {
+  border-top-left-radius: var(--print-table-radius);
+}
+
+.cetak-table thead tr:first-child th:last-child,
+.cetak-document table.table:not(.table-borderless):not(.term-conditions-table):not(.customer-info-table):not(.vendor-info-table):not(.summary-table):not(.payment-instructions-table) thead tr:first-child th:last-child {
+  border-top-right-radius: var(--print-table-radius);
+}
+
+.cetak-table:not(:has(thead)) tbody tr:first-child > :first-child,
+.cetak-document table.table:not(.table-borderless):not(.term-conditions-table):not(.customer-info-table):not(.vendor-info-table):not(.summary-table):not(.payment-instructions-table):not(:has(thead)) tbody tr:first-child > :first-child {
+  border-top-left-radius: var(--print-table-radius);
+}
+
+.cetak-table:not(:has(thead)) tbody tr:first-child > :last-child,
+.cetak-document table.table:not(.table-borderless):not(.term-conditions-table):not(.customer-info-table):not(.vendor-info-table):not(.summary-table):not(.payment-instructions-table):not(:has(thead)) tbody tr:first-child > :last-child {
+  border-top-right-radius: var(--print-table-radius);
+}
+
+.cetak-table tbody tr:last-child > :first-child,
+.cetak-document table.table:not(.table-borderless):not(.term-conditions-table):not(.customer-info-table):not(.vendor-info-table):not(.summary-table):not(.payment-instructions-table) tbody tr:last-child > :first-child {
+  border-bottom-left-radius: var(--print-table-radius);
+}
+
+.cetak-table tbody tr:last-child > :last-child,
+.cetak-document table.table:not(.table-borderless):not(.term-conditions-table):not(.customer-info-table):not(.vendor-info-table):not(.summary-table):not(.payment-instructions-table) tbody tr:last-child > :last-child {
+  border-bottom-right-radius: var(--print-table-radius);
+}
+
+.cetak-cuti-section-header + .table-responsive > table thead tr:first-child th:first-child,
+.cetak-cuti-section-header + table thead tr:first-child th:first-child,
+.cetak-lembur-section-header + .table-responsive > table thead tr:first-child th:first-child,
+.cetak-lembur-section-header + table thead tr:first-child th:first-child,
+.cetak-pd-section-header + .table-responsive > table thead tr:first-child th:first-child,
+.cetak-pd-section-header + table thead tr:first-child th:first-child,
+.cetak-arf-section-header + .table-responsive > table thead tr:first-child th:first-child,
+.cetak-arf-section-header + table thead tr:first-child th:first-child,
+.cetak-payment-request-section-header + .table-responsive > table thead tr:first-child th:first-child,
+.cetak-payment-request-section-header + table thead tr:first-child th:first-child {
+  border-top-left-radius: 0;
+}
+
+.cetak-cuti-section-header + .table-responsive > table thead tr:first-child th:last-child,
+.cetak-cuti-section-header + table thead tr:first-child th:last-child,
+.cetak-lembur-section-header + .table-responsive > table thead tr:first-child th:last-child,
+.cetak-lembur-section-header + table thead tr:first-child th:last-child,
+.cetak-pd-section-header + .table-responsive > table thead tr:first-child th:last-child,
+.cetak-pd-section-header + table thead tr:first-child th:last-child,
+.cetak-arf-section-header + .table-responsive > table thead tr:first-child th:last-child,
+.cetak-arf-section-header + table thead tr:first-child th:last-child,
+.cetak-payment-request-section-header + .table-responsive > table thead tr:first-child th:last-child,
+.cetak-payment-request-section-header + table thead tr:first-child th:last-child {
+  border-top-right-radius: 0;
+}
+
+.cetak-document .term-conditions-table {
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  border-radius: var(--print-table-radius);
+  overflow: hidden;
+}
+
+.cetak-document .term-conditions-table thead tr:first-child th:first-child {
+  border-top-left-radius: var(--print-table-radius);
+}
+
+.cetak-document .term-conditions-table thead tr:first-child th:last-child {
+  border-top-right-radius: var(--print-table-radius);
+}
+
+.cetak-document .term-conditions-table tbody tr:last-child > :first-child {
+  border-bottom-left-radius: var(--print-table-radius);
+}
+
+.cetak-document .term-conditions-table tbody tr:last-child > :last-child {
+  border-bottom-right-radius: var(--print-table-radius);
+}
+
+.cetak-document .alert {
+  border-radius: var(--print-table-radius);
+}
+
+.cetak-table thead th,
+.cetak-document table.table:not(.table-borderless):not(.term-conditions-table):not(.customer-info-table):not(.vendor-info-table):not(.summary-table):not(.payment-instructions-table) thead th,
+.cetak-document table.table:not(.table-borderless):not(.term-conditions-table) thead.table-dark th {
+  white-space: nowrap;
+  background-color: var(--print-table-header) !important;
+  color: #fff !important;
+  font-weight: 600;
+  border: none !important;
+  border-bottom: 1px solid var(--print-table-header) !important;
+  padding: var(--print-table-pad-y) var(--print-table-pad-x);
+  vertical-align: middle;
+  --bs-table-bg: var(--print-table-header);
+  --bs-table-color: #fff;
+  --bs-table-border-color: transparent;
+  box-shadow: none !important;
+}
+
+.cetak-table tbody td,
+.cetak-table tbody th,
+.cetak-table tfoot td,
+.cetak-document table.table:not(.table-borderless):not(.term-conditions-table):not(.customer-info-table):not(.vendor-info-table):not(.summary-table):not(.payment-instructions-table) tbody td,
+.cetak-document table.table:not(.table-borderless):not(.term-conditions-table):not(.customer-info-table):not(.vendor-info-table):not(.summary-table):not(.payment-instructions-table) tbody th {
+  border: none !important;
+  border-bottom: 1px solid var(--print-table-row-border) !important;
+  padding: var(--print-table-pad-y) var(--print-table-pad-x);
+  vertical-align: middle;
+  box-shadow: none !important;
+}
+
+.cetak-table tbody tr:last-child > *,
+.cetak-document table.table:not(.table-borderless):not(.term-conditions-table):not(.customer-info-table):not(.vendor-info-table):not(.summary-table):not(.payment-instructions-table) tbody tr:last-child > * {
+  border-bottom: none !important;
+}
+
+.cetak-table .cetak-table__section td {
+  background-color: #eef0f4 !important;
+  font-weight: 700;
+}
+
+.cetak-table .cetak-table__subtotal td {
+  background-color: #f8f9fa !important;
+}
+
+.cetak-table .cetak-table__total td,
+.cetak-arf-grand-total td,
+.cetak-si-grand-total td,
+.cetak-payment-request-grand-total td {
+  background-color: var(--print-table-header) !important;
+  color: #fff !important;
+  font-weight: 700;
+}
+
+.cetak-table .cetak-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.cetak-table .cetak-desc {
+  text-align: left;
+  word-break: break-word;
+}
+
+.cetak-document table.table:not(.table-borderless):not(.term-conditions-table):not(.customer-info-table):not(.vendor-info-table):not(.summary-table):not(.payment-instructions-table) tbody tr:nth-child(odd):not(.cetak-table__section):not(.cetak-table__subtotal):not(.cetak-table__total):not(.cetak-arf-grand-total):not(.cetak-si-grand-total):not(.cetak-payment-request-grand-total) > td,
+.cetak-document table.table:not(.table-borderless):not(.term-conditions-table):not(.customer-info-table):not(.vendor-info-table):not(.summary-table):not(.payment-instructions-table) tbody tr:nth-child(odd):not(.cetak-table__section):not(.cetak-table__subtotal):not(.cetak-table__total):not(.cetak-arf-grand-total):not(.cetak-si-grand-total):not(.cetak-payment-request-grand-total) > th {
+  background-color: var(--print-stripe);
+}
+
+.cetak-document table.table:not(.table-borderless):not(.term-conditions-table):not(.customer-info-table):not(.vendor-info-table):not(.summary-table):not(.payment-instructions-table) tbody tr:nth-child(even):not(.cetak-table__section):not(.cetak-table__subtotal):not(.cetak-table__total):not(.cetak-arf-grand-total):not(.cetak-si-grand-total):not(.cetak-payment-request-grand-total) > td,
+.cetak-document table.table:not(.table-borderless):not(.term-conditions-table):not(.customer-info-table):not(.vendor-info-table):not(.summary-table):not(.payment-instructions-table) tbody tr:nth-child(even):not(.cetak-table__section):not(.cetak-table__subtotal):not(.cetak-table__total):not(.cetak-arf-grand-total):not(.cetak-si-grand-total):not(.cetak-payment-request-grand-total) > th {
+  background-color: #fff;
+}
+
+.cetak-signature {
+  margin-top: 2rem;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.no-print {
+  display: initial;
+}
+
+.print-only {
+  display: none;
+}
+
+@page {
+  size: A4 portrait;
+  margin: 0;
+}
+
+@page {
+  @bottom-right {
+    content: "Halaman " counter(page) " / " counter(pages);
+    font-size: 9pt;
+    color: #555;
+  }
+}
+
+html[data-print-orientation='landscape'] {
+  --print-page-margin-top: 10mm;
+  --print-page-margin-x: 12mm;
+  --print-page-margin-bottom: 12mm;
+}
+
+@media print {
+  .no-print,
+  .cetak-print-btn,
+  .alert:not(.cetak-keep-alert) {
+    display: none !important;
+  }
+
+  .print-only {
+    display: initial !important;
+  }
+
+  .cetak-layout,
+  .cetak-print-root,
+  .invoice-print {
+    background: #fff !important;
+    min-width: 0 !important;
+    width: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .cetak-document {
+    padding: var(--print-page-margin-top) var(--print-page-margin-x) var(--print-footer-height) !important;
+    font-size: var(--print-font-size);
+    max-width: 100%;
+  }
+
+  .cetak-header {
+    margin-top: 0 !important;
+    margin-bottom: 0.6rem !important;
+  }
+
+  .cetak-hr {
+    border: none !important;
+    border-top: 1pt solid var(--print-accent) !important;
+    margin: 0.4rem 0 !important;
+  }
+
+  .cetak-header__logo {
+    height: var(--print-logo-height) !important;
+    max-width: 160px !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .cetak-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: 0;
+    padding: 0.3rem var(--print-page-margin-x);
+    font-size: 10px;
+    color: #333;
+    border-top: 1pt solid #999;
+    background: #fff;
+    z-index: 20;
+  }
+
+  .cetak-notes,
+  .cetak-table-wrap,
+  .cetak-document .table-responsive:has(> table:first-child):not(.cetak-table-wrap),
+  .cetak-document .term-conditions-table,
+  .cetak-document .alert {
+    border-radius: var(--print-table-radius) !important;
+    overflow: hidden !important;
+  }
+
+  .cetak-table-wrap,
+  .cetak-document .table-responsive:has(> table:first-child):not(.cetak-table-wrap) {
+    border: 1px solid var(--print-table-outline) !important;
+    box-shadow: none !important;
+  }
+
+  .cetak-cuti-section-header,
+  .cetak-lembur-section-header,
+  .cetak-pd-section-header,
+  .cetak-arf-section-header,
+  .cetak-payment-request-section-header,
+  .cetak-payment-request-terms-header {
+    border-radius: var(--print-table-radius) var(--print-table-radius) 0 0 !important;
+  }
+
+  .cetak-cuti-section-header + .table-responsive,
+  .cetak-cuti-section-header + table,
+  .cetak-lembur-section-header + .table-responsive,
+  .cetak-lembur-section-header + table,
+  .cetak-pd-section-header + .table-responsive,
+  .cetak-pd-section-header + table,
+  .cetak-arf-section-header + .table-responsive,
+  .cetak-arf-section-header + table,
+  .cetak-arf-section-header + .cetak-arf-notes,
+  .cetak-payment-request-section-header + .table-responsive,
+  .cetak-payment-request-section-header + table,
+  .cetak-payment-request-terms-header + .table-responsive,
+  .cetak-payment-request-terms-header + table {
+    border-top: none !important;
+    border-top-left-radius: 0 !important;
+    border-top-right-radius: 0 !important;
+    border-bottom-left-radius: var(--print-table-radius) !important;
+    border-bottom-right-radius: var(--print-table-radius) !important;
+    overflow: hidden !important;
+  }
+
+  .cetak-table,
+  .cetak-document table.table:not(.table-borderless):not(.term-conditions-table):not(.customer-info-table):not(.vendor-info-table):not(.summary-table):not(.payment-instructions-table) {
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    width: 100% !important;
+    border: 1px solid var(--print-table-outline) !important;
+    border-radius: var(--print-table-radius) !important;
+    overflow: hidden !important;
+  }
+
+  .cetak-table-wrap .cetak-table,
+  .cetak-document .table-responsive:has(> table:first-child):not(.cetak-table-wrap) > table.table {
+    border: none !important;
+    border-radius: 0 !important;
+  }
+
+  .cetak-table thead tr:first-child th:first-child,
+  .cetak-document table.table:not(.table-borderless):not(.term-conditions-table):not(.customer-info-table):not(.vendor-info-table):not(.summary-table):not(.payment-instructions-table) thead tr:first-child th:first-child,
+  .cetak-document .term-conditions-table thead tr:first-child th:first-child {
+    border-top-left-radius: var(--print-table-radius) !important;
+  }
+
+  .cetak-table thead tr:first-child th:last-child,
+  .cetak-document table.table:not(.table-borderless):not(.term-conditions-table):not(.customer-info-table):not(.vendor-info-table):not(.summary-table):not(.payment-instructions-table) thead tr:first-child th:last-child,
+  .cetak-document .term-conditions-table thead tr:first-child th:last-child {
+    border-top-right-radius: var(--print-table-radius) !important;
+  }
+
+  .cetak-table tbody tr:last-child > :first-child,
+  .cetak-document table.table:not(.table-borderless):not(.term-conditions-table):not(.customer-info-table):not(.vendor-info-table):not(.summary-table):not(.payment-instructions-table) tbody tr:last-child > :first-child,
+  .cetak-document .term-conditions-table tbody tr:last-child > :first-child {
+    border-bottom-left-radius: var(--print-table-radius) !important;
+  }
+
+  .cetak-table tbody tr:last-child > :last-child,
+  .cetak-document table.table:not(.table-borderless):not(.term-conditions-table):not(.customer-info-table):not(.vendor-info-table):not(.summary-table):not(.payment-instructions-table) tbody tr:last-child > :last-child,
+  .cetak-document .term-conditions-table tbody tr:last-child > :last-child {
+    border-bottom-right-radius: var(--print-table-radius) !important;
+  }
+
+  .cetak-cuti-section-header + .table-responsive > table thead tr:first-child th:first-child,
+  .cetak-cuti-section-header + table thead tr:first-child th:first-child,
+  .cetak-lembur-section-header + .table-responsive > table thead tr:first-child th:first-child,
+  .cetak-lembur-section-header + table thead tr:first-child th:first-child,
+  .cetak-pd-section-header + .table-responsive > table thead tr:first-child th:first-child,
+  .cetak-pd-section-header + table thead tr:first-child th:first-child,
+  .cetak-arf-section-header + .table-responsive > table thead tr:first-child th:first-child,
+  .cetak-arf-section-header + table thead tr:first-child th:first-child,
+  .cetak-payment-request-section-header + .table-responsive > table thead tr:first-child th:first-child,
+  .cetak-payment-request-section-header + table thead tr:first-child th:first-child {
+    border-top-left-radius: 0 !important;
+  }
+
+  .cetak-cuti-section-header + .table-responsive > table thead tr:first-child th:last-child,
+  .cetak-cuti-section-header + table thead tr:first-child th:last-child,
+  .cetak-lembur-section-header + .table-responsive > table thead tr:first-child th:last-child,
+  .cetak-lembur-section-header + table thead tr:first-child th:last-child,
+  .cetak-pd-section-header + .table-responsive > table thead tr:first-child th:last-child,
+  .cetak-pd-section-header + table thead tr:first-child th:last-child,
+  .cetak-arf-section-header + .table-responsive > table thead tr:first-child th:last-child,
+  .cetak-arf-section-header + table thead tr:first-child th:last-child,
+  .cetak-payment-request-section-header + .table-responsive > table thead tr:first-child th:last-child,
+  .cetak-payment-request-section-header + table thead tr:first-child th:last-child {
+    border-top-right-radius: 0 !important;
+  }
+
+  .cetak-table thead,
+  .cetak-document table thead,
+  .cetak-cuti-table thead,
+  .cetak-lembur-table thead,
+  .cetak-pd-table thead,
+  .cetak-arf-table thead,
+  .cetak-si-table thead {
+    display: table-header-group !important;
+  }
+
+  .cetak-table tfoot {
+    display: table-row-group !important;
+  }
+
+  .cetak-table tbody tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .cetak-table thead th,
+  .cetak-document table.table:not(.table-borderless):not(.term-conditions-table):not(.customer-info-table):not(.vendor-info-table):not(.summary-table):not(.payment-instructions-table) thead th,
+  .cetak-document table.table:not(.table-borderless):not(.term-conditions-table) thead.table-dark th,
+  .cetak-cuti-table thead th,
+  .cetak-lembur-table thead th,
+  .cetak-lembur-th,
+  .cetak-pd-table thead th,
+  .cetak-pd-th,
+  .cetak-arf-table thead th,
+  .cetak-arf-th,
+  .cetak-si-table thead th,
+  .cetak-si-summary thead th,
+  .cetak-payment-request-table thead th {
+    background-color: var(--print-table-header) !important;
+    color: #fff !important;
+    border: none !important;
+    border-bottom: 1px solid var(--print-table-header) !important;
+    padding: var(--print-table-pad-y) var(--print-table-pad-x) !important;
+    box-shadow: none !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .cetak-table tbody td,
+  .cetak-table tbody th,
+  .cetak-table tfoot td,
+  .cetak-document table.table:not(.table-borderless):not(.term-conditions-table):not(.customer-info-table):not(.vendor-info-table):not(.summary-table):not(.payment-instructions-table) tbody td,
+  .cetak-document table.table:not(.table-borderless):not(.term-conditions-table):not(.customer-info-table):not(.vendor-info-table):not(.summary-table):not(.payment-instructions-table) tbody th,
+  .cetak-document table.table-bordered tbody td,
+  .cetak-document table.table-bordered tbody th,
+  .cetak-cuti-table tbody td,
+  .cetak-cuti-table tbody th,
+  .cetak-lembur-table tbody td,
+  .cetak-lembur-table tbody th,
+  .cetak-pd-table tbody td,
+  .cetak-pd-table tbody th,
+  .cetak-arf-table tbody td,
+  .cetak-arf-table tbody th,
+  .cetak-si-table tbody td,
+  .cetak-si-table tbody th,
+  .cetak-payment-request-table tbody td,
+  .cetak-payment-request-table tbody th {
+    border: none !important;
+    border-bottom: 1px solid var(--print-table-row-border) !important;
+    padding: var(--print-table-pad-y) var(--print-table-pad-x) !important;
+    box-shadow: none !important;
+  }
+
+  .cetak-table tbody tr:last-child > *,
+  .cetak-document table.table:not(.table-borderless):not(.term-conditions-table):not(.customer-info-table):not(.vendor-info-table):not(.summary-table):not(.payment-instructions-table) tbody tr:last-child > * {
+    border-bottom: none !important;
+  }
+
+  .cetak-document table.table:not(.table-borderless):not(.term-conditions-table):not(.customer-info-table):not(.vendor-info-table):not(.summary-table):not(.payment-instructions-table) tbody tr:nth-child(odd):not(.cetak-table__section):not(.cetak-table__subtotal):not(.cetak-table__total):not(.cetak-arf-grand-total):not(.cetak-si-grand-total):not(.cetak-payment-request-grand-total) > td,
+  .cetak-document table.table:not(.table-borderless):not(.term-conditions-table):not(.customer-info-table):not(.vendor-info-table):not(.summary-table):not(.payment-instructions-table) tbody tr:nth-child(odd):not(.cetak-table__section):not(.cetak-table__subtotal):not(.cetak-table__total):not(.cetak-arf-grand-total):not(.cetak-si-grand-total):not(.cetak-payment-request-grand-total) > th {
+    background-color: var(--print-stripe) !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .cetak-document table.table:not(.table-borderless):not(.term-conditions-table):not(.customer-info-table):not(.vendor-info-table):not(.summary-table):not(.payment-instructions-table) tbody tr:nth-child(even):not(.cetak-table__section):not(.cetak-table__subtotal):not(.cetak-table__total):not(.cetak-arf-grand-total):not(.cetak-si-grand-total):not(.cetak-payment-request-grand-total) > td,
+  .cetak-document table.table:not(.table-borderless):not(.term-conditions-table):not(.customer-info-table):not(.vendor-info-table):not(.summary-table):not(.payment-instructions-table) tbody tr:nth-child(even):not(.cetak-table__section):not(.cetak-table__subtotal):not(.cetak-table__total):not(.cetak-arf-grand-total):not(.cetak-si-grand-total):not(.cetak-payment-request-grand-total) > th {
+    background-color: #fff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .cetak-cuti-section-header,
+  .cetak-lembur-section-header,
+  .cetak-pd-section-header,
+  .cetak-arf-section-header,
+  .cetak-payment-request-section-header,
+  .cetak-payment-request-terms-header,
+  .cetak-section__title {
+    background-color: var(--print-table-header) !important;
+    color: #fff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .cetak-table .cetak-table__section td,
+  .cetak-table .bg-light,
+  .cetak-table .cetak-table__subtotal td {
+    background-color: #eef0f4 !important;
+    color: inherit !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .cetak-table .cetak-table__total td,
+  .cetak-arf-grand-total td,
+  .cetak-si-grand-total td,
+  .cetak-payment-request-grand-total td {
+    background-color: var(--print-table-header) !important;
+    color: #fff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .cetak-signature,
+  .signature-section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  img {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    max-width: 100%;
+  }
+}

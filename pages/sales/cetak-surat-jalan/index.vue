@@ -1,85 +1,16 @@
 <template>
-    <div :key="routeKey" class="cetak-wrapper">
-    <div v-if="loading" class="text-center p-6">
-      <ProgressSpinner 
-        style="width: 50px; height: 50px" 
-        strokeWidth="4"
-        fill="transparent"
-        animationDuration="1s"
-      />
-      <div class="mt-3 text-muted">Memuat data...</div>
-    </div>
-    <div v-else-if="error" class="alert alert-danger m-6">{{ error.message }}</div>
-    <div v-else-if="suratJalan" class="p-6">
-      <div class="d-flex justify-content-between align-items-start align-content-center mb-6">
-        <!-- Logo Section - Left -->
-        <div v-if="suratJalan.salesOrder.perusahaan" class="logo-section">
-          <div class="d-flex svg-illustration align-content-center gap-2 mb-4">
-            <span class="app-brand-logo demo">
-              <img
-                :src="getCompanyLogo(suratJalan.salesOrder.perusahaan.logoPerusahaan)" 
-                alt="logo Perusahaan" 
-                style="height: 60px; max-width: 200px; object-fit: contain; cursor: pointer;" 
-                @error="(e) => handleImageError(e, '/img/default-company-logo.png')"
-                @click="perusahaanStore.openImageInNewTab(suratJalan.salesOrder.perusahaan.logoPerusahaan)"
-                @load="debugImageUrl(suratJalan.salesOrder.perusahaan.logoPerusahaan)"
-                title="Klik untuk melihat gambar lengkap"
-              >
-            </span>
-          </div>
-          <div class="text-start text-secondary-medium mt-6 mb-0" style="font-size: 12px; width: 220px; min-width: 220px;">
-            <p class="mb-2 fw-bold text-heading" style="font-size: 14px;">
-              {{ suratJalan.salesOrder.perusahaan?.nmPerusahaan || '-' }}
-            </p>
-            <p class="mb-0">
-              Alamat: {{ suratJalan.salesOrder.perusahaan?.alamatPerusahaan || '-' }}
-            </p>
-            <p class="mb-0">
-              Telepon: {{ suratJalan.salesOrder.perusahaan?.tlpPerusahaan || '-' }}
-            </p>
-            <p class="mb-0">
-              Email: {{ suratJalan.salesOrder.perusahaan?.emailPerusahaan || '-' }}
-            </p>
-            <p class="mb-0">
-              NPWP: {{ suratJalan.salesOrder.perusahaan?.npwpPerusahaan || '-' }}
-            </p>
-          </div>
-        </div>
-        
-        <!-- Invoice Header - Right -->
-        <div class="invoice-header text-end">
-          <h2 class="mb-4 text-capitalize fw-bold">SURAT JALAN</h2>
-          <table style="font-size: 12px; width: 100%;">
-            <tr>
-              <td style="text-align: right;">No. Surat Jalan</td>
-              <td style="width: 40px; text-align: center;">:</td>
-              <td style="width: 40%;">{{ suratJalan.noSuratJalan }}</td>
-            </tr>
-            <tr>
-              <td style="text-align: right; vertical-align: top;">Alamat Pengiriman</td>
-              <td style="width: 40px; text-align: center; vertical-align: top;">:</td>
-              <td style="width: 40%;">{{ suratJalan.alamatPengiriman || '-' }}</td>
-            </tr>
-            <tr>
-              <td style="text-align: right;">Tanggal</td>
-              <td style="width: 40px; text-align: center;">:</td>
-              <td style="width: 40%;">{{ new Date(suratJalan.date).toLocaleDateString('id-ID') }}</td>
-            </tr>
-            <tr>
-              <td style="text-align: right;">No. Purchase Order</td>
-              <td style="width: 40px; text-align: center;">:</td>
-              <td style="width: 40%;">{{ suratJalan.salesOrder.noPo || '-' }}</td>
-            </tr>
-            <tr>
-              <td style="text-align: right;">PIC</td>
-              <td style="width: 40px; text-align: center;">:</td>
-              <td style="width: 40%;">{{ suratJalan.picName || '-' }}</td>
-            </tr>
-          </table>
-        </div>
-      </div>
-
-      <hr class="my-6" />
+    <div :key="routeKey">
+    <CetakDocument
+      type="SURAT_JALAN"
+      :document-number="suratJalan?.noSuratJalan || ''"
+      :status="suratJalan?.status"
+      :company="suratJalan?.salesOrder?.perusahaan"
+      :header-meta="headerMeta"
+      :loading="loading"
+      :error="error"
+      :not-found="!loading && !error && !suratJalan"
+    >
+    <template v-if="suratJalan">
 
       <!-- ✅ INFO SECTION -->
       <div v-if="suratJalan.suratJalanItems && suratJalan.suratJalanItems.length > 0" 
@@ -177,10 +108,8 @@
           </tbody>
         </table>
       </div>
-    </div>
-    <div v-else class="alert alert-danger m-6" role="alert">
-        Surat Jalan tidak ditemukan.
-    </div>
+    </template>
+    </CetakDocument>
     </div>
 </template>
 
@@ -190,26 +119,31 @@
   })
   import { onMounted, onBeforeUnmount, computed, watch } from 'vue';
   import { useSuratJalanStore } from '~/stores/surat-jalan';
-  import { usePerusahaanStore } from '~/stores/perusahaan';
   import { storeToRefs } from 'pinia';
   import { useRoute } from 'vue-router';
   import { useDynamicTitle } from '~/composables/useDynamicTitle'
   import { useImageUrl } from '~/composables/useImageUrl'
 
-  // Composables
   const { setDetailTitle } = useDynamicTitle()
-  const { getCompanyLogo, handleImageError, debugImageUrl } = useImageUrl()
+  const { handleImageError } = useImageUrl()
 
   const config          = useRuntimeConfig();
   const suratJalanStore = useSuratJalanStore();
-  const perusahaanStore = usePerusahaanStore();
   const route           = useRoute();
-  const formatRupiah    = useFormatRupiah();
   const toast           = useToast();
 
   const { suratJalan, loading, error } = storeToRefs(suratJalanStore);
 
-  useRegisterCetakDraftStatus(() => suratJalan.value?.status)
+  const headerMeta = computed(() => {
+    if (!suratJalan.value) return []
+    return [
+      { label: 'No. Surat Jalan', value: suratJalan.value.noSuratJalan || '—' },
+      { label: 'Alamat Pengiriman', value: suratJalan.value.alamatPengiriman || '—' },
+      { label: 'Tanggal', value: suratJalan.value.date ? new Date(suratJalan.value.date).toLocaleDateString('id-ID') : '—' },
+      { label: 'No. Purchase Order', value: suratJalan.value.salesOrder?.noPo || '—' },
+      { label: 'PIC', value: suratJalan.value.picName || '—' },
+    ]
+  })
 
   // ✅ Computed key untuk force re-render saat route berubah (hanya untuk halaman ini)
   const routeKey = computed(() => `surat-jalan-${route.query.id || 'new'}`);
@@ -269,21 +203,6 @@
     return publicPath(file);
   });
 
-  const getLogoUrl = (logoPath) => {
-    if (!logoPath || typeof logoPath !== 'string') {
-        return null;
-    }
-    if (logoPath.startsWith('http')) {
-        return logoPath;
-    }
-    if (!config.public.apiBase) {
-        return logoPath;
-    }
-    const origin = new URL(config.public.apiBase).origin;
-    const imageUrl = `${origin}/${logoPath}`;
-    return imageUrl;
-  };
-
   // ✅ Watch route changes untuk auto-fetch saat ID berubah
   watch(() => route.query.id, (newId, oldId) => {
     if (newId && newId !== oldId) {
@@ -304,88 +223,32 @@
 </script>
 
 <style>
-  /* Layout styles */
-  .logo-section {
-    flex: 1;
-    max-width: 50%;
-  }
-
-  .invoice-header {
-    flex: 1;
-    max-width: 50%;
-  }
-
-  /* TTD Container styles for screen */
   .ttd-container {
     position: relative;
     margin: 20px 0;
   }
 
   .ttd-container .ttd-image {
-    position: relative;
     height: 120px;
-    z-index: 1;
     margin: 0 auto;
     display: block;
   }
 
   .ttd-container .andara-image {
-    position: relative;
-    z-index: 2;
     margin: -90px auto 0;
     display: block;
     height: 40px;
     object-fit: contain;
   }
 
-  /* Custom styles for print */
   @media print {
-    .ttd-container {
-      position: relative;
-    }
-
     .ttd-container .ttd-image {
-      position: relative;
       height: 90px !important;
-      z-index: 1;
-      margin: 0 auto !important;
-      display: block !important;
     }
 
     .ttd-container .andara-image {
-      position: relative;
-      z-index: 2;
       margin: -70px auto 0 !important;
-      display: block !important;
       height: 40px !important;
-      object-fit: contain !important;
-    }
-    .no-print {
-      display: none !important;
-    }
-    
-    /* Hide alert info when printing */
-    .alert {
-      display: none !important;
-    }
-
-    /* Ensure proper layout in print */
-    .logo-section,
-    .invoice-header {
-      max-width: 50% !important;
-    }
-
-    /* Logo styling for print */
-    .logo-section img {
-      max-height: 60px !important;
-      max-width: 200px !important;
-      object-fit: contain !important;
-    }
-
-    /* Ensure logo is visible in print */
-    .app-brand-logo img {
-      -webkit-print-color-adjust: exact !important;
-      print-color-adjust: exact !important;
     }
   }
 </style> 

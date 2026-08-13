@@ -1,46 +1,14 @@
 <template>
-  <div v-if="loading" class="text-center p-6">
-    <ProgressSpinner
-      style="width: 50px; height: 50px"
-      stroke-width="4"
-      fill="transparent"
-      animation-duration="1s"
-    />
-    <div class="mt-3 text-muted">Memuat data...</div>
-  </div>
-  <div v-else-if="error" class="alert alert-danger m-6">{{ error }}</div>
-  <div v-else-if="cuti" class="p-2 cetak-cuti-doc position-relative">
-    <button
-      type="button"
-      class="btn btn-primary no-print cetak-cuti-print-btn"
-      aria-label="Print"
-      @click="onPrint"
-    >
-      <i class="ri-printer-line me-1"></i>
-      Print
-    </button>
-
-    <!-- Header: sama pola dengan cetak-quotation -->
-    <div class="d-flex justify-content-between align-items-start mb-4 cetak-cuti-header">
-      <div v-if="perusahaan" class="logo-section">
-        <img
-          :src="getCompanyLogo(perusahaan.logoPerusahaan ?? perusahaan.logo_perusahaan)"
-          alt="Logo Perusahaan"
-          class="cetak-cuti-logo"
-          @error="(e) => handleImageError(e, '/img/branding/logo.png')"
-          style="height: 90px; max-width: 200px; object-fit: contain"
-        />
-      </div>
-      <div class="mx-2 text-center align-self-center">
-        <h2 class="app-brand-logo demo fw-bold mt-3">SKYLINK</h2>
-      </div>
-      <div class="cetak-cuti-title-wrap text-end mt-3">
-        <h1 class="cetak-cuti-title fw-bold mb-0">FORM CUTI / IZIN / SAKIT</h1>
-      </div>
-    </div>
-
-    <hr class="cetak-cuti-hr my-4" />
-
+  <CetakDocument
+    type="CUTI"
+    :document-number="cuti ? `#${cuti.id}` : ''"
+    :status="cuti?.status"
+    :company="perusahaan"
+    :loading="loading"
+    :error="error"
+    :not-found="!loading && !error && !cuti"
+  >
+    <template v-if="cuti">
     <div class="d-flex justify-content-between mb-3" style="font-size: 12px">
       <div class="text-start">
         <p class="mb-1"><strong>No. Pengajuan :</strong> #{{ cuti.id }}</p>
@@ -192,13 +160,8 @@
     <p class="text-muted small text-center mt-3 mb-0 no-print" style="font-size: 11px">
       Dicetak pada {{ printedAt }}
     </p>
-
-    <div class="cetak-cuti-page-footer">
-      <span class="cetak-cuti-footer-left">Form Cuti / Izin / Sakit (#{{ cuti.id }}) PT Sinergi Innovate Pratama</span>
-      <span class="cetak-cuti-footer-right">Halaman 1/1</span>
-    </div>
-  </div>
-  <div v-else class="alert alert-danger m-6" role="alert">Data cuti tidak ditemukan.</div>
+    </template>
+  </CetakDocument>
 </template>
 
 <script setup lang="ts">
@@ -206,7 +169,6 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useNuxtApp, useRuntimeConfig } from '#app'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
-import { useImageUrl } from '~/composables/useImageUrl'
 import { apiFetch } from '~/utils/apiFetch'
 import QRCodeGenerator from '~/components/QRCodeGenerator.vue'
 import {
@@ -222,7 +184,6 @@ definePageMeta({
 })
 
 const { setDetailTitle } = useDynamicTitle()
-const { getCompanyLogo, handleImageError } = useImageUrl()
 const route = useRoute()
 const runtimeConfig = useRuntimeConfig()
 
@@ -232,8 +193,6 @@ const cuti = ref<Record<string, any> | null>(null)
 const perusahaan = ref<Record<string, any> | null>(null)
 const cutiSignatures = ref<Record<string, any>[]>([])
 const sigLoading = ref(false)
-
-useRegisterCetakDraftStatus(() => cuti.value?.status)
 
 const QR_COL_SIZE = 80
 
@@ -377,10 +336,6 @@ const printedAt = computed(() =>
   })
 )
 
-function onPrint() {
-  window.print()
-}
-
 function formatDate(val: string | null | undefined) {
   if (!val) return '-'
   const d = typeof val === 'string' ? new Date(val) : val
@@ -433,51 +388,15 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.cetak-cuti-print-btn {
-  position: fixed;
-  top: 12px;
-  right: 25px;
-  z-index: 1000;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  color: #fff !important;
-}
-.cetak-cuti-print-btn:hover {
-  color: #adb5bd !important;
-}
-.cetak-cuti-print-btn i {
-  color: inherit !important;
-}
-.cetak-cuti-header {
-  min-height: 60px;
-  margin-top: 40px;
-}
-.logo-section {
-  flex-shrink: 0;
-}
-.cetak-cuti-logo {
-  height: 60px;
-  max-width: 200px;
-  object-fit: contain;
-}
-.cetak-cuti-title-wrap {
-  flex: 1;
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-end;
-}
-.cetak-cuti-title {
-  font-size: 1.35rem;
-  letter-spacing: 0.02em;
-}
 .cetak-cuti-table thead th {
   white-space: nowrap;
-  background-color: #4275f6;
+  background-color: var(--print-table-header, #3b4056);
 }
 .table-head-white {
   color: #fff;
 }
 .cetak-cuti-section-header {
-  background-color: #4275f6;
+  background-color: var(--print-table-header, #3b4056);
   color: #fff !important;
   padding: 8px 12px;
   font-size: 12px;
@@ -533,154 +452,10 @@ onMounted(async () => {
   margin-top: 0.25rem;
   font-size: 10px;
 }
-.cetak-cuti-signature-table {
-  font-size: 12px;
-  border-color: #e5e6e8 !important;
-}
-.cetak-cuti-signature-table td,
-.cetak-cuti-signature-table th {
-  border-color: #e5e6e8 !important;
-  vertical-align: top;
-}
-.cetak-cuti-sig-cell {
-  width: 33.33%;
-  padding: 0.75rem 0.5rem !important;
-}
-.cetak-cuti-sig-top {
-  min-height: 2.5rem;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  text-align: center;
-  font-size: 13px;
-  font-weight: 600;
-}
-.cetak-cuti-sig-body {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 0.4rem 0 0.75rem;
-}
-.cetak-cuti-sig-qr-slot {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 0;
-}
-.cetak-cuti-sig-meta {
-  margin-top: 1rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.35rem;
-  width: 100%;
-}
-.cetak-cuti-sig-meta--tight {
-  margin-top: 0.45rem;
-}
-.cetak-cuti-sig-body :deep(.qr-code-container) {
-  margin: 0 auto;
-  padding: 0;
-}
-.cetak-cuti-sig-name {
-  font-weight: 600;
-  font-size: 14px;
-  line-height: 1.35;
-  max-width: 100%;
-  word-break: break-word;
-}
-.cetak-cuti-sig-sub {
-  font-size: 12px;
-  color: #444;
-  line-height: 1.35;
-  max-width: 100%;
-  word-break: break-word;
-}
-.cetak-cuti-page-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 2rem;
-  padding: 0.5rem 0;
-  font-size: 11px;
-  color: #666;
-  border-top: 1px solid #e0e0e0;
-}
-.cetak-cuti-footer-left {
-  text-align: left;
-}
-.cetak-cuti-footer-right {
-  text-align: right;
-}
-.print-only {
-  display: none;
-}
 </style>
 
 <style>
 @media print {
-  .cetak-cuti-hr {
-    border: none !important;
-    border-top: 1pt solid #4275f6 !important;
-    height: 0 !important;
-    margin: 0.4rem 0 !important;
-    padding: 0 !important;
-  }
-  .no-print {
-    display: none !important;
-  }
-  .print-only {
-    display: inline !important;
-  }
-  .alert {
-    display: none !important;
-  }
-  .cetak-cuti-doc {
-    padding: 0.5rem !important;
-    padding-top: 0.25rem !important;
-    padding-bottom: 2.5rem !important;
-    font-size: 12px;
-  }
-  .cetak-cuti-doc .mb-4 {
-    margin-bottom: 0.5rem !important;
-  }
-  .cetak-cuti-header {
-    display: flex !important;
-    justify-content: space-between !important;
-    margin: 0 !important;
-  }
-  .cetak-cuti-logo {
-    height: 60px !important;
-    max-width: 200px !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-  .cetak-cuti-title-wrap {
-    text-align: right !important;
-  }
-  .cetak-cuti-title {
-    font-size: 1.25rem !important;
-  }
-  .cetak-cuti-table {
-    border-collapse: collapse;
-  }
-  .cetak-cuti-table td,
-  .cetak-cuti-table th {
-    border: 1pt solid #4275f6 !important;
-    padding: 6px 8px !important;
-  }
-  .cetak-cuti-table thead th {
-    background-color: #4275f6 !important;
-    color: #fff !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-  .cetak-cuti-section-header {
-    background-color: #4275f6 !important;
-    color: #fff !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
   .cetak-cuti-sig-3-row {
     display: flex !important;
     flex-wrap: nowrap !important;
@@ -690,40 +465,6 @@ onMounted(async () => {
     flex: 0 0 33.333% !important;
     max-width: 33.333% !important;
     padding: 0 0.35rem !important;
-  }
-  .cetak-cuti-sig-3-kicker {
-    font-size: 11px !important;
-    text-align: center !important;
-  }
-  .cetak-cuti-sig-3-name {
-    font-size: 12px !important;
-  }
-  .cetak-cuti-sig-3-meta {
-    font-size: 10px !important;
-  }
-  .cetak-cuti-sig-3-date {
-    font-size: 9px !important;
-  }
-  .cetak-cuti-sig-name {
-    font-size: 14px !important;
-  }
-  .cetak-cuti-sig-sub {
-    font-size: 12px !important;
-  }
-  .cetak-cuti-sig-top {
-    font-size: 13px !important;
-  }
-  .cetak-cuti-page-footer {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    margin: 0;
-    padding: 0.35rem 1rem;
-    font-size: 10px;
-    color: #333;
-    border-top: 1pt solid #999;
-    background: #fff;
   }
 }
 </style>

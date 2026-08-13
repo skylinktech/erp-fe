@@ -1,74 +1,16 @@
 <template>
-    <div :key="routeKey" class="cetak-wrapper">
-    <div v-if="loading" class="text-center p-6">
-      <ProgressSpinner 
-        style="width: 50px; height: 50px" 
-        strokeWidth="4"
-        fill="transparent"
-        animationDuration="1s"
-      />
-      <div class="mt-3 text-muted">Memuat data...</div>
-    </div>
-    <div v-else-if="error" class="alert alert-danger m-6">{{ error.message }}</div>
-    <div v-else-if="stockTransfer" class="p-6">
-      <div class="d-flex justify-content-between align-items-start align-content-center mb-6">
-        <!-- Logo Section - Left -->
-        <div v-if="stockTransfer.perusahaan" class="logo-section">
-          <div class="d-flex svg-illustration align-content-center gap-2 mb-4">
-            <span class="app-brand-logo demo">
-              <img
-                :src="getCompanyLogo(stockTransfer.perusahaan.logoPerusahaan)" 
-                alt="logo Perusahaan" 
-                style="height: 60px; max-width: 200px; object-fit: contain; cursor: pointer;" 
-                @error="(e) => handleImageError(e, '/img/default-company-logo.png')"
-                @click="perusahaanStore.openImageInNewTab(stockTransfer.perusahaan.logoPerusahaan)"
-                @load="debugImageUrl(stockTransfer.perusahaan.logoPerusahaan)"
-                title="Klik untuk melihat gambar lengkap"
-              >
-            </span>
-          </div>
-          <div class="text-start text-secondary-medium mt-6 mb-0" style="font-size: 12px; width: 220px; min-width: 220px;">
-            <p class="mb-2 fw-bold text-heading" style="font-size: 14px;">
-              {{ stockTransfer.perusahaan?.nmPerusahaan || '-' }}
-            </p>
-            <p class="mb-0">
-              Alamat: {{ stockTransfer.perusahaan?.alamatPerusahaan || '-' }}
-            </p>
-            <p class="mb-0">
-              Telepon: {{ stockTransfer.perusahaan?.tlpPerusahaan || '-' }}
-            </p>
-            <p class="mb-0">
-              Email: {{ stockTransfer.perusahaan?.emailPerusahaan || '-' }}
-            </p>
-          </div>
-        </div>
-        
-        <!-- Invoice Header - Right -->
-        <div class="invoice-header text-end">
-          <h2 class="mb-4 text-capitalize fw-bold">BERITA ACARA</h2>
-          <table style="font-size: 12px; width: 100%;">
-            <tbody>
-              <tr>
-                <td style="text-align: right;">No. Stock Transfer</td>
-                <td style="width: 20px;">:</td>
-                <td style="width: 50%;">{{ stockTransfer.noTransfer }}</td>
-              </tr>
-              <tr>
-                <td style="text-align: right;">Tanggal</td>
-                <td style="width: 20px;">:</td>
-                <td style="width: 50%;">{{ new Date(stockTransfer.date).toLocaleDateString('id-ID') }}</td>
-              </tr>
-              <tr>
-                <td style="text-align: right;">Penerima</td>
-                <td style="width: 20px;">:</td>
-                <td style="width: 50%;">{{ stockTransfer.penerima }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <hr class="my-6" />
+    <div :key="routeKey">
+    <CetakDocument
+      type="STOCK_TRANSFER"
+      :document-number="stockTransfer?.noTransfer || ''"
+      :status="stockTransfer?.status"
+      :company="stockTransfer?.perusahaan"
+      :header-meta="headerMeta"
+      :loading="loading"
+      :error="error"
+      :not-found="!loading && !error && !stockTransfer"
+    >
+    <template v-if="stockTransfer">
 
       <div class="d-flex justify-content-between mb-6">
         <div class="col-3">
@@ -167,10 +109,8 @@
           </tbody>
         </table>
       </div>
-    </div>
-    <div v-else class="alert alert-danger m-6" role="alert">
-      Stock Transfer tidak ditemukan.
-    </div>
+    </template>
+    </CetakDocument>
     </div>
 </template>
 
@@ -187,26 +127,29 @@
   })
   import { onMounted, onBeforeUnmount, computed, watch } from 'vue';
   import { useStockTransferStore } from '~/stores/stock-transfer';
-  import { usePerusahaanStore } from '~/stores/perusahaan';
   import { storeToRefs } from 'pinia';
   import { useRoute } from 'vue-router';
-  import Swal from 'sweetalert2';
   import { useDynamicTitle } from '~/composables/useDynamicTitle'
   import { useImageUrl } from '~/composables/useImageUrl'
 
-  // Composables
-  const { setListTitle, setFormTitle } = useDynamicTitle()
-  const { getCompanyLogo, handleImageError, debugImageUrl } = useImageUrl()
+  const { setListTitle } = useDynamicTitle()
+  const { handleImageError } = useImageUrl()
 
   const config = useRuntimeConfig();
   const stockTransferStore = useStockTransferStore();
-  const perusahaanStore = usePerusahaanStore();
   const route = useRoute();
   const toast = useToast();
 
   const { selectedStockTransfer: stockTransfer, loading, error } = storeToRefs(stockTransferStore);
 
-  useRegisterCetakDraftStatus(() => stockTransfer.value?.status)
+  const headerMeta = computed(() => {
+    if (!stockTransfer.value) return []
+    return [
+      { label: 'No. Stock Transfer', value: stockTransfer.value.noTransfer || '—' },
+      { label: 'Tanggal', value: stockTransfer.value.date ? new Date(stockTransfer.value.date).toLocaleDateString('id-ID') : '—' },
+      { label: 'Penerima', value: stockTransfer.value.penerima || '—' },
+    ]
+  })
 
   // ✅ Computed key untuk force re-render saat route berubah (hanya untuk halaman ini)
   const routeKey = computed(() => `stock-transfer-${route.query.id || 'new'}`);
@@ -266,21 +209,6 @@
     return publicPath(file);
   });
 
-  const getLogoUrl = (logoPath) => {
-    if (!logoPath || typeof logoPath !== 'string') {
-        return null;
-    }
-    if (logoPath.startsWith('http')) {
-        return logoPath;
-    }
-    if (!config.public.apiBase) {
-        return logoPath;
-    }
-    const origin = new URL(config.public.apiBase).origin;
-    const imageUrl = `${origin}/${logoPath}`;
-    return imageUrl;
-};
-
   // ✅ Watch route changes untuk auto-fetch saat ID berubah
   watch(() => route.query.id, (newId, oldId) => {
     if (newId && newId !== oldId) {
@@ -301,88 +229,33 @@
 </script>
 
 <style>
-  /* Layout styles */
-  .logo-section {
-    flex: 1;
-    max-width: 50%;
-  }
-
-  .invoice-header {
-    flex: 1;
-    max-width: 50%;
-  }
-
-  /* TTD Container styles for screen */
   .ttd-container {
     position: relative;
     margin: 20px 0;
   }
 
   .ttd-container .ttd-image {
-    position: relative;
     height: 120px;
-    z-index: 1;
     margin: 0 auto;
     display: block;
   }
 
   .ttd-container .andara-image {
-    position: relative;
-    z-index: 2;
     margin: -90px auto 0;
     display: block;
     height: 40px;
     object-fit: contain;
   }
 
-  /* Custom styles for print */
   @media print {
-    .ttd-container {
-      position: relative;
-    }
-
     .ttd-container .ttd-image {
-      position: relative;
       height: 140px !important;
-      z-index: 1;
       margin: -25px auto !important;
-      display: block !important;
     }
 
     .ttd-container .andara-image {
-      position: relative;
-      z-index: 2;
       margin: -70px auto 0 !important;
-      display: block !important;
       height: 40px !important;
-      object-fit: contain !important;
-    }
-    .no-print {
-      display: none !important;
-    }
-    
-    /* Hide alert info when printing */
-    .alert {
-      display: none !important;
-    }
-
-    /* Ensure proper layout in print */
-    .logo-section,
-    .invoice-header {
-      max-width: 50% !important;
-    }
-
-    /* Logo styling for print */
-    .logo-section img {
-      max-height: 60px !important;
-      max-width: 200px !important;
-      object-fit: contain !important;
-    }
-
-    /* Ensure logo is visible in print */
-    .app-brand-logo img {
-      -webkit-print-color-adjust: exact !important;
-      print-color-adjust: exact !important;
     }
   }
 </style> 

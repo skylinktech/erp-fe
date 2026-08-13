@@ -1,76 +1,16 @@
 <template>
-    <div :key="routeKey" class="cetak-wrapper">
-    <div v-if="loading" class="text-center p-6">
-      <ProgressSpinner 
-          style="width: 50px; height: 50px" 
-          strokeWidth="4"
-          fill="transparent"
-          animationDuration="1s"
-      />
-      <div class="mt-3 text-muted">Memuat data...</div>
-    </div>
-    <div v-else-if="error" class="alert alert-danger m-6">{{ error.message }}</div>
-    <div v-else-if="purchaseOrder" class="p-6">
-      <!-- Header Section -->
-      <div class="d-flex justify-content-between align-items-start align-content-center mb-6">
-        <!-- Logo Section - Left -->
-        <div v-if="purchaseOrder.perusahaan" class="logo-section">
-          <div class="d-flex svg-illustration align-content-center gap-2 mb-4">
-            <span class="app-brand-logo demo">
-              <img
-                :src="getCompanyLogo(purchaseOrder.perusahaan.logoPerusahaan)" 
-                alt="logo Perusahaan" 
-                style="height: 60px; max-width: 200px; object-fit: contain; cursor: pointer;" 
-                @error="(e) => handleImageError(e, '/img/default-company-logo.png')"
-                @click="perusahaanStore.openImageInNewTab(purchaseOrder.perusahaan.logoPerusahaan)"
-                @load="debugImageUrl(purchaseOrder.perusahaan.logoPerusahaan)"
-                title="Klik untuk melihat gambar lengkap"
-              >
-            </span>
-          </div>
-          <div class="text-start text-secondary-medium mt-6 mb-0" style="font-size: 12px; width: 220px; min-width: 220px;">
-            <p class="mb-2 fw-bold text-heading" style="font-size: 14px;">
-              {{ purchaseOrder.perusahaan?.nmPerusahaan || '-' }}
-            </p>
-            <p class="mb-0">
-              Alamat: {{ purchaseOrder.perusahaan?.alamatPerusahaan || '-' }}
-            </p>
-            <p class="mb-0">
-              Telepon: {{ purchaseOrder.perusahaan?.tlpPerusahaan || '-' }}
-            </p>
-            <p class="mb-0">
-              Email: {{ purchaseOrder.perusahaan?.emailPerusahaan || '-' }}
-            </p>
-            <p class="mb-0">
-              NPWP: {{ purchaseOrder.perusahaan?.npwpPerusahaan || '-' }}
-            </p>
-          </div>
-        </div>
-        
-        <!-- Invoice Header - Right -->
-        <div class="invoice-header text-end">
-          <h2 class="mb-4 text-capitalize fw-bold">PURCHASE ORDER</h2>
-          <table style="font-size: 12px; width: 100%;">
-            <tr>
-              <td style="text-align: right;">No. PO</td>
-              <td style="width: 20px;">:</td>
-              <td style="width: 50%;">{{ purchaseOrder.noPo }}</td>
-            </tr>
-            <tr>
-              <td style="text-align: right;">Tanggal</td>
-              <td style="width: 20px;">:</td>
-              <td style="width: 50%;">{{ new Date(purchaseOrder.date).toLocaleDateString('id-ID') }}</td>
-            </tr>
-            <tr>
-              <td style="text-align: right;">Term Of Payment</td>
-              <td style="width: 20px;">:</td>
-              <td style="width: 50%;">{{ purchaseOrder.termOfPayment || '30 Hari' }}</td>
-            </tr>
-          </table>
-        </div>
-      </div>
-
-      <hr class="my-6" />
+    <div :key="routeKey">
+    <CetakDocument
+      type="PURCHASE_ORDER"
+      :document-number="purchaseOrder?.noPo || ''"
+      :status="purchaseOrder?.status"
+      :company="purchaseOrder?.perusahaan"
+      :header-meta="headerMeta"
+      :loading="loading"
+      :error="error"
+      :not-found="!loading && !error && !purchaseOrder"
+    >
+    <template v-if="purchaseOrder">
 
              <!-- vendor Information Section -->
        <div class="vendor-info-section mb-6">
@@ -287,10 +227,8 @@
           </tbody>
         </table>
       </div>
-    </div>
-    <div v-else class="alert alert-danger m-6" role="alert">
-        Purchase Order tidak ditemukan.
-    </div>
+    </template>
+    </CetakDocument>
     </div>
 </template>
 
@@ -300,26 +238,30 @@
   })
   import { onMounted, onBeforeUnmount, computed, watch } from 'vue';
   import { usePurchaseOrderStore } from '~/stores/purchaseOrder';
-  import { usePerusahaanStore } from '~/stores/perusahaan';
   import { storeToRefs } from 'pinia';
   import { useRoute } from 'vue-router';
   import { useDynamicTitle } from '~/composables/useDynamicTitle'
   import { useImageUrl } from '~/composables/useImageUrl'
   
-  // Composables
   const { setDetailTitle } = useDynamicTitle()
-  const { getCompanyLogo, handleImageError, debugImageUrl } = useImageUrl()
+  const { handleImageError } = useImageUrl()
 
   const config             = useRuntimeConfig();
   const purchaseOrderStore = usePurchaseOrderStore();
-  const perusahaanStore    = usePerusahaanStore();
   const route              = useRoute();
   const formatRupiah       = useFormatRupiah();
   const toast              = useToast();
 
   const { purchaseOrder, loading, error } = storeToRefs(purchaseOrderStore);
 
-  useRegisterCetakDraftStatus(() => purchaseOrder.value?.status)
+  const headerMeta = computed(() => {
+    if (!purchaseOrder.value) return []
+    return [
+      { label: 'No. PO', value: purchaseOrder.value.noPo || '—' },
+      { label: 'Tanggal', value: purchaseOrder.value.date ? new Date(purchaseOrder.value.date).toLocaleDateString('id-ID') : '—' },
+      { label: 'Term Of Payment', value: purchaseOrder.value.termOfPayment || '30 Hari' },
+    ]
+  })
 
   // ✅ Computed key untuk force re-render saat route berubah (hanya untuk halaman ini)
   const routeKey = computed(() => `purchase-order-${route.query.id || 'new'}`);
@@ -451,167 +393,18 @@
 </script>
 
 <style>
-  /* Custom styles for print */
   @media print {
-    .no-print {
-      display: none !important;
-    }
-    
-    /* Hide alert info when printing */
-    .alert {
-      display: none !important;
-    }
-    
-    /* Allow table to break across pages */
-    .table-responsive {
-      page-break-inside: auto !important;
-    }
-    
-    .table-responsive table {
-      page-break-inside: auto !important;
-    }
-    
-    /* Keep table header on each page */
-    .table-responsive table thead {
-      display: table-header-group !important;
-      page-break-inside: avoid !important;
-    }
-    
-    /* Allow rows to break across pages */
-    .table-responsive table tbody tr {
-      page-break-inside: auto !important;
-    }
-    
-    /* Add more padding for continuation pages */
-    .table-responsive table tbody tr:first-child {
-      padding-top: 40px !important;
-    }
-    
-    /* Ensure proper spacing for table continuation */
-    .table-responsive {
-      margin-top: 0 !important;
-    }
-    
-    /* Add top margin for table when it continues on new page */
-    @page {
-      margin-top: 3mm !important;
-      margin-bottom: 15mm !important;
-    }
-    
-    /* Add extra padding for table rows that start on new page */
-    .table-responsive table tbody tr {
-      padding-top: 20px !important;
-    }
-    
-    /* Specific styling for table continuation */
-    .table-responsive table tbody tr:first-child td {
-      padding-top: 30px !important;
-    }
-    
-    /* Ensure proper spacing for all table cells */
-    .table-responsive table tbody tr td {
-      padding-top: 12px !important;
-      padding-bottom: 12px !important;
-      vertical-align: middle !important;
-    }
-    
-    /* Add margin for table when it starts on new page */
-    .table-responsive {
-      margin-top: 20px !important;
-    }
-    
-    /* Remove borders from customer info table */
-    .table-borderless td, 
+    .table-borderless td,
     .table-borderless th,
     .customer-info-table td,
-    .customer-info-table th {
-      border: none !important;
-    }
-
-    /* Remove borders from subtotal section */
-    .table-borderless .d-flex {
-      border: none !important;
-    }
-
-    /* Remove borders from catatan section */
-    .table-borderless p {
-      border: none !important;
-    }
-
-    /* Ensure only the main items table has borders */
-    .table-responsive.border table td,
-    .table-responsive.border table th {
-      border: none !important;
-    }
-
-    /* Remove borders from all other tables */
-    .table-responsive:not(.border) table td,
-    .table-responsive:not(.border) table th,
-    .summary-table td,
-    .summary-table th {
-      border: none !important;
-    }
-
-    /* Override the general table border rule for specific sections */
+    .customer-info-table th,
     .table-borderless,
     .table-borderless * {
       border: none !important;
     }
 
-    /* Ensure proper layout in print */
-    .logo-section,
-    .invoice-header {
-      max-width: 50% !important;
-    }
-
-    /* Signature section print styles */
     .d-flex.justify-content-between {
       page-break-inside: avoid !important;
-      margin-top: 40px !important;
-    }
-
-    /* Ensure signature columns are properly spaced */
-    .d-flex.justify-content-between > div {
-      width: 45% !important;
-      min-width: 200px !important;
-    }
-
-    /* Signature line styling for print */
-    .d-flex.justify-content-between .border-top {
-      border-top: 1px solid #000 !important;
-      min-width: 150px !important;
-    }
-
-    /* Ensure proper font sizes in print */
-    .d-flex.justify-content-between p {
-      font-size: 12px !important;
-      line-height: 1.4 !important;
-    }
-
-    /* Enhanced spacing for signature section in print */
-    .d-flex.justify-content-between .mb-6 {
-      margin-bottom: 2rem !important;
-    }
-
-    .d-flex.justify-content-between .mt-8 {
-      margin-top: 3rem !important;
-    }
-
-    .d-flex.justify-content-between .pt-6 {
-      padding-top: 2rem !important;
-    }
-
-    /* Logo styling for print */
-    .logo-section img {
-      max-height: 60px !important;
-      max-width: 200px !important;
-      object-fit: contain !important;
-    }
-
-    /* Ensure logo is visible in print */
-    .app-brand-logo img {
-      -webkit-print-color-adjust: exact !important;
-      print-color-adjust: exact !important;
     }
   }
 </style> 

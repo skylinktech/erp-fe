@@ -1,46 +1,17 @@
 <template>
-  <div class="cetak-payment-request-root">
-    <div v-if="loading" class="text-center p-6">
-      <ProgressSpinner
-        style="width: 50px; height: 50px"
-        strokeWidth="4"
-        fill="transparent"
-        animationDuration="1s"
-      />
-      <div class="mt-3 text-muted">Memuat data...</div>
-    </div>
-    <div v-else-if="error" class="alert alert-danger m-6">{{ error.message }}</div>
-    <div v-else-if="paymentRequest" class="p-2 cetak-payment-request-doc position-relative">
-    <button
-      type="button"
-      class="btn btn-primary no-print cetak-payment-request-print-btn"
-      aria-label="Print"
-      @click="onPrint"
-    >
-      <i class="ri-printer-line me-1"></i>
-      Print
-    </button>
-
-    <div class="d-flex justify-content-between align-items-center mb-4 cetak-payment-request-header">
-      <div class="d-flex align-items-center gap-2 logo-section">
-        <img
-          v-if="perusahaan"
-          :src="getCompanyLogo(perusahaan.logoPerusahaan)"
-          alt="Logo Perusahaan"
-          class="cetak-payment-request-logo"
-          @error="(e) => handleImageError(e, '/img/branding/logo.png')"
-          style="height: 90px; max-width: 200px; object-fit: contain;"
-        />
-        <h2 class="app-brand-logo demo fw-bold mb-0">SKYLINK</h2>
-      </div>
-      <div class="cetak-payment-request-title-wrap text-end">
-        <h1 class="cetak-payment-request-title fw-bold mb-0">{{ documentTitle }}</h1>
-        <p class="mb-0" style="font-size: 14px;">NO. PRQ: {{ getPaymentRequestNo(paymentRequest) || '-' }}</p>
-        <p class="mb-0 text-muted" style="font-size: 12px;">{{ requestTypeLabel }}</p>
-      </div>
-    </div>
-
-    <hr class="cetak-payment-request-hr my-4" />
+  <CetakDocument
+    type="PAYMENT_REQUEST"
+    :title="documentTitle"
+    :subtitle="requestTypeLabel"
+    :document-number="paymentRequest ? (getPaymentRequestNo(paymentRequest) || '') : ''"
+    :status="paymentRequest?.status"
+    :generated-at="printedAt"
+    :loading="loading"
+    :error="error"
+    :not-found="!loading && !error && !paymentRequest"
+    show-number-under-title
+  >
+    <template v-if="paymentRequest">
 
     <div class="d-flex justify-content-between mb-4" style="font-size: 12px;">
       <div class="text-start">
@@ -249,12 +220,10 @@
     </div>
 
     <div v-if="showSignatureSection" class="signature-section mt-5">
-      <h2 class="text-center fw-bold mb-3" style="font-size: 16px;">LEMBAR PENGESAHAN</h2>
-      <p class="text-center mb-0" style="font-size: 12px; max-width: 720px; margin-left: auto; margin-right: auto;">
-        Dokumen Payment Request ini telah disetujui dan ditandatangani secara digital.
-      </p>
-      <MultiSignatureDisplay
+      <CetakSignature
         :key="'sig-' + (paymentRequest.id ?? '')"
+        heading="LEMBAR PENGESAHAN"
+        caption="Dokumen Payment Request ini telah disetujui dan ditandatangani secara digital."
         document-type="payment-requests"
         :document-id="paymentRequest.id != null ? String(paymentRequest.id) : ''"
         :columns="4"
@@ -265,15 +234,8 @@
       />
     </div>
 
-    <div class="cetak-payment-request-page-footer">
-      <span>{{ getPaymentRequestNo(paymentRequest) || 'PRQ' }} — Skylink</span>
-      <span>{{ printedAt }}</span>
-    </div>
-    </div>
-    <div v-else class="alert alert-danger m-6" role="alert">
-      Payment Request tidak ditemukan.
-    </div>
-  </div>
+    </template>
+  </CetakDocument>
 </template>
 
 <script setup>
@@ -298,29 +260,18 @@ import {
   getRequestTypeLabel,
   formatDurationDaysLabel,
 } from '~/stores/payment-request'
-import { usePerusahaanStore } from '~/stores/perusahaan'
 import { storeToRefs } from 'pinia'
 import { useRoute } from 'vue-router'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import { useImageUrl } from '~/composables/useImageUrl'
-import MultiSignatureDisplay from '~/components/MultiSignatureDisplay.vue'
 
 const { setDetailTitle } = useDynamicTitle()
-const { getCompanyLogo, handleImageError, getAttachmentUrl } = useImageUrl()
+const { getAttachmentUrl } = useImageUrl()
 
 const paymentRequestStore = usePaymentRequestStore()
-const perusahaanStore = usePerusahaanStore()
 const route = useRoute()
 
 const { paymentRequest, loading, error } = storeToRefs(paymentRequestStore)
-
-useRegisterCetakDraftStatus(() => paymentRequest.value?.status)
-
-const perusahaan = computed(() => {
-  const list = perusahaanStore.perusahaans
-  if (list && list.length > 0) return list[0]
-  return null
-})
 
 const sourceRows = computed(() => getPaymentRequestSourceItems(paymentRequest.value))
 const otherRows = computed(() => getPaymentRequestOtherCharges(paymentRequest.value))
@@ -470,10 +421,6 @@ function formatRupiahNum(val) {
   )
 }
 
-function onPrint() {
-  window.print()
-}
-
 function formatDate(val) {
   if (!val) return '-'
   try {
@@ -496,7 +443,6 @@ onMounted(async () => {
   const id = route.query.id
   if (id) {
     try {
-      await perusahaanStore.fetchPerusahaans()
       await paymentRequestStore.getPaymentRequestDetails(String(id))
       if (paymentRequest.value) {
         const typeLabel = getRequestTypeLabel(
@@ -514,45 +460,8 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.cetak-payment-request-print-btn {
-  position: fixed;
-  top: 12px;
-  right: 25px;
-  z-index: 1000;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  color: #fff !important;
-}
-.cetak-payment-request-print-btn:hover {
-  color: #adb5bd !important;
-}
-.cetak-payment-request-print-btn i {
-  color: inherit !important;
-}
-.cetak-payment-request-header {
-  min-height: 60px;
-  margin-top: 40px;
-}
-.logo-section {
-  flex-shrink: 0;
-}
-.cetak-payment-request-logo {
-  height: 60px;
-  max-width: 200px;
-  object-fit: contain;
-}
-.cetak-payment-request-title-wrap {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  justify-content: flex-start;
-}
-.cetak-payment-request-title {
-  font-size: 1.5rem;
-  letter-spacing: 0.02em;
-}
 .cetak-payment-request-section-header {
-  background-color: #4275f6;
+  background-color: var(--print-table-header, #3b4056);
   color: #fff !important;
   padding: 8px 12px;
   font-size: 12px;
@@ -560,21 +469,16 @@ onMounted(async () => {
   margin-bottom: 0;
 }
 .cetak-payment-request-table {
-  border-color: transparent;
-}
-.cetak-payment-request-table td,
-.cetak-payment-request-table th {
-  border: none !important;
+  border-color: var(--print-table-outline, #e5e7eb);
 }
 .cetak-payment-request-table thead th {
   white-space: nowrap;
-  background-color: #4275f6;
-  border: none !important;
+  background-color: var(--print-table-header, #3b4056);
   color: #fff;
 }
 .cetak-payment-request-table tbody tr:nth-child(odd) > * {
-  background-color: #f5f5f5 !important;
-  --bs-table-bg-type: #f5f5f5;
+  background-color: var(--print-stripe, #f4f5f7) !important;
+  --bs-table-bg-type: var(--print-stripe, #f4f5f7);
   box-shadow: none !important;
 }
 .cetak-payment-request-table tbody tr:nth-child(even) > * {
@@ -586,11 +490,11 @@ onMounted(async () => {
   color: #fff;
 }
 .cetak-payment-request-grand-total td {
-  background-color: #4275f6;
+  background-color: var(--print-table-header, #3b4056);
   color: #fff !important;
 }
 .cetak-payment-request-terms-header {
-  background-color: #4275f6;
+  background-color: var(--print-table-header, #3b4056);
   color: #fff !important;
   padding: 8px 12px;
   font-size: 12px;
@@ -601,67 +505,12 @@ onMounted(async () => {
   padding: 12px;
   min-height: 60px;
 }
-.cetak-payment-request-page-footer {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 2rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid #f5f5f5;
-  font-size: 11px;
-  color: #6c757d;
-}
 </style>
 
 <style>
 @media print {
-  .cetak-payment-request-hr {
-    border: none !important;
-    border-top: 1pt solid #4275f6 !important;
-    height: 0 !important;
-    margin: 0.4rem 0 !important;
-    padding: 0 !important;
-  }
-  .no-print {
-    display: none !important;
-  }
-  .alert {
-    display: none !important;
-  }
-  .cetak-payment-request-doc {
-    padding: 0.5rem !important;
-    padding-top: 0.25rem !important;
-    font-size: 12px;
-  }
-  .cetak-payment-request-doc .mb-4 {
-    margin-bottom: 0.5rem !important;
-  }
-  .cetak-payment-request-header {
-    display: flex !important;
-    justify-content: space-between !important;
-    margin: 0 !important;
-  }
-  .cetak-payment-request-logo {
-    height: 60px !important;
-    max-width: 200px !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-  .cetak-payment-request-title {
-    font-size: 1.35rem !important;
-  }
-  .cetak-payment-request-table {
-    border-collapse: collapse;
-  }
-  .cetak-payment-request-table td,
-  .cetak-payment-request-table th {
-    border: none !important;
-    padding: 6px 8px !important;
-  }
-  .cetak-payment-request-table thead th {
-    border: none !important;
-  }
   .cetak-payment-request-table tbody tr:nth-child(odd) > * {
-    background-color: #f5f5f5 !important;
+    background-color: var(--print-stripe, #f4f5f7) !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
@@ -670,14 +519,11 @@ onMounted(async () => {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
-  .cetak-payment-request-description-body {
-    border: none !important;
-  }
   .cetak-payment-request-table thead th,
   .cetak-payment-request-section-header,
   .cetak-payment-request-grand-total td,
   .cetak-payment-request-terms-header {
-    background-color: #4275f6 !important;
+    background-color: var(--print-table-header, #3b4056) !important;
     color: #fff !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;

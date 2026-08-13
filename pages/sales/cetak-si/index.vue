@@ -1,46 +1,13 @@
 <template>
-  <div v-if="loading" class="text-center p-6">
-    <ProgressSpinner
-      style="width: 50px; height: 50px"
-      strokeWidth="4"
-      fill="transparent"
-      animationDuration="1s"
-    />
-    <div class="mt-3 text-muted">Memuat data...</div>
-  </div>
-  <div v-else-if="error" class="alert alert-danger m-6">{{ error.message }}</div>
-  <div v-else-if="siteInvest" class="p-2 cetak-si-doc cetak-si-doc-with-print position-relative">
-    <!-- Tombol Print: pojok kiri atas, disembunyikan saat cetak -->
-    <button
-      type="button"
-      class="btn btn-primary no-print cetak-si-print-btn"
-      aria-label="Print"
-      @click="onPrint"
-    >
-      <i class="ri-printer-line me-1"></i>
-      Print
-    </button>
-    <!-- Header: Logo kiri, Judul kanan -->
-    <div class="d-flex justify-content-between align-items-start mb-4 cetak-si-header">
-      <div v-if="perusahaan" class="logo-section">
-        <img
-          :src="getCompanyLogo(perusahaan.logoPerusahaan)"
-          alt="Logo Perusahaan"
-          class="cetak-si-logo"
-          @error="(e) => handleImageError(e, '/img/branding/logo.png')"
-          style="height: 90px; max-width: 200px; object-fit: contain;"
-        >
-      </div>
-      <div class="mx-2 text-center align-self-center">
-        <h2 class="app-brand-logo demo fw-bold mt-3">SKYLINK</h2>
-      </div>
-      <div class="cetak-si-title-wrap text-end mt-3">
-        <h1 class="cetak-si-title fw-bold mb-0">SITE INVESTMENT</h1>
-      </div>
-    </div>
-
-    <hr class="cetak-si-hr my-4">
-
+  <CetakDocument
+    type="SITE_INVESTMENT"
+    :document-number="siteInvest?.siNumber || siteInvest?.si_number || ''"
+    :status="siteInvest?.status"
+    :loading="loading"
+    :error="error"
+    :not-found="!loading && !error && !siteInvest"
+  >
+    <template v-if="siteInvest">
     <!-- Header: info kiri & kanan -->
     <div class="d-flex justify-content-between mb-4" style="font-size: 12px;">
       <div class="text-start">
@@ -189,31 +156,21 @@
         Dokumen perhitungan Site Investment (SI) ini telah disusun berdasarkan data aktual dan asumsi keuangan yang berlaku pada saat penyusunan. Dokumen ini digunakan sebagai dasar evaluasi kelayakan serta pengambilan keputusan manajerial terkait pelaksanaan project.
       </p>
 
-      <!-- Tanda tangan digital: multi-signature atau legacy single QR -->
-      <div v-if="showSignatureSection" class="signature-section mt-4">
-        <MultiSignatureDisplay
-          document-type="site-investments"
-          :document-id="siteInvest.id"
-          title="Verifikasi Digital Dokumen"
-          :columns="4"
-          :qr-size="96"
-          :compact="true"
-          :legacy-signature-token="siteInvest.signatureToken || undefined"
-          :legacy-signer-name="legacySignerName"
-          :legacy-signer-title="legacySignerTitle"
-        />
-      </div>
+      <CetakSignature
+        v-if="showSignatureSection"
+        document-type="site-investments"
+        :document-id="siteInvest.id"
+        :columns="4"
+        :qr-size="96"
+        :compact="true"
+        :legacy-signature-token="siteInvest.signatureToken || undefined"
+        :legacy-signer-name="legacySignerName"
+        :legacy-signer-title="legacySignerTitle"
+      />
     </div>
 
-    <!-- Footer halaman: kiri = Site Investment (no_si) Skylink, kanan = Halaman 1/1 -->
-    <div class="cetak-si-page-footer">
-      <span class="cetak-si-footer-left">Site Investment ({{ siteInvest.siNumber || siteInvest.si_number || '-' }}) Skylink</span>
-      <span class="cetak-si-footer-right">Halaman 1/1</span>
-    </div>
-  </div>
-  <div v-else class="alert alert-danger m-6" role="alert">
-    Site Investment tidak ditemukan.
-  </div>
+    </template>
+  </CetakDocument>
 </template>
 
 <script setup>
@@ -222,29 +179,16 @@ definePageMeta({
 })
 import { onMounted, computed } from 'vue'
 import { useSiteInvestStore } from '~/stores/site-invest'
-import { usePerusahaanStore } from '~/stores/perusahaan'
 import { storeToRefs } from 'pinia'
 import { useRoute } from 'vue-router'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
-import { useImageUrl } from '~/composables/useImageUrl'
-import MultiSignatureDisplay from '~/components/MultiSignatureDisplay.vue'
 
 const { setDetailTitle } = useDynamicTitle()
-const { getCompanyLogo, handleImageError } = useImageUrl()
 
 const siteInvestStore = useSiteInvestStore()
-const perusahaanStore = usePerusahaanStore()
 const route = useRoute()
-const formatRupiah = useFormatRupiah()
 
 const { siteInvest, loading, error } = storeToRefs(siteInvestStore)
-
-useRegisterCetakDraftStatus(() => siteInvest.value?.status)
-
-const perusahaan = computed(() => {
-  const list = perusahaanStore.perusahaans
-  return list && list.length > 0 ? list[0] : null
-})
 
 // Nomor dengan pemisah ribuan (untuk tabel)
 function formatRupiahNum (val) {
@@ -252,10 +196,6 @@ function formatRupiahNum (val) {
   const n = typeof val === 'string' ? Number(val.replace(/[^0-9.-]/g, '')) : Number(val)
   if (Number.isNaN(n)) return '-'
   return new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0, minimumFractionDigits: 0 }).format(Math.round(n))
-}
-
-function onPrint () {
-  window.print()
 }
 
 function formatDate (val) {
@@ -501,7 +441,6 @@ onMounted(async () => {
   const id = route.query.id
   if (id) {
     try {
-      await perusahaanStore.fetchPerusahaans()
       await siteInvestStore.getSiteInvestDetails(String(id))
       if (siteInvest.value) {
         setDetailTitle('Cetak Site Investment - ' + siteInvest.value.siNumber)
@@ -514,176 +453,14 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.cetak-si-print-btn {
-  position: fixed;
-  top: 12px;
-  right: 25px;
-  z-index: 1000;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  color: #fff !important;
-}
-.cetak-si-print-btn:hover {
-  color: #adb5bd !important;
-}
-.cetak-si-print-btn i {
-  color: inherit !important;
-}
-.cetak-si-header {
-  min-height: 60px;
-  margin-top: 40px;
-}
-.logo-section {
-  flex-shrink: 0;
-}
-.cetak-si-logo {
-  height: 60px;
-  max-width: 200px;
-  object-fit: contain;
-}
-.cetak-si-title-wrap {
-  flex: 1;
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-end;
-}
-.cetak-si-title {
-  font-size: 1.5rem;
-  letter-spacing: 0.02em;
-}
-.cetak-si-table thead th {
+.cetak-si-table thead th,
+.cetak-si-summary thead th {
   white-space: nowrap;
-  background-color: #4275f6;
-}
-.table-head-white {
+  background-color: var(--print-table-header, #3b4056);
   color: #fff;
 }
-.cetak-si-summary tbody td {
-  vertical-align: middle;
-}
-/* Hanya baris GRAND TOTAL: background ungu dan font putih */
 .cetak-si-grand-total td {
-  background-color: #4275f6;
+  background-color: var(--print-table-header, #3b4056);
   color: #fff !important;
-}
-
-/* Footer halaman: kiri dan kanan bawah */
-.cetak-si-page-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 2rem;
-  padding: 0.5rem 0;
-  font-size: 11px;
-  color: #666;
-  border-top: 1px solid #e0e0e0;
-}
-.cetak-si-footer-left { text-align: left; }
-.cetak-si-footer-right { text-align: right; }
-</style>
-
-<style>
-@media print {
-  /* Gunakan pt agar garis tampil di print (1px sering hilang saat cetak) */
-  .cetak-si-hr {
-    border: none !important;
-    border-top: 1pt solid #000 !important;
-    height: 0 !important;
-    margin: 0.4rem 0 !important;
-    padding: 0 !important;
-  }
-  .no-print {
-    display: none !important;
-  }
-  .alert {
-    display: none !important;
-  }
-  .cetak-si-doc {
-    padding: 0.5rem !important;
-    padding-top: 0.25rem !important;
-    padding-bottom: 2.5rem !important;
-    font-size: 12px;
-  }
-  /* Rapatkan margin antar section agar TTD digital muat di halaman pertama */
-  .cetak-si-doc .mb-4 {
-    margin-bottom: 0.5rem !important;
-  }
-  .cetak-si-footer {
-    margin-top: 0.75rem !important;
-    padding-top: 0.25rem !important;
-  }
-  .cetak-si-footer h2 {
-    margin-bottom: 0.35rem !important;
-    margin-top: 0 !important;
-    font-size: 14px !important;
-  }
-  .cetak-si-footer p {
-    margin-bottom: 0.2rem !important;
-    line-height: 1.45 !important;
-  }
-  .cetak-si-footer .signature-section {
-    margin-top: 0.4rem !important;
-  }
-  .cetak-si-header {
-    display: flex !important;
-    justify-content: space-between !important;
-    margin: 0 !important;
-  }
-  .cetak-si-logo {
-    height: 60px !important;
-    max-width: 200px !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-  .cetak-si-title-wrap {
-    text-align: right !important;
-  }
-  .cetak-si-title {
-    font-size: 1.35rem !important;
-  }
-  .cetak-si-table,
-  .cetak-si-summary {
-    border-collapse: collapse;
-  }
-  .cetak-si-table td,
-  .cetak-si-table th,
-  .cetak-si-summary td,
-  .cetak-si-summary th {
-    border: 1pt solid #4275f6 !important;
-    padding: 6px 8px !important;
-  }
-  .table-dark.table-head-white th {
-    background-color: #4275f6 !important;
-    color: #fff !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-  .bg-light {
-    background-color: #f8f9fa !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-  .table-light td {
-    background-color: #f8f9fa !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-  .cetak-si-grand-total td {
-    background-color: #4275f6 !important;
-    color: #fff !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-  .cetak-si-page-footer {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    margin: 0;
-    padding: 0.35rem 1rem;
-    font-size: 10px;
-    color: #333;
-    border-top: 1pt solid #999;
-    background: #fff;
-  }
 }
 </style>

@@ -1,37 +1,15 @@
 <template>
-  <div v-if="loading" class="text-center p-6">
-    <ProgressSpinner style="width: 50px; height: 50px" stroke-width="4" fill="transparent" />
-    <div class="mt-3 text-muted">Memuat data...</div>
-  </div>
-  <div v-else-if="error" class="alert alert-danger m-6">{{ error }}</div>
-  <div v-else-if="sppd" class="p-2 cetak-pd-doc position-relative">
-    <button type="button" class="btn btn-primary no-print cetak-pd-print-btn" @click="onPrint">
-      <i class="ri-printer-line me-1"></i> Print
-    </button>
-
-    <div class="cetak-pd-header">
-      <div class="cetak-pd-header-left">
-        <div v-if="perusahaan" class="cetak-pd-logo-wrap">
-          <img
-            :src="getCompanyLogo(perusahaan.logoPerusahaan ?? perusahaan.logo_perusahaan)"
-            alt="Logo Perusahaan"
-            class="cetak-pd-logo"
-            @error="(e) => handleImageError(e, '/img/branding/logo.png')"
-          />
-        </div>
-        <div class="cetak-pd-brand-block">
-          <h2 class="cetak-pd-brand mb-0">SKYLINK</h2>
-          <p v-if="companyName" class="cetak-pd-company-name mb-0">{{ companyName }}</p>
-        </div>
-      </div>
-      <div class="cetak-pd-header-right">
-        <h1 class="cetak-pd-title fw-bold mb-0">SURAT PERINTAH PERJALANAN DINAS</h1>
-        <p class="cetak-pd-subtitle mb-0">(SPPD)</p>
-      </div>
-    </div>
-
-    <hr class="cetak-pd-hr my-4" />
-
+  <CetakDocument
+    type="PERJALANAN_DINAS"
+    :document-number="sppd?.nomorSppd || sppd?.nomor_sppd || ''"
+    :status="sppd?.status"
+    :company="perusahaan"
+    :generated-at="printedAt"
+    :loading="loading"
+    :error="error"
+    :not-found="!loading && !error && !sppd"
+  >
+    <template v-if="sppd">
     <div class="d-flex justify-content-between mb-3" style="font-size: 12px">
       <div>
         <p class="mb-1"><strong>No. SPPD :</strong> {{ sppd.nomorSppd ?? sppd.nomor_sppd }}</p>
@@ -111,12 +89,8 @@
       :is-approved="isApproved"
       :approval-logs="approvalRows"
     />
-
-    <div class="cetak-pd-page-footer">
-      <span>SPPD ({{ sppd.nomorSppd ?? sppd.nomor_sppd }}) — Skylink</span>
-      <span>{{ printedAt }}</span>
-    </div>
-  </div>
+    </template>
+  </CetakDocument>
 </template>
 
 <script setup lang="ts">
@@ -124,7 +98,6 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useNuxtApp } from '#app'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
-import { useImageUrl } from '~/composables/useImageUrl'
 import { apiFetch } from '~/utils/apiFetch'
 import HrdCetakSignatureBlock from '~/components/hrd/HrdCetakSignatureBlock.vue'
 import {
@@ -139,19 +112,12 @@ import {
 definePageMeta({ layout: 'cetak', middleware: ['auth', 'check-permission'] })
 
 const { setDetailTitle } = useDynamicTitle()
-const { getCompanyLogo, handleImageError } = useImageUrl()
 const route = useRoute()
 
 const loading = ref(true)
 const error = ref<string | null>(null)
 const sppd = ref<Record<string, any> | null>(null)
 const perusahaan = ref<Record<string, any> | null>(null)
-
-useRegisterCetakDraftStatus(() => sppd.value?.status)
-
-const companyName = computed(
-  () => perusahaan.value?.nmPerusahaan ?? perusahaan.value?.nm_perusahaan ?? ''
-)
 
 const pegawaiName = computed(() => sppd.value?.pegawai?.nmPegawai ?? sppd.value?.pegawai?.nm_pegawai ?? '-')
 const pegawaiNik = computed(() => sppd.value?.pegawai?.nikPegawai ?? sppd.value?.pegawai?.nik_pegawai ?? '-')
@@ -189,9 +155,6 @@ const approvalRows = computed(() => {
 })
 const printedAt = computed(() => new Date().toLocaleString('id-ID'))
 
-function onPrint() {
-  window.print()
-}
 function formatDate(v: string) {
   if (!v) return '-'
   return new Date(v).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
@@ -232,81 +195,8 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.cetak-pd-print-btn {
-  position: fixed;
-  top: 12px;
-  right: 25px;
-  z-index: 1000;
-}
-
-.cetak-pd-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
-  min-height: 72px;
-}
-
-.cetak-pd-header-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex: 1;
-  min-width: 0;
-}
-
-.cetak-pd-logo-wrap {
-  flex-shrink: 0;
-}
-
-.cetak-pd-logo {
-  display: block;
-  height: 56px;
-  width: auto;
-  max-width: 120px;
-  object-fit: contain;
-}
-
-.cetak-pd-brand {
-  font-size: 1.25rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  line-height: 1.2;
-}
-
-.cetak-pd-company-name {
-  font-size: 11px;
-  color: #666;
-  margin-top: 2px;
-}
-
-.cetak-pd-header-right {
-  text-align: right;
-  flex-shrink: 0;
-  max-width: 48%;
-}
-
-.cetak-pd-title {
-  font-size: 1.05rem;
-  line-height: 1.35;
-  letter-spacing: 0.01em;
-}
-
-.cetak-pd-subtitle {
-  font-size: 11px;
-  color: #666;
-  margin-top: 2px;
-}
-
-.cetak-pd-hr {
-  border: none;
-  border-top: 1px solid #4275f6;
-  opacity: 1;
-}
-
 .cetak-pd-section-header {
-  background-color: #4275f6;
+  background-color: var(--print-table-header, #3b4056);
   color: #fff !important;
   padding: 8px 12px;
   font-size: 12px;
@@ -314,80 +204,14 @@ onMounted(async () => {
 }
 
 .cetak-pd-th {
-  background-color: #4275f6 !important;
+  background-color: var(--print-table-header, #3b4056) !important;
   color: #fff !important;
   font-weight: 600;
-  border-color: #4275f6 !important;
+  border-color: transparent !important;
 }
 
 .cetak-pd-table thead th {
-  background-color: #4275f6 !important;
+  background-color: var(--print-table-header, #3b4056) !important;
   color: #fff !important;
-}
-
-.cetak-pd-page-footer {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 2rem;
-  padding-top: 0.5rem;
-  font-size: 10px;
-  border-top: 1px solid #ccc;
-}
-</style>
-
-<style>
-@media print {
-  .no-print {
-    display: none !important;
-  }
-
-  .cetak-pd-doc {
-    padding: 0.5rem !important;
-    font-size: 12px;
-  }
-
-  .cetak-pd-header {
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    margin-bottom: 0.75rem !important;
-    page-break-inside: avoid;
-  }
-
-  .cetak-pd-logo {
-    height: 52px !important;
-    max-width: 110px !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-
-  .cetak-pd-title {
-    font-size: 1rem !important;
-  }
-
-  .cetak-pd-hr {
-    border: none !important;
-    border-top: 1pt solid #4275f6 !important;
-    margin: 0.5rem 0 !important;
-  }
-
-  .cetak-pd-table {
-    border-collapse: collapse;
-  }
-
-  .cetak-pd-table td,
-  .cetak-pd-table th {
-    border: 1pt solid #4275f6 !important;
-    padding: 6px 8px !important;
-  }
-
-  .cetak-pd-section-header,
-  .cetak-pd-th,
-  .cetak-pd-table thead th {
-    background-color: #4275f6 !important;
-    color: #fff !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
 }
 </style>

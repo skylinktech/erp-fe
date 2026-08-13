@@ -193,6 +193,8 @@ const props = defineProps({
         'work-order-requests',
         'arfs',
         'payment-requests',
+        // Print-only allowlist so BA cetak can fetch existing signatures.
+        'berita-acara',
       ].includes(value),
   },
   documentId: {

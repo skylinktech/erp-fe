@@ -1,21 +1,24 @@
 <template>
-  <div class="cetak-layout">
+  <div
+    class="cetak-layout"
+    :data-print-paper="paper"
+    :data-print-orientation="orientation"
+  >
     <!--
       position: fixed → browser repeats overlay on every printed page.
       Outside .invoice-print so global print color resets do not mute it.
     -->
     <div
-      v-if="showDraftWatermark"
+      v-if="watermarkLabel"
       class="cetak-draft-watermark"
       aria-hidden="true"
     >
-      <span class="cetak-draft-watermark__text">DRAFT</span>
+      <span class="cetak-draft-watermark__text">{{ watermarkLabel }}</span>
     </div>
 
-    <div class="invoice-print p-6">
+    <div class="invoice-print cetak-print-root p-6">
       <Head>
         <Title>{{ title ? title + ' - Sinergi Innovate Pratama' : 'Sinergi Innovate Pratama' }}</Title>
-        <Link rel="stylesheet" href="/vendor/css/pages/app-invoice-print.css" />
       </Head>
       <slot />
     </div>
@@ -23,11 +26,14 @@
 </template>
 
 <script setup>
-import { useCetakDraftWatermarkVisible } from '~/composables/useCetakDraftWatermark'
+import '~/assets/css/cetak.css'
+import { useCetakWatermarkVisible } from '~/composables/useCetakWatermark'
 
 const route = useRoute()
 const title = route.meta.title
-const showDraftWatermark = useCetakDraftWatermarkVisible()
+const watermarkLabel = useCetakWatermarkVisible()
+const paper = useCetakPaper()
+const orientation = useCetakOrientation()
 </script>
 
 <style>

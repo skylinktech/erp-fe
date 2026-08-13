@@ -71,13 +71,14 @@ export default defineNuxtConfig({
         pathPrefix: false,
       },
       {
+        path: '~/components/cetak',
+        pathPrefix: false,
+      },
+      {
         path: '~/components',
-        ignore: ['list/**'],
+        ignore: ['list/**', 'cetak/**'],
       },
     ],
-  },
-  build: {
-    transpile: ['primevue'],
   },
 
   runtimeConfig: {

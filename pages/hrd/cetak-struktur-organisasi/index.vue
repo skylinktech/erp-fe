@@ -1,40 +1,14 @@
 <template>
-  <div v-if="loading" class="text-center p-6">
-    <div class="spinner-border text-primary" role="status">
-      <span class="visually-hidden">Memuat...</span>
-    </div>
-    <div class="mt-3 text-muted">Memuat data...</div>
-  </div>
-  <div v-else-if="error" class="alert alert-danger m-6">{{ error }}</div>
-  <div v-else class="org-print-doc position-relative">
-    <button
-      type="button"
-      class="btn btn-primary no-print org-print-btn"
-      aria-label="Print"
-      @click="onPrint"
-    >
-      <i class="ri-printer-line me-1"></i>
-      Print
-    </button>
-
-    <header class="org-print-header">
-      <div class="org-print-header-left">
-        <h1 class="org-print-title">STRUKTUR ORGANISASI</h1>
-        <p class="org-print-subtitle">{{ companySubtitle }}</p>
-        <p v-if="filterSummary" class="org-print-filter">Filter: {{ filterSummary }}</p>
-      </div>
-      <div class="org-print-header-right">
-        <img
-          v-if="perusahaan"
-          :src="getCompanyLogo(perusahaan.logoPerusahaan ?? perusahaan.logo_perusahaan)"
-          alt="Logo"
-          class="org-print-logo"
-          @error="(e) => handleImageError(e, '/img/branding/logo.png')"
-        />
-        <p class="org-print-company">{{ companyName }}</p>
-      </div>
-    </header>
-
+  <CetakDocument
+    type="STRUKTUR_ORGANISASI"
+    :subtitle="companySubtitle"
+    :header-note="filterSummary ? `Filter: ${filterSummary}` : ''"
+    :company="perusahaan"
+    :generated-at="printedAt"
+    :loading="loading"
+    :error="error"
+    :not-found="false"
+  >
     <div v-if="!hasChartData" class="org-print-empty">
       Tidak ada data struktur organisasi untuk filter yang dipilih.
     </div>
@@ -107,12 +81,7 @@
         ></div>
       </template>
     </div>
-
-    <footer class="org-print-footer">
-      <span>{{ companyName }} — Struktur Organisasi</span>
-      <span>{{ printedAt }}</span>
-    </footer>
-  </div>
+  </CetakDocument>
 </template>
 
 <script setup lang="ts">
@@ -142,7 +111,7 @@ type ExecutiveNode = {
 }
 
 const { setDetailTitle } = useDynamicTitle()
-const { getCompanyLogo, getUserAvatar, handleImageError } = useImageUrl()
+const { getUserAvatar, handleImageError } = useImageUrl()
 const route = useRoute()
 
 const loading = ref(true)
@@ -220,10 +189,6 @@ function visibleJabatans(level: OrgStructureLevelDto): OrgStructureJabatan[] {
   return withPegawai.length > 0 ? withPegawai : level.jabatans
 }
 
-function onPrint() {
-  window.print()
-}
-
 async function resolveFilterLabels() {
   const { $api } = useNuxtApp()
   try {
@@ -295,75 +260,16 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.org-print-doc {
+.oc-chart,
+.org-print-empty {
   --oc-navy: #1e3348;
   --oc-navy-light: #3d5166;
   --oc-peach: #f5c4a8;
   --oc-peach-border: #e8b090;
   --oc-line: #4a5568;
   --oc-v-gap: 24px;
-  background: #fff;
-  padding: 1.5rem 2rem 3rem;
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   color: var(--oc-navy);
-  min-height: 100vh;
-}
-
-.org-print-btn {
-  position: fixed;
-  top: 12px;
-  right: 25px;
-  z-index: 1000;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  color: #fff !important;
-}
-
-.org-print-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 2rem;
-  padding-top: 2rem;
-}
-
-.org-print-title {
-  font-size: 2.75rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  line-height: 1.05;
-  margin: 0 0 0.35rem;
-  text-transform: uppercase;
-}
-
-.org-print-subtitle {
-  font-size: 1.05rem;
-  color: var(--oc-navy-light);
-  margin: 0;
-}
-
-.org-print-filter {
-  font-size: 0.75rem;
-  color: #888;
-  margin: 0.5rem 0 0;
-}
-
-.org-print-header-right {
-  text-align: center;
-  flex-shrink: 0;
-}
-
-.org-print-logo {
-  width: 72px;
-  height: 72px;
-  object-fit: contain;
-  display: block;
-  margin: 0 auto 0.4rem;
-}
-
-.org-print-company {
-  font-size: 0.95rem;
-  font-weight: 600;
-  margin: 0;
 }
 
 .org-print-empty {
@@ -707,50 +613,10 @@ onMounted(async () => {
 .oc-item-branch {
   min-width: 150px;
 }
-
-.org-print-footer {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 2.5rem;
-  padding-top: 0.5rem;
-  font-size: 0.65rem;
-  color: #888;
-  border-top: 1px solid #ddd;
-}
 </style>
 
 <style>
 @media print {
-  @page {
-    size: A4 landscape;
-    margin: 10mm;
-  }
-
-  body,
-  .invoice-print {
-    background: #fff !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-
-  .no-print {
-    display: none !important;
-  }
-
-  .org-print-doc {
-    padding: 0 !important;
-    min-height: auto !important;
-  }
-
-  .org-print-header {
-    padding-top: 0 !important;
-    margin-bottom: 1.25rem !important;
-  }
-
-  .org-print-title {
-    font-size: 2rem !important;
-  }
-
   .oc-card-dept {
     background: #f5c4a8 !important;
     -webkit-print-color-adjust: exact;
@@ -761,15 +627,6 @@ onMounted(async () => {
   .oc-card-staff,
   .oc-item-branch {
     page-break-inside: avoid;
-  }
-
-  .org-print-footer {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: #fff;
-    padding: 0.25rem 0;
   }
 }
 </style>
