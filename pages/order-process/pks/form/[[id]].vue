@@ -37,7 +37,7 @@
                   <!-- Internal / External mode -->
                   <div class="row mb-4">
                     <div class="col">
-                      <label class="form-label text-muted mb-2 px-5">Tipe PKS</label>
+                      <FormLabel required label-class="form-label text-muted mb-2 px-5">Tipe PKS</FormLabel>
 
                       <div class="d-flex align-items-center gap-3">
                         <div class="form-check mb-0 px-12">
@@ -85,7 +85,7 @@
                     <div class="tab-pane fade" id="pks-form-tabs-info" data-step-id="pks-form-tabs-info" role="tabpanel" :class="paneClass('pks-form-tabs-info')">
                       <div class="row g-4">
                         <div class="col-md-12">
-                          <label class="form-label text-muted">Customer</label>
+                          <FormLabel required>Customer</FormLabel>
                           <CustomSelect2
                             v-model="form.customerId"
                             :options="customers || []"
@@ -102,12 +102,12 @@
                           <textarea v-model="form.description" class="form-control" rows="3" placeholder="Description"></textarea>
                         </div>
                         <div class="col-md-6">
-                          <label class="form-label text-muted">Contract Start Date</label>
-                          <input v-model="form.contractStartDate" type="date" class="form-control" />
+                          <FormLabel required html-for="pks-contract-start">Contract Start Date</FormLabel>
+                          <input id="pks-contract-start" v-model="form.contractStartDate" type="date" class="form-control" aria-required="true" />
                         </div>
                         <div class="col-md-6">
-                          <label class="form-label text-muted">Contract End Date</label>
-                          <input v-model="form.contractEndDate" type="date" class="form-control" />
+                          <FormLabel required html-for="pks-contract-end">Contract End Date</FormLabel>
+                          <input id="pks-contract-end" v-model="form.contractEndDate" type="date" class="form-control" aria-required="true" />
                         </div>
                         <div class="col-md-6">
                           <label class="form-label text-muted">Signing Location</label>
@@ -144,7 +144,7 @@
                       <div v-for="(pksSub, index) in form.pksSubscriptions" :key="index" class="repeater-item mb-4">
                         <div class="row g-3">
                           <div class="col-md-10">
-                            <label class="form-label text-muted">Subscription {{ form.pksSubscriptions.length > 1 ? `#${index + 1}` : '' }} <span class="text-danger" aria-hidden="true">*</span></label>
+                            <FormLabel required>Subscription {{ form.pksSubscriptions.length > 1 ? `#${index + 1}` : '' }}</FormLabel>
                             <CustomSelect2
                               v-model="pksSub.subscriptionId"
                               :options="subscriptionsSigned"
@@ -244,11 +244,11 @@
                     <hr class="my-4">
                     <div class="row g-4 px-5">
                       <div class="col-md-6">
-                        <label class="form-label text-muted">No. Surat</label>
-                        <input v-model="form.noSurat" type="text" class="form-control" placeholder="No. Surat" />
+                        <FormLabel required html-for="pks-no-surat">No. Surat</FormLabel>
+                        <input id="pks-no-surat" v-model="form.noSurat" type="text" class="form-control" placeholder="No. Surat" aria-required="true" />
                       </div>
                       <div class="col-md-6">
-                        <label class="form-label text-muted">Vendor ID</label>
+                        <FormLabel required>Vendor</FormLabel>
                         <CustomSelect2
                           v-model="form.vendorId"
                           :options="vendors || []"
@@ -261,11 +261,11 @@
                         />
                       </div>
                       <div class="col-md-6">
-                        <label class="form-label text-muted">Nominal</label>
-                        <input v-model="form.nominal" type="text" class="form-control" placeholder="Nominal" />
+                        <FormLabel required html-for="pks-nominal">Nominal</FormLabel>
+                        <input id="pks-nominal" v-model="form.nominal" type="text" class="form-control" placeholder="Nominal" aria-required="true" />
                       </div>
                       <div class="col-md-6">
-                        <label class="form-label text-muted">Purchase Order ID</label>
+                        <FormLabel required>Purchase Order</FormLabel>
                         <CustomSelect2
                           v-model="form.purchaseOrderId"
                           :options="purchaseOrders || []"
@@ -340,6 +340,7 @@ import { usePurchaseOrderStore } from '~/stores/purchaseOrder'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
 import TabbedFormNav from '~/components/form/TabbedFormNav.vue'
 import TabbedFormActions from '~/components/form/TabbedFormActions.vue'
+import FormLabel from '~/components/form/FormLabel.vue'
 import { useTabbedFormNavigation } from '~/composables/useTabbedFormNavigation'
 import { useImageUrl } from '~/composables/useImageUrl'
 
