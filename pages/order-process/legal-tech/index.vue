@@ -197,14 +197,28 @@
                         </a>
                     </template>
                 </Column>
-                <Column field="purchaseRequest.noPurchaseRequest" header="No. Purchase Request" :sortable="true" class="text-nowrap">
+                <Column field="purchaseRequest.prNumber" header="No. Purchase Request" :sortable="true" class="text-nowrap">
                   <template #body="slotProps">
-                    <a @click="navigateTo(`/purchasing/purchase-request/detail/${slotProps.data.purchaseRequest.id}`)" class="text-primary text-nowrap" style="cursor:pointer;text-decoration:underline" :title="'View detail'">{{ slotProps.data.purchaseRequest?.prNumber || slotProps.data.purchaseRequest?.pr_number || slotProps.data.purchaseRequest?.noPurchaseRequest || '-' }}</a>
+                    <a
+                      v-if="slotProps.data.purchaseRequest?.id"
+                      @click="navigateTo(`/purchasing/purchase-request/detail/${slotProps.data.purchaseRequest.id}`)"
+                      class="text-primary text-nowrap"
+                      style="cursor:pointer;text-decoration:underline"
+                      title="View detail"
+                    >{{ slotProps.data.purchaseRequest?.prNumber || slotProps.data.purchaseRequest?.pr_number || '-' }}</a>
+                    <span v-else>-</span>
                   </template>
                 </Column>
                 <Column field="quotation.noQuotation" header="No. Quotation" :sortable="true" class="text-nowrap">
                   <template #body="slotProps">
-                    <a @click="navigateTo(`/sales/quotation/detail/${slotProps.data.quotation.id}`)" class="text-primary text-nowrap" style="cursor:pointer;text-decoration:underline" :title="'View detail'">{{ slotProps.data.quotation?.noQuotation || slotProps.data.quotation?.no_quotation || '-' }}</a>
+                    <a
+                      v-if="slotProps.data.quotation?.id"
+                      @click="navigateTo(`/sales/quotation/detail/${slotProps.data.quotation.id}`)"
+                      class="text-primary text-nowrap"
+                      style="cursor:pointer;text-decoration:underline"
+                      title="View detail"
+                    >{{ slotProps.data.quotation?.noQuotation || slotProps.data.quotation?.no_quotation || '-' }}</a>
+                    <span v-else>-</span>
                   </template>
                 </Column>
                 <Column field="purchaseOrder.noPo" header="No. PO External" :sortable="false" class="text-nowrap">
@@ -612,7 +626,7 @@ watch(showModal, (v) => {
         quotationsForSelect.value = [q, ...quotationsForSelect.value]
       }
       if (isEditMode.value && form.value?.purchaseRequestId && !purchaseRequestsForSelect.value.some((i) => (i.id || i) === (form.value.purchaseRequestId || form.value.purchase_request_id))) {
-        const i = { id: form.value.purchaseRequestId, noPurchaseRequest: '-', customer: { id: 0, name: '-' } }
+        const i = { id: form.value.purchaseRequestId, prNumber: '-', customer: { id: 0, name: '-' } }
         purchaseRequestsForSelect.value = [i, ...purchaseRequestsForSelect.value]
       }
     })

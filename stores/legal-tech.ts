@@ -49,6 +49,7 @@ export interface LeTechReview {
   currentApprovalStep?: number | null
   currentApprovers?: Array<{ userId: number; fullName?: string; email?: string; source?: string }>
   approvalLogs?: ApprovalLogEntry[]
+  purchaseRequest?: { id: number; prNumber?: string; pr_number?: string; purpose?: string; status?: string }
   quotation?: { id: string; noQuotation?: string; customerId?: number; customer?: { id: number; name?: string } }
   purchaseOrder?: { id: string; noPo?: string; poType?: string; status?: string; date?: string; vendor?: { id: number; name?: string } }
   createdByUser?: { id: number; full_name?: string; fullName?: string }
