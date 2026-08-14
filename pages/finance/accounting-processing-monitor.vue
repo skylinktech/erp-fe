@@ -1,7 +1,7 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-pt-12">
-      <h4 class="mb-1">Accounting Processing Monitor</h4>
+    <div class="container-xxl flex-grow-1">
+      
       <p class="mb-4 text-muted">Outbox monitor (business label). Payload not editable.</p>
       <div class="card mb-4"><div class="card-body"><div class="row g-3 align-items-end">
         <div class="col-md-2" v-for="f in filterFields" :key="f.key">
@@ -50,7 +50,8 @@
   </div>
 </template>
 <script setup>
-definePageMeta({ middleware: ['auth', 'check-permission'] })
+definePageMeta({
+  title: "Accounting Processing Monitor", middleware: ['auth', 'check-permission'] })
 const { $api, $apiFetch } = useNuxtApp()
 const loading=ref(false), error=ref(''), rows=ref([]), selected=ref(null), page=ref(1), summary=ref(null)
 const filterFields = [{key:'status',label:'Status'},{key:'eventType',label:'Event Type'}]

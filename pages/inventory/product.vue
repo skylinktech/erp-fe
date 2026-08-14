@@ -1,7 +1,7 @@
 <template>
     <div class="content-wrapper">
-        <div class="container-xxl flex-grow-1 container-pt-12">
-            <h4 class="mb-1">List Product</h4>
+        <div class="container-xxl flex-grow-1">
+            
             <p class="mb-6">Kelola master data produk dan komponen kit.</p>
 
             <div class="row g-6 mb-6">

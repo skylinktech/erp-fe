@@ -1,7 +1,7 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-pt-10">
-      <h4 class="mb-1">Billing Adjustment</h4>
+    <div class="container-xxl flex-grow-1">
+      
       <p class="mb-6 text-muted">
         Komponen penambah/pengurang tagihan sebelum Billing Preparation
       </p>

@@ -1,8 +1,8 @@
 <template>
   <div class="content-wrapper">
     <!-- Content -->
-    <div class="container-xxl flex-grow-1 container-p-y">
-      <h4 class="mb-1">Cost Centers</h4>
+    <div class="container-xxl flex-grow-1">
+      
       <p class="mb-6">
         Kelola cost center untuk kebutuhan alokasi biaya dan pelaporan keuangan.
       </p>

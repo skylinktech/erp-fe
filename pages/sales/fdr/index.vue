@@ -8,8 +8,8 @@
         </div>
       </div>
 
-      <div v-else class="container-xxl flex-grow-1 container-pt-12">
-        <h4 class="mb-1">Form Design Request</h4>
+      <div v-else class="container-xxl flex-grow-1">
+        
         <p class="mb-6">List Form Design Request yang terdaftar di sistem</p>
 
         <!-- Statistics Cards -->

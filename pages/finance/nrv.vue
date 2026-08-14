@@ -1,7 +1,7 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-pt-12">
-      <h4 class="mb-1">Inventory NRV</h4>
+    <div class="container-xxl flex-grow-1">
+      
       <p class="mb-4 text-muted">NRV reconciliation + assessments list (VIEW ONLY workflow visibility).</p>
       <div class="card mb-4"><div class="card-body"><div class="row g-3 align-items-end">
         <div class="col-md-2"><label class="form-label">Company ID</label><input v-model="companyId" class="form-control" /></div>
@@ -16,7 +16,8 @@
   </div>
 </template>
 <script setup>
-definePageMeta({ middleware: ['auth', 'check-permission'] })
+definePageMeta({
+  title: "Inventory NRV", middleware: ['auth', 'check-permission'] })
 const { $api, $apiFetch } = useNuxtApp()
 const loading=ref(false), error=ref(''), payload=ref(null), companyId=ref('')
 

@@ -1,9 +1,9 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-pt-12">
+    <div class="container-xxl flex-grow-1">
       <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <div>
-          <h4 class="mb-1">General Ledger</h4>
+          
           <p class="mb-0 text-muted">Detail mutasi akun dari jurnal posted</p>
         </div>
         <div class="d-flex gap-2 align-items-end flex-wrap">

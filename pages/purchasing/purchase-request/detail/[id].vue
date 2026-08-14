@@ -22,6 +22,7 @@
               <span class="text-muted">/</span>
               <div>
                 <h4 class="mb-0 fw-semibold">{{ getPurchaseRequestNo(purchaseRequest) || '—' }}</h4>
+                <PageBreadcrumb class="mt-1" :current-label="getPurchaseRequestNo(purchaseRequest) || '—'" />
                 <small class="text-muted">{{ formatDateTime(purchaseRequest.createdAt) }}</small>
               </div>
               <span :class="getStatusBadge(purchaseRequest).class" class="badge">{{ getStatusBadge(purchaseRequest).text }}</span>
@@ -354,7 +355,8 @@ function onDelete () {
 onMounted(() => load())
 watch(id, () => load())
 
-definePageMeta({ layout: 'default', middleware: ['auth', 'check-permission'] })
+definePageMeta({
+  hidePageHeading: true, layout: 'default', middleware: ['auth', 'check-permission'] })
 </script>
 
 <style scoped>

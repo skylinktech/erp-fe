@@ -1,6 +1,6 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-pt-10">
+    <div class="container-xxl flex-grow-1">
       <div v-if="loadingDetail" class="text-center p-6">
         <ProgressSpinner style="width:48px;height:48px" strokeWidth="4" />
       </div>
@@ -13,6 +13,7 @@
             </NuxtLink>
             <div>
               <h4 class="mb-0">{{ prep.customer?.name || '—' }} · {{ prep.billingPeriod }}</h4>
+              <PageBreadcrumb class="mt-1" :current-label="`${prep.customer?.name || '—'} · ${prep.billingPeriod}`" />
               <small class="text-muted">Billing Preparation</small>
             </div>
             <span :class="statusBadge(prep.status)">{{ prep.status }}</span>
@@ -321,6 +322,7 @@ import { useImageUrl } from '~/composables/useImageUrl'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
 
 definePageMeta({
+  hidePageHeading: true,
   layout: 'default',
   middleware: ['auth', 'check-permission'],
   title: 'Detail Billing Preparation',

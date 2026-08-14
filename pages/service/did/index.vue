@@ -1,7 +1,7 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-pt-10">
-      <h4 class="mb-1">List DID</h4>
+    <div class="container-xxl flex-grow-1">
+      
       <p class="mb-6">
         List DID (Delivery, Installation, Survey, Dismantle) yang terdaftar di sistem
         <span v-if="globalFilterValue" class="text-muted">

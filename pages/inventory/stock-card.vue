@@ -1,7 +1,7 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-pt-12">
-      <h4 class="mb-1">Stock Card</h4>
+    <div class="container-xxl flex-grow-1">
+      
       <p class="mb-6">Riwayat pergerakan dari <code>stock_movements</code> (operasional). Balance memakai before/after quantity.</p>
 
       <div class="card mb-4">
@@ -95,7 +95,8 @@
 </template>
 
 <script setup>
-definePageMeta({ middleware: ['auth', 'check-permission'] })
+definePageMeta({
+  title: "Stock Card", middleware: ['auth', 'check-permission'] })
 
 const { $api, $toast } = useNuxtApp()
 const movements = ref([])

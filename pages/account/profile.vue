@@ -1,14 +1,10 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-pt-5">
+    <div class="container-xxl flex-grow-1">
       <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
         <div>
-          <div class="d-flex align-items-center gap-2 mb-1">
-            <span class="text-muted small">Akun</span>
-            <span class="text-muted small">/</span>
-            <span class="text-muted small">Profil</span>
-          </div>
           <h4 class="mb-1">Profile Account</h4>
+          <PageBreadcrumb class="mt-1" current-label="Profile Account" />
           <p class="mb-0 text-muted small">
             Informasi akun login Anda{{ data?.pegawai_linked ? ' beserta data pegawai yang terhubung.' : '.' }}
           </p>
@@ -175,6 +171,7 @@ async function loadAccountProfile() {
 onMounted(loadAccountProfile)
 
 definePageMeta({
+  hidePageHeading: true,
   layout: 'default',
   middleware: ['auth'],
   title: 'Profile Account',

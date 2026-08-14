@@ -1,10 +1,11 @@
 <template>
   <div class="page-wrapper">
     <div class="content-wrapper">
-      <div class="container-xxl flex-grow-1 container-pt-12 dashboard-page">
+      <div class="container-xxl flex-grow-1 dashboard-page">
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
           <div>
             <h4 class="mb-0 fw-semibold">Dashboard</h4>
+            <PageBreadcrumb class="mt-1" current-label="Dashboard" />
             <small class="text-muted">Ringkasan yang Anda susun di Settings.</small>
           </div>
           <div class="d-flex align-items-center gap-2">
@@ -66,6 +67,7 @@ definePageMeta({
   layout: 'default',
   middleware: 'auth',
   title: 'Dashboard',
+  hidePageHeading: true,
 })
 
 const { setTitle } = useDynamicTitle()

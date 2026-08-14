@@ -5,7 +5,7 @@
         <!-- Content -->
         <div class="container-xxl flex-grow-1 container-p-y">
             <div>
-                <h4 class="mb-1">Roles List</h4>
+                
                 <p class="mb-6">
                 A role provided access to predefined menus and features so that depending on assigned role an
                 administrator can have access to what user needs.

@@ -1,7 +1,7 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-pt-12">
-      <h4 class="mb-1">Inventory Reconciliation</h4>
+    <div class="container-xxl flex-grow-1">
+      
       <p class="mb-6">
         Opening + Σ IN − Σ OUT vs <code>stocks.quantity</code>. Read-only — variance harus diselesaikan lewat formal adjustment, bukan update stok langsung.
       </p>
@@ -82,7 +82,8 @@
 </template>
 
 <script setup>
-definePageMeta({ middleware: ['auth', 'check-permission'] })
+definePageMeta({
+  title: "Inventory Reconciliation", middleware: ['auth', 'check-permission'] })
 
 const { $api, $toast } = useNuxtApp()
 const rows = ref([])

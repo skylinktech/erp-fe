@@ -1,9 +1,9 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-pt-10">
+    <div class="container-xxl flex-grow-1">
       <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
         <div>
-          <h4 class="mb-1">Katalog Widget</h4>
+          
           <p class="mb-0 text-muted">Registry widget yang bisa dipasang ke layout dashboard mana pun.</p>
         </div>
         <div class="d-flex gap-2">

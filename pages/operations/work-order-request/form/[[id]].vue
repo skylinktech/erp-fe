@@ -1,12 +1,13 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-pt-12">
+    <div class="container-xxl flex-grow-1">
       <div class="d-flex align-items-center gap-3 mb-4">
         <NuxtLink to="/operations/work-order-request" class="btn btn-outline-secondary btn-sm">
           <i class="ri-arrow-left-line me-1"></i> Kembali
         </NuxtLink>
         <div>
           <h4 class="mb-0">{{ isEditMode ? 'Edit Work Order Request' : 'Buat Work Order Request' }}</h4>
+          <PageBreadcrumb class="mt-1" :current-label="isEditMode ? 'Edit Work Order Request' : 'Buat Work Order Request'" />
           <small class="text-muted">{{ isEditMode ? `No. ${currentNo}` : 'Formulir Pengajuan Penugasan Teknisi' }}</small>
         </div>
       </div>
@@ -491,5 +492,6 @@ onMounted(async () => {
   }
 })
 
-definePageMeta({ layout: 'default', middleware: ['auth', 'check-permission'], title: 'Work Order Request Form' })
+definePageMeta({
+  hidePageHeading: true, layout: 'default', middleware: ['auth', 'check-permission'], title: 'Work Order Request Form' })
 </script>

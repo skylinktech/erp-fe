@@ -1,8 +1,8 @@
 <template>
     <div class="content-wrapper">
         <!-- Content -->
-        <div class="container-xxl flex-grow-1 container-p-y">
-            <h4 class="mb-1">Rekening Bank</h4>
+        <div class="container-xxl flex-grow-1">
+            
             <p class="mb-6">
                 Kelola rekening bank untuk transaksi keuangan
             </p>
@@ -501,7 +501,7 @@ const onSort = (event) => bankAccountStore.setSort(event)
 definePageMeta({
   layout: 'default',
   middleware: ['auth', 'check-permission'],
-  title: 'Bank Account',
+  title: 'Rekening Bank',
   description: 'Bank Account Management',
   keywords: 'Bank Account, Accounting, Sinergi Innovate Pratama',
   author: 'Sinergi Innovate Pratama',

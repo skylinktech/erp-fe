@@ -28,6 +28,7 @@
               </NuxtLink>
               <div class="d-flex flex-column">
                 <h4 class="mb-0 fw-semibold">{{ priceList.name || '—' }}</h4>
+                <PageBreadcrumb class="mt-1" :current-label="priceList.name || '—'" />
                 <small class="text-muted">ID: {{ priceList.id }}</small>
               </div>
               <span :class="priceList.isActive ? 'badge bg-success' : 'badge bg-secondary'">
@@ -207,6 +208,11 @@
 </template>
 
 <script setup>
+
+definePageMeta({
+  hidePageHeading: true,
+})
+
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useNuxtApp } from '#app'

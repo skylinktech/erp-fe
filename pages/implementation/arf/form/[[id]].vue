@@ -6,6 +6,7 @@
 import ArfFormPage from '~/components/arf/ArfFormPage.vue'
 
 definePageMeta({
+  hidePageHeading: true,
   layout: 'default',
   middleware: ['auth', 'check-permission'],
   title: 'ARF Form',

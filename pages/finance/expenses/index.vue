@@ -1,8 +1,8 @@
 <template>
     <div class="content-wrapper">
         <!-- Content -->
-        <div class="container-xxl flex-grow-1 container-p-y">
-            <h4 class="mb-1">Pengeluaran</h4>
+        <div class="container-xxl flex-grow-1">
+            
             <p class="mb-6">
                 Kelola pengeluaran dan biaya operasional perusahaan
             </p>
@@ -562,7 +562,7 @@ const onSort = (event) => expenseStore.setSort(event)
 definePageMeta({
   layout: 'default',
   middleware: ['auth', 'check-permission'],
-  title: 'Expenses',
+  title: 'Pengeluaran',
   description: 'Expense Management',
   keywords: 'Expenses, Accounting, Sinergi Innovate Pratama',
   author: 'Sinergi Innovate Pratama',

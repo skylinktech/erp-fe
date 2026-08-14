@@ -30,6 +30,7 @@
               <span class="text-muted align-self-center">/</span>
               <div class="d-flex flex-column">
                 <h4 class="mb-0 fw-semibold">{{ subscription.noSubscription || '—' }}</h4>
+                <PageBreadcrumb class="mt-1" :current-label="subscription.noSubscription || '—'" />
                 <small class="text-muted">{{ formatDateTime(subscription.createdAt) }}</small>
               </div>
               <span :class="getStatusBadge(subscription.status).class" class="badge">{{ getStatusBadge(subscription.status).text }}</span>
@@ -613,6 +614,7 @@ onMounted(() => load())
 watch(id, () => load())
 
 definePageMeta({
+  hidePageHeading: true,
   layout: 'default',
   middleware: ['auth', 'check-permission'],
 })

@@ -1,9 +1,9 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-pt-12">
+    <div class="container-xxl flex-grow-1">
       <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h4 class="mb-1">AR Aging</h4>
+          
           <p class="mb-0 text-muted">Piutang outstanding per bucket umur (as of {{ report?.asOf || '—' }})</p>
         </div>
         <div class="d-flex gap-2 align-items-end">

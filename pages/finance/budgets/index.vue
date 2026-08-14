@@ -1,8 +1,8 @@
 <template>
   <div class="content-wrapper">
     <!-- Content -->
-    <div class="container-xxl flex-grow-1 container-p-y">
-      <h4 class="mb-1">Budgets</h4>
+    <div class="container-xxl flex-grow-1">
+      
       <p class="mb-6">
         Kelola budget untuk perencanaan dan kontrol keuangan.
       </p>

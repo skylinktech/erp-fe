@@ -1,7 +1,7 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-pt-12">
-      <h4 class="mb-1">Payment Request</h4>
+    <div class="container-xxl flex-grow-1">
+      
       <p class="mb-4">Modul pengajuan dana — Project, Operational, dan Reimbursement dalam satu halaman.</p>
 
       <ul v-if="visibleTabs.length" class="nav nav-tabs mb-4" role="tablist">

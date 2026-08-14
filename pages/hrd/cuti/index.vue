@@ -1,8 +1,8 @@
 <template>
   <div>
     <div class="content-wrapper">
-      <div class="container-xxl flex-grow-1 container-pt-12">
-        <h4 class="mb-1">Pengajuan Cuti, Izin, Sakit</h4>
+      <div class="container-xxl flex-grow-1">
+        
         <p class="mb-6">Kelola pengajuan cuti seluruh pegawai dengan workflow approval multi-step.</p>
 
         <!-- Statistics Cards -->
@@ -804,6 +804,7 @@ onMounted(async () => {
 })
 
 definePageMeta({
+  title: "Pengajuan Cuti, Izin, Sakit",
   layout: 'default',
   middleware: ['auth', 'check-permission'],
   requiredPermission: ['view_cuti', 'access_cuti'],

@@ -1,9 +1,9 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-pt-10">
+    <div class="container-xxl flex-grow-1">
       <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
         <div>
-          <h4 class="mb-1">Kalender HR</h4>
+          
           <p class="mb-0 text-muted">
             Kelola libur nasional, event perusahaan, dan cuti bersama. Klik tanggal untuk menambah, klik event untuk mengedit.
           </p>

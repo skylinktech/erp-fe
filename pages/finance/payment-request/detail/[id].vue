@@ -24,6 +24,7 @@
               <span class="text-muted">/</span>
               <div>
                 <h4 class="mb-0 fw-semibold">{{ getPaymentRequestNo(paymentRequest) || '—' }}</h4>
+                <PageBreadcrumb class="mt-1" :current-label="getPaymentRequestNo(paymentRequest) || '—'" />
                 <small class="text-muted">{{ formatDateTime(paymentRequest.createdAt) }}</small>
               </div>
               <span :class="getStatusBadge(paymentRequest).class" class="badge">{{ getStatusBadge(paymentRequest).text }}</span>
@@ -765,5 +766,6 @@ function goCreateApPayment() {
 onMounted(() => load())
 watch(id, () => load())
 
-definePageMeta({ layout: 'default', middleware: ['auth', 'check-permission'], title: 'Detail Payment Request' })
+definePageMeta({
+  hidePageHeading: true, layout: 'default', middleware: ['auth', 'check-permission'], title: 'Detail Payment Request' })
 </script>

@@ -1,7 +1,7 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-pt-12">
-      <h4 class="mb-1">Inventory Cost Balance</h4>
+    <div class="container-xxl flex-grow-1">
+      
       <p class="mb-4 text-muted">VIEW ONLY — current financial cost balances (Moving WAC). No manual cost edit.</p>
 
       <div class="card mb-4">
@@ -69,7 +69,8 @@
 </template>
 
 <script setup>
-definePageMeta({ middleware: ['auth', 'check-permission'] })
+definePageMeta({
+  title: "Inventory Cost Balance", middleware: ['auth', 'check-permission'] })
 
 const { $api, $apiFetch } = useNuxtApp()
 const loading = ref(false)

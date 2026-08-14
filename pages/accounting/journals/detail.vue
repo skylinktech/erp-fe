@@ -1,9 +1,10 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-pt-12">
+    <div class="container-xxl flex-grow-1">
       <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
           <h4 class="mb-1">Journal Detail</h4>
+          <PageBreadcrumb class="mt-1" current-label="Journal Detail" />
           <p class="mb-0 text-muted">Header, lines, and inventory accounting trace when related.</p>
         </div>
         <NuxtLink class="btn btn-outline-secondary btn-sm" to="/finance/journals">Back to Journals</NuxtLink>
@@ -155,7 +156,11 @@
 </template>
 
 <script setup>
-definePageMeta({ middleware: ['auth', 'check-permission'] })
+definePageMeta({
+  hidePageHeading: true,
+  middleware: ['auth', 'check-permission'],
+  title: 'Journal Detail',
+})
 
 const route = useRoute()
 const { $api, $apiFetch } = useNuxtApp()

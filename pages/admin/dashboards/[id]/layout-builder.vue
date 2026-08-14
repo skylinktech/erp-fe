@@ -20,6 +20,7 @@
             </NuxtLink>
             <div>
               <h4 class="mb-0 fw-semibold">{{ dashboard?.name || 'Dashboard' }}</h4>
+              <PageBreadcrumb class="mt-1" :current-label="dashboard?.name || 'Dashboard'" />
               <small class="text-muted">
                 Draft
                 <span class="badge bg-label-warning ms-1">v{{ currentDraftVersion?.versionNumber ?? draftLayout?.versionNumber }}</span>
@@ -196,6 +197,7 @@ import type { AdminWidgetRow } from '~/composables/useDashboardAdmin'
 import type { DashboardWidgetDTO, DashboardLayoutWidgetDTO } from '~/composables/useDashboardEngine'
 
 definePageMeta({
+  hidePageHeading: true,
   layout: 'default',
   middleware: ['auth', 'check-permission'],
   title: 'Layout Builder',

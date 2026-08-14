@@ -14,7 +14,7 @@
 
         <!-- Content -->
         <div v-else class="container-xxl flex-grow-1 container-p-y">
-            <h4 class="mb-1">List Sales Order</h4>
+            
             <p class="mb-6">
             List salesOrder yang terdaftar di sistem
             </p>

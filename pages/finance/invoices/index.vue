@@ -1,7 +1,7 @@
 <template>
     <div class="content-wrapper">
-        <div class="container-xxl flex-grow-1 container-pt-10">
-            <h4 class="mb-1">Invoice Tagihan</h4>
+        <div class="container-xxl flex-grow-1">
+            
             <p class="mb-6">
                 Kelola tagihan pelanggan untuk perangkat yang sudah terpasang dan aktif di lokasi
             </p>
@@ -1380,7 +1380,7 @@ onMounted(async () => {
 definePageMeta({
     layout     : 'default',
     middleware : ['auth', 'check-permission'],
-    title      : 'Finance Invoice',
+    title      : 'Invoice Tagihan',
     description: 'Manajemen tagihan pelanggan untuk perangkat aktif di lokasi',
     keywords   : 'Finance, Invoice, Tagihan, Perangkat Aktif, Sinergi Innovate Pratama',
     author     : 'Sinergi Innovate Pratama',

@@ -1,6 +1,6 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-pt-10">
+    <div class="container-xxl flex-grow-1">
       <div v-if="loadingDetail" class="text-center p-6">
         <ProgressSpinner
           style="width: 50px; height: 50px"
@@ -19,6 +19,7 @@
             </NuxtLink>
             <div>
               <h4 class="mb-0 fw-semibold">{{ invoice.noInvoice }}</h4>
+              <PageBreadcrumb class="mt-1" :current-label="invoice.noInvoice" />
               <small class="text-muted">
                 {{ invoice.subscription?.noSubscription
                   ? `Subscription: ${invoice.subscription.noSubscription}`
@@ -527,6 +528,7 @@ import {
 } from '~/utils/financeInvoiceItems'
 
 definePageMeta({
+  hidePageHeading: true,
   layout: 'default',
   middleware: ['auth', 'check-permission'],
   title: 'Detail Finance Invoice',

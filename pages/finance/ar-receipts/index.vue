@@ -1,8 +1,8 @@
 <template>
     <div class="content-wrapper">
         <!-- Content -->
-        <div class="container-xxl flex-grow-1 container-pt-10">
-            <h4 class="mb-1">Penerimaan Piutang</h4>
+        <div class="container-xxl flex-grow-1">
+            
             <p class="mb-6">
                 Kelola penerimaan pembayaran dari pelanggan
             </p>
@@ -689,7 +689,7 @@ const handleSearch = async (value) => {
 definePageMeta({
   layout: 'default',
   middleware: ['auth', 'check-permission'],
-  title: 'AR Receipts',
+  title: 'Penerimaan Piutang',
   description: 'Accounts Receivable Receipt Management',
   keywords: 'AR Receipts, Accounts Receivable, Accounting, Sinergi Innovate Pratama',
   author: 'Sinergi Innovate Pratama',

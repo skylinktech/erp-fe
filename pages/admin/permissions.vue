@@ -3,9 +3,9 @@
         <!-- Content wrapper -->
         <div class="content-wrapper">
             <!-- Content -->
-            <div class="container-xxl flex-grow-1 container-pt-12">
+            <div class="container-xxl flex-grow-1">
                 <div>
-                        <h4 class="mb-1">List Permissions</h4>
+                        
                         <p class="mb-6">
                             List permissions yang terdaftar di sistem
                         </p>

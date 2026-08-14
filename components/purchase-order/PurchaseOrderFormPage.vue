@@ -10,14 +10,8 @@
       <template v-else>
         <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-4">
           <div>
-            <div class="d-flex align-items-center gap-2 mb-1">
-              <NuxtLink to="/purchasing/purchase-order" class="text-muted small text-decoration-none">
-                Purchase Order
-              </NuxtLink>
-              <span class="text-muted small">/</span>
-              <span class="text-muted small">{{ pageTitle }}</span>
-            </div>
             <h4 class="mb-1">{{ pageTitle }}</h4>
+            <PageBreadcrumb class="mt-1" :current-label="pageTitle" />
             <p class="mb-0 text-muted small">{{ pageSubtitle }}</p>
           </div>
           <NuxtLink to="/purchasing/purchase-order" class="btn btn-outline-secondary btn-sm">

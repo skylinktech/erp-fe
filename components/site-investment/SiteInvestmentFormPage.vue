@@ -1,14 +1,10 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-pt-5">
+    <div class="container-xxl flex-grow-1">
       <div class="d-flex justify-content-between align-items-start mb-4">
         <div>
-          <div class="d-flex align-items-center gap-2 mb-1">
-            <NuxtLink to="/sales/site-investment" class="text-muted small text-decoration-none">Site Investment</NuxtLink>
-            <span class="text-muted small">/</span>
-            <span class="text-muted small">{{ pageTitle }}</span>
-          </div>
           <h4 class="mb-1">{{ pageTitle }}</h4>
+          <PageBreadcrumb class="mt-1" :current-label="pageTitle" />
           <p class="mb-0 text-muted small">{{ pageSubtitle }}</p>
         </div>
         <NuxtLink to="/sales/site-investment" class="btn btn-outline-secondary btn-sm">

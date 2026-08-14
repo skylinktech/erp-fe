@@ -1,7 +1,7 @@
 <template>
   <div class="content-wrapper">
     <!-- Content -->
-    <div class="container-xxl flex-grow-1 container-pt-10">
+    <div class="container-xxl flex-grow-1">
       <div v-if="loading" class="text-center p-6">
         <ProgressSpinner 
                     style="width: 50px; height: 50px" 

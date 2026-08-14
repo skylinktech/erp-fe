@@ -2,8 +2,8 @@
 <template>
     <div class="content-wrapper">
         <!-- Content -->
-        <div class="container-xxl flex-grow-1 container-pt-12">
-            <h4 class="mb-1">List Sales Invoice</h4>
+        <div class="container-xxl flex-grow-1">
+            
             <p class="mb-6">
             List salesInvoice yang terdaftar di sistem
             </p>

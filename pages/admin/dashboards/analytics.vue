@@ -1,6 +1,6 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-pt-10">
+    <div class="container-xxl flex-grow-1">
       <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
         <div class="d-flex align-items-center gap-2">
           <NuxtLink to="/admin/dashboards" class="btn btn-icon btn-outline-secondary btn-sm">
@@ -8,6 +8,7 @@
           </NuxtLink>
           <div>
             <h4 class="mb-1">Dashboard & Widget Analytics</h4>
+            <PageBreadcrumb class="mt-1" current-label="Dashboard & Widget Analytics" />
             <p class="mb-0 text-muted">Ringkasan pemakaian dashboard & widget lintas seluruh aplikasi.</p>
           </div>
         </div>
@@ -163,6 +164,7 @@ import { useDashboardAnalyticsAdmin } from '~/composables/useDashboardAnalyticsA
 import type { DashboardAnalyticsOverview } from '~/composables/useDashboardAnalyticsAdmin'
 
 definePageMeta({
+  hidePageHeading: true,
   layout: 'default',
   middleware: ['auth', 'check-permission'],
   title: 'Dashboard & Widget Analytics',

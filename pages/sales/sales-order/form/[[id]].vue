@@ -6,6 +6,7 @@
 import SalesOrderFormPage from '~/components/sales-order/SalesOrderFormPage.vue'
 
 definePageMeta({
+  hidePageHeading: true,
   layout: 'default',
   middleware: ['auth', 'check-permission'],
   title: 'Sales Order Form',

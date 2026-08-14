@@ -1,6 +1,6 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-pt-10">
+    <div class="container-xxl flex-grow-1">
       <div v-if="loading" class="d-flex justify-content-center pt-10">
         <div class="spinner-border text-primary" />
       </div>
@@ -18,6 +18,7 @@
             </NuxtLink>
             <div>
               <h4 class="mb-0">{{ project.name }}</h4>
+              <PageBreadcrumb class="mt-1" :current-label="project.name" />
               <small class="text-muted">{{ getProjectCode(project) }}</small>
             </div>
             <span :class="getProjectStatusBadge(project.status).class">
@@ -319,6 +320,7 @@ import {
 import type { ProgressTrackerNode } from '~/stores/progress-tracker'
 
 definePageMeta({
+  hidePageHeading: true,
   layout: 'default',
   middleware: ['auth', 'check-permission'],
   title: 'Detail Progress Tracker',

@@ -1,7 +1,7 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-pt-12">
-      <h4 class="mb-1">Request Activation</h4>
+    <div class="container-xxl flex-grow-1">
+      
       <p class="mb-6">Pengajuan aktivasi layanan pelanggan (SN KIT, lokasi, PIC, dan form berlangganan).</p>
 
       <div class="row g-6 mb-6">

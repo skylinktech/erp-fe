@@ -30,6 +30,7 @@
               <span class="text-muted align-self-center">/</span>
               <div class="d-flex flex-column">
                 <h4 class="mb-0 fw-semibold">{{ siteInvest.siNumber || siteInvest.name }}</h4>
+                <PageBreadcrumb class="mt-1" :current-label="siteInvest.siNumber || siteInvest.name" />
                 <small class="text-muted">{{ formatDateTime(siteInvest.createdAt) }}</small>
               </div>
               <span :class="getStatusBadge(siteInvest).class" class="badge">{{ getStatusBadge(siteInvest).text }}</span>
@@ -164,16 +165,18 @@
                       <p class="mb-0 text-break">{{ siteInvest.notes }}</p>
                     </div>
                     <div class="col-12" v-if="siteInvest.attachment">
-                      <label class="form-label text-muted medium">Attachment</label>
-                      <a
-                        :href="getAttachmentUrl(siteInvest.attachment)"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="d-inline-flex align-items-center gap-2 badge bg-label-primary text-decoration-none py-2 px-3"
-                      >
-                        <i :class="getFileIcon(siteInvest.attachment) + ' me-1'"></i>
-                        Lihat / Unduh File
-                      </a>
+                      <label class="form-label text-muted medium d-block mb-1">Attachment</label>
+                      <p class="mb-0">
+                        <a
+                          :href="getAttachmentUrl(siteInvest.attachment)"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="d-inline-flex align-items-center gap-2 badge bg-label-primary text-decoration-none py-2 px-3"
+                        >
+                          <i :class="getFileIcon(siteInvest.attachment) + ' me-1'"></i>
+                          Lihat / Unduh File
+                        </a>
+                      </p>
                       <img
                         v-if="isImageFile(siteInvest.attachment)"
                         :src="getAttachmentUrl(siteInvest.attachment)"
@@ -643,6 +646,7 @@ onMounted(() => load())
 watch(id, () => load())
 
 definePageMeta({
+  hidePageHeading: true,
   layout: 'default',
   middleware: ['auth', 'check-permission'],
 })

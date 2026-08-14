@@ -6,6 +6,7 @@
 import PegawaiFormPage from '~/components/hrd/PegawaiFormPage.vue'
 
 definePageMeta({
+  hidePageHeading: true,
   layout: 'default',
   middleware: ['auth', 'check-permission'],
   title: 'Form Pegawai',

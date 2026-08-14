@@ -1,6 +1,6 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-pt-10">
+    <div class="container-xxl flex-grow-1">
       <div v-if="loading" class="d-flex justify-content-center align-items-center py-10">
         <div class="text-center">
           <div class="spinner-border text-primary"></div>
@@ -21,6 +21,7 @@
             </NuxtLink>
             <div>
               <h4 class="mb-0 fw-semibold">{{ detail.nomorSppd }}</h4>
+              <PageBreadcrumb class="mt-1" :current-label="detail.nomorSppd" />
               <small class="text-muted">{{ formatDateTime(detail.createdAt) }}</small>
             </div>
             <span :class="getStatusPdBadge(detail.status).class">{{ getStatusPdBadge(detail.status).text }}</span>
@@ -212,6 +213,7 @@ const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 definePageMeta({
+  hidePageHeading: true,
   layout: 'default',
   middleware: ['auth', 'check-permission'],
   requiredPermission: ['view_perjalanan_dinas', 'show_perjalanan_dinas'],

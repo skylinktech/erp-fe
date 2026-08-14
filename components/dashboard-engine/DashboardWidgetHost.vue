@@ -142,6 +142,27 @@ onErrorCaptured((err) => {
 <style scoped>
 .dashboard-widget-host {
   position: relative;
+  min-height: 0;
+}
+
+/* Vuexy collapses .card-header + .card-body padding-top, which makes inner
+   info cards sit on the header divider. Restore space inside dashboard widgets. */
+.dashboard-widget-host :deep(.card) {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.dashboard-widget-host :deep(.card-header) {
+  flex-shrink: 0;
+}
+
+.dashboard-widget-host :deep(.card-header + .card-body) {
+  padding-top: 1.25rem;
+}
+
+.dashboard-widget-host :deep(.card-body) {
+  min-height: 0;
+  overflow: auto;
 }
 
 .dashboard-widget-host--editable {

@@ -9,6 +9,7 @@
         <NotificationPermissionPrompt />
         <div class="content-wrapper">
           <div class="container-xxl flex-grow-1 container-p-y">
+            <PageHeading />
             <slot />
           </div>
           <Footer />
@@ -57,9 +58,17 @@ import Sidebar from '~/components/Sidebar.vue';
 import Navbar from '~/components/Navbar.vue';
 import Footer from '~/components/Footer.vue';
 import NotificationPermissionPrompt from '~/components/NotificationPermissionPrompt.vue';
+import PageHeading from '~/components/PageHeading.vue';
 
 </script>
 
 <style>
-
+/* Page shells still wrap themselves in container-xxl; don't add a second inset
+   under the layout heading so title, breadcrumb, and body share one left edge. */
+.layout-page .content-wrapper > .container-xxl .container-xxl,
+.layout-page .content-wrapper > .container-xxl .container-fluid {
+  max-width: none;
+  padding-left: 0;
+  padding-right: 0;
+}
 </style>

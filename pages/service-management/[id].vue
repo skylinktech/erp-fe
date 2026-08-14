@@ -1,6 +1,6 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-pt-12">
+    <div class="container-xxl flex-grow-1">
       <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
           <NuxtLink
@@ -10,6 +10,7 @@
             ← Customer Service
           </NuxtLink>
           <h4 class="mb-1">{{ row?.serviceNumber || row?.service_number || 'Service Instance' }}</h4>
+          <PageBreadcrumb class="mt-1" :current-label="row?.serviceNumber || row?.service_number || 'Service Instance'" />
           <p class="mb-0 text-muted"><span :class="statusBadgeClass(row?.status || '')">{{ getStatusLabel(row?.status || '') }}</span> · {{ row?.customer?.name || '' }}</p>
         </div>
         <div v-if="row && hasActions" class="btn-group">
@@ -121,6 +122,7 @@
 import { useServiceInstanceStore } from '~/stores/service-instances'
 
 definePageMeta({
+  hidePageHeading: true,
   layout: 'default',
   middleware: ['auth', 'check-permission'],
   title: 'Service Instance Detail',

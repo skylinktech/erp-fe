@@ -1,7 +1,7 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-pt-12">
-      <h4 class="mb-1">Purchase Return</h4>
+    <div class="container-xxl flex-grow-1">
+      
       <p class="mb-6">
         Retur pembelian operasional berdasarkan qty yang sudah di-receive (Stock In posted).
         Melewati InventoryPostingService.

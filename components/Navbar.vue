@@ -1,5 +1,5 @@
 <template>
-    <nav class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme" id="layout-navbar">
+    <nav class="layout-navbar navbar navbar-expand-xl align-items-center bg-navbar-theme" id="layout-navbar">
       <div class="layout-menu-toggle navbar-nav align-items-xl-center me-4 me-xl-0 d-xl-none">
         <a class="nav-item nav-link px-0 me-xl-6" href="javascript:void(0)" @click="toggleSidebar">
           <i class="ri-menu-fill ri-22px"></i>
@@ -654,6 +654,17 @@
   </script>
 
 <style>
+#layout-navbar.layout-navbar {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  border-radius: 0;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  background-color: #fff;
+  border-bottom: 1px solid var(--bs-card-border-color, #ededed);
+  box-shadow: none;
+}
 
 .dropdown-user {
     z-index: 9999;

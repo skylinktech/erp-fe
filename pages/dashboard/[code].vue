@@ -1,7 +1,7 @@
 <template>
   <div class="page-wrapper">
     <div class="content-wrapper">
-      <div class="container-xxl flex-grow-1 container-pt-12">
+      <div class="container-xxl flex-grow-1">
         <!-- Loading -->
         <div v-if="loading" class="d-flex justify-content-center align-items-center" style="min-height: 400px;">
           <div class="text-center">
@@ -44,6 +44,7 @@
               </span>
               <div>
                 <h4 class="mb-0 fw-semibold">{{ dashboard.name }}</h4>
+                <PageBreadcrumb class="mt-1" :current-label="dashboard.name" />
                 <small v-if="dashboard.description" class="text-muted">{{ dashboard.description }}</small>
               </div>
             </div>
@@ -103,6 +104,7 @@ definePageMeta({
   layout: 'default',
   middleware: 'auth',
   title: 'Dashboard',
+  hidePageHeading: true,
 })
 
 const route = useRoute()

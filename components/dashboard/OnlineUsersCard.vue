@@ -33,7 +33,7 @@
       </div>
     </div>
 
-    <div class="card-body pt-0 online-users-body">
+    <div class="card-body online-users-body">
       <div v-if="store.loading && store.activeUsers.length === 0" class="text-center py-4">
         <div class="spinner-border text-primary" role="status">
           <span class="visually-hidden">Loading...</span>
@@ -54,7 +54,7 @@
         <div
           v-for="session in store.recentActiveUsers"
           :key="session.sessionId"
-          class="d-flex align-items-center mb-3 p-2 border rounded"
+          class="d-flex align-items-center p-2 border rounded"
         >
           <div class="avatar avatar-sm me-3">
             <div class="avatar-initial bg-label-primary rounded">
@@ -166,6 +166,9 @@ onUnmounted(() => {
 }
 
 .online-users-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
   min-height: 0;
 }
 </style>

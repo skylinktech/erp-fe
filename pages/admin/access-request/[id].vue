@@ -1,7 +1,7 @@
 <template>
   <div class="page-wrapper">
     <div class="content-wrapper">
-      <div class="container-xxl flex-grow-1 container-pt-12">
+      <div class="container-xxl flex-grow-1">
         <!-- Loading -->
         <div v-if="loading" class="d-flex justify-content-center align-items-center" style="min-height: 400px;">
           <div class="text-center">
@@ -30,6 +30,7 @@
               <span class="text-muted align-self-center">/</span>
               <div class="d-flex flex-column">
                 <h4 class="mb-0 fw-semibold">Detail Permintaan Akses #{{ request.id }}</h4>
+                <PageBreadcrumb class="mt-1" :current-label="`Detail Permintaan Akses #${request.id}`" />
                 <small class="text-muted">{{ formatDateTime(request.createdAt) }}</small>
               </div>
               <span :class="getStatusBadge(request).class" class="badge">{{ getStatusBadge(request).text }}</span>
@@ -329,6 +330,7 @@ async function handleCancel() {
 onMounted(load)
 
 definePageMeta({
+  hidePageHeading: true,
   layout: 'default',
   middleware: ['auth', 'check-permission'],
   title: 'Detail Permintaan Akses',

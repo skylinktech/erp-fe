@@ -1,7 +1,7 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-p-y">
-      <h4 class="mb-1">Legal-Tech Review</h4>
+    <div class="container-xxl flex-grow-1">
+      
       <p class="mb-6">Verifikasi kelayakan pelanggan sebelum kontrak</p>
 
       <!-- Statistics Cards -->

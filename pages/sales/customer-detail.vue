@@ -1,6 +1,6 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-pt-10">
+    <div class="container-xxl flex-grow-1">
       <div v-if="loading" class="text-center py-10">
         <ProgressSpinner
           style="width: 50px; height: 50px"

@@ -1,7 +1,7 @@
 <template>
     <div class="content-wrapper">
-        <div class="container-xxl flex-grow-1 container-pt-10">
-            <h4 class="mb-1">List Perusahaan</h4>
+        <div class="container-xxl flex-grow-1">
+            
             <p class="mb-6">List perusahaan yang terdaftar di sistem</p>
 
             <ListPageStatsCards :items="statItems" :loading="loadingStats" />

@@ -1,7 +1,7 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-pt-12">
-      <h4 class="mb-1">Inventory Accounting Events</h4>
+    <div class="container-xxl flex-grow-1">
+      
       <p class="mb-4 text-muted">VIEW ONLY / MONITOR — inventory accounting events → journals.</p>
       <div class="card mb-4"><div class="card-body"><div class="row g-3 align-items-end">
         <div class="col-md-2" v-for="f in filterFields" :key="f.key">
@@ -79,7 +79,8 @@
   </div>
 </template>
 <script setup>
-definePageMeta({ middleware: ['auth', 'check-permission'] })
+definePageMeta({
+  title: "Inventory Accounting Events", middleware: ['auth', 'check-permission'] })
 const { $api, $apiFetch } = useNuxtApp()
 const loading=ref(false), error=ref(''), rows=ref([]), selected=ref(null), page=ref(1), summary=ref(null)
 const filterFields = [{key:'status',label:'Status'},{key:'companyId',label:'Company'},{key:'stockMovementId',label:'Movement ID'}]

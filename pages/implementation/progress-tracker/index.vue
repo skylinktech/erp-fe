@@ -1,7 +1,7 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-pt-12">
-      <h4 class="mb-1">Progress Tracker</h4>
+    <div class="container-xxl flex-grow-1">
+      
       <p class="mb-6">Lacak progress project implementation per node/network</p>
 
       <div v-if="!loading && !workflowConfigured" class="alert alert-warning mb-4">

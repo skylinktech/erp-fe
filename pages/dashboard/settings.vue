@@ -1,7 +1,7 @@
 <template>
   <div class="page-wrapper">
     <div class="content-wrapper">
-      <div class="container-xxl flex-grow-1 container-pt-12 dashboard-page">
+      <div class="container-xxl flex-grow-1 dashboard-page">
         <div v-if="loading" class="d-flex justify-content-center align-items-center" style="min-height: 400px;">
           <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
             <span class="visually-hidden">Loading...</span>
@@ -26,6 +26,7 @@
               </span>
               <div>
                 <h4 class="mb-0 fw-semibold">Dashboard Settings</h4>
+                <PageBreadcrumb class="mt-1" current-label="Dashboard Settings" />
                 <small class="text-muted">
                   Susun widget dashboard utama — setelah disimpan, hasilnya tampil di Dashboard → Main.
                 </small>
@@ -131,6 +132,7 @@ definePageMeta({
   layout: 'default',
   middleware: 'auth',
   title: 'Dashboard Settings',
+  hidePageHeading: true,
 })
 
 const { setTitle } = useDynamicTitle()

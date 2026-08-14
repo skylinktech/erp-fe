@@ -4,8 +4,8 @@
     <div class="content-wrapper">
          <!-- Content -->
  
-            <div class="container-xxl flex-grow-1 container-pt-12">
-                <h4 class="mb-1">List Pegawai</h4>
+            <div class="container-xxl flex-grow-1">
+                
                 <p class="mb-6">
                 List pegawai yang terdaftar di sistem
                 </p>

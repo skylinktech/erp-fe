@@ -1,7 +1,7 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-pt-10">
-      <h4 class="mb-1">Tax Master</h4>
+    <div class="container-xxl flex-grow-1">
+      
       <p class="mb-6">
         Konfigurasi master pajak (PPN, PPh, dll.) beserta histori tarif efektif
       </p>

@@ -1,7 +1,7 @@
 <template>
   <div class="page-wrapper">
     <div class="content-wrapper">
-      <div class="container-xxl flex-grow-1 container-pt-10">
+      <div class="container-xxl flex-grow-1">
 
         <div v-if="loading" class="d-flex justify-content-center align-items-center" style="min-height:400px">
           <div class="text-center">
@@ -25,6 +25,7 @@
               <span class="text-muted">/</span>
               <div>
                 <h4 class="mb-0 fw-semibold">{{ getBeritaAcaraNo(beritaAcara) || '—' }}</h4>
+                <PageBreadcrumb class="mt-1" :current-label="getBeritaAcaraNo(beritaAcara) || '—'" />
                 <small class="text-muted">{{ formatDateTime(beritaAcara.createdAt) }}</small>
               </div>
               <span :class="getStatusBadge(beritaAcara).class" class="badge">{{ getStatusBadge(beritaAcara).text }}</span>
@@ -358,5 +359,6 @@ async function onDelete() {
 onMounted(() => load())
 watch(id, () => load())
 
-definePageMeta({ layout: 'default', middleware: ['auth', 'check-permission'], title: 'Berita Acara Detail' })
+definePageMeta({
+  hidePageHeading: true, layout: 'default', middleware: ['auth', 'check-permission'], title: 'Berita Acara Detail' })
 </script>

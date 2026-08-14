@@ -9,8 +9,8 @@
                 <p class="mt-3 text-muted">Memuat data Purchase Order...</p>
             </div>
         </div>
-        <div v-else class="container-xxl flex-grow-1 container-pt-12">
-            <h4 class="mb-1">List Purchase Order</h4>
+        <div v-else class="container-xxl flex-grow-1">
+            
             <p class="mb-6">
             List purchase order yang terdaftar di sistem
             </p>

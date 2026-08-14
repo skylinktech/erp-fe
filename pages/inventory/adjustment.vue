@@ -1,7 +1,7 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-pt-12">
-      <h4 class="mb-1">Inventory Adjustment</h4>
+    <div class="container-xxl flex-grow-1">
+      
       <p class="mb-6">Penyesuaian stok operasional (IN/OUT) melalui inventory ledger. Tidak ada valuasi/akuntansi.</p>
 
       <div class="row g-4">

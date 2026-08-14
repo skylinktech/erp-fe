@@ -12,8 +12,8 @@
             </div>
 
             <!-- Content -->
-            <div v-else class="container-xxl flex-grow-1 container-pt-10">
-                <h4 class="mb-1">Customer Verification</h4>
+            <div v-else class="container-xxl flex-grow-1">
+                
                 <p class="mb-6">List customer verification yang terdaftar di sistem</p>
 
                 <!-- Statistics Cards -->

@@ -28837,6 +28837,7 @@ html:not([dir=rtl]) .menu-horizontal .menu-inner > .menu-item .menu-sub .menu-to
   color: #676b7b;
   z-index: 2;
   backdrop-filter: blur(6px);
+  border-bottom: 1px solid #ededed;
 }
 .layout-navbar .navbar {
   transform: translate3d(0, 0, 0);
@@ -28860,7 +28861,7 @@ html:not([dir=rtl]) .menu-horizontal .menu-inner > .menu-item .menu-sub .menu-to
   padding-right: 1.25rem;
 }
 .layout-navbar-fixed .layout-page:not(.window-scrolled) .layout-navbar.navbar-detached .search-input {
-  background-color: #f7f7f9;
+  background-color: #fff;
 }
 .layout-navbar.navbar-detached .search-input {
   transition: padding 0.2s ease, background-color 0.18s ease;

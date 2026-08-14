@@ -1,7 +1,7 @@
 <template>
   <div class="content-wrapper">
     <div class="container-xxl flex-grow-1 container-p-y">
-      <h4 class="mb-1">My Price Requests</h4>
+      
       <p class="mb-4">Daftar price adjustment request yang Anda ajukan.</p>
 
       <CollapsibleFilterCard
@@ -174,6 +174,10 @@ onMounted(async () => {
     store.params.requestedBy = user.value.id
   }
   await store.fetchRequests()
+})
+
+definePageMeta({
+  title: 'My Price Requests',
 })
 </script>
 

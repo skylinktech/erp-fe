@@ -1,10 +1,6 @@
 <template>
   <div class="content-wrapper">
     <div class="container-xxl flex-grow-1 container-py-2">
-      <div class="d-flex align-items-center mb-4">
-        <i class="ri-diamond-line me-2" style="font-size: 24px; color: var(--bs-warning);"></i>
-        <h4 class="mb-0">Sales Pipeline / Deals</h4>
-      </div>
       <p class="mb-6">Kelola opportunities dan deals di dalam sales pipeline</p>
 
       <!-- Statistics Cards -->

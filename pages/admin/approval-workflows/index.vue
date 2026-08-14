@@ -1,8 +1,7 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-p-y">
-      <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-1">
-        <h4 class="mb-0">Approval Workflows</h4>
+    <div class="container-xxl flex-grow-1">
+      <div class="d-flex flex-wrap justify-content-end align-items-start gap-2 mb-1">
         <NuxtLink to="/admin/approval-workflow-entities" class="btn btn-sm btn-outline-primary">
           <i class="ri-node-tree me-1"></i> Kelola Entity Types
         </NuxtLink>
@@ -265,6 +264,7 @@ import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
 import type { ApprovalWorkflowEntity } from '~/stores/approval-workflows'
 
 definePageMeta({
+  title: "Approval Workflows",
   layout: 'default',
   middleware: ['auth', 'check-permission'],
 })

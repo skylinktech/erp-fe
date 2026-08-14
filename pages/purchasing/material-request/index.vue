@@ -1,7 +1,7 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-pt-12">
-      <h4 class="mb-1">Material Request Form</h4>
+    <div class="container-xxl flex-grow-1">
+      
       <p class="mb-6">Permintaan material proyek eksternal (Starlink, Mikrotik, dan perangkat terkait Site Investment).</p>
 
       <div class="row g-6 mb-6">

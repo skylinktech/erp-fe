@@ -299,16 +299,25 @@ const leave = (el, done) => {
   transition: width 0.25s ease-in-out;
 }
 
-html:not(.layout-menu-collapsed) .layout-menu {
-    width: 260px;
-}
-
-html.layout-menu-collapsed .layout-menu {
-    width: 82px;
-}
-
+html:not(.layout-menu-collapsed) .layout-menu,
 html.layout-menu-collapsed.layout-menu-hover .layout-menu {
     width: 260px;
+    border-right: 1px solid var(--bs-card-border-color, #ededed);
+}
+
+html.layout-menu-collapsed:not(.layout-menu-hover) .layout-menu {
+    width: 82px;
+    border-right: 0;
+}
+
+[dir=rtl]:not(.layout-menu-collapsed) .layout-menu,
+[dir=rtl].layout-menu-collapsed.layout-menu-hover .layout-menu {
+    border-right: 0;
+    border-left: 1px solid var(--bs-card-border-color, #ededed);
+}
+
+[dir=rtl].layout-menu-collapsed:not(.layout-menu-hover) .layout-menu {
+    border-left: 0;
 }
 
 #layout-menu {

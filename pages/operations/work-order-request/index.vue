@@ -1,7 +1,7 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-pt-12">
-      <h4 class="mb-1">Work Order Request</h4>
+    <div class="container-xxl flex-grow-1">
+      
       <p class="mb-6">Pengajuan penugasan teknisi untuk pekerjaan PM, CM, dan Relokasi perangkat.</p>
 
       <!-- Statistics Cards -->

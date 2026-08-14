@@ -1231,9 +1231,10 @@ li.ui-timepicker-selected,
 
 .bg-navbar-theme {
   color: #3b4056;
+  background-color: #fff;
 }
 .layout-navbar-fixed .window-scrolled .bg-navbar-theme.layout-navbar, .layout-horizontal .bg-navbar-theme.layout-navbar {
-  background-color: rgba(255, 255, 255, 0.9) !important;
+  background-color: #fff !important;
 }
 .layout-navbar-fixed .window-scrolled .bg-navbar-theme.layout-navbar .search-input-wrapper .search-input,
 .layout-navbar-fixed .window-scrolled .bg-navbar-theme.layout-navbar .search-input-wrapper .search-toggler, .layout-horizontal .bg-navbar-theme.layout-navbar .search-input-wrapper .search-input,
@@ -1310,7 +1311,7 @@ li.ui-timepicker-selected,
 }
 
 .layout-navbar-fixed .layout-page:not(.window-scrolled) .layout-navbar.navbar-detached {
-  background: #f7f7f9;
+  background: #fff;
 }
 
 .bg-menu-theme {

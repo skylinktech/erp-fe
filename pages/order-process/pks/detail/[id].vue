@@ -30,6 +30,7 @@
               <span class="text-muted align-self-center">/</span>
               <div class="d-flex flex-column">
                 <h4 class="mb-0 fw-semibold">{{ (pks as any).noPks || (pks as any).no_pks || '—' }}</h4>
+                <PageBreadcrumb class="mt-1" :current-label="(pks as any).noPks || (pks as any).no_pks || '—'" />
                 <small class="text-muted">{{ formatDateTime((pks as any).createdAt) }}</small>
               </div>
               <span :class="getStatusBadge((pks as any).status).class" class="badge">{{ getStatusBadge((pks as any).status).text }}</span>
@@ -426,6 +427,7 @@ onMounted(() => load())
 watch(id, () => load())
 
 definePageMeta({
+  hidePageHeading: true,
   layout: 'default',
   middleware: ['auth', 'check-permission'],
 })

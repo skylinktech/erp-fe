@@ -31,6 +31,7 @@
               <span class="text-muted align-self-center">/</span>
               <div class="d-flex flex-column">
                 <h4 class="mb-0 fw-semibold">{{ fdr.fdrNumber || fdr.name }}</h4>
+                <PageBreadcrumb class="mt-1" :current-label="fdr.fdrNumber || fdr.name" />
                 <small class="text-muted">{{ formatDateTime(fdr.createdAt) }}</small>
               </div>
               <span :class="getStatusBadge(fdr).class" class="badge">{{ getStatusBadge(fdr).text }}</span>
@@ -668,6 +669,7 @@ onMounted(() => load())
 watch(id, () => load())
 
 definePageMeta({
+  hidePageHeading: true,
   layout: 'default',
   middleware: ['auth', 'check-permission'],
   title: 'Detail FDR',

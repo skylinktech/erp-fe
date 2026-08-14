@@ -1,7 +1,7 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-pt-12">
-      <h4 class="mb-1">Accounting Exceptions</h4>
+    <div class="container-xxl flex-grow-1">
+      
       <p class="mb-4 text-muted">
         Exception queue from failed/blocked accounting events and outbox. Retry only via authorized backend path.
       </p>
@@ -83,7 +83,8 @@
 </template>
 
 <script setup>
-definePageMeta({ middleware: ['auth', 'check-permission'] })
+definePageMeta({
+  title: "Accounting Exceptions", middleware: ['auth', 'check-permission'] })
 
 const { $api, $apiFetch } = useNuxtApp()
 const loading = ref(false)

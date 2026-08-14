@@ -24,6 +24,7 @@
               <span class="text-muted">/</span>
               <div>
                 <h4 class="mb-0 fw-semibold">{{ getArfRequestNo(arf) || '—' }}</h4>
+                <PageBreadcrumb class="mt-1" :current-label="getArfRequestNo(arf) || '—'" />
                 <small class="text-muted">{{ formatDateTime(arf.createdAt) }}</small>
               </div>
               <span :class="getStatusBadge(arf).class" class="badge">{{ getStatusBadge(arf).text }}</span>
@@ -277,6 +278,7 @@ import ApprovalCard from '~/components/ApprovalCard.vue'
 import Menu from 'primevue/menu'
 
 definePageMeta({
+  hidePageHeading: true,
   layout: 'default',
   middleware: ['auth', 'check-permission'],
   title: 'ARF Detail',

@@ -1,14 +1,10 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-pt-5">
+    <div class="container-xxl flex-grow-1">
       <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
         <div>
-          <div class="d-flex align-items-center gap-2 mb-1">
-            <NuxtLink to="/hrd/pegawai" class="text-muted small text-decoration-none">Pegawai</NuxtLink>
-            <span class="text-muted small">/</span>
-            <span class="text-muted small">Profil</span>
-          </div>
           <h4 class="mb-1">Profil Pegawai</h4>
+          <PageBreadcrumb class="mt-1" current-label="Profil Pegawai" />
           <p class="mb-0 text-muted small">Ringkasan lengkap data pegawai: pribadi, keluarga, perusahaan, kontrak &amp; riwayat jabatan.</p>
         </div>
         <div class="d-flex gap-2">
@@ -98,6 +94,7 @@ async function loadProfile() {
 onMounted(loadProfile)
 
 definePageMeta({
+  hidePageHeading: true,
   layout: 'default',
   middleware: ['auth', 'check-permission'],
   title: 'Profil Pegawai',

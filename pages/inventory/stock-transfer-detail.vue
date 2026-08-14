@@ -2,6 +2,7 @@
     <div class="content-wrapper">
         <div class="container-xxl flex-grow-1 container-p-y">
             <h4 class="mb-1">Detail Stock Transfer</h4>
+            <PageBreadcrumb class="mt-1" current-label="Detail Stock Transfer" />
             <p class="mb-6">
             Berikut di bawah ini data detail stock transfer
             </p>
@@ -98,6 +99,11 @@
 </template>
 
 <script setup>
+
+definePageMeta({
+  hidePageHeading: true,
+})
+
 import { onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'

@@ -2,8 +2,8 @@
 <div class="page-wrapper">
     <div class="content-wrapper">
         <!-- Content -->
-        <div class="container-xxl flex-grow-1 container-pt-12">
-            <h4 class="mb-1">List Stock</h4>
+        <div class="container-xxl flex-grow-1">
+            
             <p class="mb-6">
             List stock yang terdaftar di sistem
             </p>

@@ -1,9 +1,9 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-pt-12">
+    <div class="container-xxl flex-grow-1">
       <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h4 class="mb-1">Service Monitoring</h4>
+          
           <p class="mb-0 text-muted">KPI pending SLA, suspended aging, billable mismatch</p>
         </div>
         <button class="btn btn-outline-secondary btn-sm" :disabled="loading" @click="load">Refresh</button>

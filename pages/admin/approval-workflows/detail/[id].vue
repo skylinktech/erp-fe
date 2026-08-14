@@ -1,6 +1,6 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-pt-10">
+    <div class="container-xxl flex-grow-1">
       <div v-if="loading && !workflow" class="text-center py-8">
         <div class="spinner-border text-primary" role="status"></div>
         <p class="mt-3 text-muted">Memuat workflow...</p>
@@ -13,6 +13,7 @@
               <i class="ri-arrow-left-line me-1"></i> Kembali
             </NuxtLink>
             <h4 class="mb-1 mt-5">{{ workflow.name }}</h4>
+            <PageBreadcrumb class="mt-1" :current-label="workflow.name" />
             <p class="text-muted mb-0">
               <span class="fw-medium">{{ workflow.entity?.name || workflow.entityType }}</span>
               <code class="ms-2">{{ workflow.entity?.code || workflow.entityType }}</code>
@@ -194,6 +195,7 @@ import CustomSelect2 from '~/components/CustomSelect2.vue'
 import type { ApprovalWorkflowStepItem } from '~/stores/approval-workflows'
 
 definePageMeta({
+  hidePageHeading: true,
   layout: 'default',
   middleware: ['auth', 'check-permission'],
 })

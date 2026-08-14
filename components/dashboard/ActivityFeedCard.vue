@@ -24,7 +24,7 @@
       </div>
     </div>
 
-    <div class="card-body pt-0 activity-feed-body">
+    <div class="card-body activity-feed-body">
       <div v-if="store.loading && store.items.length === 0" class="text-center py-4">
         <div class="spinner-border text-primary" role="status">
           <span class="visually-hidden">Loading...</span>

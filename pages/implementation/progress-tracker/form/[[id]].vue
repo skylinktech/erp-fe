@@ -6,6 +6,7 @@
 import ProgressTrackerFormPage from '~/components/progress-tracker/ProgressTrackerFormPage.vue'
 
 definePageMeta({
+  hidePageHeading: true,
   layout: 'default',
   middleware: ['auth', 'check-permission'],
   title: 'Form Progress Tracker',

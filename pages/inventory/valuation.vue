@@ -1,7 +1,7 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-pt-12">
-      <h4 class="mb-1">Inventory Valuation</h4>
+    <div class="container-xxl flex-grow-1">
+      
       <p class="mb-4 text-muted">VIEW ONLY — Moving WAC valuation entries. Amounts are system-generated.</p>
 
       <div class="card mb-4">
@@ -115,7 +115,8 @@
 </template>
 
 <script setup>
-definePageMeta({ middleware: ['auth', 'check-permission'] })
+definePageMeta({
+  title: "Inventory Valuation", middleware: ['auth', 'check-permission'] })
 
 const route = useRoute()
 const { $api, $apiFetch } = useNuxtApp()

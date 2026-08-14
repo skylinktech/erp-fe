@@ -22,6 +22,7 @@
               <span class="text-muted">/</span>
               <div>
                 <h4 class="mb-0 fw-semibold">{{ getMaterialRequestNo(materialRequest) || '—' }}</h4>
+                <PageBreadcrumb class="mt-1" :current-label="getMaterialRequestNo(materialRequest) || '—'" />
                 <small class="text-muted">{{ formatDateTime(materialRequest.createdAt) }}</small>
               </div>
               <span :class="getStatusBadge(materialRequest).class" class="badge">{{ getStatusBadge(materialRequest).text }}</span>
@@ -313,5 +314,6 @@ function onDelete () {
 onMounted(() => load())
 watch(id, () => load())
 
-definePageMeta({ layout: 'default', middleware: ['auth', 'check-permission'] })
+definePageMeta({
+  hidePageHeading: true, layout: 'default', middleware: ['auth', 'check-permission'] })
 </script>

@@ -12,9 +12,9 @@
                 />
                 <div class="mt-3 text-muted">Memuat data...</div>
             </div>
-            <div v-else class="container-xxl flex-grow-1 container-p-y">
+            <div v-else class="container-xxl flex-grow-1">
                 <div>
-                    <h4 class="mb-1">List Price List</h4>
+                    
                     <p class="mb-6">
                         Daftar harga produk, service, dan DID berdasarkan tipe dan periode
                     </p>

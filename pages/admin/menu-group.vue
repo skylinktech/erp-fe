@@ -3,7 +3,7 @@
         <!-- Content -->
         <div class="container-xxl flex-grow-1 container-p-y">
             <div v-if="menuGroups.length > 0">
-                    <h4 class="mb-1">Menu Group List</h4>
+                    
                     <p class="mb-6">
                         List menu group yang terdaftar di sistem
                     </p>

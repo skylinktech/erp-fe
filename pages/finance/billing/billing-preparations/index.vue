@@ -1,7 +1,7 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-pt-10">
-      <h4 class="mb-1">Billing Preparation</h4>
+    <div class="container-xxl flex-grow-1">
+      
       <p class="mb-6 text-muted">
         Siapkan tagihan dari Service Line + Adjustment. Set Ready untuk generate Finance Invoice.
       </p>

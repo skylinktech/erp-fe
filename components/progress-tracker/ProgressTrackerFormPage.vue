@@ -1,6 +1,6 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-pt-5">
+    <div class="container-xxl flex-grow-1">
       <div v-if="!formReady && loading" class="d-flex justify-content-center py-5">
         <div class="spinner-border text-primary" role="status">
           <span class="visually-hidden">Memuat…</span>
@@ -10,17 +10,8 @@
       <template v-else>
         <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-4">
           <div>
-            <div class="d-flex align-items-center gap-2 mb-1">
-              <NuxtLink
-                to="/implementation/progress-tracker"
-                class="text-muted small text-decoration-none"
-              >
-                Progress Tracker
-              </NuxtLink>
-              <span class="text-muted small">/</span>
-              <span class="text-muted small">{{ pageTitle }}</span>
-            </div>
             <h4 class="mb-1">{{ pageTitle }}</h4>
+            <PageBreadcrumb class="mt-1" :current-label="pageTitle" />
             <p class="mb-0 text-muted small">{{ pageSubtitle }}</p>
           </div>
           <NuxtLink to="/implementation/progress-tracker" class="btn btn-outline-secondary btn-sm">

@@ -1,8 +1,7 @@
 <template>
   <div class="content-wrapper">
     <div class="container-xxl flex-grow-1 container-p-y">
-      <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-1">
-        <h4 class="mb-0">Approval Workflow Entities</h4>
+      <div class="d-flex flex-wrap justify-content-end align-items-start gap-2 mb-1">
         <NuxtLink to="/admin/approval-workflows" class="btn btn-sm btn-outline-secondary">
           <i class="ri-arrow-left-line me-1"></i> Kembali ke Workflows
         </NuxtLink>
@@ -280,6 +279,7 @@ import { useDebounceFn } from '@vueuse/core'
 import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
 
 definePageMeta({
+  title: "Approval Workflow Entities",
   layout: 'default',
   middleware: ['auth', 'check-permission'],
 })

@@ -2,7 +2,7 @@
   <div class="content-wrapper">
     <!-- Content -->
     <div class="container-xxl flex-grow-1 container-p-y">
-      <h4 class="mb-1">Sites</h4>
+      
       <p class="mb-6">
         Kelola site untuk kebutuhan lokasi kantor, gudang, tower, project, dan lainnya.
       </p>

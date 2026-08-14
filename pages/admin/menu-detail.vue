@@ -4,6 +4,7 @@
         <div class="container-xxl flex-grow-1 container-p-y">
             <div>
                     <h4 class="mb-1">List Menu Detail</h4>
+                    <PageBreadcrumb class="mt-1" current-label="List Menu Detail" />
                     <p class="mb-6">
                     List menu detail yang terdaftar di sistem
                     </p>
@@ -275,6 +276,11 @@
 </template>
 
 <script setup>
+
+definePageMeta({
+  hidePageHeading: true,
+})
+
 import { ref, computed, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia';
 import { useMenuDetailStore } from '~/stores/menu-detail'

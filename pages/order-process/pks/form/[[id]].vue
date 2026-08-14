@@ -1,16 +1,11 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-pt-5">
+    <div class="container-xxl flex-grow-1">
       <div class="row g-4 align-items-start mb-4">
         <div class="col-xl-8 col-12">
           <div class="d-flex flex-column">
-            <!-- Breadcrumb above title -->
-            <div class="d-flex align-items-center gap-2 mb-1">
-              <NuxtLink to="/order-process/pks" class="text-muted small text-decoration-none">PKS</NuxtLink>
-              <span class="text-muted small">/</span>
-              <span class="text-muted small">{{ pageTitle }}</span>
-            </div>
             <h4 class="mb-0">{{ pageTitle }}</h4>
+            <PageBreadcrumb class="mt-1" :current-label="pageTitle" />
             <p class="text-muted mb-0 small">{{ pageSubtitle }}</p>
           </div>
         </div>
@@ -681,6 +676,7 @@ useHead(() => ({
 }))
 
 definePageMeta({
+  hidePageHeading: true,
   layout: 'default',
   middleware: ['auth', 'check-permission'],
 })

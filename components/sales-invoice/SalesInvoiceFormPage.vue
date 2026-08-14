@@ -4,6 +4,7 @@
       <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
         <div>
           <h4 class="mb-1">{{ isEditMode ? 'Edit Sales Invoice' : 'Tambah Sales Invoice' }}</h4>
+          <PageBreadcrumb class="mt-1" :current-label="isEditMode ? 'Edit Sales Invoice' : 'Tambah Sales Invoice'" />
           <p class="mb-0 text-muted">Kelola sales invoice pada halaman terpisah.</p>
         </div>
         <button type="button" class="btn btn-outline-secondary" @click="navigateTo('/sales/sales-invoice')">

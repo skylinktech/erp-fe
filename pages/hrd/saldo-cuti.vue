@@ -1,7 +1,7 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-pt-10">
-      <h4 class="mb-1">Saldo Cuti Pegawai</h4>
+    <div class="container-xxl flex-grow-1">
+      
       <p class="mb-6">
         Kelola jatah cuti per pegawai, tipe, dan tahun. Termasuk potongan cuti bersama dan pengajuan
         yang disetujui.
@@ -508,6 +508,7 @@ onMounted(async () => {
 })
 
 definePageMeta({
+  title: "Saldo Cuti Pegawai",
   layout: 'default',
   middleware: ['auth', 'check-permission'],
   requiredPermission: ['view_saldo_cuti', 'access_saldo_cuti'],

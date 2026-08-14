@@ -4,6 +4,7 @@
       <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
           <h4 class="mb-1">{{ isEditMode ? 'Edit Surat Jalan' : 'Tambah Surat Jalan' }}</h4>
+          <PageBreadcrumb class="mt-1" :current-label="isEditMode ? 'Edit Surat Jalan' : 'Tambah Surat Jalan'" />
           <p class="mb-0 text-muted">Kelola surat jalan pada halaman terpisah.</p>
         </div>
         <button type="button" class="btn btn-outline-secondary" @click="navigateTo('/sales/surat-jalan')">Kembali</button>

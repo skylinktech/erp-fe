@@ -1,8 +1,8 @@
 <template>
     <div class="content-wrapper">
         <!-- Content -->
-        <div class="container-xxl flex-grow-1 container-pt-10">
-            <h4 class="mb-1">List Service Line</h4>
+        <div class="container-xxl flex-grow-1">
+            
             <p class="mb-6">
                 List service line yang terdaftar di sistem
                 <span v-if="globalFilterValue" class="text-muted">

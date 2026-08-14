@@ -1,8 +1,8 @@
 <template>
     <div class="content-wrapper">
         <!-- Content -->
-        <div class="container-xxl flex-grow-1 container-pt-12">
-            <h4 class="mb-1">List Gudang</h4>
+        <div class="container-xxl flex-grow-1">
+            
             <p class="mb-6">
             List warehouse yang terdaftar di sistem
             </p>

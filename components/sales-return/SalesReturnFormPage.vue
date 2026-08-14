@@ -4,6 +4,7 @@
       <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
           <h4 class="mb-1">{{ isEditMode ? 'Edit Sales Return' : 'Tambah Sales Return' }}</h4>
+          <PageBreadcrumb class="mt-1" :current-label="isEditMode ? 'Edit Sales Return' : 'Tambah Sales Return'" />
           <p class="mb-0 text-muted">Kelola data sales return pada halaman terpisah.</p>
         </div>
         <button type="button" class="btn btn-outline-secondary" @click="navigateTo('/sales/sales-return')">Kembali</button>

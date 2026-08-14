@@ -30,6 +30,7 @@
               <span class="text-muted align-self-center">/</span>
               <div class="d-flex flex-column">
                 <h4 class="mb-0 fw-semibold">{{ review.noLr || review.no_lr || 'Legal-Tech Review' }}</h4>
+                <PageBreadcrumb class="mt-1" :current-label="review.noLr || review.no_lr || 'Legal-Tech Review'" />
                 <small class="text-muted">{{ formatDateTime(review.createdAt) }}</small>
               </div>
               <span :class="getStatusBadge(review).class" class="badge">{{ getStatusBadge(review).text }}</span>
@@ -432,6 +433,7 @@ onMounted(() => load())
 watch(id, () => load())
 
 definePageMeta({
+  hidePageHeading: true,
   layout: 'default',
   middleware: ['auth', 'check-permission'],
 })

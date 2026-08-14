@@ -1,8 +1,8 @@
 <template>
     <div class="content-wrapper">
         <!-- Content -->
-        <div class="container-xxl flex-grow-1 container-pt-10">
-            <h4 class="mb-1">Aset Tetap</h4>
+        <div class="container-xxl flex-grow-1">
+            
             <p class="mb-6">
                 Kelola aset tetap dan perhitungan penyusutan
             </p>

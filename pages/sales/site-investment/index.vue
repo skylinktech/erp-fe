@@ -12,8 +12,8 @@
             </div>
 
             <!-- Content -->
-            <div v-else class="container-xxl flex-grow-1 container-p-y">
-                <h4 class="mb-1">Site Investment</h4>
+            <div v-else class="container-xxl flex-grow-1">
+                
                 <p class="mb-6">List site investment yang terdaftar di sistem</p>
 
                 <!-- Statistics Cards -->

@@ -1,9 +1,9 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-pt-12">
+    <div class="container-xxl flex-grow-1">
       <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h4 class="mb-1">Bank Reconciliation</h4>
+          
           <p class="mb-0 text-muted">Import statement &amp; match ke AR Receipt / AP Payment</p>
         </div>
         <button class="btn btn-outline-secondary" :disabled="loading" @click="load">Refresh</button>
