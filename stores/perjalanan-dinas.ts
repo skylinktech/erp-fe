@@ -303,9 +303,12 @@ export const usePerjalananDinasStore = defineStore('perjalanan-dinas', {
         const url = this.isEditMode
           ? $api.perjalananDinasUpdate(this.form.id!)
           : $api.perjalananDinasStore()
-        if (this.isEditMode) fd.append('_method', 'PUT')
 
-        const res = await fetch(url, { method: 'POST', credentials: 'include', body: fd })
+        const res = await fetch(url, {
+          method: this.isEditMode ? 'PUT' : 'POST',
+          credentials: 'include',
+          body: fd,
+        })
         if (!res.ok) {
           const err = await normalizeFailedResponse(
             res,

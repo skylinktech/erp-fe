@@ -291,9 +291,12 @@ export const useLemburStore = defineStore('lembur', {
         if (!this.isEditMode && this.form.auto_submit) fd.append('auto_submit', '1')
 
         const url = this.isEditMode ? $api.lemburUpdate(this.form.id!) : $api.lemburStore()
-        if (this.isEditMode) fd.append('_method', 'PUT')
 
-        const res = await fetch(url, { method: 'POST', credentials: 'include', body: fd })
+        const res = await fetch(url, {
+          method: this.isEditMode ? 'PUT' : 'POST',
+          credentials: 'include',
+          body: fd,
+        })
         if (!res.ok) {
           const err = await normalizeFailedResponse(
             res,

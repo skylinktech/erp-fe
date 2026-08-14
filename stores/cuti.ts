@@ -421,10 +421,9 @@ export const useCutiStore = defineStore('cuti', {
         if (!this.isEditMode && this.form.auto_submit) fd.append('auto_submit', '1')
 
         const url = this.isEditMode ? $api.cutiUpdate(this.form.id!) : $api.cutiStore()
-        if (this.isEditMode) fd.append('_method', 'PUT')
 
         const res = await fetch(url, {
-          method: 'POST',
+          method: this.isEditMode ? 'PUT' : 'POST',
           credentials: 'include',
           body: fd,
         })
