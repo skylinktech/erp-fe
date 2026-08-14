@@ -75,18 +75,16 @@ const sortedApprovalLogs = computed(() => {
   })
 })
 
-/** Label "Approved by X": prioritas Jabatan → Role → step_name → fullName user */
+/** Label "Approved by X": utamakan nama user yang approve, lalu nama step. */
 function getStepJabatanLabel(log: ApprovalLog) {
+  const userName = log.user?.fullName ?? log.user?.full_name ?? log.user?.email
+  if (userName) return userName
   const steps = log.workflow?.steps || []
   const stepOrder = log.stepOrder ?? log.step_order
   const step = steps.find((s) => (s.step_order ?? s.stepOrder) === stepOrder)
-  const jabatan = step?.jabatan?.nm_jabatan ?? step?.jabatan?.nmJabatan ?? ''
-  if (jabatan) return jabatan
-  const role = step?.role?.name ?? ''
-  if (role) return role
   const stepName = step?.step_name ?? step?.stepName ?? ''
   if (stepName) return stepName
-  return log.user?.fullName ?? log.user?.full_name ?? log.user?.email ?? '—'
+  return '—'
 }
 
 function stepLabel(log: ApprovalLog) {
