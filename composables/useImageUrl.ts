@@ -40,6 +40,16 @@ export const useImageUrl = () => {
 
     if (pathname.startsWith('uploads/')) {
       return pathname
+        .split('/')
+        .filter(Boolean)
+        .map((segment) => {
+          try {
+            return encodeURIComponent(decodeURIComponent(segment))
+          } catch {
+            return encodeURIComponent(segment)
+          }
+        })
+        .join('/')
     }
 
     return null
