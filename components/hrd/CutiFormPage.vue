@@ -165,7 +165,7 @@
                       @change="onFileChange"
                     />
                     <div v-if="store.form.attachmentUrl" class="form-text mt-2">
-                      <a :href="store.form.attachmentUrl" target="_blank" rel="noopener">
+                      <a :href="getAttachmentUrl(store.form.attachmentUrl)" target="_blank" rel="noopener">
                         <i class="ri-attachment-2 me-1"></i>Lampiran sebelumnya
                       </a>
                     </div>
@@ -302,6 +302,7 @@ import {
 const route = useRoute()
 const router = useRouter()
 const store = useCutiStore()
+const { getAttachmentUrl } = useImageUrl()
 
 const initializing = ref(true)
 

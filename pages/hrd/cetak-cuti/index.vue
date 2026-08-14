@@ -60,7 +60,7 @@
             <td class="text-center">5</td>
             <td class="text-start">Lampiran</td>
             <td class="text-start">
-              <a v-if="cuti.attachment" :href="cuti.attachment" target="_blank" rel="noopener" class="no-print">
+              <a v-if="cuti.attachment" :href="getAttachmentUrl(cuti.attachment)" target="_blank" rel="noopener" class="no-print">
                 Lihat lampiran
               </a>
               <span v-if="cuti.attachment" class="d-none print-only">{{ cuti.attachment }}</span>
@@ -184,6 +184,7 @@ definePageMeta({
 })
 
 const { setDetailTitle } = useDynamicTitle()
+const { getAttachmentUrl } = useImageUrl()
 const route = useRoute()
 const runtimeConfig = useRuntimeConfig()
 

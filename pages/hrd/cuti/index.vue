@@ -234,7 +234,7 @@
                     <template #body="{ data }">
                       <a
                         v-if="data.attachment"
-                        :href="data.attachment"
+                        :href="getAttachmentUrl(data.attachment)"
                         target="_blank"
                         rel="noopener"
                         class="btn btn-sm btn-text-secondary"
@@ -363,7 +363,7 @@
                 <dd class="col-7 mb-2">
                   <a
                     v-if="detail.attachment"
-                    :href="detail.attachment"
+                    :href="getAttachmentUrl(detail.attachment)"
                     target="_blank"
                     rel="noopener"
                     class="link-primary"
@@ -487,6 +487,7 @@ import Swal from 'sweetalert2'
 import { useBootstrapModal } from '~/composables/useBootstrapModal'
 
 const store = useCutiStore()
+const { getAttachmentUrl } = useImageUrl()
 const { userHasPermission, userHasRole } = usePermissions()
 const { setListTitle } = useDynamicTitle()
 

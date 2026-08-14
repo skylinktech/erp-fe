@@ -82,7 +82,7 @@
                     <input type="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.webp" @change="onFileChange" />
                     <small class="text-muted">PDF atau gambar, maks. 5MB</small>
                     <div v-if="store.form.attachmentUrl && !store.form.attachment" class="mt-2">
-                      <a :href="store.form.attachmentUrl" target="_blank" rel="noopener">Lihat lampiran saat ini</a>
+                      <a :href="getAttachmentUrl(store.form.attachmentUrl)" target="_blank" rel="noopener">Lihat lampiran saat ini</a>
                     </div>
                   </div>
 
@@ -156,6 +156,7 @@ import {
 
 const props = defineProps<{ editId?: number | null }>()
 const store = useLemburStore()
+const { getAttachmentUrl } = useImageUrl()
 const { setDetailTitle } = useDynamicTitle()
 const route = useRoute()
 const initializing = ref(true)

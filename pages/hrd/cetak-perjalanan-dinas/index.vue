@@ -43,7 +43,7 @@
           <tr>
             <td class="text-center">6</td><td>Lampiran</td>
             <td>
-              <a v-if="sppd.attachment" :href="sppd.attachment" target="_blank" class="no-print">Lihat</a>
+              <a v-if="sppd.attachment" :href="getAttachmentUrl(sppd.attachment)" target="_blank" class="no-print">Lihat</a>
               <span v-else>-</span>
             </td>
           </tr>
@@ -112,6 +112,7 @@ import {
 definePageMeta({ layout: 'cetak', middleware: ['auth', 'check-permission'] })
 
 const { setDetailTitle } = useDynamicTitle()
+const { getAttachmentUrl } = useImageUrl()
 const route = useRoute()
 
 const loading = ref(true)

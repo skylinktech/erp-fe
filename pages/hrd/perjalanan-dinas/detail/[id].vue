@@ -92,7 +92,7 @@
 
                   <dt class="col-sm-4 text-muted">Lampiran</dt>
                   <dd class="col-sm-8">
-                    <a v-if="detail.attachment" :href="detail.attachment" target="_blank" rel="noopener">Lihat lampiran</a>
+                    <a v-if="detail.attachment" :href="getAttachmentUrl(detail.attachment)" target="_blank" rel="noopener">Lihat lampiran</a>
                     <span v-else>-</span>
                   </dd>
 
@@ -221,6 +221,7 @@ definePageMeta({
 
 const route = useRoute()
 const store = usePerjalananDinasStore()
+const { getAttachmentUrl } = useImageUrl()
 const { userHasPermission, userHasRole } = usePermissions()
 const { setDetailTitle } = useDynamicTitle()
 const { detail } = storeToRefs(store)
