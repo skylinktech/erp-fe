@@ -120,6 +120,8 @@
       </div>
 
 <Modal
+        :model-value="showModal"
+        @close="didStore.closeModal"
         id="DidModal"
         :title="modalTitle"
         :description="modalDescription"
@@ -429,8 +431,6 @@ const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })
 }
 
-let modalInstance = null
-
 onMounted(() => {
   Promise.all([
     didStore.fetchDids(),
@@ -441,10 +441,6 @@ onMounted(() => {
     permissionStore.fetchPermissions(),
     userStore.loadUser(),
   ])
-  const modalElement = document.getElementById('DidModal')
-  if (modalElement) {
-    modalInstance = typeof bootstrap !== 'undefined' ? new bootstrap.Modal(modalElement) : null
-  }
   setListTitle('DID', totalRecords.value)
 })
 
@@ -460,12 +456,9 @@ async function onFormSubmit() {
 watch(showModal, async (newValue) => {
   if (newValue) {
     reset()
-    modalInstance?.show()
     if (provinceOptions.value.length === 0) await fetchProvinceOptions()
     if (regencyOptions.value.length === 0) await fetchRegencyOptions()
     if (servicePlanOptions.value.length === 0) await fetchServicePlanOptions()
-  } else {
-    modalInstance?.hide()
   }
 })
 

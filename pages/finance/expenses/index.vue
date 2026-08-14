@@ -272,7 +272,9 @@
         </div>
 
         <!-- Expense Modal -->
-        <Modal 
+        <Modal
+            :model-value="showModal"
+            @close="expenseStore.closeModal" 
             id="ExpenseModal"
             :title="modalTitle" 
             :description="modalDescription"
@@ -392,7 +394,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useExpenseStore } from '~/stores/expenses'
 import { useUserStore } from '~/stores/user'
@@ -502,7 +504,6 @@ const exportData = (format) => {
 const { userHasRole, userHasPermission } = usePermissions();
 
 // Lifecycle
-let modalInstance = null
 onMounted(async () => {
     try {
         await permissionStore.fetchPermissions()
@@ -513,25 +514,6 @@ onMounted(async () => {
         setListTitle('Expense', expenses.value.length)
     } catch (error) {
         console.error('Error in onMounted:', error)
-    }
-})
-
-// Watchers
-watch(showModal, async (newValue) => {
-    if (newValue) {
-        // Delay untuk memastikan modal sudah di-render
-        await nextTick()
-        const modalElement = document.getElementById('ExpenseModal')
-        if (modalElement) {
-            if (!modalInstance) {
-                modalInstance = new bootstrap.Modal(modalElement)
-            }
-            modalInstance.show()
-        }
-    } else {
-        if (modalInstance) {
-            modalInstance.hide()
-        }
     }
 })
 

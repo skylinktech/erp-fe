@@ -95,7 +95,9 @@
             <!--/ warehouse cards -->
 
             <!-- Placeholder untuk WarehouseModal component -->
-            <Modal 
+            <Modal
+                :model-value="showModal"
+                @close="warehouseStore.closeModal" 
                 id="Modal"
                 :title="modalTitle" 
                 :description="modalDescription"
@@ -216,27 +218,14 @@ const rowsPerPageOptionsArray = ref([10, 25, 50, 100]);
 const modalTitle = computed(() => isEditMode.value ? 'Edit Gudang' : 'Tambah Gudang');
 const modalDescription = computed(() => isEditMode.value ? 'Silakan ubah data gudang di bawah ini.' : 'Silakan isi form di bawah ini untuk menambahkan gudang baru.');
 
-let modalInstance = null
 onMounted(() => {
     warehouseStore.fetchWarehouses()
     warehouseStore.fetchStats()
     permissionStore.fetchPermissions()
     userStore.loadUser()
 
-    const modalElement = document.getElementById('Modal')
-    if (modalElement) {
-        modalInstance = new bootstrap.Modal(modalElement)
-    }
     setListTitle('Gudang', warehouses.value.length)
 });
-
-watch(showModal, (newValue) => {
-    if (newValue) {
-        modalInstance?.show()
-    } else {
-        modalInstance?.hide()
-    }
-})
 
 const debouncedSearch = useDebounceFn(() => {
     warehouseStore.setSearch(globalFilterValue.value)

@@ -230,7 +230,9 @@
             </div>
             <!--/ salesReturn cards -->
 
-            <Modal 
+            <Modal
+                :model-value="showModal"
+                @close="salesReturnStore.closeModal" 
                 id="SalesReturnModal"
                 :title="modalTitle" 
                 :description="modalDescription"
@@ -459,7 +461,6 @@ const statusOptions = ref([
     { label: 'Rejected', value: 'rejected' },
 ]);
 
-let modalInstance = null;
 onMounted(() => {
     salesReturnStore.fetchSalesReturns();
     customerStore.fetchCustomers();
@@ -470,16 +471,11 @@ onMounted(() => {
     permissionStore.fetchPermissions();
     userStore.loadUser();
 
-    const modalElement = document.getElementById('SalesReturnModal')
-    if (modalElement) {
-        modalInstance = new bootstrap.Modal(modalElement)
-    }
     setListTitle('Sales Return', salesReturns.value.length)
 });
 
 watch(showModal, (newValue) => {
     if (newValue) {
-        modalInstance?.show()
         if (isEditMode.value) {
             if (form.value.attachment_url) {
                 attachmentPreview.value = form.value.attachment_url
@@ -492,8 +488,6 @@ watch(showModal, (newValue) => {
         } else {
             attachmentPreview.value = null
         }
-    } else {
-        modalInstance?.hide()
     }
 })
 

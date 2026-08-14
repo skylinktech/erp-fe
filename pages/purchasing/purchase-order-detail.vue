@@ -578,7 +578,7 @@ import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import DocumentTimelinePanel from '~/components/documents/DocumentTimelinePanel.vue'
 import ThreeWayMatchPanel from '~/components/purchasing/ThreeWayMatchPanel.vue'
 import Swal from 'sweetalert2'
-import { Modal } from 'bootstrap'
+import { useBootstrapModal } from '~/composables/useBootstrapModal'
 
 // Composables
 const { setDetailTitle } = useDynamicTitle()
@@ -595,7 +595,13 @@ const poId = route.query.id
 // ✅ STATE untuk modal
 const receivePartialModal = ref(null)
 const modalItems = ref([])
-let modalInstance = null
+const isReceiveModalOpen = ref(false)
+
+useBootstrapModal(
+  () => document.getElementById('receivePartialModal'),
+  isReceiveModalOpen,
+  () => { isReceiveModalOpen.value = false }
+)
 
 // ✅ COMPUTED untuk check apakah Purchase Order sudah received
 const isReceived = computed(() => {
@@ -906,15 +912,7 @@ const openReceivePartialModal = () => {
         tempReceiveQty: 0 // Start dengan 0, user akan adjust dengan tombol +/-
     }))
 
-    // Initialize bootstrap modal
-    if (!modalInstance) {
-        const modalElement = document.getElementById('receivePartialModal')
-        if (modalElement) {
-            modalInstance = new Modal(modalElement)
-        }
-    }
-    
-    modalInstance?.show()
+    isReceiveModalOpen.value = true
 }
 
 // ✅ FUNCTION untuk validate quantity di modal
@@ -967,7 +965,7 @@ const confirmReceivePartial = async () => {
     }
 
     // ✅ TUTUP modal dulu sebelum tampilkan SweetAlert
-    modalInstance?.hide()
+    isReceiveModalOpen.value = false
 
     // ✅ Tampilkan konfirmasi SweetAlert
     const result = await Swal.fire({
@@ -1019,7 +1017,7 @@ const confirmReceivePartial = async () => {
 
     // ✅ Jika user cancel, buka kembali modal
     if (!result.isConfirmed) {
-        modalInstance?.show()
+        isReceiveModalOpen.value = true
         return
     }
 
@@ -1056,7 +1054,7 @@ const confirmReceivePartial = async () => {
             layout: 2,
         })
         // ✅ Jika error, buka kembali modal
-        modalInstance?.show()
+        isReceiveModalOpen.value = true
     } finally {
         loading.value = false
     }

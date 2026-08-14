@@ -271,6 +271,7 @@ definePageMeta({
 
 const wfStore = useApprovalWorkflowsStore()
 const { stats } = storeToRefs(wfStore)
+useEscapeToClose(() => wfStore.showModal, () => wfStore.closeModal())
 
 const globalFilterValue = ref('')
 const entitySelectInvalid = ref(false)

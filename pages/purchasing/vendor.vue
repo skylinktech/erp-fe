@@ -87,7 +87,9 @@
                 </div>
             </div>
 
-            <Modal 
+            <Modal
+                :model-value="showModal"
+                @close="vendorStore.closeModal" 
                 id="VendorModal"
                 :title="modalTitle" 
                 :description="modalDescription"
@@ -231,19 +233,11 @@ const statItems = computed(() => [
 const modalTitle = computed(() => isEditMode.value ? 'Edit Vendor' : 'Tambah Vendor')
 const modalDescription = computed(() => isEditMode.value ? 'Ubah detail vendor.' : 'Isi untuk menambah vendor baru.')
 
-let modalInstance = null
 onMounted(() => {
   permissionStore.fetchPermissions()
   userStore.loadUser()
   Promise.all([vendorStore.fetchVendors(), vendorStore.fetchStatistics()])
   setListTitle('Vendor', totalRecords.value)
-  const modalElement = document.getElementById('VendorModal')
-  if (modalElement) modalInstance = new bootstrap.Modal(modalElement)
-})
-
-watch(showModal, (newValue) => {
-  if (newValue) modalInstance?.show()
-  else modalInstance?.hide()
 })
 
 const debouncedSearch = useDebounceFn(() => {

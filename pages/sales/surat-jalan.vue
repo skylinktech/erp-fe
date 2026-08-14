@@ -195,7 +195,9 @@
           </div>
           <!--/ suratJalan cards -->
 
-          <Modal 
+          <Modal
+              :model-value="showModal"
+              @close="suratJalanStore.closeModal" 
               id="SuratJalanModal"
               :title="modalTitle" 
               :description="modalDescription"
@@ -517,7 +519,6 @@ const modalTitle = computed(() => isEditMode.value ? 'Edit Surat Jalan' : 'Tamba
 const modalDescription = computed(() => isEditMode.value ? 'Silakan ubah data Surat Jalan di bawah ini.' : 'Silakan isi form di bawah ini untuk menambahkan data Surat Jalan baru.');
 
 
-let modalInstance = null;
 onMounted(async () => {
   userStore.loadUser();
   suratJalanStore.fetchSuratJalans();
@@ -572,10 +573,6 @@ onMounted(async () => {
       cabangStore.fetchCabangs();
   }
 
-  const modalElement = document.getElementById('SuratJalanModal')
-  if (modalElement) {
-      modalInstance = new bootstrap.Modal(modalElement)
-  }
   setListTitle('Surat Jalan', suratJalans.value.length)
   
   // Initialize table controls
@@ -585,8 +582,6 @@ onMounted(async () => {
 
 watch(showModal, async (newValue) => {
   if (newValue) {
-      modalInstance?.show()
-      
       // Ensure customers data is loaded when modal opens
       if (!customers.value || customers.value.length === 0) {
         try {
@@ -604,8 +599,6 @@ watch(showModal, async (newValue) => {
             });
         }
       }
-  } else {
-      modalInstance?.hide()
   }
 })
 

@@ -147,7 +147,9 @@
                     <!--/ menu detail cards -->
                 </div>
                 <!-- Placeholder untuk MenuModal component -->
-            <Modal 
+            <Modal
+                :model-value="showModal"
+                @close="menuDetailStore.closeModal" 
                 id="MenuDetailModal"
                 :title="modalTitle" 
                 :description="modalDescription"
@@ -341,22 +343,9 @@ const referenceCode = computed({
     }
 });
 
-let modalInstance = null;
 onMounted(() => {
     menuDetailStore.fetchMenuDetails();
-    const modalElement = document.getElementById('MenuDetailModal');
-    if (modalElement) {
-        modalInstance = new bootstrap.Modal(modalElement);
-    }
     setListTitle('Menu Detail', menuDetails.value.length)
-});
-
-watch(showModal, (newValue) => {
-    if (newValue) {
-        modalInstance?.show();
-    } else {
-        modalInstance?.hide();
-    }
 });
 
 watch(

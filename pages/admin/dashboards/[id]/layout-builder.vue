@@ -112,6 +112,8 @@
       <!-- Config modal -->
       <Modal
         id="WidgetInstanceConfigModal"
+        :model-value="isConfigModalOpen"
+        @close="closeConfigModal"
         title="Konfigurasi Widget"
         :description="configuringWidget?.widget?.title || ''"
       >
@@ -128,7 +130,7 @@
               </label>
             </div>
             <div class="modal-footer">
-              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Tutup</button>
+              <button type="button" class="btn btn-outline-secondary" @click="closeConfigModal">Tutup</button>
               <button type="button" class="btn btn-primary" @click="saveConfigModal">Simpan</button>
             </div>
           </div>
@@ -138,6 +140,8 @@
       <!-- Riwayat Versi modal -->
       <Modal
         id="VersionHistoryModal"
+        :model-value="isHistoryModalOpen"
+        @close="closeHistoryModal"
         title="Riwayat Versi Layout"
         description="Semua versi layout dashboard ini — draft, aktif, dan yang sudah diarsipkan."
       >
@@ -269,14 +273,15 @@ function onWidgetRemove(dashboardLayoutWidgetId: number) {
 const configuringWidget = ref<DashboardLayoutWidgetDTO | null>(null)
 const configFormValue = ref<Record<string, unknown> | null>(null)
 const configHidden = ref(false)
-let configModalInstance: any = null
+const isConfigModalOpen = ref(false)
+const isHistoryModalOpen = ref(false)
 
-function getConfigModal() {
-  if (!configModalInstance && typeof window !== 'undefined' && (window as any).bootstrap) {
-    const el = document.getElementById('WidgetInstanceConfigModal')
-    if (el) configModalInstance = new (window as any).bootstrap.Modal(el)
-  }
-  return configModalInstance
+function closeConfigModal() {
+  isConfigModalOpen.value = false
+}
+
+function closeHistoryModal() {
+  isHistoryModalOpen.value = false
 }
 
 function onWidgetConfigure(dashboardLayoutWidgetId: number) {
@@ -286,7 +291,7 @@ function onWidgetConfigure(dashboardLayoutWidgetId: number) {
   configuringWidget.value = item
   configFormValue.value = item.instanceConfig ? { ...item.instanceConfig } : null
   configHidden.value = item.isHiddenByDefault
-  getConfigModal()?.show()
+  isConfigModalOpen.value = true
 }
 
 function saveConfigModal() {
@@ -296,7 +301,7 @@ function saveConfigModal() {
     instanceConfig: configFormValue.value,
     isHiddenByDefault: configHidden.value,
   })
-  getConfigModal()?.hide()
+  closeConfigModal()
 }
 
 async function onSaveDraft() {
@@ -352,19 +357,9 @@ function formatVersionDate(iso: string): string {
   }
 }
 
-let historyModalInstance: any = null
-
-function getHistoryModal() {
-  if (!historyModalInstance && typeof window !== 'undefined' && (window as any).bootstrap) {
-    const el = document.getElementById('VersionHistoryModal')
-    if (el) historyModalInstance = new (window as any).bootstrap.Modal(el)
-  }
-  return historyModalInstance
-}
-
 async function openHistoryModal() {
   await loadVersions(dashboardId.value)
-  getHistoryModal()?.show()
+  isHistoryModalOpen.value = true
 }
 
 async function onRollback(version: LayoutVersionSummary) {
@@ -379,7 +374,7 @@ async function onRollback(version: LayoutVersionSummary) {
   const toast = useToast()
   try {
     await rollbackToVersion(dashboardId.value, version.id, version.versionNumber)
-    getHistoryModal()?.hide()
+    closeHistoryModal()
     toast.success({
       title: 'Berhasil',
       message: `Rollback ke v${version.versionNumber} berhasil dipublikasikan`,

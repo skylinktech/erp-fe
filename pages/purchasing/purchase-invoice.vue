@@ -257,7 +257,9 @@
             </div>
             <!--/ purchaseInvoice cards -->
 
-            <Modal 
+            <Modal
+                :model-value="showModal"
+                @close="purchaseInvoiceStore.closeModal" 
                 id="PurchaseInvoiceModal"
                 :title="modalTitle" 
                 :description="modalDescription"
@@ -908,7 +910,6 @@ const paymentMethodOptions = ref([
     { label: 'Card', value: 'card' },
 ]);
 
-let modalInstance = null;
 onMounted(() => {
     userStore.loadUser();
     purchaseInvoiceStore.fetchPurchaseInvoices();
@@ -920,11 +921,6 @@ onMounted(() => {
     warehouseStore.fetchWarehouses();
     permissionStore.fetchPermissions();
     
-
-    const modalElement = document.getElementById('PurchaseInvoiceModal')
-    if (modalElement) {
-        modalInstance = new bootstrap.Modal(modalElement)
-    }
     setListTitle('Purchase Invoice', purchaseInvoices.value.length)
 
     // Initialize table controls
@@ -934,7 +930,6 @@ onMounted(() => {
 
 watch(showModal, (newValue) => {
     if (newValue) {
-        modalInstance?.show()
         if (isEditMode.value) {
             if (form.value.attachment_url) {
                 attachmentPreview.value = form.value.attachment_url
@@ -953,8 +948,6 @@ watch(showModal, (newValue) => {
         } else {
             attachmentPreview.value = null
         }
-    } else {
-        modalInstance?.hide()
     }
 })
 

@@ -244,6 +244,8 @@
 
         <!-- Budget Modal -->
         <Modal
+          :model-value="showModal"
+          @close="budgetStore.closeModal"
           id="BudgetModal"
           :title="modalTitle"
           :description="modalDescription"
@@ -430,7 +432,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useBudgetStore } from '~/stores/budget'
 import { useCostCenterStore } from '~/stores/cost-center'
 import { useSiteStore } from '~/stores/site'
@@ -602,7 +604,6 @@ const openEditModal = async (budget) => {
 const { userHasRole, userHasPermission } = usePermissions()
 
 // Lifecycle
-let modalInstance = null
 onMounted(async () => {
   try {
     await permissionStore.fetchPermissions()
@@ -618,7 +619,6 @@ onMounted(async () => {
   setListTitle('Budgets', totalRecords.value)
 })
 
-// Watch modal visibility untuk bootstrap modal
 async function onFormSubmit() {
   if (!isLastStep.value) {
     await next()
@@ -631,16 +631,6 @@ async function onFormSubmit() {
 watch(showModal, (newValue) => {
   if (newValue) {
     reset()
-    nextTick(() => {
-      const modalElement = document.getElementById('BudgetModal')
-      if (modalElement && !modalInstance) {
-        // @ts-ignore
-        modalInstance = new bootstrap.Modal(modalElement)
-      }
-      modalInstance?.show()
-    })
-  } else {
-    modalInstance?.hide()
   }
 })
 

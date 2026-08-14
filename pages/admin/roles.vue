@@ -130,7 +130,9 @@
             </div>
 
             <!-- Add Role Modal -->
-            <Modal 
+            <Modal
+                :model-value="showModal"
+                @close="rolesStore.closeModal" 
                 id="RolesModal"
                 :title="modalTitle" 
                 :description="modalDescription"
@@ -356,23 +358,10 @@ const filteredMenuDetails = computed(() => {
 const modalTitle = computed(() => isEditMode.value ? 'Edit Role' : 'Tambah Role');
 const modalDescription = computed(() => isEditMode.value ? 'Ubah detail role.' : 'Isi untuk menambah role baru.');
 
-let modalInstance = null;
 onMounted(() => {
     rolesStore.fetchRoles();
     rolesStore.fetchPermissions();
-    const modalElement = document.getElementById('RolesModal');
-    if (modalElement) {
-        modalInstance = new bootstrap.Modal(modalElement);
-    }
     setListTitle('Roles', roles.value.length)
-});
-
-watch(showModal, (newValue) => {
-    if (newValue) {
-        modalInstance?.show();
-    } else {
-        modalInstance?.hide();
-    }
 });
 
 const debouncedSearch = useDebounceFn(() => {

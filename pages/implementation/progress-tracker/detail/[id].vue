@@ -254,7 +254,7 @@
       </template>
     </div>
 
-    <div v-if="showApproveModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,.5);">
+    <div v-if="showApproveModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,.5);" @click.self="showApproveModal = false">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
@@ -272,7 +272,7 @@
       </div>
     </div>
 
-    <div v-if="showRejectModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,.5);">
+    <div v-if="showRejectModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,.5);" @click.self="showRejectModal = false">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
@@ -341,6 +341,13 @@ const { getStatusBadge: getApprovalStatusBadge, getStatusText } = useApprovalSta
 
 const showApproveModal = ref(false)
 const showRejectModal = ref(false)
+useEscapeToClose(
+  () => showApproveModal.value || showRejectModal.value,
+  () => {
+    showApproveModal.value = false
+    showRejectModal.value = false
+  }
+)
 const approveRemarks = ref('')
 const rejectReason = ref('')
 

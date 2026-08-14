@@ -109,6 +109,8 @@
     </div>
 
     <Modal
+      :model-value="showModal"
+      @close="store.closeModal"
       id="HrKalenderModal"
       :title="modalTitle"
       :description="modalDescription"
@@ -244,7 +246,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import Modal from '~/components/modal/Modal.vue'
 import FormLabel from '~/components/form/FormLabel.vue'
@@ -308,7 +310,6 @@ const cutiBersamaPreviewDays = computed(() =>
   )
 )
 
-let modalInstance: bootstrap.Modal | null = null
 const datesInitialized = ref(false)
 
 function todayIso(): string {
@@ -384,15 +385,6 @@ async function handleDelete() {
 
 onMounted(() => {
   setListTitle('Kalender HR')
-  const modalElement = document.getElementById('HrKalenderModal')
-  if (modalElement) {
-    modalInstance = new bootstrap.Modal(modalElement)
-  }
-})
-
-watch(showModal, (open) => {
-  if (open) modalInstance?.show()
-  else modalInstance?.hide()
 })
 
 definePageMeta({

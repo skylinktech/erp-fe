@@ -286,6 +286,7 @@ definePageMeta({
 
 const entityStore = useApprovalWorkflowEntitiesStore()
 const { stats } = storeToRefs(entityStore)
+useEscapeToClose(() => entityStore.showModal, () => entityStore.closeModal())
 
 const globalFilterValue = ref('')
 

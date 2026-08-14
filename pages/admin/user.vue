@@ -192,7 +192,9 @@
             </div>
 
             <!-- Placeholder untuk UserModal component -->
-            <Modal 
+            <Modal
+                :model-value="showModal"
+                @close="userStore.closeModal" 
                 id="UserModal"
                 :isEditMode="isEditMode"
                 :validationErrorsFromParent="validationErrors"
@@ -356,25 +358,12 @@ const rowsPerPageOptionsArray = ref([10, 25, 50, 100]);
 const modalTitle = computed(() => isEditMode.value ? 'Edit User' : 'Tambah User');
 const modalDescription = computed(() => isEditMode.value ? 'Silakan ubah data user di bawah ini.' : 'Silakan isi form di bawah ini untuk menambahkan user baru.');
 
-let modalInstance = null
 onMounted(() => {
     userStore.fetchUsers()
     userStore.fetchRoles()
     userStore.fetchStats()
-    const modalElement = document.getElementById('UserModal')
-    if (modalElement) {
-        modalInstance = new bootstrap.Modal(modalElement)
-    }
     setListTitle('User', users.value.length)
 });
-
-watch(showModal, (newValue) => {
-    if (newValue) {
-        modalInstance?.show()
-    } else {
-        modalInstance?.hide()
-    }
-})
 
 const debouncedSearch = useDebounceFn(() => {
     userStore.setSearch(globalFilterValue.value)

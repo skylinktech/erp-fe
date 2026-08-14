@@ -149,6 +149,8 @@
 
     <!-- Form modal -->
     <Modal
+      :model-value="showModal"
+      @close="store.closeModal"
       id="SaldoCutiFormModal"
       :title="store.isEditMode ? 'Edit Saldo Cuti' : 'Tambah Saldo Cuti'"
       :description="
@@ -343,7 +345,6 @@
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useDebounceFn } from '@vueuse/core'
-import { Modal as BootstrapModal } from 'bootstrap'
 import Menu from 'primevue/menu'
 import Column from 'primevue/column'
 import MyDataTable from '~/components/table/MyDataTable.vue'
@@ -352,6 +353,7 @@ import Modal from '~/components/modal/Modal.vue'
 import { useCutiBalanceStore, type CutiBalanceRow } from '~/stores/cuti-balance'
 import { usePermissions } from '~/composables/usePermissions'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
+import { useBootstrapModal } from '~/composables/useBootstrapModal'
 import { formatRangeTanggal } from '~/constants/hrd/cutiForm'
 
 const store = useCutiBalanceStore()
@@ -389,8 +391,6 @@ setListTitle('Saldo Cuti', 0)
 const actionsMenuRef = ref<InstanceType<typeof Menu> | null>(null)
 const activeRow = ref<CutiBalanceRow | null>(null)
 const detailModalEl = ref<HTMLDivElement | null>(null)
-let detailModalInstance: BootstrapModal | null = null
-let formModalInstance: BootstrapModal | null = null
 
 const actionMenuItems = computed(() => {
   const row = activeRow.value
@@ -484,24 +484,7 @@ const debouncedSearch = useDebounceFn(() => {
 
 watch(globalFilterValue, () => debouncedSearch())
 
-watch(showModal, (open) => {
-  if (!process.client) return
-  const el = document.getElementById('SaldoCutiFormModal')
-  if (!el) return
-  if (!formModalInstance) formModalInstance = new BootstrapModal(el)
-  if (open) formModalInstance.show()
-  else formModalInstance.hide()
-})
-
-watch(showDetailModal, (open) => {
-  if (!process.client || !detailModalEl.value) return
-  if (!detailModalInstance) {
-    detailModalInstance = new BootstrapModal(detailModalEl.value)
-    detailModalEl.value.addEventListener('hidden.bs.modal', () => store.closeDetailModal())
-  }
-  if (open) detailModalInstance.show()
-  else detailModalInstance.hide()
-})
+useBootstrapModal(() => detailModalEl.value, showDetailModal, () => store.closeDetailModal())
 
 onMounted(async () => {
   await Promise.all([store.fetchCutiTypes(), store.fetchPegawaiOptions(), store.fetchRows()])

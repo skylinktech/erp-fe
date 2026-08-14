@@ -245,6 +245,13 @@ const { getStatusBadge, getStatusText, getApprovalStepJabatan } = useApprovalSta
 const id = computed(() => String(route.params.id || ''))
 const showApproveModal = ref(false)
 const showRejectModal = ref(false)
+useEscapeToClose(
+  () => showApproveModal.value || showRejectModal.value,
+  () => {
+    showApproveModal.value = false
+    showRejectModal.value = false
+  }
+)
 const approveRemarks = ref('')
 const rejectRemarks = ref('')
 

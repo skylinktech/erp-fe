@@ -213,7 +213,9 @@
     </div>
 
     <!-- Modal Tambah/Edit Stock -->
-    <Modal 
+    <Modal
+        :model-value="showModal"
+        @close="stocksStore.closeModal" 
         id="StockModal"
         :title="isEditMode ? 'Edit Stock' : 'Tambah Stock'" 
         :description="isEditMode ? 'Perbarui data stock.' : 'Isi form untuk menambahkan stock.'"
@@ -382,20 +384,6 @@ onMounted(async () => {
         warehouseStore.fetchAllWarehouses(),
     ])
 });
-
-// Modal bootstrap instance
-let modalInstance = null
-onMounted(() => {
-    const modalElement = document.getElementById('StockModal')
-    if (modalElement) {
-        // @ts-ignore
-        modalInstance = new bootstrap.Modal(modalElement)
-    }
-})
-
-watch(showModal, (newVal) => {
-    if (newVal) modalInstance?.show(); else modalInstance?.hide();
-})
 
 const exportData = async (format) => {
     try {

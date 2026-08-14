@@ -309,6 +309,8 @@
             </div>
 
             <Modal
+                :model-value="showModal"
+                @close="productStore.closeModal"
                 id="ProductModal"
                 :title="modalTitle"
                 :description="modalDescription"
@@ -686,8 +688,6 @@ const isInternalSelect = computed({
     },
 })
 
-let modalInstance = null
-
 function resetFilters() {
     filters.value = {
         categoryId: null,
@@ -715,10 +715,6 @@ onMounted(async () => {
     permissionStore.fetchPermissions()
     userStore.loadUser()
 
-    const modalElement = document.getElementById('ProductModal')
-    if (modalElement) {
-        modalInstance = new bootstrap.Modal(modalElement)
-    }
     setListTitle('Product', statistics.value.total)
 })
 
@@ -734,9 +730,6 @@ async function onFormSubmit() {
 watch(showModal, (newValue) => {
     if (newValue) {
         reset()
-        modalInstance?.show()
-    } else {
-        modalInstance?.hide()
     }
 })
 

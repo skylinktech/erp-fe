@@ -484,7 +484,7 @@ import CutiBersamaBreakdownCard from '~/components/hrd/CutiBersamaBreakdownCard.
 import Column from 'primevue/column'
 import Menu from 'primevue/menu'
 import Swal from 'sweetalert2'
-import { Modal } from 'bootstrap'
+import { useBootstrapModal } from '~/composables/useBootstrapModal'
 
 const store = useCutiStore()
 const { userHasPermission, userHasRole } = usePermissions()
@@ -498,7 +498,16 @@ const statusFilterOptions = computed(() => STATUS_CUTI_OPTIONS.map((s) => ({ val
 
 // Modal detail
 const detailModalEl = ref<HTMLDivElement | null>(null)
-let detailModalInstance: Modal | null = null
+const isDetailOpen = ref(false)
+
+useBootstrapModal(
+  () => detailModalEl.value,
+  isDetailOpen,
+  () => {
+    isDetailOpen.value = false
+    store.clearDetail()
+  }
+)
 
 /* ------------------------------------------------------------------
  * Action menu (popup) — pakai PrimeVue Menu yang di-teleport ke body.
@@ -667,7 +676,7 @@ function goToCetak(row: CutiRow) {
 function goToCetakFromDetail() {
   const d = store.detail
   if (!d?.id) return
-  detailModalInstance?.hide()
+  isDetailOpen.value = false
   void navigateTo({ path: '/hrd/cetak-cuti', query: { id: String(d.id) } })
 }
 
@@ -678,13 +687,7 @@ function goToCetakFromDetail() {
  */
 async function openDetail(row: CutiRow) {
   store.detail = row
-  if (process.client) {
-    if (!detailModalInstance && detailModalEl.value) {
-      detailModalInstance = new Modal(detailModalEl.value)
-      detailModalEl.value.addEventListener('hidden.bs.modal', () => store.clearDetail())
-    }
-    detailModalInstance?.show()
-  }
+  isDetailOpen.value = true
   await store.fetchOne(row.id)
 }
 

@@ -317,6 +317,9 @@ const { getStatusBadge, getStatusText } = useApprovalStatus()
 
 const id = computed(() => String(route.params.id || ''))
 const showRejectModal = ref(false)
+useEscapeToClose(showRejectModal, () => {
+  showRejectModal.value = false
+})
 const rejectRemarks = ref('')
 
 const isEditable = computed(() =>

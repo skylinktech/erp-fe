@@ -192,7 +192,9 @@
             <!--/ customer cards -->
 
             <!-- Placeholder untuk MenuModal component -->
-            <Modal 
+            <Modal
+                :model-value="showModal"
+                @close="customerStore.closeModal" 
                 id="CustomerModal"
                 :title="modalTitle" 
                 :description="modalDescription"
@@ -389,16 +391,11 @@ const tableControls = ref({
 const modalTitle = computed(() => isEditMode.value ? 'Edit Customer' : 'Tambah Customer');
 const modalDescription = computed(() => isEditMode.value ? 'Silakan ubah data customer di bawah ini.' : 'Silakan isi form di bawah ini untuk menambahkan customer baru.');
 
-let modalInstance = null
 onMounted(() => {
     permissionStore.fetchPermissions();
     userStore.loadUser();
     if (customerStore.customers.length === 0) {
       customerStore.fetchCustomers();
-    }
-    const modalElement = document.getElementById('CustomerModal')
-    if (modalElement) {
-        modalInstance = new bootstrap.Modal(modalElement)
     }
     setListTitle('Customer', customers.value.length)
     
@@ -415,14 +412,6 @@ watch(() => params.value.rows, (newValue) => {
 watch(() => globalFilterValue.value, (newValue) => {
     tableControls.value.search = newValue;
 });
-
-watch(showModal, (newValue) => {
-    if (newValue) {
-        modalInstance?.show()
-    } else {
-        modalInstance?.hide()
-    }
-})
 
 const debouncedSearch = useDebounceFn(() => {
     customerStore.setSearch(globalFilterValue.value)

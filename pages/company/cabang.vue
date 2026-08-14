@@ -94,7 +94,9 @@
                 </div>
             </div>
 
-            <Modal 
+            <Modal
+                :model-value="showModal"
+                @close="cabangStore.closeModal" 
                 id="CabangModal"
                 :title="modalTitle"
                 :description="modalDescription"
@@ -233,8 +235,6 @@ const resetFilters = () => {
   applyPerusahaanFilter()
 }
 
-const modalInstance = ref(null)
-
 onMounted(() => {
   filterPerusahaanId.value = params.value.perusahaanId === '' || params.value.perusahaanId == null ? '' : params.value.perusahaanId
   Promise.all([
@@ -249,14 +249,6 @@ onMounted(() => {
     console.error('Error during initialization:', error)
     setListTitle('Cabang', 0)
   })
-
-  const modalElement = document.getElementById('CabangModal')
-  if (modalElement) modalInstance.value = new bootstrap.Modal(modalElement)
-})
-
-watch(showModal, (newValue) => {
-  if (newValue) modalInstance.value?.show()
-  else modalInstance.value?.hide()
 })
 
 const handleSubmit = async () => {

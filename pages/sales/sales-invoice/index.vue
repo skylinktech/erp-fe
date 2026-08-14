@@ -288,7 +288,9 @@
             </div>
             <!--/ salesInvoice cards -->
 
-            <Modal 
+            <Modal
+                :model-value="showModal"
+                @close="salesInvoiceStore.closeModal" 
                 id="SalesInvoiceModal"
                 :title="modalTitle" 
                 :description="modalDescription"
@@ -850,7 +852,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useSalesInvoiceStore } from '~/stores/sales-invoice'
 import { useCustomerStore } from '~/stores/customer'
@@ -1269,10 +1271,6 @@ const paymentMethodOptions = ref([
     { label: 'E-Wallet', value: 'e_wallet' },
 ]);
 
-let modalInstance = null;
-let modalHiddenHandler = null;
-let modalShowHandler = null;
-
 onMounted(() => {
     userStore.loadUser();
     salesInvoiceStore.fetchSalesInvoices();
@@ -1284,28 +1282,6 @@ onMounted(() => {
     warehouseStore.fetchWarehouses();
     permissionStore.fetchPermissions();
 
-    const modalElement = document.getElementById('SalesInvoiceModal')
-    if (modalElement) {
-        modalInstance = new bootstrap.Modal(modalElement)
-        
-        // ✅ FIX: Tambahkan event listener untuk sinkronisasi state ketika modal ditutup oleh Bootstrap (klik backdrop, ESC, dll)
-        modalHiddenHandler = () => {
-            // Sinkronkan dengan store state ketika modal ditutup oleh Bootstrap
-            if (salesInvoiceStore.showModal) {
-                salesInvoiceStore.closeModal()
-            }
-        }
-        
-        modalShowHandler = () => {
-            // Pastikan showModal di store sudah true
-            if (!salesInvoiceStore.showModal) {
-                salesInvoiceStore.showModal = true
-            }
-        }
-        
-        modalElement.addEventListener('hidden.bs.modal', modalHiddenHandler)
-        modalElement.addEventListener('show.bs.modal', modalShowHandler)
-    }
     setListTitle('Sales Invoice', salesInvoices.value.length)
 
     // Initialize table controls
@@ -1313,39 +1289,8 @@ onMounted(() => {
     tableControls.value.search = globalFilterValue.value;
 });
 
-// ✅ FIX: Cleanup event listeners saat component unmount
-onUnmounted(() => {
-    const modalElement = document.getElementById('SalesInvoiceModal')
-    if (modalElement) {
-        if (modalHiddenHandler) {
-            modalElement.removeEventListener('hidden.bs.modal', modalHiddenHandler)
-        }
-        if (modalShowHandler) {
-            modalElement.removeEventListener('show.bs.modal', modalShowHandler)
-        }
-    }
-});
-
 watch(showModal, async (newValue) => {
     if (newValue) {
-        // ✅ FIX: Pastikan modal instance ada, jika tidak buat ulang
-        if (!modalInstance) {
-            await nextTick()
-            const modalElement = document.getElementById('SalesInvoiceModal')
-            if (modalElement) {
-                modalInstance = new bootstrap.Modal(modalElement)
-            } else {
-                console.error('Modal element not found')
-                return
-            }
-        }
-        
-        // ✅ FIX: Pastikan modal belum terbuka sebelum show
-        const modalElement = document.getElementById('SalesInvoiceModal')
-        if (modalElement && !modalElement.classList.contains('show')) {
-            modalInstance.show()
-        }
-        
         if (isEditMode.value) {
             if (form.value.attachment_url) {
                 attachmentPreview.value = form.value.attachment_url
@@ -1387,14 +1332,6 @@ watch(showModal, async (newValue) => {
             }
         } else {
             attachmentPreview.value = null
-        }
-    } else {
-        // ✅ FIX: Pastikan modal instance ada sebelum hide
-        if (modalInstance) {
-            const modalElement = document.getElementById('SalesInvoiceModal')
-            if (modalElement && modalElement.classList.contains('show')) {
-                modalInstance.hide()
-            }
         }
     }
 })

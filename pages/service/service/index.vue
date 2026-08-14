@@ -145,7 +145,9 @@
                                 </div>
                             </div>
                             <!-- Modal untuk Service -->
-            <Modal 
+            <Modal
+                :model-value="showModal"
+                @close="serviceStore.closeModal" 
                 id="ServiceModal"
                 :title="modalTitle" 
                 :description="modalDescription"
@@ -415,7 +417,6 @@ const truncateText = (value, max = 50) => {
   return value.length > max ? `${value.substring(0, max)}...` : value
 }
 
-let modalInstance = null
 onMounted(() => {
   filterLineType.value = params.value.serviceLineType || ''
   filterBillingType.value = params.value.billingType || ''
@@ -427,19 +428,12 @@ onMounted(() => {
     userStore.loadUser(),
   ])
 
-  const modalElement = document.getElementById('ServiceModal')
-  if (modalElement) {
-    modalInstance = new bootstrap.Modal(modalElement)
-  }
   setListTitle('Service Line', totalRecords.value)
 })
 
 watch(showModal, async (open) => {
   if (open) {
     await ensureServicePlanOptions()
-    modalInstance?.show()
-  } else {
-    modalInstance?.hide()
   }
 })
 

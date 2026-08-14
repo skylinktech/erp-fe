@@ -99,6 +99,8 @@
 
       <Modal
         id="WidgetFormModal"
+        :model-value="isModalOpen"
+        @close="closeFormModal"
         :title="isEditMode ? 'Edit Widget' : 'Tambah Widget'"
         description="componentKey harus terdaftar di useWidgetRegistry.ts (frontend) supaya widget bisa dirender."
         dialog-class="modal-lg"
@@ -251,7 +253,7 @@
             </div>
 
             <div class="modal-footer mt-4">
-              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Tutup</button>
+              <button type="button" class="btn btn-outline-secondary" @click="closeFormModal">Tutup</button>
               <button type="submit" class="btn btn-primary" :disabled="submitting">
                 <span v-if="submitting" class="spinner-border spinner-border-sm me-1"></span>
                 Simpan
@@ -316,14 +318,10 @@ function emptyForm() {
 }
 
 const form = ref(emptyForm())
-let modalInstance: any = null
+const isModalOpen = ref(false)
 
-function getModal() {
-  if (!modalInstance && typeof window !== 'undefined' && (window as any).bootstrap) {
-    const el = document.getElementById('WidgetFormModal')
-    if (el) modalInstance = new (window as any).bootstrap.Modal(el)
-  }
-  return modalInstance
+function closeFormModal() {
+  isModalOpen.value = false
 }
 
 function addConfigField() {
@@ -339,7 +337,7 @@ function openCreateModal() {
   editingId.value = null
   form.value = emptyForm()
   validationErrors.value = []
-  getModal()?.show()
+  isModalOpen.value = true
 }
 
 function openEditModal(row: AdminWidgetRow) {
@@ -364,7 +362,7 @@ function openEditModal(row: AdminWidgetRow) {
     configSchema: row.configSchema ? JSON.parse(JSON.stringify(row.configSchema)) : [],
   }
   validationErrors.value = []
-  getModal()?.show()
+  isModalOpen.value = true
 }
 
 async function submitForm() {
@@ -380,7 +378,7 @@ async function submitForm() {
     } else {
       await createWidget(payload)
     }
-    getModal()?.hide()
+    closeFormModal()
     await fetchWidgets()
 
     const toast = useToast()

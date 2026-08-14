@@ -173,7 +173,9 @@
             />
 
             <!-- Placeholder untuk JabatanModal component -->
-            <Modal 
+            <Modal
+                :model-value="showModal"
+                @close="jabatanStore.closeModal" 
                 id="JabatanModal"
                 :title="modalTitle" 
                 :description="modalDescription"
@@ -296,27 +298,14 @@ function toggleActions(event, row) {
     nextTick(() => actionsMenuRef.value?.toggle(event))
 }
 
-let modalInstance = null
 onMounted(() => {
     jabatanStore.fetchJabatans();
     jabatanStore.fetchStats();
     permissionStore.fetchPermissions()
     userStore.loadUser()
 
-    const modalElement = document.getElementById('JabatanModal')
-    if (modalElement) {
-        modalInstance = new bootstrap.Modal(modalElement)
-    }
     setListTitle('Jabatan', jabatans.value.length)
 });
-
-watch(showModal, (newValue) => {
-    if (newValue) {
-        modalInstance?.show()
-    } else {
-        modalInstance?.hide()
-    }
-})
 
 const debouncedSearch = useDebounceFn(() => {
     jabatanStore.setSearch(globalFilterValue.value)

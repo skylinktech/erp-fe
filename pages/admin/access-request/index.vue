@@ -199,6 +199,8 @@
 
     <!-- Modal Form -->
     <Modal
+      :model-value="store.showModal"
+      @close="store.closeModal"
       id="AccessRequestModal"
       :title="store.isEditMode ? 'Edit Permintaan Akses' : 'Tambah Permintaan Akses'"
       :description="store.isEditMode ? 'Ubah detail permintaan akses.' : 'Isi form untuk membuat permintaan akses modul/menu.'"
@@ -557,22 +559,9 @@ function onAccessStatusChange() {
   store.setStatusFilter(params.value.status)
 }
 
-let modalInstance = null
 onMounted(async () => {
   await Promise.all([store.fetchAccessRequests(), store.fetchCountByStatus(), fetchPegawai(), fetchWorkflows(), fetchPermissions()])
-  const modalEl = document.getElementById('AccessRequestModal')
-  if (modalEl) {
-    modalInstance = typeof bootstrap !== 'undefined' ? new bootstrap.Modal(modalEl) : null
-  }
 })
-
-watch(
-  () => store.showModal,
-  (val) => {
-    if (val) modalInstance?.show()
-    else modalInstance?.hide()
-  }
-)
 
 watch(
   () => store.form.pegawaiId,

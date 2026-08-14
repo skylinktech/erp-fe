@@ -95,7 +95,9 @@
             />
 
             <!-- Placeholder untuk DepartemenModal component -->
-            <Modal 
+            <Modal
+                :model-value="showModal"
+                @close="departemenStore.closeModal" 
                 id="DepartemenModal"
                 :title="modalTitle" 
                 :description="modalDescription"
@@ -211,26 +213,13 @@ function toggleActions(event, row) {
     nextTick(() => actionsMenuRef.value?.toggle(event))
 }
 
-let modalInstance = null
 onMounted(() => {
     departemenStore.fetchDepartemens();
     permissionStore.fetchPermissions()
     userStore.loadUser()
 
-    const modalElement = document.getElementById('DepartemenModal')
-    if (modalElement) {
-        modalInstance = new bootstrap.Modal(modalElement)
-    }
     setListTitle('Departemen', departemens.value.length)
 });
-
-watch(showModal, (newValue) => {
-    if (newValue) {
-        modalInstance?.show()
-    } else {
-        modalInstance?.hide()
-    }
-})
 
 const debouncedSearch = useDebounceFn(() => {
     departemenStore.setSearch(globalFilterValue.value)

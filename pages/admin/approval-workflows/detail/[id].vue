@@ -210,6 +210,9 @@ const workflow = computed(() => wfStore.workflow)
 const steps = computed(() => (workflow.value?.steps || []).sort((a, b) => a.stepOrder - b.stepOrder))
 const loading = ref(true)
 const showStepModal = ref(false)
+useEscapeToClose(showStepModal, () => {
+  showStepModal.value = false
+})
 const editingStep = ref<ApprovalWorkflowStepItem | null>(null)
 const saving = ref(false)
 const stepErrors = ref<string[]>([])

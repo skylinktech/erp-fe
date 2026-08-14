@@ -165,7 +165,9 @@
                         </div>
                     </div>
 
-                <Modal 
+                <Modal
+                    :model-value="showModal"
+                    @close="journalStore.closeModal" 
                     id="JournalModal"
                     :title="modalTitle" 
                     :description="modalDescription"
@@ -360,7 +362,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useJournalStore } from '~/stores/journal'
 import { useUserStore } from '~/stores/user'
@@ -489,7 +491,6 @@ const exportData = (format) => {
 
 const { userHasRole, userHasPermission } = usePermissions()
 
-let modalInstance = null
 onMounted(async () => {
   try {
     await permissionStore.fetchPermissions()
@@ -509,13 +510,6 @@ onMounted(async () => {
   setListTitle('Jurnal Umum', totalRecords.value)
 })
 
-onUnmounted(() => {
-  if (modalInstance) {
-    modalInstance.dispose()
-    modalInstance = null
-  }
-})
-
 async function onFormSubmit() {
   if (!isLastStep.value) {
     await next()
@@ -528,16 +522,6 @@ async function onFormSubmit() {
 watch(showModal, (newValue) => {
   if (newValue) {
     reset()
-    nextTick(() => {
-      const modalElement = document.getElementById('JournalModal')
-      if (modalElement) {
-        if (modalInstance) modalInstance.dispose()
-        modalInstance = new bootstrap.Modal(modalElement, { backdrop: true, keyboard: true, focus: true })
-        modalInstance.show()
-      }
-    })
-  } else if (modalInstance) {
-    modalInstance.hide()
   }
 })
 

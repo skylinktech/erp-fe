@@ -233,6 +233,8 @@
 
     <!-- Modal Form -->
     <Modal
+      :model-value="showModal"
+      @close="docStore.closeModal"
       id="DocumentationModal"
       :title="modalTitle"
       :description="modalDescription"
@@ -467,19 +469,9 @@ function getTimelineMarkerClass(type: string | null | undefined): string {
   return m[type.toLowerCase()] || 'timeline-marker-primary'
 }
 
-let modalInstance: any = null
 onMounted(() => {
   docStore.fetchDocumentations()
   docStore.fetchFlowSteps()
-  const modalElement = document.getElementById('DocumentationModal')
-  if (modalElement && typeof bootstrap !== 'undefined') {
-    modalInstance = new (window as any).bootstrap.Modal(modalElement)
-  }
-})
-
-watch(showModal, (newVal) => {
-  if (newVal) modalInstance?.show()
-  else modalInstance?.hide()
 })
 
 const debouncedSearch = useDebounceFn(() => {

@@ -209,6 +209,8 @@
                     <!-- Placeholder untuk MenuModal component -->
                     <Modal 
                         id="PermissionModal"
+                        :model-value="isPermissionModalOpen"
+                        @close="handleCloseModal"
                         :validationErrorsFromParent="validationErrors"
                         :title="modalTitle" 
                         :description="modalDescription"
@@ -266,6 +268,8 @@
                     <!-- Modal untuk Update Batch Permission -->
                     <Modal 
                         id="UpdateBatchPermissionModal"
+                        :model-value="isBatchModalOpen"
+                        @close="handleCloseBatchModal"
                         :validationErrorsFromParent="batchValidationErrors"
                         title="Update Batch Permission" 
                         description="Update multiple permission sekaligus dengan menu group dan menu detail yang sama."
@@ -405,6 +409,7 @@ const batchForm = ref({
 })
 
 // Track if batch modal is open to prevent watcher from running after modal is closed
+const isPermissionModalOpen = ref(false);
 const isBatchModalOpen = ref(false);
 
 const permissionsRowsOptions = [10, 20, 50, 100]
@@ -413,49 +418,17 @@ const modalTitle = computed(() => isEditMode.value ? 'Edit Permission' : 'Tambah
 const modalDescription = computed(() => isEditMode.value ? 'Silakan ubah data permission di bawah ini.' : 'Silakan isi form di bawah ini untuk menambahkan permission baru.');
 
 const handleCloseModal = () => {
-    const modalEl = document.getElementById('PermissionModal'); 
-    if (modalEl) {
-        const modal = bootstrap.Modal.getInstance(modalEl);
-        modal.hide();
-        
-        // Bersihkan backdrop setelah modal tertutup
-        modalEl.addEventListener('hidden.bs.modal', () => {
-            document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
-            document.body.style.overflow = '';
-        }, { once: true });
-    }
-    resetFormState(); 
+    isPermissionModalOpen.value = false;
+    resetFormState();
 };
 
 const handleCloseBatchModal = () => {
-    try {
-        // Mark modal as closed first to prevent watchers from running
-        isBatchModalOpen.value = false;
-        
-        const modalEl = document.getElementById('UpdateBatchPermissionModal'); 
-        if (modalEl) {
-            const modal = bootstrap.Modal.getInstance(modalEl);
-            if (modal) {
-                modal.hide();
-                
-                // Bersihkan backdrop setelah modal tertutup
-                modalEl.addEventListener('hidden.bs.modal', () => {
-                    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
-                    document.body.style.overflow = '';
-                }, { once: true });
-            }
-        }
-        
-        // Reset form and validation errors
-        batchForm.value = {
-            menuGroupId: null,
-            menuDetailId: null,
-        };
-        batchValidationErrors.value = [];
-    } catch (error) {
-        console.error('Error closing batch modal:', error);
-        isBatchModalOpen.value = false;
-    }
+    isBatchModalOpen.value = false;
+    batchForm.value = {
+        menuGroupId: null,
+        menuDetailId: null,
+    };
+    batchValidationErrors.value = [];
 };
 
 const resetFormState = () => {
@@ -705,11 +678,7 @@ async function openAddPermissionModal() {
     if (menuGroupOptions.value.length === 0) {
         await fetchMenuGroupOptions();
     }
-    const modalEl = document.getElementById('PermissionModal');
-    if (modalEl) {
-        const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
-        modalInstance.show();
-    }
+    isPermissionModalOpen.value = true;
 }
 
 async function openUpdateBatchModal() {
@@ -737,20 +706,7 @@ async function openUpdateBatchModal() {
         // Pastikan opsi menu group terisi sebelum modal dibuka
         await fetchMenuGroupOptions();
         
-        // Mark modal as open before showing
         isBatchModalOpen.value = true;
-        
-        const modalEl = document.getElementById('UpdateBatchPermissionModal');
-        if (modalEl) {
-            const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
-            
-            // Listen for modal close events
-            modalEl.addEventListener('hidden.bs.modal', () => {
-                isBatchModalOpen.value = false;
-            }, { once: true });
-            
-            modalInstance.show();
-        }
     } catch (error) {
         console.error('Error opening batch update modal:', error);
         isBatchModalOpen.value = false;
@@ -786,11 +742,7 @@ async function openEditPermissionModal(permissionData) {
         formPermission.value.menuDetailId = permissionData.menuDetails && permissionData.menuDetails.length > 0 ? permissionData.menuDetails[0].id : null;
     }
 
-    const modalEl = document.getElementById('PermissionModal');
-    if (modalEl) {
-        const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
-        modalInstance.show();
-    }
+    isPermissionModalOpen.value = true;
 }
 
 const deletePermission = async (permissionId) => {

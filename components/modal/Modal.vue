@@ -1,7 +1,21 @@
 <template>
-    <div class="modal fade" :id="id" tabindex="-1" aria-hidden="true">
+    <div
+        ref="modalEl"
+        class="modal fade"
+        :id="id"
+        tabindex="-1"
+        aria-hidden="true"
+    >
         <div class="modal-dialog" :class="dialogClass || 'modal-lg'" role="document">
-            <div class="modal-content">
+            <div class="modal-content position-relative">
+                <button
+                    v-if="showCloseButton"
+                    type="button"
+                    class="btn-close position-absolute top-0 end-0 m-3"
+                    style="z-index: 2"
+                    aria-label="Tutup"
+                    @click="requestClose"
+                />
                 <div class="modal-body">
                     <div class="row">
                         <div class="text-center mb-6">
@@ -25,12 +39,17 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import { useBootstrapModal } from '~/composables/useBootstrapModal'
 
 const props = defineProps({
   id: {
     type: String,
     required: true
+  },
+  modelValue: {
+    type: Boolean,
+    default: false
   },
   title: {
     type: String,
@@ -47,17 +66,35 @@ const props = defineProps({
   dialogClass: {
     type: String,
     default: 'modal-lg'
+  },
+  showCloseButton: {
+    type: Boolean,
+    default: true
   }
 });
 
-// Use computed instead of ref + watch for better reactivity
-// This avoids lifecycle hook issues and is more performant
+const emit = defineEmits(['update:modelValue', 'close', 'hidden', 'shown'])
+
+const modalEl = ref(null)
+
 const validationErrors = computed(() => {
   const errors = props.validationErrorsFromParent;
   return Array.isArray(errors) ? errors : [];
 });
+
+const { hide } = useBootstrapModal(
+  () => modalEl.value,
+  () => props.modelValue,
+  () => {
+    emit('update:modelValue', false)
+    emit('close')
+    emit('hidden')
+  }
+)
+
+function requestClose() {
+  emit('update:modelValue', false)
+  emit('close')
+  hide()
+}
 </script>
-
-<style scoped>
-
-</style>

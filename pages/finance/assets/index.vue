@@ -292,7 +292,9 @@
         </div>
 
         <!-- Asset Modal -->
-        <Modal 
+        <Modal
+            :model-value="showModal"
+            @close="assetStore.closeModal" 
             id="AssetModal"
             :title="modalTitle" 
             :description="modalDescription"
@@ -500,7 +502,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAssetStore } from '~/stores/assets'
 import { useUserStore } from '~/stores/user'
@@ -672,8 +674,6 @@ const fetchAssetsSummary = async () => {
   }
 }
 
-// Modal instance variable (sama seperti halaman accounts)
-let modalInstance = null
 onMounted(async () => {
     try {
         await permissionStore.fetchPermissions()
@@ -691,22 +691,6 @@ onMounted(async () => {
         console.error('Error in onMounted:', error)
     }
     setListTitle('Aset Tetap', assets.value.length)
-})
-
-// Watchers (persis sama dengan halaman accounts)
-watch(showModal, (newValue) => {
-    if (newValue) {
-        // Delay untuk memastikan modal sudah di-render
-        nextTick(() => {
-            const modalElement = document.getElementById('AssetModal')
-            if (modalElement && !modalInstance) {
-                modalInstance = new bootstrap.Modal(modalElement)
-            }
-            modalInstance?.show()
-        })
-    } else {
-        modalInstance?.hide()
-    }
 })
 
 // Watcher untuk perusahaan_id agar cabang_id di-reset saat berubah

@@ -141,7 +141,9 @@
                     </div>
                 </div>
                 <!-- Placeholder untuk MenuModal component -->
-            <Modal 
+            <Modal
+                :model-value="showModal"
+                @close="menuGroupStore.closeModal" 
                 id="MenuGroupModal"
                 :title="modalTitle" 
                 :description="modalDescription"
@@ -221,7 +223,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia';
 import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
@@ -261,39 +263,12 @@ const jenisMenuOptions = [
     { label: 'Documentations', value: 11 },
 ];
 
-let modalInstance = null
-
-const initializeModal = async () => {
-    await nextTick()
-    const modalElement = document.getElementById('MenuGroupModal')
-    if (modalElement && typeof bootstrap !== 'undefined' && !modalInstance) {
-        modalInstance = new bootstrap.Modal(modalElement)
-    }
-}
-
 onMounted(async () => {
     if (menuGroupStore.menuGroups.length === 0) {
         menuGroupStore.fetchMenuGroups();
     }
-    await initializeModal()
     setListTitle('Menu Group', menuGroups.value.length)
 });
-
-watch(showModal, async (newValue) => {
-    await initializeModal()
-    
-    if (modalInstance) {
-        try {
-            if (newValue) {
-                modalInstance.show()
-            } else {
-                modalInstance.hide()
-            }
-        } catch (error) {
-            console.error('Error toggling modal:', error)
-        }
-    }
-})
 
 const debouncedSearch = useDebounceFn(() => {
     menuGroupStore.setSearch(globalFilterValue.value)

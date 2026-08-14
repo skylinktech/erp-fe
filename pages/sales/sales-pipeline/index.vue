@@ -635,6 +635,8 @@ function closeQuickView() {
   selectedOpportunity.value = null
 }
 
+useEscapeToClose(showQuickView, closeQuickView)
+
 function goToDetail(id) {
   closeQuickView()
   navigateTo(`/sales/sales-pipeline/detail/${id}`)

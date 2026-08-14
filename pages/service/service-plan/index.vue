@@ -140,7 +140,9 @@
                                 </div>
                             </div>
 
-            <Modal 
+            <Modal
+                :model-value="showModal"
+                @close="servicePlanStore.closeModal" 
                 id="ServicePlanModal"
                 :title="modalTitle" 
                 :description="modalDescription"
@@ -338,7 +340,6 @@ const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })
 }
 
-let modalInstance = null
 onMounted(() => {
   filterServiceTypeId.value = params.value.serviceTypeId ?? ''
   Promise.all([
@@ -348,14 +349,7 @@ onMounted(() => {
     permissionStore.fetchPermissions(),
     userStore.loadUser(),
   ])
-  const modalElement = document.getElementById('ServicePlanModal')
-  if (modalElement) modalInstance = new bootstrap.Modal(modalElement)
   setListTitle('Service Plan', totalRecords.value)
-})
-
-watch(showModal, (newValue) => {
-  if (newValue) modalInstance?.show()
-  else modalInstance?.hide()
 })
 
 const handleRowsChange = (value) => {

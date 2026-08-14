@@ -26,8 +26,6 @@
                             v-if="userHasRole('superadmin') || userHasPermission('create_perusahaan')"
                             type="button"
                             class="btn btn-primary btn-sm"
-                            data-bs-target="#PerusahaanModal"
-                            data-bs-toggle="modal"
                             @click="perusahaanStore.openModal()"
                         >
                             <i class="ri-add-line me-1"></i> Tambah Perusahaan
@@ -109,7 +107,9 @@
                 </div>
             </div>
 
-            <Modal 
+            <Modal
+                :model-value="showModal"
+                @close="perusahaanStore.closeModal" 
                 id="PerusahaanModal"
                 :title="modalTitle" 
                 :description="modalDescription"
@@ -306,7 +306,6 @@ const statItems = computed(() => [
 const modalTitle = computed(() => isEditMode.value ? 'Edit Perusahaan' : 'Tambah Perusahaan')
 const modalDescription = computed(() => isEditMode.value ? 'Silakan ubah data perusahaan di bawah ini.' : 'Silakan isi form di bawah ini untuk menambahkan perusahaan baru.')
 
-let modalInstance = null
 onMounted(() => {
   Promise.all([
     perusahaanStore.fetchPerusahaans(),
@@ -314,14 +313,7 @@ onMounted(() => {
     permissionStore.fetchPermissions(),
     userStore.loadUser(),
   ])
-  const modalElement = document.getElementById('PerusahaanModal')
-  if (modalElement) modalInstance = new bootstrap.Modal(modalElement)
   setListTitle('Perusahaan', totalRecords.value)
-})
-
-watch(showModal, (newValue) => {
-  if (newValue) modalInstance?.show()
-  else modalInstance?.hide()
 })
 
 const debouncedSearch = useDebounceFn(() => {

@@ -191,7 +191,7 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { navigateTo } from '#app'
 import { storeToRefs } from 'pinia'
 import { useDebounceFn } from '@vueuse/core'
-import { Modal } from 'bootstrap'
+import { useBootstrapModal } from '~/composables/useBootstrapModal'
 import Swal from 'sweetalert2'
 import Column from 'primevue/column'
 import Menu from 'primevue/menu'
@@ -232,7 +232,15 @@ const globalFilterValue = ref('')
 const actionsMenuRef = ref<InstanceType<typeof Menu> | null>(null)
 const activeRow = ref<LemburRow | null>(null)
 const detailModalEl = ref<HTMLDivElement | null>(null)
-let detailModal: Modal | null = null
+const isDetailOpen = ref(false)
+
+useBootstrapModal(
+  () => detailModalEl.value,
+  isDetailOpen,
+  () => {
+    isDetailOpen.value = false
+  }
+)
 
 setListTitle('Pengajuan Lembur', 0)
 
@@ -368,8 +376,7 @@ function goToCetakFromDetail() {
 
 async function openDetail(row: LemburRow) {
   await store.fetchOne(row.id)
-  if (!detailModal && detailModalEl.value) detailModal = new Modal(detailModalEl.value)
-  detailModal?.show()
+  isDetailOpen.value = true
 }
 
 async function submit(row: LemburRow) {

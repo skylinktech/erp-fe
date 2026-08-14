@@ -308,6 +308,8 @@
 
                 <!-- Modal -->
                 <Modal
+                    :model-value="showModal"
+                    @close="customerVerifStore.closeModal"
                     id="CustomerVerifModal"
                     :title="modalTitle"
                     :description="modalDescription"
@@ -605,14 +607,7 @@ watch(isDataLoading, (value) => {
     isInitialLoading.value = value
 })
 
-let modalInstance = null
-
 onMounted(() => {
-    const modalElement = document.getElementById('CustomerVerifModal')
-    if (modalElement) {
-        modalInstance = new bootstrap.Modal(modalElement)
-    }
-
     tableControls.value.rows = Number(params.value.rows) || 10
     tableControls.value.search = globalFilterValue.value
 
@@ -646,16 +641,7 @@ watch(showModal, async (newValue) => {
         }
 
         loadingSiteInvestments.value = false
-
-        nextTick(() => {
-            const modalElement = document.getElementById('CustomerVerifModal')
-            if (modalElement && !modalInstance) {
-                modalInstance = new bootstrap.Modal(modalElement)
-            }
-            modalInstance?.show()
-        })
     } else {
-        modalInstance?.hide()
         if (route.query.edit) {
             const q = { ...route.query }
             delete q.edit

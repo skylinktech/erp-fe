@@ -358,7 +358,9 @@
             </div>
             <!--/ salesOrder cards -->
 
-            <Modal 
+            <Modal
+                :model-value="showModal"
+                @close="salesOrderStore.closeModal" 
                 id="SalesOrderModal"
                 :title="modalTitle" 
                 :description="modalDescription"
@@ -799,8 +801,6 @@ const statusOptions = ref([
     { label: 'Partial', value: 'partial' },
 ]);
 
-let modalInstance = null;
-
 // ✅ Gunakan composable untuk data loading yang robust
 const { isLoading: isDataLoading, error: dataError, reload: reloadData } = usePageData({
     pageName: 'Sales Order',
@@ -848,12 +848,6 @@ watch(isDataLoading, (value) => {
 })
 
 onMounted(() => {
-    // Initialize modal
-    const modalElement = document.getElementById('SalesOrderModal')
-    if (modalElement) {
-        modalInstance = new bootstrap.Modal(modalElement)
-    }
-    
     // Initialize table controls
     tableControls.value.rows = Number(params.value.rows) || 10;
     tableControls.value.search = globalFilterValue.value;
@@ -870,15 +864,6 @@ watch(() => globalFilterValue.value, (newValue) => {
 
 watch(showModal, async (newValue) => {
     if (newValue) {
-        // Delay untuk memastikan modal sudah di-render
-        nextTick(() => {
-            const modalElement = document.getElementById('SalesOrderModal')
-            if (modalElement && !modalInstance) {
-                modalInstance = new bootstrap.Modal(modalElement)
-            }
-            modalInstance?.show()
-        })
-        
         if (isEditMode.value) {
             if (form.value.attachment_url) {
                 form.value.attachmentPreview = form.value.attachment_url
@@ -906,8 +891,6 @@ watch(showModal, async (newValue) => {
         } else {
             form.value.attachmentPreview = null
         }
-    } else {
-        modalInstance?.hide()
     }
 })
 

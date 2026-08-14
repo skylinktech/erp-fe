@@ -363,7 +363,9 @@
             </div>
             <!--/ purchaseOrder cards -->
 
-            <Modal 
+            <Modal
+                :model-value="showModal"
+                @close="purchaseOrderStore.closeModal" 
                 id="PurchaseOrderModal"
                 :title="modalTitle" 
                 :description="modalDescription"
@@ -834,8 +836,6 @@ const statusOptions = ref([
     { label: 'Cancelled', value: 'cancelled' },
 ]);
 
-let modalInstance = null;
-
 // ✅ Gunakan composable untuk data loading yang robust
 const { isLoading: isDataLoading, error: dataError, reload: reloadData } = usePageData({
     pageName: 'Purchase Order',
@@ -864,12 +864,6 @@ watch(isDataLoading, (value) => {
 })
 
 onMounted(() => {
-    // Initialize modal
-    const modalElement = document.getElementById('PurchaseOrderModal')
-    if (modalElement) {
-        modalInstance = new bootstrap.Modal(modalElement)
-    }
-
     // Initialize table controls
     tableControls.value.rows = Number(params.value.rows) || 10;
     tableControls.value.search = globalFilterValue.value;
@@ -886,15 +880,6 @@ watch(() => globalFilterValue.value, (newValue) => {
 
 watch(showModal, (newValue) => {
     if (newValue) {
-        // Delay untuk memastikan modal sudah di-render
-        nextTick(() => {
-            const modalElement = document.getElementById('PurchaseOrderModal')
-            if (modalElement && !modalInstance) {
-                modalInstance = new bootstrap.Modal(modalElement)
-            }
-            modalInstance?.show()
-        })
-        
         // ✅ FIXED: Pastikan semua produk sudah dimuat (non-blocking)
         if (!allProducts.value || allProducts.value.length === 0) {
             // Jangan await di sini, biarkan berjalan di background
@@ -910,8 +895,6 @@ watch(showModal, (newValue) => {
         } else {
             form.value.attachmentPreview = null
         }
-    } else {
-        modalInstance?.hide()
     }
 })
 

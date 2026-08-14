@@ -771,7 +771,6 @@ const paymentMethodOptions = [
   { label: "Card", value: "card" },
 ];
 
-let modalInstance = null;
 onMounted(() => {
   salesOrderStore.resetForm("pos");
   const today = new Date().toISOString().split("T")[0];
@@ -786,11 +785,6 @@ onMounted(() => {
   productStore.fetchProducts();
   warehouseStore.fetchWarehouses();
   userStore.loadUser();
-
-  const modalElement = document.getElementById("SalesOrderModal");
-  if (modalElement) {
-    modalInstance = new bootstrap.Modal(modalElement);
-  }
 });
 
 watch(

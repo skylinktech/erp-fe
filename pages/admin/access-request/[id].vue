@@ -235,6 +235,13 @@ const request = ref(null)
 const loading = ref(true)
 const showApproveModal = ref(false)
 const showRejectModal = ref(false)
+useEscapeToClose(
+  () => showApproveModal.value || showRejectModal.value,
+  () => {
+    showApproveModal.value = false
+    showRejectModal.value = false
+  }
+)
 const approveRemarks = ref('')
 const rejectRemarks = ref('')
 

@@ -266,7 +266,9 @@
         </div>
 
         <!-- Bank Account Modal -->
-        <Modal 
+        <Modal
+            :model-value="showModal"
+            @close="bankAccountStore.closeModal" 
             id="BankAccountModal"
             :title="modalTitle" 
             :description="modalDescription"
@@ -359,7 +361,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useBankAccountStore } from '~/stores/bank-accounts'
 import { useUserStore } from '~/stores/user'
@@ -444,7 +446,6 @@ const exportData = (format) => {
 const { userHasRole, userHasPermission } = usePermissions();
 
 // Lifecycle
-let modalInstance = null
 onMounted(async () => {
     try {
         await permissionStore.fetchPermissions()
@@ -456,22 +457,6 @@ onMounted(async () => {
         console.error('Error in onMounted:', error)
     }
     setListTitle('Bank Account', bankAccounts.value.length)
-})
-
-// Watchers
-watch(showModal, async (newValue) => {
-    if (newValue) {
-        // Delay untuk memastikan modal sudah di-render
-        nextTick(() => {
-            const modalElement = document.getElementById('BankAccountModal')
-            if (modalElement && !modalInstance) {
-                modalInstance = new bootstrap.Modal(modalElement)
-            }
-            modalInstance?.show()
-        })
-    } else {
-        modalInstance?.hide()
-    }
 })
 
 const debouncedSearch = useDebounceFn(() => {

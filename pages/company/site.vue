@@ -179,6 +179,8 @@
 
         <!-- Site Modal -->
         <Modal
+          :model-value="showModal"
+          @close="siteStore.closeModal"
           id="SiteModal"
           :title="modalTitle"
           :description="modalDescription"
@@ -362,7 +364,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSiteStore } from '~/stores/site'
 import { useCostCenterStore } from '~/stores/cost-center'
@@ -532,7 +534,6 @@ const exportData = async (format) => {
 const { userHasRole, userHasPermission } = usePermissions()
 
 // Lifecycle
-let modalInstance = null
 onMounted(async () => {
   try {
     await permissionStore.fetchPermissions()
@@ -544,22 +545,6 @@ onMounted(async () => {
     console.error('Error in onMounted:', error)
   }
   setListTitle('Sites', totalSites.value)
-})
-
-// Watch modal visibility untuk bootstrap modal
-watch(showModal, (newValue) => {
-  if (newValue) {
-    nextTick(() => {
-      const modalElement = document.getElementById('SiteModal')
-      if (modalElement && !modalInstance) {
-        // @ts-ignore
-        modalInstance = new bootstrap.Modal(modalElement)
-      }
-      modalInstance?.show()
-    })
-  } else {
-    modalInstance?.hide()
-  }
 })
 
 const debouncedSearch = useDebounceFn(() => {

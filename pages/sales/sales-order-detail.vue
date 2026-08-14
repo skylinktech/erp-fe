@@ -503,7 +503,7 @@ import Swal from 'sweetalert2'
 import 'sweetalert2/dist/sweetalert2.min.css'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import { useStocksStore } from '~/stores/stocks'
-import { Modal } from 'bootstrap'
+import { useBootstrapModal } from '~/composables/useBootstrapModal'
 
 // Composables
 const { setDetailTitle } = useDynamicTitle()
@@ -522,7 +522,13 @@ const hasEmptyStockItems = ref(false)
 // ✅ STATE untuk modal
 const deliverPartialModal = ref(null)
 const modalItems = ref([])
-let modalInstance = null
+const isDeliverModalOpen = ref(false)
+
+useBootstrapModal(
+  () => document.getElementById('deliverPartialModal'),
+  isDeliverModalOpen,
+  () => { isDeliverModalOpen.value = false }
+)
 
 const { salesOrder, loading } = storeToRefs(salesOrderStore)
 const soId = route.query.id
@@ -917,15 +923,7 @@ const openDeliverPartialModal = () => {
         tempDeliverQty: 0 // Start dengan 0, user akan input manual
     }))
 
-    // Initialize bootstrap modal
-    if (!modalInstance) {
-        const modalElement = document.getElementById('deliverPartialModal')
-        if (modalElement) {
-            modalInstance = new Modal(modalElement)
-        }
-    }
-    
-    modalInstance?.show()
+    isDeliverModalOpen.value = true
 }
 
 // ✅ FUNCTION untuk validate quantity di modal
@@ -978,7 +976,7 @@ const confirmDeliverPartial = async () => {
     }
 
     // ✅ TUTUP modal dulu sebelum tampilkan SweetAlert
-    modalInstance?.hide()
+    isDeliverModalOpen.value = false
 
     // ✅ Tampilkan konfirmasi SweetAlert
     const result = await Swal.fire({
@@ -1035,7 +1033,7 @@ const confirmDeliverPartial = async () => {
 
     // ✅ Jika user cancel, buka kembali modal
     if (!result.isConfirmed) {
-        modalInstance?.show()
+        isDeliverModalOpen.value = true
         return
     }
 
@@ -1073,7 +1071,7 @@ const confirmDeliverPartial = async () => {
             layout: 2,
         })
         // ✅ Jika error, buka kembali modal
-        modalInstance?.show()
+        isDeliverModalOpen.value = true
     } finally {
         loading.value = false
     }

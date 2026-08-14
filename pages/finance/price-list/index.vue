@@ -240,7 +240,9 @@
             </div>
             
             <!-- Modal untuk Price List -->
-            <Modal 
+            <Modal
+                :model-value="showModal"
+                @close="priceListStore.closeModal" 
                 id="PriceListModal"
                 :title="modalTitle" 
                 :description="modalDescription"
@@ -968,8 +970,6 @@ async function editPriceList(priceList) {
     }
 }
 
-// Modal instance
-let modalInstance = null
 async function onFormSubmit() {
     if (!isLastStep.value) {
         await next()
@@ -988,18 +988,6 @@ watch(showModal, async (newValue) => {
                     await ensureDidInOptions(line.priceableId)
                 }
             }
-        }
-        nextTick(() => {
-            const modalElement = document.getElementById('PriceListModal')
-            if (modalElement) {
-                modalInstance = new window.bootstrap.Modal(modalElement)
-                modalInstance.show()
-            }
-        })
-    } else {
-        if (modalInstance) {
-            modalInstance.hide()
-            modalInstance = null
         }
     }
 })

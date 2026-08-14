@@ -214,7 +214,9 @@
             <!--/ Stock Transfer cards -->
 
             <!-- Placeholder untuk Stock TransferModal component -->
-            <Modal 
+            <Modal
+                :model-value="showModal"
+                @close="stockTransferStore.closeModal" 
                 id="Modal"
                 :isEditMode="isEditMode"
                 :validationErrorsFromParent="validationErrors"
@@ -463,19 +465,6 @@ const onStockTransferToolbarRows = (value) => {
 
 const modalTitle = computed(() => isEditMode.value ? 'Edit Stock Transfer' : 'Tambah Stock Transfer');
 const modalDescription = computed(() => isEditMode.value ? 'Silakan ubah data Stock Transfer di bawah ini.' : 'Silakan isi form di bawah ini untuk menambahkan Stock Transfer baru.');
-
-// Fungsi untuk menangani event close dari modal
-watch(showModal, (newValue) => {
-    const modalEl = document.getElementById('Modal');
-    if (modalEl && window.bootstrap) {
-        const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-        if (newValue) {
-            modalInstance.show();
-        } else {
-            modalInstance.hide();
-        }
-    }
-});
 
 let searchDebounceTimer = null;
 watch(() => params.value.rows, (newValue) => {

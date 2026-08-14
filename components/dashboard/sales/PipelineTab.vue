@@ -803,6 +803,8 @@ function closeQuickView() {
   selectedOpportunity.value = null
 }
 
+useEscapeToClose(showQuickView, closeQuickView)
+
 function getInitials(name) {
   if (!name) return '?'
   const parts = name.split(' ')

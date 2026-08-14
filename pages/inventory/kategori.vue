@@ -150,7 +150,9 @@
             <!--/ category cards -->
 
             <!-- Placeholder untuk CategoryModal component -->
-            <Modal 
+            <Modal
+                :model-value="showModal"
+                @close="kategoriStore.closeModal" 
                 id="KategoriModal"
                 :title="modalTitle" 
                 :description="modalDescription"
@@ -231,26 +233,13 @@ const rowsPerPageOptionsArray = ref([10, 25, 50, 100]);
 const modalTitle = computed(() => isEditMode.value ? 'Edit Kategori' : 'Tambah Kategori');
 const modalDescription = computed(() => isEditMode.value ? 'Ubah detail kategori.' : 'Isi untuk menambah kategori baru.');
 
-let modalInstance = null
 onMounted(() => {
     kategoriStore.fetchKategori()
     kategoriStore.fetchStats()
     permissionStore.fetchPermissions()
     userStore.loadUser()
-    const modalElement = document.getElementById('KategoriModal')
-    if (modalElement) {
-        modalInstance = new bootstrap.Modal(modalElement)
-    }
     setListTitle('Kategori', kategori.value.length)
 });
-
-watch(showModal, (newValue) => {
-    if (newValue) {
-        modalInstance?.show()
-    } else {
-        modalInstance?.hide()
-    }
-})
 
 const debouncedSearch = useDebounceFn(() => {
     kategoriStore.setSearch(globalFilterValue.value)

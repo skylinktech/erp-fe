@@ -70,7 +70,9 @@
             <!--/ unit cards -->
 
             <!-- Placeholder untuk UnitModal component -->
-            <Modal 
+            <Modal
+                :model-value="showModal"
+                @close="unitStore.closeModal" 
                 id="UnitModal"
                 :title="modalTitle" 
                 :description="modalDescription"
@@ -152,25 +154,12 @@ const rowsPerPageOptionsArray = ref([10, 25, 50, 100]);
 const modalTitle = computed(() => isEditMode.value ? 'Edit Satuan' : 'Tambah Satuan');
 const modalDescription = computed(() => isEditMode.value ? 'Ubah detail satuan.' : 'Isi untuk menambah satuan baru.');
 
-let modalInstance = null
 onMounted(() => {
     unitStore.fetchUnit();
     permissionStore.fetchPermissions()
     userStore.loadUser()
     setListTitle('Satuan', units.value.length)
-    const modalElement = document.getElementById('UnitModal')
-    if (modalElement) {
-        modalInstance = new bootstrap.Modal(modalElement)
-    }
 });
-
-watch(showModal, (newValue) => {
-    if (newValue) {
-        modalInstance?.show()
-    } else {
-        modalInstance?.hide()
-    }
-})
 
 const debouncedSearch = useDebounceFn(() => {
     unitStore.setSearch(globalFilterValue.value)

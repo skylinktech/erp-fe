@@ -284,7 +284,9 @@
     </div>
 
     <!-- Payment Modal -->
-    <Modal 
+    <Modal
+      :model-value="showModal"
+      @close="apPaymentStore.closeModal" 
       id="PaymentModal"
       :title="modalTitle" 
       :description="modalDescription"
@@ -623,7 +625,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAPPaymentStore } from '~/stores/ap-payments'
 import { usePaymentRequestStore } from '~/stores/payment-request'
@@ -723,40 +725,6 @@ onMounted(async () => {
     console.error('Error in onMounted:', error)
   }
   setListTitle('AP Payments', apPaymentStore.payments.length)
-})
-
-// Watchers
-watch(showModal, async (newValue) => {
-  if (newValue) {
-    // Delay untuk memastikan modal sudah di-render
-    nextTick(() => {
-      const modalElement = document.getElementById('PaymentModal')
-      if (modalElement && typeof bootstrap !== 'undefined') {
-        const bsModal = new bootstrap.Modal(modalElement)
-        bsModal.show()
-      }
-    })
-  } else {
-    // Hapus modal backdrop dan modal dari DOM
-    nextTick(() => {
-      // Hapus modal backdrop
-      const backdrop = document.querySelector('.modal-backdrop')
-      if (backdrop) {
-        backdrop.remove()
-      }
-      
-      // Hapus modal dari DOM
-      const modalElement = document.getElementById('PaymentModal')
-      if (modalElement) {
-        modalElement.remove()
-      }
-      
-      // Hapus class modal-open dari body
-      document.body.classList.remove('modal-open')
-      document.body.style.overflow = ''
-      document.body.style.paddingRight = ''
-    })
-  }
 })
 
 // Methods

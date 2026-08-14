@@ -118,6 +118,8 @@
 
       <Modal
         id="DashboardFormModal"
+        :model-value="isModalOpen"
+        @close="closeFormModal"
         :title="isEditMode ? 'Edit Dashboard' : 'Tambah Dashboard'"
         description="Dashboard adalah identitas stabil lintas versi layout — layout & permission menempel di sini."
         :validation-errors-from-parent="validationErrors"
@@ -180,7 +182,7 @@
               </div>
             </div>
             <div class="modal-footer mt-4">
-              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Tutup</button>
+              <button type="button" class="btn btn-outline-secondary" @click="closeFormModal">Tutup</button>
               <button type="submit" class="btn btn-primary" :disabled="submitting">
                 <span v-if="submitting" class="spinner-border spinner-border-sm me-1"></span>
                 Simpan
@@ -236,14 +238,10 @@ function emptyForm() {
 }
 
 const form = ref(emptyForm())
-let modalInstance: any = null
+const isModalOpen = ref(false)
 
-function getModal() {
-  if (!modalInstance && typeof window !== 'undefined' && (window as any).bootstrap) {
-    const el = document.getElementById('DashboardFormModal')
-    if (el) modalInstance = new (window as any).bootstrap.Modal(el)
-  }
-  return modalInstance
+function closeFormModal() {
+  isModalOpen.value = false
 }
 
 function openCreateModal() {
@@ -251,7 +249,7 @@ function openCreateModal() {
   editingId.value = null
   form.value = emptyForm()
   validationErrors.value = []
-  getModal()?.show()
+  isModalOpen.value = true
 }
 
 function openEditModal(row: AdminDashboardRow) {
@@ -267,7 +265,7 @@ function openEditModal(row: AdminDashboardRow) {
     sortOrder: row.sortOrder,
   }
   validationErrors.value = []
-  getModal()?.show()
+  isModalOpen.value = true
 }
 
 async function submitForm() {
@@ -280,7 +278,7 @@ async function submitForm() {
     } else {
       await createDashboard(form.value)
     }
-    getModal()?.hide()
+    closeFormModal()
     await fetchDashboards()
 
     const toast = useToast()

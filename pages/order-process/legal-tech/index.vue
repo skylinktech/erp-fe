@@ -262,7 +262,9 @@
         </div>
       </div>
 
-      <Modal :id="'LeTechReviewModal'" :title="modalTitle" :description="modalDescription" :validation-errors-from-parent="validationErrors" dialog-class="modal-lg">
+      <Modal
+            :model-value="showModal"
+            @close="ltStore.closeModal" :id="'LeTechReviewModal'" :title="modalTitle" :description="modalDescription" :validation-errors-from-parent="validationErrors" dialog-class="modal-lg">
         <template #default>
           <form @submit.prevent="ltStore.saveLeTechReview()">
             <div class="row g-4">
@@ -591,7 +593,6 @@ function getFileNameFromUrl(url) {
 
 watch(filters, (f) => { ltStore.setFilters({ quotationId: f.quotationId, status: f.status }) }, { deep: true })
 
-let modalInstance = null
 onMounted(() => {
   ltStore.fetchLeTechReviews()
   ltStore.fetchStatistics()
@@ -601,13 +602,10 @@ onMounted(() => {
   setListTitle('Legal-Tech Review', reviews.value?.length ?? 0)
   tableControls.value.rows = Number(params.value.rows) || 10
   globalFilterValue.value = params.value.search || ''
-  const el = document.getElementById('LeTechReviewModal')
-  if (el) modalInstance = typeof bootstrap !== 'undefined' ? new bootstrap.Modal(el) : null
 })
 
 watch(showModal, (v) => {
   if (v) {
-    modalInstance?.show()
     nextTick(() => {
       if (isEditMode.value && form.value?.quotationId && !quotationsForSelect.value.some((q) => (q.id || q) === (form.value.quotationId || form.value.quotation_id))) {
         const q = { id: form.value.quotationId, noQuotation: '-', customer: { id: 0, name: '-' } }
@@ -618,7 +616,7 @@ watch(showModal, (v) => {
         purchaseRequestsForSelect.value = [i, ...purchaseRequestsForSelect.value]
       }
     })
-  } else modalInstance?.hide()
+  }
 })
 
 definePageMeta({

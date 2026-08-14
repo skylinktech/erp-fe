@@ -298,7 +298,9 @@
                 </div>
 
                 <!-- Account Modal (tetap sama) -->
-                <Modal 
+                <Modal
+                    :model-value="showModal"
+                    @close="accountStore.closeModal" 
                     id="AccountModal"
                     :title="modalTitle" 
                     :description="modalDescription"
@@ -631,7 +633,6 @@ const exportData = (format) => {
 const { userHasRole, userHasPermission } = usePermissions()
 
 // Lifecycle
-let modalInstance = null
 onMounted(async () => {
     try {
         await permissionStore.fetchPermissions()
@@ -643,21 +644,6 @@ onMounted(async () => {
         console.error('Error in onMounted:', error)
     }
     setListTitle('Chart of Accounts', totalAccountsCount.value)
-})
-
-// Watchers
-watch(showModal, (newValue) => {
-    if (newValue) {
-        nextTick(() => {
-            const modalElement = document.getElementById('AccountModal')
-            if (modalElement && !modalInstance) {
-                modalInstance = new bootstrap.Modal(modalElement)
-            }
-            modalInstance?.show()
-        })
-    } else {
-        modalInstance?.hide()
-    }
 })
 
 const debouncedSearch = useDebounceFn(() => {

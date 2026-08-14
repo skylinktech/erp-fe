@@ -94,7 +94,9 @@
             />
 
             <!-- Placeholder untuk DivisiModal component -->
-            <Modal 
+            <Modal
+                :model-value="showModal"
+                @close="divisiStore.closeModal" 
                 id="DivisiModal"
                 :title="modalTitle" 
                 :description="modalDescription"
@@ -199,26 +201,13 @@ function toggleActions(event, row) {
     nextTick(() => actionsMenuRef.value?.toggle(event))
 }
 
-let modalInstance = null
 onMounted(() => {
     divisiStore.fetchDivisis();
     permissionStore.fetchPermissions()
     userStore.loadUser()
 
-    const modalElement = document.getElementById('DivisiModal')
-    if (modalElement) {
-        modalInstance = new bootstrap.Modal(modalElement)
-    }
     setListTitle('Divisi', divisis.value.length)
 });
-
-watch(showModal, (newValue) => {
-    if (newValue) {
-        modalInstance?.show()
-    } else {
-        modalInstance?.hide()
-    }
-})
 
 const debouncedSearch = useDebounceFn(() => {
     divisiStore.setSearch(globalFilterValue.value)
