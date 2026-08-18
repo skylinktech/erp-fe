@@ -21,12 +21,12 @@
             <slot name="selection" :option="selectedOption" :options="selectedOptions">
               <template v-if="Array.isArray(modelValue)">
                 <span v-for="(option, index) in selectedOptions" :key="getOptionKey(option, index)" class="selected-tag">
-                  {{ getOptionLabel(option) }}
+                  {{ option != null ? getOptionLabel(option) : '' }}
                   <button type="button" class="tag-remove" @click.stop="removeOption(option)">×</button>
                 </span>
               </template>
               <template v-else>
-                {{ getOptionLabel(selectedOption) }}
+                {{ selectedOption != null ? getOptionLabel(selectedOption) : '' }}
               </template>
             </slot>
           </div>

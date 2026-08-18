@@ -89,6 +89,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       '/hrd/jabatan': 'view_jabatan',
       '/hrd/cuti': 'view_cuti',
       '/hrd/lembur': 'view_lembur',
+      '/hrd/kehadiran': 'view_kehadiran',
       '/hrd/perjalanan-dinas': 'view_perjalanan_dinas',
       '/hrd/saldo-cuti': 'view_saldo_cuti',
       '/hrd/struktur-organisasi': 'view_struktur_organisasi',
@@ -126,6 +127,8 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
         requiredPermission = 'view_pegawai'
       } else if (/^\/hrd\/cuti\/form(\/.*)?$/.test(to.path)) {
         requiredPermission = 'create_cuti'
+      } else if (/^\/hrd\/kehadiran\/form(\/.*)?$/.test(to.path)) {
+        requiredPermission = 'manage_jadwal_kehadiran'
       } else if (/^\/hrd\/perjalanan-dinas\/form(\/.*)?$/.test(to.path)) {
         requiredPermission = 'create_perjalanan_dinas'
       } else if (/^\/hrd\/perjalanan-dinas\/detail\/.+$/.test(to.path)) {
@@ -218,6 +221,22 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
           permission.name === requiredPermission
         )
       )
+
+      if (!hasPermission && to.path === '/hrd/kehadiran') {
+        const selfServiceAllowed = ['access_kehadiran', 'view_own_kehadiran', 'show_kehadiran']
+        const hasSelfService = userStore.user?.roles?.some(role =>
+          role.permissions?.some(permission => selfServiceAllowed.includes(permission.name))
+        )
+        if (hasSelfService) return
+      }
+
+      if (!hasPermission && /^\/hrd\/kehadiran\/form/.test(to.path)) {
+        const scheduleAllowed = ['manage_jadwal_kehadiran', 'edit_kehadiran']
+        const hasScheduleAccess = userStore.user?.roles?.some(role =>
+          role.permissions?.some(permission => scheduleAllowed.includes(permission.name))
+        )
+        if (hasScheduleAccess) return
+      }
 
       // Jika user tidak memiliki permission yang diperlukan, redirect ke 403
       if (!hasPermission) {

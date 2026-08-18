@@ -42,7 +42,8 @@
         </div>
 
         <template v-else>
-          <div class="row g-3 mb-4">
+          <div class="pb-8 pt-5 mb-6">
+            <div class="row g-3">
             <div class="col-sm-6 col-xl-3">
               <div class="border rounded p-3 h-100">
                 <div class="text-muted small">Jatah Tahunan</div>
@@ -71,9 +72,11 @@
                 <div class="text-muted small">hari tersedia</div>
               </div>
             </div>
+            </div>
           </div>
 
-          <div class="d-flex justify-content-between align-items-center mb-3">
+          <div class="border-top pt-6">
+            <div class="d-flex justify-content-between align-items-center mb-3">
             <h6 class="mb-0">Breakdown Cuti Bersama</h6>
             <NuxtLink
               v-if="canViewKalender"
@@ -128,6 +131,7 @@
             − cuti bersama {{ summary.cuti_bersama_total }}
             − cuti diambil {{ summary.cuti_pengajuan_terpakai }}.
           </p>
+          </div>
         </template>
       </div>
     </div>

@@ -106,13 +106,13 @@ onMounted(() => {
   font-weight: 600;
 }
 
+.hr-calendar-wrapper :deep(.fc-daygrid-day) {
+  cursor: pointer;
+}
+
 .hr-calendar-wrapper :deep(.fc-daygrid-event) {
   cursor: pointer;
   border-radius: 4px;
   padding: 1px 4px;
-}
-
-.hr-calendar-wrapper :deep(.fc-daygrid-day-number) {
-  cursor: pointer;
 }
 </style>

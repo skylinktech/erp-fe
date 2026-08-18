@@ -118,24 +118,23 @@
       dialog-class="modal-lg"
     >
       <form @submit.prevent="handleSave">
-        <div class="row g-4">
+        <div class="row g-4 align-items-start">
           <div class="col-md-6">
-            <div class="form-floating form-floating-outline">
-              <input
-                id="hr-kal-nama"
-                v-model="store.form.nama"
-                type="text"
-                class="form-control"
-                placeholder="Nama event / libur"
-                required
-                maxlength="255"
-              />
-              <label for="hr-kal-nama">Nama <span class="text-danger" aria-hidden="true">*</span></label>
-            </div>
+            <FormLabel required html-for="hr-kal-nama">Nama</FormLabel>
+            <input
+              id="hr-kal-nama"
+              v-model="store.form.nama"
+              type="text"
+              class="form-control"
+              placeholder="Nama event / libur"
+              required
+              maxlength="255"
+            />
           </div>
           <div class="col-md-6">
-            <FormLabel required>Tipe</FormLabel>
+            <FormLabel required html-for="hr-kal-tipe">Tipe</FormLabel>
             <select
+              id="hr-kal-tipe"
               v-model="store.form.tipe"
               class="form-select"
               @change="onTipeChange"
@@ -150,8 +149,9 @@
             </select>
           </div>
           <div class="col-md-6">
-            <label class="form-label">Tanggal Mulai <span class="text-danger" aria-hidden="true">*</span></label>
+            <FormLabel required html-for="hr-kal-tgl-mulai">Tanggal Mulai</FormLabel>
             <input
+              id="hr-kal-tgl-mulai"
               v-model="store.form.tanggal_mulai"
               type="date"
               class="form-control"
@@ -160,18 +160,20 @@
             />
           </div>
           <div class="col-md-6">
-            <label class="form-label">Tanggal Selesai</label>
+            <FormLabel html-for="hr-kal-tgl-selesai">Tanggal Selesai</FormLabel>
             <input
+              id="hr-kal-tgl-selesai"
               v-model="store.form.tanggal_selesai"
               type="date"
               class="form-control"
               :min="store.form.tanggal_mulai"
             />
-            <small class="text-muted">Kosongkan jika hanya 1 hari.</small>
+            <small class="form-text text-muted">Kosongkan jika hanya 1 hari.</small>
           </div>
           <div class="col-12">
-            <label class="form-label">Deskripsi</label>
+            <FormLabel html-for="hr-kal-deskripsi">Deskripsi</FormLabel>
             <textarea
+              id="hr-kal-deskripsi"
               v-model="store.form.deskripsi"
               class="form-control"
               rows="3"
@@ -189,19 +191,20 @@
             </div>
           </div>
           <div class="col-md-6">
-            <label class="form-label">Warna (opsional)</label>
+            <FormLabel html-for="hr-kal-warna">Warna (opsional)</FormLabel>
             <input
+              id="hr-kal-warna"
               v-model="store.form.warna"
               type="color"
-              class="form-control form-control-color w-100"
+              class="form-control form-control-color"
             />
           </div>
-          <div class="col-md-6 d-flex align-items-end">
-            <p class="small text-muted mb-2">
-              Rentang:
-              <strong>{{
+          <div class="col-md-6">
+            <FormLabel>Rentang</FormLabel>
+            <p class="form-control-plaintext mb-0">
+              {{
                 formatHrCalendarRange(store.form.tanggal_mulai, store.form.tanggal_selesai || store.form.tanggal_mulai)
-              }}</strong>
+              }}
             </p>
           </div>
         </div>
