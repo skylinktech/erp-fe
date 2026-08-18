@@ -378,7 +378,6 @@ export const useProductStore = defineStore('product', {
       try {
           const formData = new FormData();
           const allowedKeys = [
-            'id',
             'name',
             'sku',
             'unitId',
@@ -389,9 +388,7 @@ export const useProductStore = defineStore('product', {
             'billingType',
             'condition',
             'productType',
-            'createdBy',
             'productKits',
-            'image',
           ] as const;
 
           allowedKeys.forEach((key) => {
@@ -413,13 +410,14 @@ export const useProductStore = defineStore('product', {
                 }
               }
               formData.append(key, JSON.stringify(productKits));
-            } else if (key === 'image' && value instanceof File) {
-              formData.append(key, value);
-            } else if (key !== 'image') {
-              const stringValue = value === null || value === undefined ? '' : String(value);
-              formData.append(key, stringValue);
+            } else if (value !== null && value !== undefined && value !== '') {
+              formData.append(key, String(value));
             }
           });
+
+          if (this.form.image instanceof File) {
+            formData.append('image', this.form.image);
+          }
           
           
           

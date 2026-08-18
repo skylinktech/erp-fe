@@ -208,24 +208,30 @@ const form = ref({
   longitude: null as number | null,
 })
 
-async function searchCustomers(query: string) {
-  if (!query || query.length < 1) return
+async function searchCustomers(query: string = '') {
   try {
     const { $api } = useNuxtApp()
-    const url = `${($api as any).customers()}?search=${encodeURIComponent(query)}&rows=20`
+    const params = new URLSearchParams({
+      search: query?.trim() || '',
+      rows: '50',
+      page: '1',
+    })
+    const url = `${$api.customer()}?${params.toString()}`
     const res = await apiFetch<any>(url, { credentials: 'include' })
     const list = res?.data ?? res ?? []
     customerOptions.value = (Array.isArray(list) ? list : []).map((c: any) => ({
       label: c.name,
       value: c.id,
     }))
-  } catch {}
+  } catch (e) {
+    console.warn('Gagal memuat customer:', e)
+  }
 }
 
 async function loadCustomerById(id: number) {
   try {
     const { $api } = useNuxtApp()
-    const res = await apiFetch<any>(`${($api as any).customers()}/${id}`, { credentials: 'include' })
+    const res = await apiFetch<any>(`${$api.customer()}/${id}`, { credentials: 'include' })
     const c = res?.data ?? res
     if (c?.id) {
       const exists = customerOptions.value.find((o) => o.value === c.id)
@@ -282,6 +288,15 @@ async function loadForEdit(id: string) {
       longitude: raw.longitude != null ? Number(raw.longitude) : null,
     }
 
+    if (raw.customer?.id) {
+      const exists = customerOptions.value.find((o) => o.value === raw.customer!.id)
+      if (!exists) {
+        customerOptions.value.push({
+          label: raw.customer.name,
+          value: raw.customer.id,
+        })
+      }
+    }
     if (form.value.customerId) await loadCustomerById(form.value.customerId)
     if (raw.servicePlan) {
       const p = raw.servicePlan
@@ -326,7 +341,7 @@ async function handleSubmit() {
 }
 
 onMounted(async () => {
-  await searchServicePlans('')
+  await Promise.all([searchCustomers(''), searchServicePlans('')])
   if (isEditMode.value) await loadForEdit(String(route.params.id))
 })
 

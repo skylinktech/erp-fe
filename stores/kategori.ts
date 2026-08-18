@@ -68,9 +68,15 @@ export const useKategoriStore = defineStore('kategori', {
       this.error = null
       const { $api } = useNuxtApp()
       try {
-        const url = new URL($api.categories())
+        const params = new URLSearchParams({
+            page     : ((this.params.first / this.params.rows) + 1).toString(),
+            rows     : this.params.rows.toString(),
+            sortField: this.params.sortField || '',
+            sortOrder: (this.params.sortOrder || 1) > 0 ? 'asc' : 'desc',
+            search   : this.params.search || '',
+        })
 
-        const response = await fetch(url, {
+        const response = await fetch(`${$api.categories()}?${params.toString()}`, {
           method: 'GET',
           headers: {
             'Accept': 'application/json',
@@ -81,13 +87,6 @@ export const useKategoriStore = defineStore('kategori', {
         if (!response.ok) throw new Error('Gagal mengambil data kategori')
 
         const result = await response.json()
-        const params = new URLSearchParams({
-            page     : ((this.params.first / this.params.rows) + 1).toString(),
-            rows     : this.params.rows.toString(),
-            sortField: this.params.sortField || '',
-            sortOrder: (this.params.sortOrder || 1) > 0 ? 'asc' : 'desc',
-            search   : this.params.search || '',
-        });
         this.kategori = result.data
         this.totalRecords = result.meta.total
       } catch (e: any) {

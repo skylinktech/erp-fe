@@ -381,11 +381,26 @@
                                 <CustomSelect2 v-model="form.condition" :options="conditionOptions" :get-option-label="option => option.label" :reduce="option => option.value" searchable :clearable="false" placeholder="-- Pilih Kondisi --" id="condition" />
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Gambar</label>
-                                <input type="file" class="form-control" @change="onImageChange" accept="image/*" id="image">
-                                <div v-if="form.imagePreview" class="mt-2">
-                                    <img :src="form.imagePreview" alt="Image Preview" class="image-preview" style="height: 60px; max-width: 120px; object-fit: contain; border: 2px solid #ddd; border-radius: 8px;" @error="(e) => handleImageError(e, '/img/default-product-image.png')" />
-                                    <a :href="form.imagePreview" target="_blank" rel="noopener noreferrer" class="d-block mt-1">Lihat Gambar</a>
+                                <div class="form-floating form-floating-outline">
+                                    <input
+                                        type="file"
+                                        class="form-control"
+                                        @change="onImageChange"
+                                        accept="image/*"
+                                        id="image"
+                                    >
+                                    <label for="image">Gambar Produk</label>
+                                    <small class="text-muted d-block mt-1">Maks. 5MB. Format: jpg, jpeg, png, gif, webp</small>
+                                    <div v-if="form.imagePreview" class="mt-2">
+                                        <img
+                                            :src="form.imagePreview"
+                                            alt="Image Preview"
+                                            class="image-preview"
+                                            style="height: 60px; max-width: 120px; object-fit: contain; border: 2px solid #ddd; border-radius: 8px;"
+                                            @error="(e) => handleImageError(e, '/img/default-product-image.png')"
+                                        />
+                                        <a :href="form.imagePreview" target="_blank" rel="noopener noreferrer" class="d-block mt-1">Lihat Gambar</a>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-md-6">
