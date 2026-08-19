@@ -655,15 +655,29 @@
 
 <style>
 #layout-navbar.layout-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 1080;
   width: 100%;
   max-width: 100%;
+  min-height: var(--layout-navbar-height, 4rem);
+  height: auto;
   margin: 0;
   border-radius: 0;
-  padding-left: 1.5rem;
-  padding-right: 1.5rem;
+  padding-top: max(0.25rem, env(safe-area-inset-top, 0px));
+  padding-left: max(1rem, env(safe-area-inset-left, 0px));
+  padding-right: max(1rem, env(safe-area-inset-right, 0px));
   background-color: #fff;
   border-bottom: 1px solid var(--bs-card-border-color, #ededed);
   box-shadow: none;
+  overflow: visible;
+}
+
+@media (min-width: 1200px) {
+  #layout-navbar.layout-navbar {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
 }
 
 .dropdown-user {
