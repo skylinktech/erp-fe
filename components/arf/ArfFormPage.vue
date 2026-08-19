@@ -36,6 +36,9 @@
 
                   <div class="tab-content pt-4">
                     <div id="arf-tab-info" data-step-id="arf-tab-info" class="tab-pane fade" :class="paneClass('arf-tab-info')">
+                      <div v-if="uiErrors.type || uiErrors.siteInvestmentId || uiErrors.departmentId" class="alert alert-danger py-2 mb-3">
+                        <i class="ri-error-warning-line me-1"></i>{{ uiErrors.type || uiErrors.siteInvestmentId || uiErrors.departmentId }}
+                      </div>
                       <div class="row mb-3">
                         <label class="col-sm-3 col-form-label">Tanggal Pengajuan</label>
                         <div class="col-sm-9">
@@ -43,7 +46,7 @@
                         </div>
                       </div>
                       <div class="row mb-3">
-                        <label class="col-sm-3 col-form-label">Tipe</label>
+                        <FormLabel required label-class="col-sm-3 col-form-label">Tipe</FormLabel>
                         <div class="col-sm-9">
                           <CustomSelect2
                             v-model="form.type"
@@ -54,10 +57,11 @@
                             clearable
                             placeholder="Pilih tipe"
                           />
+                          <div v-if="uiErrors.type" class="invalid-feedback d-block">{{ uiErrors.type }}</div>
                         </div>
                       </div>
                       <div class="row mb-3">
-                        <label class="col-sm-3 col-form-label">Site Investment</label>
+                        <FormLabel required label-class="col-sm-3 col-form-label">Site Investment</FormLabel>
                         <div class="col-sm-9">
                           <CustomSelect2
                             v-model="form.siteInvestmentId"
@@ -68,10 +72,11 @@
                             clearable
                             placeholder="Pilih project implementation"
                           />
+                          <div v-if="uiErrors.siteInvestmentId" class="invalid-feedback d-block">{{ uiErrors.siteInvestmentId }}</div>
                         </div>
                       </div>
                       <div class="row mb-3">
-                        <label class="col-sm-3 col-form-label">Departemen</label>
+                        <FormLabel required label-class="col-sm-3 col-form-label">Departemen</FormLabel>
                         <div class="col-sm-9">
                           <CustomSelect2
                             v-model="form.departmentId"
@@ -82,6 +87,7 @@
                             clearable
                             placeholder="Pilih departemen"
                           />
+                          <div v-if="uiErrors.departmentId" class="invalid-feedback d-block">{{ uiErrors.departmentId }}</div>
                         </div>
                       </div>
                       <div class="row mb-3">
@@ -367,6 +373,19 @@ const formSteps = computed(() => [
 ])
 function validateArfStep(step: { id: string }): boolean {
   uiErrors.value = {}
+  if (step.id === 'arf-tab-info') {
+    const validTypes = typeOptions.map((o) => o.value)
+    if (!form.value?.type || !validTypes.includes(form.value.type)) {
+      uiErrors.value.type = 'Tipe wajib dipilih.'
+    }
+    if (!form.value?.siteInvestmentId) {
+      uiErrors.value.siteInvestmentId = 'Site Investment wajib dipilih.'
+    }
+    if (!form.value?.departmentId) {
+      uiErrors.value.departmentId = 'Departemen wajib dipilih.'
+    }
+    return Object.keys(uiErrors.value).length === 0
+  }
   if (step.id !== 'arf-tab-items') return true
   const items = form.value?.arfItems || []
   const validItems = items.filter((i) => String(i.description || '').trim() && Number(i.qty) > 0)
@@ -393,8 +412,9 @@ const {
   validateAll,
 } = useTabbedFormNavigation({ steps: formSteps, formRoot, validateStep: validateArfStep })
 const ARF_FIELD_TABS: Record<string, string> = {
-  siteInvestmentId: 'arf-tab-info',
   type: 'arf-tab-info',
+  siteInvestmentId: 'arf-tab-info',
+  departmentId: 'arf-tab-info',
   arfItems: 'arf-tab-items',
   description: 'arf-tab-items',
   quantity: 'arf-tab-items',

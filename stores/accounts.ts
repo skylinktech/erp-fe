@@ -146,19 +146,22 @@ export const useAccountStore = defineStore('account', {
       }
     },
 
-    async fetchChartOfAccounts() {
+    async fetchChartOfAccounts(search = this.params.search || '') {
       this.loading = true
       this.error = null
       const toast = useToast();
       const { $api } = useNuxtApp()
       try {
-        // Gunakan endpoint chart-of-accounts yang mengembalikan semua top-level accounts
-        const response = await fetch($api.accountsChartOfAccounts(), {
+        const url = new URL($api.accountsChartOfAccounts())
+        const q = String(search ?? '').trim()
+        if (q) url.searchParams.set('search', q)
+
+        const response = await fetch(url.toString(), {
           headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
-          credentials: 'include' // Cookie-based auth
+          credentials: 'include'
         });
 
         if (!response.ok) {
@@ -168,7 +171,6 @@ export const useAccountStore = defineStore('account', {
 
         const result = await response.json()
         
-        // Chart of Accounts mengembalikan data langsung tanpa pagination
         if (result.data && Array.isArray(result.data)) {
           this.accounts = result.data
           this.totalRecords = result.data.length
@@ -266,7 +268,7 @@ export const useAccountStore = defineStore('account', {
         }
         
         this.closeModal();
-        await this.fetchAccounts();
+        await this.fetchChartOfAccounts(this.params.search);
         toast.success({
           title: 'Success',
           message: `Akun berhasil ${this.isEditMode ? 'diperbarui' : 'disimpan'}.`,
@@ -318,7 +320,7 @@ export const useAccountStore = defineStore('account', {
             return false
           }
 
-          await this.fetchAccounts();
+          await this.fetchChartOfAccounts(this.params.search);
           toast.success({
             title: 'Success',
             message: 'Akun berhasil dihapus.',
@@ -377,19 +379,17 @@ export const useAccountStore = defineStore('account', {
     setPagination(event: any) {
       this.params.first = event.first || 0;
       this.params.rows = event.rows || 10;
-      this.fetchAccounts();
     },
 
     setSort(event: any) {
       this.params.sortField = event.sortField || 'code';
       this.params.sortOrder = event.sortOrder || 1;
-      this.fetchAccounts();
     },
 
     setSearch(search: string) {
       this.params.search = search;
       this.params.first = 0;
-      this.fetchAccounts();
+      this.fetchChartOfAccounts(search);
     }
   }
 })

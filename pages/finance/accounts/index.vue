@@ -646,11 +646,14 @@ onMounted(async () => {
     setListTitle('Chart of Accounts', totalAccountsCount.value)
 })
 
-const debouncedSearch = useDebounceFn(() => {
-    accountStore.setSearch(globalFilterValue.value)
+const debouncedSearch = useDebounceFn((value) => {
+  accountStore.setSearch(value)
+  expandedRows.value = {}
 }, 500)
 
-watch(globalFilterValue, debouncedSearch)
+watch(globalFilterValue, (value) => {
+  debouncedSearch(value)
+})
 
 // Table events
 const onPage = (event) => {
@@ -663,11 +666,9 @@ const onSort = (event) => {
     params.value.sortOrder = event.sortOrder || 1
 }
 
-const handleRowsChange = async (value) => {
-    const rowsValue = Number(value) || 10
-    accountStore.params.rows = rowsValue
+const handleRowsChange = (value) => {
+    accountStore.params.rows = Number(value) || 10
     accountStore.params.first = 0
-    await accountStore.fetchAccounts()
 }
 
 const handleSearch = async (value) => {

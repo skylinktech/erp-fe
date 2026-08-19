@@ -389,6 +389,39 @@ export const useArfStore = defineStore('arf', {
       const validItems = this.form.arfItems.filter(
         (d) => d.description?.trim() && (Number(d.qty) || 0) > 0
       )
+      if (!this.form.type) {
+        this.saving = false
+        toast.error({
+          title: 'Validasi',
+          message: 'Tipe wajib dipilih',
+          color: 'red',
+          position: 'bottomRight',
+          layout: 2,
+        })
+        return false
+      }
+      if (!this.form.siteInvestmentId) {
+        this.saving = false
+        toast.error({
+          title: 'Validasi',
+          message: 'Site Investment wajib dipilih',
+          color: 'red',
+          position: 'bottomRight',
+          layout: 2,
+        })
+        return false
+      }
+      if (!this.form.departmentId) {
+        this.saving = false
+        toast.error({
+          title: 'Validasi',
+          message: 'Departemen wajib dipilih',
+          color: 'red',
+          position: 'bottomRight',
+          layout: 2,
+        })
+        return false
+      }
       if (!validItems.length) {
         this.saving = false
         toast.error({

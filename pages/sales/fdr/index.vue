@@ -223,11 +223,16 @@
                   </Column>
                   <Column header="Actions" :exportable="false" style="min-width:8rem">
                     <template #body="slotProps">
-                      <div class="dropdown d-inline-block">
-                        <a href="javascript:;" class="btn btn-sm btn-text-secondary rounded-pill btn-icon dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
+                      <div class="dropdown d-inline-block fdr-action-dropdown">
+                        <a
+                          href="javascript:;"
+                          class="btn btn-sm btn-text-secondary rounded-pill btn-icon dropdown-toggle hide-arrow"
+                          data-bs-toggle="dropdown"
+                          data-bs-popper-config='{"strategy":"fixed"}'
+                        >
                           <i class="ri-more-2-fill"></i>
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
+                        <ul class="dropdown-menu dropdown-menu-end fdr-actions-dropdown">
                           <li v-if="(userHasRole('superadmin') || userHasPermission('edit_fdr')) && slotProps.data.status === 'draft'">
                             <a class="dropdown-item" href="javascript:void(0)" @click="fdrStore.submitFdr(slotProps.data.id)"><i class="ri-send-plane-line me-2"></i> Submit</a>
                           </li>
@@ -680,6 +685,18 @@ definePageMeta({
 </script>
 
 <style scoped>
+.fdr-add-button {
+  white-space: nowrap;
+}
+
+:deep(.fdr-actions-dropdown) {
+  z-index: 1100 !important;
+}
+
+:deep(.table-responsive:has(.fdr-action-dropdown.show)) {
+  overflow: visible;
+}
+
 .repeater-item { background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef; }
 .investment-summary-card { background: linear-gradient(135deg, #f8faff 0%, #f0f4ff 100%); border: 1px solid #e0e7ff; border-radius: 12px; overflow: hidden; }
 .investment-summary-title { margin: 0; padding: 14px 18px; font-size: 0.95rem; font-weight: 600; color: #4f46e5; background: rgba(99, 102, 241, 0.08); border-bottom: 1px solid #e0e7ff; }
