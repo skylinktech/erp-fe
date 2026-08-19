@@ -336,6 +336,11 @@
                                                             <i class="ri-eye-line me-2"></i> Lihat Detail
                                                         </a>
                                                     </li>
+                                                    <li>
+                                                        <a class="dropdown-item" href="javascript:void(0)" @click="printPurchaseOrder(slotProps.data.id)">
+                                                            <i class="ri-printer-line me-2"></i> Cetak
+                                                        </a>
+                                                    </li>
                                                     <li v-if="userHasRole('superadmin') || (userHasPermission('edit_purchase_order') && slotProps.data.status == 'draft')">
                                                         <a class="dropdown-item" href="javascript:void(0)" @click="navigateTo(`/purchasing/purchase-order/form/${slotProps.data.id}`)">
                                                             <i class="ri-edit-box-line me-2"></i> Edit
@@ -1259,6 +1264,14 @@ const onWarehouseChange = async (index) => {
 const viewPurchaseOrderDetails = (purchaseOrderId) => {
     if (!purchaseOrderId) return;
     router.push({ path: `/purchasing/purchase-order-detail`, query: { id: purchaseOrderId } });
+};
+
+const printPurchaseOrder = (purchaseOrderId) => {
+    if (!purchaseOrderId) return;
+    router.push({
+        path: '/purchasing/cetak-po',
+        query: { id: purchaseOrderId, print: true },
+    });
 };
 
 async function handleApprovePO (id) {

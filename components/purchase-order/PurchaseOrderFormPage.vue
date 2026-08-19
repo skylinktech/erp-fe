@@ -1,6 +1,6 @@
 <template>
   <div class="content-wrapper">
-    <div class="container-xxl flex-grow-1 container-p-y">
+    <div class="container-xxl flex-grow-1 container-pt-10">
       <div v-if="!formReady && loading" class="d-flex justify-content-center py-5">
         <div class="spinner-border text-primary" role="status">
           <span class="visually-hidden">Memuat…</span>
@@ -82,9 +82,10 @@
                         </div>
                       </div>
                       <div v-if="isExternalPO" class="row mb-3">
-                        <label class="col-sm-3 col-form-label">Nama Perusahaan External</label>
+                        <FormLabel required label-class="col-sm-3 col-form-label">Nama Perusahaan External</FormLabel>
                         <div class="col-sm-9">
-                          <input v-model="form.extNamaPerusahaan" type="text" class="form-control" placeholder="Nama perusahaan pihak ketiga" />
+                          <input v-model="form.extNamaPerusahaan" type="text" class="form-control" :class="{ 'is-invalid': uiErrors.extNamaPerusahaan }" placeholder="Nama perusahaan pihak ketiga" aria-required="true" />
+                          <div v-if="uiErrors.extNamaPerusahaan" class="invalid-feedback d-block">{{ uiErrors.extNamaPerusahaan }}</div>
                         </div>
                       </div>
                       <div class="row mb-3">
@@ -129,8 +130,8 @@
                           <input v-model="form.termOfPayment" type="text" class="form-control" />
                         </div>
                       </div>
-                      <div v-if="!isExternalPO" class="row mb-3">
-                        <label class="col-sm-3 col-form-label">Perusahaan</label>
+                      <div class="row mb-3">
+                        <FormLabel required label-class="col-sm-3 col-form-label">Perusahaan</FormLabel>
                         <div class="col-sm-9">
                           <CustomSelect2
                             v-model="form.perusahaanId"
@@ -141,10 +142,11 @@
                             clearable
                             placeholder="Pilih perusahaan"
                           />
+                          <div v-if="uiErrors.perusahaanId" class="invalid-feedback d-block">{{ uiErrors.perusahaanId }}</div>
                         </div>
                       </div>
-                      <div v-if="!isExternalPO" class="row mb-3">
-                        <label class="col-sm-3 col-form-label">Cabang</label>
+                      <div class="row mb-3">
+                        <FormLabel required label-class="col-sm-3 col-form-label">Cabang</FormLabel>
                         <div class="col-sm-9">
                           <CustomSelect2
                             v-model="form.cabangId"
@@ -156,10 +158,11 @@
                             placeholder="Pilih cabang"
                             :disabled="!form.perusahaanId"
                           />
+                          <div v-if="uiErrors.cabangId" class="invalid-feedback d-block">{{ uiErrors.cabangId }}</div>
                         </div>
                       </div>
                       <div class="row mb-3">
-                        <label class="col-sm-3 col-form-label">Departemen</label>
+                        <FormLabel required label-class="col-sm-3 col-form-label">Departemen</FormLabel>
                         <div class="col-sm-9">
                           <CustomSelect2
                             v-model="form.departmentId"
@@ -170,10 +173,11 @@
                             clearable
                             placeholder="Pilih departemen"
                           />
+                          <div v-if="uiErrors.departmentId" class="invalid-feedback d-block">{{ uiErrors.departmentId }}</div>
                         </div>
                       </div>
                       <div class="row mb-3">
-                        <label class="col-sm-3 col-form-label">Budget</label>
+                        <FormLabel required label-class="col-sm-3 col-form-label">Budget</FormLabel>
                         <div class="col-sm-9">
                           <CustomSelect2
                             v-model="form.budgetId"
@@ -184,6 +188,7 @@
                             clearable
                             placeholder="Pilih budget"
                           />
+                          <div v-if="uiErrors.budgetId" class="invalid-feedback d-block">{{ uiErrors.budgetId }}</div>
                           <div v-if="selectedBudgetHint" class="form-text" :class="selectedBudgetHint.class">
                             <i :class="selectedBudgetHint.icon" class="me-1"></i>{{ selectedBudgetHint.text }}
                           </div>
@@ -391,9 +396,9 @@
                       Tips
                     </strong>
                     <ul class="mb-0 ps-3">
-                      <li><strong>Internal</strong>: pilih perusahaan &amp; cabang grup.</li>
-                      <li><strong>External</strong>: isi nama perusahaan pihak ketiga.</li>
-                      <li>Pilih <strong>Budget</strong> departemen agar approval tidak ditolak otomatis.</li>
+                      <li>Perusahaan, Cabang, Departemen, dan Budget wajib diisi.</li>
+                      <li><strong>External</strong>: isi juga nama perusahaan pihak ketiga.</li>
+                      <li>Pilih <strong>Budget</strong> agar sisa anggaran dapat dicek sebelum submit.</li>
                       <li>Harga otomatis terisi dari harga beli katalog, dapat disesuaikan manual.</li>
                     </ul>
                   </div>
@@ -451,6 +456,13 @@ function validatePurchaseOrderStep(step: { id: string }): boolean {
     if (form.value?.date && form.value?.dueDate && String(form.value.dueDate) < String(form.value.date)) {
       uiErrors.value.dueDate = 'Jatuh Tempo tidak boleh lebih awal dari Tanggal PO.'
     }
+    if (!form.value?.perusahaanId) uiErrors.value.perusahaanId = 'Perusahaan wajib dipilih.'
+    if (!form.value?.cabangId) uiErrors.value.cabangId = 'Cabang wajib dipilih.'
+    if (!form.value?.departmentId) uiErrors.value.departmentId = 'Departemen wajib dipilih.'
+    if (!form.value?.budgetId) uiErrors.value.budgetId = 'Budget wajib dipilih.'
+    if (form.value?.poType === 'external' && !String(form.value?.extNamaPerusahaan || '').trim()) {
+      uiErrors.value.extNamaPerusahaan = 'Nama perusahaan external wajib diisi.'
+    }
     return Object.keys(uiErrors.value).length === 0
   }
   if (step.id === 'po-tab-items') {
@@ -490,6 +502,9 @@ const PO_FIELD_TABS: Record<string, string> = {
   dueDate: 'po-tab-info',
   perusahaanId: 'po-tab-info',
   cabangId: 'po-tab-info',
+  departmentId: 'po-tab-info',
+  budgetId: 'po-tab-info',
+  extNamaPerusahaan: 'po-tab-info',
   purchaseOrderItems: 'po-tab-items',
   warehouseId: 'po-tab-items',
   quantity: 'po-tab-items',
@@ -601,6 +616,12 @@ function findPerusahaanName(id: number | null | undefined): string {
   return p ? perusahaanLabel(p) : '—'
 }
 
+function findCabangName(id: number | null | undefined): string {
+  if (!id) return '—'
+  const c = cabangs.value.find((x) => Number(x.id) === Number(id))
+  return c ? cabangLabel(c) : '—'
+}
+
 function findDepartemenName(id: number | null | undefined): string {
   if (!id) return '—'
   const d = departemens.value.find((x) => Number(x.id) === Number(id))
@@ -642,7 +663,8 @@ const summaryRows = computed<FormPageSummaryRow[]>(() => {
     { label: 'Mode', value: isEditMode.value ? 'Edit' : 'Baru' },
     { label: 'Tipe PO', value: poTypeLabel },
     { label: 'Vendor', value: findVendorName(f.vendorId) },
-    { label: 'Perusahaan', value: isExternalPO.value ? (f.extNamaPerusahaan || '—') : findPerusahaanName(f.perusahaanId) },
+    { label: 'Perusahaan', value: findPerusahaanName(f.perusahaanId) },
+    { label: 'Cabang', value: findCabangName(f.cabangId) },
     { label: 'Departemen', value: findDepartemenName(f.departmentId) },
     { label: 'Budget', value: findBudgetName(f.budgetId) },
     { label: 'Tgl PO', value: formatDateId(f.date) },
@@ -664,10 +686,7 @@ function productsForRow(warehouseId?: number | null) {
 
 function handlePoTypeChange(poType: 'internal' | 'external') {
   form.value.poType = poType
-  if (poType === 'external') {
-    form.value.perusahaanId = null
-    form.value.cabangId = null
-  } else {
+  if (poType !== 'external') {
     form.value.extNamaPerusahaan = ''
   }
 }

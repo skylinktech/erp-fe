@@ -298,23 +298,34 @@
                     <div class="card">
                     <div class="card-body">
                         <button
-                        class="btn btn-primary d-grid w-100 mb-4"
+                        class="btn btn-primary d-grid w-100 mb-3"
+                        :disabled="!purchaseOrder?.id"
                         @click="printPurchaseOrder(purchaseOrder.id)"
                         >
-                        <span class="d-flex align-items-center justify-content-center text-nowrap"
-                            ><i class="ri-printer-line ri-16px scaleX-n1-rtl me-2"></i>Print PO</span
-                        >
+                        <span class="d-flex align-items-center justify-content-center text-nowrap">
+                            <i class="ri-printer-line ri-16px scaleX-n1-rtl me-2"></i>Print PO
+                        </span>
                         </button>
-                        <button class="btn btn-outline-secondary d-grid w-100 mb-4">Download</button>
-                        <div class="d-flex mb-4">
-                        <a
-                            class="btn btn-outline-secondary d-grid w-100 me-4"
-                            target="_blank"
-                            href="./app-invoice-print.html">
-                            Print
-                        </a>
-                        <a href="./app-invoice-edit.html" class="btn btn-outline-secondary d-grid w-100"> Edit </a>
-                        </div>
+                        <button
+                        class="btn btn-outline-secondary d-grid w-100 mb-3"
+                        :disabled="!purchaseOrder?.id || downloadingPdf"
+                        @click="downloadPurchaseOrderPdf"
+                        >
+                        <span class="d-flex align-items-center justify-content-center text-nowrap">
+                            <span v-if="downloadingPdf" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                            <i v-else class="ri-download-2-line ri-16px me-2"></i>
+                            Download PDF
+                        </span>
+                        </button>
+                        <button
+                        class="btn btn-outline-secondary d-grid w-100 mb-3"
+                        :disabled="!canEditPurchaseOrder"
+                        @click="editPurchaseOrder"
+                        >
+                        <span class="d-flex align-items-center justify-content-center text-nowrap">
+                            <i class="ri-edit-box-line ri-16px me-2"></i>Edit
+                        </span>
+                        </button>
                         <button
                         class="btn btn-success d-grid w-100"
                         data-bs-toggle="offcanvas"
@@ -579,9 +590,12 @@ import DocumentTimelinePanel from '~/components/documents/DocumentTimelinePanel.
 import ThreeWayMatchPanel from '~/components/purchasing/ThreeWayMatchPanel.vue'
 import Swal from 'sweetalert2'
 import { useBootstrapModal } from '~/composables/useBootstrapModal'
+import { usePermissions } from '~/composables/usePermissions'
+import { exportPurchaseOrderPdf } from '~/utils/purchasing/exportPurchaseOrderPdf'
 
 // Composables
 const { setDetailTitle } = useDynamicTitle()
+const { userHasPermission, userHasRole } = usePermissions()
 
 const purchaseOrderStore = usePurchaseOrderStore()
 const route              = useRoute()
@@ -596,6 +610,7 @@ const poId = route.query.id
 const receivePartialModal = ref(null)
 const modalItems = ref([])
 const isReceiveModalOpen = ref(false)
+const downloadingPdf = ref(false)
 
 useBootstrapModal(
   () => document.getElementById('receivePartialModal'),
@@ -606,6 +621,13 @@ useBootstrapModal(
 // ✅ COMPUTED untuk check apakah Purchase Order sudah received
 const isReceived = computed(() => {
     return purchaseOrder.value?.status === 'received'
+})
+
+const isDraft = computed(() => purchaseOrder.value?.status === 'draft')
+
+const canEditPurchaseOrder = computed(() => {
+    if (!isDraft.value || !purchaseOrder.value?.id) return false
+    return userHasRole('superadmin') || userHasPermission('edit_purchase_order')
 })
 
 // ✅ COMPUTED untuk total pending quantity
@@ -637,10 +659,42 @@ const isAllItemsReceived = computed(() => {
 
 // ✅ ACTION METHODS
 const printPurchaseOrder = (id) => {
+  if (!id) return
   router.push({
     path: '/purchasing/cetak-po',
     query: { id: id, print: true }
   })
+}
+
+const downloadPurchaseOrderPdf = async () => {
+  if (!purchaseOrder.value?.id || downloadingPdf.value) return
+  downloadingPdf.value = true
+  try {
+    await exportPurchaseOrderPdf(purchaseOrder.value)
+    toast.success({
+      title: 'Berhasil',
+      message: 'Purchase Order berhasil diunduh sebagai PDF.',
+      color: 'green',
+      position: 'bottomRight',
+      layout: 2,
+    })
+  } catch (error) {
+    console.error('Failed to download PO PDF:', error)
+    toast.error({
+      title: 'Gagal',
+      message: 'Gagal mengunduh Purchase Order sebagai PDF.',
+      color: 'red',
+      position: 'bottomRight',
+      layout: 2,
+    })
+  } finally {
+    downloadingPdf.value = false
+  }
+}
+
+const editPurchaseOrder = () => {
+  if (!canEditPurchaseOrder.value || !purchaseOrder.value?.id) return
+  router.push(`/purchasing/purchase-order/form/${purchaseOrder.value.id}`)
 }
 
 async function refreshPurchaseOrderDetails() {

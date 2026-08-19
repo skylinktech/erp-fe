@@ -48,7 +48,11 @@
                     paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink"
                     currentPageReportTemplate="Menampilkan {first} sampai {last} dari {totalRecords} data"
                     >
-<Column field="id" header="#" :sortable="true"></Column> 
+                            <Column header="#" :sortable="false">
+                                <template #body="slotProps">
+                                    {{ params.first + slotProps.index + 1 }}
+                                </template>
+                            </Column>
                                 <Column field="logoPerusahaan" header="Logo" :sortable="true">
                                     <template #body="slotProps">
                                         <div v-if="slotProps.data.logoPerusahaan">

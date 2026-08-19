@@ -269,22 +269,24 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
                 delete dataToAppend.noPo;
             }
 
-            // Conditional logic berdasarkan poType
+            // Perusahaan, Cabang, Departemen, Budget wajib untuk semua tipe PO
+            if (!dataToAppend.perusahaanId) {
+                throw new Error('Perusahaan harus dipilih')
+            }
+            if (!dataToAppend.cabangId) {
+                throw new Error('Cabang harus dipilih')
+            }
+            if (!dataToAppend.departmentId) {
+                throw new Error('Departemen harus dipilih')
+            }
+            if (!dataToAppend.budgetId) {
+                throw new Error('Budget harus dipilih')
+            }
             if (dataToAppend.poType === 'internal') {
-                // Untuk PO Internal: hapus extNamaPerusahaan, pastikan ada perusahaanId dan cabangId
-                delete dataToAppend.extNamaPerusahaan;
-                if (!dataToAppend.perusahaanId) {
-                    throw new Error('Perusahaan harus dipilih untuk PO Internal');
-                }
-                if (!dataToAppend.cabangId) {
-                    throw new Error('Cabang harus dipilih untuk PO Internal');
-                }
+                delete dataToAppend.extNamaPerusahaan
             } else if (dataToAppend.poType === 'external') {
-                // Untuk PO External: hapus perusahaanId dan cabangId, pastikan ada extNamaPerusahaan
-                delete dataToAppend.perusahaanId;
-                delete dataToAppend.cabangId;
-                if (!dataToAppend.extNamaPerusahaan || dataToAppend.extNamaPerusahaan.trim() === '') {
-                    throw new Error('Nama Perusahaan External harus diisi untuk PO External');
+                if (!dataToAppend.extNamaPerusahaan || String(dataToAppend.extNamaPerusahaan).trim() === '') {
+                    throw new Error('Nama Perusahaan External harus diisi untuk PO External')
                 }
             }
 

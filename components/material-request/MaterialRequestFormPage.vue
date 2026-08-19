@@ -129,25 +129,27 @@
                         Belum ada item. Muat dari SI atau klik <strong>Tambah Item</strong>.
                       </div>
 
-                      <div v-else class="table-responsive border rounded">
-                        <table class="table table-sm table-hover mb-0 mrf-items-table">
-                          <thead class="table-light">
-                            <tr>
-                              <th style="width: 40px;">#</th>
-                              <th style="min-width: 180px;">Produk Katalog</th>
-                              <th>Nama Material <span class="text-danger" aria-hidden="true">*</span></th>
-                              <th>Spesifikasi</th>
-                              <th style="width: 90px;">Qty <span class="text-danger" aria-hidden="true">*</span></th>
-                              <th style="width: 140px;">Satuan</th>
-                              <th style="width: 150px;">Harga Estimasi</th>
-                              <th style="width: 150px;">Subtotal</th>
-                              <th style="width: 48px;"></th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            <tr v-for="(row, idx) in form.materialRequestItems" :key="idx">
-                              <td class="text-muted">{{ idx + 1 }}</td>
-                              <td>
+                      <div v-else class="d-flex flex-column gap-3">
+                        <div
+                          v-for="(row, idx) in form.materialRequestItems"
+                          :key="idx"
+                          class="mrf-item-block border rounded"
+                        >
+                          <div class="mrf-item-block__head d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
+                            <span class="fw-medium text-primary">Item #{{ idx + 1 }}</span>
+                            <button
+                              type="button"
+                              class="btn btn-sm btn-icon btn-text-danger"
+                              title="Hapus item"
+                              @click="materialRequestStore.removeDetail(idx)"
+                            >
+                              <i class="ri-delete-bin-7-line"></i>
+                            </button>
+                          </div>
+                          <div class="p-3">
+                            <div class="row g-3 mb-3">
+                              <div class="col-md-5">
+                                <label class="form-label mb-1 small text-muted">Produk Katalog</label>
                                 <CustomSelect2
                                   v-model="row.productId"
                                   :options="products"
@@ -155,27 +157,50 @@
                                   :reduce="(p) => p?.id"
                                   searchable
                                   clearable
-                                  placeholder="Eksternal / Keduanya"
+                                  append-to-body
+                                  placeholder="Opsional — pilih produk"
+                                  no-options-text="Produk tidak ditemukan"
                                   @update:modelValue="(id) => onProductSelect(idx, id)"
                                 />
-                              </td>
-                              <td>
-                                <input v-model="row.productName" type="text" class="form-control form-control-sm" placeholder="Nama material" aria-required="true" />
-                              </td>
-                              <td>
-                                <input v-model="row.specification" type="text" class="form-control form-control-sm" placeholder="Merk, model, detail" />
-                              </td>
-                              <td>
+                              </div>
+                              <div class="col-md-3">
+                                <label class="form-label mb-1 small text-muted">
+                                  Nama Material <span class="text-danger" aria-hidden="true">*</span>
+                                </label>
+                                <input
+                                  v-model="row.productName"
+                                  type="text"
+                                  class="form-control"
+                                  placeholder="Nama material"
+                                  aria-required="true"
+                                />
+                              </div>
+                              <div class="col-md-4">
+                                <label class="form-label mb-1 small text-muted">Spesifikasi</label>
+                                <input
+                                  v-model="row.specification"
+                                  type="text"
+                                  class="form-control"
+                                  placeholder="Merk, model, detail"
+                                />
+                              </div>
+                            </div>
+                            <div class="row g-3 align-items-end">
+                              <div class="col-6 col-md-2">
+                                <label class="form-label mb-1 small text-muted">
+                                  Qty <span class="text-danger" aria-hidden="true">*</span>
+                                </label>
                                 <input
                                   v-model.number="row.qty"
                                   type="number"
                                   min="0.01"
                                   step="0.01"
-                                  class="form-control form-control-sm"
+                                  class="form-control"
                                   @input="materialRequestStore.onQtyOrPriceChange(idx)"
                                 />
-                              </td>
-                              <td>
+                              </div>
+                              <div class="col-6 col-md-3">
+                                <label class="form-label mb-1 small text-muted">Satuan</label>
                                 <CustomSelect2
                                   v-model="row.uomId"
                                   :options="units"
@@ -183,34 +208,33 @@
                                   :reduce="(u) => u?.id"
                                   searchable
                                   clearable
-                                  placeholder="Satuan"
+                                  append-to-body
+                                  placeholder="Pilih satuan"
                                 />
-                              </td>
-                              <td>
+                              </div>
+                              <div class="col-6 col-md-3">
+                                <label class="form-label mb-1 small text-muted">Harga Estimasi</label>
                                 <input
                                   type="text"
-                                  class="form-control form-control-sm"
+                                  class="form-control"
                                   :value="formatRupiah(row.estimatedPrice)"
-                                  placeholder="0"
+                                  placeholder="Rp 0"
                                   @input="onPriceInput(idx, $event)"
                                 />
-                              </td>
-                              <td>
-                                <input type="text" class="form-control form-control-sm bg-lighter" :value="formatRupiah(row.subtotal)" readonly tabindex="-1" />
-                              </td>
-                              <td>
-                                <button
-                                  type="button"
-                                  class="btn btn-sm btn-icon btn-text-danger"
-                                  title="Hapus item"
-                                  @click="materialRequestStore.removeDetail(idx)"
-                                >
-                                  <i class="ri-delete-bin-7-line"></i>
-                                </button>
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
+                              </div>
+                              <div class="col-6 col-md-4">
+                                <label class="form-label mb-1 small text-muted">Subtotal</label>
+                                <input
+                                  type="text"
+                                  class="form-control bg-lighter"
+                                  :value="formatRupiah(row.subtotal)"
+                                  readonly
+                                  tabindex="-1"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
 
                       <div v-if="form.materialRequestItems.length" class="d-flex justify-content-end pt-3 mt-2 border-top">
@@ -565,8 +589,26 @@ onMounted(async () => {
   border: 1px solid var(--bs-border-color, #e4e6ef);
 }
 
-.mrf-items-table .form-control-sm {
-  min-width: 0;
+.mrf-item-block {
+  background-color: var(--bs-body-bg, #fff);
+}
+
+.mrf-item-block__head {
+  background-color: rgba(var(--bs-primary-rgb, 105, 108, 255), 0.04);
+}
+
+.mrf-item-block :deep(.select2-selection__placeholder) {
+  position: static;
+  transform: none;
+  white-space: normal;
+  line-height: 1.35;
+  font-size: 0.875rem;
+  color: #697a8d !important;
+}
+
+.mrf-item-block :deep(.select2-selection__rendered) {
+  min-height: 24px;
+  align-items: center;
 }
 
 .bg-lighter {
