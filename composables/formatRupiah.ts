@@ -40,3 +40,26 @@ export const useFormatRupiah = () => {
     return `Rp ${formatter.format(Math.round(numericValue))}`
   }
 }
+
+/** Format angka untuk input biaya saat mengetik (contoh: Rp 1.234.567). */
+export function formatRupiahInput(value: number | string | null | undefined): string {
+  if (value === null || value === undefined || value === '') return ''
+  const digits = String(value).replace(/[^0-9]/g, '')
+  if (!digits) return ''
+
+  const split = digits.split(',')
+  const sisa = split[0].length % 3
+  let rupiah = split[0].substring(0, sisa)
+  const ribuan = split[0].substring(sisa).match(/\d{3}/gi)
+  if (ribuan) {
+    const separator = sisa ? '.' : ''
+    rupiah += separator + ribuan.join('.')
+  }
+  return `Rp ${rupiah}`
+}
+
+/** Parse input Rupiah ke number; string kosong → null. */
+export function parseRupiahInputNullable(text: string): number | null {
+  const digits = text.replace(/[^0-9]/g, '')
+  return digits ? Number(digits) : null
+}

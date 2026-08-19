@@ -4,7 +4,7 @@
       <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <div>
           
-          <p class="mb-0 text-muted">Arus kas berbasis GL</p>
+          <p class="mb-0 text-muted">Arus kas dari Bank Ledger settled (bukan pengakuan expense)</p>
         </div>
         <div class="d-flex gap-2 align-items-end flex-wrap">
           <div>
@@ -22,34 +22,26 @@
       <div v-if="error" class="alert alert-danger">{{ error }}</div>
 
       <div class="row g-3 mb-4" v-if="report">
-        <div class="col-md-3">
+        <div class="col-md-4">
           <div class="card h-100">
             <div class="card-body">
-              <div class="text-muted small">Operating</div>
-              <div class="fs-5 fw-semibold">{{ formatMoney(summary.operating) }}</div>
+              <div class="text-muted small">Cash In (Ledger IN)</div>
+              <div class="fs-5 fw-semibold text-success">{{ formatMoney(summary.inflow) }}</div>
             </div>
           </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-4">
           <div class="card h-100">
             <div class="card-body">
-              <div class="text-muted small">Investing</div>
-              <div class="fs-5 fw-semibold">{{ formatMoney(summary.investing) }}</div>
+              <div class="text-muted small">Cash Out (Ledger OUT)</div>
+              <div class="fs-5 fw-semibold text-danger">{{ formatMoney(summary.outflow) }}</div>
             </div>
           </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-4">
           <div class="card h-100">
             <div class="card-body">
-              <div class="text-muted small">Financing</div>
-              <div class="fs-5 fw-semibold">{{ formatMoney(summary.financing) }}</div>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card h-100">
-            <div class="card-body">
-              <div class="text-muted small">Net Change</div>
+              <div class="text-muted small">Net Cash Flow</div>
               <div class="fs-5 fw-semibold">{{ formatMoney(summary.netChange) }}</div>
             </div>
           </div>
@@ -101,20 +93,20 @@ const startDate = ref(new Date(new Date().getFullYear(), 0, 1).toISOString().sli
 const rows = computed(() => {
   const data = report.value
   if (!data) return []
-  if (Array.isArray(data)) return data
-  return data.rows || data.lines || data.items || []
+  return [
+    { section: 'Inflow', description: 'Bank Ledger settled IN', amount: data.inflows?.total ?? data.inflows?.bankLedger ?? 0 },
+    { section: 'Outflow', description: 'Bank Ledger settled OUT', amount: -(data.outflows?.total ?? data.outflows?.bankLedger ?? 0) },
+  ]
 })
 
 const summary = computed(() => {
   const data = report.value || {}
-  const operating = Number(data.operating ?? data.totalOperating ?? 0)
-  const investing = Number(data.investing ?? data.totalInvesting ?? 0)
-  const financing = Number(data.financing ?? data.totalFinancing ?? 0)
+  const inflow = Number(data.inflows?.total ?? data.inflows?.bankLedger ?? 0)
+  const outflow = Number(data.outflows?.total ?? data.outflows?.bankLedger ?? 0)
   return {
-    operating,
-    investing,
-    financing,
-    netChange: Number(data.netChange ?? data.netCashFlow ?? operating + investing + financing),
+    inflow,
+    outflow,
+    netChange: Number(data.netCashFlow ?? inflow - outflow),
   }
 })
 
@@ -132,7 +124,7 @@ async function load() {
     const qs = new URLSearchParams()
     if (startDate.value) qs.set('startDate', startDate.value)
     if (endDate.value) qs.set('endDate', endDate.value)
-    const res = await fetch($api.cashFlowGl(qs.toString()), {
+    const res = await fetch(`${$api.financeCashFlow()}?${qs.toString()}`, {
       headers: { Accept: 'application/json' },
       credentials: 'include',
     })

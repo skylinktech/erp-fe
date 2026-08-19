@@ -249,28 +249,27 @@
                                         <div class="row g-3">
                                             <div class="col-md-4">
                                                 <CustomSelect2 v-model="line.accountId" :options="accounts || []" 
-                                                    :get-option-label="option => option.label" searchable clearable
+                                                    :get-option-label="option => option?.code && option?.name ? `${option.code} - ${option.name}` : (option?.name || option?.code || '')" searchable clearable
                                                     :reduce="account => account.id" 
                                                     placeholder="Pilih Akun" 
 
                                                     :close-on-select="true"
                                                     :preserve-search="false"
                                                     :filter-by="(option, label, search) => {
-                                                        const account = option;
                                                         const searchLower = search.toLowerCase();
-                                                        return account.name.toLowerCase().includes(searchLower) || 
-                                                               account.code.toLowerCase().includes(searchLower);
+                                                        return (option.name || '').toLowerCase().includes(searchLower) || 
+                                                               (option.code || '').toLowerCase().includes(searchLower);
                                                     }"
                                                 >
-                                                    <template #option="option">
+                                                    <template #option="{ option }">
                                                         <div class="d-flex justify-content-between align-items-center w-100">
                                                             <div>
                                                                 <div class="fw-bold">{{ option.code }} - {{ option.name }}</div>
-                                                                <small class="text-muted">{{ option.type || 'No Type' }} - {{ option.category || 'No Category' }}</small>
+                                                                <small class="text-muted">{{ option.category || '—' }} · {{ option.normalBalance || '—' }}</small>
                                                             </div>
                                                         </div>
                                                     </template>
-                                                    <template #selected-option="option">
+                                                    <template #selected-option="{ option }">
                                                         <div class="d-flex align-items-center">
                                                             <span class="fw-bold">{{ option.code }} - {{ option.name }}</span>
                                                         </div>
@@ -482,7 +481,7 @@ const statusBadgeClass = (status) => {
 }
 
 const openJournalDetails = (journalId) => {
-  router.push({ path: `/accounting/journals/detail`, query: { id: journalId } })
+  router.push(`/finance/journals/detail/${journalId}`)
 }
 
 const exportData = (format) => {

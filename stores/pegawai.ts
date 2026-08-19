@@ -460,8 +460,6 @@ export const usePegawaiStore = defineStore('pegawai', {
                     this.form.jabatan_id = pegawaiData.history.jabatan?.id_jabatan ?? pegawaiData.history.jabatan?.id ?? null;
                     this.form.perusahaan_id = pegawaiData.history.perusahaan?.id ?? null;
                     this.form.divisi_id = pegawaiData.history.divisi?.id ?? null;
-                    this.form.gaji_pegawai = pegawaiData.history.gaji_pegawai ? parseFloat(pegawaiData.history.gaji_pegawai) : 0;
-                    this.form.tunjangan_pegawai = pegawaiData.history.tunjangan_pegawai ? parseFloat(pegawaiData.history.tunjangan_pegawai) : 0;
                     
                     this.initialHistory.cabangId = pegawaiData.history.cabang?.id ?? null;
                     this.initialHistory.departemenId = pegawaiData.history.departemen?.id ?? null;
@@ -480,8 +478,6 @@ export const usePegawaiStore = defineStore('pegawai', {
                      this.form.divisi_id = null;
                      this.form.cabang_id = null;
                      this.form.departemen_id = null;
-                     this.form.gaji_pegawai = 0;
-                     this.form.tunjangan_pegawai = 0;
                 }
 
                 if (pegawaiData.avatar) {
@@ -534,7 +530,7 @@ export const usePegawaiStore = defineStore('pegawai', {
                     no_tlp_keluarga: '',
                     nomor_rekening: '', bpjstk: '', bpjsk: '',
                     user_id: null, jabatan_id: null, perusahaan_id: null, cabang_id: null, divisi_id: null,
-                    departemen_id: null, gaji_pegawai: 0, tunjangan_pegawai: 0, avatar: null, avatarPreview: '',
+                    departemen_id: null, avatar: null, avatarPreview: '',
                     cv_attachment: null, kk_attachment: null, ijazah_attachment: null, skck_attachment: null,
                     cv_attachment_url: '', kk_attachment_url: '', ijazah_attachment_url: '', skck_attachment_url: '',
                 };
@@ -560,7 +556,7 @@ export const usePegawaiStore = defineStore('pegawai', {
                 no_tlp_keluarga: '',
                 nomor_rekening: '', bpjstk: '', bpjsk: '',
                 user_id: null, jabatan_id: null, perusahaan_id: null, cabang_id: null, divisi_id: null,
-                departemen_id: null, gaji_pegawai: 0, tunjangan_pegawai: 0, avatar: null, avatarPreview: '',
+                departemen_id: null, avatar: null, avatarPreview: '',
                 cv_attachment: null, kk_attachment: null, ijazah_attachment: null, skck_attachment: null,
                 cv_attachment_url: '', kk_attachment_url: '', ijazah_attachment_url: '', skck_attachment_url: '',
             };

@@ -59,6 +59,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       '/accounting/accounts/': 'view_account',
       '/accounting/assets/': 'view_asset',
       '/accounting/bank-account/': 'view_bank_account',
+      '/finance/bank-account': 'view_bank_account',
       '/accounting/expenses/': 'view_expense',
       '/accounting/journals/': 'view_journal',
       '/finance/tax-masters': 'view_tax_master',
@@ -95,6 +96,24 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       '/hrd/struktur-organisasi': 'view_struktur_organisasi',
       '/hrd/cetak-struktur-organisasi': 'view_struktur_organisasi',
       '/hrd/kalender': 'view_kalender',
+      '/payroll': 'view_payroll_dashboard',
+      '/payroll/dashboard': 'view_payroll_dashboard',
+      '/payroll/periods': 'view_payroll_period',
+      '/payroll/runs': 'view_payroll_run_summary',
+      '/payroll/runs/create': 'calculate_payroll',
+      '/payroll/variable-inputs': 'manage_variable_payroll',
+      '/payroll/adjustments': 'view_payroll_run_summary',
+      '/payroll/payments': 'create_payroll_payment',
+      '/payroll/payslips': 'view_all_payslip',
+      '/payroll/components': 'view_salary_component',
+      '/payroll/structures': 'view_salary_structure',
+      '/payroll/profiles': 'view_payroll_profile',
+      '/payroll/compensations': 'view_compensation',
+      '/payroll/tax-profiles': 'view_tax_profile',
+      '/payroll/bpjs-profiles': 'view_bpjs_profile',
+      '/payroll/configuration': 'view_payroll_config',
+      '/payroll/me/payslips': 'view_own_payslip',
+      '/payroll/cetak-payslip': 'view_own_payslip',
       '/hrd/cetak-cuti': 'view_cuti',
       '/hrd/cetak-lembur': 'view_lembur',
       '/hrd/cetak-perjalanan-dinas': 'view_perjalanan_dinas',
@@ -129,6 +148,26 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
         requiredPermission = 'create_cuti'
       } else if (/^\/hrd\/kehadiran\/form(\/.*)?$/.test(to.path)) {
         requiredPermission = 'manage_jadwal_kehadiran'
+      } else if (/^\/hrd\/payroll(\/|$)/.test(to.path)) {
+        const canonical = to.path.replace(/^\/hrd\/payroll/, '/payroll') || '/payroll/dashboard'
+        requiredPermission = routePermissionMap[canonical]
+        if (!requiredPermission && /^\/payroll\/runs\/create/.test(canonical)) {
+          requiredPermission = 'calculate_payroll'
+        } else if (!requiredPermission && /^\/payroll\/runs\/\d+/.test(canonical)) {
+          requiredPermission = 'view_payroll_run_summary'
+        } else if (!requiredPermission && /^\/payroll\/payments\/\d+/.test(canonical)) {
+          requiredPermission = 'create_payroll_payment'
+        } else if (!requiredPermission && /^\/payroll\/structures\/\d+/.test(canonical)) {
+          requiredPermission = 'view_salary_structure'
+        }
+      } else if (/^\/payroll\/runs\/create/.test(to.path)) {
+        requiredPermission = 'calculate_payroll'
+      } else if (/^\/payroll\/runs\/\d+/.test(to.path)) {
+        requiredPermission = 'view_payroll_run_summary'
+      } else if (/^\/payroll\/payments\/\d+/.test(to.path)) {
+        requiredPermission = 'create_payroll_payment'
+      } else if (/^\/payroll\/structures\/\d+/.test(to.path)) {
+        requiredPermission = 'view_salary_structure'
       } else if (/^\/hrd\/perjalanan-dinas\/form(\/.*)?$/.test(to.path)) {
         requiredPermission = 'create_perjalanan_dinas'
       } else if (/^\/hrd\/perjalanan-dinas\/detail\/.+$/.test(to.path)) {
@@ -155,6 +194,8 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
         requiredPermission = 'view_ap_aging'
       } else if (/^\/finance\/bank-recon/.test(to.path)) {
         requiredPermission = 'view_bank_recon'
+      } else if (/^\/finance\/bank-account/.test(to.path)) {
+        requiredPermission = 'view_bank_account'
       } else if (/^\/finance\/credit-notes/.test(to.path)) {
         requiredPermission = 'view_credit_note'
       } else if (/^\/finance\/journals/.test(to.path)) {
@@ -228,6 +269,94 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
           role.permissions?.some(permission => selfServiceAllowed.includes(permission.name))
         )
         if (hasSelfService) return
+      }
+
+      if (!hasPermission && (to.path.startsWith('/payroll/runs/') || to.path.startsWith('/hrd/payroll/runs/'))) {
+        const allowed = ['view_payroll_run_summary', 'view_payroll_run_detail', 'access_payroll']
+        const ok = userStore.user?.roles?.some(role =>
+          role.permissions?.some(permission => allowed.includes(permission.name))
+        )
+        if (ok) return
+      }
+
+      if (!hasPermission && (to.path === '/payroll/payslips' || to.path === '/payroll/me/payslips' || to.path.startsWith('/payroll/cetak-payslip') || to.path === '/hrd/payroll/payslips' || to.path === '/hrd/payroll/me/payslips' || to.path.startsWith('/hrd/payroll/cetak-payslip'))) {
+        const allowed = ['view_own_payslip', 'view_all_payslip', 'access_payroll']
+        const ok = userStore.user?.roles?.some(role =>
+          role.permissions?.some(permission => allowed.includes(permission.name))
+        )
+        if (ok) return
+      }
+
+      if (!hasPermission && (to.path === '/payroll/variable-inputs' || to.path === '/hrd/payroll/variable-inputs')) {
+        const allowed = ['view_payroll_variable', 'manage_variable_payroll', 'access_payroll']
+        const ok = userStore.user?.roles?.some(role =>
+          role.permissions?.some(permission => allowed.includes(permission.name))
+        )
+        if (ok) return
+      }
+
+      if (!hasPermission && (to.path.startsWith('/payroll/payments') || to.path.startsWith('/hrd/payroll/payments'))) {
+        const allowed = ['view_payroll_payment', 'create_payroll_payment', 'post_payroll', 'access_payroll']
+        const ok = userStore.user?.roles?.some(role =>
+          role.permissions?.some(permission => allowed.includes(permission.name))
+        )
+        if (ok) return
+      }
+
+      if (!hasPermission && (to.path === '/payroll/configuration' || to.path === '/hrd/payroll/configuration')) {
+        const allowed = ['view_payroll_config', 'manage_salary_component', 'manage_salary_structure', 'access_payroll']
+        const ok = userStore.user?.roles?.some(role =>
+          role.permissions?.some(permission => allowed.includes(permission.name))
+        )
+        if (ok) return
+      }
+
+      if (!hasPermission && (to.path === '/payroll/periods' || to.path === '/hrd/payroll/periods')) {
+        const allowed = ['view_payroll_period', 'view_payroll_run_summary', 'access_payroll']
+        const ok = userStore.user?.roles?.some(role =>
+          role.permissions?.some(permission => allowed.includes(permission.name))
+        )
+        if (ok) return
+      }
+
+      if (!hasPermission && (to.path.startsWith('/payroll/components') || to.path.startsWith('/hrd/payroll/components'))) {
+        const allowed = ['view_salary_component', 'manage_salary_component', 'view_payroll_config', 'access_payroll']
+        const ok = userStore.user?.roles?.some(role =>
+          role.permissions?.some(permission => allowed.includes(permission.name))
+        )
+        if (ok) return
+      }
+
+      if (!hasPermission && (to.path.startsWith('/payroll/structures') || to.path.startsWith('/hrd/payroll/structures'))) {
+        const allowed = ['view_salary_structure', 'manage_salary_structure', 'view_payroll_config', 'access_payroll']
+        const ok = userStore.user?.roles?.some(role =>
+          role.permissions?.some(permission => allowed.includes(permission.name))
+        )
+        if (ok) return
+      }
+
+      if (!hasPermission && (to.path.startsWith('/payroll/profiles') || to.path.startsWith('/hrd/payroll/profiles'))) {
+        const allowed = ['view_payroll_profile', 'manage_compensation', 'view_payroll_config', 'access_payroll']
+        const ok = userStore.user?.roles?.some(role =>
+          role.permissions?.some(permission => allowed.includes(permission.name))
+        )
+        if (ok) return
+      }
+
+      if (!hasPermission && (to.path.startsWith('/payroll/compensations') || to.path.startsWith('/hrd/payroll/compensations') || to.path.includes('/configuration/compensations'))) {
+        const allowed = ['view_compensation', 'manage_compensation', 'access_payroll']
+        const ok = userStore.user?.roles?.some(role =>
+          role.permissions?.some(permission => allowed.includes(permission.name))
+        )
+        if (ok) return
+      }
+
+      if (!hasPermission && (to.path.startsWith('/payroll/tax-profiles') || to.path.startsWith('/hrd/payroll/tax-profiles'))) {
+        const allowed = ['view_tax_profile', 'manage_tax_profile', 'access_payroll']
+        const ok = userStore.user?.roles?.some(role =>
+          role.permissions?.some(permission => allowed.includes(permission.name))
+        )
+        if (ok) return
       }
 
       if (!hasPermission && /^\/hrd\/kehadiran\/form/.test(to.path)) {

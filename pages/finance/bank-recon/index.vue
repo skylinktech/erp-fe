@@ -4,7 +4,7 @@
       <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
           
-          <p class="mb-0 text-muted">Import statement &amp; match ke AR Receipt / AP Payment</p>
+          <p class="mb-0 text-muted">Import statement &amp; match ke Bank Ledger (bukan AR/AP langsung)</p>
         </div>
         <button class="btn btn-outline-secondary" :disabled="loading" @click="load">Refresh</button>
       </div>

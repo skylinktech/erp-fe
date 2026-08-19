@@ -15,6 +15,7 @@ export const FINANCE_MODULE_NAV: FormPageNavItem[] = [
   { label: 'Cash Flow', to: '/finance/reports/cash-flow', icon: 'ri-funds-line' },
   { label: 'General Ledger', to: '/finance/reports/general-ledger', icon: 'ri-book-open-line' },
   { label: 'Bank Reconciliation', to: '/finance/bank-recon', icon: 'ri-bank-line' },
+  { label: 'Rekening Bank', to: '/finance/bank-account', icon: 'ri-bank-card-line' },
   { label: 'Fiscal Periods', to: '/finance/fiscal-periods', icon: 'ri-calendar-check-line' },
   { label: 'Journals', to: '/finance/journals', icon: 'ri-book-2-line' },
   { label: 'Billing Adjustments', to: '/finance/billing-adjustments', icon: 'ri-swap-line' },

@@ -169,229 +169,206 @@
           <div class="col-lg-5">
             <div class="card mb-4">
               <div class="card-header pt-5">
-                <template v-if="canViewCutiModule">
-                  <ul class="nav nav-tabs profile-info-tabs mb-3" role="tablist">
-                    <li class="nav-item" role="presentation">
-                      <button
-                        class="nav-link active"
-                        data-bs-toggle="tab"
-                        :data-bs-target="`#${tab('tab-kontrak')}`"
-                        type="button"
-                        role="tab"
-                        aria-selected="true"
-                      >
-                        <i class="ri-draft-line me-1"></i>
-                        <span>Kontrak</span>
-                      </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                      <button
-                        class="nav-link"
-                        data-bs-toggle="tab"
-                        :data-bs-target="`#${tab('tab-cuti')}`"
-                        type="button"
-                        role="tab"
-                        aria-selected="false"
-                      >
-                        <i class="ri-calendar-todo-line me-1"></i>
-                        <span>Cuti</span>
-                      </button>
-                    </li>
-                  </ul>
-                  <div class="tab-content">
-                    <div
-                      :id="tab('tab-kontrak')"
-                      class="tab-pane fade show active"
-                      role="tabpanel"
+                <ul v-if="showRightTabs" class="nav nav-tabs profile-info-tabs mb-3" role="tablist">
+                  <li class="nav-item" role="presentation">
+                    <button
+                      class="nav-link active"
+                      data-bs-toggle="tab"
+                      :data-bs-target="`#${tab('tab-kontrak')}`"
+                      type="button"
+                      role="tab"
+                      aria-selected="true"
                     >
-                      <template v-if="profile.kontrak_aktif">
-                        <dl class="profile-dl mb-0">
-                          <ProfileField label="Jenis Kontrak" :value="getJenisKontrakPegawaiLabel(profile.kontrak_aktif.jenis_kontrak)" />
-                          <ProfileField label="Nomor SK" :value="profile.kontrak_aktif.nomor_kontrak" />
-                          <ProfileField label="Tgl. Mulai" :value="formatTanggalDisplay(profile.kontrak_aktif.tgl_mulai)" />
-                          <ProfileField label="Tgl. Selesai" :value="formatTanggalDisplay(profile.kontrak_aktif.tgl_selesai)" />
-                          <ProfileField
-                            v-if="profile.kontrak_aktif.durasi_hari != null"
-                            label="Durasi"
-                            :value="`${profile.kontrak_aktif.durasi_hari} hari`"
-                          />
-                          <ProfileField
-                            v-if="profile.kontrak_aktif.sisa_hari != null"
-                            label="Sisa"
-                            :value="formatSisaHari(profile.kontrak_aktif.sisa_hari)"
-                          />
-                        </dl>
+                      <i class="ri-draft-line me-1"></i>
+                      <span>Kontrak</span>
+                    </button>
+                  </li>
+                  <li v-if="canViewCutiModule" class="nav-item" role="presentation">
+                    <button
+                      class="nav-link"
+                      data-bs-toggle="tab"
+                      :data-bs-target="`#${tab('tab-cuti')}`"
+                      type="button"
+                      role="tab"
+                      aria-selected="false"
+                    >
+                      <i class="ri-calendar-todo-line me-1"></i>
+                      <span>Cuti</span>
+                    </button>
+                  </li>
+                  <li v-if="canViewPayslipTab" class="nav-item" role="presentation">
+                    <button
+                      class="nav-link"
+                      data-bs-toggle="tab"
+                      :data-bs-target="`#${tab('tab-payslip')}`"
+                      type="button"
+                      role="tab"
+                      aria-selected="false"
+                      @click="activatePayslipTab"
+                    >
+                      <i class="ri-money-dollar-circle-line me-1"></i>
+                      <span>Payslip</span>
+                    </button>
+                  </li>
+                </ul>
+                <div :class="showRightTabs ? 'tab-content' : undefined">
+                  <div
+                    :id="showRightTabs ? tab('tab-kontrak') : undefined"
+                    :class="showRightTabs ? 'tab-pane fade show active' : undefined"
+                    :role="showRightTabs ? 'tabpanel' : undefined"
+                  >
+                    <template v-if="profile.kontrak_aktif">
+                      <dl class="profile-dl mb-0">
+                        <ProfileField label="Jenis Kontrak" :value="getJenisKontrakPegawaiLabel(profile.kontrak_aktif.jenis_kontrak)" />
+                        <ProfileField label="Nomor SK" :value="profile.kontrak_aktif.nomor_kontrak" />
+                        <ProfileField label="Tgl. Mulai" :value="formatTanggalDisplay(profile.kontrak_aktif.tgl_mulai)" />
+                        <ProfileField label="Tgl. Selesai" :value="formatTanggalDisplay(profile.kontrak_aktif.tgl_selesai)" />
+                        <ProfileField
+                          v-if="profile.kontrak_aktif.durasi_hari != null"
+                          label="Durasi"
+                          :value="`${profile.kontrak_aktif.durasi_hari} hari`"
+                        />
+                        <ProfileField
+                          v-if="profile.kontrak_aktif.sisa_hari != null"
+                          label="Sisa"
+                          :value="formatSisaHari(profile.kontrak_aktif.sisa_hari)"
+                        />
+                      </dl>
 
-                        <div v-if="profile.kontrak_aktif.progres_persen != null" class="mt-3">
-                          <div class="d-flex justify-content-between small text-muted mb-1">
-                            <span>Progres periode kontrak</span>
-                            <span>{{ profile.kontrak_aktif.progres_persen }}%</span>
-                          </div>
-                          <div class="progress" style="height: 8px;">
-                            <div
-                              class="progress-bar"
-                              :class="progressBarClass(profile.kontrak_aktif)"
-                              :style="{ width: `${profile.kontrak_aktif.progres_persen}%` }"
-                              role="progressbar"
-                            ></div>
-                          </div>
+                      <div v-if="profile.kontrak_aktif.progres_persen != null" class="mt-3">
+                        <div class="d-flex justify-content-between small text-muted mb-1">
+                          <span>Progres periode kontrak</span>
+                          <span>{{ profile.kontrak_aktif.progres_persen }}%</span>
                         </div>
+                        <div class="progress" style="height: 8px;">
+                          <div
+                            class="progress-bar"
+                            :class="progressBarClass(profile.kontrak_aktif)"
+                            :style="{ width: `${profile.kontrak_aktif.progres_persen}%` }"
+                            role="progressbar"
+                          ></div>
+                        </div>
+                      </div>
 
-                        <a
-                          v-if="profile.kontrak_aktif.file_sk"
-                          :href="getAttachmentUrl(profile.kontrak_aktif.file_sk)"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          class="btn btn-sm btn-outline-primary mt-3"
+                      <a
+                        v-if="profile.kontrak_aktif.file_sk"
+                        :href="getAttachmentUrl(profile.kontrak_aktif.file_sk)"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="btn btn-sm btn-outline-primary mt-3"
+                      >
+                        <i class="ri-download-line me-1"></i> Unduh SK Kontrak
+                      </a>
+
+                      <div v-if="profile.kontrak_aktif.reject_reason" class="alert alert-danger small mt-3 mb-0 py-2">
+                        <strong>Alasan ditolak:</strong> {{ profile.kontrak_aktif.reject_reason }}
+                      </div>
+                    </template>
+                    <div v-else class="text-muted small">
+                      Belum ada kontrak. Default sistem: <strong>PKWTT (Sedang ditinjau)</strong>.
+                    </div>
+                  </div>
+
+                  <div
+                    v-if="canViewCutiModule"
+                    :id="tab('tab-cuti')"
+                    class="tab-pane fade"
+                    role="tabpanel"
+                  >
+                    <div v-if="cutiPanelLoading" class="text-center py-3 text-muted small">
+                      <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                      <span class="ms-2">Memuat data cuti…</span>
+                    </div>
+                    <template v-else>
+                      <div class="mb-3">
+                        <label class="form-label small text-muted mb-1">Tahun kuota &amp; saldo</label>
+                        <select
+                          v-model.number="cutiTahun"
+                          class="form-select form-select-sm"
+                          @change="loadPegawaiCutiBalancesOnly"
                         >
-                          <i class="ri-download-line me-1"></i> Unduh SK Kontrak
-                        </a>
-
-                        <div v-if="profile.kontrak_aktif.reject_reason" class="alert alert-danger small mt-3 mb-0 py-2">
-                          <strong>Alasan ditolak:</strong> {{ profile.kontrak_aktif.reject_reason }}
-                        </div>
-                      </template>
-                      <div v-else class="text-muted small">
-                        Belum ada kontrak. Default sistem: <strong>PKWTT (Sedang ditinjau)</strong>.
+                          <option v-for="y in cutiTahunOptions" :key="y" :value="y">{{ y }}</option>
+                        </select>
                       </div>
-                    </div>
-
-                    <div :id="tab('tab-cuti')" class="tab-pane fade" role="tabpanel">
-                      <div v-if="cutiPanelLoading" class="text-center py-3 text-muted small">
-                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-                        <span class="ms-2">Memuat data cuti…</span>
+                      <dl class="profile-dl mb-3">
+                        <ProfileField
+                          label="Total cuti terpakai (tahun)"
+                          :value="`${cutiBalanceTotals.terpakai} hari`"
+                        />
+                        <ProfileField label="Sisa jatah (tahun)" :value="`${cutiBalanceTotals.sisa} hari`" />
+                        <ProfileField
+                          label="Kuota referensi (Σ jatah tipe)"
+                          :value="cutiBalanceTotals.kuotaRef > 0 ? `${cutiBalanceTotals.kuotaRef} hari` : '— (ada tipe tanpa kuota hari)'"
+                        />
+                      </dl>
+                      <div class="small fw-semibold text-muted mb-2">Per tipe (tahun {{ cutiTahun }})</div>
+                      <div class="table-responsive mb-3">
+                        <table class="table table-sm table-bordered table-striped align-middle mb-0 small">
+                          <thead class="table-light">
+                            <tr>
+                              <th>Tipe</th>
+                              <th class="text-end">Kuota / th</th>
+                              <th class="text-end">Terpakai</th>
+                              <th class="text-end">Sisa</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr v-for="(br, idx) in pegawaiCutiBalances" :key="idx">
+                              <td>{{ cutiBalanceTypeName(br) }}</td>
+                              <td class="text-end">{{ cutiBalanceKuotaHari(br) }}</td>
+                              <td class="text-end">{{ cutiBalanceNum(br, 'cuti_terpakai', 'cutiTerpakai') }}</td>
+                              <td class="text-end">{{ cutiBalanceNum(br, 'sisa_jatah_cuti', 'sisaJatahCuti') }}</td>
+                            </tr>
+                            <tr v-if="!pegawaiCutiBalances.length">
+                              <td colspan="4" class="text-center text-muted py-2">Belum ada saldo untuk tahun ini.</td>
+                            </tr>
+                          </tbody>
+                        </table>
                       </div>
-                      <template v-else>
-                        <div class="mb-3">
-                          <label class="form-label small text-muted mb-1">Tahun kuota &amp; saldo</label>
-                          <select
-                            v-model.number="cutiTahun"
-                            class="form-select form-select-sm"
-                            @change="loadPegawaiCutiBalancesOnly"
-                          >
-                            <option v-for="y in cutiTahunOptions" :key="y" :value="y">{{ y }}</option>
-                          </select>
-                        </div>
-                        <dl class="profile-dl mb-3">
-                          <ProfileField
-                            label="Total cuti terpakai (tahun)"
-                            :value="`${cutiBalanceTotals.terpakai} hari`"
-                          />
-                          <ProfileField label="Sisa jatah (tahun)" :value="`${cutiBalanceTotals.sisa} hari`" />
-                          <ProfileField
-                            label="Kuota referensi (Σ jatah tipe)"
-                            :value="cutiBalanceTotals.kuotaRef > 0 ? `${cutiBalanceTotals.kuotaRef} hari` : '— (ada tipe tanpa kuota hari)'"
-                          />
-                        </dl>
-                        <div class="small fw-semibold text-muted mb-2">Per tipe (tahun {{ cutiTahun }})</div>
-                        <div class="table-responsive mb-3">
-                          <table class="table table-sm table-bordered table-striped align-middle mb-0 small">
-                            <thead class="table-light">
-                              <tr>
-                                <th>Tipe</th>
-                                <th class="text-end">Kuota / th</th>
-                                <th class="text-end">Terpakai</th>
-                                <th class="text-end">Sisa</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              <tr v-for="(br, idx) in pegawaiCutiBalances" :key="idx">
-                                <td>{{ cutiBalanceTypeName(br) }}</td>
-                                <td class="text-end">{{ cutiBalanceKuotaHari(br) }}</td>
-                                <td class="text-end">{{ cutiBalanceNum(br, 'cuti_terpakai', 'cutiTerpakai') }}</td>
-                                <td class="text-end">{{ cutiBalanceNum(br, 'sisa_jatah_cuti', 'sisaJatahCuti') }}</td>
-                              </tr>
-                              <tr v-if="!pegawaiCutiBalances.length">
-                                <td colspan="4" class="text-center text-muted py-2">Belum ada saldo untuk tahun ini.</td>
-                              </tr>
-                            </tbody>
-                          </table>
-                        </div>
-                        <div class="small fw-semibold text-muted mb-2">Riwayat pengajuan</div>
-                        <div class="table-responsive" style="max-height: 280px; overflow-y: auto">
-                          <table class="table table-sm table-bordered table-striped align-middle mb-0 small">
-                            <thead class="table-light sticky-top">
-                              <tr>
-                                <th>#</th>
-                                <th>Periode</th>
-                                <th>Tipe</th>
-                                <th class="text-end">Durasi</th>
-                                <th>Status</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              <tr v-for="row in pegawaiCutiHistorySorted" :key="row.id">
-                                <td>{{ row.id }}</td>
-                                <td>{{ formatRangeTanggal(row.tanggalMulai ?? row.tanggal_mulai, row.tanggalSelesai ?? row.tanggal_selesai) }}</td>
-                                <td>{{ cutiRowTypeName(row) }}</td>
-                                <td class="text-end">{{ cutiRowDurasiLabel(row) }}</td>
-                                <td>
-                                  <span :class="getStatusCutiBadge(row.status).class">{{ getStatusCutiBadge(row.status).text }}</span>
-                                </td>
-                              </tr>
-                              <tr v-if="!pegawaiCutiList.length">
-                                <td colspan="5" class="text-center text-muted py-2">Belum ada pengajuan cuti.</td>
-                              </tr>
-                            </tbody>
-                          </table>
-                        </div>
-                      </template>
-                    </div>
+                      <div class="small fw-semibold text-muted mb-2">Riwayat pengajuan</div>
+                      <div class="table-responsive" style="max-height: 280px; overflow-y: auto">
+                        <table class="table table-sm table-bordered table-striped align-middle mb-0 small">
+                          <thead class="table-light sticky-top">
+                            <tr>
+                              <th>#</th>
+                              <th>Periode</th>
+                              <th>Tipe</th>
+                              <th class="text-end">Durasi</th>
+                              <th>Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr v-for="row in pegawaiCutiHistorySorted" :key="row.id">
+                              <td>{{ row.id }}</td>
+                              <td>{{ formatRangeTanggal(row.tanggalMulai ?? row.tanggal_mulai, row.tanggalSelesai ?? row.tanggal_selesai) }}</td>
+                              <td>{{ cutiRowTypeName(row) }}</td>
+                              <td class="text-end">{{ cutiRowDurasiLabel(row) }}</td>
+                              <td>
+                                <span :class="getStatusCutiBadge(row.status).class">{{ getStatusCutiBadge(row.status).text }}</span>
+                              </td>
+                            </tr>
+                            <tr v-if="!pegawaiCutiList.length">
+                              <td colspan="5" class="text-center text-muted py-2">Belum ada pengajuan cuti.</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </template>
                   </div>
-                </template>
 
-                <template v-else>
-                  <template v-if="profile.kontrak_aktif">
-                    <dl class="profile-dl mb-0">
-                      <ProfileField label="Jenis Kontrak" :value="getJenisKontrakPegawaiLabel(profile.kontrak_aktif.jenis_kontrak)" />
-                      <ProfileField label="Nomor SK" :value="profile.kontrak_aktif.nomor_kontrak" />
-                      <ProfileField label="Tgl. Mulai" :value="formatTanggalDisplay(profile.kontrak_aktif.tgl_mulai)" />
-                      <ProfileField label="Tgl. Selesai" :value="formatTanggalDisplay(profile.kontrak_aktif.tgl_selesai)" />
-                      <ProfileField
-                        v-if="profile.kontrak_aktif.durasi_hari != null"
-                        label="Durasi"
-                        :value="`${profile.kontrak_aktif.durasi_hari} hari`"
-                      />
-                      <ProfileField
-                        v-if="profile.kontrak_aktif.sisa_hari != null"
-                        label="Sisa"
-                        :value="formatSisaHari(profile.kontrak_aktif.sisa_hari)"
-                      />
-                    </dl>
-
-                    <div v-if="profile.kontrak_aktif.progres_persen != null" class="mt-3">
-                      <div class="d-flex justify-content-between small text-muted mb-1">
-                        <span>Progres periode kontrak</span>
-                        <span>{{ profile.kontrak_aktif.progres_persen }}%</span>
-                      </div>
-                      <div class="progress" style="height: 8px;">
-                        <div
-                          class="progress-bar"
-                          :class="progressBarClass(profile.kontrak_aktif)"
-                          :style="{ width: `${profile.kontrak_aktif.progres_persen}%` }"
-                          role="progressbar"
-                        ></div>
-                      </div>
-                    </div>
-
-                    <a
-                      v-if="profile.kontrak_aktif.file_sk"
-                      :href="getAttachmentUrl(profile.kontrak_aktif.file_sk)"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      class="btn btn-sm btn-outline-primary mt-3"
-                    >
-                      <i class="ri-download-line me-1"></i> Unduh SK Kontrak
-                    </a>
-
-                    <div v-if="profile.kontrak_aktif.reject_reason" class="alert alert-danger small mt-3 mb-0 py-2">
-                      <strong>Alasan ditolak:</strong> {{ profile.kontrak_aktif.reject_reason }}
-                    </div>
-                  </template>
-                  <div v-else class="text-muted small">
-                    Belum ada kontrak. Default sistem: <strong>PKWTT (Sedang ditinjau)</strong>.
+                  <div
+                    v-if="canViewPayslipTab"
+                    :id="tab('tab-payslip')"
+                    class="tab-pane fade"
+                    role="tabpanel"
+                  >
+                    <PegawaiPayslipHistory
+                      v-if="payslipTabReady && resolvedPegawaiId"
+                      :key="resolvedPegawaiId"
+                      :pegawai-id="resolvedPegawaiId"
+                    />
                   </div>
-                </template>
+                </div>
               </div>
             </div>
           </div>
@@ -433,12 +410,6 @@
                         </span>
                         <span v-if="h.departemen?.nama" class="badge bg-label-secondary">
                           <i class="ri-folder-user-line me-1"></i>{{ h.departemen.nama }}
-                        </span>
-                        <span v-if="h.gaji_pegawai != null && Number(h.gaji_pegawai) > 0" class="badge bg-label-success">
-                          <i class="ri-wallet-3-line me-1"></i>{{ formatRupiahDisplay(h.gaji_pegawai) }}
-                        </span>
-                        <span v-if="h.tunjangan_pegawai != null && Number(h.tunjangan_pegawai) > 0" class="badge bg-label-info">
-                          + Tunjangan {{ formatRupiahDisplay(h.tunjangan_pegawai) }}
                         </span>
                       </div>
                     </div>
@@ -569,6 +540,9 @@ import { useNuxtApp } from '#app'
 import { apiFetch } from '~/utils/apiFetch'
 import { useImageUrl } from '~/composables/useImageUrl'
 import { usePermissions } from '~/composables/usePermissions'
+import { usePayrollPermissions } from '~/composables/usePayrollPermissions'
+import { useUserStore } from '~/stores/user'
+import PegawaiPayslipHistory from '~/components/hrd/PegawaiPayslipHistory.vue'
 import {
   getStatusPegawaiBadge,
   getStatusKontrakPegawaiBadge,
@@ -576,7 +550,6 @@ import {
   getJenisKontrakPegawaiLabel,
   getJenisKelaminLabel,
   getPendidikanLabel,
-  formatRupiahDisplay,
   formatTanggalDisplay,
   formatMasaKerja,
 } from '~/constants/hrd/pegawaiForm'
@@ -601,6 +574,8 @@ const props = withDefaults(defineProps<{
 const { $api } = useNuxtApp()
 const { getUserAvatar, handleImageError, getAttachmentUrl } = useImageUrl()
 const { userHasPermission, userHasRole } = usePermissions()
+const { canAny } = usePayrollPermissions()
+const userStore = useUserStore()
 
 const resolvedPegawaiId = computed(() => {
   if (props.pegawaiId != null && Number.isFinite(props.pegawaiId) && props.pegawaiId > 0) {
@@ -611,6 +586,25 @@ const resolvedPegawaiId = computed(() => {
 })
 
 const canViewCutiModule = computed(() => userHasPermission('view_cuti') || userHasRole('superadmin'))
+
+const isOwnProfile = computed(() => {
+  const linkedUserId = props.profile?.pegawai?.user_id ?? props.profile?.pegawai?.user?.id
+  const me = userStore.user?.id
+  return Boolean(me && linkedUserId && Number(me) === Number(linkedUserId))
+})
+
+const canViewPayslipTab = computed(() => {
+  if (!resolvedPegawaiId.value) return false
+  if (canAny('view_all_payslip', 'view_payroll_run_detail', 'access_payroll')) return true
+  return isOwnProfile.value && canAny('view_own_payslip')
+})
+
+const showRightTabs = computed(() => canViewCutiModule.value || canViewPayslipTab.value)
+const payslipTabReady = ref(false)
+
+function activatePayslipTab() {
+  payslipTabReady.value = true
+}
 
 const cutiTahun = ref(new Date().getFullYear())
 const pegawaiCutiList = ref<Record<string, any>[]>([])
@@ -835,8 +829,6 @@ const perusahaanFields = computed<FieldDef[]>(() => {
     { label: 'Divisi', value: j.divisi?.nama },
     { label: 'Departemen', value: j.departemen?.nama },
     { label: 'Jabatan', value: j.jabatan?.nama },
-    { label: 'Gaji Pokok', value: formatRupiahDisplay(j.gaji_pegawai) },
-    { label: 'Tunjangan', value: formatRupiahDisplay(j.tunjangan_pegawai) },
     { label: 'Tgl. Masuk', value: formatTanggalDisplay(p.tgl_masuk_pegawai), valueBadge: 'success' },
     { label: 'Tgl. Keluar', value: formatTanggalDisplay(p.tgl_keluar_pegawai), valueBadge: 'danger' },
   ]
@@ -926,6 +918,7 @@ watch(
   () => [resolvedPegawaiId.value, canViewCutiModule.value] as const,
   async ([id, canView]) => {
     historyPage.value = 1
+    payslipTabReady.value = false
     if (id && canView) await loadPegawaiCuti()
     else {
       pegawaiCutiList.value = []

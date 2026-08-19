@@ -65,6 +65,11 @@
                             <Column field="kodeCabang" header="Kode Cabang" :sortable="true"></Column>
                             <Column field="nmCabang" header="Nama Cabang" :sortable="true"></Column>
                             <Column field="alamatCabang" header="Alamat" :sortable="true"></Column>
+                            <Column header="Koordinat" :sortable="false">
+                                <template #body="slotProps">
+                                    {{ formatCoords(slotProps.data) }}
+                                </template>
+                            </Column>
                             <Column header="Perusahaan" :sortable="true" field="perusahaan.nmPerusahaan">
                                 <template #body="slotProps">
                                     {{ slotProps.data.perusahaan?.nmPerusahaan || '-' }}
@@ -141,6 +146,40 @@
                                 ></textarea>
                                 <label for="alamatCabang">Alamat <span class="text-danger" aria-hidden="true">*</span></label>
                             </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating form-floating-outline">
+                                <input
+                                    type="number"
+                                    step="any"
+                                    min="-90"
+                                    max="90"
+                                    class="form-control"
+                                    id="latitude"
+                                    v-model.number="form.latitude"
+                                    placeholder="-6.2088"
+                                    required
+                                >
+                                <label for="latitude">Latitude <span class="text-danger" aria-hidden="true">*</span></label>
+                            </div>
+                            <small class="text-muted d-block mt-1">Wajib. Range: -90 s/d 90 (contoh: -6.2088)</small>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating form-floating-outline">
+                                <input
+                                    type="number"
+                                    step="any"
+                                    min="-180"
+                                    max="180"
+                                    class="form-control"
+                                    id="longitude"
+                                    v-model.number="form.longitude"
+                                    placeholder="106.8456"
+                                    required
+                                >
+                                <label for="longitude">Longitude <span class="text-danger" aria-hidden="true">*</span></label>
+                            </div>
+                            <small class="text-muted d-block mt-1">Wajib. Range: -180 s/d 180 (contoh: 106.8456)</small>
                         </div>
                         <div class="col-12">
                             <div class="form-floating form-floating-outline">
@@ -225,6 +264,29 @@ const statItems = computed(() => [
 const modalTitle = computed(() => isEditMode.value ? 'Edit Cabang' : 'Tambah Cabang')
 const modalDescription = computed(() => isEditMode.value ? 'Ubah detail cabang baru di bawah ini.' : 'Isi detail cabang baru di bawah ini.')
 
+const formatCoord = (value) => {
+  if (value === null || value === undefined || value === '') return null
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : null
+}
+
+const formatCoords = (row) => {
+  const latitude = formatCoord(row?.latitude)
+  const longitude = formatCoord(row?.longitude)
+  if (latitude === null || longitude === null) return '-'
+  return `${latitude}, ${longitude}`
+}
+
+const isValidLatitude = (value) => {
+  const parsed = formatCoord(value)
+  return parsed !== null && parsed >= -90 && parsed <= 90
+}
+
+const isValidLongitude = (value) => {
+  const parsed = formatCoord(value)
+  return parsed !== null && parsed >= -180 && parsed <= 180
+}
+
 const applyPerusahaanFilter = () => {
   const v = filterPerusahaanId.value
   cabangStore.setPerusahaanId(v === '' ? '' : Number(v))
@@ -260,6 +322,10 @@ const handleSubmit = async () => {
     }
     if (!form.value.kodeCabang || !form.value.nmCabang || !form.value.alamatCabang) {
       toast.error({ title: 'Error', message: 'Semua field wajib diisi', color: 'red', position: 'bottomRight', layout: 2 })
+      return
+    }
+    if (!isValidLatitude(form.value.latitude) || !isValidLongitude(form.value.longitude)) {
+      toast.error({ title: 'Error', message: 'Latitude dan longitude wajib diisi dengan nilai yang valid', color: 'red', position: 'bottomRight', layout: 2 })
       return
     }
     if (isEditMode.value) await cabangStore.updateCabang()

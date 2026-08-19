@@ -8,11 +8,25 @@ export interface Cabang {
   kodeCabang: string
   nmCabang: string
   alamatCabang: string
+  latitude: number | null
+  longitude: number | null
   perusahaanId: number
   createdAt: string
   updatedAt: string
   perusahaan?: Perusahaan
 }
+
+const toCoordinate = (value: unknown): number | null => {
+  if (value === '' || value === undefined || value === null) return null
+  const parsed = Number(String(value).trim().replace(',', '.'))
+  return Number.isFinite(parsed) ? parsed : null
+}
+
+const isValidLatitude = (value: number | null): value is number =>
+  value !== null && value >= -90 && value <= 90
+
+const isValidLongitude = (value: number | null): value is number =>
+  value !== null && value >= -180 && value <= 180
 
 interface CabangState {
   cabangs: Cabang[]
@@ -45,6 +59,8 @@ const initialFormState: Partial<Cabang> = {
   kodeCabang: '',
   nmCabang: '',
   alamatCabang: '',
+  latitude: null,
+  longitude: null,
   perusahaanId: undefined,
 }
 
@@ -142,6 +158,24 @@ export const useCabangStore = defineStore('cabang', {
         }
     },
 
+    buildPayload() {
+      const latitude = toCoordinate(this.form.latitude)
+      const longitude = toCoordinate(this.form.longitude)
+
+      if (!isValidLatitude(latitude) || !isValidLongitude(longitude)) {
+        throw new Error('Latitude dan longitude wajib diisi dengan nilai yang valid')
+      }
+
+      return {
+        kodeCabang: this.form.kodeCabang,
+        nmCabang: this.form.nmCabang,
+        alamatCabang: this.form.alamatCabang,
+        perusahaanId: this.form.perusahaanId,
+        latitude,
+        longitude,
+      }
+    },
+
     async createCabang() {
       const toast = useToast();
       this.loading = true
@@ -155,7 +189,7 @@ export const useCabangStore = defineStore('cabang', {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
-          body: JSON.stringify(this.form),
+          body: JSON.stringify(this.buildPayload()),
           credentials: 'include', // Cookie-based auth
         })
         this.closeModal()
@@ -191,7 +225,7 @@ export const useCabangStore = defineStore('cabang', {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
-          body: JSON.stringify(this.form),
+          body: JSON.stringify(this.buildPayload()),
           credentials: 'include', // Cookie-based auth
         })
         this.closeModal()
@@ -278,6 +312,8 @@ export const useCabangStore = defineStore('cabang', {
           kodeCabang: cabang.kodeCabang,
           nmCabang: cabang.nmCabang,
           alamatCabang: cabang.alamatCabang,
+          latitude: toCoordinate(cabang.latitude),
+          longitude: toCoordinate(cabang.longitude),
           perusahaanId: cabang.perusahaanId
         }
       } else {

@@ -42,7 +42,7 @@
                   <dd class="col-8">
                     <NuxtLink
                       v-if="journal.reversalOfJournalId"
-                      :to="`/accounting/journals/detail?id=${journal.reversalOfJournalId}`"
+                      :to="`/finance/journals/detail/${journal.reversalOfJournalId}`"
                     >{{ shortId(journal.reversalOfJournalId) }}</NuxtLink>
                     <span v-else>-</span>
                   </dd>
@@ -50,7 +50,7 @@
                   <dd class="col-8">
                     <NuxtLink
                       v-if="journal.reversedByJournalId"
-                      :to="`/accounting/journals/detail?id=${journal.reversedByJournalId}`"
+                      :to="`/finance/journals/detail/${journal.reversedByJournalId}`"
                     >{{ shortId(journal.reversedByJournalId) }}</NuxtLink>
                     <span v-else>-</span>
                   </dd>
@@ -62,7 +62,7 @@
 
         <div class="card mb-4">
           <div class="card-header"><strong>Journal Lines</strong></div>
-          <div class="card-body table-responsive">
+          <div class="card-body table-responsive py-3">
             <table class="table table-sm">
               <thead>
                 <tr>
@@ -190,9 +190,9 @@ function rememberMovement(_id) {
 }
 
 async function load() {
-  const id = route.query.id
+  const id = route.params.id
   if (!id) {
-    error.value = 'Journal id query required'
+    error.value = 'Journal id required'
     return
   }
   loading.value = true
@@ -208,5 +208,5 @@ async function load() {
   }
 }
 
-watch(() => route.query.id, load, { immediate: true })
+watch(() => route.params.id, load, { immediate: true })
 </script>

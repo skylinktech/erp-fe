@@ -39,7 +39,7 @@
             </span>
           </div>
           <div class="card-body">
-            <div class="row g-3">
+            <div class="row g-3 py-3">
               <div class="col-md-6 col-lg-3">
                 <div class="text-muted small mb-1">Username</div>
                 <div class="fw-medium">{{ data.account.username || '-' }}</div>

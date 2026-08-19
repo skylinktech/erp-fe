@@ -40,7 +40,7 @@
 
                   <div class="tab-content pt-4">
                     <div id="pegawai-fp-tab-personal" data-step-id="pegawai-fp-tab-personal" class="tab-pane fade" role="tabpanel" :class="paneClass('pegawai-fp-tab-personal')">
-                      <div class="row g-3">
+                      <div class="row g-3 pegawai-form-grid">
                         <div class="col-md-6">
                           <div class="form-floating form-floating-outline">
                             <input id="pegawai-fp-nm" v-model="form.nm_pegawai" type="text" class="form-control" placeholder="Nama Lengkap" name="nm_pegawai" />
@@ -59,52 +59,54 @@
                             <label for="pegawai-fp-tmp">Tempat Lahir <span class="text-danger" aria-hidden="true">*</span></label>
                           </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-6">
                           <div class="form-floating form-floating-outline">
-                            <input id="pegawai-fp-tgl-lahir" v-model="form.tgl_lahir_pegawai" type="date" class="form-control" name="tgl_lahir_pegawai" />
+                            <input id="pegawai-fp-tgl-lahir" v-model="form.tgl_lahir_pegawai" type="date" class="form-control" name="tgl_lahir_pegawai" placeholder=" " />
                             <label for="pegawai-fp-tgl-lahir">Tanggal Lahir <span class="text-danger" aria-hidden="true">*</span></label>
                           </div>
                         </div>
-                        <div class="col-md-3">
-                          <FormLabel required html-for="pegawai-fp-pendidikan">Pendidikan</FormLabel>
-                          <CustomSelect2
-                            id="pegawai-fp-pendidikan"
-                            v-model="form.pendidikan_pegawai"
-                            :options="pendidikanOptions"
-                            :get-option-label="(o) => o.label"
-                            :reduce="(o) => Number(o.value)"
-                            searchable
-                            clearable
-                            placeholder="-- Pilih Pendidikan --"
-                            class="select-pendidikan"
-                          />
+                        <div class="col-md-6">
+                          <div class="form-floating form-floating-outline">
+                            <CustomSelect2
+                              id="pegawai-fp-pendidikan"
+                              v-model="form.pendidikan_pegawai"
+                              :options="pendidikanOptions"
+                              :get-option-label="(o) => o.label"
+                              :reduce="(o) => Number(o.value)"
+                              searchable
+                              clearable
+                              class="select-pendidikan"
+                            />
+                            <label for="pegawai-fp-pendidikan">Pendidikan <span class="text-danger" aria-hidden="true">*</span></label>
+                          </div>
                         </div>
                         <div class="col-md-6">
                           <div class="form-floating form-floating-outline">
-                            <input id="pegawai-fp-ktp" v-model="form.no_ktp_pegawai" type="text" class="form-control" name="no_ktp_pegawai" />
+                            <CustomSelect2
+                              id="pegawai-fp-jk"
+                              v-model="form.jenis_kelamin_pegawai"
+                              :options="jenisKelaminOptions"
+                              :get-option-label="(o) => o.label"
+                              :reduce="(o) => o.value"
+                              :get-option-key="(o) => o.value"
+                              searchable
+                              clearable
+                              class="select-jenis-kelamin"
+                            />
+                            <label for="pegawai-fp-jk">Jenis Kelamin <span class="text-danger" aria-hidden="true">*</span></label>
+                          </div>
+                        </div>
+                        <div class="col-md-6">
+                          <div class="form-floating form-floating-outline">
+                            <input id="pegawai-fp-ktp" v-model="form.no_ktp_pegawai" type="text" class="form-control" placeholder="No. KTP Pegawai" name="no_ktp_pegawai" />
                             <label for="pegawai-fp-ktp">No. KTP Pegawai <span class="text-danger" aria-hidden="true">*</span></label>
                           </div>
                         </div>
                         <div class="col-md-6">
                           <div class="form-floating form-floating-outline">
-                            <input id="pegawai-fp-npwp" v-model="form.npwp_pegawai" type="text" class="form-control" name="npwp_pegawai" />
+                            <input id="pegawai-fp-npwp" v-model="form.npwp_pegawai" type="text" class="form-control" placeholder="No. NPWP Pegawai" name="npwp_pegawai" />
                             <label for="pegawai-fp-npwp">No. NPWP Pegawai <span class="text-danger" aria-hidden="true">*</span></label>
                           </div>
-                        </div>
-                        <div class="col-md-6">
-                          <FormLabel required html-for="pegawai-fp-jk">Jenis Kelamin</FormLabel>
-                          <CustomSelect2
-                            id="pegawai-fp-jk"
-                            v-model="form.jenis_kelamin_pegawai"
-                            :options="jenisKelaminOptions"
-                            :get-option-label="(o) => o.label"
-                            :reduce="(o) => o.value"
-                            :get-option-key="(o) => o.value"
-                            searchable
-                            clearable
-                            placeholder="-- Pilih Jenis Kelamin --"
-                            class="select-jenis-kelamin"
-                          />
                         </div>
                         <div class="col-md-6">
                           <div class="form-floating form-floating-outline">
@@ -117,27 +119,27 @@
                               :get-option-key="(o) => o.value"
                               searchable
                               clearable
-                              placeholder="-- Pilih Agama --"
                               class="select-agama"
                             />
+                            <label for="pegawai-fp-agama">Agama</label>
                           </div>
                         </div>
-                        <div class="col-md-12">
+                        <div class="col-6">
                           <div class="form-floating form-floating-outline">
-                            <input id="pegawai-fp-avatar" type="file" class="form-control" accept="image/*" @change="onAvatarChange" />
+                            <input id="pegawai-fp-avatar" type="file" class="form-control" accept="image/*" placeholder=" " @change="onAvatarChange" />
                             <label for="pegawai-fp-avatar">Avatar</label>
-                            <div v-if="form.avatarPreview" class="mt-2">
-                              <img
-                                :src="form.avatarPreview"
-                                alt="Avatar Preview"
-                                style="height: 60px; width: 60px; object-fit: cover; border-radius: 50%; border: 2px solid #ddd"
-                                @error="(e) => handleImageError(e, '/img/default-avatar.png')"
-                              />
-                              <a :href="form.avatarPreview" target="_blank" rel="noopener noreferrer" class="d-block mt-1 small">Lihat Avatar</a>
-                            </div>
+                          </div>
+                          <div v-if="form.avatarPreview" class="mt-2">
+                            <img
+                              :src="form.avatarPreview"
+                              alt="Avatar Preview"
+                              style="height: 60px; width: 60px; object-fit: cover; border-radius: 50%; border: 2px solid #ddd"
+                              @error="(e) => handleImageError(e, '/img/default-avatar.png')"
+                            />
+                            <a :href="form.avatarPreview" target="_blank" rel="noopener noreferrer" class="d-block mt-1 small">Lihat Avatar</a>
                           </div>
                         </div>
-                        <div class="col-md-12">
+                        <div class="col-12">
                           <div class="form-floating form-floating-outline">
                             <textarea id="pegawai-fp-alamat" v-model="form.alamat_pegawai" class="form-control h-px-100" placeholder="Alamat"></textarea>
                             <label for="pegawai-fp-alamat">Alamat <span class="text-danger" aria-hidden="true">*</span></label>
@@ -147,7 +149,7 @@
                     </div>
 
                     <div id="pegawai-fp-tab-perusahaan" data-step-id="pegawai-fp-tab-perusahaan" class="tab-pane fade" role="tabpanel" :class="paneClass('pegawai-fp-tab-perusahaan')">
-                      <div class="row g-3">
+                      <div class="row g-3 pegawai-form-grid">
                         <div class="col-12">
                           <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center gap-2">
                             <div class="form-check form-switch mb-0">
@@ -172,7 +174,6 @@
                               :loading="availableUsersLoading"
                               :get-option-label="userOptionLabel"
                               :reduce="(o) => o.id"
-                              placeholder="-- Pilih User --"
                               clearable
                               class="user-account-select"
                               @update:modelValue="onUserSelected"
@@ -194,13 +195,13 @@
                         </div>
                         <div class="col-md-6">
                           <div class="form-floating form-floating-outline">
-                            <input id="pegawai-fp-fullname" v-model="form.full_name" type="text" class="form-control" />
+                            <input id="pegawai-fp-fullname" v-model="form.full_name" type="text" class="form-control" placeholder="Full Name" />
                             <label for="pegawai-fp-fullname">Full Name</label>
                           </div>
                         </div>
                         <div class="col-md-6">
                           <div class="form-floating form-floating-outline">
-                            <input id="pegawai-fp-username" v-model="form.username" type="text" class="form-control" readonly />
+                            <input id="pegawai-fp-username" v-model="form.username" type="text" class="form-control" placeholder="Username" readonly />
                             <label for="pegawai-fp-username">Username (Auto-generated)</label>
                           </div>
                           <small class="text-muted d-block mt-1">Username mengikuti akun user yang ditautkan atau otomatis dari nama pegawai.</small>
@@ -212,6 +213,7 @@
                               v-model="form.email"
                               type="email"
                               class="form-control"
+                              placeholder="Email"
                               :readonly="true"
                               :disabled="!assignUserAccount"
                             />
@@ -222,7 +224,7 @@
                         <div class="col-md-6">
                           <template v-if="isEditMode">
                             <div class="form-floating form-floating-outline">
-                              <input id="pegawai-fp-nik" v-model="form.nik_pegawai" type="text" class="form-control" name="nik_pegawai" readonly />
+                              <input id="pegawai-fp-nik" v-model="form.nik_pegawai" type="text" class="form-control" name="nik_pegawai" placeholder="NIK Pegawai" readonly />
                               <label for="pegawai-fp-nik">NIK Pegawai</label>
                             </div>
                           </template>
@@ -231,168 +233,147 @@
                           </div>
                         </div>
                         <div class="col-md-6">
-                          <FormLabel required html-for="pegawai-fp-jabatan">Jabatan</FormLabel>
-                          <CustomSelect2
-                            id="pegawai-fp-jabatan"
-                            v-model="form.jabatan_id"
-                            :options="jabatans"
-                            :get-option-label="(o) => o.nmJabatan"
-                            :reduce="(o) => o.id"
-                            :get-option-key="(o) => o.id"
-                            searchable
-                            clearable
-                            placeholder="-- Pilih Jabatan --"
-                            class="jabatan"
-                          />
-                        </div>
-                        <div class="col-md-6">
-                          <FormLabel required html-for="pegawai-fp-perusahaan">Perusahaan</FormLabel>
-                          <CustomSelect2
-                            id="pegawai-fp-perusahaan"
-                            v-model="form.perusahaan_id"
-                            :options="perusahaans"
-                            :get-option-label="(o) => o.nmPerusahaan"
-                            :reduce="(o) => o.id"
-                            :get-option-key="(o) => o.id"
-                            searchable
-                            clearable
-                            placeholder="-- Pilih Perusahaan --"
-                            class="perusahaan"
-                            @update:modelValue="handleCompanySelected"
-                          />
-                        </div>
-                        <div class="col-md-6">
-                          <FormLabel required html-for="pegawai-fp-cabang">Cabang</FormLabel>
-                          <CustomSelect2
-                            id="pegawai-fp-cabang"
-                            v-model="form.cabang_id"
-                            :options="filteredCabang"
-                            :get-option-label="(o) => o.nmCabang"
-                            :reduce="(o) => o.id"
-                            :get-option-key="(o) => o.id"
-                            searchable
-                            clearable
-                            placeholder="-- Pilih Cabang --"
-                            class="cabang"
-                          />
-                        </div>
-                        <div class="col-md-6">
-                          <FormLabel required html-for="pegawai-fp-divisi">Divisi</FormLabel>
-                          <CustomSelect2
-                            id="pegawai-fp-divisi"
-                            v-model="form.divisi_id"
-                            :options="divisis"
-                            :get-option-label="(o) => o.nmDivisi"
-                            :reduce="(o) => o.id"
-                            :get-option-key="(o) => o.id"
-                            searchable
-                            clearable
-                            placeholder="-- Pilih Divisi --"
-                            class="divisi"
-                            @update:modelValue="handleDivisiSelected"
-                          />
-                        </div>
-                        <div class="col-md-6">
-                          <FormLabel required html-for="pegawai-fp-departemen">Departemen</FormLabel>
-                          <CustomSelect2
-                            id="pegawai-fp-departemen"
-                            v-model="form.departemen_id"
-                            :options="filteredDepartemen"
-                            :get-option-label="(o) => o.nmDepartemen"
-                            :reduce="(o) => o.id"
-                            :get-option-key="(o) => o.id"
-                            searchable
-                            clearable
-                            placeholder="-- Pilih Departemen --"
-                            class="departemen"
-                          />
+                          <div class="form-floating form-floating-outline">
+                            <CustomSelect2
+                              id="pegawai-fp-jabatan"
+                              v-model="form.jabatan_id"
+                              :options="jabatans"
+                              :get-option-label="(o) => o.nmJabatan"
+                              :reduce="(o) => o.id"
+                              :get-option-key="(o) => o.id"
+                              searchable
+                              clearable
+                              class="jabatan"
+                            />
+                            <label for="pegawai-fp-jabatan">Jabatan <span class="text-danger" aria-hidden="true">*</span></label>
+                          </div>
                         </div>
                         <div class="col-md-6">
                           <div class="form-floating form-floating-outline">
-                            <input id="pegawai-fp-tgl-masuk" v-model="form.tgl_masuk_pegawai" type="date" class="form-control" name="tgl_masuk_pegawai" />
+                            <CustomSelect2
+                              id="pegawai-fp-perusahaan"
+                              v-model="form.perusahaan_id"
+                              :options="perusahaans"
+                              :get-option-label="(o) => o.nmPerusahaan"
+                              :reduce="(o) => o.id"
+                              :get-option-key="(o) => o.id"
+                              searchable
+                              clearable
+                              class="perusahaan"
+                              @update:modelValue="handleCompanySelected"
+                            />
+                            <label for="pegawai-fp-perusahaan">Perusahaan <span class="text-danger" aria-hidden="true">*</span></label>
+                          </div>
+                        </div>
+                        <div class="col-md-6">
+                          <div class="form-floating form-floating-outline">
+                            <CustomSelect2
+                              id="pegawai-fp-cabang"
+                              v-model="form.cabang_id"
+                              :options="filteredCabang"
+                              :get-option-label="(o) => o.nmCabang"
+                              :reduce="(o) => o.id"
+                              :get-option-key="(o) => o.id"
+                              searchable
+                              clearable
+                              class="cabang"
+                            />
+                            <label for="pegawai-fp-cabang">Cabang <span class="text-danger" aria-hidden="true">*</span></label>
+                          </div>
+                        </div>
+                        <div class="col-md-6">
+                          <div class="form-floating form-floating-outline">
+                            <CustomSelect2
+                              id="pegawai-fp-divisi"
+                              v-model="form.divisi_id"
+                              :options="divisis"
+                              :get-option-label="(o) => o.nmDivisi"
+                              :reduce="(o) => o.id"
+                              :get-option-key="(o) => o.id"
+                              searchable
+                              clearable
+                              class="divisi"
+                              @update:modelValue="handleDivisiSelected"
+                            />
+                            <label for="pegawai-fp-divisi">Divisi <span class="text-danger" aria-hidden="true">*</span></label>
+                          </div>
+                        </div>
+                        <div class="col-md-6">
+                          <div class="form-floating form-floating-outline">
+                            <CustomSelect2
+                              id="pegawai-fp-departemen"
+                              v-model="form.departemen_id"
+                              :options="filteredDepartemen"
+                              :get-option-label="(o) => o.nmDepartemen"
+                              :reduce="(o) => o.id"
+                              :get-option-key="(o) => o.id"
+                              searchable
+                              clearable
+                              class="departemen"
+                            />
+                            <label for="pegawai-fp-departemen">Departemen <span class="text-danger" aria-hidden="true">*</span></label>
+                          </div>
+                        </div>
+                        <div class="col-md-6">
+                          <div class="form-floating form-floating-outline">
+                            <input id="pegawai-fp-tgl-masuk" v-model="form.tgl_masuk_pegawai" type="date" class="form-control" name="tgl_masuk_pegawai" placeholder=" " />
                             <label for="pegawai-fp-tgl-masuk">Tanggal Masuk Pegawai <span class="text-danger" aria-hidden="true">*</span></label>
                           </div>
                         </div>
                         <div class="col-md-6">
                           <div class="form-floating form-floating-outline">
-                            <input id="pegawai-fp-tgl-keluar" v-model="form.tgl_keluar_pegawai" type="date" class="form-control" name="tgl_keluar_pegawai" />
+                            <input id="pegawai-fp-tgl-keluar" v-model="form.tgl_keluar_pegawai" type="date" class="form-control" name="tgl_keluar_pegawai" placeholder=" " />
                             <label for="pegawai-fp-tgl-keluar">Tanggal Keluar Pegawai</label>
                           </div>
                         </div>
                         <div class="col-md-6">
                           <div class="form-floating form-floating-outline">
-                            <input
-                              id="pegawai-fp-gaji"
-                              type="text"
-                              class="form-control"
-                              name="gaji_pegawai"
-                              placeholder="Rp 0,-"
-                              :value="gajiPegawaiFormatted"
-                              @input="handleGajiInput"
+                            <CustomSelect2
+                              id="pegawai-fp-status"
+                              v-model="form.status_pegawai"
+                              :options="statusPegawaiOptions"
+                              :get-option-label="(o) => o.label"
+                              :reduce="(o) => o.value"
+                              :get-option-key="(o) => o.value"
+                              searchable
+                              clearable
+                              class="select-status-pegawai"
                             />
-                            <label for="pegawai-fp-gaji">Gaji Pegawai <span class="text-danger" aria-hidden="true">*</span></label>
+                            <label for="pegawai-fp-status">Status Pegawai <span class="text-danger" aria-hidden="true">*</span></label>
                           </div>
-                        </div>
-                        <div class="col-md-6">
-                          <div class="form-floating form-floating-outline">
-                            <input
-                              id="pegawai-fp-tunjangan"
-                              type="text"
-                              class="form-control"
-                              placeholder="Rp 0,-"
-                              :value="tunjanganPegawaiFormatted"
-                              @input="handleTunjanganInput"
-                            />
-                            <label for="pegawai-fp-tunjangan">Tunjangan Pegawai <span class="text-danger" aria-hidden="true">*</span></label>
-                          </div>
-                        </div>
-                        <div class="col-md-6">
-                          <FormLabel required html-for="pegawai-fp-status">Status Pegawai</FormLabel>
-                          <CustomSelect2
-                            id="pegawai-fp-status"
-                            v-model="form.status_pegawai"
-                            :options="statusPegawaiOptions"
-                            :get-option-label="(o) => o.label"
-                            :reduce="(o) => o.value"
-                            :get-option-key="(o) => o.value"
-                            searchable
-                            clearable
-                            placeholder="-- Pilih Status Pegawai --"
-                            class="select-status-pegawai"
-                          />
                         </div>
                       </div>
                     </div>
 
                     <div id="pegawai-fp-tab-social" data-step-id="pegawai-fp-tab-social" class="tab-pane fade" role="tabpanel" :class="paneClass('pegawai-fp-tab-social')">
-                      <div class="row g-3">
+                      <div class="row g-3 pegawai-form-grid">
                         <div class="col-md-3">
                           <div class="form-floating form-floating-outline">
-                            <input id="pegawai-fp-pasangan" v-model="form.istri_suami_pegawai" type="text" class="form-control" />
+                            <input id="pegawai-fp-pasangan" v-model="form.istri_suami_pegawai" type="text" class="form-control" placeholder="Istri/Suami Pegawai" />
                             <label for="pegawai-fp-pasangan">Istri/Suami Pegawai</label>
                           </div>
                         </div>
                         <div class="col-md-3">
                           <div class="form-floating form-floating-outline">
-                            <input id="pegawai-fp-anak1" v-model="form.anak_1" type="text" class="form-control" />
+                            <input id="pegawai-fp-anak1" v-model="form.anak_1" type="text" class="form-control" placeholder="Anak 1" />
                             <label for="pegawai-fp-anak1">Anak 1</label>
                           </div>
                         </div>
                         <div class="col-md-3">
                           <div class="form-floating form-floating-outline">
-                            <input id="pegawai-fp-anak2" v-model="form.anak_2" type="text" class="form-control" />
+                            <input id="pegawai-fp-anak2" v-model="form.anak_2" type="text" class="form-control" placeholder="Anak 2" />
                             <label for="pegawai-fp-anak2">Anak 2</label>
                           </div>
                         </div>
                         <div class="col-md-3">
                           <div class="form-floating form-floating-outline">
-                            <input id="pegawai-fp-anak3" v-model="form.anak_3" type="text" class="form-control" />
+                            <input id="pegawai-fp-anak3" v-model="form.anak_3" type="text" class="form-control" placeholder="Anak 3" />
                             <label for="pegawai-fp-anak3">Anak 3</label>
                           </div>
                         </div>
                         <div class="col-md-12">
                           <div class="form-floating form-floating-outline">
-                            <input id="pegawai-fp-tlp-kel" v-model="form.no_tlp_keluarga" type="text" class="form-control" />
+                            <input id="pegawai-fp-tlp-kel" v-model="form.no_tlp_keluarga" type="text" class="form-control" placeholder="Keluarga yang dapat dihubungi" />
                             <label for="pegawai-fp-tlp-kel">Keluarga yang dapat dihubungi</label>
                           </div>
                         </div>
@@ -400,39 +381,53 @@
                     </div>
 
                     <div id="pegawai-fp-tab-dokumen" data-step-id="pegawai-fp-tab-dokumen" class="tab-pane fade" role="tabpanel" :class="paneClass('pegawai-fp-tab-dokumen')">
-                      <div class="row g-3">
+                      <div class="row g-3 pegawai-form-grid">
                         <div class="col-md-6">
-                          <label class="form-label" for="pegawai-fp-cv">CV (PDF / gambar / Word)</label>
-                          <input id="pegawai-fp-cv" type="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,image/*,application/pdf" @change="onDocChange('cv_attachment', $event)" />
+                          <div class="form-floating form-floating-outline">
+                            <input id="pegawai-fp-cv" type="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,image/*,application/pdf" placeholder=" " @change="onDocChange('cv_attachment', $event)" />
+                            <label for="pegawai-fp-cv">CV (PDF / gambar / Word)</label>
+                          </div>
                           <a v-if="form.cv_attachment_url" :href="form.cv_attachment_url" target="_blank" rel="noopener noreferrer" class="d-inline-block mt-1 small">Unduh CV terpasang</a>
                         </div>
                         <div class="col-md-6">
-                          <label class="form-label" for="pegawai-fp-kk">Kartu Keluarga</label>
-                          <input id="pegawai-fp-kk" type="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,image/*,application/pdf" @change="onDocChange('kk_attachment', $event)" />
+                          <div class="form-floating form-floating-outline">
+                            <input id="pegawai-fp-kk" type="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,image/*,application/pdf" placeholder=" " @change="onDocChange('kk_attachment', $event)" />
+                            <label for="pegawai-fp-kk">Kartu Keluarga</label>
+                          </div>
                           <a v-if="form.kk_attachment_url" :href="form.kk_attachment_url" target="_blank" rel="noopener noreferrer" class="d-inline-block mt-1 small">Unduh KK terpasang</a>
                         </div>
                         <div class="col-md-6">
-                          <label class="form-label" for="pegawai-fp-ijazah">Ijazah</label>
-                          <input id="pegawai-fp-ijazah" type="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,image/*,application/pdf" @change="onDocChange('ijazah_attachment', $event)" />
+                          <div class="form-floating form-floating-outline">
+                            <input id="pegawai-fp-ijazah" type="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,image/*,application/pdf" placeholder=" " @change="onDocChange('ijazah_attachment', $event)" />
+                            <label for="pegawai-fp-ijazah">Ijazah</label>
+                          </div>
                           <a v-if="form.ijazah_attachment_url" :href="form.ijazah_attachment_url" target="_blank" rel="noopener noreferrer" class="d-inline-block mt-1 small">Unduh ijazah terpasang</a>
                         </div>
                         <div class="col-md-6">
-                          <label class="form-label" for="pegawai-fp-skck">SKCK</label>
-                          <input id="pegawai-fp-skck" type="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,image/*,application/pdf" @change="onDocChange('skck_attachment', $event)" />
+                          <div class="form-floating form-floating-outline">
+                            <input id="pegawai-fp-skck" type="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,image/*,application/pdf" placeholder=" " @change="onDocChange('skck_attachment', $event)" />
+                            <label for="pegawai-fp-skck">SKCK</label>
+                          </div>
                           <a v-if="form.skck_attachment_url" :href="form.skck_attachment_url" target="_blank" rel="noopener noreferrer" class="d-inline-block mt-1 small">Unduh SKCK terpasang</a>
                         </div>
                         <div class="col-md-6">
-                          <label class="form-label" for="pegawai-fp-skck">BPJS Ketenagakerjaan</label>
-                          <input id="pegawai-fp-bpjstk" v-model="form.bpjstk" type="text" class="form-control" />
+                          <div class="form-floating form-floating-outline">
+                            <input id="pegawai-fp-bpjstk" v-model="form.bpjstk" type="text" class="form-control" placeholder="BPJS Ketenagakerjaan" />
+                            <label for="pegawai-fp-bpjstk">BPJS Ketenagakerjaan</label>
+                          </div>
                         </div>
                         <div class="col-md-6">
-                          <label class="form-label" for="pegawai-fp-skck">BPJS Kesehatan</label>
-                          <input id="pegawai-fp-bpjsk" v-model="form.bpjsk" type="text" class="form-control" />
+                          <div class="form-floating form-floating-outline">
+                            <input id="pegawai-fp-bpjsk" v-model="form.bpjsk" type="text" class="form-control" placeholder="BPJS Kesehatan" />
+                            <label for="pegawai-fp-bpjsk">BPJS Kesehatan</label>
+                          </div>
                         </div>
-                        <div class="col-md-12">
-                          <label class="form-label" for="pegawai-fp-rek">Nomor rekening Bank Mandiri (opsional)</label>
-                          <input id="pegawai-fp-rek" v-model="form.nomor_rekening" type="text" class="form-control" maxlength="13" inputmode="numeric" />
-                          <small class="text-muted">Jika diisi, gunakan rekening Bank Mandiri: tepat 13 digit, prefix <code>008</code>.</small>
+                        <div class="col-12">
+                          <div class="form-floating form-floating-outline">
+                            <input id="pegawai-fp-rek" v-model="form.nomor_rekening" type="text" class="form-control" maxlength="13" inputmode="numeric" placeholder="Nomor rekening Bank Mandiri" />
+                            <label for="pegawai-fp-rek">Nomor rekening Bank Mandiri (opsional)</label>
+                          </div>
+                          <small class="text-muted d-block mt-1">Jika diisi, gunakan rekening Bank Mandiri: tepat 13 digit, prefix <code>008</code>.</small>
                         </div>
                       </div>
                     </div>
@@ -544,7 +539,7 @@
                       <h6 class="mb-3 border-top pt-3">
                         {{ editingKontrakId ? 'Edit kontrak (draft / ditolak)' : 'Tambah draft kontrak' }}
                       </h6>
-                      <div class="row g-3">
+                      <div class="row g-3 pegawai-form-grid">
                         <div class="col-md-6">
                           <div class="form-floating form-floating-outline">
                             <CustomSelect2
@@ -554,13 +549,12 @@
                               :get-option-label="(o: { label: string }) => o.label"
                               :reduce="(o: { value: number }) => o.value"
                               :get-option-key="(o: { value: number }) => o.value"
-                              placeholder="Jenis kontrak"
                               class="select-kontrak-jenis"
                             />
                             <label for="pegawai-fp-kontrak-jenis">Jenis kontrak <span class="text-danger" aria-hidden="true">*</span></label>
                           </div>
                         </div>
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-6">
                           <div class="form-floating form-floating-outline">
                             <input
                               id="pegawai-fp-kontrak-nomor"
@@ -572,24 +566,26 @@
                             <label for="pegawai-fp-kontrak-nomor">Nomor SK / referensi (opsional)</label>
                           </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-6">
                           <div class="form-floating form-floating-outline">
                             <input
                               id="pegawai-fp-kontrak-mulai"
                               v-model="kontrakDraft.tgl_mulai"
                               type="date"
                               class="form-control"
+                              placeholder=" "
                             />
                             <label for="pegawai-fp-kontrak-mulai">Tanggal mulai <span class="text-danger" aria-hidden="true">*</span></label>
                           </div>
                         </div>
-                        <div v-if="kontrakDraft.jenis_kontrak === 2" class="col-md-3">
+                        <div v-if="kontrakDraft.jenis_kontrak === 2" class="col-md-6">
                           <div class="form-floating form-floating-outline">
                             <input
                               id="pegawai-fp-kontrak-selesai"
                               v-model="kontrakDraft.tgl_selesai"
                               type="date"
                               class="form-control"
+                              placeholder=" "
                             />
                             <label for="pegawai-fp-kontrak-selesai">Tanggal selesai (PKWT) <span class="text-danger" aria-hidden="true">*</span></label>
                           </div>
@@ -607,25 +603,29 @@
                             <label for="pegawai-fp-kontrak-induk">ID kontrak induk (opsional)</label>
                           </div>
                         </div>
-                        <div class="col-md-12">
-                          <label class="form-label" for="pegawai-fp-kontrak-cat">Catatan</label>
-                          <textarea
-                            id="pegawai-fp-kontrak-cat"
-                            v-model="kontrakDraft.catatan"
-                            class="form-control"
-                            rows="2"
-                            placeholder="Catatan internal"
-                          />
+                        <div class="col-12">
+                          <div class="form-floating form-floating-outline">
+                            <textarea
+                              id="pegawai-fp-kontrak-cat"
+                              v-model="kontrakDraft.catatan"
+                              class="form-control h-px-100"
+                              placeholder="Catatan internal"
+                            />
+                            <label for="pegawai-fp-kontrak-cat">Catatan</label>
+                          </div>
                         </div>
-                        <div class="col-md-12">
-                          <label class="form-label" for="pegawai-fp-kontrak-file">Lampiran SK (PDF / gambar / Word, maks. 5MB)</label>
-                          <input
-                            id="pegawai-fp-kontrak-file"
-                            type="file"
-                            class="form-control"
-                            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,image/*,application/pdf"
-                            @change="onKontrakSkChange"
-                          />
+                        <div class="col-12">
+                          <div class="form-floating form-floating-outline">
+                            <input
+                              id="pegawai-fp-kontrak-file"
+                              type="file"
+                              class="form-control"
+                              accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,image/*,application/pdf"
+                              placeholder=" "
+                              @change="onKontrakSkChange"
+                            />
+                            <label for="pegawai-fp-kontrak-file">Lampiran SK (PDF / gambar / Word, maks. 5MB)</label>
+                          </div>
                         </div>
                         <div class="col-12 d-flex flex-wrap gap-2">
                           <button type="button" class="btn btn-primary" :disabled="kontrakSaving" @click="submitKontrakDraft">
@@ -694,7 +694,6 @@ import { storeToRefs } from 'pinia'
 import { useRoute } from 'vue-router'
 import { useDebounceFn } from '@vueuse/core'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
-import FormLabel from '~/components/form/FormLabel.vue'
 import TabbedFormNav from '~/components/form/TabbedFormNav.vue'
 import TabbedFormActions from '~/components/form/TabbedFormActions.vue'
 import { useTabbedFormNavigation } from '~/composables/useTabbedFormNavigation'
@@ -832,8 +831,6 @@ function validatePegawaiStep(step: { id: string }): boolean {
       [f.divisi_id, 'Divisi wajib dipilih.'],
       [f.departemen_id, 'Departemen wajib dipilih.'],
       [f.tgl_masuk_pegawai, 'Tanggal Masuk Pegawai wajib diisi.'],
-      [f.gaji_pegawai, 'Gaji Pegawai wajib diisi.'],
-      [f.tunjangan_pegawai, 'Tunjangan Pegawai wajib diisi.'],
       [f.status_pegawai, 'Status Pegawai wajib dipilih.'],
     )
     for (const [value, message] of checks) {
@@ -875,8 +872,6 @@ const PEGAWAI_FIELD_TABS: Record<string, string> = {
   divisi_id: 'pegawai-fp-tab-perusahaan',
   departemen_id: 'pegawai-fp-tab-perusahaan',
   tgl_masuk_pegawai: 'pegawai-fp-tab-perusahaan',
-  gaji_pegawai: 'pegawai-fp-tab-perusahaan',
-  tunjangan_pegawai: 'pegawai-fp-tab-perusahaan',
   status_pegawai: 'pegawai-fp-tab-perusahaan',
 }
 
@@ -1332,34 +1327,6 @@ function onDocChange(field: 'cv_attachment' | 'kk_attachment' | 'ijazah_attachme
   pegawaiStore.handlePegawaiDocumentChange(field, file)
 }
 
-function formatRupiah(angka: string | number | null | undefined) {
-  if (angka === null || angka === undefined) return ''
-  let number_string = String(angka).replace(/[^,\d]/g, '').toString()
-  const split = number_string.split(',')
-  const sisa = split[0].length % 3
-  let rupiah = split[0].substring(0, sisa)
-  const ribuan = split[0].substring(sisa).match(/\d{3}/gi)
-  if (ribuan) {
-    const separator = sisa ? '.' : ''
-    rupiah += separator + ribuan.join('.')
-  }
-  rupiah = split[1] !== undefined ? `${rupiah},${split[1]}` : rupiah
-  return `Rp ${rupiah}`
-}
-
-const gajiPegawaiFormatted = computed(() => formatRupiah(form.value.gaji_pegawai))
-const tunjanganPegawaiFormatted = computed(() => formatRupiah(form.value.tunjangan_pegawai))
-
-function handleGajiInput(e: Event) {
-  const t = e.target as HTMLInputElement
-  form.value.gaji_pegawai = t.value.replace(/[^0-9]/g, '')
-}
-
-function handleTunjanganInput(e: Event) {
-  const t = e.target as HTMLInputElement
-  form.value.tunjangan_pegawai = t.value.replace(/[^0-9]/g, '')
-}
-
 async function onFormSubmit() {
   if (!isLastStep.value) {
     await next()
@@ -1475,5 +1442,48 @@ onMounted(async () => {
 }
 .pegawai-form-tabs .nav-link {
   white-space: nowrap;
+}
+
+.pegawai-form-grid > [class*='col-'] {
+  display: flex;
+  flex-direction: column;
+}
+
+.pegawai-form-grid .form-floating {
+  width: 100%;
+}
+
+.pegawai-form-grid .form-floating > .form-control,
+.pegawai-form-grid .form-floating > .form-select {
+  min-height: 3rem;
+}
+
+.pegawai-form-grid .form-floating:has(.custom-select2-wrapper) > label {
+  width: auto;
+  height: auto;
+  padding: 2px 0.375rem;
+  margin-left: 0.625rem;
+  margin-top: 0.125rem;
+  transform: translateY(-0.8rem) translateX(-2px);
+  opacity: 1;
+  font-size: 0.8125rem;
+  background-color: var(--bs-paper-bg, #fff);
+  z-index: 3;
+}
+
+.pegawai-form-grid .form-floating:has(.custom-select2-wrapper) :deep(.custom-select2),
+.pegawai-form-grid .form-floating:has(.custom-select2-wrapper) :deep(.select2-selection) {
+  min-height: 3rem;
+  height: 3rem;
+}
+
+.pegawai-form-grid .form-floating:has(.custom-select2-wrapper) :deep(.select2-selection) {
+  border-radius: 0.5rem;
+  border-color: #cfd0d6;
+  padding: 0.5rem 0.75rem;
+}
+
+.pegawai-form-grid .form-floating:has(.custom-select2-wrapper):focus-within :deep(.select2-selection) {
+  border-color: #008fec;
 }
 </style>

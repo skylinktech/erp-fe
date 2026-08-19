@@ -121,6 +121,7 @@ export default defineNuxtConfig({
       htmlAttrs: {
         lang: 'en',
         dir: 'ltr',
+        class: 'layout-menu-fixed layout-menu-expanded',
         'data-assets-path': ''
       },
       meta: [

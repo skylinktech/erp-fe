@@ -97,7 +97,7 @@
             <dd class="col-8">
               <NuxtLink
                 v-if="selected.journalId"
-                :to="`/accounting/journals/detail?id=${selected.journalId}`"
+                :to="`/finance/journals/detail/${selected.journalId}`"
               >{{ shortId(selected.journalId) }}</NuxtLink>
               <span v-else>-</span>
             </dd>

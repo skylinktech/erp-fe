@@ -322,12 +322,30 @@ html.layout-menu-collapsed:not(.layout-menu-hover) .layout-menu {
 
 #layout-menu {
   padding-top: 1rem;
+  height: 100%;
 }
+
 .menu-sub {
   transition: height 0.3s ease-in-out;
   overflow: hidden;
 }
+
 .menu-inner {
   overflow-y: auto;
+  overflow-x: hidden;
+  flex: 1 1 auto;
+  min-height: 0;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (min-width: 1200px) {
+  html.layout-menu-fixed:not(.layout-menu-collapsed) .layout-page {
+    padding-left: 260px;
+  }
+
+  html.layout-menu-fixed.layout-menu-collapsed .layout-page {
+    padding-left: 82px;
+  }
 }
 </style>

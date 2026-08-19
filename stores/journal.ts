@@ -185,12 +185,11 @@ export const useJournalStore = defineStore('journal', {
         // Gunakan parameter yang sama seperti accountStore tetapi dengan rows yang lebih besar
         const params = new URLSearchParams({
           page: '1',
-          limit: '10000', // Backend menggunakan 'limit', bukan 'rows'
+          rows: '10000',
           sortField: 'code',
           sortOrder: 'asc',
           search: '',
         });
-        
         
         const response = await fetch(`${$api.accounts()}?${params.toString()}`, {
           headers: {

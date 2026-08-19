@@ -87,6 +87,98 @@ export const erpMenuItems = [
     type: "main"
   },
 
+  {
+    name: "Payroll Dashboard",
+    path: "/payroll/dashboard",
+    icon: "ri-dashboard-line",
+    category: "HRD",
+    type: "main"
+  },
+  {
+    name: "Payroll Runs",
+    path: "/payroll/runs",
+    icon: "ri-file-list-3-line",
+    category: "HRD",
+    type: "main"
+  },
+  {
+    name: "Payroll Variable Input",
+    path: "/payroll/variable-inputs",
+    icon: "ri-edit-box-line",
+    category: "HRD",
+    type: "main"
+  },
+  {
+    name: "Payroll Payment",
+    path: "/payroll/payments",
+    icon: "ri-bank-card-line",
+    category: "HRD",
+    type: "main"
+  },
+  {
+    name: "Payslip",
+    path: "/payroll/payslips",
+    icon: "ri-file-text-line",
+    category: "HRD",
+    type: "main"
+  },
+  {
+    name: "Payslip Saya",
+    path: "/payroll/me/payslips",
+    icon: "ri-file-user-line",
+    category: "HRD",
+    type: "main"
+  },
+  {
+    name: "Payroll Configuration",
+    path: "/payroll/configuration",
+    icon: "ri-settings-3-line",
+    category: "HRD",
+    type: "main"
+  },
+  {
+    name: "Payroll Periods",
+    path: "/payroll/periods",
+    icon: "ri-calendar-line",
+    category: "HRD",
+    type: "main"
+  },
+  {
+    name: "Salary Components",
+    path: "/payroll/components",
+    icon: "ri-price-tag-3-line",
+    category: "HRD",
+    type: "main"
+  },
+  {
+    name: "Salary Structures",
+    path: "/payroll/structures",
+    icon: "ri-organization-chart",
+    category: "HRD",
+    type: "main"
+  },
+  {
+    name: "Payroll Profiles",
+    path: "/payroll/profiles",
+    icon: "ri-user-settings-line",
+    category: "HRD",
+    type: "main"
+  },
+  {
+    name: "Compensation",
+    path: "/payroll/compensations",
+    icon: "ri-money-cny-circle-line",
+    category: "HRD",
+    type: "main"
+  },
+  {
+    name: "Tax Profiles",
+    path: "/payroll/tax-profiles",
+    icon: "ri-percent-line",
+    category: "HRD",
+    type: "main"
+  },
+
   // Inventory Module
   {
     name: "Barang",
@@ -248,6 +340,20 @@ export const erpMenuItems = [
   },
 
   // Finance — Inventory Accounting visibility (Phase 17)
+  {
+    name: "Rekening Bank",
+    path: "/finance/bank-account",
+    icon: "ri-bank-card-line",
+    category: "Finance",
+    type: "main"
+  },
+  {
+    name: "Bank Reconciliation",
+    path: "/finance/bank-recon",
+    icon: "ri-bank-line",
+    category: "Finance",
+    type: "main"
+  },
   {
     name: "Inventory Accounting Events",
     path: "/finance/inventory-accounting-events",

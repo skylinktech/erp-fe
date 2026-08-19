@@ -54,6 +54,8 @@ import { defineProps, defineExpose, ref, defineEmits } from 'vue'
 import DataTable from 'primevue/datatable'
 import { useExcelExport } from '~/composables/useExcelExport'
 
+defineOptions({ inheritAttrs: false })
+
 // Fungsi formatRupiah
 const formatRupiah = (amount) => {
     if (!amount && amount !== 0) return 'Rp 0';

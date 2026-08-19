@@ -34,6 +34,7 @@ export const PRINT_DOCUMENT_TYPES = [
   'PERJALANAN_DINAS',
   'ARF',
   'STRUKTUR_ORGANISASI',
+  'PAYSLIP',
 ] as const
 
 export type PrintDocumentType = (typeof PRINT_DOCUMENT_TYPES)[number]
@@ -188,6 +189,13 @@ export const PRINT_DOCUMENTS: Record<PrintDocumentType, PrintDocumentPreset> = {
     orientation: 'landscape',
     title: 'STRUKTUR ORGANISASI',
     notFoundMessage: 'Tidak ada data struktur organisasi untuk filter yang dipilih.',
+    watermarkPolicy: {},
+  },
+  PAYSLIP: {
+    ...STANDARD,
+    title: 'PAYSLIP / SLIP GAJI',
+    showGeneratedAt: true,
+    notFoundMessage: 'Payslip tidak ditemukan.',
     watermarkPolicy: {},
   },
 }

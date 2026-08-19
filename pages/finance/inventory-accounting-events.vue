@@ -29,7 +29,7 @@
             <td>{{ formatMoney(row.amount) }}</td>
             <td><span class="badge bg-label-secondary">{{ row.status }}</span></td>
             <td>
-              <NuxtLink v-if="row.journalId" :to="`/accounting/journals/detail?id=${row.journalId}`">
+              <NuxtLink v-if="row.journalId" :to="`/finance/journals/detail/${row.journalId}`">
                 {{ shortId(row.journalId) }}
               </NuxtLink>
               <span v-else>-</span>
@@ -62,7 +62,7 @@
             <dt class="col-4">Status / Journal</dt>
             <dd class="col-8">
               {{ selected.status }} /
-              <NuxtLink v-if="selected.journalId" :to="`/accounting/journals/detail?id=${selected.journalId}`">
+              <NuxtLink v-if="selected.journalId" :to="`/finance/journals/detail/${selected.journalId}`">
                 {{ selected.journalId }}
               </NuxtLink>
               <span v-else>-</span>

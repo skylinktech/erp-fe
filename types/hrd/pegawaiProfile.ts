@@ -5,8 +5,6 @@ export interface ProfileLookup {
 
 export interface ProfileHistoryRow {
   id: number
-  gaji_pegawai: number | string | null
-  tunjangan_pegawai: number | string | null
   created_at: string | null
   updated_at: string | null
   jabatan: ProfileLookup | null

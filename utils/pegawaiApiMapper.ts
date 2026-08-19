@@ -132,8 +132,6 @@ export function mapPegawaiShowResponseToListRow(raw: Record<string, unknown>): R
             nama: (dp.nm_departemen ?? dp.nmDepartemen) as string,
           }
         : null,
-      gaji_pegawai: pickSnakeOrCamel(history, 'gaji_pegawai'),
-      tunjangan_pegawai: pickSnakeOrCamel(history, 'tunjangan_pegawai'),
     }
   } else {
     out.history = null

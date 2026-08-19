@@ -27,6 +27,8 @@ export const useLayoutStore = defineStore('layout', {
         if (!process.client) return;
         const html = document.documentElement;
 
+        html.classList.add('layout-menu-fixed');
+
         // Handle expanded/collapsed state
         if (this.isSidebarExpanded) {
           html.classList.add('layout-menu-expanded');

@@ -183,7 +183,7 @@
                     <td>
                       <NuxtLink
                         v-if="e.journalId"
-                        :to="`/accounting/journals/detail?id=${e.journalId}`"
+                        :to="`/finance/journals/detail/${e.journalId}`"
                         class="text-primary"
                       >{{ shortId(e.journalId) }}</NuxtLink>
                       <span v-else>-</span>

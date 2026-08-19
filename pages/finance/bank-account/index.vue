@@ -62,7 +62,7 @@
                     <div class="card">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Rekening Aktif</p>
+                                <p class="mb-0">Unreconciled</p>
                                 <div class="avatar">
                                     <span class="avatar-initial rounded bg-label-success">
                                         <i class="ri-check-line"></i>
@@ -71,8 +71,8 @@
                             </div>
                             <div class="d-flex justify-content-between align-items-center">
                                 <div class="bank-heading">
-                                    <h5 class="mb-1">{{ activeAccountCount }}</h5>
-                                    <span class="text-muted">Rekening Aktif</span>
+                                    <h5 class="mb-1">{{ totalUnreconciled }}</h5>
+                                    <span class="text-muted">Transaksi belum rekonsiliasi</span>
                                 </div>
                                 <a href="javascript:void(0);" class="text-secondary">
                                     <i class="ri-file-copy-line ri-22px"></i>
@@ -98,7 +98,7 @@
                     <div class="card">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Total Saldo</p>
+                                <p class="mb-0">Total Ledger Balance</p>
                                 <div class="avatar">
                                     <span class="avatar-initial rounded bg-label-warning">
                                         <i class="ri-money-dollar-circle-line"></i>
@@ -107,8 +107,8 @@
                             </div>
                             <div class="d-flex justify-content-between align-items-center">
                                 <div class="bank-heading">
-                                    <h5 class="mb-1">{{ formatRupiah(totalBalance) }}</h5>
-                                    <span class="text-muted">Total Saldo</span>
+                                    <h5 class="mb-1">{{ formatRupiah(totalLedgerBalance) }}</h5>
+                                    <span class="text-muted">Saldo Ledger</span>
                                 </div>
                                 <a href="javascript:void(0);" class="text-secondary">
                                     <i class="ri-file-copy-line ri-22px"></i>
@@ -134,7 +134,7 @@
                     <div class="card">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Rekening Default</p>
+                                <p class="mb-0">Total Saldo Awal</p>
                                 <div class="avatar">
                                     <span class="avatar-initial rounded bg-label-info">
                                         <i class="ri-star-line"></i>
@@ -143,8 +143,8 @@
                             </div>
                             <div class="d-flex justify-content-between align-items-center">
                                 <div class="bank-heading">
-                                    <h5 class="mb-1">{{ defaultAccountCount }}</h5>
-                                    <span class="text-muted">Rekening Default</span>
+                                    <h5 class="mb-1">{{ formatRupiah(totalOpeningBalance) }}</h5>
+                                    <span class="text-muted">Opening Balance</span>
                                 </div>
                                 <a href="javascript:void(0);" class="text-secondary">
                                     <i class="ri-file-copy-line ri-22px"></i>
@@ -231,11 +231,23 @@
                                 <span class="badge bg-label-secondary">{{ slotProps.data.currency }}</span>
                             </template>
                         </Column>
-                        <Column field="opening_balance" header="Saldo" :sortable="true" style="min-width:120px">
+                        <Column field="opening_balance" header="Saldo Awal" :sortable="true" style="min-width:140px">
                             <template #body="slotProps">
-                                <span class="fw-semibold" >
+                                <span class="text-muted">
                                     {{ formatRupiah(slotProps.data.opening_balance || 0) }}
                                 </span>
+                            </template>
+                        </Column>
+                        <Column field="ledger_balance" header="Ledger Balance" :sortable="true" style="min-width:150px">
+                            <template #body="slotProps">
+                                <span class="fw-semibold" :class="getBalanceClass(slotProps.data.ledger_balance)">
+                                    {{ formatRupiah(slotProps.data.ledger_balance ?? slotProps.data.opening_balance ?? 0) }}
+                                </span>
+                            </template>
+                        </Column>
+                        <Column field="unreconciled_count" header="Unreconciled" :sortable="true" style="min-width:120px">
+                            <template #body="slotProps">
+                                {{ slotProps.data.unreconciled_count || 0 }}
                             </template>
                         </Column>
                         <Column header="Actions" :exportable="false" style="min-width:8rem">
@@ -244,6 +256,11 @@
                                     <a href="javascript:;" class="btn btn-sm btn-text-secondary rounded-pill btn-icon dropdown-toggle hide-arrow" data-bs-toggle="dropdown"><i class="ri-more-2-fill"></i>
                                     </a>
                                     <ul class="dropdown-menu">
+                                        <li>
+                                            <a class="dropdown-item" href="javascript:void(0)" @click="openBankAccountDetails(slotProps.data.id)">
+                                                <i class="ri-eye-line me-2"></i> Detail &amp; Ledger
+                                            </a>
+                                        </li>
                                         <li v-if="userHasRole('superadmin') || userHasPermission('edit_bank_account')">
                                             <a class="dropdown-item" href="javascript:void(0)" @click="bankAccountStore.openModal(slotProps.data, 'admin')">
                                                 <i class="ri-edit-box-line me-2"></i> Edit
@@ -332,15 +349,24 @@
                         <div class="col-md-6">
                             <div class="form-floating form-floating-outline">
                                 <input 
-                                    type="number" 
+                                    type="text" 
                                     class="form-control" 
-                                    v-model="form.opening_balance" 
-                                    placeholder="Masukkan saldo awal"
-                                    step="0.01"
-                                    min="0"
-                                    
+                                    :value="formatRupiah(form.opening_balance || 0)"
+                                    @input="updateOpeningBalanceFromInput"
+                                    placeholder="Rp 0"
                                 >
                                 <label>Saldo Awal <span class="text-danger" aria-hidden="true">*</span></label>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="form-floating form-floating-outline">
+                                <select class="form-select" v-model="form.account_id">
+                                    <option value="">Pilih COA Bank/Cash</option>
+                                    <option v-for="acc in cashAccounts" :key="acc.id" :value="acc.id">
+                                        {{ acc.code }} — {{ acc.name }}
+                                    </option>
+                                </select>
+                                <label>Akun GL (Bank/Cash)</label>
                             </div>
                         </div>
 
@@ -368,7 +394,7 @@ import { useUserStore } from '~/stores/user'
 import { usePermissionsStore } from '~/stores/permissions'
 import { useDebounceFn } from '@vueuse/core'
 import { usePermissions } from '~/composables/usePermissions'
-import { useFormatRupiah } from '~/composables/formatRupiah'
+import { useFormatRupiah, parseRupiahToNumber } from '~/composables/formatRupiah'
 import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
@@ -405,17 +431,24 @@ const showModal = computed(() => bankAccountStore.showModal || false)
 const validationErrors = computed(() => bankAccountStore.validationErrors || [])
 const accountTypes = computed(() => bankAccountStore.accountTypes || [])
 const currencies = computed(() => bankAccountStore.currencies || [])
+const cashAccounts = computed(() => bankAccountStore.cashAccounts || [])
 
-// Statistics
-const activeAccountCount = computed(() => 0) // Not available in current database schema
-const defaultAccountCount = computed(() => 0) // Not available in current database schema
+const activeAccountCount = computed(() =>
+    (bankAccounts.value || []).filter((a) => a.is_active !== false).length
+)
 
-const totalBalance = computed(() => {
+const totalUnreconciled = computed(() =>
+    (bankAccounts.value || []).reduce((sum, acc) => sum + (Number(acc.unreconciled_count) || 0), 0)
+)
+
+const totalLedgerBalance = computed(() => {
     if (!bankAccounts.value || !Array.isArray(bankAccounts.value)) return 0
-    return bankAccounts.value.reduce((sum, acc) => {
-        const balance = Number(acc.opening_balance) || 0
-        return sum + balance
-    }, 0)
+    return bankAccounts.value.reduce((sum, acc) => sum + (Number(acc.ledger_balance ?? acc.opening_balance) || 0), 0)
+})
+
+const totalOpeningBalance = computed(() => {
+    if (!bankAccounts.value || !Array.isArray(bankAccounts.value)) return 0
+    return bankAccounts.value.reduce((sum, acc) => sum + (Number(acc.opening_balance) || 0), 0)
 })
 
 // Table options
@@ -433,7 +466,7 @@ const getBalanceClass = (balance) => {
 }
 
 const openBankAccountDetails = (accountId) => {
-    router.push({ path: `/accounting/bank-accounts/detail`, query: { id: accountId } })
+    router.push({ path: `/finance/bank-account/detail/${accountId}` })
 }
 
 const exportData = (format) => {
@@ -450,6 +483,7 @@ onMounted(async () => {
     try {
         await permissionStore.fetchPermissions()
         await userStore.loadUser()
+        await bankAccountStore.fetchCashAccounts()
         if (bankAccountStore.bankAccounts.length === 0) {
             await bankAccountStore.fetchBankAccounts()
         }
@@ -482,6 +516,11 @@ const handleSearch = async (value) => {
 }
 
 const onSort = (event) => bankAccountStore.setSort(event)
+
+const updateOpeningBalanceFromInput = (event) => {
+    const numericValue = parseRupiahToNumber(event.target.value)
+    bankAccountStore.form.opening_balance = Math.round(numericValue)
+}
 
 definePageMeta({
   layout: 'default',
