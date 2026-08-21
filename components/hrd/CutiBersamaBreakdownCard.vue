@@ -62,7 +62,7 @@
               <div class="border rounded p-3 h-100">
                 <div class="text-muted small">Cuti Diambil</div>
                 <div class="fs-4 fw-semibold">-{{ summary.cuti_pengajuan_terpakai }}</div>
-                <div class="text-muted small">hari (pengajuan disetujui)</div>
+                <div class="text-muted small">hari (pengajuan CT disetujui)</div>
               </div>
             </div>
             <div class="col-sm-6 col-xl-3">

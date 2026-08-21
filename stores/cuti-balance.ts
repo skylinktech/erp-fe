@@ -17,6 +17,7 @@ export interface CutiBalanceRow {
   jatah_awal: number
   cuti_bersama_total: number
   cuti_pengajuan_terpakai: number
+  sisa_tersedia?: number
   pegawai: {
     idPegawai: number
     nmPegawai: string

@@ -34,8 +34,8 @@
                 <div class="col-md-6 d-flex align-items-end">
                   <p class="small text-muted mb-0">
                     <i class="ri-information-line me-1"></i>
-                    Saldo cuti tahunan otomatis berkurang saat ada cuti bersama atau pengajuan
-                    disetujui.
+                    Saldo per tipe berkurang saat pengajuan tipe itu disetujui.
+                    Cuti bersama hanya memotong Cuti Tahunan (CT).
                   </p>
                 </div>
               </div>
@@ -119,7 +119,7 @@
                 </Column>
                 <Column header="Sisa" style="width: 8%">
                   <template #body="{ data }">
-                    <strong class="text-success">{{ data.sisa_jatah_cuti }}</strong>
+                    <strong class="text-success">{{ sisaTampil(data) }}</strong>
                   </template>
                 </Column>
                 <Column header="Valid Sampai" style="width: 12%">
@@ -192,7 +192,7 @@
             />
           </div>
           <div v-if="!store.isEditMode" class="col-md-6 d-flex align-items-end">
-            <div class="form-check">
+            <div v-if="selectedTypeHasDefaultQuota" class="form-check">
               <input
                 id="auto-prorata"
                 v-model="store.form.auto_prorata"
@@ -203,9 +203,12 @@
                 Hitung jatah pro-rata otomatis
               </label>
             </div>
+            <p v-else class="small text-muted mb-2">
+              Tipe ini tidak punya jatah default. Isi sisa jatah sesuai kuota pegawai.
+            </p>
           </div>
           <div
-            v-if="store.isEditMode || (!store.isEditMode && !store.form.auto_prorata)"
+            v-if="store.isEditMode || !store.form.auto_prorata || !selectedTypeHasDefaultQuota"
             class="col-md-6"
           >
             <label class="form-label">
@@ -306,7 +309,7 @@
                 <dt class="col-4 text-muted">Cuti Diambil</dt>
                 <dd class="col-8">-{{ detail.cuti_pengajuan_terpakai }} hari</dd>
                 <dt class="col-4 text-muted">Sisa</dt>
-                <dd class="col-8"><strong class="text-success">{{ detail.sisa_jatah_cuti }} hari</strong></dd>
+                <dd class="col-8"><strong class="text-success">{{ sisaTampil(detail) }} hari</strong></dd>
               </dl>
 
               <h6 v-if="(detail.breakdown?.length ?? 0) > 0" class="mb-3">Breakdown Cuti Bersama</h6>
@@ -384,6 +387,29 @@ const canCreate = computed(
 const canEdit = computed(() => userHasRole('superadmin') || userHasPermission('edit_saldo_cuti'))
 const canDelete = computed(
   () => userHasRole('superadmin') || userHasPermission('delete_saldo_cuti')
+)
+
+const selectedCreateType = computed(
+  () => cutiTypes.value.find((t) => t.id === store.form.cuti_type_id) ?? null
+)
+const selectedTypeHasDefaultQuota = computed(
+  () => Number(selectedCreateType.value?.jatahCuti ?? 0) > 0
+)
+
+function sisaTampil(row: Pick<CutiBalanceRow, 'jatah_awal' | 'cuti_bersama_total' | 'cuti_pengajuan_terpakai' | 'sisa_tersedia' | 'sisa_jatah_cuti'>) {
+  if (row.sisa_tersedia != null) return row.sisa_tersedia
+  const jatah = Number(row.jatah_awal ?? 0)
+  const bersama = Number(row.cuti_bersama_total ?? 0)
+  const diambil = Number(row.cuti_pengajuan_terpakai ?? 0)
+  return Math.max(0, jatah - bersama - diambil)
+}
+
+watch(
+  () => store.form.cuti_type_id,
+  () => {
+    if (store.isEditMode) return
+    store.form.auto_prorata = selectedTypeHasDefaultQuota.value
+  }
 )
 
 setListTitle('Saldo Cuti', 0)

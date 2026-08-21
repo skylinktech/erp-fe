@@ -272,6 +272,7 @@
                   <li>Boleh diajukan backdated maksimum 7 hari terakhir.</li>
                   <li>Cuti sakit 1–2 hari: lampiran opsional.</li>
                   <li>Cuti sakit lebih dari 2 hari: wajib lampirkan surat dokter / keterangan sakit.</li>
+                  <li>Jika pegawai punya kuota Cuti Sakit, pengajuan yang disetujui memotong kuota itu (bukan jatah Cuti Tahunan).</li>
                 </ul>
               </div>
             </div>
