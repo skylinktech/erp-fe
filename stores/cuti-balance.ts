@@ -57,6 +57,26 @@ function emptyForm(): CutiBalanceFormModel {
   }
 }
 
+/** Normalisasi ke `YYYY-MM-DD` agar `<input type="date">` dan validator VineJS selaras. */
+function toDateOnly(value: string | Date | null | undefined): string | null {
+  if (value == null || value === '') return null
+  if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) return null
+    const yyyy = value.getFullYear()
+    const mm = String(value.getMonth() + 1).padStart(2, '0')
+    const dd = String(value.getDate()).padStart(2, '0')
+    return `${yyyy}-${mm}-${dd}`
+  }
+  const s = String(value).trim()
+  const iso = s.match(/^(\d{4}-\d{2}-\d{2})/)
+  if (iso) return iso[1]
+  const dmy = s.match(/^(\d{1,2})\s*\/\s*(\d{1,2})\s*\/\s*(\d{4})$/)
+  if (dmy) {
+    return `${dmy[3]}-${dmy[2].padStart(2, '0')}-${dmy[1].padStart(2, '0')}`
+  }
+  return null
+}
+
 interface CutiBalanceState {
   rows: CutiBalanceRow[]
   loading: boolean
@@ -212,7 +232,7 @@ export const useCutiBalanceStore = defineStore('cuti-balance', {
         sisa_jatah_cuti: row.sisa_jatah_cuti,
         cuti_terpakai: row.cuti_terpakai,
         sisa_cuti_tahun_lalu: row.sisa_cuti_tahun_lalu,
-        valid_sampai: row.valid_sampai || `${row.tahun}-12-31`,
+        valid_sampai: toDateOnly(row.valid_sampai) || `${row.tahun}-12-31`,
         auto_prorata: false,
       }
       this.showModal = true
@@ -267,7 +287,7 @@ export const useCutiBalanceStore = defineStore('cuti-balance', {
               sisa_jatah_cuti: this.form.sisa_jatah_cuti,
               cuti_terpakai: this.form.cuti_terpakai,
               sisa_cuti_tahun_lalu: this.form.sisa_cuti_tahun_lalu,
-              valid_sampai: this.form.valid_sampai || null,
+              valid_sampai: toDateOnly(this.form.valid_sampai),
             }
           : {
               pegawai_id: this.form.pegawai_id,
@@ -276,7 +296,7 @@ export const useCutiBalanceStore = defineStore('cuti-balance', {
               sisa_jatah_cuti: this.form.auto_prorata ? undefined : this.form.sisa_jatah_cuti,
               cuti_terpakai: this.form.cuti_terpakai,
               sisa_cuti_tahun_lalu: this.form.sisa_cuti_tahun_lalu,
-              valid_sampai: this.form.valid_sampai || null,
+              valid_sampai: toDateOnly(this.form.valid_sampai),
               auto_prorata: this.form.auto_prorata,
             }
 
