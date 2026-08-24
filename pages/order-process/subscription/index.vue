@@ -210,6 +210,9 @@
                         <li v-if="(userHasRole('superadmin') || userHasPermission('edit_subscription')) && (slotProps.data.status === 'draft' || slotProps.data.status === 'signed')">
                           <a class="dropdown-item text-warning" href="javascript:void(0)" @click="openCancelModal(slotProps.data)"><i class="ri-close-circle-line me-2"></i> Cancel</a>
                         </li>
+                        <li v-if="(userHasRole('superadmin') || userHasPermission('edit_subscription')) && (slotProps.data.status === 'active' || slotProps.data.status === 'signed')">
+                          <a class="dropdown-item" href="javascript:void(0)" @click="openAttachmentModal(slotProps.data)"><i class="ri-attachment-line me-2"></i> Edit Attachment</a>
+                        </li>
                         <li v-if="(userHasRole('superadmin') || userHasPermission('delete_subscription')) && slotProps.data.status === 'draft'">
                           <a class="dropdown-item text-danger" href="javascript:void(0)" @click="subscriptionStore.deleteSubscription(slotProps.data.id)"><i class="ri-delete-bin-7-line me-2"></i> Hapus</a>
                         </li>
@@ -231,12 +234,19 @@
 
     </div>
     <div class="content-backdrop fade"></div>
+    <SubscriptionAttachmentModal
+      v-model="showAttachmentModal"
+      :subscription-id="selectedAttachmentSubscription?.id || null"
+      :subscription-data="selectedAttachmentSubscription"
+      @saved="refreshAfterAttachmentSave"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
+import SubscriptionAttachmentModal from '~/components/subscription/SubscriptionAttachmentModal.vue'
 import { useSubscriptionStore } from '~/stores/subscription'
 import { useCustomerStore } from '~/stores/customer'
 import { usePermissions } from '~/composables/usePermissions'
@@ -258,6 +268,8 @@ const { customers } = storeToRefs(customerStore)
 
 const tableControls = ref({ rows: 10, search: '' })
 const filters = ref({ search: '', customerId: null, status: null })
+const showAttachmentModal = ref(false)
+const selectedAttachmentSubscription = ref(null)
 
 const hasActiveFilters = computed(
   () => !!filters.value.customerId || !!filters.value.status
@@ -348,6 +360,16 @@ async function openCancelModal(row) {
     const ok = await subscriptionStore.cancelSubscription(row.id, result.value ?? null)
     if (ok) subscriptionStore.fetchSubscriptions()
   }
+}
+
+function openAttachmentModal(row) {
+  selectedAttachmentSubscription.value = row
+  showAttachmentModal.value = true
+}
+
+async function refreshAfterAttachmentSave() {
+  await subscriptionStore.fetchSubscriptions(true)
+  await subscriptionStore.fetchStatistics()
 }
 
 const handleRowsChange = (v) => { 

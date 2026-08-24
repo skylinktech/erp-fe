@@ -160,8 +160,8 @@ export const PRINT_DOCUMENTS: Record<PrintDocumentType, PrintDocumentPreset> = {
   },
   SUBSCRIPTION: {
     ...STANDARD,
-    title: 'FORM BERLANGGANAN',
-    subtitle: '(Subscription)',
+    title: 'FORMULIR BERLANGGANAN',
+    subtitle: '(Subscription Form)',
     notFoundMessage: 'Form Berlangganan tidak ditemukan.',
   },
   CUTI: {

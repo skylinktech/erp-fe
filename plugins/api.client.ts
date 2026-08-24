@@ -833,6 +833,7 @@ export default defineNuxtPlugin(() => {
     submitSubscription: (id: string) => `${apiBase}/subscription/submitSubscription/${id}`,
     activateSubscription: (id: string) => `${apiBase}/subscription/activateSubscription/${id}`,
     cancelSubscription: (id: string) => `${apiBase}/subscription/cancelSubscription/${id}`,
+    updateSubscriptionAttachments: (id: string) => `${apiBase}/subscription/${id}/attachments`,
 
     // Sales Pipeline
     salesPipelineStage: () => `${apiBase}/sales-pipeline-stage`,
@@ -874,10 +875,14 @@ export default defineNuxtPlugin(() => {
       if (!status) return url
       return `${url}?status=${encodeURIComponent(status)}`
     },
-    dataPegawai: (statusPegawai?: number | string) => {
-      const url = `${apiBase}/data/pegawai`
-      if (statusPegawai === undefined || statusPegawai === null || statusPegawai === '') return url
-      return `${url}?status_pegawai=${encodeURIComponent(String(statusPegawai))}`
+    dataPegawai: (statusPegawai?: number | string, opts?: { requireKontrakAktif?: boolean }) => {
+      const qs = new URLSearchParams()
+      if (statusPegawai !== undefined && statusPegawai !== null && statusPegawai !== '') {
+        qs.set('status_pegawai', String(statusPegawai))
+      }
+      if (opts?.requireKontrakAktif) qs.set('require_kontrak_aktif', '1')
+      const query = qs.toString()
+      return query ? `${apiBase}/data/pegawai?${query}` : `${apiBase}/data/pegawai`
     },
     dataStock: () => `${apiBase}/data/stock`,
 

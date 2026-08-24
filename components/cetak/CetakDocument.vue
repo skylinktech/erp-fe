@@ -26,37 +26,58 @@
     <template v-else>
       <CetakPrintButton />
 
-      <CetakHeader
-        :variant="preset.headerVariant"
-        :title="resolvedTitle"
-        :subtitle="resolvedSubtitle"
-        :brand-name="preset.brandName"
-        :document-number="documentNumber"
-        :show-number-under-title="showNumberUnderTitle"
-        :show-npwp="preset.showNpwp"
-        :header-note="headerNote"
-        :header-meta="headerMeta"
-        :profile="profile"
-      >
-        <template v-if="$slots.header" #header>
-          <slot name="header" />
-        </template>
-      </CetakHeader>
-
-      <hr class="cetak-hr">
-
-      <div class="cetak-document__body">
-        <slot />
-      </div>
-
-      <CetakFooter
-        :title="resolvedTitle"
-        :document-number="documentNumber"
-        :footer-brand="preset.footerBrand"
-        :revision="revision"
-        :generated-at="showGeneratedAt ? generatedAtDisplay : ''"
-        :show-page-number="preset.showPageNumber"
-      />
+      <!--
+        Table skeleton: thead/tfoot repeat on every printed page (reliable in Chromium).
+        Avoids position:fixed overlap that clips body content.
+      -->
+      <table class="cetak-page-table">
+        <thead class="cetak-page-table__head">
+          <tr>
+            <td class="cetak-page-table__head-cell">
+              <CetakHeader
+                :variant="preset.headerVariant"
+                :title="resolvedTitle"
+                :subtitle="resolvedSubtitle"
+                :brand-name="preset.brandName"
+                :document-number="documentNumber"
+                :show-number-under-title="showNumberUnderTitle"
+                :show-npwp="preset.showNpwp"
+                :header-note="headerNote"
+                :header-meta="headerMeta"
+                :profile="profile"
+              >
+                <template v-if="$slots.header" #header>
+                  <slot name="header" />
+                </template>
+              </CetakHeader>
+              <hr class="cetak-hr">
+            </td>
+          </tr>
+        </thead>
+        <tfoot class="cetak-page-table__foot">
+          <tr>
+            <td class="cetak-page-table__foot-cell">
+              <CetakFooter
+                :title="resolvedTitle"
+                :document-number="documentNumber"
+                :footer-brand="preset.footerBrand"
+                :revision="revision"
+                :generated-at="showGeneratedAt ? generatedAtDisplay : ''"
+                :show-page-number="preset.showPageNumber"
+              />
+            </td>
+          </tr>
+        </tfoot>
+        <tbody class="cetak-page-table__body">
+          <tr>
+            <td class="cetak-page-table__body-cell">
+              <div class="cetak-document__body">
+                <slot />
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </template>
   </div>
 </template>
@@ -172,13 +193,22 @@ function applyPrintEnvironment() {
   document.documentElement.setAttribute('data-print-paper', preset.value.paper)
   document.documentElement.setAttribute('data-print-orientation', preset.value.orientation)
   document.documentElement.setAttribute('data-print-type', props.type)
+  document.documentElement.setAttribute('data-print-header', preset.value.headerVariant)
 
   if (!pageStyleEl) {
     pageStyleEl = document.createElement('style')
     pageStyleEl.setAttribute('data-cetak-page', 'true')
     document.head.appendChild(pageStyleEl)
   }
-  pageStyleEl.textContent = `@page { size: ${preset.value.paper} ${preset.value.orientation}; margin: 0; }`
+  const isLandscape = preset.value.orientation === 'landscape'
+  const tallHeader =
+    preset.value.headerVariant === 'company-address' ||
+    preset.value.headerVariant === 'finance'
+  const isSubscription = props.type === 'SUBSCRIPTION'
+  const topMargin = isSubscription ? '10mm' : isLandscape ? (tallHeader ? '40mm' : '26mm') : tallHeader ? '48mm' : '30mm'
+  const bottomMargin = isSubscription ? '16mm' : isLandscape ? '18mm' : '22mm'
+  const sideMargin = isSubscription ? '10mm' : '8mm'
+  pageStyleEl.textContent = `@page { size: ${preset.value.paper} ${preset.value.orientation}; margin: ${topMargin} ${sideMargin} ${bottomMargin} ${sideMargin} !important; }`
 }
 
 function clearPrintEnvironment() {
@@ -186,6 +216,7 @@ function clearPrintEnvironment() {
   document.documentElement.removeAttribute('data-print-paper')
   document.documentElement.removeAttribute('data-print-orientation')
   document.documentElement.removeAttribute('data-print-type')
+  document.documentElement.removeAttribute('data-print-header')
   pageStyleEl?.remove()
   pageStyleEl = null
 }

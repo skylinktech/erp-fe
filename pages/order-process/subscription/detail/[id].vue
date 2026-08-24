@@ -51,6 +51,9 @@
                   <a v-if="subscription.status === 'draft'" class="dropdown-item" href="javascript:void(0)" @click="navigateTo('/order-process/subscription?edit=' + subscription.id)">
                     <i class="ri-edit-box-line me-2"></i> Edit
                   </a>
+                  <a v-if="canEditAttachment" class="dropdown-item" href="javascript:void(0)" @click="openAttachmentEditor">
+                    <i class="ri-attachment-line me-2"></i> Edit Attachment
+                  </a>
                   <a class="dropdown-item" href="javascript:void(0)" @click="onPrintSubscription">
                     <i class="ri-printer-line me-2"></i> Cetak Form Berlangganan
                   </a>
@@ -421,12 +424,19 @@
       </div>
     </div>
     <div class="content-backdrop fade"></div>
+    <SubscriptionAttachmentModal
+      v-model="showAttachmentModal"
+      :subscription-id="subscription?.id || null"
+      :subscription-data="subscription"
+      @saved="refreshAfterAction"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
+import SubscriptionAttachmentModal from '~/components/subscription/SubscriptionAttachmentModal.vue'
 import { useSubscriptionStore } from '~/stores/subscription'
 import { usePermissions } from '~/composables/usePermissions'
 import { useImageUrl } from '~/composables/useImageUrl'
@@ -440,6 +450,13 @@ const { getAttachmentUrl } = useImageUrl()
 
 const { subscription, loading, error } = storeToRefs(subscriptionStore)
 const submitting = ref(false)
+const showAttachmentModal = ref(false)
+
+const canEditAttachment = computed(() => {
+  if (!subscription.value) return false
+  const s = subscription.value.status
+  return (s === 'active' || s === 'signed') && (userHasRole('superadmin') || userHasPermission('edit_subscription'))
+})
 
 const id = computed(() => String(route.params.id || ''))
 
@@ -629,13 +646,19 @@ async function onCancel () {
   }
 }
 
+function openAttachmentEditor() {
+  showAttachmentModal.value = true
+}
+
 function handleDelete () {
   if (!subscription.value) return
   subscriptionStore.deleteSubscription(subscription.value.id)
   navigateTo('/order-process/subscription')
 }
 
-onMounted(() => load())
+onMounted(async () => {
+  await load()
+})
 watch(id, () => load())
 
 definePageMeta({

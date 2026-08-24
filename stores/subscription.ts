@@ -662,6 +662,63 @@ export const useSubscriptionStore = defineStore('subscription', {
       this.validationErrors = []
     },
 
+    async saveAttachmentsOnly(subscriptionId: string) {
+      const toast = useToast()
+      this.saving = true
+      const { $api } = useNuxtApp()
+
+      const formData = new FormData()
+
+      if (this.form.attachments && this.form.attachments.length > 0) {
+        for (const file of this.form.attachments) {
+          formData.append('attachments', file)
+        }
+      }
+      if (this.form.existingAttachments) {
+        formData.append('existingAttachments', JSON.stringify(this.form.existingAttachments))
+      }
+
+      if (this.form.poAttachment instanceof File) {
+        formData.append('poAttachment', this.form.poAttachment)
+      }
+      if (this.form.existingPoAttachment) {
+        formData.append('existingPoAttachment', this.form.existingPoAttachment)
+      } else if (!this.form.poAttachment) {
+        formData.append('removePoAttachment', '1')
+      }
+
+      try {
+        const res = await fetch($api.updateSubscriptionAttachments(subscriptionId), {
+          method: 'PATCH',
+          headers: { Accept: 'application/json' },
+          credentials: 'include',
+          body: formData,
+        })
+
+        if (!res.ok) {
+          const err = await normalizeFailedResponse(res, 'Attachment gagal diperbarui.')
+          toastNormalizedError(err)
+          return false
+        }
+
+        this.closeModal()
+        toast.success({
+          title: 'Sukses',
+          message: 'Attachment berhasil diperbarui',
+          color: 'green',
+          position: 'bottomRight',
+          layout: 2,
+        })
+        return true
+      } catch (e: any) {
+        const err = normalizeApiError(e, 'Attachment gagal disimpan.')
+        toastNormalizedError(err)
+        return false
+      } finally {
+        this.saving = false
+      }
+    },
+
     addService() {
       this.form.subscriptionServices.push({
         serviceId: 0,
