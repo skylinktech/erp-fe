@@ -29,6 +29,7 @@ export const PRINT_DOCUMENT_TYPES = [
   'PURCHASE_REQUEST',
   'MATERIAL_REQUEST',
   'SITE_INVESTMENT',
+  'SUBSCRIPTION',
   'CUTI',
   'LEMBUR',
   'PERJALANAN_DINAS',
@@ -156,6 +157,12 @@ export const PRINT_DOCUMENTS: Record<PrintDocumentType, PrintDocumentPreset> = {
     ...STANDARD,
     title: 'SITE INVESTMENT',
     notFoundMessage: 'Site Investment tidak ditemukan.',
+  },
+  SUBSCRIPTION: {
+    ...STANDARD,
+    title: 'FORM BERLANGGANAN',
+    subtitle: '(Subscription)',
+    notFoundMessage: 'Form Berlangganan tidak ditemukan.',
   },
   CUTI: {
     ...STANDARD,

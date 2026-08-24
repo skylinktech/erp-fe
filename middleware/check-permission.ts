@@ -119,6 +119,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       '/hrd/cetak-perjalanan-dinas': 'view_perjalanan_dinas',
       '/implementation/cetak-arf': 'view_arf',
       '/finance/cetak-payment-request': 'view_payment_request',
+      '/order-process/cetak-subscription': 'access_subscription',
       '/company/perusahaan': 'view_perusahaan',
       '/company/cabang': 'view_cabang',
       '/admin/roles': 'view_role',
@@ -218,6 +219,8 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
         requiredPermission = 'view_berita_acara'
       } else if (/^\/finance\/cetak-payment-request/.test(to.path)) {
         requiredPermission = 'view_payment_request'
+      } else if (/^\/order-process\/cetak-subscription/.test(to.path)) {
+        requiredPermission = 'access_subscription'
       } else if (/^\/finance\/billing-preparations/.test(to.path)) {
         requiredPermission = 'view_billing_preparation'
       } else if (/^\/purchasing\/purchase-order\/form(\/.*)?$/.test(to.path)) {

@@ -64,6 +64,10 @@
                     <div v-if="uiErrors.customerName || uiErrors.customerId" class="invalid-feedback d-block">{{ uiErrors.customerName || uiErrors.customerId }}</div>
                   </div>
                   <div class="col-md-6">
+                    <label class="form-label text-muted">Business Scheme</label>
+                    <input type="text" :value="businessSchemeLabel" class="form-control bg-light" readonly placeholder="Dari Quotation → Site Investment" />
+                  </div>
+                  <div class="col-md-6">
                     <label class="form-label text-muted">Status</label>
                     <CustomSelect2
                       v-model="localForm.status"
@@ -395,6 +399,16 @@ const servicePlanNameFromQuotation = computed(() => {
   if (!selectedQuotation.value) return ''
   const services = selectedQuotation.value.quotationServices ?? selectedQuotation.value.quotation_services ?? []
   return services[0]?.servicePlan?.name ?? services[0]?.service_plan_name ?? services[0]?.service?.servicePlan?.name ?? ''
+})
+
+/** Quotation → Site Investment → Business Scheme (preloaded server-side). */
+const businessSchemeLabel = computed(() => {
+  const q = selectedQuotation.value
+  if (!q) return ''
+  const si = q.siteInvest ?? q.site_invest ?? null
+  const scheme = si?.businessScheme ?? si?.business_scheme ?? null
+  if (!scheme) return '—'
+  return scheme.name || scheme.code || '—'
 })
 
 const otcFromQuotationItems = computed(() => {

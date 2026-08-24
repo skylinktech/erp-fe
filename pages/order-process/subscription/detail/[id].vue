@@ -51,6 +51,9 @@
                   <a v-if="subscription.status === 'draft'" class="dropdown-item" href="javascript:void(0)" @click="navigateTo('/order-process/subscription?edit=' + subscription.id)">
                     <i class="ri-edit-box-line me-2"></i> Edit
                   </a>
+                  <a class="dropdown-item" href="javascript:void(0)" @click="onPrintSubscription">
+                    <i class="ri-printer-line me-2"></i> Cetak Form Berlangganan
+                  </a>
                   <a v-if="subscription.status === 'draft'" class="dropdown-item text-danger" href="javascript:void(0)" @click="handleDelete">
                     <i class="ri-delete-bin-7-line me-2"></i> Hapus
                   </a>
@@ -104,6 +107,10 @@
                         <NuxtLink v-if="subscription.quotation?.id" :to="'/sales/quotation/detail/' + subscription.quotation.id" class="text-primary">{{ subscription.quotation?.noQuotation || '—' }}</NuxtLink>
                         <span v-else>{{ subscription.quotation?.noQuotation || '—' }}</span>
                       </p>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label text-muted medium">Business Scheme</label>
+                      <p class="mb-0 fw-medium">{{ businessSchemeLabel }}</p>
                     </div>
                     <div class="col-md-6">
                       <label class="form-label text-muted medium">Customer</label>
@@ -436,6 +443,16 @@ const submitting = ref(false)
 
 const id = computed(() => String(route.params.id || ''))
 
+/** Quotation → Site Investment → Business Scheme (preloaded server-side). */
+const businessSchemeLabel = computed(() => {
+  const q = subscription.value?.quotation as any
+  if (!q) return '—'
+  const si = q.siteInvest ?? q.site_invest ?? null
+  const scheme = si?.businessScheme ?? si?.business_scheme ?? null
+  if (!scheme) return '—'
+  return scheme.name || scheme.code || '—'
+})
+
 function formatDate (v: string | Date | null | undefined) {
   if (!v) return '—'
   return new Date(v).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
@@ -541,6 +558,14 @@ async function load () {
 
 function refreshAfterAction () {
   setTimeout(() => load(), 500)
+}
+
+function onPrintSubscription () {
+  if (!subscription.value?.id) return
+  navigateTo({
+    path: '/order-process/cetak-subscription',
+    query: { id: subscription.value.id, print: 'true' },
+  })
 }
 
 async function onSubmit () {

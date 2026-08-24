@@ -177,6 +177,11 @@
                     <a @click="navigateTo(`/sales/quotation/detail/${slotProps.data.quotation.id}`)" class="text-primary text-nowrap" style="cursor:pointer;text-decoration:underline" :title="'View detail'">{{ slotProps.data.quotation?.noQuotation || slotProps.data.quotation?.no_quotation || '-' }}</a>
                   </template>
                 </Column>
+                <Column header="Skema" :sortable="false" class="text-nowrap">
+                  <template #body="slotProps">
+                    {{ getBusinessSchemeLabel(slotProps.data) }}
+                  </template>
+                </Column>
                 <Column field="status" header="Status" :sortable="true">
                   <template #body="slotProps">
                     <span :class="getStatusBadge(slotProps.data.status).class">{{ getStatusBadge(slotProps.data.status).text }}</span>
@@ -210,6 +215,9 @@
                         </li>
                         <li>
                           <a class="dropdown-item" href="javascript:void(0)" @click="navigateTo(`/order-process/subscription/detail/${slotProps.data.id}`)"><i class="ri-eye-line me-2"></i> Lihat Detail</a>
+                        </li>
+                        <li>
+                          <a class="dropdown-item" href="javascript:void(0)" @click="goToCetak(slotProps.data)"><i class="ri-printer-line me-2"></i> Cetak</a>
                         </li>
                       </ul>
                     </div>
@@ -282,6 +290,22 @@ function getStatusBadge(status) {
     case 'canceled': return { text: 'Canceled', class: 'badge rounded-pill bg-label-danger' }
     default: return { text: status, class: 'badge rounded-pill bg-label-light' }
   }
+}
+
+/** Quotation → Site Investment → Business Scheme (preloaded server-side). */
+function getBusinessSchemeLabel(row) {
+  const q = row?.quotation
+  const si = q?.siteInvest ?? q?.site_invest
+  const scheme = si?.businessScheme ?? si?.business_scheme
+  return scheme?.name || scheme?.code || '-'
+}
+
+function goToCetak(row) {
+  if (!row?.id) return
+  navigateTo({
+    path: '/order-process/cetak-subscription',
+    query: { id: String(row.id), print: 'true' },
+  })
 }
 
 async function handleActivate(row) {

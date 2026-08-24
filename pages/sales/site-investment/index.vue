@@ -264,7 +264,9 @@
                                         <template #body="slotProps">{{ (slotProps.data.customer?.name ?? slotProps.data.customerName) || '-' }}</template>
                                     </Column>
                                     <Column field="location" header="Lokasi" :sortable="true">
-                                        <template #body="slotProps">{{ slotProps.data.location || '-' }}</template>
+                                        <template #body="slotProps">
+                                            <span :title="slotProps.data.location || ''">{{ truncateWords(slotProps.data.location, 5) }}</span>
+                                        </template>
                                     </Column>
                                     <Column field="businessScheme.name" header="Skema" :sortable="true" class="text-nowrap fw-semibold">
                                         <template #body="slotProps">{{ (slotProps.data.businessScheme?.name ?? slotProps.data.businessSchemeName) || '-' }}</template>
@@ -422,6 +424,14 @@ function canRejectSiteInvest(row) {
 }
 
 const { getAttachmentUrl, isImageFile } = useImageUrl()
+
+function truncateWords(text, maxWords = 5) {
+    const value = String(text || '').trim()
+    if (!value) return '-'
+    const words = value.split(/\s+/).filter(Boolean)
+    if (words.length <= maxWords) return value
+    return `${words.slice(0, maxWords).join(' ')} ...`
+}
 
 function formatSiDate(value) {
     if (value == null || value === '') return '-'
