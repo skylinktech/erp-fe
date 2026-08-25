@@ -899,8 +899,7 @@ const updateReceivedQty = async (item) => {
     }
 }
 
-// ✅ FUNCTION untuk mendapatkan status badge class
-// ✅ FUNCTION untuk status (dengan "Approved by X" / "Rejected by X")
+// ✅ FUNCTION untuk status (dengan "Approved by X" / "Rejected by X" / "Received by X")
 const { getStatusBadge, getStatusText } = useApprovalStatus()
 
 // ✅ FUNCTION untuk check status semua items
@@ -911,10 +910,16 @@ const checkAllItemsStatus = () => {
         return Math.floor(Number(item.receivedQty || 0)) === Math.floor(Number(item.quantity || 0))
     })
     
-    if (allItemsDone && purchaseOrder.value.status !== 'received') {
+    if (allItemsDone && purchaseOrder.value.status === 'received') {
+        const receiverName =
+            purchaseOrder.value.receivedByUser?.fullName ||
+            purchaseOrder.value.receivedByUser?.full_name ||
+            ''
         toast.success({
             title: 'Semua Item Selesai!',
-            message: 'Semua item telah diterima sepenuhnya. Status berubah menjadi Received.',
+            message: receiverName
+                ? `Semua item telah diterima sepenuhnya. Status: Received by ${receiverName}.`
+                : 'Semua item telah diterima sepenuhnya. Status berubah menjadi Received.',
             color: 'green',
             timeout: 2000,
             position: 'bottomRight',

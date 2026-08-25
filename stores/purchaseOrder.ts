@@ -659,6 +659,15 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
                 if (this.purchaseOrder.status !== updatedPurchaseOrder.status) {
                     this.purchaseOrder.status = updatedPurchaseOrder.status;
                 }
+                if (updatedPurchaseOrder.receivedBy != null) {
+                    this.purchaseOrder.receivedBy = updatedPurchaseOrder.receivedBy;
+                }
+                if (updatedPurchaseOrder.receivedAt != null) {
+                    this.purchaseOrder.receivedAt = updatedPurchaseOrder.receivedAt;
+                }
+                if (updatedPurchaseOrder.receivedByUser) {
+                    this.purchaseOrder.receivedByUser = updatedPurchaseOrder.receivedByUser;
+                }
             }
             
             // ✅ Toast dihapus karena sudah ada di component yang memanggilnya

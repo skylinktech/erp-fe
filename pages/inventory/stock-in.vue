@@ -191,12 +191,17 @@
                                                         <i class="ri-upload-2-line me-2"></i> Post
                                                     </a>
                                                 </li>
+                                                <li v-if="canEditSerial(slotProps.data)">
+                                                    <a class="dropdown-item" href="javascript:void(0)" @click="editSerials(slotProps.data.id)">
+                                                        <i class="ri-barcode-box-line me-2"></i> Edit Serial
+                                                    </a>
+                                                </li>
                                                 <li v-if="userHasRole('superadmin') || userHasPermission('show_stock_in')">
                                                     <a class="dropdown-item" href="javascript:void(0)" @click="viewStockInDetails(slotProps.data.id)">
                                                         <i class="ri-eye-line me-2"></i> Lihat Detail
                                                     </a>
                                                 </li>
-                                                <li v-if="userHasRole('superadmin') || (userHasPermission('delete_stock_in'))">
+                                                <li v-if="(userHasRole('superadmin') || userHasPermission('delete_stock_in')) && slotProps.data.status == 'draft'">
                                                     <a class="dropdown-item text-danger" href="javascript:void(0)" @click="deleteStockIn(slotProps.data.id)">
                                                         <i class="ri-delete-bin-7-line me-2"></i> Hapus
                                                     </a>
@@ -233,6 +238,7 @@ import { useRouter } from 'vue-router'
 import { usePermissions } from '~/composables/usePermissions'
 import { usePermissionsStore } from '~/stores/permissions'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
+import { toastApiError } from '~/utils/apiError'
 
 // Composables
 const { setListTitle, setFormTitle } = useDynamicTitle()
@@ -259,6 +265,37 @@ const status       = ref([
     { label: 'Draft', value: 'draft' },
     { label: 'Posted', value: 'posted' },
 ]);
+
+function isDeviceProduct(product) {
+    return !!(product?.isDevice ?? product?.is_device)
+}
+
+function trackingPolicyOf(product) {
+    return product?.trackingPolicy || product?.tracking_policy || (isDeviceProduct(product) ? 'UNIT_SERIAL' : 'NONE')
+}
+
+function hasDeviceLines(row) {
+    const details = row?.stockInDetails || row?.stock_in_details || []
+    return details.some((d) => trackingPolicyOf(d.product) !== 'NONE')
+}
+
+function canEditSerial(row) {
+    if (!row || row.status !== 'draft') return false
+    const canCapture =
+        userHasRole('superadmin') ||
+        userHasRole('admin') ||
+        userHasPermission('capture_equipment_serial') ||
+        userHasPermission('approve_stock_in') ||
+        userHasPermission('edit_stock_in')
+    return canCapture && hasDeviceLines(row)
+}
+
+function editSerials(stockInId) {
+    router.push({
+        path: '/inventory/stock-in-detail',
+        query: { id: stockInId, focus: 'serials' },
+    })
+}
 
 // Method untuk selection change
 const onSelectionChange = (event) => {
@@ -426,27 +463,14 @@ const postStockIn = async (id) => {
         await stockInStore.fetchStockInsPaginated();
         selectedStockIns.value = [];
         forceUpdate.value++;
-        toast.success(`Stock In berhasil diposting.`);
+        toast.success({
+            title: 'Berhasil',
+            message: 'Stock In berhasil diposting.',
+            color: 'green',
+            position: 'bottomRight',
+        });
     } catch (error) {
-        let errorMessage = 'Gagal memposting stock in';
-        if (error instanceof Error) {
-            errorMessage = error.message;
-        } else if (typeof error === 'string') {
-            errorMessage = error;
-        }
-        
-        // Coba parsing error jika itu adalah string JSON
-        try {
-            const parsedError = JSON.parse(errorMessage);
-            if (parsedError.errors) {
-                return toast.error('Terdapat kesalahan validasi data.');
-            }
-             errorMessage = parsedError.message || errorMessage;
-        } catch (e) {
-            // Biarkan errorMessage seperti apa adanya jika bukan JSON
-        }
-        
-        toast.error(errorMessage);
+        toastApiError(error, 'Gagal memposting stock in');
     }
 };
 
@@ -458,7 +482,7 @@ const postAllSelectedStockIn = async () => {
 
     const result = await Swal.fire({
         title: 'Konfirmasi Post All',
-        text: `Apakah Anda yakin ingin memposting ${selectedStockIns.length} stock in yang dipilih?`,
+        text: `Apakah Anda yakin ingin memposting ${selectedStockIns.value.length} stock in yang dipilih?`,
         icon: 'question',
         showCancelButton: true,
         confirmButtonColor: '#28a745',
@@ -486,7 +510,8 @@ const postAllSelectedStockIn = async () => {
                 if (result.results.failed.length > 0) {
                     message += '\n\nGagal:';
                     result.results.failed.forEach(item => {
-                        message += `\n- ${item.id}: ${item.reason}`;
+                        const reason = item.reason || item.message || 'Gagal diposting';
+                        message += `\n- ${item.noSi || item.id}: ${reason}`;
                     });
                 }
             }
@@ -507,22 +532,7 @@ const postAllSelectedStockIn = async () => {
             
         } catch (error) {
             console.error('Error in postAllSelectedStockIn:', error);
-            
-            let errorMessage = 'Gagal memposting stock in';
-            if (error instanceof Error) {
-                errorMessage = error.message;
-            } else if (typeof error === 'string') {
-                errorMessage = error;
-            } else if (error && typeof error === 'object') {
-                // Coba extract message dari error object
-                errorMessage = error.message || error.error || JSON.stringify(error);
-            }
-            
-            
-            toast.error(errorMessage);
-            
-            
-            
+            toastApiError(error, 'Gagal memposting stock in');
         } finally {
             loading.value = false;
         }
@@ -537,8 +547,7 @@ const loadLazyData = async () => {
         selectedStockIns.value = [];
         forceUpdate.value++;
     } catch (error) {
-        const error_message = error.message;
-        toast.error(`Tidak dapat memuat data stock in: ${error_message}`);
+        toastApiError(error, 'Tidak dapat memuat data stock in');
         // Clear selection jika terjadi error
         selectedStockIns.value = [];
         forceUpdate.value++;
@@ -608,7 +617,12 @@ const exportStockInWithDetails = async () => {
         const stockInData = await stockInStore.exportStockInWithDetails();
         
         if (!stockInData || stockInData.length === 0) {
-            toast.warning('Tidak ada data untuk diexport');
+            toast.warning({
+                title: 'Warning',
+                message: 'Tidak ada data untuk diexport',
+                color: 'orange',
+                position: 'bottomRight',
+            });
             return;
         }
 
@@ -711,10 +725,15 @@ const exportStockInWithDetails = async () => {
         link.click();
         document.body.removeChild(link);
 
-        toast.success('Export CSV dengan detail item berhasil!');
+        toast.success({
+            title: 'Berhasil',
+            message: 'Export CSV dengan detail item berhasil!',
+            color: 'green',
+            position: 'bottomRight',
+        });
         
     } catch (error) {
-        toast.error('Gagal export CSV: ' + (error.message || 'Unknown error'));
+        toastApiError(error, 'Gagal export CSV');
     } finally {
         loading.value = false;
     }
@@ -745,10 +764,15 @@ const deleteStockIn = async (id) => {
             loadLazyData(); // Muat ulang data
             selectedStockIns.value = [];
             forceUpdate.value++;
-            toast.success('Stock In berhasil dihapus.');
+            toast.success({
+                title: 'Berhasil',
+                message: 'Stock In berhasil dihapus.',
+                color: 'green',
+                position: 'bottomRight',
+            });
 
         } catch (error) {
-            toast.error(error.message);
+            toastApiError(error, 'Gagal menghapus stock in');
         }
     }
 };
@@ -770,7 +794,8 @@ definePageMeta({
   keywords: 'Stock In, Inventory, Sinergi Innovate Pratama',
   author: 'Sinergi Innovate Pratama',
   robots: 'index, follow',
-  viewport: 'width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0'
+  viewport: 'width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0',
+  alias: ['/inventory/barang-masuk'],
 });
 
 </script>

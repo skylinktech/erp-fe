@@ -428,7 +428,7 @@ import FormPageSidebar from '~/components/form/FormPageSidebar.vue'
 import StockAvailabilityAlert from '~/components/purchasing/StockAvailabilityAlert.vue'
 import { PURCHASING_MODULE_NAV } from '~/constants/purchasing/formNav'
 import { usePurchaseRequestStockAvailability } from '~/composables/usePurchaseRequestStockAvailability'
-import { buildStockMap, evaluateLineStock, getAvailableQty } from '~/utils/purchasing/stockAvailability'
+import { buildStockMap, poLineStockHint } from '~/utils/purchasing/stockAvailability'
 import { getPurchaseRequestItemsList } from '~/stores/purchase-request'
 import type { FormPageSummaryRow } from '~/types/form-page'
 
@@ -723,28 +723,7 @@ function lineStockHint(index: number): { text: string; class: string; icon: stri
   if (!row?.productId || !row?.warehouseId) {
     return { text: '', class: '', icon: '' }
   }
-  const available = getAvailableQty(stockMap.value, row.productId, row.warehouseId)
-  const requested = Number(row.quantity) || 0
-  const status = evaluateLineStock(requested, available)
-  if (status === 'sufficient') {
-    return {
-      text: `Stok tersedia: ${Math.floor(available)} (diminta ${Math.floor(requested)})`,
-      class: 'text-success',
-      icon: 'ri-checkbox-circle-line',
-    }
-  }
-  if (status === 'insufficient') {
-    return {
-      text: `Stok tidak mencukupi — tersedia ${Math.floor(available)}, diminta ${Math.floor(requested)}`,
-      class: 'text-warning',
-      icon: 'ri-alert-line',
-    }
-  }
-  return {
-    text: 'Stok kosong di gudang ini',
-    class: 'text-danger',
-    icon: 'ri-error-warning-line',
-  }
+  return poLineStockHint(stockMap.value, row.productId, row.warehouseId, Number(row.quantity) || 0)
 }
 
 function onWarehouseChange(index: number) {

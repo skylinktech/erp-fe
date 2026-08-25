@@ -421,13 +421,39 @@
                             <div class="col-md-6">
                                 <div class="d-flex align-items-center gap-4 mt-3 flex-wrap">
                                     <div class="form-check form-switch d-flex align-items-center mb-0">
-                                        <input class="form-check-input me-2" type="checkbox" v-model="form.isDevice" />
+                                        <input class="form-check-input me-2" type="checkbox" v-model="form.isDevice" @change="onDeviceToggle" />
                                         <label class="form-check-label mb-0">Is Device?</label>
                                     </div>
                                     <div class="form-check form-switch d-flex align-items-center mb-0">
                                         <input class="form-check-input me-2" type="checkbox" v-model="form.isKit" @change="onKitToggle" />
                                         <label class="form-check-label mb-0">Is Kit?</label>
                                     </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Tracking Policy</label>
+                                <CustomSelect2
+                                    v-model="form.trackingPolicy"
+                                    :options="trackingPolicyOptions"
+                                    :get-option-label="option => option.label"
+                                    :reduce="option => option.value"
+                                    :get-option-key="option => option.value"
+                                    :clearable="false"
+                                    placeholder="-- Pilih Policy --"
+                                />
+                                <small class="text-muted">
+                                    NONE = qty only. UNIT_SERIAL = serial per unit. KIT_SERIAL = kit ID.
+                                    DEFERRED_COMPONENT_SERIAL = kit/UTID at receiving; router/antenna/cable at unbox.
+                                </small>
+                            </div>
+                            <div class="col-md-6" v-if="form.trackingPolicy === 'DEFERRED_COMPONENT_SERIAL'">
+                                <div class="form-check mt-4">
+                                    <input
+                                        class="form-check-input"
+                                        type="checkbox"
+                                        v-model="form.assignmentRequiresSerialVerification"
+                                    />
+                                    <label class="form-check-label">Assignment memerlukan serial komponen terverifikasi</label>
                                 </div>
                             </div>
                         </div>
@@ -680,6 +706,13 @@ const productKitTypeOptions = [
     { label: 'Cable', value: 'cable' },
 ]
 
+const trackingPolicyOptions = [
+    { label: 'NONE — tidak perlu identifier', value: 'NONE' },
+    { label: 'UNIT_SERIAL — serial per quantity', value: 'UNIT_SERIAL' },
+    { label: 'KIT_SERIAL — kit number / identifier resmi', value: 'KIT_SERIAL' },
+    { label: 'DEFERRED_COMPONENT_SERIAL — kit/UTID dulu, serial komponen saat unbox', value: 'DEFERRED_COMPONENT_SERIAL' },
+]
+
 const isInternalOptions = [
     { label: 'Internal & Eksternal', value: '' },
     { label: 'Internal', value: 'true' },
@@ -773,6 +806,24 @@ const onKitToggle = () => {
         goToId('product-info', { skipValidation: true })
     }
 }
+
+const onDeviceToggle = () => {
+    if (form.value.isDevice && (!form.value.trackingPolicy || form.value.trackingPolicy === 'NONE')) {
+        form.value.trackingPolicy = 'UNIT_SERIAL'
+    }
+    if (!form.value.isDevice && form.value.trackingPolicy === 'UNIT_SERIAL') {
+        form.value.trackingPolicy = 'NONE'
+    }
+}
+
+watch(
+    () => form.value.trackingPolicy,
+    (policy) => {
+        if (policy && policy !== 'NONE') {
+            form.value.isDevice = true
+        }
+    }
+)
 
 const onProductToolbarRows = (value) => {
     tableControls.value.rows = Number(value) || 10
@@ -887,6 +938,7 @@ definePageMeta({
     author: 'Sinergi Innovate Pratama',
     robots: 'index, follow',
     viewport: 'width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0',
+    alias: ['/inventory/barang'],
 })
 </script>
 

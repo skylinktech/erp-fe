@@ -58,6 +58,9 @@ function emptyForm(): CutiBalanceFormModel {
   }
 }
 
+export const CUTI_BALANCE_INELIGIBLE_KONTRAK_MESSAGE =
+  'Saldo cuti hanya dapat diisi untuk pegawai yang kontraknya sudah disetujui (aktif). Pegawai tanpa kontrak, masih ditinjau, atau belum disetujui tidak dapat ditambahkan.'
+
 /** Normalisasi ke `YYYY-MM-DD` agar `<input type="date">` dan validator VineJS selaras. */
 function toDateOnly(value: string | Date | null | undefined): string | null {
   if (value == null || value === '') return null
@@ -150,8 +153,11 @@ export const useCutiBalanceStore = defineStore('cuti-balance', {
     async fetchPegawaiOptions(search = '') {
       const { $api } = useNuxtApp()
       try {
-        const qs = search ? `?search=${encodeURIComponent(search)}` : ''
-        const res = await fetch(`${$api.dataPegawai()}${qs}`, { credentials: 'include' })
+        const base = $api.dataPegawai(undefined, { requireKontrakAktif: true })
+        const url = search
+          ? `${base}${base.includes('?') ? '&' : '?'}search=${encodeURIComponent(search)}`
+          : base
+        const res = await fetch(url, { credentials: 'include' })
         const json = await res.json()
         const list = json?.data ?? json ?? []
         this.pegawaiOptions = (Array.isArray(list) ? list : []).map((p: any) => ({
@@ -266,6 +272,11 @@ export const useCutiBalanceStore = defineStore('cuti-balance', {
       if (!this.isEditMode) {
         if (!this.form.pegawai_id) {
           this.validationErrors = ['Pegawai wajib dipilih']
+          this.saving = false
+          return false
+        }
+        if (!this.pegawaiOptions.some((p) => p.id === this.form.pegawai_id)) {
+          this.validationErrors = [CUTI_BALANCE_INELIGIBLE_KONTRAK_MESSAGE]
           this.saving = false
           return false
         }

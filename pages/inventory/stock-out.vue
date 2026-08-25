@@ -178,7 +178,7 @@
                                                         <i class="ri-eye-line me-2"></i> Lihat Detail
                                                     </a>
                                                 </li>
-                                                <li v-if="userHasRole('superadmin') || (userHasPermission('delete_stock_out') && slotProps.data.status == 'Received')">
+                                                <li v-if="userHasRole('superadmin') || (userHasPermission('delete_stock_out') && slotProps.data.status == 'draft')">
                                                     <a class="dropdown-item text-danger" href="javascript:void(0)" @click="deleteStockOut(slotProps.data.id)">
                                                         <i class="ri-delete-bin-7-line me-2"></i> Hapus
                                                     </a>
@@ -777,7 +777,8 @@ definePageMeta({
   keywords: 'Stock Out, Inventory, Sinergi Innovate Pratama',
   author: 'Sinergi Innovate Pratama',
   robots: 'index, follow',
-  viewport: 'width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0'
+  viewport: 'width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0',
+  alias: ['/inventory/barang-keluar'],
 });
 
 </script>

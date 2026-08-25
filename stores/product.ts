@@ -20,6 +20,9 @@ export interface Product {
   condition?: 'baru' | 'bekas' | 'rusak'
   categoryId: number
   productType?: string | null
+  trackingPolicy?: 'NONE' | 'UNIT_SERIAL' | 'KIT_SERIAL' | 'DEFERRED_COMPONENT_SERIAL'
+  assignmentRequiresSerialVerification?: boolean
+  requiredComponentTypes?: string[] | null
   image: string | File
   createdBy?: number | null
   createdAt: string
@@ -119,6 +122,9 @@ export const useProductStore = defineStore('product', {
       billingType: 'one_time' as 'one_time' | 'recurring',
       condition: 'baru' as 'baru' | 'bekas' | 'rusak',
       productType: null as string | null,
+      trackingPolicy: 'NONE' as const,
+      assignmentRequiresSerialVerification: false,
+      requiredComponentTypes: null,
       image: '',
       categoryId: undefined,
       productKits: [] as ProductKit[],
@@ -388,6 +394,9 @@ export const useProductStore = defineStore('product', {
             'billingType',
             'condition',
             'productType',
+            'trackingPolicy',
+            'assignmentRequiresSerialVerification',
+            'requiredComponentTypes',
             'productKits',
           ] as const;
 
@@ -395,6 +404,12 @@ export const useProductStore = defineStore('product', {
             const value = this.form[key as keyof typeof this.form];
             if (key === 'isDevice' || key === 'isKit') {
               formData.append(key, value ? 'true' : 'false');
+            } else if (key === 'assignmentRequiresSerialVerification') {
+              formData.append(key, value ? 'true' : 'false');
+            } else if (key === 'requiredComponentTypes') {
+              if (value != null) {
+                formData.append(key, JSON.stringify(value));
+              }
             } else if (key === 'isInternal') {
               if (value === null || value === undefined) {
                 formData.append(key, '');
@@ -550,6 +565,16 @@ export const useProductStore = defineStore('product', {
               billingType: source.billingType ?? source.billing_type ?? product.billingType ?? 'one_time',
               isDevice: source.isDevice ?? source.is_device ?? product.isDevice ?? false,
               isKit: source.isKit ?? source.is_kit ?? false,
+              trackingPolicy:
+                source.trackingPolicy ??
+                source.tracking_policy ??
+                ((source.isDevice ?? source.is_device ?? product.isDevice) ? 'UNIT_SERIAL' : 'NONE'),
+              assignmentRequiresSerialVerification: !!(
+                source.assignmentRequiresSerialVerification ??
+                source.assignment_requires_serial_verification
+              ),
+              requiredComponentTypes:
+                source.requiredComponentTypes ?? source.required_component_types ?? null,
               isInternal: this.normalizeNullableBoolean(source.isInternal ?? source.is_internal),
               condition: source.condition ?? 'baru',
               productKits: (source.productKits || []).map((kit) => ({
@@ -578,6 +603,9 @@ export const useProductStore = defineStore('product', {
                 billingType: 'one_time',
                 condition: 'baru',
                 productType: null,
+                trackingPolicy: 'NONE',
+                assignmentRequiresSerialVerification: false,
+                requiredComponentTypes: null,
                 image: '',
                 imagePreview: '',
                 categoryId: undefined,
@@ -600,6 +628,9 @@ export const useProductStore = defineStore('product', {
             billingType: 'one_time',
             condition: 'baru',
             productType: null,
+            trackingPolicy: 'NONE',
+            assignmentRequiresSerialVerification: false,
+            requiredComponentTypes: null,
             image: '',
             imagePreview: '',
             categoryId: undefined,

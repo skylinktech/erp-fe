@@ -169,6 +169,9 @@
               <option :value="null" disabled>— Pilih pegawai —</option>
               <option v-for="p in pegawaiOptions" :key="p.id" :value="p.id">{{ p.label }}</option>
             </select>
+            <p class="small text-muted mt-1 mb-0">
+              Hanya pegawai dengan kontrak aktif (sudah disetujui). Kontrak ditinjau / belum disetujui tidak dapat diisi saldo cuti.
+            </p>
           </div>
           <div v-if="!store.isEditMode" class="col-md-6">
             <label class="form-label">Tipe Cuti <span class="text-danger">*</span></label>

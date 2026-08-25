@@ -18,9 +18,22 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
     // Mapping route ke permission yang diperlukan
     const routePermissionMap: Record<string, string> = {
       '/inventory/product': 'view_product',
+      '/inventory/barang': 'view_product',
       '/inventory/stock': 'view_stock',
+      '/inventory/stok': 'view_stock',
+      '/inventory/buffer': 'access_buffer_stock',
+      '/inventory/equipment': 'view_equipment',
+      '/inventory/equipment-inspection': 'view_equipment_inspection',
+      '/inventory/equipment-replacement': 'view_equipment_replacement',
+      '/inventory/equipment-repair': 'view_equipment_repair',
+      '/inventory/equipment-scrap': 'view_equipment_scrap',
+      '/inventory/warranty-assessment': 'view_warranty_assessment',
+      '/inventory/warranty-claim': 'view_warranty_claim',
+      '/inventory/warranty-rma': 'view_warranty_rma',
       '/inventory/stock-in': 'view_stock_in',
+      '/inventory/barang-masuk': 'view_stock_in',
       '/inventory/stock-out': 'view_stock_out',
+      '/inventory/barang-keluar': 'view_stock_out',
       '/inventory/stock-transfer': 'view_stock_transfer',
       '/inventory/gudang': 'view_gudang',
       '/inventory/unit': 'view_unit',
@@ -265,6 +278,122 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
           permission.name === requiredPermission
         )
       )
+
+      if (!hasPermission && to.path === '/inventory/buffer') {
+        const allowed = [
+          'access_buffer_stock',
+          'manage_buffer_stock',
+          'view_stock_reservation',
+        ]
+        const ok = userStore.user?.roles?.some(role =>
+          role.permissions?.some(permission => allowed.includes(permission.name))
+        )
+        if (ok) return
+      }
+
+      if (!hasPermission && to.path.startsWith('/inventory/equipment')) {
+        const allowed = ['view_equipment', 'view_equipment_detail', 'access_equipment']
+        const ok = userStore.user?.roles?.some(role =>
+          role.permissions?.some(permission => allowed.includes(permission.name))
+        )
+        if (ok) return
+      }
+
+      if (!hasPermission && to.path.startsWith('/inventory/equipment-inspection')) {
+        const allowed = [
+          'view_equipment_inspection',
+          'inspect_equipment',
+          'complete_equipment_inspection',
+          'view_equipment',
+        ]
+        const ok = userStore.user?.roles?.some(role =>
+          role.permissions?.some(permission => allowed.includes(permission.name))
+        )
+        if (ok) return
+      }
+
+      if (!hasPermission && to.path.startsWith('/inventory/equipment-replacement')) {
+        const allowed = [
+          'view_equipment_replacement',
+          'create_equipment_replacement',
+          'complete_equipment_replacement',
+          'view_equipment',
+        ]
+        const ok = userStore.user?.roles?.some(role =>
+          role.permissions?.some(permission => allowed.includes(permission.name))
+        )
+        if (ok) return
+      }
+
+      if (!hasPermission && to.path.startsWith('/inventory/warranty-assessment')) {
+        const allowed = [
+          'view_warranty_assessment',
+          'create_warranty_assessment',
+          'view_warranty_claim',
+        ]
+        const ok = userStore.user?.roles?.some(role =>
+          role.permissions?.some(permission => allowed.includes(permission.name))
+        )
+        if (ok) return
+      }
+
+      if (!hasPermission && to.path.startsWith('/inventory/warranty-claim')) {
+        const allowed = [
+          'view_warranty_claim',
+          'create_warranty_claim',
+          'submit_warranty_claim',
+          'record_warranty_provider_decision',
+          'view_warranty_assessment',
+        ]
+        const ok = userStore.user?.roles?.some(role =>
+          role.permissions?.some(permission => allowed.includes(permission.name))
+        )
+        if (ok) return
+      }
+
+      if (!hasPermission && to.path.startsWith('/inventory/warranty-rma')) {
+        const allowed = [
+          'view_warranty_rma',
+          'create_warranty_rma',
+          'ship_warranty_rma',
+          'cancel_warranty_rma',
+          'record_rma_resolution',
+          'receive_rma_return',
+          'receive_rma_replacement',
+          'view_warranty_claim',
+        ]
+        const ok = userStore.user?.roles?.some(role =>
+          role.permissions?.some(permission => allowed.includes(permission.name))
+        )
+        if (ok) return
+      }
+
+      if (!hasPermission && to.path.startsWith('/inventory/equipment-repair')) {
+        const allowed = [
+          'view_equipment_repair',
+          'create_equipment_repair',
+          'complete_equipment_repair',
+          'view_equipment',
+        ]
+        const ok = userStore.user?.roles?.some(role =>
+          role.permissions?.some(permission => allowed.includes(permission.name))
+        )
+        if (ok) return
+      }
+
+      if (!hasPermission && to.path.startsWith('/inventory/equipment-scrap')) {
+        const allowed = [
+          'view_equipment_scrap',
+          'create_equipment_scrap',
+          'approve_equipment_scrap',
+          'execute_equipment_scrap',
+          'view_equipment',
+        ]
+        const ok = userStore.user?.roles?.some(role =>
+          role.permissions?.some(permission => allowed.includes(permission.name))
+        )
+        if (ok) return
+      }
 
       if (!hasPermission && to.path === '/hrd/kehadiran') {
         const selfServiceAllowed = ['access_kehadiran', 'view_own_kehadiran', 'show_kehadiran']

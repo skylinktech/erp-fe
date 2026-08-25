@@ -150,6 +150,15 @@
                         <i class="ri-more-2-fill"></i>
                       </a>
                       <ul class="dropdown-menu">
+                        <li v-if="userHasRole('superadmin') || userHasPermission('edit_site') || userHasPermission('view_site') || userHasPermission('view_site_equipment') || userHasPermission('access_site_equipment')">
+                          <a
+                            class="dropdown-item"
+                            href="javascript:void(0)"
+                            @click="goToSiteDetail(slotProps.data.id)"
+                          >
+                            <i class="ri-eye-line me-2"></i> Detail / Equipment
+                          </a>
+                        </li>
                         <li v-if="userHasRole('superadmin') || userHasPermission('edit_site')">
                           <a
                             class="dropdown-item"
@@ -532,6 +541,11 @@ const exportData = async (format) => {
 
 // Permission helpers
 const { userHasRole, userHasPermission } = usePermissions()
+
+function goToSiteDetail(id) {
+  if (!id) return
+  navigateTo(`/company/site/${id}`)
+}
 
 // Lifecycle
 onMounted(async () => {

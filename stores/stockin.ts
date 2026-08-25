@@ -31,6 +31,22 @@ interface StockState {
   selectAll: boolean
 }
 
+function pickErrorMessage(errorData: any, fallback: string): string {
+  if (!errorData || typeof errorData !== 'object') return fallback
+  if (typeof errorData.message === 'string' && errorData.message.trim()) return errorData.message.trim()
+  if (typeof errorData.error === 'string' && errorData.error.trim()) return errorData.error.trim()
+  return fallback
+}
+
+/** Preserve API envelope on Error so getApiErrorMessage / toastApiError can read code & data. */
+function throwHttpApiError(response: Response, errorData: any, fallback: string): never {
+  const err: any = new Error(pickErrorMessage(errorData, fallback))
+  err.data = errorData
+  err.status = response.status
+  err.statusCode = response.status
+  throw err
+}
+
 export const useStockStore = defineStore('stock', {
   state: (): StockState => ({
     stockIns: [],
@@ -94,7 +110,7 @@ export const useStockStore = defineStore('stock', {
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({ message: 'Gagal memuat data stock in dengan status: ' + response.status }));
-            throw new Error(errorData.message || 'Gagal memuat data stock in');
+            throwHttpApiError(response, errorData, 'Gagal memuat data stock in')
         }
 
         const result = await response.json();
@@ -164,7 +180,7 @@ export const useStockStore = defineStore('stock', {
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({ message: 'Gagal menghapus stock in' }))
-          throw new Error(errorData.message)
+          throwHttpApiError(response, errorData, 'Gagal menghapus stock in')
         }
 
         return true
@@ -281,7 +297,7 @@ export const useStockStore = defineStore('stock', {
           const errorData = await response.json().catch(() => ({
             message: 'Gagal memuat data stock in',
           }))
-          throw new Error(errorData.message)
+          throwHttpApiError(response, errorData, 'Gagal memuat data stock in')
         }
 
         const result = await response.json()
@@ -488,7 +504,7 @@ export const useStockStore = defineStore('stock', {
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({ message: 'Gagal export data stock in' }));
-            throw new Error(errorData.message || 'Gagal export data stock in');
+            throwHttpApiError(response, errorData, 'Gagal export data stock in');
         }
 
         const result = await response.json();
@@ -518,16 +534,16 @@ export const useStockStore = defineStore('stock', {
         console.log('Store: Response headers:', response.headers);
 
         if (!response.ok) {
-          let errorData;
+          let errorData
           try {
-            errorData = await response.json();
-            console.error('Store: Error response data:', errorData);
+            errorData = await response.json()
+            console.error('Store: Error response data:', errorData)
           } catch (parseError) {
-            console.error('Store: Failed to parse error response:', parseError);
-            errorData = { message: `HTTP ${response.status}: ${response.statusText}` };
+            console.error('Store: Failed to parse error response:', parseError)
+            errorData = { message: `HTTP ${response.status}: ${response.statusText}` }
           }
-          
-          throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+
+          throwHttpApiError(response, errorData, `HTTP ${response.status}: ${response.statusText}`)
         }
 
         const result = await response.json();
@@ -562,8 +578,8 @@ export const useStockStore = defineStore('stock', {
         });
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: 'Gagal memposting stock in' }));
-          throw new Error(errorData.message);
+          const errorData = await response.json().catch(() => ({ message: 'Gagal memposting stock in' }))
+          throwHttpApiError(response, errorData, 'Gagal memposting stock in')
         }
 
         return true;

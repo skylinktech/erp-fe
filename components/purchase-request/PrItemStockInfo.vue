@@ -19,7 +19,7 @@
         <span class="fw-medium">{{ info.warehouseName || '—' }}</span>
       </div>
       <div class="col-sm-4">
-        <span class="text-muted d-block">Stok tersedia</span>
+        <span class="text-muted d-block">Stok On Hand</span>
         <span class="fw-medium" :class="availableClass">{{ formatQty(info.availableQty) }}</span>
       </div>
       <div class="col-sm-4">

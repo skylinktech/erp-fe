@@ -177,7 +177,13 @@
                                         {{ slotProps.data.tgl_lahir_pegawai ? new Date(slotProps.data.tgl_lahir_pegawai).toLocaleDateString() : '-' }}
                                     </template>
                                 </Column>
-                                <Column field="alamat_pegawai" header="Alamat" :sortable="true" style="width:18%"></Column>
+                                <Column field="alamat_pegawai" header="Alamat" :sortable="true" style="width:18%">
+                                    <template #body="{ data }">
+                                        <span class="text-nowrap" :title="data.alamat_pegawai || ''">
+                                            {{ truncateWords(data.alamat_pegawai, 5) }}
+                                        </span>
+                                    </template>
+                                </Column>
                                 <Column field="status_pegawai" header="Status" :sortable="true" style="width:8%">
                                     <template #body="slotProps">
                                         <span >
@@ -271,6 +277,14 @@ function goToEditPegawaiForm(row: { id_pegawai: number }) {
 
 function goToPegawaiProfile(row: { id_pegawai: number }) {
     void navigateTo(`/hrd/pegawai/profile/${row.id_pegawai}`)
+}
+
+function truncateWords(text: string | null | undefined, maxWords = 5): string {
+    const value = String(text || '').trim()
+    if (!value) return '-'
+    const words = value.split(/\s+/).filter(Boolean)
+    if (words.length <= maxWords) return value
+    return `${words.slice(0, maxWords).join(' ')} ...`
 }
 
 const actionsMenuRef = ref<InstanceType<typeof Menu> | null>(null)

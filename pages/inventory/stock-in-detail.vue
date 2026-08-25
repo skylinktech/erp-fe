@@ -47,7 +47,7 @@
                                 <div>
                                     <h4 class="mb-1">Nomor Stock In: {{ stockIn.noSi }}</h4>
                                     <p class="text-muted mb-0" style="font-size: 0.95em;">
-                                        Berikut adalah informasi singkat mengenai dokumen Stock In ini, termasuk nomor SI, tanggal, gudang tujuan, dan status terkini. Pastikan data sudah sesuai sebelum melakukan proses lebih lanjut.
+                                        Identifier requirement mengikuti tracking policy produk.
                                     </p>
                                 </div>
                                 <NuxtLink to="/inventory/stock-in" class="btn btn-sm btn-primary">
@@ -59,7 +59,7 @@
                                     <ul class="list-unstyled">
                                         <li class="mb-2"><strong>Posted by:</strong> {{ stockIn.postedByUser?.fullName || '-' }}</li>
                                         <li class="mb-2"><strong>Description:</strong> {{ stockIn.description || '-' }}</li>
-                                        <li class="mb-2"><strong>Posted At:</strong> {{ new Date(stockIn.postedAt).toLocaleDateString() }}</li>
+                                        <li class="mb-2"><strong>Posted At:</strong> {{ stockIn.postedAt ? new Date(stockIn.postedAt).toLocaleDateString() : '-' }}</li>
                                     </ul>
                                 </div>
                             </div>
@@ -81,9 +81,105 @@
                                         {{ slotProps.data.quantity || 0 }}
                                     </template>
                                 </Column>
+                                <Column header="Serialized">
+                                    <template #body="slotProps">
+                                        <span v-if="trackingPolicyOf(slotProps.data.product) === 'NONE'" class="badge bg-label-secondary">Qty only</span>
+                                        <span v-else class="badge bg-label-warning">{{ trackingPolicyOf(slotProps.data.product) }}</span>
+                                    </template>
+                                </Column>
+                                <Column header="Serials">
+                                    <template #body="slotProps">
+                                        <template v-if="needsIdentifierCapture(slotProps.data.product)">
+                                          Required: {{ Number(slotProps.data.quantity) || 0 }}
+                                          / Captured: {{ (slotProps.data.serials || []).length }}
+                                        </template>
+                                        <span v-else class="text-muted">—</span>
+                                    </template>
+                                </Column>
                             </MyDataTable>
                         </div>
                     </div>
+                </div>
+
+                <div
+                  v-for="detail in deviceDetails"
+                  :id="detail.id === deviceDetails[0]?.id ? 'serial-capture' : undefined"
+                  :key="detail.id"
+                  class="col-12"
+                >
+                  <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                      <div>
+                        <h5 class="card-title mb-0">
+                          {{ identifierCardTitle(detail.product) }} — {{ detail.product?.sku }}
+                        </h5>
+                        <small class="text-muted">
+                          Required: {{ Number(detail.quantity) || 0 }} · Captured: {{ (serialDrafts[detail.id] || []).length }}
+                        </small>
+                        <div
+                          v-if="trackingPolicyOf(detail.product) === 'DEFERRED_COMPONENT_SERIAL'"
+                          class="small text-info mt-1"
+                        >
+                          Kit identifier lengkap; serial komponen akan dilengkapi saat unboxing
+                        </div>
+                      </div>
+                      <button
+                        v-if="canEditSerials"
+                        class="btn btn-sm btn-primary"
+                        :disabled="savingDetailId === detail.id"
+                        @click="saveSerials(detail)"
+                      >
+                        {{ savingDetailId === detail.id ? 'Saving...' : 'Save Serials' }}
+                      </button>
+                    </div>
+                    <div class="card-body table-responsive">
+                      <table class="table table-sm">
+                        <thead>
+                          <tr>
+                            <th>#</th>
+                            <th v-if="showUnitSerialField(detail.product)">Serial Number</th>
+                            <th>UTID</th>
+                            <th>Kit Number</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr v-for="(row, idx) in (serialDrafts[detail.id] || [])" :key="idx">
+                            <td>{{ idx + 1 }}</td>
+                            <td v-if="showUnitSerialField(detail.product)">
+                              <input
+                                v-model="row.serialNumber"
+                                class="form-control form-control-sm"
+                                :readonly="!canEditSerials"
+                              />
+                            </td>
+                            <td>
+                              <input
+                                v-model="row.utid"
+                                class="form-control form-control-sm"
+                                :readonly="!canEditSerials"
+                              />
+                            </td>
+                            <td>
+                              <input
+                                v-model="row.kitNumber"
+                                class="form-control form-control-sm"
+                                :readonly="!canEditSerials"
+                              />
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                      <p v-if="!canEditSerials" class="small text-muted mb-0">
+                        Post-receipt identity correction is deferred (admin-controlled). Serials are not editable after posting.
+                      </p>
+                      <p
+                        v-else-if="(serialDrafts[detail.id] || []).length !== Number(detail.quantity)"
+                        class="small text-danger mb-0"
+                      >
+                        Jumlah identifier tidak sesuai quantity — post akan ditolak sampai Required = Captured.
+                      </p>
+                    </div>
+                  </div>
                 </div>
             </div>
             <div v-else class="alert alert-danger" role="alert">
@@ -94,26 +190,125 @@
 </template>
 
 <script setup>
-
 definePageMeta({
   hidePageHeading: true,
 })
 
-import { onMounted, onBeforeUnmount } from 'vue'
+import { onMounted, onBeforeUnmount, computed, reactive, ref, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import Column from 'primevue/column'
 import { useStockStore } from '~/stores/stockin'
-import Swal from 'sweetalert2'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
+import { getApiErrorMessage } from '~/utils/apiError'
 
-// Composables
 const { setDetailTitle } = useDynamicTitle()
+const { userHasPermission, userHasRole } = usePermissions()
+const { $api } = useNuxtApp()
+const toast = useToast()
 
 const route = useRoute()
 const stockInStore = useStockStore()
 const { selectedStockIn: stockIn, loading, error } = storeToRefs(stockInStore)
+const serialDrafts = reactive({})
+const savingDetailId = ref(null)
+
+function isDeviceProduct(product) {
+  return !!(product?.isDevice ?? product?.is_device)
+}
+
+function trackingPolicyOf(product) {
+  return product?.trackingPolicy || product?.tracking_policy || (isDeviceProduct(product) ? 'UNIT_SERIAL' : 'NONE')
+}
+
+function needsIdentifierCapture(product) {
+  return trackingPolicyOf(product) !== 'NONE'
+}
+
+function showUnitSerialField(product) {
+  const policy = trackingPolicyOf(product)
+  return policy === 'UNIT_SERIAL' || policy === 'KIT_SERIAL'
+}
+
+function identifierCardTitle(product) {
+  const policy = trackingPolicyOf(product)
+  if (policy === 'DEFERRED_COMPONENT_SERIAL') return 'Kit / UTID'
+  if (policy === 'KIT_SERIAL') return 'Kit Identifier'
+  return 'Serial / Equipment Units'
+}
+
+const canEditSerials = computed(() => {
+  if (stockIn.value?.status !== 'draft') return false
+  return (
+    userHasRole('superadmin') ||
+    userHasRole('admin') ||
+    userHasPermission('capture_equipment_serial') ||
+    userHasPermission('approve_stock_in') ||
+    userHasPermission('edit_stock_in')
+  )
+})
+
+const deviceDetails = computed(() =>
+  (stockIn.value?.stockInDetails || stockIn.value?.stock_in_details || []).filter((d) =>
+    needsIdentifierCapture(d.product)
+  )
+)
+
+function syncDraftsFromStockIn() {
+  const details = stockIn.value?.stockInDetails || stockIn.value?.stock_in_details || []
+  for (const detail of details) {
+    if (!needsIdentifierCapture(detail.product)) continue
+    const qty = Number(detail.quantity) || 0
+    const existing = detail.serials || []
+    const rows = []
+    for (let i = 0; i < qty; i++) {
+      const src = existing[i] || {}
+      rows.push({
+        serialNumber: src.serialNumber || src.serial_number || '',
+        utid: src.utid || '',
+        kitNumber: src.kitNumber || src.kit_number || '',
+      })
+    }
+    serialDrafts[detail.id] = rows
+  }
+}
+
+watch(stockIn, () => syncDraftsFromStockIn(), { immediate: true })
+
+async function saveSerials(detail) {
+  savingDetailId.value = detail.id
+  try {
+    await $fetch($api.stockInSerials(stockIn.value.id, detail.id), {
+      method: 'PUT',
+      credentials: 'include',
+      body: { serials: serialDrafts[detail.id] || [] },
+    })
+    toast.success({
+      title: 'Berhasil',
+      message: 'Serial tersimpan (draft)',
+      color: 'green',
+      position: 'bottomRight',
+    })
+    await stockInStore.fetchStockInById(stockIn.value.id)
+  } catch (e) {
+    toast.error({
+      title: 'Error',
+      message: getApiErrorMessage(e, 'Gagal simpan serial'),
+      color: 'red',
+      position: 'bottomRight',
+    })
+  } finally {
+    savingDetailId.value = null
+  }
+}
+
+function scrollToSerialCapture() {
+  if (route.query.focus !== 'serials') return
+  nextTick(() => {
+    document.getElementById('serial-capture')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  })
+}
 
 onMounted(async () => {
   const stockInId = route.query.id;
@@ -121,25 +316,26 @@ onMounted(async () => {
     try {
       await stockInStore.fetchStockInById(stockInId);
       setDetailTitle('Stock In', stockIn.value.noSi)
+      scrollToSerialCapture()
     } catch (e) {
-      const toast = useToast()
-      toast.error(e.message || 'Gagal memuat detail stock in.')
+      toast.error({
+        title: 'Error',
+        message: getApiErrorMessage(e, 'Gagal memuat detail stock in.'),
+        color: 'red',
+        position: 'bottomRight',
+      })
     }
   } else {
-    const toast = useToast()
-    toast.error('ID Stock In tidak ditemukan di URL.')
+    toast.error({
+      title: 'Error',
+      message: 'ID Stock In tidak ditemukan di URL.',
+      color: 'red',
+      position: 'bottomRight',
+    })
   }
 });
 
 onBeforeUnmount(() => {
     stockInStore.resetStockIn();
 });
-
-const getStatusClass = (status) => {
-    const statusMap = {
-        draft: 'bg-label-secondary',
-        posted: 'bg-label-success',
-    }
-    return statusMap[status] || 'bg-label-info'
-}
-</script> 
+</script>

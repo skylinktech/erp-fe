@@ -125,7 +125,7 @@ export function evaluateFormItemsStock(
           ? null
           : status === 'not_found'
             ? 'Stok kosong atau tidak ditemukan'
-            : `Stok tidak mencukupi (tersedia ${Math.floor(available)}, diminta ${Math.floor(needQty)})`,
+            : `Stok on-hand tidak mencukupi (on-hand ${Math.floor(available)}, diminta ${Math.floor(needQty)})`,
     })
   }
 
@@ -186,6 +186,7 @@ export function getStockInfoForLine(
   }
 }
 
+/** Outbound / PR-style: bandingkan kebutuhan vs on-hand (cukup / kurang). */
 export function lineStockHint(
   stockMap: Map<string, number>,
   productId: number | null | undefined,
@@ -198,19 +199,55 @@ export function lineStockHint(
   const status = evaluateLineStock(requested, available)
   if (status === 'sufficient') {
     return {
-      text: `Stok tersedia: ${Math.floor(available)} (diminta ${Math.floor(requested)})`,
+      text: `Stok On Hand: ${Math.floor(available)} (diminta ${Math.floor(requested)})`,
       class: 'text-success',
       icon: 'ri-checkbox-circle-line',
     }
   }
   if (status === 'insufficient') {
     return {
-      text: `Stok tidak mencukupi — tersedia ${Math.floor(available)}, diminta ${Math.floor(requested)}`,
+      text: `Stok on-hand tidak mencukupi — on-hand ${Math.floor(available)}, diminta ${Math.floor(requested)}`,
       class: 'text-warning',
       icon: 'ri-alert-line',
     }
   }
   return { text: 'Stok kosong di gudang ini', class: 'text-danger', icon: 'ri-error-warning-line' }
+}
+
+function formatStockQty(n: number): string {
+  if (!Number.isFinite(n)) return '0'
+  if (Number.isInteger(n)) return String(n)
+  return String(Math.round(n * 100) / 100)
+}
+
+/**
+ * Inbound / PO-style: informasional saja.
+ * PO menambah stok setelah receive — jangan bandingkan “cukup/tidak cukup”.
+ */
+export function poLineStockHint(
+  stockMap: Map<string, number>,
+  productId: number | null | undefined,
+  warehouseId: number | null | undefined,
+  orderQty: number
+): { text: string; class: string; icon: string } {
+  if (!productId || !warehouseId) return { text: '', class: '', icon: '' }
+  const onHand = getAvailableQty(stockMap, productId, warehouseId)
+  const order = Number(orderQty) || 0
+
+  if (order <= 0) {
+    return {
+      text: `On hand gudang: ${formatStockQty(onHand)}. Qty order belum diisi.`,
+      class: 'text-muted',
+      icon: 'ri-information-line',
+    }
+  }
+
+  const afterReceive = onHand + order
+  return {
+    text: `On hand: ${formatStockQty(onHand)} · Order: ${formatStockQty(order)} · Setelah receive: ~${formatStockQty(afterReceive)}`,
+    class: 'text-muted',
+    icon: 'ri-information-line',
+  }
 }
 
 export function stockLineBadgeClass(status: StockAvailabilityLine['status']): string {

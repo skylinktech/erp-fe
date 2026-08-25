@@ -1,4 +1,4 @@
-/** Composable untuk status approval (Approved by X / Rejected by X): Jabatan → Role → fullName → username */
+/** Composable untuk status approval (Approved by X / Rejected by X / Received by X): Jabatan → Role → fullName → username */
 
 /** Ambil jabatan user dari pegawai.PegawaiHistory (terbaru).nm_jabatan */
 function getUserJabatan(user: any): string {
@@ -16,6 +16,14 @@ function getUserDisplayName(user: any): string {
   const roles = user?.roles ?? []
   const roleName = Array.isArray(roles) ? roles[0]?.name : ''
   if (roleName) return roleName
+  const fullName = user?.fullName ?? user?.full_name ?? ''
+  if (fullName) return fullName
+  return user?.username ?? user?.email ?? ''
+}
+
+/** Nama penerima barang: utamakan nama orang (fullName/username), bukan jabatan/role */
+function getReceiverDisplayName(user: any): string {
+  if (!user) return ''
   const fullName = user?.fullName ?? user?.full_name ?? ''
   if (fullName) return fullName
   return user?.username ?? user?.email ?? ''
@@ -81,7 +89,7 @@ export function useApprovalStatus() {
     return null
   }
 
-  /** Badge untuk status dengan "Approved by [jabatan]" / "Rejected by [jabatan]" */
+  /** Badge untuk status dengan "Approved by X" / "Rejected by X" / "Received by X" */
   function getStatusBadge(row: any, statusMap?: Record<string, { text: string; class: string }>) {
     const status = row?.status
     if (!status) return { text: '—', class: 'badge rounded-pill bg-label-light' }
@@ -111,6 +119,10 @@ export function useApprovalStatus() {
       const by = getApprovalStepJabatan(row, 'rejected')
       return { text: by ? `Rejected by ${by}` : base.text, class: base.class }
     }
+    if (status === 'received') {
+      const by = getReceiverDisplayName(row?.receivedByUser ?? row?.received_by_user)
+      return { text: by ? `Received by ${by}` : base.text, class: base.class }
+    }
     if (status === 'pending' || status === 'submitted') {
       // Ketika ada partial approval (approver pertama sudah approve), tampilkan "Approved by X (1/2)" seperti SI & Quotation
       const stepCount = getStepCountForApproved(row)
@@ -127,7 +139,7 @@ export function useApprovalStatus() {
     return base
   }
 
-  /** Status text untuk ApprovalCard (DRAFT, APPROVED, PENDING, dll) — dengan "Approved by X" saat approved */
+  /** Status text untuk ApprovalCard — dengan "Approved by X" / "Rejected by X" / "Received by X" */
   function getStatusText(row: any, statusMap?: Record<string, string>) {
     const status = row?.status
     if (!status) return '—'
@@ -155,6 +167,10 @@ export function useApprovalStatus() {
     if (status === 'rejected') {
       const by = getApprovalStepJabatan(row, 'rejected')
       return by ? `Rejected by ${by}` : (map[status] ?? status.toUpperCase())
+    }
+    if (status === 'received') {
+      const by = getReceiverDisplayName(row?.receivedByUser ?? row?.received_by_user)
+      return by ? `Received by ${by}` : (map[status] ?? status.toUpperCase())
     }
     if (status === 'pending' || status === 'submitted') {
       const stepCount = getStepCountForApproved(row)

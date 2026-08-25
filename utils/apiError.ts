@@ -267,6 +267,7 @@ function pickCode(body: Record<string, unknown>): string | null {
 function pickRawMessage(raw: unknown, body: Record<string, unknown>): string {
   const candidates = [
     body.message,
+    typeof body.error === 'string' ? body.error : null,
     isRecord(body.data) ? body.data.message : null,
     isRecord(raw) ? raw.message : null,
   ]

@@ -202,6 +202,20 @@ export const erpMenuItems = [
     type: "main"
   },
   {
+    name: "Buffer Stock",
+    path: "/inventory/buffer",
+    icon: "ri-shield-check-line",
+    category: "Inventory",
+    type: "main"
+  },
+  {
+    name: "Equipment",
+    path: "/inventory/equipment",
+    icon: "ri-cpu-line",
+    category: "Inventory",
+    type: "main"
+  },
+  {
     name: "Barang Masuk",
     path: "/inventory/barang-masuk",
     icon: "ri-login-box-line",

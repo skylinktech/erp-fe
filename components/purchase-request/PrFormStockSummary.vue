@@ -12,7 +12,7 @@
               <th>#</th>
               <th>Produk</th>
               <th>Gudang</th>
-              <th class="text-end">Tersedia</th>
+              <th class="text-end">On Hand</th>
               <th class="text-end">Diminta</th>
               <th class="text-center">Status Stok</th>
             </tr>

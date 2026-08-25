@@ -71,9 +71,63 @@
                     </div>
                 </div>
             </div>
+
+            <div class="card mb-6">
+                <div class="card-body">
+                    <p class="mb-3 small fw-medium text-muted">Legenda</p>
+                    <div class="row g-3 small">
+                        <div class="col-md-6 col-lg-3">
+                            <span class="d-inline-flex align-items-start gap-2">
+                                <span class="legend-dot bg-secondary flex-shrink-0 mt-1"></span>
+                                <span>
+                                    <strong class="d-block">On Hand</strong>
+                                    <span class="text-muted">Qty fisik di gudang. Tidak berkurang saat dibuat reservation/buffer.</span>
+                                </span>
+                            </span>
+                        </div>
+                        <div class="col-md-6 col-lg-3">
+                            <span class="d-inline-flex align-items-start gap-2">
+                                <span class="legend-dot bg-warning flex-shrink-0 mt-1"></span>
+                                <span>
+                                    <strong class="d-block">Reserved</strong>
+                                    <span class="text-muted">Total qty yang sedang di-reserve (termasuk allocation &amp; buffer).</span>
+                                </span>
+                            </span>
+                        </div>
+                        <div class="col-md-6 col-lg-3">
+                            <span class="d-inline-flex align-items-start gap-2">
+                                <span class="legend-dot bg-info flex-shrink-0 mt-1"></span>
+                                <span>
+                                    <strong class="d-block">Buffer</strong>
+                                    <span class="text-muted">Subset dari Reserved untuk buffer stock. Sudah termasuk di Reserved — jangan dikurangi dua kali.</span>
+                                </span>
+                            </span>
+                        </div>
+                        <div class="col-md-6 col-lg-4 col-xl">
+                            <span class="d-inline-flex align-items-start gap-2">
+                                <span class="legend-dot bg-success flex-shrink-0 mt-1"></span>
+                                <span>
+                                    <strong class="d-block">Available</strong>
+                                    <span class="text-muted">On Hand − Reserved. Qty yang siap dipakai / dikeluarkan.</span>
+                                </span>
+                            </span>
+                        </div>
+                        <div class="col-md-6 col-lg-4 col-xl">
+                            <span class="d-inline-flex align-items-start gap-2">
+                                <span class="legend-dot bg-primary flex-shrink-0 mt-1"></span>
+                                <span>
+                                    <strong class="d-block">Eq Available</strong>
+                                    <span class="text-muted">Device SKU: unit equipment status AVAILABLE di gudang. RETURNED tidak ikut.</span>
+                                </span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="row g-6">
                 <div class="col-12">
-                    <h4 class="mt-6 mb-1">Data Stock</h4>
+                    <h4 class="mb-1">Data Stock</h4>
                     <p class="mb-0">Kelola daftar stok produk per gudang.</p>
                 </div>
                 <div class="col-12">
@@ -93,6 +147,14 @@
                             @export="exportData"
                         >
                             <template #add>
+                                <NuxtLink
+                                    v-if="userHasRole('superadmin') || userHasPermission('manage_buffer_stock') || userHasPermission('access_buffer_stock')"
+                                    to="/inventory/buffer"
+                                    class="btn btn-outline-primary me-2"
+                                >
+                                    <i class="ri-shield-check-line me-1"></i>
+                                    Buffer Stock
+                                </NuxtLink>
                                 <button
                                     v-if="userHasRole('superadmin')"
                                     type="button"
@@ -174,9 +236,41 @@
                                         </span>
                                     </template>
                                 </Column>
-                                <Column field="quantity" header="Jumlah" :sortable="true" class="text-nowrap">
+                                <Column field="quantity" header="On Hand" :sortable="true" class="text-nowrap">
                                     <template #body="slotProps">
-                                        {{ slotProps.data.quantity ? Math.floor(slotProps.data.quantity) : 0 }}
+                                        {{ Math.floor(Number(slotProps.data.onHandQty ?? slotProps.data.quantity) || 0) }}
+                                    </template>
+                                </Column>
+                                <Column field="reservedQty" header="Reserved" :sortable="false" class="text-nowrap">
+                                    <template #body="slotProps">
+                                        {{ Math.floor(Number(slotProps.data.reservedQty) || 0) }}
+                                    </template>
+                                </Column>
+                                <Column field="bufferQty" header="Buffer" :sortable="false" class="text-nowrap">
+                                    <template #body="slotProps">
+                                        <span class="text-muted">{{ Math.floor(Number(slotProps.data.bufferQty) || 0) }}</span>
+                                    </template>
+                                </Column>
+                                <Column field="availableQty" header="Available" :sortable="false" class="text-nowrap">
+                                    <template #body="slotProps">
+                                        <strong>{{ Math.floor(Number(slotProps.data.availableQty ?? slotProps.data.quantity) || 0) }}</strong>
+                                    </template>
+                                </Column>
+                                <Column header="Eq Available" :sortable="false" class="text-nowrap">
+                                    <template #body="slotProps">
+                                        <span v-if="slotProps.data.serializedAvailableQty != null">
+                                          {{ Math.floor(Number(slotProps.data.serializedAvailableQty) || 0) }}
+                                          <small
+                                            v-if="slotProps.data.operationalAvailableQty != null"
+                                            class="text-muted d-block"
+                                          >
+                                            ops {{ Math.floor(Number(slotProps.data.operationalAvailableQty) || 0) }}
+                                            <span v-if="slotProps.data.serializedReturnedQty">
+                                              · ret {{ Math.floor(Number(slotProps.data.serializedReturnedQty) || 0) }}
+                                            </span>
+                                          </small>
+                                        </span>
+                                        <span v-else class="text-muted">—</span>
                                     </template>
                                 </Column>
                                 <Column header="Actions" :exportable="false" style="min-width:8rem" v-if="userHasRole('superadmin')">
@@ -247,17 +341,16 @@
                         />
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">Jumlah <span class="text-danger" aria-hidden="true">*</span></label>
+                        <label class="form-label">Jumlah On Hand</label>
                         <input
                             type="number"
                             class="form-control"
-                            v-model="form.quantity"
-                            min="0"
-                            :disabled="true"
-                            title="Quantity tidak dapat diubah langsung (Phase 12B). Gunakan Stock In/Out/Transfer/Return."
+                            :value="form.quantity ?? 0"
+                            readonly
+                            title="On-hand quantity is display-only (Phase 18A). Use Stock In/Out/Transfer/Adjustment documents."
                         />
                         <small class="text-muted">
-                            Quantity tidak dapat diedit langsung. Gunakan dokumen Stock In / Out / Transfer / Return.
+                            On Hand bersifat display-only. Perubahan stok hanya melalui dokumen Stock In / Out / Transfer / Adjustment.
                         </small>
                     </div>
                     <div class="col-md-6">
@@ -955,11 +1048,19 @@ definePageMeta({
   keywords: 'Stock, Inventory, Sinergi Innovate Pratama',
   author: 'Sinergi Innovate Pratama',
   robots: 'index, follow',
-  viewport: 'width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0'
+  viewport: 'width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0',
+  alias: ['/inventory/stok'],
 });
 </script>
 
 <style scoped>
+.legend-dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .card-body {
