@@ -329,6 +329,8 @@ export default defineNuxtPlugin(() => {
     approveRequestActivation: (id: number | string) => `${apiBase}/request-activation/${id}/approve`,
     rejectRequestActivation: (id: number | string) => `${apiBase}/request-activation/${id}/reject`,
     completeRequestActivation: (id: number | string) => `${apiBase}/request-activation/${id}/complete`,
+    requestActivationReadiness: (id: number | string) =>
+      `${apiBase}/request-activation/${id}/activation-readiness`,
 
     // Berita Acara — Operations
     beritaAcara: () => `${apiBase}/berita-acara`,

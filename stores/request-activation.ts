@@ -64,8 +64,44 @@ export interface RequestActivation {
   customer?: { id: number; name: string; email?: string; phone?: string; code?: string }
   servicePlan?: { id: number; name: string; quota?: string | null } | null
   approvalLogs?: ApprovalLogEntry[]
+  serviceInstanceId?: string | null
+  service_instance_id?: string | null
+  subscriptionServiceId?: string | null
   currentApprovers?: ApproverInfo[]
   nextApprovalStep?: number | null
+}
+
+export interface ActivationBlocker {
+  code: string
+  message: string
+  referenceType?: string
+  referenceId?: string
+  outstandingAmount?: number
+  currency?: string
+}
+
+export interface ActivationReadiness {
+  eligible: boolean
+  requestActivationId?: number
+  subscriptionId: string
+  subscriptionServiceId?: string
+  serviceInstanceId: string
+  checks: {
+    identityValid: boolean
+    customerConsistent: boolean
+    subscriptionSigned: boolean
+    requestActivationApproved: boolean
+    servicePendingActivation: boolean
+    requiredChargesExist: boolean
+    requiredChargesInvoiced: boolean
+    requiredInvoicesValid: boolean
+    requiredInvoicesFullyPaid: boolean
+  }
+  requiredAmount: number
+  settledAmount: number
+  outstandingAmount: number
+  currency?: string
+  blockers: ActivationBlocker[]
 }
 
 interface RequestActivationState {
@@ -114,6 +150,9 @@ interface RequestActivationState {
     rejected: number
     completed: number
   }
+  activationReadiness: ActivationReadiness | null
+  readinessLoading: boolean
+  readinessError: string | null
 }
 
 function todayIso() {
@@ -170,6 +209,9 @@ export const useRequestActivationStore = defineStore('requestActivation', {
       rejected: 0,
       completed: 0,
     },
+    activationReadiness: null,
+    readinessLoading: false,
+    readinessError: null,
   }),
 
   actions: {
@@ -183,6 +225,7 @@ export const useRequestActivationStore = defineStore('requestActivation', {
         approve: (id: number | string) => $api.approveRequestActivation(id),
         reject: (id: number | string) => $api.rejectRequestActivation(id),
         complete: (id: number | string) => $api.completeRequestActivation(id),
+        readiness: (id: number | string) => $api.requestActivationReadiness(id),
       }
     },
 
@@ -242,6 +285,27 @@ export const useRequestActivationStore = defineStore('requestActivation', {
         else if (res?.id) this.requestActivation = res
       } finally {
         this.loading = false
+      }
+    },
+
+    async fetchActivationReadiness(id: number | string): Promise<ActivationReadiness | null> {
+      const api = this.apiEndpoints()
+      this.readinessLoading = true
+      this.readinessError = null
+      try {
+        const res = await apiFetch(api.readiness(id), {
+          headers: { Accept: 'application/json' },
+          credentials: 'include',
+        })
+        const data = (res?.data ?? res) as ActivationReadiness
+        this.activationReadiness = data
+        return data
+      } catch (e: any) {
+        this.readinessError = e?.message || 'Gagal memuat syarat aktivasi'
+        this.activationReadiness = null
+        return null
+      } finally {
+        this.readinessLoading = false
       }
     },
 
@@ -478,8 +542,19 @@ export const useRequestActivationStore = defineStore('requestActivation', {
           }),
         })
         if (!res.ok) {
-          const err = await normalizeFailedResponse(res, 'Request Activation gagal diselesaikan.')
-          toastNormalizedError(err)
+          const body = await res.json().catch(() => null)
+          const blockers = body?.meta?.blockers || body?.data?.blockers || []
+          const extra = Array.isArray(blockers) && blockers.length
+            ? ` ${blockers.map((b: ActivationBlocker) => b.message).filter(Boolean).join('; ')}`
+            : ''
+          const err = await normalizeFailedResponse(
+            new Response(JSON.stringify(body), { status: res.status, headers: { 'Content-Type': 'application/json' } }),
+            `Request Activation gagal diselesaikan.${extra}`
+          )
+          toastNormalizedError({
+            ...err,
+            message: extra ? `${err.message}${extra}` : err.message,
+          })
           return false
         }
         await this.fetchRequestActivations()

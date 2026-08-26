@@ -55,6 +55,7 @@
                   <a
                     v-if="requestActivation.status === 'approved' && (userHasRole('superadmin') || userHasPermission('edit_request_activation'))"
                     class="dropdown-item"
+                    :class="{ disabled: completeDisabled }"
                     href="javascript:void(0)"
                     @click="onComplete"
                   >
@@ -243,6 +244,50 @@
                 </div>
               </div>
 
+              <div class="card mb-4">
+                <div class="card-header border-0 bg-transparent px-5 py-4 d-flex justify-content-between align-items-center">
+                  <h5 class="card-title mb-0">Syarat Aktivasi</h5>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-secondary"
+                    :disabled="readinessLoading"
+                    @click="loadReadiness"
+                  >
+                    <i class="ri-refresh-line me-1"></i> Muat ulang
+                  </button>
+                </div>
+                <div class="card-body px-5 pt-0 pb-4">
+                  <div v-if="readinessLoading" class="text-muted small">Memuat syarat aktivasi...</div>
+                  <div v-else-if="readinessError" class="alert alert-warning py-2 mb-0">
+                    {{ readinessError }}
+                    <button type="button" class="btn btn-link btn-sm p-0 ms-1" @click="loadReadiness">Coba lagi</button>
+                  </div>
+                  <ul v-else-if="activationReadiness" class="list-unstyled mb-0">
+                    <li
+                      v-for="item in readinessChecklist"
+                      :key="item.key"
+                      class="d-flex align-items-start gap-2 mb-2"
+                    >
+                      <i
+                        :class="item.ok ? 'ri-checkbox-circle-fill text-success' : 'ri-close-circle-fill text-danger'"
+                        class="mt-1"
+                      ></i>
+                      <span>
+                        {{ item.label }}
+                        <NuxtLink
+                          v-if="item.invoiceId && canViewInvoice"
+                          :to="`/finance/invoices/detail/${item.invoiceId}`"
+                          class="d-block small"
+                        >
+                          Buka invoice
+                        </NuxtLink>
+                      </span>
+                    </li>
+                  </ul>
+                  <p v-else class="text-muted small mb-0">Syarat aktivasi belum tersedia.</p>
+                </div>
+              </div>
+
               <ApprovalCard
                 :status-text="getStatusText(requestActivation)"
                 :current-step="approvalStepDisplay"
@@ -290,13 +335,25 @@ import {
 } from '~/stores/request-activation'
 import { useApprovalStatus } from '~/composables/useApprovalStatus'
 import { usePermissions } from '~/composables/usePermissions'
+import { useFormatRupiah } from '~/composables/formatRupiah'
 import ApprovalCard from '~/components/ApprovalCard.vue'
+import Swal from 'sweetalert2'
 
 const route = useRoute()
 const store = useRequestActivationStore()
 const { userHasPermission, userHasRole } = usePermissions()
-const { requestActivation, loading, error } = storeToRefs(store)
+const { requestActivation, loading, error, activationReadiness, readinessLoading, readinessError } = storeToRefs(store)
 const { getStatusBadge, getStatusText } = useApprovalStatus()
+const formatRupiah = useFormatRupiah()
+const canViewInvoice = computed(() =>
+  userHasRole('superadmin') ||
+  userHasRole('admin') ||
+  userHasPermission('view_finance_invoice') ||
+  userHasPermission('show_finance_invoice') ||
+  userHasPermission('view_sales_invoice') ||
+  userHasPermission('show_sales_invoice') ||
+  userHasPermission('view_invoice')
+)
 
 const id = computed(() => String(route.params.id || ''))
 const showRejectModal = ref(false)
@@ -334,9 +391,65 @@ function formatCoord(v?: number | string | null) {
   return String(v)
 }
 
+const completeDisabled = computed(() => {
+  if (readinessLoading.value) return true
+  if (activationReadiness.value && activationReadiness.value.eligible === false) return true
+  return false
+})
+
+const readinessChecklist = computed(() => {
+  const r = activationReadiness.value
+  if (!r) return []
+  const outstanding =
+    canViewInvoice.value && r.outstandingAmount > 0
+      ? `Initial invoice masih tersisa ${formatRupiah(r.outstandingAmount)}`
+      : r.checks.requiredInvoicesFullyPaid
+        ? ''
+        : 'Initial invoice belum lunas'
+  const invoiceBlocker = r.blockers.find((b) => b.referenceType === 'finance_invoice' && b.referenceId)
+  return [
+    { key: 'signed', ok: r.checks.subscriptionSigned, label: 'Subscription sudah ditandatangani' },
+    {
+      key: 'si',
+      ok: Boolean(r.serviceInstanceId) || r.checks.servicePendingActivation,
+      label: 'Service Instance sudah diprovisioning',
+    },
+    { key: 'approved', ok: r.checks.requestActivationApproved, label: 'Request Activation sudah disetujui' },
+    { key: 'invoiced', ok: r.checks.requiredChargesInvoiced, label: 'Initial charges sudah menjadi invoice' },
+    {
+      key: 'paid',
+      ok: r.checks.requiredInvoicesFullyPaid,
+      label: r.checks.requiredInvoicesFullyPaid ? 'Initial invoice sudah lunas' : outstanding || 'Initial invoice belum lunas',
+      invoiceId: canViewInvoice.value ? invoiceBlocker?.referenceId : undefined,
+    },
+  ]
+})
+
+async function loadReadiness() {
+  if (!id.value) return
+  await store.fetchActivationReadiness(id.value)
+}
+
 async function load() {
   if (!id.value) return
   await store.getRequestActivationDetails(id.value)
+  await loadReadiness()
+}
+
+async function onComplete() {
+  if (!requestActivation.value || completeDisabled.value) return
+  const confirm = await Swal.fire({
+    title: 'Selesaikan aktivasi?',
+    text: 'Service Instance akan diaktifkan dalam transaksi yang sama. Pastikan invoice awal sudah lunas.',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: 'Tandai Selesai',
+    cancelButtonText: 'Batal',
+  })
+  if (!confirm.isConfirmed) return
+  const ok = await store.markCompleted(requestActivation.value.id)
+  if (ok) await load()
+  else await loadReadiness()
 }
 
 async function onSubmit() {
@@ -357,12 +470,6 @@ async function handleReject() {
   const ok = await store.rejectRequestActivation(requestActivation.value.id, rejectRemarks.value.trim())
   if (ok) await load()
   rejectRemarks.value = ''
-}
-
-async function onComplete() {
-  if (!requestActivation.value) return
-  const ok = await store.markCompleted(requestActivation.value.id)
-  if (ok) await load()
 }
 
 async function onDelete() {
