@@ -2,6 +2,14 @@ import { defineStore } from 'pinia'
 import { useNuxtApp } from '#app'
 import Swal from 'sweetalert2'
 import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
+import {
+  normalizeArReceiptFormOptions,
+  formatArInvoiceOptionLabel,
+  formatBankAccountOptionLabel,
+  type ArReceiptInvoiceOption,
+  type BankAccountOption,
+} from '~/utils/financeFormOptions'
+import { buildQueryString, fetchJson, parsePaginatedData } from '~/utils/paginatedApi'
 
 export interface ARReceipt {
   id?: string
@@ -47,8 +55,9 @@ interface ARReceiptState {
   showModal: boolean
   validationErrors: any[]
   customers: any[]
-  invoices: any[]
-  bankAccounts: any[]
+  invoices: ArReceiptInvoiceOption[]
+  bankAccounts: BankAccountOption[]
+  formOptionsLoading: boolean
   paymentMethods: { value: string; label: string }[]
   currencies: { value: string; label: string }[]
   statuses: { value: string; label: string }[]
@@ -88,6 +97,7 @@ export const useARReceiptStore = defineStore('arReceipt', {
     customers: [],
     invoices: [],
     bankAccounts: [],
+    formOptionsLoading: false,
     paymentMethods: [
       { value: 'cash', label: 'Tunai' },
       { value: 'bank_transfer', label: 'Transfer Bank' },
@@ -185,70 +195,81 @@ export const useARReceiptStore = defineStore('arReceipt', {
     async fetchCustomers() {
       const { $api } = useNuxtApp()
       try {
-        const response = await fetch($api.customer(), {
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          credentials: 'include' // Cookie-based auth
-        });
-
-        if (response.ok) {
-          const result = await response.json()
-          this.customers = Array.isArray(result.data) ? result.data : []
-        } else {
-          this.customers = []
-        }
+        const url = `${$api.customer()}${buildQueryString({ page: 1, rows: 500, sortField: 'name', sortOrder: 'asc' })}`
+        const result = await fetchJson<Record<string, unknown>>(url)
+        this.customers = parsePaginatedData(result)
       } catch (error) {
         console.error('Error fetching customers:', error)
         this.customers = []
       }
     },
 
-    async fetchInvoices() {
+    /**
+     * Single request for invoice + bank account dropdowns (scoped to AR Receipt permission).
+     * Pass customerId to load open invoices for that customer only.
+     */
+    async fetchFormOptions(
+      customerId?: string | number | null,
+      includeInvoiceIds: string[] = []
+    ) {
+      this.formOptionsLoading = true
       const { $api } = useNuxtApp()
-      try {
-        const response = await fetch($api.salesInvoice(), {
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          credentials: 'include' // Cookie-based auth
-        });
+      const toast = useToast()
 
-        if (response.ok) {
-          const result = await response.json()
-          this.invoices = Array.isArray(result.data) ? result.data : []
-        } else {
-          this.invoices = []
-        }
-      } catch (error) {
-        console.error('Error fetching invoices:', error)
+      try {
+        const url = `${$api.arReceiptsFormOptions()}${buildQueryString({
+          customerId: customerId || undefined,
+          includeInvoiceIds: includeInvoiceIds.filter(Boolean).join(',') || undefined,
+        })}`
+        const result = await fetchJson(url)
+        const options = normalizeArReceiptFormOptions(result)
+        this.invoices = options.invoices
+        this.bankAccounts = options.bankAccounts
+      } catch (error: any) {
+        console.error('Error fetching AR receipt form options:', error)
         this.invoices = []
+        this.bankAccounts = []
+        toast.error({
+          title: 'Error',
+          message: error?.message || 'Gagal memuat opsi invoice dan rekening bank.',
+          color: 'red',
+          position: 'bottomRight',
+          layout: 2,
+        })
+      } finally {
+        this.formOptionsLoading = false
       }
     },
 
-    async fetchBankAccounts() {
-      const { $api } = useNuxtApp()
-      try {
-        const response = await fetch($api.bankAccounts(), {
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          credentials: 'include' // Cookie-based auth
-        });
-
-        if (response.ok) {
-          const result = await response.json()
-          this.bankAccounts = Array.isArray(result.data) ? result.data : []
-        } else {
-          this.bankAccounts = []
-        }
-      } catch (error) {
-        console.error('Error fetching bank accounts:', error)
-        this.bankAccounts = []
+    async onCustomerChange(customerId?: string | number | null) {
+      this.form.invoice_id = ''
+      if (!this.form.allocations?.length) {
+        this.form.allocations = []
+      } else {
+        this.form.allocations = this.form.allocations.map((row) => ({
+          ...row,
+          salesInvoiceId: '',
+        }))
       }
+      await this.fetchFormOptions(customerId)
+    },
+
+    invoiceOptionLabel(invoice: ArReceiptInvoiceOption) {
+      return formatArInvoiceOptionLabel(invoice)
+    },
+
+    bankAccountOptionLabel(account: BankAccountOption) {
+      return formatBankAccountOptionLabel(account)
+    },
+
+    /** @deprecated Use fetchFormOptions */
+    async fetchInvoices(customerId?: string | number | null) {
+      await this.fetchFormOptions(customerId)
+    },
+
+    /** @deprecated Use fetchFormOptions */
+    async fetchBankAccounts() {
+      await this.fetchFormOptions(this.form.customer_id || this.form.customerId)
     },
 
     async saveReceipt() {
@@ -502,8 +523,43 @@ export const useARReceiptStore = defineStore('arReceipt', {
       
       this.showModal = true;
       this.fetchCustomers();
-      this.fetchInvoices();
-      this.fetchBankAccounts();
+
+      const customerId = receipt?.customer_id || (receipt as any)?.customerId || null
+      const includeInvoiceIds = [
+        receipt?.invoice_id,
+        (receipt as any)?.salesInvoiceId,
+        ...((receipt?.allocations || []).map((a: any) => a.salesInvoiceId)),
+        ...(((receipt as any)?.settlementLines || (receipt as any)?.settlement_lines || []).map(
+          (l: any) => l.salesInvoiceId || l.sales_invoice_id
+        )),
+      ]
+        .map((id) => (id ? String(id) : ''))
+        .filter(Boolean)
+
+      this.fetchFormOptions(customerId, [...new Set(includeInvoiceIds)]);
+    },
+
+    /**
+     * Prefill create form from Open Invoice (does not auto-confirm / mutate invoice status).
+     */
+    openFromOpenInvoice(prefill: {
+      customerId: string | number
+      invoiceId: string
+      amount: number
+      notes?: string
+    }) {
+      this.openModal()
+      this.form.customer_id = String(prefill.customerId)
+      this.form.invoice_id = String(prefill.invoiceId)
+      this.form.amount = Number(prefill.amount || 0)
+      this.form.notes = prefill.notes || `Pembayaran invoice ${prefill.invoiceId}`
+      this.form.allocations = [
+        {
+          salesInvoiceId: String(prefill.invoiceId),
+          amount: Number(prefill.amount || 0),
+        },
+      ]
+      this.fetchFormOptions(prefill.customerId, [String(prefill.invoiceId)])
     },
 
     closeModal() {

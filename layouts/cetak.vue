@@ -16,7 +16,7 @@
       <span class="cetak-draft-watermark__text">{{ watermarkLabel }}</span>
     </div>
 
-    <div class="invoice-print cetak-print-root p-6">
+    <div class="invoice-print cetak-print-root">
       <Head>
         <Title>{{ title ? title + ' - Sinergi Innovate Pratama' : 'Sinergi Innovate Pratama' }}</Title>
       </Head>

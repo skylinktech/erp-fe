@@ -12,11 +12,11 @@
 
 .cetak-layout {
   --print-page-margin-x: 8mm;
-  --print-page-margin-top: 16mm;
-  --print-page-margin-bottom: 22mm;
+  --print-page-margin-top: 6mm;
+  --print-page-margin-bottom: 12mm;
   --print-font-size: 12px;
   --print-line-height: 1.4;
-  --print-header-gap: 1rem;
+  --print-header-gap: 0.5rem;
   /* Reserved bands for fixed header/footer repeated on every printed page. */
   --print-header-height: 30mm;
   --print-footer-height: 12mm;
@@ -43,6 +43,8 @@
 .cetak-print-root {
   min-width: 0;
   background: #fff;
+  /* Screen preview: tipis saja; print meng-zero via @media print */
+  padding: 8px 12px 16px;
 }
 
 .cetak-document {
@@ -50,6 +52,32 @@
   padding: var(--print-page-margin-top) var(--print-page-margin-x)
     var(--print-page-margin-bottom);
   max-width: 100%;
+}
+
+/* Invoice — rapatkan atas di preview & cetak (selector di document, bukan html) */
+.cetak-document[data-print-type='FINANCE_INVOICE'],
+.cetak-document[data-print-type='SALES_INVOICE'] {
+  --print-page-margin-top: 0;
+  --print-page-margin-bottom: 10mm;
+  padding-top: 0;
+}
+
+.cetak-document[data-print-type='FINANCE_INVOICE'] .cetak-header,
+.cetak-document[data-print-type='SALES_INVOICE'] .cetak-header {
+  min-height: 0;
+  margin-top: 0;
+  margin-bottom: 0.35rem;
+  padding-top: 0;
+}
+
+.cetak-document[data-print-type='FINANCE_INVOICE'] .cetak-header__logo,
+.cetak-document[data-print-type='SALES_INVOICE'] .cetak-header__logo {
+  margin-bottom: 0.25rem !important;
+}
+
+.cetak-document[data-print-type='FINANCE_INVOICE'] .cetak-hr,
+.cetak-document[data-print-type='SALES_INVOICE'] .cetak-hr {
+  margin: 0.85rem 0 1rem;
 }
 
 /* Repeat header/footer on every printed page via table-header-group / table-footer-group. */
@@ -100,8 +128,8 @@
 
 .cetak-header {
   min-height: 60px;
-  margin-top: 0.5rem;
-  margin-bottom: 1rem;
+  margin-top: 0;
+  margin-bottom: 0.75rem;
 }
 
 .cetak-header__brand-group {
@@ -164,7 +192,7 @@
 .cetak-hr {
   border: none;
   border-top: 1pt solid var(--print-accent);
-  margin: 1rem 0;
+  margin: 0.85rem 0;
 }
 
 .cetak-footer {
@@ -458,10 +486,10 @@
 @page {
   size: A4 portrait;
   /*
-   * Top/bottom margins reserve space for fixed header/footer on every sheet.
-   * Side margins stay narrow so the body uses more horizontal width.
+   * Fallback saja. Margin otoritatif di-inject oleh CetakDocument.applyPrintEnvironment()
+   * dengan !important (header sudah in-flow via .cetak-page-table).
    */
-  margin: 30mm 8mm 22mm 8mm;
+  margin: 12mm 12mm 12mm 12mm;
 }
 
 @page {
@@ -481,7 +509,7 @@ html[data-print-orientation='landscape'] {
 
 html[data-print-header='company-address'],
 html[data-print-header='finance'] {
-  --print-header-height: 48mm;
+  --print-header-height: 36mm;
 }
 
 /* Form Berlangganan — compact page margins; header/footer repeat via .cetak-page-table. */
@@ -620,6 +648,11 @@ html[data-print-type='SUBSCRIPTION'] .cetak-check {
     max-width: 100%;
   }
 
+  .cetak-document[data-print-type='FINANCE_INVOICE'],
+  .cetak-document[data-print-type='SALES_INVOICE'] {
+    padding: 0 !important;
+  }
+
   /* Repeat header/footer every page — no position:fixed clipping. */
   .cetak-page-table {
     width: 100%;
@@ -681,7 +714,39 @@ html[data-print-type='SUBSCRIPTION'] .cetak-check {
   }
 
   .cetak-page-table > thead > tr > td {
-    padding: 0 0 6mm 0 !important;
+    padding: 0 0 2mm 0 !important;
+  }
+
+  .cetak-document[data-print-type='FINANCE_INVOICE'] .cetak-page-table > thead > tr > td,
+  .cetak-document[data-print-type='SALES_INVOICE'] .cetak-page-table > thead > tr > td,
+  html[data-print-type='FINANCE_INVOICE'] .cetak-page-table > thead > tr > td,
+  html[data-print-type='SALES_INVOICE'] .cetak-page-table > thead > tr > td {
+    padding: 0 !important;
+  }
+
+  .cetak-document[data-print-type='FINANCE_INVOICE'] .cetak-page-table .cetak-header,
+  .cetak-document[data-print-type='SALES_INVOICE'] .cetak-page-table .cetak-header,
+  html[data-print-type='FINANCE_INVOICE'] .cetak-page-table .cetak-header,
+  html[data-print-type='SALES_INVOICE'] .cetak-page-table .cetak-header {
+    margin: 0 !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+  }
+
+  .cetak-document[data-print-type='FINANCE_INVOICE'] .cetak-page-table .cetak-header__logo.mb-3,
+  .cetak-document[data-print-type='SALES_INVOICE'] .cetak-page-table .cetak-header__logo.mb-3,
+  html[data-print-type='FINANCE_INVOICE'] .cetak-page-table .cetak-header__logo.mb-3,
+  html[data-print-type='SALES_INVOICE'] .cetak-page-table .cetak-header__logo.mb-3 {
+    margin-bottom: 2mm !important;
+  }
+
+  .cetak-document[data-print-type='FINANCE_INVOICE'] .cetak-page-table .cetak-header::after,
+  .cetak-document[data-print-type='SALES_INVOICE'] .cetak-page-table .cetak-header::after,
+  html[data-print-type='FINANCE_INVOICE'] .cetak-page-table .cetak-header::after,
+  html[data-print-type='SALES_INVOICE'] .cetak-page-table .cetak-header::after {
+    margin-top: 4mm !important;
+    margin-bottom: 4mm !important;
+    padding: 0 !important;
   }
 
   .cetak-page-table > tbody > tr:first-child {
@@ -701,10 +766,6 @@ html[data-print-type='SUBSCRIPTION'] .cetak-check {
     margin: 0 !important;
   }
 
-  .cetak-page-table__body-cell .cetak-document__body > :first-child {
-    margin-top: 0 !important;
-  }
-
   .cetak-page-table .cetak-header,
   .cetak-page-table .cetak-footer {
     position: static !important;
@@ -720,11 +781,25 @@ html[data-print-type='SUBSCRIPTION'] .cetak-check {
     content: '';
     display: block;
     border-bottom: 1pt solid var(--print-accent);
-    margin-top: 2mm;
+    margin-top: 3.5mm;
+    margin-bottom: 3.5mm;
   }
 
   .cetak-hr {
     display: none !important;
+  }
+
+  .cetak-page-table__body-cell .cetak-document__body > :first-child {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+  }
+
+  .cetak-document[data-print-type='FINANCE_INVOICE'] .cetak-page-table__body-cell .customer-info-section,
+  .cetak-document[data-print-type='SALES_INVOICE'] .cetak-page-table__body-cell .customer-info-section,
+  html[data-print-type='FINANCE_INVOICE'] .cetak-page-table__body-cell .customer-info-section,
+  html[data-print-type='SALES_INVOICE'] .cetak-page-table__body-cell .customer-info-section {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
   }
 
   .cetak-header__logo {

@@ -24,6 +24,7 @@ export const useServiceInstanceStore = defineStore('serviceInstance', {
     summary: null as any,
     monitoring: null as any,
     events: [] as any[],
+    eventsTotal: 0,
     listParams: {
       page: 1,
       rows: 10,
@@ -110,11 +111,27 @@ export const useServiceInstanceStore = defineStore('serviceInstance', {
       const rows = Number(e.rows ?? this.listParams.rows) || 10
       const first = Number(e.first ?? 0)
       const page = e.page != null ? Number(e.page) + 1 : Math.floor(first / rows) + 1
-      return this.fetchCustomerService({ page, rows, first })
+      return this.fetchCustomerService({
+        page,
+        rows,
+        first,
+        status: this.listParams.status,
+        statuses: this.listParams.statuses,
+        search: this.listParams.search,
+        technology: this.listParams.technology,
+      })
     },
 
     setSearch(search: string) {
-      return this.fetchCustomerService({ search, page: 1, first: 0 })
+      return this.fetchCustomerService({
+        search,
+        page: 1,
+        first: 0,
+        statuses: this.listParams.statuses,
+        status: this.listParams.status,
+        technology: this.listParams.technology,
+        rows: this.listParams.rows,
+      })
     },
 
     setStatusFilter(status: string | null) {
@@ -180,9 +197,13 @@ export const useServiceInstanceStore = defineStore('serviceInstance', {
       return json.data
     },
 
-    async fetchEvents(params: { page?: number; serviceInstanceId?: string } = {}) {
+    async fetchEvents(
+      params: { page?: number; limit?: number; serviceInstanceId?: string } = {}
+    ) {
       const { $api } = useNuxtApp()
-      const qs = new URLSearchParams({ page: String(params.page || 1), limit: '50' })
+      const page = params.page || 1
+      const limit = params.limit || 50
+      const qs = new URLSearchParams({ page: String(page), limit: String(limit) })
       if (params.serviceInstanceId) qs.set('serviceInstanceId', params.serviceInstanceId)
       const url = params.serviceInstanceId
         ? `${$api.serviceInstancesEvents(params.serviceInstanceId)}?${qs}`
@@ -194,6 +215,7 @@ export const useServiceInstanceStore = defineStore('serviceInstance', {
       const json = await res.json()
       if (!res.ok) throw new Error(json.message || 'Gagal memuat events')
       this.events = Array.isArray(json.data) ? json.data : []
+      this.eventsTotal = Number(json.meta?.total) || this.events.length
       return this.events
     },
 

@@ -238,10 +238,31 @@
                     <li>
                       <NuxtLink
                         class="dropdown-item"
-                        :to="`/finance/billing-preparations/detail/${data.id}`"
+                        :to="`/finance/billing/billing-preparations/detail/${data.id}`"
                       >
-                        <i class="ri-eye-line me-2"></i> Detail
+                        <i class="ri-eye-line me-2"></i> Detail / Kelola Draft
                       </NuxtLink>
+                    </li>
+                    <li
+                      v-if="data.status === 'draft' && (userHasRole('superadmin') || userHasPermission('edit_billing_preparation'))"
+                    >
+                      <NuxtLink
+                        class="dropdown-item"
+                        :to="`/finance/billing/billing-preparations/detail/${data.id}?addAdjustment=1`"
+                      >
+                        <i class="ri-add-line me-2"></i> Tambah Billing Adjustment
+                      </NuxtLink>
+                    </li>
+                    <li
+                      v-if="data.status === 'draft' && (userHasRole('superadmin') || userHasPermission('edit_billing_preparation'))"
+                    >
+                      <a
+                        class="dropdown-item"
+                        href="javascript:void(0)"
+                        @click="store.syncCharges(data.id)"
+                      >
+                        <i class="ri-refresh-line me-2"></i> Sinkronkan Charge
+                      </a>
                     </li>
                     <li
                       v-if="data.status === 'draft' && (userHasRole('superadmin') || userHasPermission('ready_billing_preparation'))"
@@ -262,7 +283,7 @@
                         href="javascript:void(0)"
                         @click="store.remove(data.id)"
                       >
-                        <i class="ri-delete-bin-line me-2"></i> Hapus
+                        <i class="ri-delete-bin-line me-2"></i> Hapus Draft
                       </a>
                     </li>
                   </ul>
@@ -412,6 +433,31 @@
               no-options-text="Tidak ada Billing Adjustment approved untuk customer ini"
             />
           </div>
+
+          <div v-if="chargePreviewLines.length" class="mt-3">
+            <div class="small text-muted mb-1">Preview charge eligible (tidak di-reserve sampai Buat)</div>
+            <ul class="list-unstyled small mb-0 border rounded p-2">
+              <li
+                v-for="line in chargePreviewLines"
+                :key="line.chargeKey"
+                class="d-flex justify-content-between gap-2 border-bottom py-1"
+              >
+                <span>
+                  <span class="badge bg-label-secondary me-1">{{ line.chargeType }}</span>
+                  {{ line.description }}
+                </span>
+                <span class="text-nowrap">{{ formatRupiah(line.amount) }}</span>
+              </li>
+            </ul>
+          </div>
+          <div v-if="chargePreviewSkips.length" class="alert alert-light border mt-2 mb-0 py-2 small">
+            <div class="fw-semibold mb-1">Dilewati</div>
+            <ul class="mb-0 ps-3">
+              <li v-for="(skip, idx) in chargePreviewSkips" :key="skip.chargeKey || idx">
+                {{ skip.reason }}
+              </li>
+            </ul>
+          </div>
         </div>
         <p v-else class="text-muted small mb-0">
           Pilih customer terlebih dahulu untuk menampilkan Form Berlangganan dan Billing Adjustment.
@@ -467,7 +513,12 @@ const dialogVisible = ref(false)
 const fileRef = ref(null)
 const loadingPreview = ref(false)
 const loadingTaxes = ref(false)
-const sourceOptions = ref({ subscriptions: [], adjustments: [] })
+const sourceOptions = ref({
+  subscriptions: [],
+  adjustments: [],
+  chargeLines: [],
+  chargeSkips: [],
+})
 const taxMasterOptions = ref([])
 const form = ref({
   customerId: null,
@@ -481,6 +532,8 @@ const form = ref({
 const customers = computed(() => customerStore.customers || [])
 const subscriptionOptions = computed(() => sourceOptions.value.subscriptions || [])
 const adjustmentOptions = computed(() => sourceOptions.value.adjustments || [])
+const chargePreviewLines = computed(() => sourceOptions.value.chargeLines || [])
+const chargePreviewSkips = computed(() => sourceOptions.value.chargeSkips || [])
 
 const selectedTaxPreviews = computed(() => {
   const ids = new Set(form.value.taxMasterIds || [])
@@ -553,7 +606,7 @@ watch(searchQuery, (v) => debouncedSearch(v))
 
 const loadSourceOptions = useDebounceFn(async () => {
   if (!form.value.customerId) {
-    sourceOptions.value = { subscriptions: [], adjustments: [] }
+    sourceOptions.value = { subscriptions: [], adjustments: [], chargeLines: [], chargeSkips: [] }
     form.value.subscriptionIds = []
     form.value.adjustmentIds = []
     return
@@ -610,7 +663,7 @@ const openCreate = async () => {
     taxMasterIds: [],
   }
   fileRef.value = null
-  sourceOptions.value = { subscriptions: [], adjustments: [] }
+  sourceOptions.value = { subscriptions: [], adjustments: [], chargeLines: [], chargeSkips: [] }
   dialogVisible.value = true
   loadingTaxes.value = true
   try {

@@ -485,18 +485,23 @@ onMounted(loadAndMaybePrint)
 
 .term-conditions-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  border: none !important;
   font-size: 10px;
   line-height: 1.35;
-  --bs-table-bg: #4b4b4b;
-  --bs-table-color: #fff;
-  --bs-table-border-color: #616161;
+  overflow: hidden;
+  border-radius: var(--print-table-radius, 10px);
+  --bs-table-bg: transparent;
+  --bs-table-color: inherit;
+  --bs-table-border-color: transparent;
+  --bs-table-striped-bg: var(--print-stripe, #f4f5f7);
 }
 
 .term-conditions-table thead.table-dark th {
-  background-color: #4b4b4b !important;
+  background-color: var(--print-table-header, #3b4056) !important;
   color: #fff !important;
-  border-color: #616161 !important;
+  border: none !important;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
@@ -504,51 +509,76 @@ onMounted(loadAndMaybePrint)
 .term-conditions-table th {
   text-align: center;
   font-weight: 700;
-  padding: 6px 8px;
+  padding: 8px 12px;
   letter-spacing: 0.02em;
 }
 
 .term-conditions-table td {
-  border: 1px solid #616161;
+  border: none !important;
   vertical-align: top;
-  padding: 6px 8px;
-  background: #fff;
+  padding: 8px 12px;
   color: #111;
+  box-shadow: none !important;
+}
+
+/* Striped rows — sama seperti tabel MRC (--print-stripe) */
+.term-conditions-table tbody tr:nth-child(odd) > td {
+  background-color: var(--print-stripe, #f4f5f7) !important;
+}
+
+.term-conditions-table tbody tr:nth-child(even) > td {
+  background-color: #fff !important;
 }
 
 .term-conditions-table .term-conditions-no {
   width: 28px;
   font-weight: 700;
-  background: #fff !important;
   color: #111 !important;
 }
 
 .term-conditions-table .term-conditions-text {
-  background: #fff;
   color: #111;
   text-align: left;
 }
 
 .payment-instructions-table .payment-instructions-body {
-  background: #fff !important;
   color: #111;
   text-align: left;
-  padding: 8px 10px;
+  padding: 8px 12px;
   line-height: 1.45;
 }
 
 @media print {
-  .term-conditions-table thead.table-dark th,
-  .payment-instructions-table thead.table-dark th {
-    background-color: #4b4b4b !important;
-    color: #fff !important;
+  .term-conditions-table,
+  .payment-instructions-table {
+    border: none !important;
+    border-collapse: separate !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
-  .term-conditions-table .term-conditions-no {
-    background: #fff !important;
-    color: #111 !important;
+  .term-conditions-table thead.table-dark th,
+  .payment-instructions-table thead.table-dark th {
+    background-color: var(--print-table-header, #3b4056) !important;
+    color: #fff !important;
+    border: none !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .term-conditions-table td,
+  .payment-instructions-table td {
+    border: none !important;
+  }
+
+  .term-conditions-table tbody tr:nth-child(odd) > td {
+    background-color: var(--print-stripe, #f4f5f7) !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .term-conditions-table tbody tr:nth-child(even) > td {
+    background-color: #fff !important;
   }
 }
 </style>

@@ -3,10 +3,17 @@
     <!-- Content -->
     <div class="container-xxl flex-grow-1">
       
-      <p class="mb-6">
-        Kelola pembayaran ke vendor untuk transaksi keuangan
+      <p class="mb-4">
+        Kelola pembayaran ke vendor, tagihan outstanding, dan aging hutang.
       </p>
 
+      <FinanceWorkspaceTabs
+        :tabs="visibleTabs"
+        :model-value="activeTab"
+        @update:model-value="setTab"
+      />
+
+      <div v-show="activeTab === 'payments'">
       <!-- Payment Statistics Cards -->
       <div class="row g-6 mb-6">
         <div class="col-xl-3 col-lg-6 col-md-6" v-if="apPaymentStore.loading">
@@ -280,6 +287,16 @@
             </div>
           </div>
         </div>
+      </div>
+      </div>
+      <!-- /tab payments -->
+
+      <div v-if="isTabActivated('open-bills')" v-show="activeTab === 'open-bills'">
+        <ApOpenBillsPanel @create-payment="onCreatePaymentFromOpenBill" />
+      </div>
+
+      <div v-if="isTabActivated('aging')" v-show="activeTab === 'aging'">
+        <ApAgingPanel />
       </div>
     </div>
 
@@ -643,6 +660,10 @@ import InputText from 'primevue/inputtext'
 import vSelect from 'vue-select'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
 import 'vue-select/dist/vue-select.css'
+import FinanceWorkspaceTabs from '~/components/finance/FinanceWorkspaceTabs.vue'
+import ApOpenBillsPanel from '~/components/finance/ap/ApOpenBillsPanel.vue'
+import ApAgingPanel from '~/components/finance/ap/ApAgingPanel.vue'
+import { useFinanceWorkspaceTabs } from '~/composables/useFinanceWorkspaceTabs'
 
 const { setListTitle, setFormTitle } = useDynamicTitle()
 
@@ -655,6 +676,27 @@ const permissionStore = usePermissionsStore()
 // Router
 const router = useRouter()
 const route = useRoute()
+
+const workspaceTabs = [
+  { id: 'payments', label: 'Payments', permission: ['view_ap_payment', 'access_ap_payment'] },
+  { id: 'open-bills', label: 'Open Bills', permission: ['view_ap_aging', 'view_ap_payment'] },
+  { id: 'aging', label: 'Aging Analysis', permission: ['view_ap_aging', 'view_ap_payment'] },
+]
+
+const { activeTab, visibleTabs, setTab, isTabActivated } = useFinanceWorkspaceTabs({
+  tabs: workspaceTabs,
+  defaultTabId: 'payments',
+})
+
+function onCreatePaymentFromOpenBill(row) {
+  setTab('payments')
+  apPaymentStore.openFromOpenBill({
+    vendorId: row.partyId,
+    invoiceId: row.id,
+    amount: row.remainingAmount,
+    description: `Pembayaran AP Invoice ${row.number}`,
+  })
+}
 
 const formatRupiah = useFormatRupiah()
 
@@ -699,32 +741,50 @@ onMounted(async () => {
   try {
     await permissionStore.fetchPermissions()
     await userStore.loadUser()
-    if (apPaymentStore.payments.length === 0) {
-      await apPaymentStore.fetchPayments()
-    }
-    
-    // Preload vendor data untuk dropdown
-    if (apPaymentStore.vendors.length === 0) {
-      await apPaymentStore.fetchVendors();
-    }
-    
-    // Preload invoice data untuk dropdown
-    if (apPaymentStore.invoices.length === 0) {
-      await apPaymentStore.fetchInvoices();
-    }
 
     const fromPrq = route.query.fromPrq
     if (fromPrq && typeof fromPrq === 'string') {
+      setTab('payments')
       await paymentRequestStore.getPaymentRequestDetails(fromPrq)
       const prq = paymentRequestStore.paymentRequest
       if (prq?.id) {
         apPaymentStore.openFromPaymentRequest(prq)
+      }
+    } else if (route.query.highlight) {
+      setTab('payments')
+      globalFilterValue.value = String(route.query.highlight)
+      apPaymentStore.setSearch?.(String(route.query.highlight))
+    }
+
+    if (activeTab.value === 'payments') {
+      if (apPaymentStore.payments.length === 0) {
+        await apPaymentStore.fetchPayments()
+      }
+      if (apPaymentStore.vendors.length === 0) {
+        await apPaymentStore.fetchVendors()
+      }
+      if (apPaymentStore.invoices.length === 0) {
+        await apPaymentStore.fetchInvoices()
       }
     }
   } catch (error) {
     console.error('Error in onMounted:', error)
   }
   setListTitle('AP Payments', apPaymentStore.payments.length)
+})
+
+watch(activeTab, async (tab) => {
+  if (tab === 'payments') {
+    if (!apPaymentStore.payments.length && !apPaymentStore.loading) {
+      await apPaymentStore.fetchPayments()
+    }
+    if (!apPaymentStore.vendors.length) {
+      await apPaymentStore.fetchVendors()
+    }
+    if (!apPaymentStore.invoices.length) {
+      await apPaymentStore.fetchInvoices()
+    }
+  }
 })
 
 // Methods
@@ -945,8 +1005,8 @@ const updateAmountFromInput = (event) => {
 definePageMeta({
   layout: 'default',
   middleware: ['auth', 'check-permission'],
-  title: 'Pembayaran ke Vendor',
-  description: 'Accounts Payable Payment Management',
+  title: 'AP Payments',
+  description: 'Accounts Payable Payments, Open Bills, and Aging',
   keywords: 'AP Payments, Accounts Payable, Accounting, Sinergi Innovate Pratama',
   author: 'Sinergi Innovate Pratama',
   robots: 'index, follow',
@@ -955,8 +1015,6 @@ definePageMeta({
 </script>
 
 <style scoped>
-<style scoped>
-
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .card-body {

@@ -200,15 +200,40 @@ function applyPrintEnvironment() {
     pageStyleEl.setAttribute('data-cetak-page', 'true')
     document.head.appendChild(pageStyleEl)
   }
+
+  /**
+   * Header/footer diulang via .cetak-page-table (thead/tfoot in-flow),
+   * jadi @page margin hanya edge putih — jangan reserve ruang fixed-header.
+   * (Dulu tallHeader memakai 48mm/30mm dan menyebabkan gap besar di preview cetak.)
+   */
   const isLandscape = preset.value.orientation === 'landscape'
-  const tallHeader =
-    preset.value.headerVariant === 'company-address' ||
-    preset.value.headerVariant === 'finance'
   const isSubscription = props.type === 'SUBSCRIPTION'
-  const topMargin = isSubscription ? '10mm' : isLandscape ? (tallHeader ? '40mm' : '26mm') : tallHeader ? '48mm' : '30mm'
-  const bottomMargin = isSubscription ? '16mm' : isLandscape ? '18mm' : '22mm'
-  const sideMargin = isSubscription ? '10mm' : '8mm'
-  pageStyleEl.textContent = `@page { size: ${preset.value.paper} ${preset.value.orientation}; margin: ${topMargin} ${sideMargin} ${bottomMargin} ${sideMargin} !important; }`
+  const isInvoice =
+    props.type === 'FINANCE_INVOICE' || props.type === 'SALES_INVOICE'
+
+  let topMargin = '12mm'
+  let bottomMargin = '12mm'
+  let sideMargin = '12mm'
+
+  if (isSubscription) {
+    topMargin = '12mm'
+    bottomMargin = '12mm'
+    sideMargin = '10mm'
+  } else if (isInvoice) {
+    topMargin = '12mm'
+    bottomMargin = '12mm'
+    sideMargin = '12mm'
+  } else if (isLandscape) {
+    topMargin = '12mm'
+    bottomMargin = '12mm'
+    sideMargin = '12mm'
+  }
+
+  pageStyleEl.textContent = [
+    `@page { size: ${preset.value.paper} ${preset.value.orientation}; margin: ${topMargin} ${sideMargin} ${bottomMargin} ${sideMargin} !important; }`,
+    /* Pastikan tidak ada margin body yang menambah gap di atas */
+    `@media print { html, body { margin: 0 !important; padding: 0 !important; } }`,
+  ].join('\n')
 }
 
 function clearPrintEnvironment() {

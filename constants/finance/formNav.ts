@@ -7,8 +7,6 @@ export const FINANCE_MODULE_NAV: FormPageNavItem[] = [
   { label: 'Payment Request', to: '/finance/payment-request', icon: 'ri-hand-coin-line' },
   { label: 'AR Receipts', to: '/finance/ar-receipts', icon: 'ri-wallet-3-line' },
   { label: 'AP Payments', to: '/finance/ap-payments', icon: 'ri-money-dollar-circle-line' },
-  { label: 'AR Aging', to: '/finance/reports/ar-aging', icon: 'ri-time-line' },
-  { label: 'AP Aging', to: '/finance/reports/ap-aging', icon: 'ri-history-line' },
   { label: 'Trial Balance', to: '/finance/reports/trial-balance', icon: 'ri-scales-3-line' },
   { label: 'Profit & Loss', to: '/finance/reports/profit-loss', icon: 'ri-line-chart-line' },
   { label: 'Balance Sheet', to: '/finance/reports/balance-sheet', icon: 'ri-file-chart-line' },

@@ -35,6 +35,22 @@
                   </div>
 
                   <div class="col-md-6">
+                    <label class="form-label">Form Berlangganan</label>
+                    <CustomSelect2
+                      v-model="form.subscriptionId"
+                      :options="subscriptionOptions"
+                      :get-option-label="o => o.label"
+                      :reduce="o => o.value"
+                      searchable
+                      clearable
+                      placeholder="Pilih Form Berlangganan (signed)..."
+                      @search="searchSignedSubscriptions"
+                      @update:modelValue="onSubscriptionChange"
+                    />
+                    <small class="text-muted">Hanya status signed. Memilih akan mengisi customer, paket, lokasi, dan PIC.</small>
+                  </div>
+
+                  <div class="col-md-6">
                     <label class="form-label">Customer <span class="text-danger">*</span></label>
                     <CustomSelect2
                       v-model="form.customerId"
@@ -115,10 +131,6 @@
                     <label class="form-label">Contact AM</label>
                     <input type="text" class="form-control" v-model="form.contactAm" placeholder="Nama AM" />
                   </div>
-                  <div class="col-md-6">
-                    <label class="form-label">Form Berlangganan (URL)</label>
-                    <input type="url" class="form-control" v-model="form.subscriptionFormUrl" placeholder="https://..." />
-                  </div>
                   <div class="col-12">
                     <label class="form-label">Address</label>
                     <textarea class="form-control" rows="2" v-model="form.address" placeholder="Alamat lengkap lokasi"></textarea>
@@ -170,7 +182,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import {
   useRequestActivationStore,
@@ -178,6 +190,11 @@ import {
 } from '~/stores/request-activation'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
 import { apiFetch } from '~/utils/apiFetch'
+import { useDebounceFn } from '@vueuse/core'
+import {
+  applySignedSubscriptionPrefill,
+  type SignedSubscriptionOption,
+} from '~/utils/requestActivationPrefill'
 
 const route = useRoute()
 const store = useRequestActivationStore()
@@ -189,6 +206,8 @@ const currentNo = ref('')
 
 const customerOptions = ref<{ label: string; value: number }[]>([])
 const servicePlanOptions = ref<{ label: string; value: number; name?: string }[]>([])
+const subscriptionOptions = ref<{ label: string; value: string; prefill: SignedSubscriptionOption }[]>([])
+const subscriptionPrefillById = ref<Record<string, SignedSubscriptionOption>>({})
 
 const form = ref({
   requestDate: new Date().toISOString().slice(0, 10),
@@ -201,6 +220,7 @@ const form = ref({
   picName: '',
   picPhone: '',
   subscriptionFormUrl: '',
+  subscriptionId: null as string | null,
   notes: '',
   contactAm: '',
   address: '',
@@ -256,11 +276,100 @@ async function searchServicePlans(query: string) {
   }
 }
 
+function ensureServicePlanOption(id: number | null, name: string) {
+  if (!id) return
+  const exists = servicePlanOptions.value.find((o) => o.value === id)
+  if (!exists) {
+    servicePlanOptions.value.push({
+      label: name || `Plan #${id}`,
+      value: id,
+      name: name || '',
+    })
+  }
+}
+
 function onServicePlanChange(id: number | null) {
   if (!id) return
   const plan = servicePlanOptions.value.find((p) => p.value === id)
   if (plan?.name) form.value.planName = plan.name
 }
+
+async function searchSignedSubscriptions(query: string = '') {
+  try {
+    const { $api } = useNuxtApp()
+    const params = new URLSearchParams({
+      search: query?.trim() || '',
+      rows: '50',
+    })
+    if (form.value.customerId) params.set('customerId', String(form.value.customerId))
+    if (form.value.subscriptionId) params.set('includeId', form.value.subscriptionId)
+
+    const res = await apiFetch<{ data?: SignedSubscriptionOption[] }>(
+      $api.requestActivationSubscriptionOptions(params.toString()),
+      { credentials: 'include' }
+    )
+    const list = Array.isArray(res?.data) ? res.data : []
+    const byId: Record<string, SignedSubscriptionOption> = { ...subscriptionPrefillById.value }
+    subscriptionOptions.value = list.map((item) => {
+      byId[item.id] = item
+      return { label: item.label, value: item.id, prefill: item }
+    })
+    subscriptionPrefillById.value = byId
+  } catch (e) {
+    console.warn('Gagal memuat Form Berlangganan:', e)
+    subscriptionOptions.value = []
+  }
+}
+
+const debouncedReloadSubscriptions = useDebounceFn(() => {
+  searchSignedSubscriptions('')
+}, 300)
+
+function onSubscriptionChange(id: string | null) {
+  if (!id) {
+    form.value.subscriptionId = null
+    form.value.subscriptionFormUrl = ''
+    return
+  }
+
+  const prefill =
+    subscriptionPrefillById.value[id] ||
+    subscriptionOptions.value.find((o) => o.value === id)?.prefill
+
+  if (!prefill) return
+
+  const mapped = applySignedSubscriptionPrefill(prefill)
+  form.value.subscriptionId = mapped.subscriptionId
+  form.value.subscriptionFormUrl = mapped.subscriptionFormUrl
+  form.value.customerId = mapped.customerId
+  form.value.servicePlanId = mapped.servicePlanId
+  form.value.planName = mapped.planName
+  form.value.locationName = mapped.locationName
+  form.value.picName = mapped.picName
+  form.value.picPhone = mapped.picPhone
+  form.value.address = mapped.address
+  form.value.latitude = mapped.latitude
+  form.value.longitude = mapped.longitude
+
+  if (mapped.customerId) {
+    const exists = customerOptions.value.find((o) => o.value === mapped.customerId)
+    if (!exists) {
+      customerOptions.value.push({
+        label: prefill.customerName || `Customer #${mapped.customerId}`,
+        value: mapped.customerId,
+      })
+    }
+  }
+
+  ensureServicePlanOption(mapped.servicePlanId, mapped.planName)
+}
+
+watch(
+  () => form.value.customerId,
+  () => {
+    debouncedReloadSubscriptions()
+  }
+)
 
 async function loadForEdit(id: string) {
   pageLoading.value = true
@@ -280,7 +389,8 @@ async function loadForEdit(id: string) {
       locationName: raw.locationName ?? raw.location_name ?? '',
       picName: raw.picName ?? raw.pic_name ?? '',
       picPhone: raw.picPhone ?? raw.pic_phone ?? '',
-      subscriptionFormUrl: raw.subscriptionFormUrl ?? raw.subscription_form_url ?? '',
+      subscriptionFormUrl: '',
+      subscriptionId: raw.subscriptionId ?? raw.subscription_id ?? null,
       notes: raw.notes ?? '',
       contactAm: raw.contactAm ?? raw.contact_am ?? '',
       address: raw.address ?? '',
@@ -300,14 +410,35 @@ async function loadForEdit(id: string) {
     if (form.value.customerId) await loadCustomerById(form.value.customerId)
     if (raw.servicePlan) {
       const p = raw.servicePlan
-      const exists = servicePlanOptions.value.find((o) => o.value === p.id)
-      if (!exists) {
-        servicePlanOptions.value.push({
-          label: p.quota ? `${p.name} (${p.quota})` : p.name,
-          value: p.id,
-          name: p.name,
-        })
-      }
+      ensureServicePlanOption(p.id, p.name)
+    }
+
+    await searchSignedSubscriptions('')
+
+    const sub = raw.subscription
+    const subId = form.value.subscriptionId
+    if (subId && sub && !subscriptionOptions.value.find((o) => o.value === subId)) {
+      const no = sub.noSubscription || sub.no_subscription || subId
+      const label = raw.customer?.name ? `${no} — ${raw.customer.name}` : String(no)
+      subscriptionOptions.value.unshift({
+        label,
+        value: subId,
+        prefill: {
+          id: subId,
+          label,
+          noSubscription: String(no),
+          customerId: form.value.customerId,
+          customerName: raw.customer?.name || '',
+          servicePlanId: form.value.servicePlanId,
+          planName: form.value.planName,
+          locationName: form.value.locationName,
+          picName: form.value.picName,
+          picPhone: form.value.picPhone,
+          address: form.value.address,
+          latitude: form.value.latitude,
+          longitude: form.value.longitude,
+        },
+      })
     }
   } finally {
     pageLoading.value = false
@@ -331,6 +462,7 @@ async function handleSubmit() {
   Object.assign(store.form, {
     ...(existingId ? { id: existingId } : {}),
     ...form.value,
+    subscriptionFormUrl: '',
   })
   const result = await store.saveRequestActivation()
   if (result) {
@@ -341,7 +473,11 @@ async function handleSubmit() {
 }
 
 onMounted(async () => {
-  await Promise.all([searchCustomers(''), searchServicePlans('')])
+  await Promise.all([
+    searchCustomers(''),
+    searchServicePlans(''),
+    searchSignedSubscriptions(''),
+  ])
   if (isEditMode.value) await loadForEdit(String(route.params.id))
 })
 

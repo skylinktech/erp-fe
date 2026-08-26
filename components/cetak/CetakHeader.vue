@@ -34,7 +34,7 @@
           <img
             :src="profile.logoUrl"
             alt="Logo Perusahaan"
-            class="cetak-header__logo mb-3"
+            class="cetak-header__logo mb-1"
             @error="onLogoError"
           >
           <div class="text-start text-secondary-medium cetak-header__company-meta">

@@ -59,6 +59,11 @@ export default defineNuxtConfig({
     '/inventory/cetak-stock-transfer/**': { ssr: false },
     '/notifications': { redirect: '/' },
     '/notifications/**': { redirect: '/' },
+    // Legacy aging pages → workspace tabs (bookmark/deep-link safety net)
+    '/finance/reports/ar-aging': { redirect: '/finance/ar-receipts?tab=aging' },
+    '/finance/reports/ap-aging': { redirect: '/finance/ap-payments?tab=aging' },
+    // Service Monitoring/Events: handled by legacy-service-workspace-redirect.global.ts
+    // (preserves serviceId and other query keys — do not use static routeRules here)
   },
   modules: [
     '@pinia/nuxt',

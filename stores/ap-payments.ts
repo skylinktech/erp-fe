@@ -746,6 +746,29 @@ export const useAPPaymentStore = defineStore('apPayment', {
       this.fetchBankAccounts();
     },
 
+    /**
+     * Prefill create form from Open Bill (does not auto-post / mutate PI status).
+     */
+    openFromOpenBill(prefill: {
+      vendorId: string | number
+      invoiceId: string
+      amount: number
+      description?: string
+    }) {
+      this.openModal()
+      this.form.vendorId = Number(prefill.vendorId) as any
+      this.form.invoiceId = String(prefill.invoiceId) as any
+      this.form.amount = Number(prefill.amount || 0)
+      this.form.description =
+        prefill.description || `Pembayaran AP Invoice ${prefill.invoiceId}`
+      this.form.allocations = [
+        {
+          purchaseInvoiceId: String(prefill.invoiceId),
+          amount: Number(prefill.amount || 0),
+        },
+      ]
+    },
+
     addAllocation() {
       if (!this.form.allocations) this.form.allocations = []
       this.form.allocations.push({ purchaseInvoiceId: '', amount: 0 })

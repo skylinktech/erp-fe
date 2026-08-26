@@ -323,6 +323,8 @@ export default defineNuxtPlugin(() => {
     requestActivationShow: (id: number | string) => `${apiBase}/request-activation/${id}`,
     getRequestActivationDetails: (id: number | string) => `${apiBase}/request-activation/getDetails/${id}`,
     requestActivationStatistics: () => `${apiBase}/request-activation/statistics`,
+    requestActivationSubscriptionOptions: (params?: string) =>
+      `${apiBase}/request-activation/subscription-options${params ? `?${params}` : ''}`,
     submitRequestActivation: (id: number | string) => `${apiBase}/request-activation/${id}/submit`,
     approveRequestActivation: (id: number | string) => `${apiBase}/request-activation/${id}/approve`,
     rejectRequestActivation: (id: number | string) => `${apiBase}/request-activation/${id}/reject`,
@@ -422,6 +424,7 @@ export default defineNuxtPlugin(() => {
     billingPreparationsPreviewSources: () => `${apiBase}/finance/billing-preparations/preview-sources`,
     billingPreparationsShow     : (id: string) => `${apiBase}/finance/billing-preparations/${id}`,
     billingPreparationsRebuild  : (id: string) => `${apiBase}/finance/billing-preparations/${id}/rebuild-items`,
+    billingPreparationsSyncCharges: (id: string) => `${apiBase}/finance/billing-preparations/${id}/sync-charges`,
     billingPreparationsReady    : (id: string) => `${apiBase}/finance/billing-preparations/${id}/ready`,
 
     // Payment Requests — pengajuan dana ke Direktur Utama
@@ -487,6 +490,7 @@ export default defineNuxtPlugin(() => {
     arReceiptsShow: (id: number | string) => `${apiBase}/accounting/ar-receipts/${id}`,
     arReceiptsDelete: (id: number | string) => `${apiBase}/accounting/ar-receipts/delete/${id}`,
     arReceiptsSummary: () => `${apiBase}/accounting/ar-receipts/summary`,
+    arReceiptsFormOptions: () => `${apiBase}/accounting/ar-receipts/form-options`,
     arReceiptsConfirm: (id: number | string) => `${apiBase}/accounting/ar-receipts/${id}/confirm`,
     arReceiptsCancel: (id: number | string) => `${apiBase}/accounting/ar-receipts/${id}/cancel`,
     

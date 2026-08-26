@@ -12,12 +12,31 @@ export interface BillingPrepItem {
   amount: number
   selected: boolean
   sortOrder: number
+  chargeType?: string | null
+  chargeKey?: string | null
+  billingPeriod?: string | null
+  billingChargeId?: string | null
   serviceLine?: {
     id: string
     serviceName?: string
     planName?: string
     subscriptionId?: string
   } | null
+}
+
+export interface BillingChargeSkip {
+  chargeKey?: string
+  reason: string
+  subscriptionId?: string
+  subscriptionServiceId?: string
+}
+
+export interface BillingChargePreviewLine {
+  chargeKey: string
+  chargeType: string
+  description: string
+  amount: number
+  billingPeriod?: string | null
 }
 
 export interface BillingPrepSources {
@@ -69,6 +88,10 @@ export interface BillingPreparation {
   items?: BillingPrepItem[]
   taxes?: BillingPrepTax[]
   sources?: BillingPrepSources
+  chargeSkips?: BillingChargeSkip[]
+  newEligibleChargeCount?: number
+  newEligibleChargeTotal?: number
+  eligibleChargeTypes?: string[]
   totalAmount?: number
   itemCount?: number
   selectedCount?: number
@@ -89,6 +112,10 @@ function normalizeItem(raw: any): BillingPrepItem {
     amount: Number(raw.amount ?? 0),
     selected: !!(raw.selected ?? true),
     sortOrder: Number(raw.sortOrder ?? raw.sort_order ?? 0),
+    chargeType: raw.chargeType ?? raw.charge_type ?? null,
+    chargeKey: raw.chargeKey ?? raw.charge_key ?? null,
+    billingPeriod: raw.billingPeriod ?? raw.billing_period ?? null,
+    billingChargeId: raw.billingChargeId ?? raw.billing_charge_id ?? null,
     serviceLine: serviceLine
       ? {
           id: serviceLine.id,
@@ -161,6 +188,22 @@ function normalizePrep(raw: any): BillingPreparation {
     items,
     taxes,
     sources: raw.sources ? normalizeSources(raw.sources) : undefined,
+    chargeSkips: Array.isArray(raw.chargeSkips)
+      ? raw.chargeSkips
+      : Array.isArray(raw.charge_skips)
+        ? raw.charge_skips
+        : [],
+    newEligibleChargeCount: Number(
+      raw.newEligibleChargeCount ?? raw.new_eligible_charge_count ?? 0
+    ),
+    newEligibleChargeTotal: Number(
+      raw.newEligibleChargeTotal ?? raw.new_eligible_charge_total ?? 0
+    ),
+    eligibleChargeTypes: Array.isArray(raw.eligibleChargeTypes)
+      ? raw.eligibleChargeTypes
+      : Array.isArray(raw.eligible_charge_types)
+        ? raw.eligible_charge_types
+        : [],
     totalAmount: Number(raw.totalAmount ?? raw.total_amount ?? 0),
     itemCount: Number(raw.itemCount ?? raw.item_count ?? items.length),
     selectedCount: Number(
@@ -310,6 +353,20 @@ export const useBillingPreparationStore = defineStore('billingPreparation', {
           body,
         })
         const json = await res.json().catch(() => ({}))
+        if (res.status === 409 && json.data?.id) {
+          const go = await Swal.fire({
+            title: 'Billing Preparation sudah ada',
+            text:
+              json.message ||
+              'Billing Preparation aktif untuk customer dan periode ini sudah tersedia. Buka draft yang sudah ada?',
+            icon: 'info',
+            showCancelButton: true,
+            confirmButtonText: 'Buka Draft',
+            cancelButtonText: 'Tutup',
+          })
+          if (go.isConfirmed) return json.data.id as string
+          return null
+        }
         if (!res.ok) throw new Error(json.message || `HTTP ${res.status}`)
         useToast().success({
           title: 'Berhasil',
@@ -340,10 +397,20 @@ export const useBillingPreparationStore = defineStore('billingPreparation', {
         })
         const json = await res.json().catch(() => ({}))
         if (!res.ok) throw new Error(json.message || `HTTP ${res.status}`)
-        return normalizeSources(json.data || {})
+        const sources = normalizeSources(json.data || {})
+        return {
+          ...sources,
+          chargeLines: (json.data?.chargeLines || json.data?.charge_lines || []) as BillingChargePreviewLine[],
+          chargeSkips: (json.data?.chargeSkips || json.data?.charge_skips || []) as BillingChargeSkip[],
+        }
       } catch (e: any) {
         console.error('previewSources:', e)
-        return { subscriptions: [], adjustments: [] } as BillingPrepSources
+        return {
+          subscriptions: [],
+          adjustments: [],
+          chargeLines: [],
+          chargeSkips: [],
+        }
       }
     },
 
@@ -421,11 +488,42 @@ export const useBillingPreparationStore = defineStore('billingPreparation', {
       }
     },
 
+    async syncCharges(id: string) {
+      this.saving = true
+      const { $api } = useNuxtApp()
+      try {
+        const res = await fetch($api.billingPreparationsSyncCharges(id), {
+          method: 'POST',
+          credentials: 'include',
+          headers: { Accept: 'application/json' },
+        })
+        const json = await res.json().catch(() => ({}))
+        if (!res.ok) throw new Error(json.message || `HTTP ${res.status}`)
+        await this.fetchById(id)
+        const added = json.data?.added?.length || 0
+        useToast().success({
+          title: 'Berhasil',
+          message:
+            added > 0
+              ? `${added} charge ditambahkan. ${json.message || ''}`.trim()
+              : json.message || 'Tidak ada charge baru',
+          color: 'green',
+          position: 'bottomRight',
+        })
+        return json.data
+      } catch (e: any) {
+        useToast().error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight' })
+        return null
+      } finally {
+        this.saving = false
+      }
+    },
+
     async markReady(id: string) {
       const { $api } = useNuxtApp()
       const ok = await Swal.fire({
         title: 'Set Ready & Generate Finance Invoice?',
-        text: 'Status akan menjadi Ready dan worker akan membuat Finance Invoice (bukan Sales Invoice toko).',
+        text: 'Status akan menjadi Ready dan Finance Invoice akan digenerate.',
         icon: 'question',
         showCancelButton: true,
         confirmButtonText: 'Ya, Ready',
@@ -438,7 +536,16 @@ export const useBillingPreparationStore = defineStore('billingPreparation', {
           headers: { Accept: 'application/json' },
         })
         const json = await res.json().catch(() => ({}))
-        if (!res.ok) throw new Error(json.message || `HTTP ${res.status}`)
+        if (!res.ok) {
+          const code = json.meta?.code
+          if (code === 'BILLING_PREPARATION_HAS_UNREVIEWED_CHARGES') {
+            throw new Error(
+              json.message ||
+                'Terdapat charge baru yang belum disinkronkan. Sinkronkan terlebih dahulu.'
+            )
+          }
+          throw new Error(json.message || `HTTP ${res.status}`)
+        }
         useToast().success({
           title: 'Berhasil',
           message: json.message,

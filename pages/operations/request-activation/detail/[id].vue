@@ -126,8 +126,20 @@
                     <div class="col-12">
                       <label class="form-label text-muted">Form Berlangganan</label>
                       <p class="mb-0">
+                        <NuxtLink
+                          v-if="requestActivation.subscriptionId || requestActivation.subscription_id"
+                          :to="`/order-process/subscription/detail/${requestActivation.subscriptionId || requestActivation.subscription_id}`"
+                          class="text-primary"
+                        >
+                          {{
+                            requestActivation.subscription?.noSubscription
+                              || requestActivation.subscription?.no_subscription
+                              || requestActivation.subscriptionId
+                              || requestActivation.subscription_id
+                          }}
+                        </NuxtLink>
                         <a
-                          v-if="requestActivation.subscriptionFormUrl || requestActivation.subscription_form_url"
+                          v-else-if="requestActivation.subscriptionFormUrl || requestActivation.subscription_form_url"
                           :href="requestActivation.subscriptionFormUrl || requestActivation.subscription_form_url || '#'"
                           target="_blank"
                           rel="noopener noreferrer"

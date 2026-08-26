@@ -3,10 +3,17 @@
         <!-- Content -->
         <div class="container-xxl flex-grow-1">
             
-            <p class="mb-6">
-                Kelola penerimaan pembayaran dari pelanggan
+            <p class="mb-4">
+                Kelola penerimaan pembayaran dari pelanggan, invoice outstanding, dan aging piutang.
             </p>
 
+            <FinanceWorkspaceTabs
+              :tabs="visibleTabs"
+              :model-value="activeTab"
+              @update:model-value="setTab"
+            />
+
+            <div v-show="activeTab === 'receipts'">
             <!-- Receipt Statistics Cards -->
             <div class="row g-6 mb-6">
                 <div class="col-xl-3 col-lg-6 col-md-6" v-if="loading">
@@ -243,26 +250,86 @@
                                         </span>
                                     </template>
                                 </Column>
-                                <Column header="Actions" :exportable="false" style="min-width:8rem">
+                                <Column header="Aksi" :exportable="false" style="min-width:100px">
                                     <template #body="slotProps">
-                                        <button @click="receiptStore.openModal(slotProps.data)" class="btn btn-sm btn-icon btn-text-secondary rounded-pill btn-icon me-2" v-if="slotProps.data.status === 'draft' && (userHasPermission('edit_ar_receipt') || userHasRole('superadmin'))">
-                                            <i class="ri-edit-box-line ri-20px"></i>
-                                        </button>
-                                        <button @click="confirmReceipt(slotProps.data.id)" class="btn btn-sm btn-icon btn-text-secondary rounded-pill btn-icon me-2" v-if="slotProps.data.status === 'draft' && (userHasPermission('approve_ar_receipt') || userHasRole('superadmin'))">
-                                            <i class="ri-checkbox-circle-line ri-20px"></i>
-                                        </button>
-                                        <button @click="cancelReceipt(slotProps.data.id)" class="btn btn-sm btn-icon btn-text-secondary rounded-pill btn-icon me-2" v-if="slotProps.data.status === 'confirmed' && (userHasPermission('approve_ar_receipt') || userHasRole('superadmin'))" title="Batalkan">
-                                            <i class="ri-close-circle-line ri-20px"></i>
-                                        </button>
-                                        <button @click="receiptStore.deleteReceipt(slotProps.data.id)" class="btn btn-sm btn-icon btn-text-secondary rounded-pill btn-icon" v-if="slotProps.data.status === 'draft' && (userHasPermission('delete_ar_receipt') || userHasRole('superadmin'))">
-                                            <i class="ri-delete-bin-7-line ri-20px"></i>
-                                        </button>
+                                        <div class="d-inline-block dropdown">
+                                            <a
+                                                href="javascript:;"
+                                                class="btn btn-sm btn-text-secondary rounded-pill btn-icon dropdown-toggle hide-arrow"
+                                                data-bs-toggle="dropdown"
+                                                data-bs-popper-config='{"strategy":"fixed"}'
+                                            >
+                                                <i class="ri-more-2-fill"></i>
+                                            </a>
+                                            <ul class="dropdown-menu dropdown-menu-end ar-receipt-actions-dropdown">
+                                                <li
+                                                    v-if="slotProps.data.status === 'draft' && (userHasPermission('edit_ar_receipt') || userHasRole('superadmin'))"
+                                                >
+                                                    <a
+                                                        class="dropdown-item"
+                                                        href="javascript:void(0)"
+                                                        @click="receiptStore.openModal(slotProps.data)"
+                                                    >
+                                                        <i class="ri-pencil-line me-2"></i> Edit
+                                                    </a>
+                                                </li>
+                                                <li
+                                                    v-if="slotProps.data.status === 'draft' && (userHasPermission('approve_ar_receipt') || userHasRole('superadmin'))"
+                                                >
+                                                    <a
+                                                        class="dropdown-item text-success"
+                                                        href="javascript:void(0)"
+                                                        @click="confirmReceipt(slotProps.data.id)"
+                                                    >
+                                                        <i class="ri-checkbox-circle-line me-2"></i> Konfirmasi
+                                                    </a>
+                                                </li>
+                                                <li
+                                                    v-if="slotProps.data.status === 'confirmed' && (userHasPermission('approve_ar_receipt') || userHasRole('superadmin'))"
+                                                >
+                                                    <a
+                                                        class="dropdown-item text-warning"
+                                                        href="javascript:void(0)"
+                                                        @click="cancelReceipt(slotProps.data.id)"
+                                                    >
+                                                        <i class="ri-close-circle-line me-2"></i> Batalkan
+                                                    </a>
+                                                </li>
+                                                <li
+                                                    v-if="slotProps.data.status === 'draft' && (userHasPermission('delete_ar_receipt') || userHasRole('superadmin'))"
+                                                >
+                                                    <hr class="dropdown-divider">
+                                                </li>
+                                                <li
+                                                    v-if="slotProps.data.status === 'draft' && (userHasPermission('delete_ar_receipt') || userHasRole('superadmin'))"
+                                                >
+                                                    <a
+                                                        class="dropdown-item text-danger"
+                                                        href="javascript:void(0)"
+                                                        @click="receiptStore.deleteReceipt(slotProps.data.id)"
+                                                    >
+                                                        <i class="ri-delete-bin-7-line me-2"></i> Hapus
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
                                     </template>
                                 </Column>
                             </MyDataTable>
                         </div>
                     </div>
                 </div>
+            </div>
+            </div>
+            <!-- /tab receipts -->
+
+            <div v-if="isTabActivated('open-invoices')" v-show="activeTab === 'open-invoices'" class="pt-2">
+              <ArOpenInvoicesPanel @record-payment="onRecordPaymentFromOpenInvoice" />
+            </div>
+
+            <div v-if="isTabActivated('aging')" v-show="activeTab === 'aging'" class="pt-2">
+              <ArAgingPanel />
+            </div>
 
                 <!-- Receipt Modal -->
                 <Modal
@@ -304,7 +371,7 @@
                                         <select 
                                             class="form-select" 
                                             v-model="form.customer_id"
-                                            
+                                            @change="onCustomerChange"
                                         >
                                             <option value="">Pilih Pelanggan</option>
                                             <option v-for="customer in customers" :key="customer.id" :value="customer.id">
@@ -319,14 +386,20 @@
                                         <select 
                                             class="form-select" 
                                             v-model="form.invoice_id"
+                                            :disabled="!form.customer_id || formOptionsLoading"
                                             @change="receiptStore.syncPrimaryAllocation()"
                                         >
-                                            <option value="">Pilih Invoice (Opsional)</option>
+                                            <option value="">
+                                                {{ formOptionsLoading ? 'Memuat invoice...' : (form.customer_id ? 'Pilih Invoice (Opsional)' : 'Pilih pelanggan terlebih dahulu') }}
+                                            </option>
                                             <option v-for="invoice in invoices" :key="invoice.id" :value="invoice.id">
-                                                {{ invoice.reference_number }} - {{ formatCurrency(invoice.total_amount, invoice.currency) }}
+                                                {{ invoiceOptionLabel(invoice) }}
                                             </option>
                                         </select>
                                         <label>Invoice</label>
+                                    </div>
+                                    <div v-if="form.customer_id && !formOptionsLoading && !invoices.length" class="form-text text-muted">
+                                        Tidak ada invoice approved dengan sisa piutang untuk pelanggan ini.
                                     </div>
                                 </div>
                                 <div class="col-md-6">
@@ -349,13 +422,19 @@
                                         <select 
                                             class="form-select" 
                                             v-model="form.bank_account_id"
+                                            :disabled="formOptionsLoading || form.payment_method === 'cash'"
                                         >
-                                            <option value="">Pilih Rekening Bank (Opsional)</option>
+                                            <option value="">
+                                                {{ formOptionsLoading ? 'Memuat rekening...' : 'Pilih Rekening Bank (Opsional)' }}
+                                            </option>
                                             <option v-for="account in bankAccounts" :key="account.id" :value="account.id">
-                                                {{ account.bank_name }} - {{ account.account_number }}
+                                                {{ bankAccountOptionLabel(account) }}
                                             </option>
                                         </select>
                                         <label>Rekening Bank</label>
+                                    </div>
+                                    <div v-if="!formOptionsLoading && !bankAccounts.length" class="form-text text-muted">
+                                        Belum ada rekening bank aktif. Tambahkan di menu Rekening Bank.
                                     </div>
                                 </div>
                                 <div class="col-md-6">
@@ -389,10 +468,14 @@
                                       <tbody>
                                         <tr v-for="(row, idx) in (form.allocations || [])" :key="idx">
                                           <td>
-                                            <select v-model="row.salesInvoiceId" class="form-select form-select-sm">
+                                            <select
+                                              v-model="row.salesInvoiceId"
+                                              class="form-select form-select-sm"
+                                              :disabled="!form.customer_id || formOptionsLoading"
+                                            >
                                               <option value="">Pilih invoice</option>
                                               <option v-for="invoice in invoices" :key="invoice.id" :value="invoice.id">
-                                                {{ invoice.reference_number || invoice.noInvoice || invoice.id }}
+                                                {{ invoiceOptionLabel(invoice) }}
                                               </option>
                                             </select>
                                           </td>
@@ -479,7 +562,6 @@
                         </form>
                     </template>
                 </Modal>
-            </div>
         </div>
         <div class="content-backdrop fade"></div>
     </div>
@@ -487,7 +569,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useARReceiptStore } from '~/stores/ar-receipts'
 import { useUserStore } from '~/stores/user'
 import { usePermissionsStore } from '~/stores/permissions'
@@ -499,6 +581,10 @@ import Modal from '~/components/modal/Modal.vue'
 import Column from 'primevue/column'
 import Dropdown from 'primevue/dropdown'
 import InputText from 'primevue/inputtext'
+import FinanceWorkspaceTabs from '~/components/finance/FinanceWorkspaceTabs.vue'
+import ArOpenInvoicesPanel from '~/components/finance/ar/ArOpenInvoicesPanel.vue'
+import ArAgingPanel from '~/components/finance/ar/ArAgingPanel.vue'
+import { useFinanceWorkspaceTabs } from '~/composables/useFinanceWorkspaceTabs'
 
 const { setListTitle, setFormTitle } = useDynamicTitle()
 
@@ -509,6 +595,28 @@ const permissionStore = usePermissionsStore()
 
 // Router
 const router = useRouter()
+const route = useRoute()
+
+const workspaceTabs = [
+  { id: 'receipts', label: 'Receipts', permission: ['view_ar_receipt', 'access_ar_receipt'] },
+  { id: 'open-invoices', label: 'Open Invoices', permission: ['view_ar_aging', 'view_invoice', 'view_ar_receipt'] },
+  { id: 'aging', label: 'Aging Analysis', permission: ['view_ar_aging', 'view_ar_receipt'] },
+]
+
+const { activeTab, visibleTabs, setTab, isTabActivated } = useFinanceWorkspaceTabs({
+  tabs: workspaceTabs,
+  defaultTabId: 'receipts',
+})
+
+function onRecordPaymentFromOpenInvoice(row) {
+  setTab('receipts')
+  receiptStore.openFromOpenInvoice({
+    customerId: row.partyId,
+    invoiceId: row.id,
+    amount: row.remainingAmount,
+    notes: `Pembayaran invoice ${row.number}`,
+  })
+}
 
 // Refs
 const myDataTableRef = ref()
@@ -552,6 +660,7 @@ const paymentMethods = computed(() => {
 const bankAccounts = computed(() => {
   return Array.isArray(receiptStore.bankAccounts) ? receiptStore.bankAccounts : []
 })
+const formOptionsLoading = computed(() => receiptStore.formOptionsLoading)
 const currencies = computed(() => {
   return Array.isArray(receiptStore.currencies) ? receiptStore.currencies : []
 })
@@ -570,7 +679,7 @@ const confirmedCount = computed(() => {
 })
 const totalAmount = computed(() => {
   if (!Array.isArray(receipts.value)) return 0
-  return receipts.value.reduce((sum, receipt) => sum + (receipt.amount || 0), 0)
+  return receipts.value.reduce((sum, receipt) => sum + Number(receipt.amount || 0), 0)
 })
 
 // Modal
@@ -607,11 +716,26 @@ const formatDate = (dateString) => {
 }
 
 const formatCurrency = (amount, currency = 'IDR') => {
-    if (!amount) return '0'
-    return new Intl.NumberFormat('id-ID', {
-        style: 'currency',
-        currency: currency
-    }).format(amount)
+    const n = Number(amount)
+    if (!Number.isFinite(n)) return 'Rp 0'
+    try {
+      return new Intl.NumberFormat('id-ID', {
+          style: 'currency',
+          currency: currency || 'IDR',
+      }).format(n)
+    } catch {
+      return new Intl.NumberFormat('id-ID', {
+          style: 'currency',
+          currency: 'IDR',
+      }).format(n)
+    }
+}
+
+const invoiceOptionLabel = (invoice) => receiptStore.invoiceOptionLabel(invoice)
+const bankAccountOptionLabel = (account) => receiptStore.bankAccountOptionLabel(account)
+
+const onCustomerChange = async () => {
+    await receiptStore.onCustomerChange(form.value.customer_id)
 }
 
 const confirmReceipt = async (id) => {
@@ -636,11 +760,35 @@ onMounted(async () => {
     try {
         await permissionStore.fetchPermissions()
         await userStore.loadUser()
-        await receiptStore.fetchReceipts()
+
+        const q = route.query
+        if (q.invoiceId && q.customerId) {
+          setTab('receipts')
+          receiptStore.openFromOpenInvoice({
+            customerId: q.customerId,
+            invoiceId: String(q.invoiceId),
+            amount: Number(q.amount || 0),
+            notes: q.notes ? String(q.notes) : `Pembayaran invoice ${q.invoiceId}`,
+          })
+        } else if (q.highlight) {
+          setTab('receipts')
+          globalFilterValue.value = String(q.highlight)
+          receiptStore.setSearch(String(q.highlight))
+        }
+
+        if (activeTab.value === 'receipts') {
+          await receiptStore.fetchReceipts()
+        }
     } catch (error) {
         console.error('Error in onMounted:', error)
     }
     setListTitle('AR Receipts', receipts.value.length)
+})
+
+watch(activeTab, (tab) => {
+  if (tab === 'receipts' && !receiptStore.receipts.length && !receiptStore.loading) {
+    receiptStore.fetchReceipts()
+  }
 })
 
 const debouncedSearch = useDebounceFn(() => {
@@ -674,8 +822,8 @@ const handleSearch = async (value) => {
 definePageMeta({
   layout: 'default',
   middleware: ['auth', 'check-permission'],
-  title: 'Penerimaan Piutang',
-  description: 'Accounts Receivable Receipt Management',
+  title: 'AR Receipts',
+  description: 'Accounts Receivable Receipts, Open Invoices, and Aging',
   keywords: 'AR Receipts, Accounts Receivable, Accounting, Sinergi Innovate Pratama',
   author: 'Sinergi Innovate Pratama',
   robots: 'index, follow',
@@ -684,14 +832,17 @@ definePageMeta({
 </script>
 
 <style scoped>
-<style scoped>
+/* Dropdown aksi: fixed strategy agar tidak ter-clip overflow datatable */
+:deep(.ar-receipt-actions-dropdown) {
+  z-index: 1100 !important;
+}
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .card-body {
     padding: 16px;
   }
-  
+
   .form-label {
     font-size: 13px;
     margin-bottom: 6px;

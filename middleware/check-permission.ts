@@ -88,13 +88,12 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       '/finance/ar-receipts': 'view_ar_receipt',
       '/finance/ap-payments': 'view_ap_payment',
       '/finance/fiscal-periods': 'view_fiscal_period',
-      '/finance/reports/ar-aging': 'view_ar_aging',
-      '/finance/reports/ap-aging': 'view_ap_aging',
       '/finance/bank-recon': 'view_bank_recon',
       '/finance/credit-notes': 'view_credit_note',
       '/finance/journals': 'view_journal',
       '/service-management/customer-service': 'view_service_instance',
       '/service-management/pending': 'view_service_instance',
+      // Legacy paths: redirected to customer-service?tab=… (keep for auth before redirect)
       '/service-management/events': 'view_service_instance',
       '/service-management/monitoring': 'view_service_instance',
       '/hrd/pegawai': 'view_pegawai',
@@ -202,10 +201,6 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
         requiredPermission = 'view_payment_request'
       } else if (/^\/finance\/fiscal-periods/.test(to.path)) {
         requiredPermission = 'view_fiscal_period'
-      } else if (/^\/finance\/reports\/ar-aging/.test(to.path)) {
-        requiredPermission = 'view_ar_aging'
-      } else if (/^\/finance\/reports\/ap-aging/.test(to.path)) {
-        requiredPermission = 'view_ap_aging'
       } else if (/^\/finance\/bank-recon/.test(to.path)) {
         requiredPermission = 'view_bank_recon'
       } else if (/^\/finance\/bank-account/.test(to.path)) {
@@ -278,6 +273,32 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
           permission.name === requiredPermission
         )
       )
+
+      if (!hasPermission && to.path === '/finance/ar-receipts') {
+        const allowed = [
+          'view_ar_receipt',
+          'access_ar_receipt',
+          'view_ar_aging',
+          'access_ar_aging',
+        ]
+        const ok = userStore.user?.roles?.some(role =>
+          role.permissions?.some(permission => allowed.includes(permission.name))
+        )
+        if (ok) return
+      }
+
+      if (!hasPermission && to.path === '/finance/ap-payments') {
+        const allowed = [
+          'view_ap_payment',
+          'access_ap_payment',
+          'view_ap_aging',
+          'access_ap_aging',
+        ]
+        const ok = userStore.user?.roles?.some(role =>
+          role.permissions?.some(permission => allowed.includes(permission.name))
+        )
+        if (ok) return
+      }
 
       if (!hasPermission && to.path === '/inventory/buffer') {
         const allowed = [

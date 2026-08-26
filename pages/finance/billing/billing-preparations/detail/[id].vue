@@ -20,11 +20,30 @@
           </div>
           <div class="d-flex flex-wrap gap-2">
             <button
-              v-if="prep.status === 'draft'"
+              v-if="prep.status === 'draft' && (userHasRole('superadmin') || userHasPermission('edit_billing_preparation'))"
               class="btn btn-outline-secondary btn-sm"
+              :disabled="store.saving || syncing"
+              @click="openAddAdjustmentModal"
+            >
+              <i class="ri-add-line me-1"></i> Tambah Billing Adjustment
+            </button>
+            <button
+              v-if="prep.status === 'draft' && (userHasRole('superadmin') || userHasPermission('edit_billing_preparation'))"
+              class="btn btn-outline-primary btn-sm"
+              :disabled="store.saving || syncing"
+              @click="onSyncCharges"
+            >
+              <i class="ri-refresh-line me-1"></i>
+              {{ syncing ? 'Menyinkronkan…' : 'Sinkronkan Charge' }}
+            </button>
+            <button
+              v-if="prep.status === 'draft' && (userHasRole('superadmin') || userHasPermission('edit_billing_preparation'))"
+              class="btn btn-outline-secondary btn-sm"
+              :disabled="store.saving"
+              title="Rebuild menghapus selection — gunakan Sync untuk penambahan normal"
               @click="store.rebuildItems(prep.id)"
             >
-              <i class="ri-refresh-line me-1"></i> Rebuild Items
+              <i class="ri-restart-line me-1"></i> Rebuild
             </button>
             <button
               v-if="prep.status === 'draft' && (userHasRole('superadmin') || userHasPermission('edit_billing_preparation'))"
@@ -37,7 +56,7 @@
             <button
               v-if="prep.status === 'draft' && (userHasRole('superadmin') || userHasPermission('ready_billing_preparation'))"
               class="btn btn-success btn-sm"
-              :disabled="!canSetReady"
+              :disabled="!canSetReady || syncing"
               :title="readyDisabledReason"
               @click="onSetReady"
             >
@@ -54,6 +73,21 @@
         </div>
 
         <div
+          v-if="prep.status === 'draft' && (prep.newEligibleChargeCount || 0) > 0"
+          class="alert alert-warning mb-4"
+        >
+          <i class="ri-information-line me-1"></i>
+          {{ prep.newEligibleChargeCount }} charge baru tersedia
+          <template v-if="prep.newEligibleChargeTotal">
+            dengan total <strong>{{ formatRupiah(prep.newEligibleChargeTotal) }}</strong>
+          </template>
+          <span v-if="prep.eligibleChargeTypes?.length">
+            ({{ prep.eligibleChargeTypes.join(', ') }})
+          </span>.
+          Sinkronkan untuk memasukkannya ke Billing Preparation ini.
+        </div>
+
+        <div
           v-if="prep.status === 'draft' && selectedCount > 0 && selectedTotal <= 0"
           class="alert alert-warning mb-4"
         >
@@ -62,6 +96,19 @@
           <strong>{{ formatRupiah(selectedTotal) }}</strong>.
           Finance Invoice hanya bisa digenerate jika total &gt; Rp 0.
           Kurangi restitution/discount atau tambah charge terlebih dahulu.
+        </div>
+
+        <div v-if="prep.chargeSkips?.length" class="alert alert-info mb-4">
+          <div class="fw-semibold mb-1">Charge yang tidak masuk ke draft ini</div>
+          <ul class="mb-0 small">
+            <li v-for="(skip, idx) in prep.chargeSkips" :key="skip.chargeKey || idx">
+              {{ skip.reason }}
+              <details v-if="skip.chargeKey" class="d-inline ms-1">
+                <summary class="text-muted" style="cursor:pointer">detail teknis</summary>
+                <code class="small">{{ skip.chargeKey }}</code>
+              </details>
+            </li>
+          </ul>
         </div>
 
         <div class="row g-4">
@@ -76,7 +123,7 @@
                   <thead>
                     <tr>
                       <th style="width:50px">Sel</th>
-                      <th>Source</th>
+                      <th>Jenis</th>
                       <th>Description</th>
                       <th class="text-end">Qty</th>
                       <th class="text-end">Price</th>
@@ -94,30 +141,16 @@
                         >
                       </td>
                       <td>
-                        <NuxtLink
-                          v-if="item.sourceType === 'subscription' && item.serviceLine?.subscriptionId"
-                          :to="`/order-process/subscription/detail/${item.serviceLine.subscriptionId}`"
-                          class="badge bg-label-info text-decoration-none"
-                        >
-                          subscription
-                        </NuxtLink>
-                        <NuxtLink
-                          v-else-if="item.sourceType === 'adjustment'"
-                          to="/finance/billing-adjustments"
-                          class="badge bg-label-warning text-decoration-none"
-                        >
-                          adjustment
-                        </NuxtLink>
-                        <NuxtLink
-                          v-else-if="item.sourceType === 'tax'"
-                          to="/finance/tax-masters"
-                          class="badge bg-label-primary text-decoration-none"
-                        >
-                          tax
-                        </NuxtLink>
-                        <span v-else class="badge bg-label-info">{{ item.sourceType }}</span>
+                        <span :class="chargeTypeBadge(item.chargeType, item.sourceType)">
+                          {{ chargeTypeLabel(item.chargeType, item.sourceType) }}
+                        </span>
+                        <div v-if="item.billingPeriod" class="small text-muted mt-1">
+                          {{ item.billingPeriod }}
+                        </div>
                       </td>
-                      <td>{{ item.description }}</td>
+                      <td>
+                        {{ item.description }}
+                      </td>
                       <td class="text-end">{{ item.qty }}</td>
                       <td class="text-end">{{ formatRupiah(item.price) }}</td>
                       <td class="text-end" :class="item.amount < 0 ? 'text-danger' : ''">
@@ -143,7 +176,7 @@
                 <h5 class="mb-0">Sumber Terhubung</h5>
               </div>
               <div class="card-body">
-                <div class="row g-3">
+                <div class="row g-3 pt-5">
                   <div class="col-md-6">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                       <h6 class="mb-0">Form Berlangganan</h6>
@@ -306,14 +339,60 @@
 
       <div v-else class="alert alert-warning">Billing preparation tidak ditemukan.</div>
     </div>
+
+    <Dialog
+      v-model:visible="adjModalVisible"
+      modal
+      header="Tambah Billing Adjustment"
+      :style="{ width: '520px' }"
+      @hide="resetAdjModal"
+    >
+      <div class="d-flex flex-column gap-3">
+        <p class="text-muted small mb-0">
+          Pilih Billing Adjustment berstatus <strong>approved</strong> untuk customer
+          dan periode draft ini, lalu sinkronkan ke Billing Preparation.
+        </p>
+        <div>
+          <label class="form-label">Billing Adjustment (Approved)</label>
+          <CustomSelect2
+            v-model="selectedAdjIds"
+            :options="approvedAdjOptions"
+            :get-option-label="adjOptionLabel"
+            :reduce="(o) => o.id"
+            :loading="loadingAdjOptions"
+            searchable
+            clearable
+            multiple
+            :close-on-select="false"
+            placeholder="Pilih adjustment approved"
+            no-options-text="Tidak ada adjustment approved yang belum masuk draft"
+          />
+        </div>
+      </div>
+      <template #footer>
+        <button type="button" class="btn btn-outline-secondary" :disabled="addingAdj" @click="adjModalVisible = false">
+          Batal
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          :disabled="addingAdj || !selectedAdjIds.length"
+          @click="submitAddAdjustments"
+        >
+          {{ addingAdj ? 'Menyimpan…' : 'Tambahkan & Sinkronkan' }}
+        </button>
+      </template>
+    </Dialog>
   </div>
 </template>
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
+import Dialog from 'primevue/dialog'
 import { useBillingPreparationStore } from '~/stores/billing-preparations'
+import { useBillingAdjustmentStore } from '~/stores/billing-adjustments'
 import { useTaxMasterStore } from '~/stores/tax-masters'
 import { usePermissions } from '~/composables/usePermissions'
 import { useFormatRupiah } from '~/composables/formatRupiah'
@@ -329,7 +408,9 @@ definePageMeta({
 })
 
 const route = useRoute()
+const router = useRouter()
 const store = useBillingPreparationStore()
+const adjStore = useBillingAdjustmentStore()
 const taxMasterStore = useTaxMasterStore()
 const { selected: prep, loadingDetail } = storeToRefs(store)
 const { userHasRole, userHasPermission } = usePermissions()
@@ -344,8 +425,35 @@ const applyTax = ref(false)
 const taxMasterIds = ref([])
 const taxMasterOptions = ref([])
 const loadingTaxes = ref(false)
+const syncing = ref(false)
+
+const adjModalVisible = ref(false)
+const selectedAdjIds = ref([])
+const approvedAdjOptions = ref([])
+const loadingAdjOptions = ref(false)
+const addingAdj = ref(false)
 
 const sources = computed(() => prep.value?.sources || { subscriptions: [], adjustments: [] })
+
+const attachedAdjIds = computed(() => {
+  const ids = new Set()
+  for (const item of prep.value?.items || localItems.value || []) {
+    if (String(item.chargeType || '').toUpperCase() === 'ADJUSTMENT' && item.sourceId) {
+      ids.add(String(item.sourceId))
+    }
+    if (item.sourceType === 'adjustment' && item.sourceId) {
+      ids.add(String(item.sourceId))
+    }
+  }
+  return ids
+})
+
+const adjOptionLabel = (o) => {
+  if (!o) return ''
+  const desc = o.description || 'Adjustment'
+  const amount = formatRupiah(o.amount || 0)
+  return `[${o.type}] ${desc} · ${amount}`
+}
 
 const selectedTaxPreviews = computed(() => {
   const ids = new Set(taxMasterIds.value || [])
@@ -372,18 +480,114 @@ const statusBadge = (s) => ({
   invoiced: 'badge bg-label-success',
 }[s] || 'badge bg-label-secondary')
 
+const chargeTypeLabel = (chargeType, sourceType) => {
+  const ct = String(chargeType || '').toUpperCase()
+  if (ct === 'OTC' || ct === 'MRC' || ct === 'ADJUSTMENT' || ct === 'TAX') return ct
+  if (sourceType === 'tax') return 'TAX'
+  if (sourceType === 'adjustment') return 'ADJUSTMENT'
+  if (sourceType === 'subscription') return 'MRC'
+  return sourceType || '—'
+}
+
+const chargeTypeBadge = (chargeType, sourceType) => {
+  const label = chargeTypeLabel(chargeType, sourceType)
+  return (
+    {
+      OTC: 'badge bg-label-primary',
+      MRC: 'badge bg-label-info',
+      ADJUSTMENT: 'badge bg-label-warning',
+      TAX: 'badge bg-label-secondary',
+    }[label] || 'badge bg-label-secondary'
+  )
+}
+
 const selectedTotal = computed(() =>
   localItems.value.filter((i) => i.selected).reduce((s, i) => s + Number(i.amount || 0), 0)
 )
 const selectedCount = computed(() => localItems.value.filter((i) => i.selected).length)
-const canSetReady = computed(() => selectedCount.value > 0 && selectedTotal.value > 0)
+const hasUnreviewed = computed(() => (prep.value?.newEligibleChargeCount || 0) > 0)
+const canSetReady = computed(
+  () => selectedCount.value > 0 && selectedTotal.value > 0 && !hasUnreviewed.value
+)
 const readyDisabledReason = computed(() => {
+  if (hasUnreviewed.value) {
+    return `Terdapat ${prep.value?.newEligibleChargeCount} charge baru yang belum disinkronkan`
+  }
   if (selectedCount.value === 0) return 'Pilih minimal 1 item terlebih dahulu'
   if (selectedTotal.value <= 0) {
     return `Total item terpilih harus > Rp 0 (saat ini ${formatRupiah(selectedTotal.value)})`
   }
   return ''
 })
+
+const onSyncCharges = async () => {
+  if (!prep.value || syncing.value) return
+  syncing.value = true
+  try {
+    await store.syncCharges(prep.value.id)
+  } finally {
+    syncing.value = false
+  }
+}
+
+const resetAdjModal = () => {
+  selectedAdjIds.value = []
+  approvedAdjOptions.value = []
+}
+
+const openAddAdjustmentModal = async () => {
+  if (!prep.value) return
+  adjModalVisible.value = true
+  selectedAdjIds.value = []
+  loadingAdjOptions.value = true
+  try {
+    const rows = await adjStore.fetchApprovedOptions({
+      customerId: prep.value.customerId,
+      billingPeriod: prep.value.billingPeriod,
+    })
+    const attached = attachedAdjIds.value
+    approvedAdjOptions.value = rows.filter((r) => !attached.has(String(r.id)))
+  } finally {
+    loadingAdjOptions.value = false
+  }
+}
+
+const submitAddAdjustments = async () => {
+  if (!prep.value || !selectedAdjIds.value.length || addingAdj.value) return
+  addingAdj.value = true
+  try {
+    const wantAdj = new Set(selectedAdjIds.value.map(String))
+    const result = await store.syncCharges(prep.value.id)
+    if (!result) return
+
+    await store.fetchById(prep.value.id)
+    // Sync menambah semua ELIGIBLE; unselect adjustment baru yang tidak dipilih di modal.
+    const addedKeys = new Set((result.added || []).map((a) => a.chargeKey).filter(Boolean))
+    if (addedKeys.size) {
+      localItems.value = (prep.value?.items || []).map((i) => {
+        const isAdj =
+          String(i.chargeType || '').toUpperCase() === 'ADJUSTMENT' || i.sourceType === 'adjustment'
+        if (
+          isAdj &&
+          i.chargeKey &&
+          addedKeys.has(i.chargeKey) &&
+          i.sourceId &&
+          !wantAdj.has(String(i.sourceId))
+        ) {
+          return { ...i, selected: false }
+        }
+        return { ...i }
+      })
+      await saveItems()
+    }
+
+    adjModalVisible.value = false
+    resetAdjModal()
+    await router.replace(`/finance/billing/billing-preparations/detail/${prep.value.id}`)
+  } finally {
+    addingAdj.value = false
+  }
+}
 
 const formatDate = (v) => {
   if (!v) return '—'
@@ -472,5 +676,11 @@ onMounted(async () => {
     loadingTaxes.value = false
   }
   await store.fetchById(String(route.params.id || ''))
+  if (String(route.query.addAdjustment || '') === '1' && prep.value?.status === 'draft') {
+    await openAddAdjustmentModal()
+    const q = { ...route.query }
+    delete q.addAdjustment
+    await router.replace({ path: route.path, query: q })
+  }
 })
 </script>

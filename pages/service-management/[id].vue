@@ -32,7 +32,7 @@
               <i class="ri-checkbox-circle-line me-2"></i> Activate
             </a>
             <a
-              v-if="row.status === 'active'"
+              v-if="canEditCustomerService && row.status === 'active'"
               class="dropdown-item"
               href="javascript:void(0)"
               @click="doTransition('suspend')"
@@ -48,7 +48,10 @@
               <i class="ri-play-circle-line me-2"></i> Resume
             </a>
             <a
-              v-if="['active', 'suspended', 'pending_activation'].includes(row.status)"
+              v-if="
+                canEditCustomerService &&
+                ['active', 'suspended', 'pending_activation'].includes(row.status)
+              "
               class="dropdown-item text-danger"
               href="javascript:void(0)"
               @click="doTransition('terminate')"
@@ -120,6 +123,7 @@
 
 <script setup lang="ts">
 import { useServiceInstanceStore } from '~/stores/service-instances'
+import { usePermissions } from '~/composables/usePermissions'
 
 definePageMeta({
   hidePageHeading: true,
@@ -130,6 +134,10 @@ definePageMeta({
 
 const route = useRoute()
 const store = useServiceInstanceStore()
+const { userHasRole, userHasPermission } = usePermissions()
+const canEditCustomerService = computed(
+  () => userHasRole('superadmin') || userHasPermission('edit_customer_service')
+)
 const row = computed(() => store.selected)
 const events = computed(() => store.events)
 const hasActions = computed(() => {

@@ -136,6 +136,36 @@ export const useBillingAdjustmentStore = defineStore('billingAdjustment', {
       }
     },
 
+    /** Options for BP modal: approved adjustments for customer (+ optional period). */
+    async fetchApprovedOptions(opts: {
+      customerId: number
+      billingPeriod?: string
+      rows?: number
+    }): Promise<BillingAdjustment[]> {
+      const { $api } = useNuxtApp()
+      try {
+        const qs = new URLSearchParams({
+          page: '1',
+          rows: String(opts.rows ?? 100),
+          sortField: 'created_at',
+          sortOrder: '-1',
+          status: 'approved',
+          customerId: String(opts.customerId),
+        })
+        if (opts.billingPeriod) qs.set('billingPeriod', opts.billingPeriod)
+        const res = await fetch(`${$api.billingAdjustments()}?${qs}`, {
+          credentials: 'include',
+          headers: { Accept: 'application/json' },
+        })
+        const json = await res.json().catch(() => ({}))
+        if (!res.ok) throw new Error(json.message || `HTTP ${res.status}`)
+        return (json.data || []).map(normalizeAdj)
+      } catch (e: any) {
+        useToast().error({ title: 'Error', message: e.message, color: 'red', position: 'bottomRight' })
+        return []
+      }
+    },
+
     async create(payload: Record<string, any>, file?: File | null) {
       this.saving = true
       const { $api } = useNuxtApp()
