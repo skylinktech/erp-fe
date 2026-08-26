@@ -424,7 +424,6 @@ function openSubscriptionModal() {
       quotationId: review.value?.quotation?.id || review.value?.quotationId,
       leTechReviewId: review.value?.id,
       leTechReviewNo: review.value?.noLr || review.value?.no_lr,
-      purchaseRequestId: review.value?.purchaseRequestId || review.value?.purchase_request_id || review.value?.purchaseRequest?.id,
     },
   })
 }

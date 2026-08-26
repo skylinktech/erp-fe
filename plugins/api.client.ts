@@ -879,7 +879,6 @@ export default defineNuxtPlugin(() => {
     leTechReview: () => `${apiBase}/le-tech-review`,
     leTechReviewShow: (id: number | string) => `${apiBase}/le-tech-review/${id}`,
     leTechReviewStatistics: () => `${apiBase}/le-tech-review/statistics`,
-    leTechReviewExternalPurchaseOrders: () => `${apiBase}/le-tech-review/external-purchase-orders`,
     submitLeTechReview: (id: number | string) => `${apiBase}/le-tech-review/submitLeTechReview/${id}`,
     approveLeTechReview: (id: number | string) => `${apiBase}/le-tech-review/approveLeTechReview/${id}`,
     rejectLeTechReview: (id: number | string) => `${apiBase}/le-tech-review/rejectLeTechReview/${id}`,

@@ -197,18 +197,6 @@
                         </a>
                     </template>
                 </Column>
-                <Column field="purchaseRequest.prNumber" header="No. Purchase Request" :sortable="true" class="text-nowrap">
-                  <template #body="slotProps">
-                    <a
-                      v-if="slotProps.data.purchaseRequest?.id"
-                      @click="navigateTo(`/purchasing/purchase-request/detail/${slotProps.data.purchaseRequest.id}`)"
-                      class="text-primary text-nowrap"
-                      style="cursor:pointer;text-decoration:underline"
-                      title="View detail"
-                    >{{ slotProps.data.purchaseRequest?.prNumber || slotProps.data.purchaseRequest?.pr_number || '-' }}</a>
-                    <span v-else>-</span>
-                  </template>
-                </Column>
                 <Column field="quotation.noQuotation" header="No. Quotation" :sortable="true" class="text-nowrap">
                   <template #body="slotProps">
                     <a
@@ -219,11 +207,6 @@
                       title="View detail"
                     >{{ slotProps.data.quotation?.noQuotation || slotProps.data.quotation?.no_quotation || '-' }}</a>
                     <span v-else>-</span>
-                  </template>
-                </Column>
-                <Column field="purchaseOrder.noPo" header="No. PO External" :sortable="false" class="text-nowrap">
-                  <template #body="slotProps">
-                    <span>{{ slotProps.data.purchaseOrder?.noPo || slotProps.data.purchaseOrder?.no_po || '-' }}</span>
                   </template>
                 </Column>
                 <Column field="quotation.customer.name" header="Customer" :sortable="true" class="text-nowrap">
@@ -286,21 +269,7 @@
                 <label class="form-label text-muted">No. LR</label>
                 <input type="text" :value="form.noLr || '-'" class="form-control" disabled readonly />
               </div>
-              <div class="col-6">
-                <label class="form-label text-muted">Purchase Request</label>
-                <CustomSelect2
-                  v-model="form.purchaseRequestId"
-                  :options="purchaseRequestsForSelect"
-                  :get-option-label="(o) => (o ? (o.prNumber || o.pr_number || o.noPurchaseRequest || o.id) : '')"
-                  :reduce="(o) => o?.id"
-                  searchable
-                  clearable
-                  placeholder="Pilih Purchase Request"
-                  :disabled="isEditMode || isViewMode"
-                  @update:modelValue="onPurchaseRequestChange"
-                />
-              </div>
-              <div class="col-6">
+              <div class="col-12">
                 <label class="form-label text-muted">Quotation <span class="text-danger" aria-hidden="true">*</span></label>
                 <CustomSelect2
                   v-model="form.quotationId"
@@ -311,19 +280,6 @@
                   clearable
                   placeholder="Pilih Quotation"
                   :disabled="isEditMode || isViewMode"
-                />
-              </div>
-              <div class="col-12">
-                <label class="form-label text-muted">Purchase Order (External)</label>
-                <CustomSelect2
-                  v-model="form.purchaseOrderId"
-                  :options="externalPurchaseOrders"
-                  :get-option-label="(o) => (o ? `${o.noPo || o.no_po || ''} - ${o.vendor?.name || '-'}` : '')"
-                  :reduce="(o) => o?.id"
-                  searchable
-                  clearable
-                  placeholder="Pilih Purchase Order External"
-                  :disabled="isViewMode"
                 />
               </div>
               <div class="col-12">
@@ -400,8 +356,6 @@ const { reviews, loading, saving, totalRecords, params, form, isEditMode, isView
 
 const quotationsForSelect = ref([])
 const quotationsForFilter = ref([])
-const purchaseRequestsForSelect = ref([])
-const externalPurchaseOrders = ref([])
 const expandedRows = ref({})
 const tableControls = ref({ rows: 10, search: '' })
 const filters = ref({ quotationId: null, status: null })
@@ -494,50 +448,6 @@ async function fetchQuotations() {
   }
 }
 
-async function fetchPurchaseRequestsForSelect() {
-  const { $api } = useNuxtApp()
-  try {
-    const r = await fetch(`${$api.purchaseRequest()}?page=1&rows=500&status=approved`, { headers: { Accept: 'application/json' }, credentials: 'include' })
-    if (r.ok) {
-      const j = await r.json()
-      purchaseRequestsForSelect.value = j.data || []
-    }
-  } catch (e) {
-    console.error('Error fetching Purchase Requests:', e)
-  }
-}
-
-async function fetchExternalPurchaseOrders() {
-  const { $api } = useNuxtApp()
-  try {
-    const r = await fetch(`${$api.leTechReviewExternalPurchaseOrders()}?rows=500`, {
-      headers: { Accept: 'application/json' },
-      credentials: 'include',
-    })
-    if (r.ok) {
-      const j = await r.json()
-      externalPurchaseOrders.value = Array.isArray(j.data) ? j.data : []
-    }
-  } catch (e) {
-    console.error('fetchExternalPurchaseOrders:', e)
-  }
-}
-
-async function onPurchaseRequestChange(purchaseRequestId) {
-  if (!purchaseRequestId) return
-  if (purchaseRequestsForSelect.value.some((i) => i.id === purchaseRequestId)) return
-  try {
-    const { $api } = useNuxtApp()
-    const r = await fetch($api.purchaseRequestShow(purchaseRequestId), { headers: { Accept: 'application/json' }, credentials: 'include' })
-    if (r.ok) {
-      const j = await r.json()
-      purchaseRequestsForSelect.value.push(j.data || j)
-    }
-  } catch (e) {
-    console.error('Error fetching Purchase Request detail:', e)
-  }
-}
-
 function onAttachmentsChange(e) {
   if (!form.value) return
   const files = Array.from(e.target.files || [])
@@ -611,8 +521,6 @@ onMounted(() => {
   ltStore.fetchLeTechReviews()
   ltStore.fetchStatistics()
   fetchQuotations()
-  fetchPurchaseRequestsForSelect()
-  fetchExternalPurchaseOrders()
   setListTitle('Legal-Tech Review', reviews.value?.length ?? 0)
   tableControls.value.rows = Number(params.value.rows) || 10
   globalFilterValue.value = params.value.search || ''
@@ -624,10 +532,6 @@ watch(showModal, (v) => {
       if (isEditMode.value && form.value?.quotationId && !quotationsForSelect.value.some((q) => (q.id || q) === (form.value.quotationId || form.value.quotation_id))) {
         const q = { id: form.value.quotationId, noQuotation: '-', customer: { id: 0, name: '-' } }
         quotationsForSelect.value = [q, ...quotationsForSelect.value]
-      }
-      if (isEditMode.value && form.value?.purchaseRequestId && !purchaseRequestsForSelect.value.some((i) => (i.id || i) === (form.value.purchaseRequestId || form.value.purchase_request_id))) {
-        const i = { id: form.value.purchaseRequestId, prNumber: '-', customer: { id: 0, name: '-' } }
-        purchaseRequestsForSelect.value = [i, ...purchaseRequestsForSelect.value]
       }
     })
   }
