@@ -126,6 +126,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       '/payroll/configuration': 'view_payroll_config',
       '/payroll/me/payslips': 'view_own_payslip',
       '/payroll/cetak-payslip': 'view_own_payslip',
+      '/hrd/payroll/cetak-payslip': 'view_own_payslip',
       '/hrd/cetak-cuti': 'view_cuti',
       '/hrd/cetak-lembur': 'view_lembur',
       '/hrd/cetak-perjalanan-dinas': 'view_perjalanan_dinas',

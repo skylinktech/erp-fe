@@ -1000,6 +1000,7 @@ html[data-print-type='SUBSCRIPTION'] .cetak-check {
   .cetak-cuti-table thead,
   .cetak-lembur-table thead,
   .cetak-pd-table thead,
+  .cetak-payslip-table thead,
   .cetak-arf-table thead,
   .cetak-si-table thead {
     display: table-row-group !important;
@@ -1024,6 +1025,7 @@ html[data-print-type='SUBSCRIPTION'] .cetak-check {
   .cetak-lembur-th,
   .cetak-pd-table thead th,
   .cetak-pd-th,
+  .cetak-payslip-table thead th,
   .cetak-arf-table thead th,
   .cetak-arf-th,
   .cetak-si-table thead th,
@@ -1051,6 +1053,8 @@ html[data-print-type='SUBSCRIPTION'] .cetak-check {
   .cetak-lembur-table tbody th,
   .cetak-pd-table tbody td,
   .cetak-pd-table tbody th,
+  .cetak-payslip-table tbody td,
+  .cetak-payslip-table tbody th,
   .cetak-arf-table tbody td,
   .cetak-arf-table tbody th,
   .cetak-si-table tbody td,

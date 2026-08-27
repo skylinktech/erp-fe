@@ -199,7 +199,8 @@ export const PRINT_DOCUMENTS: Record<PrintDocumentType, PrintDocumentPreset> = {
     watermarkPolicy: {},
   },
   PAYSLIP: {
-    ...STANDARD,
+    ...COMPANY_ADDRESS,
+    showNpwp: false,
     title: 'PAYSLIP / SLIP GAJI',
     showGeneratedAt: true,
     notFoundMessage: 'Payslip tidak ditemukan.',

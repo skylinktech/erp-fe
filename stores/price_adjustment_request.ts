@@ -258,6 +258,8 @@ export const usePriceAdjustmentRequestStore = defineStore('priceAdjustmentReques
       const toast = useToast()
       const { $api } = useNuxtApp()
 
+      if (this.loading) return
+
       const result = await Swal.fire({
         title: 'Approve Price Request?',
         text: 'Price list akan otomatis diupdate setelah approval',
@@ -289,7 +291,7 @@ export const usePriceAdjustmentRequestStore = defineStore('priceAdjustmentReques
 
           toast.success({
             title: 'Berhasil',
-            message: 'Price adjustment request berhasil diapprove',
+            message: responseData.message || 'Price adjustment request berhasil diapprove',
             color: 'green',
             position: 'bottomRight',
           })
