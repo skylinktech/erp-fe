@@ -109,6 +109,7 @@ import { useRoute } from 'vue-router';
 import { useLayoutStore } from '~/stores/layout';
 import { useUserStore } from '~/stores/user';
 import SidebarMenuNode from '~/components/SidebarMenuNode.vue';
+import { isStockMenuParentRoute, isStockWorkspacePath } from '~/utils/inventory/stockWorkspace';
 
 const menuGroupsStore = useMenuGroupStore();
 const route = useRoute();
@@ -187,6 +188,7 @@ const toggleDetail = (detailId) => {
 
 function isNodeActive(node, path) {
   if (node.route && node.route === path) return true;
+  if (isStockMenuParentRoute(node.route) && isStockWorkspacePath(path)) return true;
   if (!Array.isArray(node.children)) return false;
   return node.children.some((child) => isNodeActive(child, path));
 }

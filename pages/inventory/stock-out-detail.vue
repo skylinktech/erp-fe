@@ -50,7 +50,7 @@
                                         Berikut adalah informasi singkat mengenai dokumen Stock Out ini, termasuk nomor SO, tanggal, gudang asal, dan status terkini. Pastikan data sudah sesuai sebelum melakukan proses lebih lanjut.
                                     </p>
                                 </div>
-                                <NuxtLink to="/inventory/stock-out" class="btn btn-sm btn-primary">
+                                <NuxtLink to="/inventory/stock?tab=stock-out" class="btn btn-sm btn-primary">
                                     <i class="ri-arrow-left-line me-1"></i>
                                 </NuxtLink>
                             </div>

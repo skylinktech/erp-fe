@@ -195,8 +195,8 @@ export const erpMenuItems = [
     type: "main"
   },
   {
-    name: "Stok Barang",
-    path: "/inventory/stok",
+    name: "Stock",
+    path: "/inventory/stock",
     icon: "ri-box-3-line",
     category: "Inventory",
     type: "main"
@@ -212,20 +212,6 @@ export const erpMenuItems = [
     name: "Equipment",
     path: "/inventory/equipment",
     icon: "ri-cpu-line",
-    category: "Inventory",
-    type: "main"
-  },
-  {
-    name: "Barang Masuk",
-    path: "/inventory/barang-masuk",
-    icon: "ri-login-box-line",
-    category: "Inventory",
-    type: "main"
-  },
-  {
-    name: "Barang Keluar",
-    path: "/inventory/barang-keluar",
-    icon: "ri-logout-box-line",
     category: "Inventory",
     type: "main"
   },
@@ -247,13 +233,6 @@ export const erpMenuItems = [
     name: "Stock Card",
     path: "/inventory/stock-card",
     icon: "ri-file-list-3-line",
-    category: "Inventory",
-    type: "main"
-  },
-  {
-    name: "Stock Movements",
-    path: "/inventory/stock-movements",
-    icon: "ri-exchange-line",
     category: "Inventory",
     type: "main"
   },

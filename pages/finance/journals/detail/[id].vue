@@ -99,7 +99,7 @@
                   <td>
                     <NuxtLink
                       v-if="e.stockMovementId"
-                      :to="`/inventory/stock-movements`"
+                      :to="`/inventory/stock?tab=movements`"
                       class="text-primary"
                       @click="rememberMovement(e.stockMovementId)"
                     >{{ shortId(e.stockMovementId) }}</NuxtLink>

@@ -52,7 +52,7 @@
                                         Berikut adalah informasi singkat mengenai dokumen Stock Transfer ini, termasuk nomor ST, tanggal, gudang asal, gudang tujuan, dan status terkini. Pastikan data sudah sesuai sebelum melakukan proses lebih lanjut.
                                     </p>
                                 </div>
-                                <NuxtLink to="/inventory/stock-transfer" class="btn btn-sm btn-primary">
+                                <NuxtLink to="/inventory/stock?tab=transfer" class="btn btn-sm btn-primary">
                                     <i class="ri-arrow-left-line me-1"></i>
                                 </NuxtLink>
                             </div>

@@ -97,7 +97,7 @@
                 <dd class="col-7">{{ selected.costSourceType }} / {{ selected.costSourceId || '-' }}</dd>
                 <dt class="col-5">Source Movement</dt>
                 <dd class="col-7">
-                  <NuxtLink to="/inventory/stock-movements">{{ shortId(selected.stockMovementId) }}</NuxtLink>
+                  <NuxtLink to="/inventory/stock?tab=movements">{{ shortId(selected.stockMovementId) }}</NuxtLink>
                 </dd>
                 <dt class="col-5">Company / Status</dt>
                 <dd class="col-7">{{ selected.companyId }} / {{ selected.status }}</dd>

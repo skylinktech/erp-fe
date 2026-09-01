@@ -52,7 +52,7 @@
         <div class="card-body small">
           <dl class="row mb-0">
             <dt class="col-4">Movement</dt>
-            <dd class="col-8"><NuxtLink to="/inventory/stock-movements">{{ selected.stockMovementId }}</NuxtLink></dd>
+            <dd class="col-8"><NuxtLink to="/inventory/stock?tab=movements">{{ selected.stockMovementId }}</NuxtLink></dd>
             <dt class="col-4">Product / WH</dt>
             <dd class="col-8">{{ selected.productId }} / {{ selected.warehouseId }}</dd>
             <dt class="col-4">Source Doc</dt>

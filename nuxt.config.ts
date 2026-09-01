@@ -63,7 +63,8 @@ export default defineNuxtConfig({
     '/finance/reports/ar-aging': { redirect: '/finance/ar-receipts?tab=aging' },
     '/finance/reports/ap-aging': { redirect: '/finance/ap-payments?tab=aging' },
     // Service Monitoring/Events: handled by legacy-service-workspace-redirect.global.ts
-    // (preserves serviceId and other query keys — do not use static routeRules here)
+    // Stock In/Out/Transfer/Movements: handled by legacy-stock-workspace-redirect.global.ts
+    // (preserves query keys — do not use static routeRules here)
   },
   modules: [
     '@pinia/nuxt',

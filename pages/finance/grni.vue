@@ -89,7 +89,7 @@
           <dl class="row mb-0">
             <dt class="col-4">Receipt Movement</dt>
             <dd class="col-8">
-              <NuxtLink to="/inventory/stock-movements">{{ selected.receiptMovementId }}</NuxtLink>
+              <NuxtLink to="/inventory/stock?tab=movements">{{ selected.receiptMovementId }}</NuxtLink>
             </dd>
             <dt class="col-4">Purchase Invoice</dt>
             <dd class="col-8">{{ selected.purchaseInvoiceId || '-' }}</dd>

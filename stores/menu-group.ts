@@ -4,6 +4,7 @@ import Swal from 'sweetalert2'
 import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 import { useUserStore } from './user'
 import type { MenuDetail } from './menu-detail'
+import { coalesceStockMenuGroups } from '~/utils/inventory/stockWorkspace'
 
 export interface MenuGroup {
   id: number
@@ -60,8 +61,8 @@ export const useMenuGroupStore = defineStore('menu-group', {
         return []
       }
       
-      // Backend sudah memfilter berdasarkan permission, jadi kita hanya perlu mengembalikan data yang sudah difilter
-      return state.sidebarMenuGroups
+      // Backend sudah memfilter berdasarkan permission; coalesce stock children into one Stock item
+      return coalesceStockMenuGroups(state.sidebarMenuGroups)
     }
   },
   actions: {

@@ -16,6 +16,8 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
     }
 
     // Mapping route ke permission yang diperlukan
+    const { STOCK_WORKSPACE_PERMISSIONS } = await import('~/utils/inventory/stockWorkspace')
+
     const routePermissionMap: Record<string, string> = {
       '/inventory/product': 'view_product',
       '/inventory/barang': 'view_product',
@@ -306,6 +308,13 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
         ]
         const ok = userStore.user?.roles?.some(role =>
           role.permissions?.some(permission => allowed.includes(permission.name))
+        )
+        if (ok) return
+      }
+
+      if (!hasPermission && (to.path === '/inventory/stock' || to.path === '/inventory/stok')) {
+        const ok = userStore.user?.roles?.some(role =>
+          role.permissions?.some(permission => STOCK_WORKSPACE_PERMISSIONS.includes(permission.name))
         )
         if (ok) return
       }
