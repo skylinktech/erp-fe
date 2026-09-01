@@ -2,67 +2,57 @@
   <div class="content-wrapper">
     <div class="container-xxl flex-grow-1">
       
-      <p class="mb-6">Permintaan material proyek eksternal (Starlink, Mikrotik, dan perangkat terkait Site Investment).</p>
+      <PageDescription>Permintaan material proyek eksternal (Starlink, Mikrotik, dan perangkat terkait Site Investment).</PageDescription>
 
-      <div class="row g-6 mb-6">
-        <div class="col-xl-3 col-lg-6 col-md-6"><div class="card"><div class="card-body"><div class="d-flex justify-content-between align-items-center mb-4"><p class="mb-0">Total MRF</p><div class="avatar"><span class="avatar-initial rounded bg-label-primary"><i class="ri-file-list-3-line"></i></span></div></div><h5 class="mb-0">{{ statistics?.totalMaterialRequests || 0 }}</h5></div></div></div>
-        <div class="col-xl-3 col-lg-6 col-md-6"><div class="card"><div class="card-body"><div class="d-flex justify-content-between align-items-center mb-4"><p class="mb-0">Draft</p><div class="avatar"><span class="avatar-initial rounded bg-label-secondary"><i class="ri-draft-line"></i></span></div></div><h5 class="mb-0">{{ statistics?.draftMaterialRequests || 0 }}</h5></div></div></div>
-        <div class="col-xl-3 col-lg-6 col-md-6"><div class="card"><div class="card-body"><div class="d-flex justify-content-between align-items-center mb-4"><p class="mb-0">Pending</p><div class="avatar"><span class="avatar-initial rounded bg-label-warning"><i class="ri-time-line"></i></span></div></div><h5 class="mb-0">{{ statistics?.pendingMaterialRequests || 0 }}</h5></div></div></div>
-        <div class="col-xl-3 col-lg-6 col-md-6"><div class="card"><div class="card-body"><div class="d-flex justify-content-between align-items-center mb-4"><p class="mb-0">Approved</p><div class="avatar"><span class="avatar-initial rounded bg-label-success"><i class="ri-checkbox-circle-line"></i></span></div></div><h5 class="mb-0">{{ statistics?.approvedMaterialRequests || 0 }}</h5></div></div></div>
-      </div>
+      <ListPageStatsCards :items="statItems" />
 
       <CollapsibleFilterCard
         title="Filter Material Request"
         :has-active-filters="hasActiveFilters"
-        :show-reset="false"
         @reset="resetFilters"
       >
-        <div class="row g-4">
-          <div class="col-md-6">
-            <FilterField>
-              <label class="form-label">Status</label>
-              <CustomSelect2
-                v-model="filters.status"
-                :options="statusOptions"
-                :get-option-label="(o) => o.label"
-                :reduce="(o) => o.value"
-                searchable
-                clearable
-                placeholder="Status"
-              />
-            </FilterField>
-          </div>
-          <div class="col-md-6">
-            <FilterField>
-              <label class="form-label">Prioritas</label>
-              <CustomSelect2
-                v-model="filters.priority"
-                :options="priorityOptions"
-                :get-option-label="(o) => o.label"
-                :reduce="(o) => o.value"
-                searchable
-                clearable
-                placeholder="Prioritas"
-              />
-            </FilterField>
-          </div>
-          <div class="col-md-6 offset-md-6 d-flex justify-content-end mt-4">
-            <button type="button" class="btn btn-outline-secondary btn-sm" @click="resetFilters">
-              <i class="ri-refresh-line me-1"></i>
-              Reset Filter
-            </button>
-          </div>
-        </div>
+        <FilterFieldsRow>
+          <FilterField>
+            <label class="form-label">Status</label>
+            <CustomSelect2
+              v-model="filters.status"
+              :options="statusOptions"
+              :get-option-label="(o) => o.label"
+              :reduce="(o) => o.value"
+              searchable
+              clearable
+              placeholder="Status"
+            />
+          </FilterField>
+          <FilterField>
+            <label class="form-label">Prioritas</label>
+            <CustomSelect2
+              v-model="filters.priority"
+              :options="priorityOptions"
+              :get-option-label="(o) => o.label"
+              :reduce="(o) => o.value"
+              searchable
+              clearable
+              placeholder="Prioritas"
+            />
+          </FilterField>
+        </FilterFieldsRow>
       </CollapsibleFilterCard>
 
       <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
-              <div class="d-flex align-items-center me-3 mb-2 mb-md-0"><span class="me-2">Baris:</span><Dropdown v-model="tableControls.rows" :options="rowsPerPageOptionsArray" @change="handleRowsChange" placeholder="Jumlah" style="width: 8rem;" /></div>
-              <div class="d-flex align-items-center gap-2">
-                <button v-if="userHasRole('superadmin') || userHasPermission('create_material_request')" @click="navigateTo('/purchasing/material-request/form')" class="btn btn-primary"><i class="ri-add-line me-1"></i>Tambah</button>
-                <span class="p-input-icon-left"><InputText v-model="globalFilterValue" placeholder="Cari no. MRF, SI, keterangan..." class="w-full md:w-20rem" /></span>
-              </div>
-            </div>
+            <ListPageTableHeader
+              :rows="Number(tableControls.rows)"
+              :rows-options="rowsPerPageOptionsArray"
+              :search="globalFilterValue"
+              search-placeholder="Cari no. MRF, SI, keterangan..."
+              :show-export="false"
+              @update:rows="handleRowsChange"
+              @update:search="(v) => { globalFilterValue = v }"
+            >
+              <template #add>
+                <button v-if="userHasRole('superadmin') || userHasPermission('create_material_request')" type="button" class="btn btn-primary" @click="navigateTo('/purchasing/material-request/form')"><i class="ri-add-line me-1"></i>Tambah</button>
+              </template>
+            </ListPageTableHeader>
             <div class="card-datatable table-responsive py-3 px-3">
               <MyDataTable ref="myDataTableRef" :data="materialRequests" :rows="Number(params.rows)" :loading="loading" :totalRecords="totalRecords" :first="params.first" :lazy="true" @page="onPage($event)" @sort="onSort($event)" responsiveLayout="scroll" paginatorPosition="bottom" paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink" currentPageReportTemplate="Menampilkan {first} sampai {last} dari {totalRecords} data">
                 <Column header="#" :sortable="false"><template #body="slotProps">{{ params.first + slotProps.index + 1 }}</template></Column>
@@ -107,10 +97,10 @@ import { useMaterialRequestStore, getMaterialRequestNo } from '~/stores/material
 import { usePermissions } from '~/composables/usePermissions'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
+import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
+import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
 import Column from 'primevue/column'
 import Menu from 'primevue/menu'
-import Dropdown from 'primevue/dropdown'
-import InputText from 'primevue/inputtext'
 import { useDebounceFn } from '@vueuse/core'
 import Swal from 'sweetalert2'
 import { useMaterialRequestApproval } from '~/composables/useMaterialRequestApproval'
@@ -120,6 +110,13 @@ const { userHasPermission, userHasRole } = usePermissions()
 const { canApproveMaterialRequest, canRejectMaterialRequest } = useMaterialRequestApproval()
 const formatRupiah = useFormatRupiah()
 const { materialRequests, loading, totalRecords, params, statistics } = storeToRefs(materialRequestStore)
+
+const statItems = computed(() => [
+  { key: 'total', label: 'Total MRF', value: statistics.value?.totalMaterialRequests || 0, icon: 'ri-file-list-3-line', iconBgClass: 'bg-label-primary' },
+  { key: 'draft', label: 'Draft', value: statistics.value?.draftMaterialRequests || 0, icon: 'ri-draft-line', iconBgClass: 'bg-label-secondary' },
+  { key: 'pending', label: 'Pending', value: statistics.value?.pendingMaterialRequests || 0, icon: 'ri-time-line', iconBgClass: 'bg-label-warning' },
+  { key: 'approved', label: 'Approved', value: statistics.value?.approvedMaterialRequests || 0, icon: 'ri-checkbox-circle-line', iconBgClass: 'bg-label-success' },
+])
 const tableControls = ref({ rows: 10 })
 const filters = ref({ status: null, priority: null })
 
@@ -206,7 +203,13 @@ function toggleActions(event, row) {
 
 const onPage = (e) => { if (e) materialRequestStore.setPagination(e) }
 const onSort = (e) => { if (e) materialRequestStore.setSort(e) }
-const handleRowsChange = (v) => { params.value.rows = Number(v) || 10; params.value.first = 0; materialRequestStore.fetchMaterialRequests() }
+const handleRowsChange = (v) => {
+  const rows = Number(v) || 10
+  tableControls.value.rows = rows
+  params.value.rows = rows
+  params.value.first = 0
+  materialRequestStore.fetchMaterialRequests()
+}
 const debouncedSearch = useDebounceFn(() => materialRequestStore.setSearch(globalFilterValue.value), 500)
 watch(globalFilterValue, debouncedSearch)
 watch(filters, (f) => materialRequestStore.setFilters({ status: f.status, priority: f.priority }), { deep: true })

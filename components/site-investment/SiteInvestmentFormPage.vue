@@ -1,16 +1,11 @@
 <template>
   <div class="content-wrapper">
     <div class="container-xxl flex-grow-1">
-      <div class="d-flex justify-content-between align-items-start mb-4">
-        <div>
-          <h4 class="mb-1">{{ pageTitle }}</h4>
-          <PageBreadcrumb class="mt-1" :current-label="pageTitle" />
-          <p class="mb-0 text-muted small">{{ pageSubtitle }}</p>
-        </div>
-        <NuxtLink to="/sales/site-investment" class="btn btn-outline-secondary btn-sm">
-          <i class="ri-arrow-left-line me-1"></i> Kembali
-        </NuxtLink>
-      </div>
+      <FormPageHeader
+        :title="pageTitle"
+        :subtitle="pageSubtitle"
+        back-href="/sales/site-investment"
+      />
 
       <div class="row g-4">
         <div class="col-xl-8 col-12">

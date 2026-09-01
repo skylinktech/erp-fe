@@ -9,6 +9,7 @@
       </button>
     </div>
     <div class="d-flex flex-wrap gap-2">
+      <slot name="before-primary" />
       <button
         v-if="!isFirstStep"
         type="button"

@@ -3,39 +3,27 @@
     <div class="content-wrapper">
       <div class="container-xxl flex-grow-1">
 
-        <div v-if="loading" class="d-flex justify-content-center align-items-center" style="min-height:400px">
-          <div class="text-center">
-            <div class="spinner-border text-primary" style="width:3rem;height:3rem"></div>
-            <p class="mt-3 text-muted">Memuat Work Order Request...</p>
-          </div>
-        </div>
+        <PageLoadingState v-if="loading" message="Memuat Work Order Request..." />
 
-        <div v-else-if="error && !workOrderRequest" class="alert alert-danger">
-          <i class="ri-error-warning-line me-2"></i>
-          {{ error?.message || 'Gagal memuat data.' }}
-          <NuxtLink to="/operations/work-order-request" class="alert-link ms-2">Kembali ke Daftar</NuxtLink>
-        </div>
+        <PageErrorAlert
+          v-else-if="error && !workOrderRequest"
+          :message="error?.message || 'Gagal memuat data.'"
+          back-href="/operations/work-order-request"
+        />
 
         <template v-else-if="workOrderRequest">
-          <!-- Header -->
-          <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
-            <div class="d-flex flex-wrap align-items-center gap-3">
-              <NuxtLink to="/operations/work-order-request" class="btn btn-outline-secondary btn-sm">
-                <i class="ri-arrow-left-line me-1"></i> Kembali
-              </NuxtLink>
-              <span class="text-muted">/</span>
-              <div>
-                <h4 class="mb-0 fw-semibold">{{ getWorkOrderRequestNo(workOrderRequest) || '—' }}</h4>
-                <PageBreadcrumb class="mt-1" :current-label="getWorkOrderRequestNo(workOrderRequest) || '—'" />
-                <small class="text-muted">{{ formatDateTime(workOrderRequest.createdAt) }}</small>
-              </div>
+          <DetailPageHeader
+            :title="getWorkOrderRequestNo(workOrderRequest) || '—'"
+            :subtitle="formatDateTime(workOrderRequest.createdAt)"
+            back-href="/operations/work-order-request"
+          >
+            <template #badges>
               <span :class="getStatusBadge(workOrderRequest).class" class="badge">{{ getStatusBadge(workOrderRequest).text }}</span>
               <span :class="['badge', urgencyBadgeClass(workOrderRequest.urgencyLevel ?? workOrderRequest.urgency_level)]">
                 {{ urgencyShortLabel(workOrderRequest.urgencyLevel ?? workOrderRequest.urgency_level) }}
               </span>
-            </div>
-
-            <div class="d-flex gap-2">
+            </template>
+            <template #actions>
               <div class="btn-group">
                 <button type="button" class="btn btn-outline-secondary dropdown-toggle btn-sm" data-bs-toggle="dropdown">
                   Actions
@@ -90,8 +78,8 @@
                   </a>
                 </div>
               </div>
-            </div>
-          </div>
+            </template>
+          </DetailPageHeader>
 
           <div class="row g-4">
             <!-- Main Content -->

@@ -245,7 +245,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
           sortOrder: this.params.sortOrder?.toString() || '',
           draw: this.params.draw.toString(),
           search: this.params.search || '',
-          includeItems: 'true',
+          includeItems: 'false',
         })
 
         if (this.params.customerId) {

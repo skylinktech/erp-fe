@@ -1,53 +1,41 @@
 <template>
   <div class="content-wrapper">
     <div class="container-xxl flex-grow-1">
-      <div class="d-flex justify-content-between align-items-start mb-4">
-        <div>
-          <h4 class="mb-1">{{ pageTitle }}</h4>
-          <PageBreadcrumb class="mt-1" :current-label="pageTitle" />
-          <p class="mb-0 text-muted small">{{ pageSubtitle }}</p>
-        </div>
-        <NuxtLink to="/operations/request-dismantle" class="btn btn-outline-secondary btn-sm">
-          <i class="ri-arrow-left-line me-1"></i> Kembali
-        </NuxtLink>
-      </div>
+      <FormPageHeader
+        :title="pageTitle"
+        :subtitle="pageSubtitle"
+        back-href="/operations/request-dismantle"
+      />
 
-      <div v-if="pageLoading" class="text-center py-5">
-        <div class="spinner-border text-primary"></div>
-      </div>
+      <PageLoadingState v-if="pageLoading" message="Memuat data..." />
 
       <form v-else ref="formRoot" @submit.prevent="onFinalSubmit">
-        <ul class="nav nav-pills flex-wrap gap-2 mb-4">
-          <li v-for="(step, idx) in steps" :key="step.id" class="nav-item">
-            <button
-              type="button"
-              class="nav-link"
-              :class="{ active: currentIndex === idx }"
-              @click="goToStep(idx)"
-            >
-              {{ idx + 1 }}. {{ step.label }}
-            </button>
-          </li>
-        </ul>
+        <TabbedFormNav
+          :steps="steps"
+          :current-index="currentIndex"
+          :disabled="savingDraft || submitting"
+          nav-class="mb-4"
+          @select="goToStep"
+        />
 
         <div v-show="currentStep?.id === 'info'" data-step-id="info" id="info" class="card mb-4">
           <div class="card-body p-4 row g-3">
             <div class="col-md-4">
-              <label class="form-label">Tanggal Request <span class="text-danger">*</span></label>
+              <FormLabel required>Tanggal Request</FormLabel>
               <input v-model="form.requestDate" type="date" class="form-control" required />
             </div>
             <div class="col-md-4">
-              <label class="form-label">Tanggal Efektif Terminasi <span class="text-danger">*</span></label>
+              <FormLabel required>Tanggal Efektif Terminasi</FormLabel>
               <input v-model="form.requestedEffectiveTerminationAt" type="datetime-local" class="form-control" required />
             </div>
             <div class="col-md-4">
-              <label class="form-label">Tipe Terminasi <span class="text-danger">*</span></label>
+              <FormLabel required>Tipe Terminasi</FormLabel>
               <select v-model="form.terminationType" class="form-select" required>
                 <option v-for="o in terminationOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
               </select>
             </div>
             <div class="col-md-4">
-              <label class="form-label">Customer <span class="text-danger">*</span></label>
+              <FormLabel required>Customer</FormLabel>
               <CustomSelect2
                 v-model="form.customerId"
                 :options="customerOptions"
@@ -61,7 +49,7 @@
               />
             </div>
             <div class="col-md-4">
-              <label class="form-label">Site <span class="text-danger">*</span></label>
+              <FormLabel required>Site</FormLabel>
               <CustomSelect2
                 v-model="form.siteId"
                 :options="siteOptions"
@@ -75,7 +63,7 @@
               />
             </div>
             <div class="col-md-4">
-              <label class="form-label">Perusahaan <span class="text-danger">*</span></label>
+              <FormLabel required>Perusahaan</FormLabel>
               <CustomSelect2
                 v-model="form.perusahaanId"
                 :options="perusahaanOptions"
@@ -239,20 +227,22 @@
           </div>
         </div>
 
-        <div class="d-flex justify-content-between flex-wrap gap-2">
-          <button type="button" class="btn btn-outline-secondary" :disabled="isFirstStep" @click="prevStep">Back</button>
-          <div class="d-flex gap-2">
-            <button type="button" class="btn btn-outline-primary" :disabled="savingDraft" @click="saveDraft">
+        <TabbedFormActions
+          :is-first-step="isFirstStep"
+          :is-last-step="isLastStep"
+          :saving="submitting || savingDraft"
+          cancel-href="/operations/request-dismantle"
+          submit-label="Submit"
+          @next="nextStep"
+          @previous="prevStep"
+        >
+          <template #before-primary>
+            <button type="button" class="btn btn-outline-primary" :disabled="savingDraft || submitting" @click="saveDraft">
               <span v-if="savingDraft" class="spinner-border spinner-border-sm me-1"></span>
               Save Draft
             </button>
-            <button v-if="!isLastStep" type="button" class="btn btn-primary" @click="nextStep">Next</button>
-            <button v-else type="submit" class="btn btn-success" :disabled="submitting">
-              <span v-if="submitting" class="spinner-border spinner-border-sm me-1"></span>
-              Submit
-            </button>
-          </div>
-        </div>
+          </template>
+        </TabbedFormActions>
       </form>
     </div>
   </div>
@@ -263,6 +253,9 @@ import { ref, computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import Swal from 'sweetalert2'
 import { useTabbedFormNavigation } from '~/composables/useTabbedFormNavigation'
+import TabbedFormNav from '~/components/form/TabbedFormNav.vue'
+import TabbedFormActions from '~/components/form/TabbedFormActions.vue'
+import FormLabel from '~/components/form/FormLabel.vue'
 import { useRequestDismantleStore } from '~/stores/request-dismantle'
 import { apiFetch } from '~/utils/apiFetch'
 import { BILLING_CUTOFF_OPTIONS, TERMINATION_TYPE_OPTIONS } from '~/utils/dismantleLabels'

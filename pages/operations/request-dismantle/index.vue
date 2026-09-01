@@ -1,21 +1,9 @@
 <template>
   <div class="content-wrapper">
     <div class="container-xxl flex-grow-1">
-      <p class="mb-6">Pengajuan dismantle layanan — terminasi, recovery peralatan, billing, dan completion.</p>
+      <PageDescription>Pengajuan dismantle layanan — terminasi, recovery peralatan, billing, dan completion.</PageDescription>
 
-      <div class="row g-4 mb-6">
-        <div v-for="kpi in kpiCards" :key="kpi.key" class="col-xl-3 col-lg-4 col-md-6">
-          <div class="card h-100">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <p class="mb-0 text-muted">{{ kpi.label }}</p>
-                <span :class="`avatar-initial rounded ${kpi.bg}`"><i :class="kpi.icon"></i></span>
-              </div>
-              <h5 class="mb-0">{{ kpi.value }}</h5>
-            </div>
-          </div>
-        </div>
-      </div>
+      <ListPageStatsCards :items="statItems" />
 
       <div class="row g-6">
         <div class="col-12">
@@ -51,12 +39,16 @@
 
         <div class="col-12">
           <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-              <div class="d-flex align-items-center">
-                <span class="me-2">Baris:</span>
-                <Dropdown v-model="tableControls.rows" :options="rowsPerPageOptions" @change="handleRowsChange" style="width: 8rem;" />
-              </div>
-              <div class="d-flex align-items-center gap-2 flex-wrap">
+            <ListPageTableHeader
+              :rows="Number(tableControls.rows)"
+              :rows-options="rowsPerPageOptions"
+              :search="globalFilterValue"
+              search-placeholder="Cari no. request, customer..."
+              :show-export="false"
+              @update:rows="handleRowsChange"
+              @update:search="(v) => { globalFilterValue = v }"
+            >
+              <template #add>
                 <button
                   v-if="canCreate"
                   type="button"
@@ -65,11 +57,8 @@
                 >
                   <i class="ri-add-line me-1"></i>Tambah
                 </button>
-                <span class="p-input-icon-left">
-                  <InputText v-model="globalFilterValue" placeholder="Cari no. request, customer..." class="w-full md:w-20rem" />
-                </span>
-              </div>
-            </div>
+              </template>
+            </ListPageTableHeader>
 
             <div class="card-datatable table-responsive py-3 px-3">
               <MyDataTable
@@ -140,8 +129,6 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import Column from 'primevue/column'
-import Dropdown from 'primevue/dropdown'
-import InputText from 'primevue/inputtext'
 import Menu from 'primevue/menu'
 import { useDebounceFn } from '@vueuse/core'
 import { useRequestDismantleStore } from '~/stores/request-dismantle'
@@ -150,6 +137,8 @@ import { TERMINATION_TYPE_OPTIONS } from '~/utils/dismantleLabels'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
 import DismantleProgressSummary from '~/components/dismantle/DismantleProgressSummary.vue'
+import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
+import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
 import type { DismantleRequestListItem } from '~/types/operations/dismantle'
 
 definePageMeta({ middleware: ['auth', 'check-permission'], title: 'Request Dismantle' })
@@ -198,6 +187,16 @@ const kpiCards = computed(() => {
   ]
 })
 
+const statItems = computed(() =>
+  kpiCards.value.map((k) => ({
+    key: k.key,
+    label: k.label,
+    value: k.value,
+    icon: k.icon,
+    iconBgClass: k.bg,
+  }))
+)
+
 function formatDate(val?: string | null) {
   if (!val) return '—'
   try {
@@ -220,7 +219,8 @@ function onPage(e: { first: number; rows: number }) {
   store.fetchList()
 }
 
-function handleRowsChange() {
+function handleRowsChange(value?: number) {
+  tableControls.value.rows = Number(value) || tableControls.value.rows
   params.value.rows = tableControls.value.rows
   params.value.first = 0
   store.fetchList()

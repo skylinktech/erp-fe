@@ -3,44 +3,30 @@
     <div class="content-wrapper">
       <div class="container-xxl flex-grow-1 container p-y">
         <!-- Loading -->
-        <div v-if="loading" class="d-flex justify-content-center align-items-center" style="min-height: 400px;">
-          <div class="text-center">
-            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
-              <span class="visually-hidden">Loading...</span>
-            </div>
-            <p class="mt-3 text-muted">Memuat detail Site Investment...</p>
-          </div>
-        </div>
+        <PageLoadingState v-if="loading" message="Memuat detail Site Investment..." />
 
-        <!-- Error -->
-        <div v-else-if="error && !siteInvest" class="alert alert-danger">
-          <i class="ri-error-warning-line me-2"></i>
-          {{ error.message || 'Gagal memuat data.' }}
-          <NuxtLink to="/sales/site-investment" class="alert-link ms-2">Kembali ke Daftar</NuxtLink>
-        </div>
+        <PageErrorAlert
+          v-else-if="error && !siteInvest"
+          :message="error.message || 'Gagal memuat data.'"
+          back-href="/sales/site-investment"
+        />
 
         <!-- Content -->
         <template v-else-if="siteInvest">
-          <!-- Header: Breadcrumb + Actions -->
-          <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
-            <div class="d-flex flex-wrap align-items-center gap-3">
-              <NuxtLink to="/sales/site-investment" class="btn btn-outline-secondary btn-sm">
-                <i class="ri-arrow-left-line me-1"></i> Kembali
-              </NuxtLink>
-              <span class="text-muted align-self-center">/</span>
-              <div class="d-flex flex-column">
-                <h4 class="mb-0 fw-semibold">{{ siteInvest.siNumber || siteInvest.name }}</h4>
-                <PageBreadcrumb class="mt-1" :current-label="siteInvest.siNumber || siteInvest.name" />
-                <small class="text-muted">{{ formatDateTime(siteInvest.createdAt) }}</small>
-              </div>
+          <DetailPageHeader
+            :title="siteInvest.siNumber || siteInvest.name"
+            :subtitle="formatDateTime(siteInvest.createdAt)"
+            back-href="/sales/site-investment"
+          >
+            <template #badges>
               <span :class="getStatusBadge(siteInvest).class" class="badge">{{ getStatusBadge(siteInvest).text }}</span>
               <span v-if="(siteInvest.revision ?? 0) > 0" class="badge bg-label-info">Revisi {{ siteInvest.revision }}</span>
               <span :class="getPriorityBadge(siteInvest.priority).class" class="badge">{{ getPriorityBadge(siteInvest.priority).text }}</span>
               <span v-if="siteInvest.overBudget" class="badge bg-label-warning">
                 <i class="ri-alert-line me-1"></i> Over Budget
               </span>
-            </div>
-            <div class="d-flex flex-wrap gap-2">
+            </template>
+            <template #actions>
               <div class="btn-group" role="group">
                 <button id="btnGroupDrop1" type="button" class="btn btn-outline-secondary dropdown-toggle btn-sm" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="d-none d-sm-block">Actions</span></button>
                 <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
@@ -67,8 +53,8 @@
                   </a>
                 </div>
               </div>
-            </div>
-          </div>
+            </template>
+          </DetailPageHeader>
 
           <!-- Process Flow -->
           <div class="card mb-4">

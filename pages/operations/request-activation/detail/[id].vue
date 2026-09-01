@@ -3,35 +3,24 @@
     <div class="content-wrapper">
       <div class="container-xxl flex-grow-1">
 
-        <div v-if="loading" class="d-flex justify-content-center align-items-center" style="min-height:400px">
-          <div class="text-center">
-            <div class="spinner-border text-primary" style="width:3rem;height:3rem"></div>
-            <p class="mt-3 text-muted">Memuat Request Activation...</p>
-          </div>
-        </div>
+        <PageLoadingState v-if="loading" message="Memuat Request Activation..." />
 
-        <div v-else-if="error && !requestActivation" class="alert alert-danger">
-          <i class="ri-error-warning-line me-2"></i>
-          {{ error?.message || 'Gagal memuat data.' }}
-          <NuxtLink to="/operations/request-activation" class="alert-link ms-2">Kembali ke Daftar</NuxtLink>
-        </div>
+        <PageErrorAlert
+          v-else-if="error && !requestActivation"
+          :message="error?.message || 'Gagal memuat data.'"
+          back-href="/operations/request-activation"
+        />
 
         <template v-else-if="requestActivation">
-          <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
-            <div class="d-flex flex-wrap align-items-center gap-3">
-              <NuxtLink to="/operations/request-activation" class="btn btn-outline-secondary btn-sm">
-                <i class="ri-arrow-left-line me-1"></i> Kembali
-              </NuxtLink>
-              <span class="text-muted">/</span>
-              <div>
-                <h4 class="mb-0 fw-semibold">{{ getRequestActivationNo(requestActivation) || '—' }}</h4>
-                <PageBreadcrumb class="mt-1" :current-label="getRequestActivationNo(requestActivation) || '—'" />
-                <small class="text-muted">{{ formatDateTime(requestActivation.createdAt) }}</small>
-              </div>
+          <DetailPageHeader
+            :title="getRequestActivationNo(requestActivation) || '—'"
+            :subtitle="formatDateTime(requestActivation.createdAt)"
+            back-href="/operations/request-activation"
+          >
+            <template #badges>
               <span :class="getStatusBadge(requestActivation).class" class="badge">{{ getStatusBadge(requestActivation).text }}</span>
-            </div>
-
-            <div class="d-flex gap-2">
+            </template>
+            <template #actions>
               <div class="btn-group">
                 <button type="button" class="btn btn-outline-secondary dropdown-toggle btn-sm" data-bs-toggle="dropdown">
                   Actions
@@ -80,8 +69,8 @@
                   </a>
                 </div>
               </div>
-            </div>
-          </div>
+            </template>
+          </DetailPageHeader>
 
           <div class="row g-4">
             <div class="col-xl-8">

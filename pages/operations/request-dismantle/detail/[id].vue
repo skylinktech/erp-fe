@@ -1,21 +1,17 @@
 <template>
   <div class="content-wrapper">
     <div class="container-xxl flex-grow-1">
-      <div v-if="loadingDetail" class="text-center py-5">
-        <div class="spinner-border text-primary"></div>
-        <p class="mt-2 text-muted">Memuat Request Dismantle...</p>
-      </div>
+      <PageLoadingState v-if="loadingDetail" message="Memuat Request Dismantle..." />
 
       <template v-else-if="selected">
-        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
-          <div>
-            <NuxtLink to="/operations/request-dismantle" class="btn btn-outline-secondary btn-sm mb-2">
-              <i class="ri-arrow-left-line me-1"></i> Kembali
-            </NuxtLink>
-            <h4 class="mb-1">{{ selected.requestNumber }}</h4>
+        <DetailPageHeader
+          :title="selected.requestNumber"
+          back-href="/operations/request-dismantle"
+        >
+          <template #badges>
             <DismantleProgressSummary :status="selected.status" :phase="selected.summaryPhase" />
-          </div>
-          <div class="d-flex gap-2">
+          </template>
+          <template #actions>
             <div v-if="hasAnyAction" class="btn-group">
               <button type="button" class="btn btn-outline-secondary dropdown-toggle btn-sm" data-bs-toggle="dropdown">
                 Actions
@@ -113,8 +109,8 @@
                 </a>
               </div>
             </div>
-          </div>
-        </div>
+          </template>
+        </DetailPageHeader>
 
         <ul class="nav nav-tabs mb-4 flex-nowrap overflow-auto">
           <li v-for="tab in tabs" :key="tab.id" class="nav-item">

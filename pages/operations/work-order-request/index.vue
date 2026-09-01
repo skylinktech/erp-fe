@@ -2,47 +2,9 @@
   <div class="content-wrapper">
     <div class="container-xxl flex-grow-1">
       
-      <p class="mb-6">Pengajuan penugasan teknisi untuk pekerjaan PM, CM, dan Relokasi perangkat.</p>
+      <PageDescription>Pengajuan penugasan teknisi untuk pekerjaan PM, CM, dan Relokasi perangkat.</PageDescription>
 
-      <!-- Statistics Cards -->
-      <div class="row g-6 mb-6">
-        <div class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card"><div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-              <p class="mb-0">Total WOR</p>
-              <div class="avatar"><span class="avatar-initial rounded bg-label-primary"><i class="ri-file-list-3-line"></i></span></div>
-            </div>
-            <h5 class="mb-0">{{ statistics.total }}</h5>
-          </div></div>
-        </div>
-        <div class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card"><div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-              <p class="mb-0">Pending</p>
-              <div class="avatar"><span class="avatar-initial rounded bg-label-warning"><i class="ri-time-line"></i></span></div>
-            </div>
-            <h5 class="mb-0">{{ statistics.pending }}</h5>
-          </div></div>
-        </div>
-        <div class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card"><div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-              <p class="mb-0">Approved</p>
-              <div class="avatar"><span class="avatar-initial rounded bg-label-success"><i class="ri-checkbox-circle-line"></i></span></div>
-            </div>
-            <h5 class="mb-0">{{ statistics.approved }}</h5>
-          </div></div>
-        </div>
-        <div class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card"><div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-              <p class="mb-0">Urgency Tinggi</p>
-              <div class="avatar"><span class="avatar-initial rounded bg-label-danger"><i class="ri-alarm-warning-line"></i></span></div>
-            </div>
-            <h5 class="mb-0">{{ statistics.highUrgency }}</h5>
-          </div></div>
-        </div>
-      </div>
+      <ListPageStatsCards :items="statItems" />
 
       <div class="row g-6">
         <div class="col-12">
@@ -88,24 +50,26 @@
         <!-- Table -->
         <div class="col-12">
           <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
-              <div class="d-flex align-items-center me-3 mb-2 mb-md-0">
-                <span class="me-2">Baris:</span>
-                <Dropdown v-model="tableControls.rows" :options="rowsPerPageOptions" @change="handleRowsChange" placeholder="Jumlah" style="width: 8rem;" />
-              </div>
-              <div class="d-flex align-items-center gap-2">
+            <ListPageTableHeader
+              :rows="Number(tableControls.rows)"
+              :rows-options="rowsPerPageOptions"
+              :search="globalFilterValue"
+              search-placeholder="Cari no. WOR, site, lokasi..."
+              :show-export="false"
+              @update:rows="handleRowsChange"
+              @update:search="(v) => { globalFilterValue = v }"
+            >
+              <template #add>
                 <button
                   v-if="userHasRole('superadmin') || userHasPermission('create_work_order_request')"
-                  @click="navigateTo('/operations/work-order-request/form')"
+                  type="button"
                   class="btn btn-primary"
+                  @click="navigateTo('/operations/work-order-request/form')"
                 >
                   <i class="ri-add-line me-1"></i>Tambah
                 </button>
-                <span class="p-input-icon-left">
-                  <InputText v-model="globalFilterValue" placeholder="Cari no. WOR, site, lokasi..." class="w-full md:w-20rem" />
-                </span>
-              </div>
-            </div>
+              </template>
+            </ListPageTableHeader>
 
             <div class="card-datatable table-responsive py-3 px-3">
               <MyDataTable
@@ -200,10 +164,10 @@ import {
 import { usePermissions } from '~/composables/usePermissions'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
+import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
+import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
 import Column from 'primevue/column'
 import Menu from 'primevue/menu'
-import Dropdown from 'primevue/dropdown'
-import InputText from 'primevue/inputtext'
 import { useDebounceFn } from '@vueuse/core'
 import Swal from 'sweetalert2'
 import type { WorkOrderJobType, WorkOrderUrgencyLevel } from '~/stores/work-order-request'
@@ -212,6 +176,13 @@ const store = useWorkOrderRequestStore()
 const { userHasPermission, userHasRole } = usePermissions()
 const { workOrderRequests, loading, totalRecords, params, statistics } = storeToRefs(store)
 const { getStatusBadge } = useApprovalStatus()
+
+const statItems = computed(() => [
+  { key: 'total', label: 'Total WOR', value: statistics.value.total, icon: 'ri-file-list-3-line', iconBgClass: 'bg-label-primary' },
+  { key: 'pending', label: 'Pending', value: statistics.value.pending, icon: 'ri-time-line', iconBgClass: 'bg-label-warning' },
+  { key: 'approved', label: 'Approved', value: statistics.value.approved, icon: 'ri-checkbox-circle-line', iconBgClass: 'bg-label-success' },
+  { key: 'highUrgency', label: 'Urgency Tinggi', value: statistics.value.highUrgency, icon: 'ri-alarm-warning-line', iconBgClass: 'bg-label-danger' },
+])
 
 const tableControls = ref({ rows: 10 })
 const filters = ref({ status: null as string | null, jobType: null as string | null, urgencyLevel: null as string | null })
@@ -356,7 +327,9 @@ function toggleActions(event: Event, row: any) {
 const onPage = (e: any) => { if (e) store.setPagination(e) }
 const onSort = (e: any) => { if (e) store.setSort(e) }
 const handleRowsChange = (v: any) => {
-  params.value.rows = Number(v) || 10
+  const rows = Number(v) || 10
+  tableControls.value.rows = rows
+  params.value.rows = rows
   params.value.first = 0
   store.fetchWorkOrderRequests()
 }

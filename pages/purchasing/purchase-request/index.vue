@@ -2,67 +2,57 @@
   <div class="content-wrapper">
     <div class="container-xxl flex-grow-1">
       
-      <p class="mb-6">Permintaan barang internal perusahaan (ATK, perangkat keras, dll.)</p>
+      <PageDescription>Permintaan barang internal perusahaan (ATK, perangkat keras, dll.)</PageDescription>
 
-      <div class="row g-6 mb-6">
-        <div class="col-xl-3 col-lg-6 col-md-6"><div class="card"><div class="card-body"><div class="d-flex justify-content-between align-items-center mb-4"><p class="mb-0">Total PR</p><div class="avatar"><span class="avatar-initial rounded bg-label-primary"><i class="ri-file-list-3-line"></i></span></div></div><h5 class="mb-0">{{ statistics?.totalPurchaseRequests || 0 }}</h5></div></div></div>
-        <div class="col-xl-3 col-lg-6 col-md-6"><div class="card"><div class="card-body"><div class="d-flex justify-content-between align-items-center mb-4"><p class="mb-0">Draft</p><div class="avatar"><span class="avatar-initial rounded bg-label-secondary"><i class="ri-draft-line"></i></span></div></div><h5 class="mb-0">{{ statistics?.draftPurchaseRequests || 0 }}</h5></div></div></div>
-        <div class="col-xl-3 col-lg-6 col-md-6"><div class="card"><div class="card-body"><div class="d-flex justify-content-between align-items-center mb-4"><p class="mb-0">Pending</p><div class="avatar"><span class="avatar-initial rounded bg-label-warning"><i class="ri-time-line"></i></span></div></div><h5 class="mb-0">{{ statistics?.pendingPurchaseRequests || 0 }}</h5></div></div></div>
-        <div class="col-xl-3 col-lg-6 col-md-6"><div class="card"><div class="card-body"><div class="d-flex justify-content-between align-items-center mb-4"><p class="mb-0">Approved</p><div class="avatar"><span class="avatar-initial rounded bg-label-success"><i class="ri-checkbox-circle-line"></i></span></div></div><h5 class="mb-0">{{ statistics?.approvedPurchaseRequests || 0 }}</h5></div></div></div>
-      </div>
+      <ListPageStatsCards :items="statItems" />
 
       <CollapsibleFilterCard
         title="Filter Purchase Request"
         :has-active-filters="hasActiveFilters"
-        :show-reset="false"
         @reset="resetFilters"
       >
-        <div class="row g-4">
-          <div class="col-md-6">
-            <FilterField>
-              <label class="form-label">Status</label>
-              <CustomSelect2
-                v-model="filters.status"
-                :options="statusOptions"
-                :get-option-label="(o) => o.label"
-                :reduce="(o) => o.value"
-                searchable
-                clearable
-                placeholder="Status"
-              />
-            </FilterField>
-          </div>
-          <div class="col-md-6">
-            <FilterField>
-              <label class="form-label">Prioritas</label>
-              <CustomSelect2
-                v-model="filters.priority"
-                :options="priorityOptions"
-                :get-option-label="(o) => o.label"
-                :reduce="(o) => o.value"
-                searchable
-                clearable
-                placeholder="Prioritas"
-              />
-            </FilterField>
-          </div>
-          <div class="col-md-6 offset-md-6 d-flex justify-content-end mt-4">
-            <button type="button" class="btn btn-outline-secondary btn-sm" @click="resetFilters">
-              <i class="ri-refresh-line me-1"></i>
-              Reset Filter
-            </button>
-          </div>
-        </div>
+        <FilterFieldsRow>
+          <FilterField>
+            <label class="form-label">Status</label>
+            <CustomSelect2
+              v-model="filters.status"
+              :options="statusOptions"
+              :get-option-label="(o) => o.label"
+              :reduce="(o) => o.value"
+              searchable
+              clearable
+              placeholder="Status"
+            />
+          </FilterField>
+          <FilterField>
+            <label class="form-label">Prioritas</label>
+            <CustomSelect2
+              v-model="filters.priority"
+              :options="priorityOptions"
+              :get-option-label="(o) => o.label"
+              :reduce="(o) => o.value"
+              searchable
+              clearable
+              placeholder="Prioritas"
+            />
+          </FilterField>
+        </FilterFieldsRow>
       </CollapsibleFilterCard>
 
       <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
-              <div class="d-flex align-items-center me-3 mb-2 mb-md-0"><span class="me-2">Baris:</span><Dropdown v-model="tableControls.rows" :options="rowsPerPageOptionsArray" @change="handleRowsChange" placeholder="Jumlah" style="width: 8rem;" /></div>
-              <div class="d-flex align-items-center gap-2">
-                <button v-if="userHasRole('superadmin') || userHasPermission('create_purchase_request')" @click="navigateTo('/purchasing/purchase-request/form')" class="btn btn-primary"><i class="ri-add-line me-1"></i>Tambah</button>
-                <span class="p-input-icon-left"><InputText v-model="globalFilterValue" placeholder="Cari no. PR, keterangan..." class="w-full md:w-20rem" /></span>
-              </div>
-            </div>
+            <ListPageTableHeader
+              :rows="Number(tableControls.rows)"
+              :rows-options="rowsPerPageOptionsArray"
+              :search="globalFilterValue"
+              search-placeholder="Cari no. PR, keterangan..."
+              :show-export="false"
+              @update:rows="handleRowsChange"
+              @update:search="(v) => { globalFilterValue = v }"
+            >
+              <template #add>
+                <button v-if="userHasRole('superadmin') || userHasPermission('create_purchase_request')" type="button" class="btn btn-primary" @click="navigateTo('/purchasing/purchase-request/form')"><i class="ri-add-line me-1"></i>Tambah</button>
+              </template>
+            </ListPageTableHeader>
             <div class="card-datatable table-responsive py-3 px-3">
               <MyDataTable ref="myDataTableRef" :data="purchaseRequests" :rows="Number(params.rows)" :loading="loading" :totalRecords="totalRecords" :first="params.first" :lazy="true" @page="onPage($event)" @sort="onSort($event)" responsiveLayout="scroll" paginatorPosition="bottom" paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink" currentPageReportTemplate="Menampilkan {first} sampai {last} dari {totalRecords} data">
                 <Column header="#" :sortable="false"><template #body="slotProps">{{ params.first + slotProps.index + 1 }}</template></Column>
@@ -118,10 +108,10 @@ import { usePurchaseRequestStore } from '~/stores/purchase-request'
 import { usePermissions } from '~/composables/usePermissions'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
+import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
+import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
 import Column from 'primevue/column'
 import Menu from 'primevue/menu'
-import Dropdown from 'primevue/dropdown'
-import InputText from 'primevue/inputtext'
 import { useDebounceFn } from '@vueuse/core'
 import Swal from 'sweetalert2'
 import { usePurchaseRequestApproval } from '~/composables/usePurchaseRequestApproval'
@@ -133,6 +123,13 @@ const { userHasPermission, userHasRole } = usePermissions()
 const { canApprovePurchaseRequest, canRejectPurchaseRequest } = usePurchaseRequestApproval()
 const formatRupiah = useFormatRupiah()
 const { purchaseRequests, loading, totalRecords, params, statistics } = storeToRefs(purchaseRequestStore)
+
+const statItems = computed(() => [
+  { key: 'total', label: 'Total PR', value: statistics.value?.totalPurchaseRequests || 0, icon: 'ri-file-list-3-line', iconBgClass: 'bg-label-primary' },
+  { key: 'draft', label: 'Draft', value: statistics.value?.draftPurchaseRequests || 0, icon: 'ri-draft-line', iconBgClass: 'bg-label-secondary' },
+  { key: 'pending', label: 'Pending', value: statistics.value?.pendingPurchaseRequests || 0, icon: 'ri-time-line', iconBgClass: 'bg-label-warning' },
+  { key: 'approved', label: 'Approved', value: statistics.value?.approvedPurchaseRequests || 0, icon: 'ri-checkbox-circle-line', iconBgClass: 'bg-label-success' },
+])
 const tableControls = ref({ rows: 10 })
 const filters = ref({ status: null, priority: null })
 
@@ -251,7 +248,13 @@ function toggleActions(event, row) {
 
 const onPage = (e) => { if (e) purchaseRequestStore.setPagination(e) }
 const onSort = (e) => { if (e) purchaseRequestStore.setSort(e) }
-const handleRowsChange = (v) => { params.value.rows = Number(v) || 10; params.value.first = 0; purchaseRequestStore.fetchPurchaseRequests() }
+const handleRowsChange = (v) => {
+  const rows = Number(v) || 10
+  tableControls.value.rows = rows
+  params.value.rows = rows
+  params.value.first = 0
+  purchaseRequestStore.fetchPurchaseRequests()
+}
 const debouncedSearch = useDebounceFn(() => purchaseRequestStore.setSearch(globalFilterValue.value), 500)
 watch(globalFilterValue, debouncedSearch)
 watch(filters, (f) => purchaseRequestStore.setFilters({ status: f.status, priority: f.priority }), { deep: true })

@@ -4,92 +4,8 @@
         <!-- Content -->
         <div class="container-xxl flex-grow-1">
             
-            <p class="mb-6">
-            List quotation yang terdaftar di sistem
-            </p>
-            <!-- Statistics Cards -->
-            <div class="row g-6 mb-6">
-                <div class="col-xl-3 col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Total Quotations</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-primary">
-                                        <i class="ri-file-text-line"></i>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="account-heading">
-                                    <h5 class="mb-1">{{ statistics?.totalQuotations || 0 }}</h5>
-                                    <span class="text-muted">Quotation terdaftar</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Approved</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-success">
-                                        <i class="ri-checkbox-circle-line"></i>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="account-heading">
-                                    <h5 class="mb-1">{{ statistics?.approvedQuotations || 0 }}</h5>
-                                    <span class="text-muted">Approved</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Pending</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-warning">
-                                        <i class="ri-time-line"></i>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="account-heading">
-                                    <h5 class="mb-1">{{ statistics?.pendingQuotations || 0 }}</h5>
-                                    <span class="text-muted">Pending</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Rejected</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-danger">
-                                        <i class="ri-close-circle-line"></i>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="account-heading">
-                                    <h5 class="mb-1">{{ statistics?.rejectedQuotations || 0 }}</h5>
-                                    <span class="text-muted">Rejected</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <PageDescription>List quotation yang terdaftar di sistem</PageDescription>
+            <ListPageStatsCards :items="statItems" />
 
             <div class="row g-6">
                 <div class="col-12">
@@ -293,6 +209,7 @@ import MyDataTable from '~/components/table/MyDataTable.vue'
 import QuotationExpandedRow from '~/components/table/QuotationExpandedRow.vue'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
 import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
+import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
 import Column from 'primevue/column'
   import { useDebounceFn } from '@vueuse/core'
   import { useDynamicTitle } from '~/composables/useDynamicTitle'
@@ -312,6 +229,13 @@ import Column from 'primevue/column'
 
   const { quotations, loading, totalRecords, params, statistics } = storeToRefs(quotationStore)
   const { customers }   = storeToRefs(customerStore)
+
+const statItems = computed(() => [
+  { key: 'total', label: 'Total Quotations', value: statistics.value?.totalQuotations || 0, icon: 'ri-file-text-line', iconBgClass: 'bg-label-primary', subtitle: 'Quotation terdaftar' },
+  { key: 'approved', label: 'Approved', value: statistics.value?.approvedQuotations || 0, icon: 'ri-checkbox-circle-line', iconBgClass: 'bg-label-success', subtitle: 'Approved' },
+  { key: 'pending', label: 'Pending', value: statistics.value?.pendingQuotations || 0, icon: 'ri-time-line', iconBgClass: 'bg-label-warning', subtitle: 'Pending' },
+  { key: 'rejected', label: 'Rejected', value: statistics.value?.rejectedQuotations || 0, icon: 'ri-close-circle-line', iconBgClass: 'bg-label-danger', subtitle: 'Rejected' },
+])
 
 // State
 const globalFilterValue = ref('');

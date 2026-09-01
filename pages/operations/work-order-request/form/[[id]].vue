@@ -1,16 +1,11 @@
 <template>
   <div class="content-wrapper">
     <div class="container-xxl flex-grow-1">
-      <div class="d-flex align-items-center gap-3 mb-4">
-        <NuxtLink to="/operations/work-order-request" class="btn btn-outline-secondary btn-sm">
-          <i class="ri-arrow-left-line me-1"></i> Kembali
-        </NuxtLink>
-        <div>
-          <h4 class="mb-0">{{ isEditMode ? 'Edit Work Order Request' : 'Buat Work Order Request' }}</h4>
-          <PageBreadcrumb class="mt-1" :current-label="isEditMode ? 'Edit Work Order Request' : 'Buat Work Order Request'" />
-          <small class="text-muted">{{ isEditMode ? `No. ${currentNo}` : 'Formulir Pengajuan Penugasan Teknisi' }}</small>
-        </div>
-      </div>
+      <FormPageHeader
+        :title="isEditMode ? 'Edit Work Order Request' : 'Buat Work Order Request'"
+        :subtitle="isEditMode ? `No. ${currentNo}` : 'Formulir Pengajuan Penugasan Teknisi'"
+        back-href="/operations/work-order-request"
+      />
 
       <div v-if="pageLoading" class="text-center py-5">
         <div class="spinner-border text-primary"></div>

@@ -2,63 +2,17 @@
   <div class="content-wrapper">
     <div class="container-xxl flex-grow-1">
       
-      <p class="mb-6">Pengajuan budget untuk project implementation</p>
+      <PageDescription>Pengajuan budget untuk project implementation</PageDescription>
 
-      <div class="row g-6 mb-6">
-        <div class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">Total ARF</p>
-                <div class="avatar"><span class="avatar-initial rounded bg-label-primary"><i class="ri-file-edit-line"></i></span></div>
-              </div>
-              <h5 class="mb-0">{{ statistics?.totalArfs || 0 }}</h5>
-            </div>
-          </div>
-        </div>
-        <div class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">Draft</p>
-                <div class="avatar"><span class="avatar-initial rounded bg-label-secondary"><i class="ri-draft-line"></i></span></div>
-              </div>
-              <h5 class="mb-0">{{ statistics?.draftArfs || 0 }}</h5>
-            </div>
-          </div>
-        </div>
-        <div class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">Pending</p>
-                <div class="avatar"><span class="avatar-initial rounded bg-label-warning"><i class="ri-time-line"></i></span></div>
-              </div>
-              <h5 class="mb-0">{{ statistics?.pendingArfs || 0 }}</h5>
-            </div>
-          </div>
-        </div>
-        <div class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">Approved</p>
-                <div class="avatar"><span class="avatar-initial rounded bg-label-success"><i class="ri-checkbox-circle-line"></i></span></div>
-              </div>
-              <h5 class="mb-0">{{ statistics?.approvedArfs || 0 }}</h5>
-            </div>
-          </div>
-        </div>
-      </div>
+      <ListPageStatsCards :items="statItems" />
 
       <CollapsibleFilterCard
         title="Filter ARF"
         :has-active-filters="hasActiveFilters"
-        :show-reset="false"
         @reset="resetFilters"
       >
-        <div class="row g-4">
-          <div class="col-md-6">
+        <FilterFieldsRow>
+          <FilterField>
             <label class="form-label">Status</label>
             <CustomSelect2
               v-model="filters.status"
@@ -69,8 +23,8 @@
               clearable
               placeholder="Semua status"
             />
-          </div>
-          <div class="col-md-6">
+          </FilterField>
+          <FilterField>
             <label class="form-label">Tipe</label>
             <CustomSelect2
               v-model="filters.type"
@@ -81,37 +35,33 @@
               clearable
               placeholder="Semua tipe"
             />
-          </div>
-          <div class="col-md-6 offset-md-6 d-flex justify-content-end mt-4">
-            <button type="button" class="btn btn-outline-secondary btn-sm" @click="resetFilters">
-              <i class="ri-refresh-line me-1"></i>
-              Reset Filter
-            </button>
-          </div>
-        </div>
+          </FilterField>
+        </FilterFieldsRow>
       </CollapsibleFilterCard>
 
       <div class="row g-6">
         <div class="col-12">
           <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
-              <div class="d-flex align-items-center me-3 mb-2 mb-md-0">
-                <span class="me-2">Baris:</span>
-                <Dropdown v-model="tableControls.rows" :options="rowsPerPageOptionsArray" @change="handleRowsChange" placeholder="Jumlah" style="width: 8rem;" />
-              </div>
-              <div class="d-flex align-items-center gap-2">
+            <ListPageTableHeader
+              :rows="Number(tableControls.rows)"
+              :rows-options="rowsPerPageOptionsArray"
+              :search="globalFilterValue"
+              search-placeholder="Cari no. ARF, SI, catatan..."
+              :show-export="false"
+              @update:rows="handleRowsChange"
+              @update:search="(v) => { globalFilterValue = v }"
+            >
+              <template #add>
                 <button
                   v-if="userHasRole('superadmin') || userHasPermission('create_arf')"
+                  type="button"
                   class="btn btn-primary"
                   @click="navigateTo('/implementation/arf/form')"
                 >
                   <i class="ri-add-line me-1"></i>Tambah
                 </button>
-                <span class="p-input-icon-left">
-                  <InputText v-model="globalFilterValue" placeholder="Cari no. ARF, SI, catatan..." class="w-full md:w-20rem" />
-                </span>
-              </div>
-            </div>
+              </template>
+            </ListPageTableHeader>
             <div class="card-datatable table-responsive py-3 px-3">
               <MyDataTable
                 :data="arfs"
@@ -193,10 +143,10 @@ import { useArfApproval } from '~/composables/useArfApproval'
 import { useApprovalStatus } from '~/composables/useApprovalStatus'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
+import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
+import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
 import Column from 'primevue/column'
 import Menu from 'primevue/menu'
-import Dropdown from 'primevue/dropdown'
-import InputText from 'primevue/inputtext'
 import { useDebounceFn } from '@vueuse/core'
 import Swal from 'sweetalert2'
 
@@ -209,6 +159,13 @@ definePageMeta({
 const arfStore = useArfStore()
 const formatRupiah = useFormatRupiah()
 const { arfs, loading, totalRecords, params, statistics } = storeToRefs(arfStore)
+
+const statItems = computed(() => [
+  { key: 'total', label: 'Total ARF', value: statistics.value?.totalArfs || 0, icon: 'ri-file-edit-line', iconBgClass: 'bg-label-primary' },
+  { key: 'draft', label: 'Draft', value: statistics.value?.draftArfs || 0, icon: 'ri-draft-line', iconBgClass: 'bg-label-secondary' },
+  { key: 'pending', label: 'Pending', value: statistics.value?.pendingArfs || 0, icon: 'ri-time-line', iconBgClass: 'bg-label-warning' },
+  { key: 'approved', label: 'Approved', value: statistics.value?.approvedArfs || 0, icon: 'ri-checkbox-circle-line', iconBgClass: 'bg-label-success' },
+])
 const { userHasRole, userHasPermission } = usePermissions()
 const { canApproveArf, canRejectArf } = useArfApproval()
 const { getStatusBadge } = useApprovalStatus()
@@ -359,7 +316,8 @@ function onSort(e: { sortField?: string; sortOrder?: number }) {
   arfStore.fetchArfs()
 }
 
-function handleRowsChange() {
+function handleRowsChange(value?: number) {
+  tableControls.value.rows = Number(value) || tableControls.value.rows
   params.value.rows = tableControls.value.rows
   params.value.first = 0
   arfStore.fetchArfs()

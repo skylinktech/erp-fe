@@ -9,17 +9,21 @@
         <div class="card-body">
           <div v-if="loading" class="skeleton-loader" style="height: 48px" />
           <template v-else>
-            <div class="d-flex justify-content-between align-items-center mb-2">
+            <div class="d-flex justify-content-between align-items-center mb-4">
               <p class="mb-0">{{ item.label }}</p>
-              <span
-                class="avatar-initial rounded p-2"
-                :class="item.iconBgClass || 'bg-label-primary'"
-              >
-                <i :class="item.icon || 'ri-bar-chart-line'" />
-              </span>
+              <div class="avatar">
+                <span
+                  class="avatar-initial rounded"
+                  :class="item.iconBgClass || 'bg-label-primary'"
+                >
+                  <i :class="item.icon || 'ri-bar-chart-line'" />
+                </span>
+              </div>
             </div>
-            <h5 class="mb-0" :class="item.valueClass">{{ item.value }}</h5>
-            <small v-if="item.subtitle" class="text-muted">{{ item.subtitle }}</small>
+            <div class="account-heading">
+              <h5 class="mb-1" :class="item.valueClass">{{ item.value }}</h5>
+              <span v-if="item.subtitle" class="text-muted">{{ item.subtitle }}</span>
+            </div>
           </template>
         </div>
       </div>
@@ -58,6 +62,6 @@ const colClass = computed(() => {
   const n = props.items?.length || 4
   if (n <= 2) return 'col-xl-6 col-md-6'
   if (n === 3) return 'col-xl-4 col-md-6'
-  return 'col-xl-3 col-md-6'
+  return 'col-xl-3 col-lg-6 col-md-6'
 })
 </script>
