@@ -17,6 +17,10 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
 
     // Mapping route ke permission yang diperlukan
     const { STOCK_WORKSPACE_PERMISSIONS } = await import('~/utils/inventory/stockWorkspace')
+    const {
+      EQUIPMENT_WORKSPACE_PERMISSIONS,
+      WARRANTY_WORKSPACE_PERMISSIONS,
+    } = await import('~/utils/inventory/lifecycleWorkspaces')
 
     const routePermissionMap: Record<string, string> = {
       '/inventory/product': 'view_product',
@@ -25,6 +29,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       '/inventory/stok': 'view_stock',
       '/inventory/buffer': 'access_buffer_stock',
       '/inventory/equipment': 'view_equipment',
+      '/inventory/warranty': 'view_warranty_assessment',
       '/inventory/equipment-inspection': 'view_equipment_inspection',
       '/inventory/equipment-replacement': 'view_equipment_replacement',
       '/inventory/equipment-repair': 'view_equipment_repair',
@@ -319,6 +324,20 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
         if (ok) return
       }
 
+      if (!hasPermission && to.path === '/inventory/equipment') {
+        const ok = userStore.user?.roles?.some(role =>
+          role.permissions?.some(permission => EQUIPMENT_WORKSPACE_PERMISSIONS.includes(permission.name))
+        )
+        if (ok) return
+      }
+
+      if (!hasPermission && to.path === '/inventory/warranty') {
+        const ok = userStore.user?.roles?.some(role =>
+          role.permissions?.some(permission => WARRANTY_WORKSPACE_PERMISSIONS.includes(permission.name))
+        )
+        if (ok) return
+      }
+
       if (!hasPermission && to.path === '/inventory/buffer') {
         const allowed = [
           'access_buffer_stock',
@@ -331,7 +350,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
         if (ok) return
       }
 
-      if (!hasPermission && to.path.startsWith('/inventory/equipment')) {
+      if (!hasPermission && (to.path === '/inventory/equipment' || to.path.startsWith('/inventory/equipment/'))) {
         const allowed = ['view_equipment', 'view_equipment_detail', 'access_equipment']
         const ok = userStore.user?.roles?.some(role =>
           role.permissions?.some(permission => allowed.includes(permission.name))

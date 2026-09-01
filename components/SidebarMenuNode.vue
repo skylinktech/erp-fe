@@ -58,6 +58,12 @@
 <script setup>
 import { computed } from 'vue'
 import { isStockMenuParentRoute, isStockWorkspacePath } from '~/utils/inventory/stockWorkspace'
+import {
+  isEquipmentMenuParentRoute,
+  isEquipmentWorkspacePath,
+  isWarrantyMenuParentRoute,
+  isWarrantyWorkspacePath,
+} from '~/utils/inventory/lifecycleWorkspaces'
 
 defineOptions({ name: 'SidebarMenuNode' })
 
@@ -87,6 +93,8 @@ const isActive = computed(() => isNodeActive(props.item, props.currentPath))
 function isNodeActive(node, path) {
   if (node.route && node.route === path) return true
   if (isStockMenuParentRoute(node.route) && isStockWorkspacePath(path)) return true
+  if (isEquipmentMenuParentRoute(node.route) && isEquipmentWorkspacePath(path)) return true
+  if (isWarrantyMenuParentRoute(node.route) && isWarrantyWorkspacePath(path)) return true
   if (!Array.isArray(node.children)) return false
   return node.children.some((child) => isNodeActive(child, path))
 }

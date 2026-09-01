@@ -6,7 +6,7 @@
           <h4 class="mb-1">Replacement {{ row?.replacementNo || '' }}</h4>
           <p class="mb-0 text-muted">Service recovery detail — physical install uses SITE_ISSUE.</p>
         </div>
-        <NuxtLink to="/inventory/equipment-replacement" class="btn btn-outline-secondary btn-sm">← Back</NuxtLink>
+        <NuxtLink to="/inventory/equipment?tab=replacement" class="btn btn-outline-secondary btn-sm">← Back</NuxtLink>
       </div>
 
       <div v-if="loading" class="text-muted">Loading...</div>

@@ -26,7 +26,7 @@
           >
             Unbox / Lengkapi Serial Komponen
           </button>
-          <NuxtLink to="/inventory/equipment" class="btn btn-outline-secondary btn-sm">← Back</NuxtLink>
+          <NuxtLink to="/inventory/equipment?tab=register" class="btn btn-outline-secondary btn-sm">← Back</NuxtLink>
         </div>
       </div>
 
@@ -154,7 +154,7 @@
           <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
               <strong>Fault / Withdrawal / Inspection</strong>
-              <NuxtLink to="/inventory/equipment-inspection" class="btn btn-xs btn-outline-secondary">
+              <NuxtLink to="/inventory/equipment?tab=inspection" class="btn btn-xs btn-outline-secondary">
                 Inspection Queue
               </NuxtLink>
             </div>
@@ -239,7 +239,7 @@
           <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
               <strong>Warranty</strong>
-              <NuxtLink to="/inventory/warranty-assessment" class="btn btn-xs btn-outline-secondary">
+              <NuxtLink to="/inventory/warranty?tab=assessments" class="btn btn-xs btn-outline-secondary">
                 Assessments
               </NuxtLink>
             </div>

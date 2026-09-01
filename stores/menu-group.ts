@@ -5,6 +5,7 @@ import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from
 import { useUserStore } from './user'
 import type { MenuDetail } from './menu-detail'
 import { coalesceStockMenuGroups } from '~/utils/inventory/stockWorkspace'
+import { coalesceEquipmentWarrantyMenuGroups } from '~/utils/inventory/lifecycleWorkspaces'
 
 export interface MenuGroup {
   id: number
@@ -61,8 +62,8 @@ export const useMenuGroupStore = defineStore('menu-group', {
         return []
       }
       
-      // Backend sudah memfilter berdasarkan permission; coalesce stock children into one Stock item
-      return coalesceStockMenuGroups(state.sidebarMenuGroups)
+      // Backend sudah memfilter berdasarkan permission; coalesce nested inventory workspaces
+      return coalesceEquipmentWarrantyMenuGroups(coalesceStockMenuGroups(state.sidebarMenuGroups))
     }
   },
   actions: {

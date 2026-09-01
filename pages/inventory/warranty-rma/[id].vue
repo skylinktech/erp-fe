@@ -6,7 +6,7 @@
           <h4 class="mb-1">Warranty RMA {{ row?.rmaNo }}</h4>
           <p class="mb-0 text-muted">Ship → resolution → physical receive (return or provider replacement).</p>
         </div>
-        <NuxtLink to="/inventory/warranty-rma" class="btn btn-outline-secondary btn-sm">RMA List</NuxtLink>
+        <NuxtLink to="/inventory/warranty?tab=rma" class="btn btn-outline-secondary btn-sm">RMA List</NuxtLink>
       </div>
 
       <div v-if="loading" class="text-muted">Loading...</div>

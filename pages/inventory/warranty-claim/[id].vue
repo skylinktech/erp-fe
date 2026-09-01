@@ -6,7 +6,7 @@
           <h4 class="mb-1">Claim {{ row?.claimNo }}</h4>
           <p class="mb-0 text-muted">Internal assessment is never overwritten by provider decision.</p>
         </div>
-        <NuxtLink to="/inventory/warranty-claim" class="btn btn-outline-secondary btn-sm">← Back</NuxtLink>
+        <NuxtLink to="/inventory/warranty?tab=claims" class="btn btn-outline-secondary btn-sm">← Back</NuxtLink>
       </div>
 
       <div v-if="loading" class="text-muted">Loading...</div>
