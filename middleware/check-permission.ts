@@ -81,6 +81,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       '/finance/invoices': 'view_invoice',
       '/finance/payment-request': 'view_payment_request',
       '/operations/request-activation': 'view_request_activation',
+      '/operations/request-dismantle': 'view_dismantle_request',
       '/operations/berita-acara': 'view_berita_acara',
       '/operations/cetak-berita-acara': 'view_berita_acara',
       '/finance/billing-adjustments': 'view_billing_adjustment',
@@ -218,6 +219,14 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
         requiredPermission = 'show_request_activation'
       } else if (/^\/operations\/request-activation/.test(to.path)) {
         requiredPermission = 'view_request_activation'
+      } else if (/^\/operations\/request-dismantle\/form(\/.*)?$/.test(to.path)) {
+        requiredPermission = 'create_dismantle_request'
+      } else if (/^\/operations\/request-dismantle\/detail\/.+$/.test(to.path)) {
+        requiredPermission = 'show_dismantle_request'
+      } else if (/^\/operations\/request-dismantle\/[^/]+\/(execute|receive)$/.test(to.path)) {
+        requiredPermission = 'show_dismantle_request'
+      } else if (/^\/operations\/request-dismantle/.test(to.path)) {
+        requiredPermission = 'view_dismantle_request'
       } else if (/^\/operations\/berita-acara\/form(\/.*)?$/.test(to.path)) {
         requiredPermission = 'access_berita_acara'
       } else if (/^\/operations\/berita-acara\/detail\/.+$/.test(to.path)) {

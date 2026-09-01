@@ -49,6 +49,7 @@ const SEGMENT_LABELS: Record<string, string> = {
   operations: 'Operations',
   'work-order-request': 'Work Order Request',
   'request-activation': 'Request Activation',
+  'request-dismantle': 'Request Dismantle',
   'berita-acara': 'Berita Acara',
   purchasing: 'Purchasing',
   'purchase-order': 'Purchase Order',

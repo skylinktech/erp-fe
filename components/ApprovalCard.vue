@@ -25,6 +25,7 @@
         <div class="text-muted">Riwayat Approval</div>
         <ul class="mb-0 ps-3">
           <li v-for="log in sortedApprovalLogs" :key="log.id" :class="(log.action ?? log.Action) === 'approved' ? 'text-success' : 'text-danger'">
+            <span v-if="log.isEmergencyOverride || log.is_emergency_override" class="badge bg-danger me-1">SUPERADMIN OVERRIDE</span>
             {{ (log.action ?? log.Action) === 'approved' ? 'Approved' : 'Rejected' }} by {{ getStepJabatanLabel(log) }}
             <div v-if="log.remarks" class="text-muted small">Catatan: {{ log.remarks }}</div>
           </li>
@@ -51,6 +52,8 @@ interface ApprovalLog {
   action?: string
   Action?: string
   remarks?: string
+  isEmergencyOverride?: boolean
+  is_emergency_override?: boolean
   user?: { fullName?: string; full_name?: string; email?: string }
   workflow?: { steps?: Array<{ step_order?: number; stepOrder?: number; step_name?: string; stepName?: string; jabatan?: { nm_jabatan?: string; nmJabatan?: string }; role?: { name?: string } }> }
   createdAt?: string

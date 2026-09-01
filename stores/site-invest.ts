@@ -45,6 +45,8 @@ interface SiteInvestService {
   siteInvestId?: string
   priceListLineId: number
   quantity: number
+  /** Snapshotted commercial contract duration (months). Null = legacy unknown. */
+  contractDurationMonths?: number | null
   price: number
   subtotal: number
   isPriceOverridden?: boolean
@@ -416,8 +418,8 @@ export const useSiteInvestStore = defineStore('siteInvest', {
           }
         })
 
-        const serviceKeys = ['priceListLineId', 'quantity', 'price', 'subtotal', 'isPriceOverridden', 'priceReason', 'terminalKitCount', 'quotaPriority', 'newServiceLine', 'additionalData']
-        const serviceKeysToSnake: Record<string, string> = { priceListLineId: 'price_list_line_id', quantity: 'quantity', price: 'price', subtotal: 'subtotal', isPriceOverridden: 'is_price_overridden', priceReason: 'price_reason', terminalKitCount: 'terminal_kit_count', quotaPriority: 'quota_priority', newServiceLine: 'new_service_line', additionalData: 'additional_data' }
+        const serviceKeys = ['priceListLineId', 'quantity', 'contractDurationMonths', 'price', 'subtotal', 'isPriceOverridden', 'priceReason', 'terminalKitCount', 'quotaPriority', 'newServiceLine', 'additionalData']
+        const serviceKeysToSnake: Record<string, string> = { priceListLineId: 'price_list_line_id', quantity: 'quantity', contractDurationMonths: 'contract_duration_months', price: 'price', subtotal: 'subtotal', isPriceOverridden: 'is_price_overridden', priceReason: 'price_reason', terminalKitCount: 'terminal_kit_count', quotaPriority: 'quota_priority', newServiceLine: 'new_service_line', additionalData: 'additional_data' }
         const services = this.form.siteInvestServices ?? []
         services.forEach((item: any, i: number) => {
           const plLineId = Number(item?.priceListLineId ?? item?.price_list_line_id ?? 0)
@@ -994,6 +996,9 @@ export const useSiteInvestStore = defineStore('siteInvest', {
             s.quantity = q
             s.price = p
             s.subtotal = nm(s.subtotal) || q * p
+            const dur = s.contractDurationMonths ?? s.contract_duration_months
+            s.contractDurationMonths =
+              dur != null && dur !== '' && Number(dur) > 0 ? Math.trunc(Number(dur)) : null
             s.isPriceOverridden = s.isPriceOverridden ?? s.is_price_overridden ?? false
             s.priceReason = s.priceReason ?? s.price_reason ?? ''
             s.terminalKitCount = s.terminalKitCount ?? s.terminal_kit_count ?? null
@@ -1108,6 +1113,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
       this.form.siteInvestServices.push({
         priceListLineId: 0,
         quantity: 1,
+        contractDurationMonths: null,
         price: 0,
         subtotal: 0,
         isPriceOverridden: false,

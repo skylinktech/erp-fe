@@ -13,6 +13,7 @@ export interface SubscriptionService {
   servicePlan: string
   planName: string
   quantity: number
+  contractDurationMonths?: number | null
   mrcAmount: number
   otcAmount: number
   startDate?: string | null
@@ -317,6 +318,10 @@ export const useSubscriptionStore = defineStore('subscription', {
         servicePlan: s.servicePlan || '',
         planName: s.planName || s.servicePlan || '',
         quantity: Number(s.quantity) || 1,
+        contractDurationMonths:
+          (s as any).contractDurationMonths != null
+            ? Number((s as any).contractDurationMonths)
+            : Number(this.form.contractPeriod) || null,
         mrcAmount: Number(s.mrcAmount) || 0,
         otcAmount: Number(s.otcAmount) || 0,
         startDate: s.startDate || null,
@@ -558,6 +563,12 @@ export const useSubscriptionStore = defineStore('subscription', {
             servicePlan: s.servicePlan ?? s.service_plan ?? s.servicePlan?.name ?? s.service?.servicePlan?.name ?? '',
             planName: s.planName ?? s.plan_name ?? '',
             quantity: Number(s.quantity) || 1,
+            contractDurationMonths: (() => {
+              const d = s.contractDurationMonths ?? s.contract_duration_months
+              if (d == null || d === '') return Number(raw.contractPeriod ?? raw.contract_period) || null
+              const n = Number(d)
+              return Number.isFinite(n) && n > 0 ? Math.trunc(n) : null
+            })(),
             mrcAmount: Number(s.mrcAmount ?? s.mrc_amount) || 0,
             otcAmount: Number(s.otcAmount ?? s.otc_amount) || 0,
             startDate: s.startDate ?? s.start_date ? new Date(s.startDate ?? s.start_date).toISOString().split('T')[0] : null,

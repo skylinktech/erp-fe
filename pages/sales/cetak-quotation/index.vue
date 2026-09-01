@@ -29,7 +29,7 @@
             <th class="text-center" style="width: 40px;">No</th>
             <th class="text-start">Item Description</th>
             <th class="text-center" style="width: 50px;">Qty</th>
-            <th class="text-center" style="width: 70px;">Unit of Day</th>
+            <th class="text-center" style="width: 70px;">Duration</th>
             <th class="text-end" style="width: 110px;">Unit Price</th>
             <th class="text-end" style="width: 120px;">Total</th>
           </tr>
@@ -43,7 +43,7 @@
             <td class="text-center">{{ idx + 1 }}</td>
             <td class="cetak-desc">{{ m.product?.name || m.product?.sku || '—' }}</td>
             <td class="text-center">{{ m.quantity ?? 0 }}</td>
-            <td class="text-center">1</td>
+            <td class="text-center">-</td>
             <td class="cetak-num">{{ formatRupiahNum(otcUnitPrice(m)) }}</td>
             <td class="cetak-num">{{ formatRupiahNum(otcAmount(m)) }}</td>
           </tr>
@@ -237,7 +237,10 @@ function mrcItemDescription (m) {
 }
 
 function mrcUnitOfDay (m) {
-  return m.quantity ?? 1
+  const d = m.contractDurationMonths ?? m.contract_duration_months
+  if (d == null || d === '') return '-'
+  const n = Number(d)
+  return Number.isFinite(n) && n > 0 ? String(Math.trunc(n)) : '-'
 }
 
 const itemsSubtotal = computed(() => {

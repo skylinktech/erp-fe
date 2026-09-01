@@ -1,4 +1,5 @@
 import { usePermissions } from '~/composables/usePermissions'
+import { useApprovalOverride } from '~/composables/useApprovalOverride'
 import { useUserStore } from '~/stores/user'
 
 type ApproverLike = { userId?: number; user_id?: number }
@@ -19,7 +20,8 @@ export function useWorkflowApproval(options: {
   /** Status values treated as pending approval */
   pendingStatuses?: string[]
 }) {
-  const { userHasRole, userHasPermission } = usePermissions()
+  const { userHasPermission } = usePermissions()
+  const { canEmergencyOverride } = useApprovalOverride()
   const userStore = useUserStore()
   const pendingStatuses = options.pendingStatuses ?? ['pending', 'submitted']
 
@@ -50,34 +52,42 @@ export function useWorkflowApproval(options: {
   function canApprove(row: WorkflowRow | null | undefined): boolean {
     if (!row || !isPending(row)) return false
     if (userStore.user?.id == null) return false
-
-    const privileged =
-      userHasRole('superadmin') || userHasPermission(options.approvePermission)
-
-    if (privileged) {
-      const approvers = getApprovers(row)
-      if (approvers.length === 0) return true
-      return isUserInApprovers(row)
-    }
+    if (!userHasPermission(options.approvePermission)) return false
+    const approvers = getApprovers(row)
+    if (approvers.length === 0) return true
     return isUserInApprovers(row)
+  }
+
+  function canEmergencyOverrideApprove(row: WorkflowRow | null | undefined): boolean {
+    if (!row || !isPending(row)) return false
+    if (!canEmergencyOverride.value) return false
+    if (!canApprove(row)) return true
+    const approvers = getApprovers(row)
+    // Empty approver list can show Approve in FE while backend still blocks (maker-checker, etc.)
+    if (approvers.length === 0) return true
+    return !isUserInApprovers(row)
   }
 
   function canReject(row: WorkflowRow | null | undefined): boolean {
     if (!row || !isPending(row)) return false
     if (userStore.user?.id == null) return false
 
-    const privileged =
-      userHasRole('superadmin') ||
-      userHasPermission(options.rejectPermission || options.approvePermission) ||
-      userHasPermission(options.approvePermission)
-
-    if (privileged) {
-      const approvers = getApprovers(row)
-      if (approvers.length === 0) return true
-      return isUserInApprovers(row)
+    const rejectPerm = options.rejectPermission || options.approvePermission
+    if (!userHasPermission(rejectPerm) && !userHasPermission(options.approvePermission)) {
+      return false
     }
+    const approvers = getApprovers(row)
+    if (approvers.length === 0) return true
     return isUserInApprovers(row)
   }
 
-  return { canApprove, canReject, isPending, isUserInApprovers, getApprovers, getStatus }
+  return {
+    canApprove,
+    canReject,
+    canEmergencyOverrideApprove,
+    isPending,
+    isUserInApprovers,
+    getApprovers,
+    getStatus,
+  }
 }

@@ -327,8 +327,19 @@
                   </h5>
                 </div>
                 <div class="card-body px-5 pt-4 pb-4">
+                  <div
+                    v-if="feasibility?.profitabilityStatus === 'BELOW_THRESHOLD'"
+                    class="alert alert-warning py-2 mb-3"
+                    role="alert"
+                  >
+                    <strong>⚠ PROFITABILITY BELOW COMPANY THRESHOLD</strong>
+                    <div class="small mt-1">
+                      Current: {{ formatPct(feasibility.profitabilityPercent) }}%
+                      · Minimum: {{ formatPct(feasibility.profitabilityThresholdPercent) }}%
+                    </div>
+                  </div>
                   <div class="d-flex justify-content-between py-1">
-                    <label class="form-label text-muted medium mb-0">Managed Service</label>
+                    <label class="form-label text-muted medium mb-0">Managed Service (Contract)</label>
                     <p class="mb-0 fw-medium">{{ formatRupiah(serviceSubtotalFromApi) }}</p>
                   </div>
                   <div class="d-flex justify-content-between py-1">
@@ -341,14 +352,36 @@
                   </div>
                   <hr class="my-2" />
                   <div class="d-flex justify-content-between py-1">
-                    <label class="form-label text-muted medium mb-0">Total Investasi</label>
-                    <p class="mb-0 fw-semibold">{{ formatRupiah(totalFromApi) }}</p>
+                    <label class="form-label text-muted medium mb-0">Total Income</label>
+                    <p class="mb-0 fw-semibold">{{ formatRupiah(feasibility?.income?.contractAmount ?? totalFromApi) }}</p>
                   </div>
+                  <div class="d-flex justify-content-between py-1">
+                    <label class="form-label text-muted medium mb-0">Total Expenses</label>
+                    <p class="mb-0 fw-medium">{{ formatRupiah(feasibility?.expenses?.contractAmount ?? 0) }}</p>
+                  </div>
+                  <div class="d-flex justify-content-between py-1">
+                    <label class="form-label text-muted medium mb-0">Project Profit</label>
+                    <p class="mb-0 fw-medium">{{ formatRupiah(feasibility?.projectProfit ?? 0) }}</p>
+                  </div>
+                  <div class="d-flex justify-content-between py-1">
+                    <label class="form-label text-muted medium mb-0">Monthly Gross Margin</label>
+                    <p class="mb-0 fw-medium">{{ feasibility?.monthlyGrossMargin != null ? formatRupiah(feasibility.monthlyGrossMargin) : '-' }}</p>
+                  </div>
+                  <div class="d-flex justify-content-between py-1">
+                    <label class="form-label text-muted medium mb-0">Profitability</label>
+                    <p class="mb-0 fw-medium" :class="{ 'text-warning': feasibility?.profitabilityStatus === 'BELOW_THRESHOLD' }">
+                      {{ feasibility?.profitabilityPercent != null ? formatPct(feasibility.profitabilityPercent) + '%' : '-' }}
+                    </p>
+                  </div>
+                  <div class="d-flex justify-content-between py-1">
+                    <label class="form-label text-muted medium mb-0">Contract Duration</label>
+                    <p class="mb-0 fw-medium">{{ feasibility?.contractDurationMonths != null ? feasibility.contractDurationMonths + ' bln' : '-' }}</p>
+                  </div>
+                  <hr class="my-2" />
                   <div class="d-flex justify-content-between py-1">
                     <label class="form-label text-muted medium mb-0">Marketing Fee</label>
                     <p class="mb-0 fw-medium">{{ formatRupiah(marketingFeeFromApi) }}</p>
                   </div>
-                  <hr class="my-2" />
                   <div class="d-flex justify-content-between py-1">
                     <label class="form-label text-muted medium mb-0">Grand Total</label>
                     <p class="mb-0 fw-medium fs-5 text-primary">{{ formatRupiah(grandTotalFromApi) }}</p>
@@ -584,6 +617,16 @@ function fromApiNum (si: any, ...keys: string[]): number {
 const totalFromApi = computed(() => fromApiNum(siteInvest.value, 'total'))
 const marketingFeeFromApi = computed(() => fromApiNum(siteInvest.value, 'marketingFee', 'marketing_fee'))
 const grandTotalFromApi = computed(() => fromApiNum(siteInvest.value, 'grandTotal', 'grand_total'))
+
+const feasibility = computed(() => {
+  const si = siteInvest.value as any
+  return si?.feasibilitySummary ?? si?.feasibility_summary ?? si?.commercialSummary ?? si?.commercial_summary ?? null
+})
+
+function formatPct (n: unknown) {
+  if (n == null || Number.isNaN(Number(n))) return '-'
+  return Number(n).toFixed(2)
+}
 
 async function load () {
   if (!id.value) return

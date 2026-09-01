@@ -488,8 +488,8 @@ const totals = computed(() => computeQuotationTotals(quotation.value as Record<s
 function getServiceItemName (s: any): string {
   const svc = s.service ?? s
   const name = svc?.name ?? svc?.code
-  if (name) return name
-  return 'Service #' + (s.serviceId ?? s.service_id ?? '—')
+  if (name && !/^Service #\d+$/i.test(String(name))) return name
+  return svc?.code || '—'
 }
 
 /** Harga efektif per unit (sama seperti modal): base price + Terminal Kit + Quota Priority + New Service Line + Additional Data */

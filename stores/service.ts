@@ -22,6 +22,7 @@ export interface Service {
   servicePlan?: {
     id: number
     name: string
+    contractMonth?: number | null
   }
   createdByUser?: {
     id: number
@@ -159,6 +160,88 @@ export const useServiceStore = defineStore('service', {
       } finally {
         this.loading = false
       }
+    },
+
+    /**
+     * Load a broad service catalog for dropdowns without mutating list-page pagination
+     * (shared store params.rows defaults to 10 and may exclude the SI-prefilled service).
+     */
+    async fetchServicesForSelect(rows = 500) {
+      const { $api } = useNuxtApp()
+      try {
+        const params = new URLSearchParams({
+          page: '1',
+          rows: String(rows),
+          sortField: 'id',
+          sortOrder: 'asc',
+          search: '',
+        })
+        const response = await fetch(`${$api.service()}?${params.toString()}`, {
+          headers: { Accept: 'application/json' },
+          credentials: 'include',
+        })
+        if (!response.ok) return
+        const result = await response.json()
+        const list = Array.isArray(result?.data) ? result.data : []
+        this.mergeServicesIntoMaster(list)
+      } catch {
+        // Dropdown can still resolve via ensureServicesByIds / prefill snapshot
+      }
+    },
+
+    mergeServicesIntoMaster(list: any[]) {
+      if (!Array.isArray(list) || list.length === 0) return
+      const byId = new Map<number, any>(
+        (Array.isArray(this.services) ? this.services : []).map((s: any) => [Number(s.id), s])
+      )
+      for (const svc of list) {
+        const id = Number(svc?.id)
+        if (!id) continue
+        const cur = byId.get(id)
+        const incomingName = (svc?.name || '').trim()
+        const isFake = (n: string) => /^Service #\d+$/i.test(n)
+        if (!cur) {
+          byId.set(id, svc)
+        } else if (incomingName && (!cur.name || isFake(String(cur.name)))) {
+          byId.set(id, { ...cur, ...svc })
+        } else if (incomingName) {
+          byId.set(id, { ...cur, ...svc, name: incomingName })
+        }
+      }
+      this.services = Array.from(byId.values())
+    },
+
+    /** Resolve missing service labels by id (for SI prefill / edit when not in current page). */
+    async ensureServicesByIds(ids: number[]) {
+      const { $api } = useNuxtApp()
+      const unique = [...new Set((ids || []).map((id) => Number(id)).filter((id) => id > 0))]
+      if (unique.length === 0) return
+
+      const isFake = (n: unknown) => typeof n === 'string' && /^Service #\d+$/i.test(n)
+      const missing = unique.filter((id) => {
+        const cur = (this.services || []).find((s: any) => Number(s.id) === id)
+        return !cur || !cur.name || isFake(cur.name)
+      })
+      if (missing.length === 0) return
+
+      const fetched: any[] = []
+      await Promise.all(
+        missing.map(async (id) => {
+          try {
+            const response = await fetch(`${$api.service()}/${id}`, {
+              headers: { Accept: 'application/json' },
+              credentials: 'include',
+            })
+            if (!response.ok) return
+            const data = await response.json()
+            const svc = data?.data ?? data
+            if (svc?.id) fetched.push(svc)
+          } catch {
+            // ignore single-id failures
+          }
+        })
+      )
+      this.mergeServicesIntoMaster(fetched)
     },
 
     async saveService() {

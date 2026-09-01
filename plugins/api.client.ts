@@ -332,6 +332,53 @@ export default defineNuxtPlugin(() => {
     requestActivationReadiness: (id: number | string) =>
       `${apiBase}/request-activation/${id}/activation-readiness`,
 
+    // Request Dismantle — Operations
+    dismantleRequests: () => `${apiBase}/dismantle-requests`,
+    dismantleRequestShow: (id: string) => `${apiBase}/dismantle-requests/${id}`,
+    dismantleRequestsStatistics: () => `${apiBase}/dismantle-requests/statistics`,
+    dismantleRequestSubmit: (id: string) => `${apiBase}/dismantle-requests/${id}/submit`,
+    dismantleRequestApprove: (id: string) => `${apiBase}/dismantle-requests/${id}/approve`,
+    dismantleRequestReject: (id: string) => `${apiBase}/dismantle-requests/${id}/reject`,
+    dismantleRequestCancel: (id: string) => `${apiBase}/dismantle-requests/${id}/cancel`,
+    dismantleRequestBlock: (id: string) => `${apiBase}/dismantle-requests/${id}/block`,
+    dismantleRequestUnblock: (id: string) => `${apiBase}/dismantle-requests/${id}/unblock`,
+    dismantleRequestStart: (id: string) => `${apiBase}/dismantle-requests/${id}/start`,
+    dismantleRequestComplete: (id: string) => `${apiBase}/dismantle-requests/${id}/complete`,
+    dismantleRequestTerminateServices: (id: string) =>
+      `${apiBase}/dismantle-requests/${id}/terminate-services`,
+    dismantleRequestSyncFinalCharges: (id: string) =>
+      `${apiBase}/dismantle-requests/${id}/sync-final-charges`,
+    dismantleRequestReadiness: (id: string, purpose = 'submit') =>
+      `${apiBase}/dismantle-requests/${id}/readiness?purpose=${encodeURIComponent(purpose)}`,
+    dismantleRequestCompletionReadiness: (id: string) =>
+      `${apiBase}/dismantle-requests/${id}/completion-readiness`,
+    dismantleRequestReconciliation: (id: string) =>
+      `${apiBase}/dismantle-requests/${id}/reconciliation`,
+    dismantleRequestFinancialSummary: (id: string) =>
+      `${apiBase}/dismantle-requests/${id}/financial-summary`,
+    dismantleRequestEquipmentRecoverySummary: (id: string) =>
+      `${apiBase}/dismantle-requests/${id}/equipment-recovery-summary`,
+    dismantleRequestFinancialReview: (id: string) =>
+      `${apiBase}/dismantle-requests/${id}/financial-review`,
+    dismantleEquipmentPhysicalRemoval: (requestId: string, lineId: string) =>
+      `${apiBase}/dismantle-requests/${requestId}/equipments/${lineId}/physical-removal`,
+    dismantleEquipmentReceive: (requestId: string, lineId: string) =>
+      `${apiBase}/dismantle-requests/${requestId}/equipments/${lineId}/receive`,
+    dismantleEquipmentCustomerHandover: (requestId: string, lineId: string) =>
+      `${apiBase}/dismantle-requests/${requestId}/equipments/${lineId}/customer-handover`,
+    dismantleRequestAttachments: (requestId: string) =>
+      `${apiBase}/dismantle-requests/${requestId}/attachments`,
+    dismantleRequestAttachmentRequirements: (requestId: string) =>
+      `${apiBase}/dismantle-requests/${requestId}/attachment-requirements`,
+    dismantleRequestAttachmentDownload: (requestId: string, attachmentId: string) =>
+      `${apiBase}/dismantle-requests/${requestId}/attachments/${attachmentId}/download`,
+    dismantleRequestAttachmentPreview: (requestId: string, attachmentId: string) =>
+      `${apiBase}/dismantle-requests/${requestId}/attachments/${attachmentId}/preview`,
+    dismantleRequestAttachmentVoid: (requestId: string, attachmentId: string) =>
+      `${apiBase}/dismantle-requests/${requestId}/attachments/${attachmentId}/void`,
+    dismantleServiceFinanceReview: (requestId: string, serviceLineId: string) =>
+      `${apiBase}/dismantle-requests/${requestId}/services/${serviceLineId}/finance-review`,
+
     // Berita Acara — Operations
     beritaAcara: () => `${apiBase}/berita-acara`,
     beritaAcaraShow: (id: number | string) => `${apiBase}/berita-acara/${id}`,

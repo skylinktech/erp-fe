@@ -21,6 +21,8 @@
         <p class="mb-1"><strong>SERVICE PLANS :</strong> {{ firstServicePlanName }}</p>
         <p class="mb-1"><strong>NUMBER OF UNIT :</strong> {{ totalUnitDisplay }}</p>
         <p class="mb-1"><strong>DURATION [MONTH] :</strong> {{ durationDisplay }}</p>
+        <p class="mb-1"><strong>BILLING FREQUENCY :</strong> {{ billingFrequencyDisplay }}</p>
+        <p class="mb-1"><strong>PRICE BASIS :</strong> {{ pricingPeriodDisplay }}</p>
       </div>
     </div>
 
@@ -49,10 +51,10 @@
               <td class="text-start">{{ item.priceListLine?.service?.name || item.priceListLine?.service?.code || '-' }}</td>
               <td class="text-center">1</td>
               <td class="text-center">{{ Number(item.quantity) }}</td>
-              <td class="text-center">{{ Number(item.quantity) }}</td>
+              <td class="text-center">{{ formatContractDurationMonths(resolveLineDurationMonths(item)) }}</td>
               <td class="text-end">{{ formatRupiahNum(getServicePrice(item)) }}</td>
               <td class="text-end">{{ itemPriceBuyDisplay(item) }}</td>
-              <td class="text-end">{{ formatRupiahNum(getServiceSubtotal(item)) }}</td>
+              <td class="text-end">{{ formatRupiahNum(getServiceContractIncome(item)) }}</td>
               <td class="text-end">{{ itemExpenseDisplay(item) }}</td>
             </tr>
             <tr class="fw-bold">
@@ -142,8 +144,13 @@
             <td colspan="3" class="text-end">{{ formatRupiahNum(incomeLessExpenses) }}</td>
           </tr>
           <tr>
-            <td colspan="5" class="text-start fw-medium">PCT MARGIN</td>
+            <td colspan="5" class="text-start fw-medium">PCT MARGIN / PROFITABILITY</td>
             <td colspan="3" class="text-end">{{ pctMarginDisplay }}</td>
+          </tr>
+          <tr v-if="feasibility?.profitabilityStatus === 'BELOW_THRESHOLD'">
+            <td colspan="8" class="text-start text-danger fw-medium">
+              STATUS: BELOW MINIMUM TARGET ({{ feasibility.profitabilityThresholdPercent }}%)
+            </td>
           </tr>
         </tbody>
       </table>
@@ -182,6 +189,13 @@ import { useSiteInvestStore } from '~/stores/site-invest'
 import { storeToRefs } from 'pinia'
 import { useRoute } from 'vue-router'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
+import {
+  formatContractDurationMonths,
+  resolveLineDurationMonths,
+  resolveDocumentDurationMonths,
+  billingFrequencyLabel,
+  pricingPeriodLabel,
+} from '~/utils/commercialTerms'
 
 const { setDetailTitle } = useDynamicTitle()
 
@@ -237,20 +251,29 @@ const totalUnitDisplay = computed(() => {
   return String(mat.length)
 })
 
-// Duration: tampilkan angka saja (nilai numerik dari billing cycle, atau qty service jika tidak ada angka)
+// Duration: explicit snapshotted contractDurationMonths only — never qty / billingCycle regex
 const durationDisplay = computed(() => {
   const si = siteInvest.value
   const list = (si?.siteInvestServices ?? si?.site_invest_services) || []
-  if (!list.length) return '1'
-  const billingCycle = list[0]?.priceListLine?.billingCycle
-  if (billingCycle != null && billingCycle !== '') {
-    const str = String(billingCycle)
-    const numMatch = str.match(/\d+/)
-    if (numMatch) return numMatch[0]
-  }
-  // Fallback: qty service (baris pertama)
-  const qty = Number(list[0]?.quantity)
-  return !Number.isNaN(qty) && qty > 0 ? String(qty) : '1'
+  return formatContractDurationMonths(resolveDocumentDurationMonths(list))
+})
+
+const billingFrequencyDisplay = computed(() => {
+  const si = siteInvest.value
+  const list = (si?.siteInvestServices ?? si?.site_invest_services) || []
+  if (!list.length) return '-'
+  const first = list[0]
+  return billingFrequencyLabel(
+    first?.billingFrequency ?? first?.billing_frequency ?? first?.priceListLine?.billingCycle
+  )
+})
+
+const pricingPeriodDisplay = computed(() => {
+  const si = siteInvest.value
+  const list = (si?.siteInvestServices ?? si?.site_invest_services) || []
+  if (!list.length) return '-'
+  const first = list[0]
+  return pricingPeriodLabel(first?.pricingPeriod ?? first?.pricing_period)
 })
 
 /** Nilai numerik dari API dengan dukungan snake_case (selaras halaman detail) */
@@ -266,16 +289,29 @@ function fromApiNum (si, ...keys) {
   return 0
 }
 
-/** Subtotal section dari API; tidak hitung ulang */
+const feasibility = computed(() => {
+  const si = siteInvest.value
+  return si?.feasibilitySummary ?? si?.feasibility_summary ?? si?.commercialSummary ?? si?.commercial_summary ?? null
+})
+
 const serviceSubtotalDisplay = computed(() => {
+  const f = feasibility.value
+  if (f?.serviceContractAmount != null) return Number(f.serviceContractAmount) || 0
+  if (f?.income?.contractAmount != null && Array.isArray(f?.lines?.services)) {
+    return (f.lines.services || []).reduce((s, l) => s + (Number(l.contractAmount) || 0), 0)
+  }
   const si = siteInvest.value
   return fromApiNum(si, 'serviceSubtotal', 'service_subtotal')
 })
 const materialSubtotal = computed(() => {
+  const f = feasibility.value
+  if (f?.materialContractAmount != null) return Number(f.materialContractAmount) || 0
   const si = siteInvest.value
   return fromApiNum(si, 'materialSubtotal', 'material_subtotal')
 })
 const didSubtotal = computed(() => {
+  const f = feasibility.value
+  if (f?.didContractAmount != null) return Number(f.didContractAmount) || 0
   const si = siteInvest.value
   return fromApiNum(si, 'didSubtotal', 'did_subtotal')
 })
@@ -287,9 +323,13 @@ function getServicePrice (item) {
   return Number.isNaN(n) ? 0 : n
 }
 
-/** Subtotal service per baris: murni dari API; fallback qty×price hanya jika subtotal tidak ada */
+/** Subtotal service per baris: prefer contractAmount from API feasibility */
 function getServiceSubtotal (item) {
   if (!item) return 0
+  if (item.contractAmount != null && item.contractAmount !== '') {
+    const n = Number(item.contractAmount)
+    if (!Number.isNaN(n)) return n
+  }
   const st = item.subtotal
   if (st !== undefined && st !== null && st !== '') {
     const n = Number(st)
@@ -300,9 +340,33 @@ function getServiceSubtotal (item) {
   return qty * price
 }
 
+function getServiceContractIncome (item) {
+  if (!item) return 0
+  if (item.contractAmount != null && item.contractAmount !== '') {
+    const n = Number(item.contractAmount)
+    if (!Number.isNaN(n)) return n
+  }
+  // Recurring: period × duration when snapshot known
+  const period = (() => {
+    const st = item.subtotal
+    if (st !== undefined && st !== null && st !== '') {
+      const n = Number(st)
+      if (!Number.isNaN(n)) return n
+    }
+    return (Number(item.quantity) || 1) * getServicePrice(item)
+  })()
+  const dur = Number(item.contractDurationMonths ?? item.contract_duration_months)
+  if (Number.isFinite(dur) && dur > 0) return period * dur
+  return period
+}
+
 /** Subtotal per item material/DID: dari API (subtotal); fallback qty×price jika tidak ada */
 function getItemSubtotal (item) {
   if (!item) return 0
+  if (item.contractAmount != null && item.contractAmount !== '') {
+    const n = Number(item.contractAmount)
+    if (!Number.isNaN(n)) return n
+  }
   const st = item.subtotal
   if (st !== undefined && st !== null && st !== '') {
     const n = Number(st)
@@ -313,15 +377,22 @@ function getItemSubtotal (item) {
   return qty * price
 }
 
-/** Nilai expense: ambil langsung dari table (item.expense). Fallback hitung dari price_buy × quantity hanya untuk data lama yang belum punya expense. */
+/** Prefer costContractAmount from API */
 function getItemExpense (item) {
   if (!item) return null
+  if (item.costContractAmount != null && item.costContractAmount !== '') {
+    return Number(item.costContractAmount)
+  }
   if (item.expense != null && item.expense !== '') return Number(item.expense)
   const pl = item.priceListLine ?? item.price_list_line
   const unitCost = pl?.priceBuy ?? pl?.price_buy ?? null
   if (unitCost == null) return null
   const qty = Math.max(1, Number(item.quantity ?? item.qty ?? 1) || 1)
-  return Number(unitCost) * qty
+  const periodCost = Number(unitCost) * qty
+  const dur = Number(item.contractDurationMonths ?? item.contract_duration_months)
+  const isService = !!(pl?.service || item.priceListLine?.service)
+  if (isService && Number.isFinite(dur) && dur > 0) return periodCost * dur
+  return periodCost
 }
 
 function itemExpenseDisplay (item) {
@@ -391,29 +462,33 @@ const hasAnyItems = computed(() => {
   return m + s + d > 0
 })
 
-// Grand total income = jumlah total INCOME yang ditampilkan per section (selaras dengan tabel)
 const grandTotalIncome = computed(() => {
-  const serviceIncome = serviceSubtotalDisplay.value
-  const matIncome = materialSubtotal.value
-  const didInc = didSubtotal.value
-  return serviceIncome + matIncome + didInc
+  const f = feasibility.value
+  if (f?.income?.contractAmount != null) return Number(f.income.contractAmount) || 0
+  return serviceSubtotalDisplay.value + materialSubtotal.value + didSubtotal.value
 })
-// Grand total expenses = jumlah expense per section (price_buy × qty)
-const grandTotalExpenses = computed(() => serviceExpenseSubtotal.value + materialExpenseSubtotal.value + didExpenseSubtotal.value)
+const grandTotalExpenses = computed(() => {
+  const f = feasibility.value
+  if (f?.expenses?.contractAmount != null) return Number(f.expenses.contractAmount) || 0
+  return serviceExpenseSubtotal.value + materialExpenseSubtotal.value + didExpenseSubtotal.value
+})
 
 const incomeLessExpenses = computed(() => {
-  const income = grandTotalIncome.value
-  const expenses = grandTotalExpenses.value
-  return income - expenses
+  const f = feasibility.value
+  if (f?.projectProfit != null) return Number(f.projectProfit) || 0
+  return grandTotalIncome.value - grandTotalExpenses.value
 })
 
 const pctMarginDisplay = computed(() => {
+  const f = feasibility.value
+  if (f?.profitabilityPercent != null) {
+    return Number(f.profitabilityPercent).toFixed(2) + '%'
+  }
   const income = grandTotalIncome.value
   if (!income || income <= 0) return '-'
   const less = incomeLessExpenses.value
   const pct = (less / income) * 100
   if (!Number.isFinite(pct)) return '-'
-  // Tampilkan desimal agar PCT MARGIN terbaca lebih presisi saat cetak
   return pct.toFixed(2) + '%'
 })
 

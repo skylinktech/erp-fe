@@ -4,6 +4,8 @@ import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from
 import Swal from 'sweetalert2'
 import { useNuxtApp } from '#app'
 import { useUserStore } from '~/stores/user'
+import { useServiceStore } from '~/stores/service'
+import { serviceContractSubtotal } from '~/utils/commercialPricing'
 import type { User } from './userManagement'
 import type { Perusahaan } from './perusahaan'
 import type { Cabang } from './cabang'
@@ -39,10 +41,13 @@ export interface QuotationServiceItem {
   quotationId?: string
   unitId: number
   serviceId: number
+  servicePlanId?: number | null
   quantity: number
+  /** Snapshotted commercial contract duration (months). Null = legacy unknown. */
+  contractDurationMonths?: number | null
   price: number
   subtotal: number
-  service?: { id: number; name: string; code?: string; price?: number }
+  service?: { id: number; name: string; code?: string; price?: number; servicePlan?: { contractMonth?: number | null } }
   unit?: { id: number; symbol?: string; name?: string }
   terminalKitCount?: number | null
   quotaPriority?: number | null
@@ -385,13 +390,16 @@ export const useQuotationStore = defineStore('quotation', {
             });
 
             validServices.forEach((s: any, i: number) => {
-                const sub = Number(s.subtotal) || (Number(s.quantity) || 0) * (Number(s.price) || 0);
+                const sub = serviceContractSubtotal(s);
                 formData.append(`quotationServices[${i}][unitId]`, String(s.unitId));
                 formData.append(`quotationServices[${i}][serviceId]`, String(s.serviceId));
                 if (s.servicePlanId !== undefined && s.servicePlanId !== null && s.servicePlanId !== '') {
                   formData.append(`quotationServices[${i}][servicePlanId]`, String(s.servicePlanId));
                 }
                 formData.append(`quotationServices[${i}][quantity]`, String(s.quantity));
+                if (s.contractDurationMonths != null && s.contractDurationMonths !== '') {
+                  formData.append(`quotationServices[${i}][contractDurationMonths]`, String(s.contractDurationMonths));
+                }
                 formData.append(`quotationServices[${i}][price]`, String(s.price));
                 formData.append(`quotationServices[${i}][subtotal]`, String(sub));
                 formData.append(`quotationServices[${i}][isPriceOverridden]`, (s.isPriceOverridden === true || s.isPriceOverridden === 'true') ? 'true' : 'false');
@@ -793,9 +801,16 @@ export const useQuotationStore = defineStore('quotation', {
                     : (qty * effectivePrice);
                 return {
                     ...s,
-                    serviceId: s.serviceId ?? s.service_id,
-                    unitId: s.unitId ?? s.unit_id,
+                    serviceId: s.serviceId != null && s.serviceId !== '' ? Number(s.serviceId ?? s.service_id) : (s.service_id != null ? Number(s.service_id) : null),
+                    unitId: s.unitId != null && s.unitId !== '' ? Number(s.unitId ?? s.unit_id) : (s.unit_id != null ? Number(s.unit_id) : null),
+                    servicePlanId: s.servicePlanId ?? s.service_plan_id ?? null,
                     quantity: qty,
+                    contractDurationMonths: (() => {
+                      const d = s.contractDurationMonths ?? s.contract_duration_months
+                      if (d == null || d === '') return null
+                      const n = Number(d)
+                      return Number.isFinite(n) && n > 0 ? Math.trunc(n) : null
+                    })(),
                     price,
                     subtotal,
                     isPriceOverridden: s.isPriceOverridden ?? s.is_price_overridden ?? false,
@@ -806,6 +821,14 @@ export const useQuotationStore = defineStore('quotation', {
                     quotaPriority: qp != null ? Number(qp) : null,
                     newServiceLine: nsl != null ? Number(nsl) : null,
                     additionalData: ad != null ? Number(ad) : null,
+                    service: s.service
+                      ? {
+                          id: Number(s.service.id),
+                          name: s.service.name,
+                          code: s.service.code,
+                          servicePlanId: s.service.servicePlanId ?? s.service.service_plan_id ?? null,
+                        }
+                      : null,
                 };
             });
             // Normalisasi quotationDids (semua field opsional)
@@ -829,6 +852,7 @@ export const useQuotationStore = defineStore('quotation', {
             this.form = formData;
 
             this.syncCustomerProductsFromFormItems();
+            void this.ensurePrefillServiceLabels();
 
             if (!this.form.quotationItems || this.form.quotationItems.length === 0) {
                 this.form.quotationItems = [];
@@ -981,6 +1005,67 @@ export const useQuotationStore = defineStore('quotation', {
       }
     },
 
+    /**
+     * Merge SI-prefilled services into service master options so CustomSelect2 can resolve labels
+     * (service list is paginated and may not include the SI service).
+     * Never invents placeholder names like "Service #1".
+     */
+    syncPrefillServicesIntoMaster() {
+      const serviceStore = useServiceStore();
+      const extras = (this.form.quotationServices || [])
+        .map((item: any) => {
+          const id = Number(item.serviceId ?? item.service_id ?? item.service?.id);
+          if (!id) return null;
+          const s = item.service;
+          const name = (s?.name || item.name || '').trim();
+          if (!name || /^Service #\d+$/i.test(name)) return null;
+          return {
+            id,
+            name,
+            code: s?.code ?? item.code ?? '',
+            servicePlanId: item.servicePlanId ?? s?.servicePlanId ?? null,
+            servicePlan: s?.servicePlan ?? null,
+            period: s?.period ?? 0,
+            description: s?.description ?? '',
+            createdBy: s?.createdBy ?? 0,
+            updatedBy: s?.updatedBy ?? 0,
+            createdAt: s?.createdAt ?? '',
+            updatedAt: s?.updatedAt ?? '',
+          };
+        })
+        .filter(Boolean) as any[];
+
+      if (extras.length > 0) {
+        serviceStore.mergeServicesIntoMaster(extras);
+      }
+    },
+
+    async ensurePrefillServiceLabels() {
+      const serviceStore = useServiceStore();
+      this.syncPrefillServicesIntoMaster();
+      const ids = (this.form.quotationServices || [])
+        .map((item: any) => Number(item.serviceId ?? item.service_id ?? item.service?.id))
+        .filter((id: number) => id > 0);
+      await serviceStore.ensureServicesByIds(ids);
+      // Re-attach resolved names onto form line snapshots for dropdown merge
+      for (const item of this.form.quotationServices || []) {
+        const id = Number(item.serviceId ?? item.service_id);
+        if (!id) continue;
+        const found = (serviceStore.services || []).find((s: any) => Number(s.id) === id);
+        if (!found?.name) continue;
+        if (!item.service || !item.service.name || /^Service #\d+$/i.test(String(item.service.name))) {
+          item.service = {
+            ...(item.service || {}),
+            id,
+            name: found.name,
+            code: found.code ?? item.service?.code ?? '',
+            servicePlanId: found.servicePlanId ?? item.servicePlanId ?? null,
+            servicePlan: found.servicePlan ?? item.service?.servicePlan ?? null,
+          };
+        }
+      }
+    },
+
     addItem() {
         this.form.quotationItems.push({
             productId: null, quantity: 1, price: 0,
@@ -1001,6 +1086,7 @@ export const useQuotationStore = defineStore('quotation', {
             serviceId: null,
             servicePlanId: null,
             quantity: 1,
+            contractDurationMonths: null,
             price: 0,
             subtotal: 0,
             isPriceOverridden: false,
@@ -1103,23 +1189,58 @@ export const useQuotationStore = defineStore('quotation', {
         this.syncCustomerProductsFromFormItems();
 
         this.form.quotationServices = services.map((s: any) => ({
-          serviceId: s.serviceId ?? s.service_id ?? null,
-          servicePlanId: s.servicePlanId ?? s.service_plan_id ?? null,
-          unitId: s.unitId ?? s.unit_id ?? null,
+          serviceId: (() => {
+            const id = s.serviceId ?? s.service_id ?? s.service?.id
+            return id != null && id !== '' ? Number(id) : null
+          })(),
+          servicePlanId: s.servicePlanId ?? s.service_plan_id ?? s.service?.servicePlanId ?? null,
+          unitId: s.unitId != null && s.unitId !== '' ? Number(s.unitId ?? s.unit_id) : (s.unit_id != null ? Number(s.unit_id) : null),
           quantity: Number(s.quantity) || 1,
+          contractDurationMonths: (() => {
+            const d = s.contractDurationMonths ?? s.contract_duration_months
+            if (d == null || d === '') return null
+            const n = Number(d)
+            return Number.isFinite(n) && n > 0 ? Math.trunc(n) : null
+          })(),
           price: Number(s.price) || 0,
-          subtotal: Number(s.subtotal) || (Number(s.quantity) || 1) * (Number(s.price) || 0),
+          pricingPeriod: s.pricingPeriod ?? s.pricing_period ?? null,
+          billingType: s.billingType ?? s.billing_type ?? s.service?.billingType ?? null,
+          periodAmount: s.periodAmount != null ? Number(s.periodAmount) : null,
+          subtotal: (() => {
+            const mapped = {
+              quantity: Number(s.quantity) || 1,
+              price: Number(s.price) || 0,
+              contractDurationMonths: s.contractDurationMonths ?? s.contract_duration_months,
+              pricingPeriod: s.pricingPeriod ?? s.pricing_period ?? null,
+              billingType: s.billingType ?? s.billing_type ?? s.service?.billingType ?? null,
+              service: s.service,
+            }
+            const fromApi = s.subtotal != null && s.subtotal !== '' ? Number(s.subtotal) : NaN
+            if (Number.isFinite(fromApi) && fromApi > 0) return fromApi
+            return serviceContractSubtotal(mapped)
+          })(),
           isPriceOverridden: !!(s.isPriceOverridden ?? s.is_price_overridden),
           priceReason: s.priceReason ?? s.price_reason ?? '',
           terminalKitCount: s.terminalKitCount ?? s.terminal_kit_count ?? null,
           quotaPriority: s.quotaPriority ?? s.quota_priority ?? null,
           newServiceLine: s.newServiceLine ?? s.new_service_line ?? null,
           additionalData: s.additionalData ?? s.additional_data ?? null,
+          service: s.service
+            ? {
+                id: Number(s.service.id),
+                name: s.service.name,
+                code: s.service.code,
+                billingType: s.service.billingType ?? s.service.billing_type ?? null,
+                servicePlanId: s.service.servicePlanId ?? s.service.service_plan_id ?? null,
+                servicePlan: s.service.servicePlan ?? s.service.service_plan ?? null,
+              }
+            : null,
         }));
         if (this.form.quotationServices.length === 0) {
           this.addServiceItem();
         }
 
+        await this.ensurePrefillServiceLabels();
         this.setQuotationDidsFromSiteInvest(dids);
         this.form.useDidFromSiteInvest = dids.length > 0 && dids.every((d: any) => d.priceListLineId ?? d.price_list_line_id)
           ? true
@@ -1234,6 +1355,7 @@ export const useQuotationStore = defineStore('quotation', {
 
                 // Panggil openModal dengan data lengkap
                 this.openModal(resData.data);
+                await this.ensurePrefillServiceLabels();
                 
                 // ✅ NEW: Fetch products untuk customer jika ada customerId
                 if (resData.data.customerId) {

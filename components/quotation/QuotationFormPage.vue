@@ -98,13 +98,13 @@
               <!-- ── TAB SERVICE ── -->
               <div class="tab-pane fade" id="quotation-tab-services" data-step-id="quotation-tab-services" role="tabpanel" :class="paneClass('quotation-tab-services')">
                 <div class="repeater-table">
-                  <div class="repeater-table-head d-none d-md-grid repeater-cols-5">
-                    <span>Service</span><span>Unit</span><span>Qty</span><span>Harga Satuan</span><span>Subtotal</span>
+                  <div class="repeater-table-head d-none d-md-grid repeater-cols-6">
+                    <span>Service</span><span>Unit</span><span>Qty</span><span>Durasi (bln)</span><span>Harga Satuan</span><span>Subtotal</span>
                   </div>
                   <div v-for="(item, idx) in form.quotationServices" :key="'s-'+idx" class="repeater-table-row">
                     <div class="repeater-cell repeater-cell-main">
                       <span class="repeater-cell-label d-md-none">Service</span>
-                      <CustomSelect2 v-model="item.serviceId" :options="services || []" :get-option-label="s => s?.name || ''" :reduce="s => s?.id" searchable clearable placeholder="Pilih Service" />
+                      <CustomSelect2 v-model="item.serviceId" :options="serviceSelectOptions" :get-option-label="s => s?.name || s?.code || ''" :reduce="s => s?.id != null ? Number(s.id) : null" searchable clearable placeholder="Pilih Service" @update:modelValue="onQuotationServiceChange(idx, $event)" />
                     </div>
                     <div class="repeater-cell">
                       <span class="repeater-cell-label d-md-none">Unit</span>
@@ -113,6 +113,10 @@
                     <div class="repeater-cell">
                       <span class="repeater-cell-label d-md-none">Qty</span>
                       <input v-model.number="item.quantity" type="number" min="1" class="form-control" placeholder="Qty" />
+                    </div>
+                    <div class="repeater-cell">
+                      <span class="repeater-cell-label d-md-none">Durasi (bulan)</span>
+                      <input v-model.number="item.contractDurationMonths" type="number" min="1" step="1" class="form-control" placeholder="Bulan" />
                     </div>
                     <div class="repeater-cell">
                       <span class="repeater-cell-label d-md-none">
@@ -126,7 +130,7 @@
                     </div>
                     <div class="repeater-cell repeater-cell-subtotal">
                       <span class="repeater-cell-label d-md-none">Subtotal</span>
-                      <input :value="formatRupiah(lineSubtotal(item))" type="text" class="form-control repeater-subtotal" readonly disabled tabindex="-1" />
+                      <input :value="formatRupiah(serviceContractSubtotal(item))" type="text" class="form-control repeater-subtotal" readonly disabled tabindex="-1" />
                       <button type="button" class="repeater-delete-btn" @click="quotationStore.removeServiceItem(idx)" title="Hapus"><i class="ri-delete-bin-6-line"></i></button>
                     </div>
                     <div v-if="item.isPriceOverridden" class="repeater-cell-reason">
@@ -281,6 +285,7 @@
 }
 .repeater-cols-4 { grid-template-columns: 3fr 1fr 1.5fr 1.8fr; }
 .repeater-cols-5 { grid-template-columns: 2.5fr 1fr 1fr 1.5fr 1.8fr; }
+.repeater-cols-6 { grid-template-columns: 2fr 0.8fr 0.7fr 0.9fr 1.3fr 1.5fr; }
 .repeater-subtotal {
   background: #e9ecef !important;
   color: #495057 !important;
@@ -381,6 +386,7 @@ import FormLabel from '~/components/form/FormLabel.vue'
 import { useTabbedFormNavigation } from '~/composables/useTabbedFormNavigation'
 import { parseRupiahToNumber } from '~/composables/formatRupiah'
 import { lineSubtotal } from '~/utils/lineSubtotal'
+import { serviceContractSubtotal } from '~/utils/commercialPricing'
 import { firstErrorTab } from '~/utils/apiError'
 
 const route = useRoute()
@@ -439,6 +445,28 @@ const {
 } = useTabbedFormNavigation({ steps: formSteps, formRoot, validateStep: validateQuotationStep })
 const { customers } = storeToRefs(customerStore)
 const { services } = storeToRefs(serviceStore)
+
+/** Merge master services with SI-prefilled service snapshots so selected labels always resolve */
+const serviceSelectOptions = computed(() => {
+  const byId = new Map<number, any>()
+  const isFakeName = (n: unknown) => typeof n === 'string' && /^Service #\d+$/i.test(n)
+  for (const s of services.value || []) {
+    const id = Number(s?.id)
+    if (!id) continue
+    if (isFakeName(s?.name)) continue
+    byId.set(id, s)
+  }
+  for (const item of form.value?.quotationServices || []) {
+    const id = Number(item?.serviceId ?? item?.service?.id)
+    if (!id) continue
+    const snapshot = item.service
+    const snapName = (snapshot?.name || '').trim()
+    if (snapName && !isFakeName(snapName)) {
+      byId.set(id, { ...(byId.get(id) || {}), ...snapshot, id, name: snapName })
+    }
+  }
+  return Array.from(byId.values())
+})
 
 const productSelectOptions = computed(() => {
   const map = new Map<number, any>()
@@ -520,6 +548,24 @@ function toggleServiceOverride(idx: number) {
   if (!item.isPriceOverridden) item.priceReason = ''
 }
 
+/** Prefill contractDurationMonths from ServicePlan.contractMonth; never overwrite user edit. */
+function onQuotationServiceChange(idx: number, serviceId: unknown) {
+  const item = form.value?.quotationServices?.[idx]
+  if (!item) return
+  const svc = (serviceSelectOptions.value || []).find((s: any) => Number(s?.id) === Number(serviceId))
+  if (!svc) return
+  item.servicePlanId = svc.servicePlanId ?? svc.service_plan_id ?? svc.servicePlan?.id ?? null
+  if (item.contractDurationMonths == null || item.contractDurationMonths === '') {
+    const planMonth =
+      svc.servicePlan?.contractMonth ??
+      svc.service_plan?.contract_month ??
+      svc.contractMonth ??
+      null
+    const n = Number(planMonth)
+    item.contractDurationMonths = Number.isFinite(n) && n > 0 ? Math.trunc(n) : null
+  }
+}
+
 function toggleDidOverride(idx: number) {
   const item = form.value?.quotationDids?.[idx]
   if (!item) return
@@ -573,12 +619,14 @@ function mergePrefillMasterOptions(prefill: any) {
     const exists = costCenters.value.some((c: any) => c.id === prefill.costCenter.id)
     if (!exists) costCenters.value = [...costCenters.value, prefill.costCenter]
   }
+  // Ensure service dropdown options include SI-prefilled services (paginated master may miss them)
+  void quotationStore.ensurePrefillServiceLabels()
 }
 
 async function loadForm() {
   quotationStore.closeModal()
   skipSiteInvestPrefill.value = true
-  await Promise.all([customerStore.fetchCustomers(), serviceStore.fetchServices(), loadMasters()])
+  await Promise.all([customerStore.fetchCustomers(), serviceStore.fetchServicesForSelect(), loadMasters()])
   if (quotationId.value) {
     await quotationStore.fetchQuotationForEdit(quotationId.value)
     quotationStore.showModal = false

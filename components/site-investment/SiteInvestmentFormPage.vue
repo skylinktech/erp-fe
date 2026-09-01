@@ -110,38 +110,74 @@
                     <div class="investment-summary-card">
                       <h6 class="investment-summary-title">
                         <i class="ri-pie-chart-2-line me-2"></i>
-                        Ringkasan Total Investasi
+                        Ringkasan Feasibility (Contract Value)
                       </h6>
+                      <div
+                        v-if="feasibilityPreview.profitabilityStatus === 'BELOW_THRESHOLD'"
+                        class="alert alert-warning mb-3 py-2"
+                        role="alert"
+                      >
+                        <strong>⚠ Profitability di bawah minimum perusahaan</strong>
+                        <div class="small mt-1">
+                          Profitability saat ini : {{ formatPct(feasibilityPreview.profitabilityPercent) }}%
+                          <br>
+                          Minimum : {{ formatPct(feasibilityPreview.profitabilityThresholdPercent) }}%
+                          <br>
+                          Proposal masih dapat disimpan sebagai draft, tetapi perlu diperhatikan sebelum approval.
+                        </div>
+                      </div>
                       <div class="investment-summary-body">
                         <div class="investment-summary-row">
-                          <span class="investment-summary-label">Managed Service</span>
-                          <span class="investment-summary-value">{{ formatRupiah(serviceSubtotal) }}</span>
+                          <span class="investment-summary-label">Managed Service (Contract)</span>
+                          <span class="investment-summary-value">{{ formatRupiah(feasibilityPreview.serviceContractAmount) }}</span>
                         </div>
                         <div class="investment-summary-row">
-                          <span class="investment-summary-label">Material</span>
-                          <span class="investment-summary-value">{{ formatRupiah(materialSubtotal) }}</span>
+                          <span class="investment-summary-label">Material (Contract)</span>
+                          <span class="investment-summary-value">{{ formatRupiah(feasibilityPreview.materialContractAmount) }}</span>
                         </div>
                         <div class="investment-summary-row">
-                          <span class="investment-summary-label">DID (Delivery/Installation)</span>
-                          <span class="investment-summary-value">{{ formatRupiah(didSubtotal) }}</span>
+                          <span class="investment-summary-label">DID (Contract)</span>
+                          <span class="investment-summary-value">{{ formatRupiah(feasibilityPreview.didContractAmount) }}</span>
+                        </div>
+                        <div class="investment-summary-row text-muted small">
+                          <span class="investment-summary-label">Period Revenue (1 periode)</span>
+                          <span class="investment-summary-value">{{ formatRupiah(feasibilityPreview.income?.periodAmount || 0) }}</span>
                         </div>
 
                         <div class="investment-summary-divider"></div>
 
-                        <div class="investment-summary-row investment-summary-row-total">
-                          <span class="investment-summary-label">Total Investasi</span>
-                          <span class="investment-summary-value">{{ formatRupiah(totalInvestment) }}</span>
+                        <div class="investment-summary-row">
+                          <span class="investment-summary-label">Total Income</span>
+                          <span class="investment-summary-value">{{ formatRupiah(feasibilityPreview.income?.contractAmount || 0) }}</span>
                         </div>
+                        <div class="investment-summary-row">
+                          <span class="investment-summary-label">Total Expenses</span>
+                          <span class="investment-summary-value">{{ formatRupiah(feasibilityPreview.expenses?.contractAmount || 0) }}</span>
+                        </div>
+                        <div class="investment-summary-row">
+                          <span class="investment-summary-label">Project Profit</span>
+                          <span class="investment-summary-value">{{ formatRupiah(feasibilityPreview.projectProfit || 0) }}</span>
+                        </div>
+                        <div class="investment-summary-row">
+                          <span class="investment-summary-label">Monthly Gross Margin</span>
+                          <span class="investment-summary-value">{{ feasibilityPreview.monthlyGrossMargin != null ? formatRupiah(feasibilityPreview.monthlyGrossMargin) : '-' }}</span>
+                        </div>
+                        <div class="investment-summary-row">
+                          <span class="investment-summary-label">Profitability</span>
+                          <span class="investment-summary-value" :class="{ 'text-warning': feasibilityPreview.profitabilityStatus === 'BELOW_THRESHOLD' }">
+                            {{ feasibilityPreview.profitabilityPercent != null ? formatPct(feasibilityPreview.profitabilityPercent) + '%' : '-' }}
+                          </span>
+                        </div>
+
+                        <div class="investment-summary-divider"></div>
+
                         <div class="investment-summary-row">
                           <span class="investment-summary-label">Marketing Fee</span>
                           <span class="investment-summary-value">{{ formatRupiah(marketingFeeAmount) }}</span>
                         </div>
-
-                        <div class="investment-summary-divider"></div>
-
                         <div class="investment-summary-row investment-summary-row-grand">
-                          <span class="investment-summary-label">Grand Total</span>
-                          <span class="investment-summary-value">{{ formatRupiah(grandTotal) }}</span>
+                          <span class="investment-summary-label">Grand Total (Income + Fee)</span>
+                          <span class="investment-summary-value">{{ formatRupiah(feasibilityPreview.grandTotal) }}</span>
                         </div>
                       </div>
                     </div>
@@ -194,8 +230,8 @@
               <div id="si-tab-services" data-step-id="si-tab-services" class="tab-pane fade" role="tabpanel" :class="paneClass('si-tab-services')">
                 <div v-if="uiErrors.siteInvestServices" class="alert alert-danger py-2 mb-3"><i class="ri-error-warning-line me-1"></i>{{ uiErrors.siteInvestServices }}</div>
                 <div class="repeater-table">
-                  <div class="repeater-table-head d-none d-md-grid repeater-cols-4">
-                    <span>Service</span><span>Qty</span><span>Harga Satuan</span><span>Subtotal</span>
+                  <div class="repeater-table-head d-none d-md-grid repeater-cols-6">
+                    <span>Service</span><span>Qty</span><span>Durasi (bln)</span><span>Harga Satuan</span><span>Period</span><span>Contract</span>
                   </div>
                   <div v-for="(item, index) in form.siteInvestServices" :key="'s-'+index" class="repeater-table-row">
                     <div class="repeater-cell repeater-cell-main">
@@ -207,6 +243,10 @@
                       <input type="number" v-model.number="item.quantity" @input="calculateServiceSubtotal(index)" class="form-control" min="0.01" placeholder="Qty">
                     </div>
                     <div class="repeater-cell">
+                      <span class="repeater-cell-label d-md-none">Durasi (bulan)</span>
+                      <input type="number" v-model.number="item.contractDurationMonths" class="form-control" min="1" step="1" placeholder="Bulan">
+                    </div>
+                    <div class="repeater-cell">
                       <span class="repeater-cell-label d-md-none">
                         Harga Satuan
                         <span v-if="item.isPriceOverridden" class="badge bg-warning text-dark ms-1 py-0 px-1 badge-custom">Custom</span>
@@ -216,9 +256,13 @@
                         <button type="button" class="btn-price-lock" :class="{ 'is-overridden': item.isPriceOverridden }" @click="toggleServiceOverride(index)" :title="item.isPriceOverridden ? 'Kunci: kembalikan ke harga price list' : 'Klik untuk atur custom price'"><i :class="item.isPriceOverridden ? 'ri-lock-unlock-line' : 'ri-lock-line'"></i></button>
                       </div>
                     </div>
-                    <div class="repeater-cell repeater-cell-subtotal">
-                      <span class="repeater-cell-label d-md-none">Subtotal</span>
+                    <div class="repeater-cell">
+                      <span class="repeater-cell-label d-md-none">Period Amount</span>
                       <input :value="formatRupiah(lineSubtotal(item))" class="form-control repeater-subtotal" readonly disabled tabindex="-1">
+                    </div>
+                    <div class="repeater-cell repeater-cell-subtotal">
+                      <span class="repeater-cell-label d-md-none">Contract Value</span>
+                      <input :value="formatRupiah(serviceContractValue(item))" class="form-control repeater-subtotal" readonly disabled tabindex="-1">
                       <button type="button" class="repeater-delete-btn" @click="siteInvestStore.removeServiceItem(index)" title="Hapus"><i class="ri-delete-bin-6-line"></i></button>
                     </div>
                     <div v-if="item.isPriceOverridden" class="repeater-cell-reason">
@@ -343,6 +387,7 @@ import {
   filterLinesByPriceListId,
 } from '~/utils/priceListLines'
 import { lineSubtotal } from '~/utils/lineSubtotal'
+import { previewSiFeasibility, calculateContractAmount } from '~/utils/siFeasibilityPreview'
 import { firstErrorTab } from '~/utils/apiError'
 
 const route = useRoute()
@@ -410,19 +455,41 @@ const priceListOptions = ref([])
 
 const materialSubtotal = computed(() => {
   if (!form.value?.siteInvestMaterials) return 0
-  return form.value.siteInvestMaterials.reduce((sum, item) => sum + (Number(item?.subtotal) || 0), 0)
+  return form.value.siteInvestMaterials.reduce((sum, item) => sum + (Number(item?.subtotal) || lineSubtotal(item)), 0)
 })
-const serviceSubtotal = computed(() => {
-  if (!form.value?.siteInvestServices) return 0
-  return form.value.siteInvestServices.reduce((sum, item) => sum + (Number(item?.subtotal) || 0), 0)
-})
+const serviceSubtotal = computed(() => feasibilityPreview.value.serviceContractAmount || 0)
 const didSubtotal = computed(() => {
   if (!form.value?.siteInvestDids) return 0
-  return form.value.siteInvestDids.reduce((sum, item) => sum + (Number(item?.subtotal) || 0), 0)
+  return form.value.siteInvestDids.reduce((sum, item) => sum + (Number(item?.subtotal) || lineSubtotal(item)), 0)
 })
-const totalInvestment = computed(() => materialSubtotal.value + serviceSubtotal.value + didSubtotal.value)
 const marketingFeeAmount = computed(() => Number(form.value?.marketingFee ?? form.value?.marketing_fee ?? 0) || 0)
-const grandTotal = computed(() => totalInvestment.value + marketingFeeAmount.value)
+
+const feasibilityPreview = computed(() =>
+  previewSiFeasibility({
+    services: form.value?.siteInvestServices || [],
+    materials: form.value?.siteInvestMaterials || [],
+    dids: form.value?.siteInvestDids || [],
+    marketingFee: marketingFeeAmount.value,
+    priceListLinesService: priceListLinesService.value,
+    priceListLinesProduct: priceListLinesProduct.value,
+    priceListLinesDid: priceListLinesDid.value,
+  })
+)
+
+function serviceContractValue(item) {
+  return calculateContractAmount({
+    quantity: item?.quantity,
+    unitPrice: item?.price,
+    contractDurationMonths: item?.contractDurationMonths,
+    chargeKind: 'RECURRING',
+    pricingPeriod: 'MONTH',
+  })
+}
+
+function formatPct(n) {
+  if (n == null || Number.isNaN(Number(n))) return '-'
+  return Number(n).toFixed(2)
+}
 
 const priceListOptionsDid = computed(() => {
   const seen = new Map()
@@ -697,6 +764,16 @@ const onServiceLineChange = (index, lineId) => {
   if (!line || !item) return
   item.price = getServiceLineEffectivePrice(line)
   item.quantity = Number(line.quantity) || 1
+  // Prefill duration from ServicePlan.contractMonth once; do not overwrite user edits on re-select unless empty
+  const planMonth =
+    line.service?.servicePlan?.contractMonth ??
+    line.service?.service_plan?.contract_month ??
+    line.service?.contractMonth ??
+    null
+  if (item.contractDurationMonths == null || item.contractDurationMonths === '') {
+    const n = Number(planMonth)
+    item.contractDurationMonths = Number.isFinite(n) && n > 0 ? Math.trunc(n) : null
+  }
   item.isPriceOverridden = false
   item.priceReason = ''
   item.subtotal = item.quantity * item.price
@@ -1071,6 +1148,12 @@ watch([selectedDidPriceListId, selectedPriceListId], async () => {
 }
 .repeater-cols-4 {
   grid-template-columns: 3fr 1fr 1.5fr 1.8fr;
+}
+.repeater-cols-5 {
+  grid-template-columns: 2.5fr 0.8fr 0.9fr 1.4fr 1.6fr;
+}
+.repeater-cols-6 {
+  grid-template-columns: 2fr 0.7fr 0.8fr 1.2fr 1.2fr 1.4fr;
 }
 .repeater-subtotal {
   background: #e9ecef !important;
