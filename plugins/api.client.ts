@@ -117,6 +117,19 @@ export default defineNuxtPlugin(() => {
     approvalWorkflowEntities: () => `${apiBase}/approval-workflow-entities`,
     approvalWorkflowEntityShow: (id: number | string) => `${apiBase}/approval-workflow-entities/${id}`,
 
+    notificationAdminEvents: () => `${apiBase}/notification-admin/events`,
+    notificationAdminCatalog: () => `${apiBase}/notification-admin/catalog`,
+    notificationAdminCoverage: () => `${apiBase}/notification-admin/coverage`,
+    notificationAdminPolicies: () => `${apiBase}/notification-admin/policies`,
+    notificationAdminPolicy: (id: number | string) => `${apiBase}/notification-admin/policies/${id}`,
+    notificationAdminDryRun: () => `${apiBase}/notification-admin/policies/dry-run`,
+    notificationAdminPreview: () => `${apiBase}/notification-admin/templates/preview`,
+    notificationAdminLogs: () => `${apiBase}/notification-admin/logs`,
+    notificationAdminLog: (id: number | string) => `${apiBase}/notification-admin/logs/${id}`,
+    notificationAdminSettings: () => `${apiBase}/notification-admin/settings`,
+    notificationAdminHealth: () => `${apiBase}/notification-admin/health`,
+    notificationAdminRetry: (id: number | string) => `${apiBase}/notification-admin/outbox/${id}/retry`,
+
     // Jabatan, Perusahaan, Cabang, Divisi, Departemen, Cuti, Pegawai
     jabatan              : () => `${apiBase}/jabatan`,
     countPegawaiByJabatan: () => `${apiBase}/jabatan/countPegawaiByJabatan`,

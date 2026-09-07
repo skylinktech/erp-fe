@@ -180,12 +180,13 @@ export const useNotificationFeedStore = defineStore('notificationFeed', {
     prependFeedItem(recipientLike: Record<string, unknown>) {
       const mapped = mapRecipientToFeedItem(recipientLike)
       const exists = this.items.some((row) => String(row.recipientId) === String(mapped.recipientId))
-      if (!exists && (this.activeTab === 'general' || (this.activeTab === 'inbox' && !mapped.isRead))) {
+      if (exists) return
+      if (this.activeTab === 'general' || (this.activeTab === 'inbox' && !mapped.isRead && mapped.contributesToUnreadCount !== false)) {
         this.items.unshift(mapped)
       }
-      if (!mapped.isRead) {
+      this.counts.general += 1
+      if (!mapped.isRead && mapped.contributesToUnreadCount !== false) {
         this.counts.inbox += 1
-        this.counts.general += 1
       }
     },
 

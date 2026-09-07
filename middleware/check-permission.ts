@@ -147,6 +147,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       '/admin/permissions': 'view_permission',
       '/admin/dashboards': 'manage_dashboard',
       '/admin/dashboards/widgets': 'manage_dashboard_widget',
+      '/admin/notification-management': 'view_notification_policy',
     }
 
     // Cek apakah user adalah superadmin

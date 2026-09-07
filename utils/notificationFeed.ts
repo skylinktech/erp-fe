@@ -13,6 +13,11 @@ export interface NotificationFeedItem {
   subtitle: string
   categoryLabel: string
   raw: Record<string, unknown>
+  recipientType?: string
+  category?: string
+  priority?: string
+  contributesToUnreadCount?: boolean
+  deepLink?: string
 }
 
 /** Ubah snake_case / kebab-case menjadi Title Case, mis. payment_request → Payment Request */
@@ -61,6 +66,8 @@ export function getNotificationEventLabel(event: string): string {
     created: 'membuat',
     updated: 'memperbarui',
     approval_step: 'mengirim approval',
+    cancelled: 'membatalkan',
+    revised: 'mengajukan ulang',
   }
   return map[event] || humanizeNotificationLabel(event).toLowerCase() || 'memperbarui'
 }
@@ -151,11 +158,13 @@ export function mapRecipientToFeedItem(recipient: Record<string, any>): Notifica
 
   const type = String(notification.type || payload.type || '')
   const event = String(notification.event || payload.event || '')
-  const title = buildTitle(type, payload)
+  const title =
+    String(recipient.title || payload.title || '').trim() || buildTitle(type, payload)
   const categoryLabel = getNotificationTypeLabel(type)
   const eventLabel = getNotificationEventLabel(event)
+  const renderedMessage = String(recipient.message || payload.message || '').trim()
 
-  let subtitle = `${eventLabel} ${title}`.trim()
+  let subtitle = renderedMessage || `${eventLabel} ${title}`.trim()
   if (
     type === 'purchase_order' &&
     event === 'rejected' &&
@@ -185,10 +194,16 @@ export function mapRecipientToFeedItem(recipient: Record<string, any>): Notifica
     subtitle,
     categoryLabel,
     raw: recipient,
+    recipientType: String(recipient.recipient_type || recipient.recipientType || ''),
+    category: String(recipient.category || ''),
+    priority: String(recipient.priority || ''),
+    contributesToUnreadCount: recipient.contributes_to_unread_count ?? recipient.contributesToUnreadCount ?? true,
+    deepLink: String(recipient.deep_link || recipient.deepLink || payload.deepLink || ''),
   }
 }
 
 export function getNotificationNavigationPath(item: NotificationFeedItem): string | null {
+  if (item.deepLink && item.deepLink.startsWith('/')) return item.deepLink
   const payload = (item.raw?.notification as { payload?: Record<string, any> } | undefined)?.payload || {}
 
   switch (item.type) {

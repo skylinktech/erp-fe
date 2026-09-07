@@ -144,10 +144,14 @@ export const useNotificationsStore = defineStore('notifications', {
           try {
             const recipient = payload.recipient || payload.data?.recipient || payload
             const notification = recipient?.notification || payload.notification
-            const type = notification?.type || payload.type || 'Notifikasi'
-            const msg = payload.message || notification?.payload?.title || 'Anda memiliki notifikasi baru'
+            const title = payload.title || recipient?.title || notification?.type || 'Notifikasi'
+            const msg =
+              payload.message ||
+              recipient?.message ||
+              notification?.payload?.title ||
+              'Anda memiliki notifikasi baru'
             this.handleRealtimeEvent({
-              title: String(type),
+              title: String(title),
               message: String(msg),
               tag: `notification-${recipient?.id || notification?.id || Date.now()}`,
               recipient: recipient?.notification ? recipient : undefined,

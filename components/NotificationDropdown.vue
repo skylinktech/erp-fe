@@ -91,14 +91,14 @@
                 </div>
                 <div class="flex-grow-1 min-w-0">
                   <p class="mb-1 small notification-item-text">
-                    <span class="fw-semibold">{{ item.createdByName }}</span>
-                    {{ ' ' }}
-                    <span>{{ getEventLabel(item.event) }}</span>
-                    {{ ' ' }}
                     <span class="fw-semibold">{{ item.title }}</span>
                   </p>
+                  <p class="mb-1 small text-body">{{ item.subtitle }}</p>
                   <p class="mb-0 text-muted notification-item-meta">
                     {{ formatTimeAgo(item.createdAt) }} • {{ item.categoryLabel }}
+                    <span v-if="item.priority === 'HIGH' || item.priority === 'CRITICAL'" class="badge bg-label-warning ms-1">
+                      {{ item.priority }}
+                    </span>
                   </p>
                 </div>
                 <div v-if="!item.isRead" class="flex-shrink-0">
@@ -137,7 +137,6 @@ import { storeToRefs } from 'pinia'
 import { useNotificationFeedStore } from '~/stores/notificationFeed'
 import {
   formatNotificationTimeAgo,
-  getNotificationEventLabel,
   getNotificationNavigationPath,
   type NotificationFeedItem,
   type NotificationTab,
@@ -158,10 +157,6 @@ const tabs = computed(() => [
   { key: 'general' as NotificationTab, label: 'Umum', count: counts.value.general },
   { key: 'archived' as NotificationTab, label: 'Arsip', count: counts.value.archived },
 ])
-
-function getEventLabel(event: string) {
-  return getNotificationEventLabel(event)
-}
 
 function formatTimeAgo(date: string) {
   return formatNotificationTimeAgo(date)
