@@ -832,10 +832,27 @@ html[data-print-type='SUBSCRIPTION'] .cetak-check {
     font-size: 10px !important;
   }
 
-  /* Keep each section table on one page — never leave a header orphan. */
+  /* Keep compact section tables on one page — never leave a header orphan.
+   * Exception: SI main/summary tables are tall; forcing avoid pushes them to page 2. */
   .cetak-table-wrap,
   .cetak-notes,
-  .cetak-document .table-responsive:has(> table:first-child):not(.cetak-table-wrap) {
+  .cetak-document .table-responsive:has(> table:first-child):not(.cetak-table-wrap):not(:has(> .cetak-si-table)):not(:has(> .cetak-si-summary)) {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* SI long tables must flow from page 1 across pages */
+  .cetak-document .table-responsive:has(> .cetak-si-table),
+  .cetak-document .table-responsive:has(> .cetak-si-summary),
+  .cetak-document .cetak-si-table,
+  .cetak-document .cetak-si-summary {
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+    overflow: visible !important;
+  }
+
+  .cetak-document .cetak-si-table tbody tr,
+  .cetak-document .cetak-si-summary tbody tr {
     break-inside: avoid;
     page-break-inside: avoid;
   }
@@ -866,11 +883,17 @@ html[data-print-type='SUBSCRIPTION'] .cetak-check {
 
   .cetak-notes,
   .cetak-table-wrap,
-  .cetak-document .table-responsive:has(> table:first-child):not(.cetak-table-wrap),
+  .cetak-document .table-responsive:has(> table:first-child):not(.cetak-table-wrap):not(:has(> .cetak-si-table)):not(:has(> .cetak-si-summary)),
   .cetak-document .term-conditions-table,
   .cetak-document .alert {
     border-radius: var(--print-table-radius) !important;
     overflow: hidden !important;
+  }
+
+  .cetak-document .table-responsive:has(> .cetak-si-table),
+  .cetak-document .table-responsive:has(> .cetak-si-summary) {
+    border-radius: 0 !important;
+    overflow: visible !important;
   }
 
   .cetak-table-wrap,
