@@ -40,12 +40,12 @@
           </tr>
         </thead>
         <tbody>
-          <!-- SERVICEPLAN [MRC] -->
+          <!-- INCOME: SERVICEPLAN [MRC] -->
           <template v-if="siteInvestServicesList.length > 0">
             <tr class="fw-bold bg-light">
               <td colspan="8" class="text-start">SERVICEPLAN [MRC]</td>
             </tr>
-            <tr v-for="(item, index) in siteInvestServicesList" :key="'svc-' + (item.id || index)">
+            <tr v-for="(item, index) in siteInvestServicesList" :key="'svc-inc-' + (item.id || index)">
               <td class="text-start">{{ item.priceListLine?.service?.name || item.priceListLine?.service?.code || '-' }}</td>
               <td class="text-center">1</td>
               <td class="text-center">{{ Number(item.quantity) }}</td>
@@ -53,21 +53,21 @@
               <td class="text-center">{{ formatContractDurationMonths(resolveLineDurationMonths(item)) }}</td>
               <td class="text-end">{{ formatRupiahNum(getServicePrice(item)) }}</td>
               <td class="text-end">{{ formatRupiahNum(getServiceContractIncome(item)) }}</td>
-              <td class="text-end">{{ itemExpenseDisplay(item) }}</td>
+              <td class="text-end">-</td>
             </tr>
             <tr class="fw-bold">
               <td colspan="6" class="text-end">TOTAL</td>
               <td class="text-end">{{ formatRupiahNum(serviceSubtotalDisplay) }}</td>
-              <td class="text-end">{{ formatRupiahNum(serviceExpenseSubtotal) }}</td>
+              <td class="text-end">-</td>
             </tr>
           </template>
 
-          <!-- MATERIAL [OTC] -->
+          <!-- INCOME: MATERIAL [OTC] -->
           <template v-if="siteInvestMaterialsList.length > 0">
             <tr class="fw-bold bg-light">
               <td colspan="8" class="text-start">MATERIAL [OTC]</td>
             </tr>
-            <tr v-for="(item, index) in siteInvestMaterialsList" :key="'mat-' + (item.id || index)">
+            <tr v-for="(item, index) in siteInvestMaterialsList" :key="'mat-inc-' + (item.id || index)">
               <td class="text-start">{{ item.priceListLine?.product?.name || item.priceListLine?.product?.sku || '-' }}</td>
               <td class="text-center">1</td>
               <td class="text-center">{{ Number(item.quantity) }}</td>
@@ -75,21 +75,21 @@
               <td class="text-center">1</td>
               <td class="text-end">{{ formatRupiahNum(item.price || 0) }}</td>
               <td class="text-end">{{ formatRupiahNum(getItemSubtotal(item)) }}</td>
-              <td class="text-end">{{ itemExpenseDisplay(item) }}</td>
+              <td class="text-end">-</td>
             </tr>
             <tr class="fw-bold">
               <td colspan="6" class="text-end">TOTAL</td>
               <td class="text-end">{{ formatRupiahNum(materialSubtotal) }}</td>
-              <td class="text-end">{{ formatRupiahNum(materialExpenseSubtotal) }}</td>
+              <td class="text-end">-</td>
             </tr>
           </template>
 
-          <!-- DELIVERY & INSTALLATION -->
+          <!-- INCOME: DELIVERY & INSTALLATION -->
           <template v-if="siteInvestDidsList.length > 0">
             <tr class="fw-bold bg-light">
               <td colspan="8" class="text-start">DELIVERY & INSTALLATION</td>
             </tr>
-            <tr v-for="(item, index) in siteInvestDidsList" :key="'did-' + (item.id || index)">
+            <tr v-for="(item, index) in siteInvestDidsList" :key="'did-inc-' + (item.id || index)">
               <td class="text-start">{{ didDescription(item) }}</td>
               <td class="text-center">1</td>
               <td class="text-center">{{ Number(item.quantity) }}</td>
@@ -97,11 +97,77 @@
               <td class="text-center">1</td>
               <td class="text-end">{{ formatRupiahNum(item.price || 0) }}</td>
               <td class="text-end">{{ formatRupiahNum(getItemSubtotal(item)) }}</td>
-              <td class="text-end">{{ itemExpenseDisplay(item) }}</td>
+              <td class="text-end">-</td>
             </tr>
             <tr class="fw-bold">
               <td colspan="6" class="text-end">TOTAL</td>
               <td class="text-end">{{ formatRupiahNum(didSubtotal) }}</td>
+              <td class="text-end">-</td>
+            </tr>
+          </template>
+
+          <!-- EXPENSES: MRC (detail cost service, mis. bandwidth/serviceplan) -->
+          <template v-if="siteInvestServicesList.length > 0">
+            <tr class="fw-bold bg-light">
+              <td colspan="8" class="text-start">MRC</td>
+            </tr>
+            <tr v-for="(item, index) in siteInvestServicesList" :key="'svc-exp-' + (item.id || index)">
+              <td class="text-start">{{ item.priceListLine?.service?.name || item.priceListLine?.service?.code || '-' }}</td>
+              <td class="text-center">1</td>
+              <td class="text-center">{{ Number(item.quantity) }}</td>
+              <td class="text-center">{{ itemSatuan(item, 'service') }}</td>
+              <td class="text-center">{{ formatContractDurationMonths(resolveLineDurationMonths(item)) }}</td>
+              <td class="text-end">{{ unitCostDisplay(item) }}</td>
+              <td class="text-end">-</td>
+              <td class="text-end">{{ itemExpenseDisplay(item) }}</td>
+            </tr>
+            <tr class="fw-bold">
+              <td colspan="6" class="text-end">TOTAL</td>
+              <td class="text-end">-</td>
+              <td class="text-end">{{ formatRupiahNum(serviceExpenseSubtotal) }}</td>
+            </tr>
+          </template>
+
+          <!-- EXPENSES: OTC (detail cost material, mis. Router Mikrotik, Kabel LAN) -->
+          <template v-if="siteInvestMaterialsList.length > 0">
+            <tr class="fw-bold bg-light">
+              <td colspan="8" class="text-start">OTC</td>
+            </tr>
+            <tr v-for="(item, index) in siteInvestMaterialsList" :key="'mat-exp-' + (item.id || index)">
+              <td class="text-start">{{ item.priceListLine?.product?.name || item.priceListLine?.product?.sku || '-' }}</td>
+              <td class="text-center">1</td>
+              <td class="text-center">{{ Number(item.quantity) }}</td>
+              <td class="text-center">{{ itemSatuan(item, 'material') }}</td>
+              <td class="text-center">1</td>
+              <td class="text-end">{{ unitCostDisplay(item) }}</td>
+              <td class="text-end">-</td>
+              <td class="text-end">{{ itemExpenseDisplay(item) }}</td>
+            </tr>
+            <tr class="fw-bold">
+              <td colspan="6" class="text-end">TOTAL</td>
+              <td class="text-end">-</td>
+              <td class="text-end">{{ formatRupiahNum(materialExpenseSubtotal) }}</td>
+            </tr>
+          </template>
+
+          <!-- EXPENSES: DELIVERY & INSTALLATION -->
+          <template v-if="siteInvestDidsList.length > 0">
+            <tr class="fw-bold bg-light">
+              <td colspan="8" class="text-start">DELIVERY & INSTALLATION</td>
+            </tr>
+            <tr v-for="(item, index) in siteInvestDidsList" :key="'did-exp-' + (item.id || index)">
+              <td class="text-start">{{ didDescription(item) }}</td>
+              <td class="text-center">1</td>
+              <td class="text-center">{{ Number(item.quantity) }}</td>
+              <td class="text-center">{{ itemSatuan(item, 'did') }}</td>
+              <td class="text-center">1</td>
+              <td class="text-end">{{ unitCostDisplay(item) }}</td>
+              <td class="text-end">-</td>
+              <td class="text-end">{{ itemExpenseDisplay(item) }}</td>
+            </tr>
+            <tr class="fw-bold">
+              <td colspan="6" class="text-end">TOTAL</td>
+              <td class="text-end">-</td>
               <td class="text-end">{{ formatRupiahNum(didExpenseSubtotal) }}</td>
             </tr>
           </template>
@@ -397,6 +463,22 @@ function getItemExpense (item) {
 
 function itemExpenseDisplay (item) {
   const val = getItemExpense(item)
+  if (val == null) return '-'
+  return formatRupiahNum(val)
+}
+
+/** RATE pada baris expenses: harga beli satuan (priceBuy) */
+function getUnitCost (item) {
+  if (!item) return null
+  const pl = item.priceListLine ?? item.price_list_line
+  const v = pl?.priceBuy ?? pl?.price_buy
+  if (v === null || v === undefined || v === '') return null
+  const n = Number(v)
+  return Number.isNaN(n) ? null : n
+}
+
+function unitCostDisplay (item) {
+  const val = getUnitCost(item)
   if (val == null) return '-'
   return formatRupiahNum(val)
 }
