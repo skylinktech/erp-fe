@@ -240,7 +240,7 @@
                                     >
                                     <label>Email Customer <span class="text-danger">*</span></label>
                                 </div>
-                                <div v-if="hasEmailError" class="text-danger small mt-1">Email harus menggunakan format email yang valid.</div>
+                                <div v-if="emailErrorMessage" class="text-danger small mt-1">{{ emailErrorMessage }}</div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-floating form-floating-outline">
@@ -454,6 +454,10 @@ const exportData = (format) => {
 const hasEmailError = computed(() =>
   (validationErrors.value || []).some((err) => String(err).toLowerCase().includes('email'))
 )
+const emailErrorMessage = computed(() => {
+  const hit = (validationErrors.value || []).find((err) => String(err).toLowerCase().includes('email'))
+  return hit ? String(hit) : ''
+})
 const hasPhoneError = computed(() =>
   (validationErrors.value || []).some((err) => {
     const text = String(err).toLowerCase()

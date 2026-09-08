@@ -38,7 +38,7 @@
                         <input id="fdr-name" v-model="form.name" class="form-control" :class="{ 'is-invalid': uiErrors.name }" placeholder="Nama" aria-required="true">
                         <div v-if="uiErrors.name" class="invalid-feedback d-block">{{ uiErrors.name }}</div>
                       </div>
-                      <div class="col-md-6"><FormLabel>Customer</FormLabel><CustomSelect2 v-model="form.customerId" :options="customers" :get-option-label="getCustomerLabel" :reduce="getCustomerId" searchable clearable placeholder="Pilih Customer" /></div>
+                      <div class="col-md-6"><FormLabel>Customer</FormLabel><CustomSelect2 v-model="form.customerId" :options="customerSelectOptions" :get-option-label="getCustomerLabel" :reduce="getCustomerId" searchable clearable placeholder="Pilih Customer" /></div>
                       <div class="col-md-6">
                         <FormLabel :required="isManualSite">Site</FormLabel>
                         <CustomSelect2
@@ -528,7 +528,7 @@ const {
   formRoot,
   validateStep: validateFdrStep,
 })
-const { customers } = storeToRefs(customerStore)
+const { customerSelectOptions } = storeToRefs(customerStore)
 
 const fdrId = computed(() => route.params.id ? String(route.params.id) : null)
 const pageTitle = computed(() => (fdrId.value ? 'Edit FDR' : 'Tambah FDR'))
@@ -860,7 +860,7 @@ async function loadMasters() {
 
 async function initForm() {
   fdrStore.closeModal()
-  await Promise.all([customerStore.fetchCustomers(), loadMasters()])
+  await Promise.all([customerStore.fetchCustomersForSelect(), loadMasters()])
   if (fdrId.value) {
     await fdrStore.openModal({ id: fdrId.value })
     fdrStore.showModal = false

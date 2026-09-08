@@ -20,7 +20,7 @@
                   <label class="form-label">Filter Customer</label>
                   <CustomSelect2
                     v-model="filters.customerId"
-                    :options="customers"
+                    :options="customerSelectOptions"
                     :get-option-label="getCustomerLabel"
                     :reduce="getCustomerId"
                     placeholder="Pilih Customer"
@@ -222,7 +222,7 @@ const { getStatusBadge } = useApprovalStatus()
 const { getAttachmentUrl, isImageFile } = useImageUrl()
 
 const { fdrs, loading, totalRecords, params, stats } = storeToRefs(fdrStore)
-const { customers } = storeToRefs(customerStore)
+const { customerSelectOptions } = storeToRefs(customerStore)
 
 const statItems = computed(() => [
   { key: 'total', label: 'Total FDR', value: stats.value.total || 0, icon: 'ri-file-list-3-line', iconBgClass: 'bg-label-primary', subtitle: 'FDR terdaftar' },
@@ -515,7 +515,7 @@ const onDateChange = () => fdrStore.setFilters(filters.value)
 const { isLoading: isDataLoading } = usePageData({
   pageName: 'FDR',
   loaders: [
-    () => customerStore.fetchCustomers(),
+    () => customerStore.fetchCustomersForSelect(),
     () => fetchSites(),
     () => fetchBusinessSchemes(),
     () => fdrStore.fetchFdrs(),

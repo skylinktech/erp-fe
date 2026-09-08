@@ -34,7 +34,7 @@
                   </div>
                   <div class="col-md-6">
                     <label class="form-label">Customer</label>
-                    <CustomSelect2 v-model="form.customerId" :options="customers" :get-option-label="getCustomerLabel" :reduce="getCustomerId" placeholder="Pilih Customer" searchable clearable />
+                    <CustomSelect2 v-model="form.customerId" :options="customerSelectOptions" :get-option-label="getCustomerLabel" :reduce="getCustomerId" placeholder="Pilih Customer" searchable clearable />
                   </div>
                   <div class="col-md-6">
                     <label class="form-label">Site</label>
@@ -453,7 +453,7 @@ const {
   formRoot,
   validateStep: validateSiteInvestStep,
 })
-const { customers } = storeToRefs(customerStore)
+const { customerSelectOptions } = storeToRefs(customerStore)
 
 const quotationId = computed(() => route.params.id ? String(route.params.id) : null)
 const pageTitle = computed(() => (quotationId.value ? 'Edit Site Investment' : 'Tambah Site Investment'))
@@ -1065,6 +1065,8 @@ async function onFdrSelect(fdrId) {
   form.value.fdrId = fdr.id
   form.value.name = fdr.name || form.value.name
   form.value.customerId = fdr.customerId ?? fdr.customer_id ?? null
+  const nestedCustomer = fdr.customer ?? null
+  if (nestedCustomer) customerStore.mergeCustomerIntoSelect(nestedCustomer)
   form.value.siteId = fdr.siteId ?? fdr.site_id ?? null
   form.value.businessSchemeId = fdr.businessSchemeId ?? fdr.business_scheme_id ?? null
   form.value.priority = fdr.priority || 'medium'
@@ -1108,7 +1110,7 @@ async function fetchMasters() {
     const j = await preparedByRes.json()
     pegawaiOptions.value = mapPegawaiToOptions(j.data ?? j)
   }
-  await customerStore.fetchCustomers()
+  await customerStore.fetchCustomersForSelect()
   const [productLines, serviceLines, didLines] = await Promise.all([
     siteInvestStore.fetchPriceListLines('product'),
     siteInvestStore.fetchPriceListLines('service'),

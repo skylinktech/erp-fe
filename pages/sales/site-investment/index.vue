@@ -20,7 +20,7 @@
                                     <label class="form-label">Filter Customer</label>
                                     <CustomSelect2
                                         v-model="filters.customerId"
-                                        :options="customers"
+                                        :options="customerSelectOptions"
                                         :get-option-label="getCustomerLabel"
                                         :reduce="getCustomerId"
                                         placeholder="Pilih Customer"
@@ -322,7 +322,7 @@ const statItems = computed(() => [
     { key: 'rejected', label: 'Rejected', value: stats.value.rejected || 0, icon: 'ri-close-circle-line', iconBgClass: 'bg-label-danger', subtitle: 'Rejected' },
     { key: 'expired', label: 'Expired', value: stats.value.expired || 0, icon: 'ri-pass-expired-line', iconBgClass: 'bg-label-secondary', subtitle: 'Expired' },
 ])
-const { customers } = storeToRefs(customerStore)
+const { customerSelectOptions } = storeToRefs(customerStore)
 
 
 const { user } = storeToRefs(userStore)
@@ -709,7 +709,7 @@ const { isLoading: isDataLoading, error: dataError } = usePageData({
             siteInvestStore.params.endDate = null
             siteInvestStore.params.first = 0
         },
-        () => customerStore.fetchCustomers(),
+        () => customerStore.fetchCustomersForSelect(),
         () => permissionStore.fetchPermissions(),
         () => userStore.loadUser(),
         () => siteInvestStore.fetchSiteInvests(),
