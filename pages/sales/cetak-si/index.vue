@@ -24,17 +24,18 @@
       </div>
     </div>
 
-    <!-- Tabel utama: DESCRIPTION, LOC, QTY, SATUAN, DUR, RATE, INCOME, EXPENSES -->
+    <!-- Tabel utama: DESCRIPTION, TYPE, LOC, QTY, SATUAN, DUR, SELLING, INCOME, EXPENSES -->
     <div class="table-responsive mb-4">
       <table class="table table-bordered cetak-si-table m-0" style="font-size: 12px;">
         <thead class="table-dark table-head-white">
           <tr>
             <th class="text-start">DESCRIPTION</th>
+            <th class="text-center" style="width: 80px;">TYPE</th>
             <th class="text-center" style="width: 50px;">LOC</th>
             <th class="text-center" style="width: 50px;">QTY</th>
             <th class="text-center" style="width: 70px;">SATUAN</th>
             <th class="text-center" style="width: 50px;">DUR</th>
-            <th class="text-end" style="width: 100px;">RATE</th>
+            <th class="text-end" style="width: 100px;">SELLING</th>
             <th class="text-end" style="width: 110px;">INCOME</th>
             <th class="text-end" style="width: 110px;">EXPENSES</th>
           </tr>
@@ -43,10 +44,11 @@
           <!-- INCOME: SERVICEPLAN [MRC] -->
           <template v-if="siteInvestServicesList.length > 0">
             <tr class="fw-bold bg-light">
-              <td colspan="8" class="text-start">SERVICEPLAN [MRC]</td>
+              <td colspan="9" class="text-start">SERVICEPLAN [MRC]</td>
             </tr>
             <tr v-for="(item, index) in siteInvestServicesList" :key="'svc-inc-' + (item.id || index)">
               <td class="text-start">{{ item.priceListLine?.service?.name || item.priceListLine?.service?.code || '-' }}</td>
+              <td class="text-center">Revenue</td>
               <td class="text-center">1</td>
               <td class="text-center">{{ Number(item.quantity) }}</td>
               <td class="text-center">{{ itemSatuan(item, 'service') }}</td>
@@ -56,7 +58,7 @@
               <td class="text-end">-</td>
             </tr>
             <tr class="fw-bold">
-              <td colspan="6" class="text-end">TOTAL</td>
+              <td colspan="7" class="text-end">TOTAL</td>
               <td class="text-end">{{ formatRupiahNum(serviceSubtotalDisplay) }}</td>
               <td class="text-end">-</td>
             </tr>
@@ -65,10 +67,11 @@
           <!-- INCOME: MATERIAL [OTC] -->
           <template v-if="siteInvestMaterialsList.length > 0">
             <tr class="fw-bold bg-light">
-              <td colspan="8" class="text-start">MATERIAL [OTC]</td>
+              <td colspan="9" class="text-start">MATERIAL [OTC]</td>
             </tr>
             <tr v-for="(item, index) in siteInvestMaterialsList" :key="'mat-inc-' + (item.id || index)">
               <td class="text-start">{{ item.priceListLine?.product?.name || item.priceListLine?.product?.sku || '-' }}</td>
+              <td class="text-center">Revenue</td>
               <td class="text-center">1</td>
               <td class="text-center">{{ Number(item.quantity) }}</td>
               <td class="text-center">{{ itemSatuan(item, 'material') }}</td>
@@ -78,7 +81,7 @@
               <td class="text-end">-</td>
             </tr>
             <tr class="fw-bold">
-              <td colspan="6" class="text-end">TOTAL</td>
+              <td colspan="7" class="text-end">TOTAL</td>
               <td class="text-end">{{ formatRupiahNum(materialSubtotal) }}</td>
               <td class="text-end">-</td>
             </tr>
@@ -87,10 +90,11 @@
           <!-- INCOME: DELIVERY & INSTALLATION -->
           <template v-if="siteInvestDidsList.length > 0">
             <tr class="fw-bold bg-light">
-              <td colspan="8" class="text-start">DELIVERY & INSTALLATION</td>
+              <td colspan="9" class="text-start">DELIVERY & INSTALLATION</td>
             </tr>
             <tr v-for="(item, index) in siteInvestDidsList" :key="'did-inc-' + (item.id || index)">
               <td class="text-start">{{ didDescription(item) }}</td>
+              <td class="text-center">Revenue</td>
               <td class="text-center">1</td>
               <td class="text-center">{{ Number(item.quantity) }}</td>
               <td class="text-center">{{ itemSatuan(item, 'did') }}</td>
@@ -100,7 +104,7 @@
               <td class="text-end">-</td>
             </tr>
             <tr class="fw-bold">
-              <td colspan="6" class="text-end">TOTAL</td>
+              <td colspan="7" class="text-end">TOTAL</td>
               <td class="text-end">{{ formatRupiahNum(didSubtotal) }}</td>
               <td class="text-end">-</td>
             </tr>
@@ -109,10 +113,11 @@
           <!-- EXPENSES: MRC (detail cost service, mis. bandwidth/serviceplan) -->
           <template v-if="siteInvestServicesList.length > 0">
             <tr class="fw-bold bg-light">
-              <td colspan="8" class="text-start">MRC</td>
+              <td colspan="9" class="text-start">MRC</td>
             </tr>
             <tr v-for="(item, index) in siteInvestServicesList" :key="'svc-exp-' + (item.id || index)">
               <td class="text-start">{{ item.priceListLine?.service?.name || item.priceListLine?.service?.code || '-' }}</td>
+              <td class="text-center">Cost</td>
               <td class="text-center">1</td>
               <td class="text-center">{{ Number(item.quantity) }}</td>
               <td class="text-center">{{ itemSatuan(item, 'service') }}</td>
@@ -122,7 +127,7 @@
               <td class="text-end">{{ itemExpenseDisplay(item) }}</td>
             </tr>
             <tr class="fw-bold">
-              <td colspan="6" class="text-end">TOTAL</td>
+              <td colspan="7" class="text-end">TOTAL</td>
               <td class="text-end">-</td>
               <td class="text-end">{{ formatRupiahNum(serviceExpenseSubtotal) }}</td>
             </tr>
@@ -131,10 +136,11 @@
           <!-- EXPENSES: OTC (detail cost material, mis. Router Mikrotik, Kabel LAN) -->
           <template v-if="siteInvestMaterialsList.length > 0">
             <tr class="fw-bold bg-light">
-              <td colspan="8" class="text-start">OTC</td>
+              <td colspan="9" class="text-start">OTC</td>
             </tr>
             <tr v-for="(item, index) in siteInvestMaterialsList" :key="'mat-exp-' + (item.id || index)">
               <td class="text-start">{{ item.priceListLine?.product?.name || item.priceListLine?.product?.sku || '-' }}</td>
+              <td class="text-center">Cost</td>
               <td class="text-center">1</td>
               <td class="text-center">{{ Number(item.quantity) }}</td>
               <td class="text-center">{{ itemSatuan(item, 'material') }}</td>
@@ -144,7 +150,7 @@
               <td class="text-end">{{ itemExpenseDisplay(item) }}</td>
             </tr>
             <tr class="fw-bold">
-              <td colspan="6" class="text-end">TOTAL</td>
+              <td colspan="7" class="text-end">TOTAL</td>
               <td class="text-end">-</td>
               <td class="text-end">{{ formatRupiahNum(materialExpenseSubtotal) }}</td>
             </tr>
@@ -153,10 +159,11 @@
           <!-- EXPENSES: DELIVERY & INSTALLATION -->
           <template v-if="siteInvestDidsList.length > 0">
             <tr class="fw-bold bg-light">
-              <td colspan="8" class="text-start">DELIVERY & INSTALLATION</td>
+              <td colspan="9" class="text-start">DELIVERY & INSTALLATION</td>
             </tr>
             <tr v-for="(item, index) in siteInvestDidsList" :key="'did-exp-' + (item.id || index)">
               <td class="text-start">{{ didDescription(item) }}</td>
+              <td class="text-center">Cost</td>
               <td class="text-center">1</td>
               <td class="text-center">{{ Number(item.quantity) }}</td>
               <td class="text-center">{{ itemSatuan(item, 'did') }}</td>
@@ -166,7 +173,7 @@
               <td class="text-end">{{ itemExpenseDisplay(item) }}</td>
             </tr>
             <tr class="fw-bold">
-              <td colspan="6" class="text-end">TOTAL</td>
+              <td colspan="7" class="text-end">TOTAL</td>
               <td class="text-end">-</td>
               <td class="text-end">{{ formatRupiahNum(didExpenseSubtotal) }}</td>
             </tr>
@@ -174,7 +181,7 @@
 
           <!-- Kosong -->
           <tr v-if="!hasAnyItems">
-            <td colspan="8" class="text-center py-4 text-muted">Tidak ada item</td>
+            <td colspan="9" class="text-center py-4 text-muted">Tidak ada item</td>
           </tr>
         </tbody>
       </table>
@@ -185,6 +192,7 @@
       <table class="table table-bordered cetak-si-summary m-0" style="font-size: 12px;">
         <colgroup>
           <col>
+          <col style="width: 80px;">
           <col style="width: 50px;">
           <col style="width: 50px;">
           <col style="width: 70px;">
@@ -195,24 +203,24 @@
         </colgroup>
         <tbody>
           <tr class="cetak-si-grand-total fw-bold">
-            <td colspan="6" class="text-start">GRAND TOTAL</td>
+            <td colspan="7" class="text-start">GRAND TOTAL</td>
             <td class="text-end">{{ formatRupiahNum(grandTotalIncome) }}</td>
             <td class="text-end">{{ formatRupiahNum(grandTotalExpenses) }}</td>
           </tr>
           <tr>
-            <td colspan="6" class="text-start fw-medium">INCOME LESS EXPENSES</td>
+            <td colspan="7" class="text-start fw-medium">INCOME LESS EXPENSES</td>
             <td colspan="2" class="text-end">{{ formatRupiahNum(incomeLessExpenses) }}</td>
           </tr>
           <tr>
-            <td colspan="6" class="text-start fw-medium">MONTHLY GROSS MARGIN</td>
+            <td colspan="7" class="text-start fw-medium">MONTHLY GROSS MARGIN</td>
             <td colspan="2" class="text-end">{{ monthlyGrossMarginDisplay }}</td>
           </tr>
           <tr>
-            <td colspan="6" class="text-start fw-medium">PCT MARGIN</td>
+            <td colspan="7" class="text-start fw-medium">PCT MARGIN</td>
             <td colspan="2" class="text-end">{{ pctMarginDisplay }}</td>
           </tr>
           <tr v-if="feasibility?.profitabilityStatus === 'BELOW_THRESHOLD'">
-            <td colspan="8" class="text-start text-danger fw-medium">
+            <td colspan="9" class="text-start text-danger fw-medium">
               STATUS: BELOW MINIMUM TARGET ({{ feasibility.profitabilityThresholdPercent }}%)
             </td>
           </tr>
