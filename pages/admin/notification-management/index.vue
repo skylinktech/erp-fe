@@ -367,7 +367,7 @@
         <template v-else-if="store.settings">
           <section class="card mb-4">
             <div class="card-header"><h5 class="mb-0">Channel Configuration</h5></div>
-            <div class="card-body">
+            <div class="card-body py-3">
               <div v-for="channel in store.settings.channels" :key="channel.name" class="border rounded p-3 mb-3">
                 <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
                   <div>
@@ -389,7 +389,7 @@
 
           <section class="card mb-4">
             <div class="card-header"><h5 class="mb-0">Superadmin Feed Settings</h5></div>
-            <div class="card-body">
+            <div class="card-body py-3">
               <div class="row g-3">
                 <div class="col-md-4">
                   <div class="form-check form-switch">
@@ -403,13 +403,7 @@
                     <label class="form-check-label" for="receiveAll">Receive all policy-authorized events</label>
                   </div>
                 </div>
-                <div class="col-md-4">
-                  <label class="form-label">Minimum priority</label>
-                  <select v-model="settingsForm.superadminFeed.minPriority" class="form-select" :disabled="!canManageGlobalSettings">
-                    <option>LOW</option><option>NORMAL</option><option>HIGH</option><option>CRITICAL</option>
-                  </select>
-                </div>
-                <div class="col-md-3" v-for="flag in feedCategoryFlags" :key="flag.key">
+                <div class="col-md-4" v-for="flag in feedCategoryFlags" :key="flag.key">
                   <div class="form-check form-switch">
                     <input :id="flag.key" v-model="settingsForm.superadminFeed[flag.key]" class="form-check-input" type="checkbox" :disabled="!canManageGlobalSettings">
                     <label class="form-check-label" :for="flag.key">{{ flag.label }}</label>
@@ -420,6 +414,12 @@
                     <input id="infoUnread" v-model="settingsForm.superadminFeed.informationalContributesUnread" class="form-check-input" type="checkbox" :disabled="!canManageGlobalSettings">
                     <label class="form-check-label" for="infoUnread">Informational contributes to unread</label>
                   </div>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Minimum priority</label>
+                  <select v-model="settingsForm.superadminFeed.minPriority" class="form-select" :disabled="!canManageGlobalSettings">
+                    <option>LOW</option><option>NORMAL</option><option>HIGH</option><option>CRITICAL</option>
+                  </select>
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">Aggregation behavior</label>
@@ -433,7 +433,7 @@
 
           <section class="card mb-4">
             <div class="card-header"><h5 class="mb-0">Delivery Defaults</h5></div>
-            <div class="card-body">
+            <div class="card-body py-3">
               <div class="row g-3">
                 <div class="col-md-4">
                   <label class="form-label">Default maximum attempts</label>
@@ -456,7 +456,7 @@
 
           <section v-if="store.health" class="card mb-4">
             <div class="card-header"><h5 class="mb-0">System Health</h5></div>
-            <div class="card-body">
+            <div class="card-body py-3">
               <div class="row g-3">
                 <div class="col-md-3"><strong>Worker:</strong> {{ store.health.worker.status }}</div>
                 <div class="col-md-3"><strong>Pending outbox:</strong> {{ store.health.outbox.pending }}</div>

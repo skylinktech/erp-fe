@@ -225,10 +225,20 @@
               <div id="si-tab-services" data-step-id="si-tab-services" class="tab-pane fade" role="tabpanel" :class="paneClass('si-tab-services')">
                 <div v-if="uiErrors.siteInvestServices" class="alert alert-danger py-2 mb-3"><i class="ri-error-warning-line me-1"></i>{{ uiErrors.siteInvestServices }}</div>
                 <div class="repeater-table">
-                  <div class="repeater-table-head d-none d-md-grid repeater-cols-6">
-                    <span>Service</span><span>Qty</span><span>Durasi (bln) *</span><span>Harga Satuan</span><span>Period</span><span>Contract</span>
+                  <div class="repeater-table-head d-none d-md-grid repeater-cols-service">
+                    <span>Service</span>
+                    <span>Qty</span>
+                    <span>Durasi *</span>
+                    <span>Harga Satuan</span>
+                    <span title="Qty × harga satuan (satu periode)">Period Amount</span>
+                    <span title="Period Amount × durasi (bulan)">Contract Value</span>
+                    <span class="repeater-head-action" aria-hidden="true"></span>
                   </div>
-                  <div v-for="(item, index) in form.siteInvestServices" :key="'s-'+index" class="repeater-table-row">
+                  <div
+                    v-for="(item, index) in form.siteInvestServices"
+                    :key="'s-'+index"
+                    class="repeater-table-row repeater-cols-service"
+                  >
                     <div class="repeater-cell repeater-cell-main">
                       <span class="repeater-cell-label d-md-none">Service</span>
                       <CustomSelect2 v-model="item.priceListLineId" :options="priceListLinesService" :get-option-label="getServiceLineLabel" :reduce="getServiceLineId" placeholder="Pilih Service" @update:modelValue="onServiceLineChange(index, $event)" />
@@ -248,7 +258,7 @@
                         step="1"
                         required
                         aria-required="true"
-                        placeholder="Bulan (wajib, min. 1)"
+                        placeholder="Bulan"
                         title="Wajib diisi. Isi 1 untuk biaya sekali (EOS/OM)."
                         @input="onServiceDurationInput"
                       >
@@ -265,11 +275,13 @@
                     </div>
                     <div class="repeater-cell">
                       <span class="repeater-cell-label d-md-none">Period Amount</span>
-                      <input :value="formatRupiah(lineSubtotal(item))" class="form-control repeater-subtotal" readonly disabled tabindex="-1">
+                      <input :value="formatRupiah(lineSubtotal(item))" class="form-control repeater-subtotal" readonly disabled tabindex="-1" title="Qty × harga satuan">
                     </div>
-                    <div class="repeater-cell repeater-cell-subtotal">
+                    <div class="repeater-cell">
                       <span class="repeater-cell-label d-md-none">Contract Value</span>
-                      <input :value="formatRupiah(serviceContractValue(item))" class="form-control repeater-subtotal" readonly disabled tabindex="-1">
+                      <input :value="formatRupiah(serviceContractValue(item))" class="form-control repeater-subtotal" readonly disabled tabindex="-1" title="Period Amount × durasi (bulan)">
+                    </div>
+                    <div class="repeater-cell repeater-cell-action">
                       <button type="button" class="repeater-delete-btn" @click="siteInvestStore.removeServiceItem(index)" title="Hapus"><i class="ri-delete-bin-6-line"></i></button>
                     </div>
                     <div v-if="item.isPriceOverridden" class="repeater-cell-reason">
@@ -279,6 +291,10 @@
                   </div>
                   <div v-if="!form.siteInvestServices?.length" class="repeater-empty">Belum ada item.</div>
                 </div>
+                <p class="text-muted small mt-2 mb-0">
+                  <strong>Period Amount</strong> = Qty × Harga Satuan.
+                  <strong>Contract Value</strong> = Period Amount × Durasi (bulan). Isi durasi <strong>1</strong> untuk biaya sekali (EOS/OM).
+                </p>
                 <button type="button" class="btn btn-outline-primary btn-sm mt-3" @click="siteInvestStore.addServiceItem()"><i class="ri-add-line me-1"></i>Tambah Service</button>
               </div>
 
@@ -1176,6 +1192,8 @@ watch([selectedDidPriceListId, selectedPriceListId], async () => {
 .repeater-table {
   border: 1px solid #dee2e6;
   border-radius: 10px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 .repeater-table-head {
   background: #f1f3f5;
@@ -1214,6 +1232,14 @@ watch([selectedDidPriceListId, selectedPriceListId], async () => {
   gap: 8px;
 }
 .repeater-cell-subtotal .form-control { flex: 1 1 0; min-width: 0; }
+.repeater-cell-action {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding-right: 2px;
+}
 .repeater-cell-label {
   font-size: 0.7rem;
   font-weight: 700;
@@ -1231,6 +1257,67 @@ watch([selectedDidPriceListId, selectedPriceListId], async () => {
 }
 .repeater-cols-6 {
   grid-template-columns: 2fr 0.7fr 0.8fr 1.2fr 1.2fr 1.4fr;
+}
+/* Service: fixed widths for Qty/Durasi so multi-digit values stay readable.
+   Money columns keep a usable min; Service flexes. Table scrolls horizontally if needed. */
+.repeater-cols-service {
+  grid-template-columns:
+    minmax(140px, 1.6fr)
+    88px
+    96px
+    minmax(128px, 1.15fr)
+    minmax(120px, 1.05fr)
+    minmax(120px, 1.1fr)
+    40px;
+  box-sizing: border-box;
+  min-width: 820px;
+}
+/* Compact number fields: right-align + hide native steppers (still typeable) */
+.repeater-cols-service input[type='number'] {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.repeater-cols-service input[type='number']::-webkit-outer-spin-button,
+.repeater-cols-service input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.repeater-cols-service .repeater-subtotal,
+.repeater-cols-service .price-field {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.875rem;
+}
+@media (min-width: 768px) {
+  .repeater-table-head.repeater-cols-service,
+  .repeater-table-row.repeater-cols-service {
+    padding-right: 20px;
+  }
+  .repeater-table-row.repeater-cols-service {
+    display: grid;
+    align-items: end;
+    gap: 10px;
+  }
+  .repeater-table-row.repeater-cols-service .repeater-cell {
+    flex: unset;
+    width: auto;
+    min-width: 0;
+  }
+  .repeater-table-row.repeater-cols-service .repeater-cell-action {
+    width: 40px;
+    max-width: 40px;
+    justify-content: center;
+    padding-right: 0;
+  }
+  .repeater-table-row.repeater-cols-service .repeater-cell-reason {
+    grid-column: 1 / -1;
+  }
+  .repeater-head-action {
+    display: block;
+  }
 }
 .repeater-subtotal {
   background: #e9ecef !important;
