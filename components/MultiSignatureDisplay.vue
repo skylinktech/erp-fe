@@ -50,67 +50,124 @@
         ></div>
       </div>
 
-      <!-- Signatures Grid; gap minimal antara Prepared by & Approved by -->
-      <div class="row signature-grid" :class="[compact ? 'g-0' : 'g-1', { 'justify-content-center': signatures.length === 1 || compact }, compact && 'signature-grid-compact']">
-        <div
-          v-for="(signature, index) in signatures"
-          :key="signature.id"
-          :class="signatures.length === 1 ? 'col-12 col-md-6 col-lg-4' : columnClass"
-        >
-          <div class="signature-card">
-            <div v-if="cutiPrintMode" class="cuti-print-sig-kicker">
-              {{ cutiPrintHeader(index, signatures.length) }}
-            </div>
-            <!-- Judul di atas QR: Prepared by / Approved by (Approved by bisa disembunyikan via prop, mis. di cetak quotation) -->
-            <div v-else-if="isPreparedBy(signature)" class="signature-card-label mb-2">Prepared by</div>
-            <div v-else-if="showApprovedByLabel" class="signature-card-label mb-2 mt-8"></div>
-            <!-- QR Code -->
-            <div class="qr-wrapper">
-              <QRCodeGenerator
-                :value="getVerificationUrl(signature.token)"
-                :size="qrSize"
-                :show-label="false"
-              />
-            </div>
-
-            <!-- Signature Info: Nama, hairline, Jabatan/Role -->
-            <div class="signature-info mt-2">
-              <!-- Nama (fullName atau dari user) -->
-              <div class="user-name fw-bold text-break">
-                {{ displayName(signature) }}
+      <!-- Signatures Grid: Prepared by per kartu; 1× "Approved by" terpusat di atas semua QR approver -->
+      <div
+        class="row signature-grid align-items-start"
+        :class="[compact ? 'g-0' : 'g-1', { 'justify-content-center': signatures.length === 1 || compact }, compact && 'signature-grid-compact']"
+      >
+        <!-- Cetak cuti: flat list + label per QR -->
+        <template v-if="cutiPrintMode">
+          <div
+            v-for="(signature, index) in signatures"
+            :key="signature.id"
+            :class="signatures.length === 1 ? 'col-12 col-md-6 col-lg-4' : columnClass"
+          >
+            <div class="signature-card">
+              <div class="cuti-print-sig-kicker">
+                {{ cutiPrintHeader(index, signatures.length) }}
               </div>
-              <!-- Pemisah: hairline seperti Site Investment -->
-              <hr class="signature-separator-hairline my-1">
-              <!-- Jabatan (jika ada) atau Role user -->
-              <div class="signature-title small">
-                {{ displayTitle(signature) }}
+              <div class="qr-wrapper">
+                <QRCodeGenerator
+                  :value="getVerificationUrl(signature.token)"
+                  :size="qrSize"
+                  :show-label="false"
+                />
               </div>
-
-              <!-- Signed Date -->
-              <div class="signed-date text-muted small mt-1">
-                {{ formatDate(signature.signedAt) }}
-              </div>
-
-              <!-- Notes (if any) -->
-              <div v-if="signature.notes" class="signature-notes small text-muted mt-1">
-                <i class="ri-message-2-line me-1"></i>
-                {{ signature.notes }}
-              </div>
-
-              <!-- Verification Status (tanpa hairline/label di bawah) -->
-              <div
-                class="verification-status mt-2"
-                :class="{ 'verification-status--cuti-print': cutiPrintMode }"
-              >
-                <i
-                  class="ri-verified-badge-fill me-1"
-                  :class="cutiPrintMode ? 'text-cuti-print-accent' : 'text-success'"
-                ></i>
-                <small :class="cutiPrintMode ? 'text-cuti-print-accent' : 'text-success'">Terverifikasi</small>
+              <div class="signature-info mt-2">
+                <div class="user-name fw-bold text-break">{{ displayName(signature) }}</div>
+                <hr class="signature-separator-hairline my-1">
+                <div class="signature-title small">{{ displayTitle(signature) }}</div>
+                <div class="signed-date text-muted small mt-1">{{ formatDate(signature.signedAt) }}</div>
+                <div v-if="signature.notes" class="signature-notes small text-muted mt-1">
+                  <i class="ri-message-2-line me-1"></i>{{ signature.notes }}
+                </div>
+                <div class="verification-status mt-2 verification-status--cuti-print">
+                  <i class="ri-verified-badge-fill me-1 text-cuti-print-accent"></i>
+                  <small class="text-cuti-print-accent">Terverifikasi</small>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </template>
+
+        <template v-else>
+          <div
+            v-for="signature in preparedSignatures"
+            :key="'prep-' + signature.id"
+            :class="signatures.length === 1 ? 'col-12 col-md-6 col-lg-4' : columnClass"
+          >
+            <div class="signature-card">
+              <div class="signature-card-label mb-2">Prepared by</div>
+              <div class="qr-wrapper">
+                <QRCodeGenerator
+                  :value="getVerificationUrl(signature.token)"
+                  :size="qrSize"
+                  :show-label="false"
+                />
+              </div>
+              <div class="signature-info mt-2">
+                <div class="user-name fw-bold text-break">{{ displayName(signature) }}</div>
+                <hr class="signature-separator-hairline my-1">
+                <div class="signature-title small">{{ displayTitle(signature) }}</div>
+                <div class="signed-date text-muted small mt-1">{{ formatDate(signature.signedAt) }}</div>
+                <div v-if="signature.notes" class="signature-notes small text-muted mt-1">
+                  <i class="ri-message-2-line me-1"></i>{{ signature.notes }}
+                </div>
+                <div class="verification-status mt-2">
+                  <i class="ri-verified-badge-fill me-1 text-success"></i>
+                  <small class="text-success">Terverifikasi</small>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div
+            v-if="approverSignatures.length > 0"
+            class="col-auto signature-approver-group"
+          >
+            <div
+              v-if="showApprovedByLabel"
+              class="signature-card-label mb-2 signature-approver-group-label"
+            >
+              Approved by
+            </div>
+            <div
+              v-else-if="preparedSignatures.length > 0"
+              class="signature-card-label mb-2 signature-approver-group-label invisible"
+              aria-hidden="true"
+            >
+              &nbsp;
+            </div>
+            <div class="d-flex flex-wrap justify-content-center align-items-start signature-approver-qrs">
+              <div
+                v-for="signature in approverSignatures"
+                :key="'apr-' + signature.id"
+                class="signature-card"
+              >
+                <div class="qr-wrapper">
+                  <QRCodeGenerator
+                    :value="getVerificationUrl(signature.token)"
+                    :size="qrSize"
+                    :show-label="false"
+                  />
+                </div>
+                <div class="signature-info mt-2">
+                  <div class="user-name fw-bold text-break">{{ displayName(signature) }}</div>
+                  <hr class="signature-separator-hairline my-1">
+                  <div class="signature-title small">{{ displayTitle(signature) }}</div>
+                  <div class="signed-date text-muted small mt-1">{{ formatDate(signature.signedAt) }}</div>
+                  <div v-if="signature.notes" class="signature-notes small text-muted mt-1">
+                    <i class="ri-message-2-line me-1"></i>{{ signature.notes }}
+                  </div>
+                  <div class="verification-status mt-2">
+                    <i class="ri-verified-badge-fill me-1 text-success"></i>
+                    <small class="text-success">Terverifikasi</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
       </div>
 
       <!-- Pending / lengkap (disembunyikan di cetak cuti / tanpa header) -->
@@ -314,6 +371,14 @@ const progressPercentage = computed(() => {
   return Math.min(100, Math.round((signatures.value.length / effectiveRequired.value) * 100))
 })
 
+const preparedSignatures = computed(() =>
+  signatures.value.filter((s) => isPreparedBy(s))
+)
+
+const approverSignatures = computed(() =>
+  signatures.value.filter((s) => !isPreparedBy(s))
+)
+
 // Methods
 async function fetchSignatures() {
   const id = props.documentId != null && props.documentId !== '' ? String(props.documentId) : null
@@ -489,6 +554,19 @@ watch(
   font-weight: 600;
   color: #333;
   text-transform: none;
+}
+
+.signature-approver-group {
+  max-width: 100%;
+}
+
+.signature-approver-group-label {
+  text-align: center;
+  width: 100%;
+}
+
+.signature-approver-qrs {
+  gap: 0.25rem 0.5rem;
 }
 
 .cetak-si-signature {

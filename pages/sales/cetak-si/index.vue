@@ -8,7 +8,7 @@
     :not-found="!loading && !error && !siteInvest"
   >
     <template v-if="siteInvest">
-    <!-- Header: info kiri & kanan -->
+    <!-- Header: info kiri & kanan (selaras layout PDF Site Investment) -->
     <div class="d-flex justify-content-between mb-4" style="font-size: 12px;">
       <div class="text-start">
         <p class="mb-1"><strong>PROJECT :</strong> {{ siteInvest.name || '-' }}</p>
@@ -21,12 +21,10 @@
         <p class="mb-1"><strong>SERVICE PLANS :</strong> {{ firstServicePlanName }}</p>
         <p class="mb-1"><strong>NUMBER OF UNIT :</strong> {{ totalUnitDisplay }}</p>
         <p class="mb-1"><strong>DURATION [MONTH] :</strong> {{ durationDisplay }}</p>
-        <p class="mb-1"><strong>BILLING FREQUENCY :</strong> {{ billingFrequencyDisplay }}</p>
-        <p class="mb-1"><strong>PRICE BASIS :</strong> {{ pricingPeriodDisplay }}</p>
       </div>
     </div>
 
-    <!-- Tabel utama: DESCRIPTION, LOC, QTY, DUR, RATE, INCOME, EXPENSES -->
+    <!-- Tabel utama: DESCRIPTION, LOC, QTY, SATUAN, DUR, RATE, INCOME, EXPENSES -->
     <div class="table-responsive mb-4">
       <table class="table table-bordered cetak-si-table m-0" style="font-size: 12px;">
         <thead class="table-dark table-head-white">
@@ -34,9 +32,9 @@
             <th class="text-start">DESCRIPTION</th>
             <th class="text-center" style="width: 50px;">LOC</th>
             <th class="text-center" style="width: 50px;">QTY</th>
+            <th class="text-center" style="width: 70px;">SATUAN</th>
             <th class="text-center" style="width: 50px;">DUR</th>
             <th class="text-end" style="width: 100px;">RATE</th>
-            <th class="text-end" style="width: 100px;">HARGA BELI</th>
             <th class="text-end" style="width: 110px;">INCOME</th>
             <th class="text-end" style="width: 110px;">EXPENSES</th>
           </tr>
@@ -51,61 +49,58 @@
               <td class="text-start">{{ item.priceListLine?.service?.name || item.priceListLine?.service?.code || '-' }}</td>
               <td class="text-center">1</td>
               <td class="text-center">{{ Number(item.quantity) }}</td>
+              <td class="text-center">{{ itemSatuan(item, 'service') }}</td>
               <td class="text-center">{{ formatContractDurationMonths(resolveLineDurationMonths(item)) }}</td>
               <td class="text-end">{{ formatRupiahNum(getServicePrice(item)) }}</td>
-              <td class="text-end">{{ itemPriceBuyDisplay(item) }}</td>
               <td class="text-end">{{ formatRupiahNum(getServiceContractIncome(item)) }}</td>
               <td class="text-end">{{ itemExpenseDisplay(item) }}</td>
             </tr>
             <tr class="fw-bold">
-              <td colspan="5" class="text-end">TOTAL</td>
-              <td class="text-end">-</td>
+              <td colspan="6" class="text-end">TOTAL</td>
               <td class="text-end">{{ formatRupiahNum(serviceSubtotalDisplay) }}</td>
               <td class="text-end">{{ formatRupiahNum(serviceExpenseSubtotal) }}</td>
             </tr>
           </template>
 
-          <!-- HARDWARE [OTC] -->
+          <!-- MATERIAL [OTC] -->
           <template v-if="siteInvestMaterialsList.length > 0">
             <tr class="fw-bold bg-light">
-              <td colspan="8" class="text-start">HARDWARE [OTC]</td>
+              <td colspan="8" class="text-start">MATERIAL [OTC]</td>
             </tr>
             <tr v-for="(item, index) in siteInvestMaterialsList" :key="'mat-' + (item.id || index)">
               <td class="text-start">{{ item.priceListLine?.product?.name || item.priceListLine?.product?.sku || '-' }}</td>
               <td class="text-center">1</td>
               <td class="text-center">{{ Number(item.quantity) }}</td>
+              <td class="text-center">{{ itemSatuan(item, 'material') }}</td>
               <td class="text-center">1</td>
               <td class="text-end">{{ formatRupiahNum(item.price || 0) }}</td>
-              <td class="text-end">{{ itemPriceBuyDisplay(item) }}</td>
               <td class="text-end">{{ formatRupiahNum(getItemSubtotal(item)) }}</td>
               <td class="text-end">{{ itemExpenseDisplay(item) }}</td>
             </tr>
             <tr class="fw-bold">
-              <td colspan="5" class="text-end">TOTAL</td>
-              <td class="text-end">-</td>
+              <td colspan="6" class="text-end">TOTAL</td>
               <td class="text-end">{{ formatRupiahNum(materialSubtotal) }}</td>
               <td class="text-end">{{ formatRupiahNum(materialExpenseSubtotal) }}</td>
             </tr>
           </template>
 
-          <!-- DID [MRC/OTC] -->
+          <!-- DELIVERY & INSTALLATION -->
           <template v-if="siteInvestDidsList.length > 0">
             <tr class="fw-bold bg-light">
-              <td colspan="8" class="text-start">Delivery & Installation (OTC)</td>
+              <td colspan="8" class="text-start">DELIVERY & INSTALLATION</td>
             </tr>
             <tr v-for="(item, index) in siteInvestDidsList" :key="'did-' + (item.id || index)">
-              <td class="text-start">{{ item.priceListLine?.did?.name || item.priceListLine?.did?.code || '-' }}</td>
+              <td class="text-start">{{ didDescription(item) }}</td>
               <td class="text-center">1</td>
               <td class="text-center">{{ Number(item.quantity) }}</td>
+              <td class="text-center">{{ itemSatuan(item, 'did') }}</td>
               <td class="text-center">1</td>
               <td class="text-end">{{ formatRupiahNum(item.price || 0) }}</td>
-              <td class="text-end">{{ itemPriceBuyDisplay(item) }}</td>
               <td class="text-end">{{ formatRupiahNum(getItemSubtotal(item)) }}</td>
               <td class="text-end">{{ itemExpenseDisplay(item) }}</td>
             </tr>
             <tr class="fw-bold">
-              <td colspan="5" class="text-end">TOTAL</td>
-              <td class="text-end">-</td>
+              <td colspan="6" class="text-end">TOTAL</td>
               <td class="text-end">{{ formatRupiahNum(didSubtotal) }}</td>
               <td class="text-end">{{ formatRupiahNum(didExpenseSubtotal) }}</td>
             </tr>
@@ -119,33 +114,36 @@
       </table>
     </div>
 
-    <!-- Summary: GRAND TOTAL, INCOME LESS EXPENSES, PCT MARGIN (kolom sejajar dengan tabel utama: INCOME & EXPENSES) -->
+    <!-- Summary: GRAND TOTAL, INCOME LESS EXPENSES, MONTHLY GROSS MARGIN, PCT MARGIN -->
     <div class="table-responsive mb-4">
       <table class="table table-bordered cetak-si-summary m-0" style="font-size: 12px;">
         <colgroup>
           <col>
           <col style="width: 50px;">
           <col style="width: 50px;">
+          <col style="width: 70px;">
           <col style="width: 50px;">
-          <col style="width: 100px;">
           <col style="width: 100px;">
           <col style="width: 110px;">
           <col style="width: 110px;">
         </colgroup>
         <tbody>
           <tr class="cetak-si-grand-total fw-bold">
-            <td colspan="5" class="text-start">GRAND TOTAL</td>
-            <td class="text-end">-</td>
+            <td colspan="6" class="text-start">GRAND TOTAL</td>
             <td class="text-end">{{ formatRupiahNum(grandTotalIncome) }}</td>
             <td class="text-end">{{ formatRupiahNum(grandTotalExpenses) }}</td>
           </tr>
           <tr>
-            <td colspan="5" class="text-start fw-medium">INCOME LESS EXPENSES</td>
-            <td colspan="3" class="text-end">{{ formatRupiahNum(incomeLessExpenses) }}</td>
+            <td colspan="6" class="text-start fw-medium">INCOME LESS EXPENSES</td>
+            <td colspan="2" class="text-end">{{ formatRupiahNum(incomeLessExpenses) }}</td>
           </tr>
           <tr>
-            <td colspan="5" class="text-start fw-medium">PCT MARGIN / PROFITABILITY</td>
-            <td colspan="3" class="text-end">{{ pctMarginDisplay }}</td>
+            <td colspan="6" class="text-start fw-medium">MONTHLY GROSS MARGIN</td>
+            <td colspan="2" class="text-end">{{ monthlyGrossMarginDisplay }}</td>
+          </tr>
+          <tr>
+            <td colspan="6" class="text-start fw-medium">PCT MARGIN</td>
+            <td colspan="2" class="text-end">{{ pctMarginDisplay }}</td>
           </tr>
           <tr v-if="feasibility?.profitabilityStatus === 'BELOW_THRESHOLD'">
             <td colspan="8" class="text-start text-danger fw-medium">
@@ -170,6 +168,7 @@
         :columns="4"
         :qr-size="96"
         :compact="true"
+        :show-approved-by-label="true"
         :legacy-signature-token="siteInvest.signatureToken || undefined"
         :legacy-signer-name="legacySignerName"
         :legacy-signer-title="legacySignerTitle"
@@ -193,8 +192,6 @@ import {
   formatContractDurationMonths,
   resolveLineDurationMonths,
   resolveDocumentDurationMonths,
-  billingFrequencyLabel,
-  pricingPeriodLabel,
 } from '~/utils/commercialTerms'
 
 const { setDetailTitle } = useDynamicTitle()
@@ -210,12 +207,6 @@ function formatRupiahNum (val) {
   const n = typeof val === 'string' ? Number(val.replace(/[^0-9.-]/g, '')) : Number(val)
   if (Number.isNaN(n)) return '-'
   return new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0, minimumFractionDigits: 0 }).format(Math.round(n))
-}
-
-function formatDate (val) {
-  if (!val) return '-'
-  const d = typeof val === 'string' ? new Date(val) : val
-  return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
 function statusLabel (s, si) {
@@ -243,12 +234,11 @@ const firstServicePlanName = computed(() => {
   return first?.priceListLine?.service?.name || first?.priceListLine?.service?.code || '-'
 })
 
-// Number of Unit: jumlah product (item material/hardware) yang disimpan
+/** NUMBER OF UNIT (PDF): total qty Managed Service / Serviceplan */
 const totalUnitDisplay = computed(() => {
-  const si = siteInvest.value
-  if (!si) return '0'
-  const mat = (si.siteInvestMaterials ?? si.site_invest_materials) || []
-  return String(mat.length)
+  const list = (siteInvest.value?.siteInvestServices ?? siteInvest.value?.site_invest_services) || []
+  const sum = list.reduce((acc, item) => acc + (Number(item?.quantity) || 0), 0)
+  return String(sum)
 })
 
 // Duration: explicit snapshotted contractDurationMonths only — never qty / billingCycle regex
@@ -258,23 +248,50 @@ const durationDisplay = computed(() => {
   return formatContractDurationMonths(resolveDocumentDurationMonths(list))
 })
 
-const billingFrequencyDisplay = computed(() => {
-  const si = siteInvest.value
-  const list = (si?.siteInvestServices ?? si?.site_invest_services) || []
-  if (!list.length) return '-'
-  const first = list[0]
-  return billingFrequencyLabel(
-    first?.billingFrequency ?? first?.billing_frequency ?? first?.priceListLine?.billingCycle
-  )
-})
+/**
+ * SATUAN label for print (PDF convention). Prefer unit from priceable when present.
+ */
+function itemSatuan (item, kind) {
+  const pl = item?.priceListLine ?? item?.price_list_line
+  const productUnit =
+    pl?.product?.unit?.symbol ||
+    pl?.product?.unit?.name ||
+    pl?.product?.unitName ||
+    pl?.product?.unit_name ||
+    null
+  if (productUnit) return String(productUnit)
+  if (kind === 'service') return 'Package'
+  if (kind === 'did') return 'Lot'
+  return 'Unit'
+}
 
-const pricingPeriodDisplay = computed(() => {
-  const si = siteInvest.value
-  const list = (si?.siteInvestServices ?? si?.site_invest_services) || []
-  if (!list.length) return '-'
-  const first = list[0]
-  return pricingPeriodLabel(first?.pricingPeriod ?? first?.pricing_period)
-})
+/** DID print label: category (Delivery / Installation), not DID header name */
+const DID_CATEGORY_LABELS = {
+  delivery: 'Delivery',
+  installation: 'Installation',
+  survey: 'Survey',
+  dismantle: 'Dismantle',
+}
+const DID_CATEGORY_ORDER = {
+  delivery: 1,
+  installation: 2,
+  survey: 3,
+  dismantle: 4,
+}
+
+function resolveDidCategoryKey (item) {
+  const pl = item?.priceListLine ?? item?.price_list_line
+  const raw = pl?.categoryDid ?? pl?.category_did ?? ''
+  return String(raw).split(',')[0].trim().toLowerCase()
+}
+
+function didDescription (item) {
+  const key = resolveDidCategoryKey(item)
+  if (key && DID_CATEGORY_LABELS[key]) return DID_CATEGORY_LABELS[key]
+  if (key) return key.charAt(0).toUpperCase() + key.slice(1)
+  const pl = item?.priceListLine ?? item?.price_list_line
+  return pl?.did?.name || pl?.did?.code || '-'
+}
 
 /** Nilai numerik dari API dengan dukungan snake_case (selaras halaman detail) */
 function fromApiNum (si, ...keys) {
@@ -321,23 +338,6 @@ function getServicePrice (item) {
   if (!item) return 0
   const n = Number(item.price)
   return Number.isNaN(n) ? 0 : n
-}
-
-/** Subtotal service per baris: prefer contractAmount from API feasibility */
-function getServiceSubtotal (item) {
-  if (!item) return 0
-  if (item.contractAmount != null && item.contractAmount !== '') {
-    const n = Number(item.contractAmount)
-    if (!Number.isNaN(n)) return n
-  }
-  const st = item.subtotal
-  if (st !== undefined && st !== null && st !== '') {
-    const n = Number(st)
-    if (!Number.isNaN(n)) return n
-  }
-  const qty = Number(item.quantity) || 1
-  const price = getServicePrice(item)
-  return qty * price
 }
 
 function getServiceContractIncome (item) {
@@ -401,22 +401,6 @@ function itemExpenseDisplay (item) {
   return formatRupiahNum(val)
 }
 
-/** Harga beli satuan (unit) dari price list line */
-function getItemPriceBuy (item) {
-  if (!item) return null
-  const pl = item.priceListLine ?? item.price_list_line
-  const v = pl?.priceBuy ?? pl?.price_buy
-  if (v === null || v === undefined || v === '') return null
-  const n = Number(v)
-  return Number.isNaN(n) ? null : n
-}
-
-function itemPriceBuyDisplay (item) {
-  const val = getItemPriceBuy(item)
-  if (val == null) return '-'
-  return formatRupiahNum(val)
-}
-
 /** Daftar item dari API dengan dukungan snake_case (selaras halaman detail) */
 const siteInvestServicesList = computed(() => {
   const si = siteInvest.value
@@ -428,7 +412,12 @@ const siteInvestMaterialsList = computed(() => {
 })
 const siteInvestDidsList = computed(() => {
   const si = siteInvest.value
-  return (si?.siteInvestDids ?? si?.site_invest_dids) || []
+  const list = [...((si?.siteInvestDids ?? si?.site_invest_dids) || [])]
+  return list.sort((a, b) => {
+    const oa = DID_CATEGORY_ORDER[resolveDidCategoryKey(a)] ?? 99
+    const ob = DID_CATEGORY_ORDER[resolveDidCategoryKey(b)] ?? 99
+    return oa - ob
+  })
 })
 
 const serviceExpenseSubtotal = computed(() => {
@@ -477,6 +466,18 @@ const incomeLessExpenses = computed(() => {
   const f = feasibility.value
   if (f?.projectProfit != null) return Number(f.projectProfit) || 0
   return grandTotalIncome.value - grandTotalExpenses.value
+})
+
+const monthlyGrossMarginDisplay = computed(() => {
+  const f = feasibility.value
+  if (f?.monthlyGrossMargin != null && f.monthlyGrossMargin !== '') {
+    return formatRupiahNum(f.monthlyGrossMargin)
+  }
+  const dur = Number(f?.contractDurationMonths)
+  if (Number.isFinite(dur) && dur > 0) {
+    return formatRupiahNum(incomeLessExpenses.value / dur)
+  }
+  return '-'
 })
 
 const pctMarginDisplay = computed(() => {
