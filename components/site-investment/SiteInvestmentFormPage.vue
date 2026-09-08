@@ -226,7 +226,7 @@
                 <div v-if="uiErrors.siteInvestServices" class="alert alert-danger py-2 mb-3"><i class="ri-error-warning-line me-1"></i>{{ uiErrors.siteInvestServices }}</div>
                 <div class="repeater-table">
                   <div class="repeater-table-head d-none d-md-grid repeater-cols-6">
-                    <span>Service</span><span>Qty</span><span>Durasi (bln)</span><span>Harga Satuan</span><span>Period</span><span>Contract</span>
+                    <span>Service</span><span>Qty</span><span>Durasi (bln) *</span><span>Harga Satuan</span><span>Period</span><span>Contract</span>
                   </div>
                   <div v-for="(item, index) in form.siteInvestServices" :key="'s-'+index" class="repeater-table-row">
                     <div class="repeater-cell repeater-cell-main">
@@ -238,8 +238,20 @@
                       <input type="number" v-model.number="item.quantity" @input="calculateServiceSubtotal(index)" class="form-control" min="0.01" placeholder="Qty">
                     </div>
                     <div class="repeater-cell">
-                      <span class="repeater-cell-label d-md-none">Durasi (bulan)</span>
-                      <input type="number" v-model.number="item.contractDurationMonths" class="form-control" min="1" step="1" placeholder="Bulan">
+                      <span class="repeater-cell-label d-md-none">Durasi (bulan) *</span>
+                      <input
+                        type="number"
+                        v-model.number="item.contractDurationMonths"
+                        class="form-control"
+                        :class="{ 'is-invalid': uiErrors.siteInvestServicesDuration }"
+                        min="1"
+                        step="1"
+                        required
+                        aria-required="true"
+                        placeholder="Bulan (wajib, min. 1)"
+                        title="Wajib diisi. Isi 1 untuk biaya sekali (EOS/OM)."
+                        @input="onServiceDurationInput"
+                      >
                     </div>
                     <div class="repeater-cell">
                       <span class="repeater-cell-label d-md-none">
@@ -585,6 +597,23 @@ function validateSiteInvestStep(step) {
       uiErrors.value = { ...uiErrors.value, siteInvestServices: 'Service dengan quantity > 0 wajib memilih price list line' }
       return false
     }
+    const durationInvalid = services.some((item) => {
+      if ((Number(item?.quantity) || 0) <= 0 && Number(item?.priceListLineId || 0) <= 0) return false
+      const months = Number(item?.contractDurationMonths)
+      return !Number.isFinite(months) || months < 1
+    })
+    if (durationInvalid) {
+      uiErrors.value = {
+        ...uiErrors.value,
+        siteInvestServices: 'Durasi (bulan) wajib diisi dan harus lebih dari 0. Isi 1 untuk biaya sekali (EOS/OM).',
+        siteInvestServicesDuration: true,
+      }
+      return false
+    }
+    const next = { ...uiErrors.value }
+    delete next.siteInvestServices
+    delete next.siteInvestServicesDuration
+    uiErrors.value = next
     return true
   }
   if (step.id === 'si-tab-dids') {
@@ -637,6 +666,20 @@ function validateBeforeSubmit() {
   if (serviceInvalid) {
     errors.push({ field: 'siteInvestServices', message: 'Service dengan quantity > 0 wajib memilih price list line' })
     uiErrors.value.siteInvestServices = 'Service dengan quantity > 0 wajib memilih price list line'
+    activateTab('si-tab-services')
+    return errors
+  }
+
+  const durationInvalid = services.some((item) => {
+    if ((Number(item?.quantity) || 0) <= 0 && Number(item?.priceListLineId || 0) <= 0) return false
+    const months = Number(item?.contractDurationMonths)
+    return !Number.isFinite(months) || months < 1
+  })
+  if (durationInvalid) {
+    const message = 'Durasi (bulan) wajib diisi dan harus lebih dari 0. Isi 1 untuk biaya sekali (EOS/OM).'
+    errors.push({ field: 'siteInvestServices', message })
+    uiErrors.value.siteInvestServices = message
+    uiErrors.value.siteInvestServicesDuration = true
     activateTab('si-tab-services')
     return errors
   }
@@ -759,7 +802,8 @@ const onServiceLineChange = (index, lineId) => {
   if (!line || !item) return
   item.price = getServiceLineEffectivePrice(line)
   item.quantity = Number(line.quantity) || 1
-  // Prefill duration from ServicePlan.contractMonth once; do not overwrite user edits on re-select unless empty
+  // Prefill duration from ServicePlan.contractMonth once; do not overwrite user edits on re-select unless empty.
+  // Fallback 1 bulan agar biaya sekali (EOS/OM) tetap masuk Subtotal Service.
   const planMonth =
     line.service?.servicePlan?.contractMonth ??
     line.service?.service_plan?.contract_month ??
@@ -767,11 +811,21 @@ const onServiceLineChange = (index, lineId) => {
     null
   if (item.contractDurationMonths == null || item.contractDurationMonths === '') {
     const n = Number(planMonth)
-    item.contractDurationMonths = Number.isFinite(n) && n > 0 ? Math.trunc(n) : null
+    item.contractDurationMonths = Number.isFinite(n) && n > 0 ? Math.trunc(n) : 1
   }
   item.isPriceOverridden = false
   item.priceReason = ''
   item.subtotal = item.quantity * item.price
+}
+
+function onServiceDurationInput() {
+  if (!uiErrors.value?.siteInvestServicesDuration && !uiErrors.value?.siteInvestServices) return
+  const next = { ...uiErrors.value }
+  delete next.siteInvestServicesDuration
+  if (typeof next.siteInvestServices === 'string' && next.siteInvestServices.includes('Durasi (bulan)')) {
+    delete next.siteInvestServices
+  }
+  uiErrors.value = next
 }
 const onDidLineChange = (index, lineId) => {
   const line = priceListLinesDid.value.find((l) => Number(l.id) === Number(lineId))
@@ -958,7 +1012,23 @@ async function onPriceListSelect(priceListId) {
   const lines = priceList.lines || []
   const pt = (l) => l.priceableType ?? l.priceable_type
   form.value.siteInvestMaterials = lines.filter((l) => pt(l) === 'product').map((l) => ({ priceListLineId: l.id, quantity: toNum(l.quantity) || 1, price: toNum(l.price) || 0, subtotal: toNum(l.subtotal) || (toNum(l.quantity) || 1) * (toNum(l.price) || 0), isPriceOverridden: false, priceReason: '' }))
-  form.value.siteInvestServices = lines.filter((l) => pt(l) === 'service').map((l) => ({ priceListLineId: l.id, quantity: toNum(l.quantity) || 1, price: getServiceLineEffectivePrice(l), subtotal: (toNum(l.quantity) || 1) * getServiceLineEffectivePrice(l), isPriceOverridden: false, priceReason: '' }))
+  form.value.siteInvestServices = lines.filter((l) => pt(l) === 'service').map((l) => {
+    const planMonth =
+      l.service?.servicePlan?.contractMonth ??
+      l.service?.service_plan?.contract_month ??
+      l.service?.contractMonth ??
+      null
+    const n = Number(planMonth)
+    return {
+      priceListLineId: l.id,
+      quantity: toNum(l.quantity) || 1,
+      contractDurationMonths: Number.isFinite(n) && n > 0 ? Math.trunc(n) : 1,
+      price: getServiceLineEffectivePrice(l),
+      subtotal: (toNum(l.quantity) || 1) * getServiceLineEffectivePrice(l),
+      isPriceOverridden: false,
+      priceReason: '',
+    }
+  })
   form.value.siteInvestDids = lines.filter((l) => pt(l) === 'did').map((l) => ({ priceListLineId: l.id, quantity: toNum(l.quantity) || 1, price: toNum(l.price) || 0, subtotal: toNum(l.subtotal) || (toNum(l.quantity) || 1) * (toNum(l.price) || 0), isPriceOverridden: false, priceReason: '' }))
   selectedDidPriceListId.value = plId
   lines.filter((l) => pt(l) === 'product').forEach((l) => mergePriceListLineLocal(priceListLinesProduct.value, l, plId, priceList.name))
@@ -984,7 +1054,19 @@ async function onFdrSelect(fdrId) {
   form.value.priority = fdr.priority || 'medium'
   form.value.location = fdr.location || form.value.location
   form.value.siteInvestMaterials = (fdr.fdrItems ?? fdr.fdr_items ?? []).map((i) => ({ priceListLineId: i.priceListLineId ?? i.price_list_line_id ?? 0, quantity: Number(i.quantity) || 1, price: Number(i.price) || 0, subtotal: Number(i.subtotal) || 0, isPriceOverridden: false, priceReason: '' }))
-  form.value.siteInvestServices = (fdr.fdrServices ?? fdr.fdr_services ?? []).map((s) => ({ priceListLineId: s.priceListLineId ?? s.price_list_line_id ?? 0, quantity: Number(s.quantity) || 1, price: Number(s.price) || 0, subtotal: Number(s.subtotal) || 0, isPriceOverridden: false, priceReason: '' }))
+  form.value.siteInvestServices = (fdr.fdrServices ?? fdr.fdr_services ?? []).map((s) => {
+    const dur = s.contractDurationMonths ?? s.contract_duration_months
+    const n = Number(dur)
+    return {
+      priceListLineId: s.priceListLineId ?? s.price_list_line_id ?? 0,
+      quantity: Number(s.quantity) || 1,
+      contractDurationMonths: Number.isFinite(n) && n > 0 ? Math.trunc(n) : 1,
+      price: Number(s.price) || 0,
+      subtotal: Number(s.subtotal) || 0,
+      isPriceOverridden: false,
+      priceReason: '',
+    }
+  })
   form.value.siteInvestDids = (fdr.fdrDids ?? fdr.fdr_dids ?? []).map((d) => ({ priceListLineId: d.priceListLineId ?? d.price_list_line_id ?? 0, quantity: Number(d.quantity) || 1, price: Number(d.price) || 0, subtotal: Number(d.subtotal) || 0, isPriceOverridden: false, priceReason: '' }))
   syncPriceListSelectionFromFdr(fdr)
   mergeFdrPriceListLinesIntoCache(fdr)

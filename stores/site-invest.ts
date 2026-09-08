@@ -998,7 +998,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
             s.subtotal = nm(s.subtotal) || q * p
             const dur = s.contractDurationMonths ?? s.contract_duration_months
             s.contractDurationMonths =
-              dur != null && dur !== '' && Number(dur) > 0 ? Math.trunc(Number(dur)) : null
+              dur != null && dur !== '' && Number(dur) > 0 ? Math.trunc(Number(dur)) : 1
             s.isPriceOverridden = s.isPriceOverridden ?? s.is_price_overridden ?? false
             s.priceReason = s.priceReason ?? s.price_reason ?? ''
             s.terminalKitCount = s.terminalKitCount ?? s.terminal_kit_count ?? null
@@ -1113,7 +1113,7 @@ export const useSiteInvestStore = defineStore('siteInvest', {
       this.form.siteInvestServices.push({
         priceListLineId: 0,
         quantity: 1,
-        contractDurationMonths: null,
+        contractDurationMonths: 1,
         price: 0,
         subtotal: 0,
         isPriceOverridden: false,
