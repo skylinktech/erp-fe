@@ -579,6 +579,8 @@ export default defineNuxtPlugin(() => {
 
     // Journal Entries
     journals: () => `${apiBase}/accounting/journals`,
+    journalsPartyOptions: (params?: string) =>
+      `${apiBase}/accounting/journals/party-options${params ? `?${params}` : ''}`,
     journalsSubmit: (id: number | string) => `${apiBase}/accounting/journals/${id}/submit`,
     journalsApprove: (id: number | string) => `${apiBase}/accounting/journals/${id}/approve`,
     journalsReject: (id: number | string) => `${apiBase}/accounting/journals/${id}/reject`,
@@ -606,11 +608,19 @@ export default defineNuxtPlugin(() => {
       `${apiBase}/accounting/reports/cash-flow${params ? `?${params}` : ''}`,
     generalLedger: (params?: string) =>
       `${apiBase}/accounting/reports/general-ledger${params ? `?${params}` : ''}`,
+    generalLedgerFormOptions: (params?: string) =>
+      `${apiBase}/accounting/reports/general-ledger/form-options${params ? `?${params}` : ''}`,
+    generalLedgerExport: (params?: string) =>
+      `${apiBase}/accounting/reports/general-ledger/export${params ? `?${params}` : ''}`,
     // Reconciliation
     reconciliationAp: (params?: string) =>
       `${apiBase}/accounting/reconciliation/ap${params ? `?${params}` : ''}`,
     reconciliationAr: (params?: string) =>
       `${apiBase}/accounting/reconciliation/ar${params ? `?${params}` : ''}`,
+    reconciliationArParty: (params?: string) =>
+      `${apiBase}/accounting/reconciliation/ar-party${params ? `?${params}` : ''}`,
+    reconciliationApParty: (params?: string) =>
+      `${apiBase}/accounting/reconciliation/ap-party${params ? `?${params}` : ''}`,
     reconciliationBank: (params?: string) =>
       `${apiBase}/accounting/reconciliation/bank${params ? `?${params}` : ''}`,
     reconciliationAsset: (params?: string) =>

@@ -99,6 +99,11 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       '/finance/bank-recon': 'view_bank_recon',
       '/finance/credit-notes': 'view_credit_note',
       '/finance/journals': 'view_journal',
+      '/finance/reports/general-ledger': 'view_general_ledger',
+      '/finance/reports/trial-balance': 'view_financial_reports',
+      '/finance/reports/profit-loss': 'view_financial_reports',
+      '/finance/reports/balance-sheet': 'view_financial_reports',
+      '/finance/reports/cash-flow': 'view_financial_reports',
       '/service-management/customer-service': 'view_service_instance',
       '/service-management/pending': 'view_service_instance',
       // Legacy paths: redirected to customer-service?tab=… (keep for auth before redirect)
@@ -312,6 +317,35 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
           'view_ap_aging',
           'access_ap_aging',
         ]
+        const ok = userStore.user?.roles?.some(role =>
+          role.permissions?.some(permission => allowed.includes(permission.name))
+        )
+        if (ok) return
+      }
+
+      if (!hasPermission && to.path === '/finance/reports/general-ledger') {
+        const allowed = [
+          'view_general_ledger',
+          'access_general_ledger',
+          'view_financial_reports',
+          'view_journal',
+        ]
+        const ok = userStore.user?.roles?.some(role =>
+          role.permissions?.some(permission => allowed.includes(permission.name))
+        )
+        if (ok) return
+      }
+
+      if (
+        !hasPermission &&
+        [
+          '/finance/reports/trial-balance',
+          '/finance/reports/profit-loss',
+          '/finance/reports/balance-sheet',
+          '/finance/reports/cash-flow',
+        ].includes(to.path)
+      ) {
+        const allowed = ['view_financial_reports', 'view_journal', 'access_journal']
         const ok = userStore.user?.roles?.some(role =>
           role.permissions?.some(permission => allowed.includes(permission.name))
         )

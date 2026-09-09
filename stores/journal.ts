@@ -10,7 +10,12 @@ export interface JournalLine {
   debit: number
   credit: number
   description?: string
+  customerId?: number | null
+  vendorId?: number | null
+  partyType?: 'customer' | 'vendor' | ''
   account?: any
+  customer?: { id: number; name?: string | null; code?: string | null } | null
+  vendor?: { id: number; name?: string | null; code?: string | null } | null
 }
 
 export interface Journal {
@@ -61,6 +66,8 @@ interface JournalState {
   journalTypes: { value: string; label: string }[]
   journalStatuses: { value: string; label: string }[]
   accounts: any[]
+  customerOptions: Array<{ id: number; name: string; code?: string | null }>
+  vendorOptions: Array<{ id: number; name: string; code?: string | null }>
 }
 
 export const useJournalStore = defineStore('journal', {
@@ -112,7 +119,9 @@ export const useJournalStore = defineStore('journal', {
       { value: 'reversed', label: 'Reversed' },
       { value: 'cancelled', label: 'Dibatalkan' }
     ],
-    accounts: []
+    accounts: [],
+    customerOptions: [],
+    vendorOptions: [],
   }),
 
   actions: {
@@ -259,6 +268,40 @@ export const useJournalStore = defineStore('journal', {
             this.saving = false
             return
           }
+          const policy = this.linePartyPolicy(line)
+          if (policy === 'CUSTOMER' && !line.customerId) {
+            const toast = useToast()
+            toast.error({
+              title: 'Error',
+              message: `Baris ${i + 1}: Customer wajib dipilih untuk akun Accounts Receivable`,
+              color: 'red',
+              position: 'bottomRight',
+            })
+            this.saving = false
+            return
+          }
+          if (policy === 'VENDOR' && !line.vendorId) {
+            const toast = useToast()
+            toast.error({
+              title: 'Error',
+              message: `Baris ${i + 1}: Vendor wajib dipilih untuk akun Accounts Payable`,
+              color: 'red',
+              position: 'bottomRight',
+            })
+            this.saving = false
+            return
+          }
+          if (line.customerId && line.vendorId) {
+            const toast = useToast()
+            toast.error({
+              title: 'Error',
+              message: `Baris ${i + 1}: Customer dan Vendor tidak boleh terisi bersamaan`,
+              color: 'red',
+              position: 'bottomRight',
+            })
+            this.saving = false
+            return
+          }
         }
 
         // Validasi balance di frontend
@@ -324,6 +367,12 @@ export const useJournalStore = defineStore('journal', {
               formData.append(`journalLines[${index}][credit]`, String(line.credit || 0));
               if (line.description) {
                 formData.append(`journalLines[${index}][description]`, line.description);
+              }
+              if (line.customerId) {
+                formData.append(`journalLines[${index}][customerId]`, String(line.customerId));
+              }
+              if (line.vendorId) {
+                formData.append(`journalLines[${index}][vendorId]`, String(line.vendorId));
               }
               console.log(`Added line ${index} to FormData`);
             } else {
@@ -670,7 +719,16 @@ export const useJournalStore = defineStore('journal', {
       this.validationErrors = [];
       
       if (journal) {
-        this.form = { ...journal };
+        this.form = {
+          ...journal,
+          journalLines: (journal.journalLines || []).map((line) => ({
+            ...line,
+            partyType: line.customerId ? 'customer' : line.vendorId ? 'vendor' : '',
+          })),
+        }
+        this.seedSelectedPartyOptions(this.form.journalLines)
+        this.fetchPartyOptions('customer')
+        this.fetchPartyOptions('vendor')
       } else {
         this.form = {
           journalNumber: '', // Akan di-generate otomatis oleh backend
@@ -684,13 +742,19 @@ export const useJournalStore = defineStore('journal', {
               accountId: '',
               debit: 0,
               credit: 0,
-              description: ''
+              description: '',
+              customerId: null,
+              vendorId: null,
+              partyType: '',
             },
             {
               accountId: '',
               debit: 0,
               credit: 0,
-              description: ''
+              description: '',
+              customerId: null,
+              vendorId: null,
+              partyType: '',
             }
           ]
         };
@@ -715,13 +779,19 @@ export const useJournalStore = defineStore('journal', {
             accountId: '',
             debit: 0,
             credit: 0,
-            description: ''
+            description: '',
+            customerId: null,
+            vendorId: null,
+            partyType: '',
           },
           {
             accountId: '',
             debit: 0,
             credit: 0,
-            description: ''
+            description: '',
+            customerId: null,
+            vendorId: null,
+            partyType: '',
           }
         ]
       };
@@ -733,8 +803,106 @@ export const useJournalStore = defineStore('journal', {
         accountId: '',
         debit: 0,
         credit: 0,
-        description: ''
+        description: '',
+        customerId: null,
+        vendorId: null,
+        partyType: '',
       });
+    },
+
+    linePartyPolicy(line: JournalLine | undefined): 'NONE' | 'CUSTOMER' | 'VENDOR' | 'OPTIONAL' {
+      if (!line?.accountId) return 'NONE'
+      const account = this.accounts.find((a: any) => String(a.id) === String(line.accountId))
+      const raw = String(account?.partyDimension || account?.party_dimension || 'NONE').toUpperCase()
+      if (raw === 'CUSTOMER' || raw === 'VENDOR' || raw === 'OPTIONAL') return raw
+      return 'NONE'
+    },
+
+    onJournalAccountChange(line: JournalLine) {
+      const policy = this.linePartyPolicy(line)
+      if (policy === 'CUSTOMER') {
+        line.vendorId = null
+        line.partyType = 'customer'
+        this.fetchPartyOptions('customer')
+      } else if (policy === 'VENDOR') {
+        line.customerId = null
+        line.partyType = 'vendor'
+        this.fetchPartyOptions('vendor')
+      } else if (policy === 'OPTIONAL') {
+        if (line.customerId) line.partyType = 'customer'
+        else if (line.vendorId) line.partyType = 'vendor'
+        else line.partyType = ''
+      } else {
+        line.customerId = null
+        line.vendorId = null
+        line.partyType = ''
+      }
+    },
+
+    seedSelectedPartyOptions(lines: JournalLine[] | undefined) {
+      for (const line of lines || []) {
+        if (line.customerId && line.customer) {
+          this.customerOptions = this.mergePartyOption(this.customerOptions, {
+            id: Number(line.customer.id ?? line.customerId),
+            name: line.customer.name || `Customer #${line.customerId}`,
+            code: line.customer.code ?? null,
+          })
+        } else if (line.customerId) {
+          this.customerOptions = this.mergePartyOption(this.customerOptions, {
+            id: Number(line.customerId),
+            name: `Customer #${line.customerId}`,
+          })
+        }
+        if (line.vendorId && line.vendor) {
+          this.vendorOptions = this.mergePartyOption(this.vendorOptions, {
+            id: Number(line.vendor.id ?? line.vendorId),
+            name: line.vendor.name || `Vendor #${line.vendorId}`,
+            code: line.vendor.code ?? null,
+          })
+        } else if (line.vendorId) {
+          this.vendorOptions = this.mergePartyOption(this.vendorOptions, {
+            id: Number(line.vendorId),
+            name: `Vendor #${line.vendorId}`,
+          })
+        }
+      }
+    },
+
+    mergePartyOption(
+      current: Array<{ id: number; name: string; code?: string | null }>,
+      extra: { id: number; name: string; code?: string | null }
+    ) {
+      if (!extra.id) return current
+      if (current.some((row) => Number(row.id) === Number(extra.id))) return current
+      return [extra, ...current]
+    },
+
+    async fetchPartyOptions(partyType: 'customer' | 'vendor', search = '') {
+      const { $api } = useNuxtApp()
+      try {
+        const params = new URLSearchParams({
+          partyType,
+          search,
+          page: '1',
+          limit: '20',
+        })
+        const response = await fetch($api.journalsPartyOptions(params.toString()), {
+          headers: { Accept: 'application/json' },
+          credentials: 'include',
+        })
+        if (!response.ok) return
+        const result = await response.json()
+        const rows = result?.data || []
+        if (partyType === 'customer') {
+          this.customerOptions = rows
+          this.seedSelectedPartyOptions(this.form.journalLines)
+        } else {
+          this.vendorOptions = rows
+          this.seedSelectedPartyOptions(this.form.journalLines)
+        }
+      } catch (error) {
+        console.error('Error fetching journal party options:', error)
+      }
     },
 
     removeJournalLine(index: number) {

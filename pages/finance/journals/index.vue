@@ -252,6 +252,7 @@
                                                     :get-option-label="option => option?.code && option?.name ? `${option.code} - ${option.name}` : (option?.name || option?.code || '')" searchable clearable
                                                     :reduce="account => account.id" 
                                                     placeholder="Pilih Akun" 
+                                                    @update:modelValue="journalStore.onJournalAccountChange(line)" 
 
                                                     :close-on-select="true"
                                                     :preserve-search="false"
@@ -331,6 +332,57 @@
                                                 </button>
                                             </div>
                                         </div>
+                                        <div
+                                            v-if="journalStore.linePartyPolicy(line) !== 'NONE'"
+                                            class="row g-3 mt-1"
+                                        >
+                                            <div
+                                                v-if="journalStore.linePartyPolicy(line) === 'OPTIONAL'"
+                                                class="col-md-3"
+                                            >
+                                                <CustomSelect2
+                                                    v-model="line.partyType"
+                                                    :options="[
+                                                        { id: 'customer', name: 'Customer' },
+                                                        { id: 'vendor', name: 'Vendor' },
+                                                    ]"
+                                                    :get-option-label="(o) => o.name"
+                                                    :reduce="(o) => o.id"
+                                                    placeholder="Tipe Party"
+                                                    @update:modelValue="onOptionalPartyTypeChange(line)"
+                                                />
+                                            </div>
+                                            <div
+                                                v-if="showCustomerSelector(line)"
+                                                class="col-md-12"
+                                            >
+                                                <CustomSelect2
+                                                    v-model="line.customerId"
+                                                    :options="journalStore.customerOptions || []"
+                                                    :get-option-label="(o) => o?.code ? `${o.code} — ${o.name}` : (o?.name || '')"
+                                                    searchable
+                                                    clearable
+                                                    :reduce="(o) => o.id"
+                                                    placeholder="Pilih Customer"
+                                                    @search="onCustomerSearch"
+                                                />
+                                            </div>
+                                            <div
+                                                v-if="showVendorSelector(line)"
+                                                class="col-md-12"
+                                            >
+                                                <CustomSelect2
+                                                    v-model="line.vendorId"
+                                                    :options="journalStore.vendorOptions || []"
+                                                    :get-option-label="(o) => o?.name || ''"
+                                                    searchable
+                                                    clearable
+                                                    :reduce="(o) => o.id"
+                                                    placeholder="Pilih Vendor"
+                                                    @search="onVendorSearch"
+                                                />
+                                            </div>
+                                        </div>
                                         <hr class="my-4">
                                     </div>
                                     <div class="mt-4 col-12">
@@ -400,6 +452,34 @@ const userStore = useUserStore()
 const permissionStore = usePermissionsStore()
 const formatRupiah = useFormatRupiah()
 const router = useRouter()
+
+const onCustomerSearch = useDebounceFn((term) => {
+  journalStore.fetchPartyOptions('customer', term || '')
+}, 300)
+const onVendorSearch = useDebounceFn((term) => {
+  journalStore.fetchPartyOptions('vendor', term || '')
+}, 300)
+
+function showCustomerSelector(line) {
+  const policy = journalStore.linePartyPolicy(line)
+  return policy === 'CUSTOMER' || (policy === 'OPTIONAL' && line.partyType === 'customer')
+}
+function showVendorSelector(line) {
+  const policy = journalStore.linePartyPolicy(line)
+  return policy === 'VENDOR' || (policy === 'OPTIONAL' && line.partyType === 'vendor')
+}
+function onOptionalPartyTypeChange(line) {
+  if (line.partyType === 'customer') {
+    line.vendorId = null
+    journalStore.fetchPartyOptions('customer')
+  } else if (line.partyType === 'vendor') {
+    line.customerId = null
+    journalStore.fetchPartyOptions('vendor')
+  } else {
+    line.customerId = null
+    line.vendorId = null
+  }
+}
 
 const myDataTableRef = ref()
 const formRoot = ref(null)

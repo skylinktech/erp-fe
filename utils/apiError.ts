@@ -170,6 +170,10 @@ function unwrapBody(raw: unknown): Record<string, unknown> {
 function collectErrorSource(body: Record<string, unknown>): unknown {
   if (body.errors != null) return body.errors
   if (isRecord(body.data) && body.data.errors != null) return body.data.errors
+  if (isRecord(body.data) && body.data.fields != null) return body.data.fields
+  if (isRecord(body.data) && isRecord(body.data.error) && body.data.error.fields != null) {
+    return body.data.error.fields
+  }
   if (Array.isArray(body.data)) return body.data
   return null
 }
@@ -260,6 +264,12 @@ function pickStatus(raw: unknown, explicit?: number | null): number | null {
 
 function pickCode(body: Record<string, unknown>): string | null {
   if (isRecord(body.meta) && body.meta.code != null) return String(body.meta.code)
+  if (isRecord(body.error) && (body.error as { code?: unknown }).code != null) {
+    return String((body.error as { code: unknown }).code)
+  }
+  if (isRecord(body.data) && isRecord(body.data.error) && body.data.error.code != null) {
+    return String(body.data.error.code)
+  }
   if (body.code != null) return String(body.code)
   return null
 }
@@ -268,7 +278,9 @@ function pickRawMessage(raw: unknown, body: Record<string, unknown>): string {
   const candidates = [
     body.message,
     typeof body.error === 'string' ? body.error : null,
+    isRecord(body.error) ? body.error.message : null,
     isRecord(body.data) ? body.data.message : null,
+    isRecord(body.data) && isRecord(body.data.error) ? body.data.error.message : null,
     isRecord(raw) ? raw.message : null,
   ]
   for (const c of candidates) {

@@ -63,6 +63,15 @@
             </div>
             <div class="card-body px-5 pt-0 pb-4">
               <div class="d-flex flex-wrap align-items-center gap-2 process-flow">
+                <template v-if="fdrRefId">
+                  <NuxtLink
+                    :to="'/sales/fdr/detail/' + fdrRefId"
+                    class="process-pill process-pill-done text-decoration-none"
+                  >
+                    <i class="ri-check-line me-1"></i> FDR{{ fdrRefNumber ? ' (' + fdrRefNumber + ')' : '' }}
+                  </NuxtLink>
+                  <span class="process-arrow text-muted">&gt;</span>
+                </template>
                 <span class="process-pill process-pill-done">
                   <i class="ri-check-line me-1"></i> Site Investment{{ siteInvest.siDate ? ' (' + formatDate(siteInvest.siDate) + ')' : '' }}
                 </span>
@@ -101,6 +110,19 @@
                     <div class="col-md-6">
                       <label class="form-label text-muted medium">Customer</label>
                       <p class="mb-0 fw-medium">{{ siteInvest.customer?.name || '—' }}</p>
+                    </div>
+                    <div class="col-md-6" v-if="fdrRefId || fdrRefLabel">
+                      <label class="form-label text-muted medium">Referensi FDR</label>
+                      <p class="mb-0 fw-medium">
+                        <NuxtLink
+                          v-if="fdrRefId"
+                          :to="'/sales/fdr/detail/' + fdrRefId"
+                          class="text-primary"
+                        >
+                          {{ fdrRefLabel }}
+                        </NuxtLink>
+                        <span v-else>{{ fdrRefLabel }}</span>
+                      </p>
                     </div>
                     <div class="col-md-6" v-if="siteInvest.site">
                       <label class="form-label text-muted medium">Site</label>
@@ -472,6 +494,25 @@ const canReject = computed(() => canApprove.value)
 const formatRupiah = useFormatRupiah()
 
 const { siteInvest, loading, error } = storeToRefs(siteInvestStore)
+
+const fdrRefId = computed(() => {
+  const si = siteInvest.value as any
+  if (!si) return ''
+  const id = si.fdr?.id ?? si.fdrId ?? si.fdr_id
+  return id != null && id !== '' ? String(id) : ''
+})
+
+const fdrRefNumber = computed(() => {
+  const si = siteInvest.value as any
+  if (!si) return ''
+  return si.fdr?.fdrNumber || si.fdr?.fdr_number || ''
+})
+
+const fdrRefLabel = computed(() => {
+  const si = siteInvest.value as any
+  if (!si) return '—'
+  return fdrRefNumber.value || si.fdr?.name || '—'
+})
 
 const id = computed(() => {
   const p = route.params.id

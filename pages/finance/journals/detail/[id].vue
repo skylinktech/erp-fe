@@ -66,19 +66,20 @@
             <table class="table table-sm">
               <thead>
                 <tr>
-                  <th>Account</th><th>Description</th>
+                  <th>Account</th><th>Party</th><th>Description</th>
                   <th class="text-end">Debit</th><th class="text-end">Credit</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="line in journal.journalLines || []" :key="line.id">
                   <td>{{ line.account?.code || line.accountId }} — {{ line.account?.name || '' }}</td>
+                  <td>{{ partyLabel(line) }}</td>
                   <td>{{ line.description || '-' }}</td>
                   <td class="text-end">{{ formatMoney(line.debit) }}</td>
                   <td class="text-end">{{ formatMoney(line.credit) }}</td>
                 </tr>
                 <tr v-if="!(journal.journalLines || []).length">
-                  <td colspan="4" class="text-muted">No lines</td>
+                  <td colspan="5" class="text-muted">No lines</td>
                 </tr>
               </tbody>
             </table>
@@ -183,6 +184,20 @@ function formatMoney(v) {
 function shortId(id) {
   const s = String(id || '')
   return s.length > 12 ? `${s.slice(0, 8)}…` : s || '-'
+}
+
+function partyLabel(line) {
+  const customer = line?.customer
+  const vendor = line?.vendor
+  if (customer?.name || line?.customerId) {
+    return customer?.name
+      ? `Customer: ${customer.code ? `${customer.code} — ` : ''}${customer.name}`
+      : `Customer #${line.customerId}`
+  }
+  if (vendor?.name || line?.vendorId) {
+    return vendor?.name ? `Vendor: ${vendor.name}` : `Vendor #${line.vendorId}`
+  }
+  return '-'
 }
 
 function rememberMovement(_id) {

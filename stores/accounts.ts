@@ -12,6 +12,8 @@ export interface Account {
   isParent: boolean
   parentId?: string | null
   level: number
+  partyDimension?: 'NONE' | 'CUSTOMER' | 'VENDOR' | 'OPTIONAL'
+  isControlAccount?: boolean
   parent?: Account
   children?: Account[]
 }
