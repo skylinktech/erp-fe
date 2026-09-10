@@ -739,6 +739,8 @@ export default defineNuxtPlugin(() => {
     budgets: () => `${apiBase}/accounting/budgets`,
     budgetStatistics: () => `${apiBase}/accounting/budgets/statistics`,
     budgetExportExcel: () => `${apiBase}/accounting/budgets/export-excel`,
+    budgetHistory: (id: number | string, params?: string) =>
+      `${apiBase}/accounting/budgets/${id}/history${params ? `?${params}` : ''}`,
 
     // Import
     import: () => `${apiBase}/import`,

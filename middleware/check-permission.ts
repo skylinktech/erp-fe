@@ -99,6 +99,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       '/finance/bank-recon': 'view_bank_recon',
       '/finance/credit-notes': 'view_credit_note',
       '/finance/journals': 'view_journal',
+      '/finance/budgets': 'view_budget',
       '/finance/reports/general-ledger': 'view_general_ledger',
       '/finance/reports/trial-balance': 'view_financial_reports',
       '/finance/reports/profit-loss': 'view_financial_reports',
@@ -224,6 +225,8 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
         requiredPermission = 'view_credit_note'
       } else if (/^\/finance\/journals/.test(to.path)) {
         requiredPermission = 'view_journal'
+      } else if (/^\/finance\/budgets/.test(to.path)) {
+        requiredPermission = 'view_budget'
       } else if (/^\/service-management(\/.*)?$/.test(to.path)) {
         requiredPermission = 'view_service_instance'
       } else if (/^\/operations\/request-activation\/form(\/.*)?$/.test(to.path)) {
@@ -317,6 +320,14 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
           'view_ap_aging',
           'access_ap_aging',
         ]
+        const ok = userStore.user?.roles?.some(role =>
+          role.permissions?.some(permission => allowed.includes(permission.name))
+        )
+        if (ok) return
+      }
+
+      if (!hasPermission && /^\/finance\/budgets/.test(to.path)) {
+        const allowed = ['view_budget', 'access_budget', 'show_budget', 'view_budget_history']
         const ok = userStore.user?.roles?.some(role =>
           role.permissions?.some(permission => allowed.includes(permission.name))
         )

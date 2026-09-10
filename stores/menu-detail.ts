@@ -38,8 +38,15 @@ interface MenuDetailState {
   menuGroups: MenuGroup[]
   parentOptions: MenuDetailParentOption[]
   loading: boolean
+  loadingStats: boolean
   error: any
   totalRecords: number
+  statistics: {
+    total: number
+    aktif: number
+    nonaktif: number
+    referenceable: number
+  }
   params: {
     first: number
     rows: number
@@ -59,8 +66,15 @@ export const useMenuDetailStore = defineStore('menu-detail', {
         menuGroups: [],
         parentOptions: [],
         loading: true,
+        loadingStats: false,
         error: null,
         totalRecords: 0,
+        statistics: {
+            total: 0,
+            aktif: 0,
+            nonaktif: 0,
+            referenceable: 0,
+        },
         params: {
             first: 0,
             rows: 10,
@@ -113,6 +127,39 @@ export const useMenuDetailStore = defineStore('menu-detail', {
         });
       } finally {
         this.loading = false
+      }
+    },
+
+    async fetchStatistics() {
+      this.loadingStats = true
+      const { $api } = useNuxtApp()
+      try {
+        const params = new URLSearchParams({
+          page: '1',
+          rows: '1000',
+          sortField: 'id',
+          sortOrder: 'asc',
+          search: '',
+        })
+        const response = await fetch(`${$api.menuDetails()}?${params.toString()}`, {
+          headers: { Accept: 'application/json' },
+          credentials: 'include',
+        })
+        if (!response.ok) throw new Error('Gagal mengambil statistik menu detail')
+        const result = await response.json()
+        const rows = result.data || []
+        this.statistics = {
+          total: result.meta?.total || rows.length,
+          aktif: rows.filter((row: MenuDetail) => Number(row.status) === 1).length,
+          nonaktif: rows.filter((row: MenuDetail) => Number(row.status) === 0).length,
+          referenceable: rows.filter(
+            (row: any) => row.isReferenceable || row.is_referenceable
+          ).length,
+        }
+      } catch (e) {
+        console.error('Error fetching menu detail statistics:', e)
+      } finally {
+        this.loadingStats = false
       }
     },
     
@@ -223,6 +270,7 @@ export const useMenuDetailStore = defineStore('menu-detail', {
         
         this.closeModal();
         await this.fetchMenuDetails();
+        await this.fetchStatistics();
 
         const menuGroupStore = useMenuGroupStore();
         await menuGroupStore.fetchAllMenuGroups();
@@ -281,6 +329,7 @@ export const useMenuDetailStore = defineStore('menu-detail', {
           }
 
           await this.fetchMenuDetails();
+          await this.fetchStatistics();
           const menuGroupStore = useMenuGroupStore();
           await menuGroupStore.fetchAllMenuGroups();
 

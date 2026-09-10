@@ -156,7 +156,12 @@
                 </Column>
                 <Column field="budgetCode" header="Kode Budget" :sortable="true" style="min-width:150px">
                   <template #body="slotProps">
-                    <span class="fw-semibold">{{ slotProps.data.budgetCode }}</span>
+                    <NuxtLink
+                      :to="`/finance/budgets/detail/${slotProps.data.id}`"
+                      class="fw-semibold text-primary text-decoration-none"
+                    >
+                      {{ slotProps.data.budgetCode }}
+                    </NuxtLink>
                   </template>
                 </Column>
                 <Column field="budgetName" header="Nama Budget" :sortable="true" style="min-width:250px">
@@ -232,6 +237,14 @@
                           >
                             <i class="ri-delete-bin-7-line me-2"></i> Hapus
                           </a>
+                        </li>
+                        <li v-if="canViewHistory">
+                          <NuxtLink
+                            class="dropdown-item"
+                            :to="`/finance/budgets/detail/${slotProps.data.id}`"
+                          >
+                            <i class="ri-eye-line me-2"></i> Detail
+                          </NuxtLink>
                         </li>
                       </ul>
                     </div>
@@ -602,6 +615,14 @@ const openEditModal = async (budget) => {
 
 // Permission helpers
 const { userHasRole, userHasPermission } = usePermissions()
+const canViewHistory = computed(
+  () =>
+    userHasRole('superadmin') ||
+    userHasPermission('view_budget_history') ||
+    userHasPermission('view_budget') ||
+    userHasPermission('access_budget') ||
+    userHasPermission('show_budget')
+)
 
 // Lifecycle
 onMounted(async () => {

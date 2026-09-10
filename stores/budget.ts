@@ -3,6 +3,75 @@ import { useNuxtApp } from '#app'
 import Swal from 'sweetalert2'
 import { normalizeFailedResponse } from '~/utils/apiError'
 
+export interface BudgetHistoryEntry {
+  id: number
+  type: string
+  typeLabel: string
+  amount: number
+  effectiveImpact: number
+  runningAvailable: number
+  referenceType: string | null
+  referenceId: number | null
+  referenceUuid: string | null
+  sourceEvent: string | null
+  notes: string | null
+  reversalOfId: number | null
+  conversionOfId: number | null
+  effectiveAt: string | null
+  createdAt: string | null
+  actor: { id: number; fullName: string | null; email: string | null } | null
+  sourceDocument: { type: string; number: string | null; link: string | null } | null
+}
+
+export interface BudgetHistoryReport {
+  budget: {
+    id: number
+    budgetCode: string
+    budgetName: string
+    status: string
+    totalAmount: number
+    startDate: string | null
+    endDate: string | null
+    costCenter: { id: number; code: string; name: string } | null
+  }
+  summary: {
+    approved: number
+    reserved: number
+    committed: number
+    actual: number
+    released: number
+    transferIn: number
+    transferOut: number
+    available: number
+  }
+  history: BudgetHistoryEntry[]
+  pagination: { page: number; perPage: number; total: number; lastPage: number }
+}
+
+export interface BudgetHistoryParams {
+  type?: string | null
+  startDate?: string | null
+  endDate?: string | null
+  sourceType?: string | null
+  search?: string | null
+  page?: number
+  perPage?: number
+  sortBy?: string | null
+  sortOrder?: string | null
+}
+
+const DEFAULT_HISTORY_PARAMS: BudgetHistoryParams = {
+  type: null,
+  startDate: null,
+  endDate: null,
+  sourceType: null,
+  search: '',
+  page: 1,
+  perPage: 20,
+  sortBy: 'date',
+  sortOrder: 'desc',
+}
+
 export interface BudgetAllo {
   id?: number
   budgetId?: number
@@ -71,6 +140,13 @@ interface BudgetState {
     approvedBudgets: number
     rejectedBudgets: number
   }
+  // Budget history (separate from CRUD state above; never mutates budgets/form)
+  historyLoading: boolean
+  historyError: string | null
+  historyReport: BudgetHistoryReport | null
+  historyParams: BudgetHistoryParams
+  historyRequestSeq: number
+  historyAbortController: AbortController | null
 }
 
 export const useBudgetStore = defineStore('budget', {
@@ -107,6 +183,12 @@ export const useBudgetStore = defineStore('budget', {
       approvedBudgets: 0,
       rejectedBudgets: 0,
     },
+    historyLoading: false,
+    historyError: null,
+    historyReport: null,
+    historyParams: { ...DEFAULT_HISTORY_PARAMS },
+    historyRequestSeq: 0,
+    historyAbortController: null,
   }),
 
   actions: {
@@ -567,6 +649,76 @@ export const useBudgetStore = defineStore('budget', {
         budgetAllos: [],
       }
       this.validationErrors = []
+      this.clearHistory()
+    },
+
+    /**
+     * Fetch budget ledger history (summary + paginated running-balance entries).
+     * Stale-safe: aborts the previous in-flight request and ignores its response
+     * via a monotonic requestSeq guard, so out-of-order responses never clobber
+     * a newer page/filter change.
+     */
+    async fetchBudgetHistory(budgetId: number | string, params: BudgetHistoryParams = {}) {
+      const { $api } = useNuxtApp()
+
+      this.historyAbortController?.abort()
+      const controller = new AbortController()
+      this.historyAbortController = controller
+
+      const seq = ++this.historyRequestSeq
+      this.historyParams = { ...this.historyParams, ...params }
+      this.historyLoading = true
+      this.historyError = null
+
+      try {
+        const qs = new URLSearchParams()
+        Object.entries(this.historyParams).forEach(([key, value]) => {
+          if (value !== null && value !== undefined && value !== '') {
+            qs.set(key, String(value))
+          }
+        })
+
+        const response = await fetch(`${$api.budgetHistory(budgetId, qs.toString())}`, {
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          credentials: 'include',
+          signal: controller.signal,
+        })
+
+        if (seq !== this.historyRequestSeq) return // superseded by a newer request
+
+        if (!response.ok) {
+          const err = await normalizeFailedResponse(response, 'Gagal memuat history budget.')
+          throw new Error(err.message)
+        }
+
+        const result = await response.json()
+        if (seq !== this.historyRequestSeq) return // superseded while awaiting body
+
+        this.historyReport = result.data
+      } catch (error: any) {
+        if (error?.name === 'AbortError') return // superseded request, not a real error
+        if (seq !== this.historyRequestSeq) return
+        console.error('Error fetching budget history:', error)
+        this.historyError = error.message || 'Gagal memuat history budget.'
+        this.historyReport = null
+      } finally {
+        if (seq === this.historyRequestSeq) {
+          this.historyLoading = false
+        }
+      }
+    },
+
+    clearHistory() {
+      this.historyAbortController?.abort()
+      this.historyAbortController = null
+      this.historyRequestSeq += 1 // invalidate any in-flight request
+      this.historyLoading = false
+      this.historyError = null
+      this.historyReport = null
+      this.historyParams = { ...DEFAULT_HISTORY_PARAMS }
     },
 
     setPagination(event: any) {
