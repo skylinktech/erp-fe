@@ -338,21 +338,6 @@
                     <label>Parent Site <span class="text-muted small">(Opsional)</span></label>
                   </div>
                 </div>
-                <div class="col-md-6">
-                  <div class="form-floating form-floating-outline">
-                    <select class="form-select" v-model="form.costCenterId">
-                      <option :value="null">Pilih Cost Center (Opsional)</option>
-                      <option
-                        v-for="cc in costCenterOptions"
-                        :key="cc.id"
-                        :value="cc.id"
-                      >
-                        {{ cc.code }} - {{ cc.name }}
-                      </option>
-                    </select>
-                    <label>Cost Center <span class="text-muted small">(Opsional)</span></label>
-                  </div>
-                </div>
               </div>
               <div class="mt-4 d-flex justify-content-end gap-2">
                 <button type="button" class="btn btn-outline-secondary" @click="siteStore.closeModal()">
@@ -392,7 +377,6 @@ const { setListTitle } = useDynamicTitle()
 
 // Stores
 const siteStore = useSiteStore()
-const costCenterStore = useCostCenterStore()
 const userStore = useUserStore()
 const permissionStore = usePermissionsStore()
 
@@ -436,9 +420,6 @@ const parentOptions = computed(() => {
     return true
   })
 })
-
-// Cost center options
-const costCenterOptions = computed(() => costCenterStore.costCenters || [])
 
 const typeOptions = [
   { value: 'office', label: 'Office' },
@@ -553,8 +534,6 @@ onMounted(async () => {
     await permissionStore.fetchPermissions()
     await userStore.loadUser()
     await siteStore.fetchSites()
-    // Fetch cost centers untuk dropdown
-    await costCenterStore.fetchCostCenters(true)
   } catch (error) {
     console.error('Error in onMounted:', error)
   }

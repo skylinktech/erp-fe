@@ -28,6 +28,11 @@
               <div id="si-tab-info" data-step-id="si-tab-info" class="tab-pane fade" role="tabpanel" :class="paneClass('si-tab-info')">
                 <div class="row g-3">
                   <div class="col-md-6">
+                    <label class="form-label">Isi dari FDR</label>
+                    <CustomSelect2 v-model="form.fdrId" :options="fdrsForSelect" :get-option-label="getFdrLabel" :reduce="getFdrId" placeholder="Isi dari FDR" searchable clearable @update:modelValue="onFdrSelect" />
+                    <small class="text-muted">Pilih FDR untuk autofill informasi project, material, service, dan DID.</small>
+                  </div>
+                  <div class="col-md-6">
                     <FormLabel required html-for="si-name">Nama Site Investment</FormLabel>
                     <input id="si-name" v-model="form.name" class="form-control" :class="{ 'is-invalid': uiErrors.name }" placeholder="Nama Site Investment" aria-required="true">
                     <div v-if="uiErrors.name" class="invalid-feedback d-block">{{ uiErrors.name }}</div>
@@ -43,11 +48,6 @@
                   <div class="col-md-6">
                     <label class="form-label">Business Scheme</label>
                     <CustomSelect2 v-model="form.businessSchemeId" :options="businessSchemes" :get-option-label="getBranchLabel" :reduce="getBranchId" placeholder="Pilih Business Scheme" searchable clearable />
-                  </div>
-                  <div class="col-md-6">
-                    <label class="form-label">Isi dari FDR</label>
-                    <CustomSelect2 v-model="form.fdrId" :options="fdrsForSelect" :get-option-label="getFdrLabel" :reduce="getFdrId" placeholder="Isi dari FDR" searchable clearable @update:modelValue="onFdrSelect" />
-                    <small class="text-muted">Pilih FDR untuk autofill informasi project, material, service, dan DID.</small>
                   </div>
                   <div class="col-md-6">
                     <label class="form-label">Isi dari Price List</label>
@@ -734,12 +734,25 @@ function onAttachmentChange(e) {
 }
 
 
+function mergeSiteIntoSelect(site) {
+  const id = Number(site?.id)
+  if (!id || !site) return
+  const list = Array.isArray(sites.value) ? [...sites.value] : []
+  const idx = list.findIndex((s) => Number(s.id) === id)
+  if (idx >= 0) {
+    list[idx] = { ...list[idx], ...site, id }
+  } else {
+    list.push({ ...site, id })
+  }
+  sites.value = list
+}
+
 function onSiteChange(siteId) {
-  const s = sites.value.find((x) => x.id === siteId)
+  const s = sites.value.find((x) => Number(x.id) === Number(siteId))
   if (!s || !form.value) return
-  form.value.location = s.address || ''
-  form.value.lat = s.latitude != null ? String(s.latitude) : ''
-  form.value.long = s.longitude != null ? String(s.longitude) : ''
+  form.value.location = s.address || form.value.location || ''
+  form.value.lat = s.latitude != null ? String(s.latitude) : form.value.lat
+  form.value.long = s.longitude != null ? String(s.longitude) : form.value.long
 }
 
 const calculateMaterialSubtotal = (index) => {
@@ -1067,7 +1080,11 @@ async function onFdrSelect(fdrId) {
   form.value.customerId = fdr.customerId ?? fdr.customer_id ?? null
   const nestedCustomer = fdr.customer ?? null
   if (nestedCustomer) customerStore.mergeCustomerIntoSelect(nestedCustomer)
-  form.value.siteId = fdr.siteId ?? fdr.site_id ?? null
+  const nestedSite = fdr.site ?? null
+  if (nestedSite) mergeSiteIntoSelect(nestedSite)
+  const resolvedSiteId = fdr.siteId ?? fdr.site_id ?? nestedSite?.id ?? null
+  form.value.siteId = resolvedSiteId != null ? Number(resolvedSiteId) : null
+  if (form.value.siteId) onSiteChange(form.value.siteId)
   form.value.businessSchemeId = fdr.businessSchemeId ?? fdr.business_scheme_id ?? null
   form.value.priority = fdr.priority || 'medium'
   form.value.location = fdr.location || form.value.location
@@ -1098,7 +1115,7 @@ async function fetchMasters() {
   const [fdrRes, priceListRes, siteRes, bsRes, preparedByRes] = await Promise.all([
     fetch(`${$api.fdr()}?page=1&rows=500&includeItems=false`, { headers: { Accept: 'application/json' }, credentials: 'include' }),
     fetch(`${$api.priceList()}?page=1&rows=500&isActive=true`, { headers: { Accept: 'application/json' }, credentials: 'include' }),
-    fetch(`${$api.sites()}?page=1&rows=500`, { headers: { Accept: 'application/json' }, credentials: 'include' }),
+    fetch(`${$api.sites()}?page=1&rows=1000&forSelect=true`, { headers: { Accept: 'application/json' }, credentials: 'include' }),
     fetch(`${$api.businessSchemes()}?page=1&rows=500`, { headers: { Accept: 'application/json' }, credentials: 'include' }),
     fetch($api.siteInvestmentPreparedByOptions(), { headers: { Accept: 'application/json' }, credentials: 'include' }),
   ])
@@ -1134,6 +1151,7 @@ async function initForm() {
   if (!Array.isArray(form.value.siteInvestMaterials) || form.value.siteInvestMaterials.length === 0) siteInvestStore.addMaterialItem()
   if (!Array.isArray(form.value.siteInvestServices) || form.value.siteInvestServices.length === 0) siteInvestStore.addServiceItem()
   if (!Array.isArray(form.value.siteInvestDids) || form.value.siteInvestDids.length === 0) siteInvestStore.addDidItem()
+  if (form.value?.site) mergeSiteIntoSelect(form.value.site)
   mergeSiteInvestFormLinesIntoCache()
   if (route.query.fromFdr && typeof route.query.fromFdr === 'string') await onFdrSelect(route.query.fromFdr)
   else {

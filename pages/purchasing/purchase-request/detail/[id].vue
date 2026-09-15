@@ -64,8 +64,20 @@
                     <div class="col-md-6"><label class="form-label text-muted">No. PR</label><p class="mb-0 fw-medium">{{ getPurchaseRequestNo(purchaseRequest) || '—' }}</p></div>
                     <div class="col-md-6"><label class="form-label text-muted">Tanggal Request</label><p class="mb-0">{{ purchaseRequest.requestDate || purchaseRequest.request_date || '—' }}</p></div>
                     <div class="col-md-6"><label class="form-label text-muted">Pemohon</label><p class="mb-0">{{ purchaseRequest.requestedByUser?.fullName || purchaseRequest.requestedByUser?.full_name || purchaseRequest.createdByUser?.full_name || '—' }}</p></div>
-                    <div class="col-md-6"><label class="form-label text-muted">Departemen</label><p class="mb-0">{{ purchaseRequest.department?.nm_departemen || purchaseRequest.department?.nmDepartemen || '—' }}</p></div>
-                    <div class="col-md-6"><label class="form-label text-muted">Budget</label><p class="mb-0">{{ purchaseRequest.budget?.budgetCode || purchaseRequest.budget?.budget_code || '—' }} {{ purchaseRequest.budget?.budgetName || purchaseRequest.budget?.budget_name || '' }}</p></div>
+                    <div class="col-md-6">
+                      <label class="form-label text-muted">Alokasi</label>
+                      <p class="mb-0">
+                        <span class="badge rounded-pill bg-label-info">{{ allocationScopeLabel }}</span>
+                      </p>
+                    </div>
+                    <template v-if="isProjectScope">
+                      <div class="col-md-6"><label class="form-label text-muted">Project</label><p class="mb-0">{{ purchaseRequest.project?.projectCode || '—' }} {{ purchaseRequest.project?.name || '' }}</p></div>
+                    </template>
+                    <template v-else>
+                      <div class="col-md-6"><label class="form-label text-muted">Departemen</label><p class="mb-0">{{ purchaseRequest.department?.nm_departemen || purchaseRequest.department?.nmDepartemen || '—' }}</p></div>
+                      <div class="col-md-6"><label class="form-label text-muted">Cost Center</label><p class="mb-0">{{ purchaseRequest.costCenter?.code || '' }} {{ purchaseRequest.costCenter?.name || '—' }}</p></div>
+                      <div class="col-md-6"><label class="form-label text-muted">Budget</label><p class="mb-0">{{ purchaseRequest.budget?.budgetCode || purchaseRequest.budget?.budget_code || '—' }} {{ purchaseRequest.budget?.budgetName || purchaseRequest.budget?.budget_name || '' }}</p></div>
+                    </template>
                     <div class="col-md-6"><label class="form-label text-muted">Gudang</label><p class="mb-0">{{ purchaseRequest.warehouse?.name || '—' }}</p></div>
                     <div class="col-md-6"><label class="form-label text-muted">Total Estimasi</label><p class="mb-0 fw-semibold text-primary">{{ formatRupiah(getPurchaseRequestTotal(purchaseRequest)) }}</p></div>
                     <div class="col-md-6"><label class="form-label text-muted">Mata Uang</label><p class="mb-0">{{ purchaseRequest.currency || 'IDR' }}</p></div>
@@ -264,6 +276,12 @@ const canApprove = computed(() => canApprovePurchaseRequest(purchaseRequest.valu
 const canReject = computed(() => canRejectPurchaseRequest(purchaseRequest.value))
 
 const itemList = computed(() => getPurchaseRequestItemsList(purchaseRequest.value))
+
+const isProjectScope = computed(() => {
+  const scope = purchaseRequest.value?.allocationScope || purchaseRequest.value?.allocation_scope
+  return scope === 'PROJECT'
+})
+const allocationScopeLabel = computed(() => (isProjectScope.value ? 'Project' : 'Internal'))
 
 const PR_STOCK_STATUSES = ['pending', 'approved', 'completed']
 

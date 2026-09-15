@@ -66,7 +66,7 @@
             <table class="table table-sm">
               <thead>
                 <tr>
-                  <th>Account</th><th>Party</th><th>Description</th>
+                  <th>Account</th><th>Party</th><th>Dimensi</th><th>Description</th>
                   <th class="text-end">Debit</th><th class="text-end">Credit</th>
                 </tr>
               </thead>
@@ -74,12 +74,13 @@
                 <tr v-for="line in journal.journalLines || []" :key="line.id">
                   <td>{{ line.account?.code || line.accountId }} — {{ line.account?.name || '' }}</td>
                   <td>{{ partyLabel(line) }}</td>
+                  <td class="small">{{ dimensionLabel(line) }}</td>
                   <td>{{ line.description || '-' }}</td>
                   <td class="text-end">{{ formatMoney(line.debit) }}</td>
                   <td class="text-end">{{ formatMoney(line.credit) }}</td>
                 </tr>
                 <tr v-if="!(journal.journalLines || []).length">
-                  <td colspan="5" class="text-muted">No lines</td>
+                  <td colspan="6" class="text-muted">No lines</td>
                 </tr>
               </tbody>
             </table>
@@ -198,6 +199,23 @@ function partyLabel(line) {
     return vendor?.name ? `Vendor: ${vendor.name}` : `Vendor #${line.vendorId}`
   }
   return '-'
+}
+
+function dimensionLabel(line) {
+  const parts = []
+  const dept = line?.department
+  const cc = line?.costCenter
+  const proj = line?.project
+  if (dept?.nm_departemen || dept?.nmDepartemen || line?.departmentId) {
+    parts.push(`Dept: ${dept?.nm_departemen || dept?.nmDepartemen || `#${line.departmentId}`}`)
+  }
+  if (cc?.name || line?.costCenterId) {
+    parts.push(`CC: ${cc?.code ? `${cc.code} — ${cc.name}` : cc?.name || `#${line.costCenterId}`}`)
+  }
+  if (proj?.name || line?.projectId) {
+    parts.push(`Project: ${proj?.projectCode ? `${proj.projectCode} — ${proj.name}` : proj?.name || `#${line.projectId}`}`)
+  }
+  return parts.length ? parts.join(' · ') : '-'
 }
 
 function rememberMovement(_id) {

@@ -18,8 +18,8 @@ export interface Site {
   endDate?: string | null
   status?: 'planned' | 'active' | 'inactive' | 'closed'
   parentId?: number | null
-  costCenterId?: number | null
   parent?: Site
+  /** @deprecated Stage A — legacy read only */
   costCenter?: { id: number; code: string; name: string; type: string }
 }
 
@@ -69,7 +69,6 @@ export const useSiteStore = defineStore('site', {
       endDate: null,
       status: 'planned',
       parentId: null,
-      costCenterId: null,
     },
     isEditMode: false,
     showModal: false,
@@ -170,7 +169,6 @@ export const useSiteStore = defineStore('site', {
           endDate: this.form.endDate || null,
           status: this.form.status || 'planned',
           parentId: this.form.parentId || null,
-          costCenterId: this.form.costCenterId || null,
         }
 
         let method = 'POST'
@@ -293,7 +291,6 @@ export const useSiteStore = defineStore('site', {
           endDate: null,
           status: 'planned',
           parentId: null,
-          costCenterId: null,
         }
       }
 
@@ -316,7 +313,6 @@ export const useSiteStore = defineStore('site', {
         endDate: null,
         status: 'planned',
         parentId: null,
-        costCenterId: null,
       }
       this.validationErrors = []
     },

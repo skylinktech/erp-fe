@@ -349,6 +349,18 @@
                         </div>
                         <div class="col-md-6">
                             <div class="form-floating form-floating-outline">
+                                <select
+                                    class="form-select"
+                                    v-model="form.allocationScope"
+                                >
+                                    <option value="INTERNAL">Internal</option>
+                                    <option value="PROJECT">Project</option>
+                                </select>
+                                <label>Alokasi Pengeluaran</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating form-floating-outline">
                                 <select 
                                     class="form-select" 
                                     v-model="form.departemenId"
@@ -359,7 +371,35 @@
                                         {{ dept.nmDepartemen }}
                                     </option>
                                 </select>
-                                <label>Departemen <span class="text-danger" aria-hidden="true">*</span></label>
+                                <label>Departemen <span v-if="form.allocationScope !== 'PROJECT'" class="text-danger" aria-hidden="true">*</span></label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating form-floating-outline">
+                                <select
+                                    class="form-select"
+                                    v-model="form.costCenterId"
+                                >
+                                    <option :value="null">Pilih Cost Center (opsional)</option>
+                                    <option v-for="cc in costCenters" :key="cc.id" :value="cc.id">
+                                        {{ cc.code ? `${cc.code} — ${cc.name}` : cc.name }}
+                                    </option>
+                                </select>
+                                <label>Cost Center</label>
+                            </div>
+                        </div>
+                        <div v-if="form.allocationScope === 'PROJECT'" class="col-md-6">
+                            <div class="form-floating form-floating-outline">
+                                <select
+                                    class="form-select"
+                                    v-model="form.projectId"
+                                >
+                                    <option :value="null" disabled>Pilih Project</option>
+                                    <option v-for="p in projects" :key="p.id" :value="p.id">
+                                        {{ p.projectCode ? `${p.projectCode} — ${p.name}` : p.name }}
+                                    </option>
+                                </select>
+                                <label>Project <span class="text-danger" aria-hidden="true">*</span></label>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -445,6 +485,8 @@ const validationErrors = computed(() => expenseStore.validationErrors || [])
 const paymentMethods = computed(() => expenseStore.paymentMethods || [])
 const bankAccounts = computed(() => expenseStore.bankAccounts || [])
 const departments = computed(() => expenseStore.departments || [])
+const costCenters = computed(() => expenseStore.costCenters || [])
+const projects = computed(() => expenseStore.projects || [])
 
 // Statistics
 const totalExpenses = computed(() => {

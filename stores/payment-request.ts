@@ -135,6 +135,8 @@ export interface PaymentRequest {
   source_number?: string | null
   requestedBy?: number | null
   departmentId?: number | null
+  costCenterId?: number | null
+  cost_center_id?: number | null
   vendorId?: number | null
   payeeName?: string | null
   payee_name?: string | null
@@ -180,6 +182,7 @@ export interface PaymentRequest {
   createdByUser?: { id: number; full_name?: string; fullName?: string; email?: string }
   approvedByUser?: { id: number; full_name?: string; fullName?: string; roles?: Array<{ name?: string }> }
   department?: { id: number; nm_departemen?: string; nmDepartemen?: string }
+  costCenter?: { id: number; code?: string; name?: string }
   vendor?: { id: number; name: string }
   approvalLogs?: ApprovalLogEntry[]
   approval_logs?: ApprovalLogEntry[]
@@ -224,6 +227,8 @@ interface PaymentRequestState {
     sourceId: string | null
     sourceNumber: string
     departmentId: number | null
+    costCenterId: number | null
+    projectId: string | null
     vendorId: number | null
     payeeName: string
     bankName: string
@@ -519,6 +524,8 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
       sourceId: null,
       sourceNumber: '',
       departmentId: null,
+      costCenterId: null,
+      projectId: null,
       vendorId: null,
       payeeName: '',
       bankName: '',
@@ -632,6 +639,8 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
         sourceId: null,
         sourceNumber: '',
         departmentId: null,
+        costCenterId: null,
+        projectId: null,
         vendorId: null,
         payeeName: '',
         bankName: '',
@@ -686,6 +695,8 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
         sourceId: data.sourceId || data.source_id || null,
         sourceNumber: data.sourceNumber || data.source_number || '',
         departmentId: data.departmentId ?? null,
+        costCenterId: data.costCenterId ?? data.cost_center_id ?? null,
+        projectId: data.projectId ?? data.project_id ?? null,
         vendorId: data.vendorId ?? null,
         payeeName: data.payeeName || data.payee_name || '',
         bankName: data.bankName || data.bank_name || '',
@@ -917,6 +928,8 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
           sourceId: String(data.sourceId ?? sourceId),
           sourceNumber: data.sourceNumber || data.source_number || '',
           departmentId: data.departmentId ?? data.department_id ?? this.form.departmentId,
+          costCenterId: data.costCenterId ?? data.cost_center_id ?? this.form.costCenterId,
+          projectId: data.projectId ?? data.project_id ?? this.form.projectId,
           vendorId: data.vendorId ?? data.vendor_id ?? null,
           payeeName: data.payeeName || data.payee_name || this.form.payeeName || '',
           purpose: data.purpose || this.form.purpose || '',
@@ -977,6 +990,18 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
         toast.error({
           title: 'Validasi',
           message: 'Sumber dokumen (PO / MRF / ARF) wajib dipilih',
+          color: 'red',
+          position: 'bottomRight',
+          layout: 2,
+        })
+        return false
+      }
+
+      if (isProject && !this.form.projectId) {
+        this.saving = false
+        toast.error({
+          title: 'Validasi',
+          message: 'Project wajib dipilih untuk Payment Request Project',
           color: 'red',
           position: 'bottomRight',
           layout: 2,
@@ -1086,6 +1111,8 @@ export const usePaymentRequestStore = defineStore('paymentRequest', {
         estimatedEndDate: end || null,
         requestDate: this.form.requestDate || todayIso(),
         departmentId: this.form.departmentId,
+        costCenterId: this.form.costCenterId,
+        projectId: this.form.projectId,
         vendorId: this.form.vendorId,
         payeeName: this.form.payeeName?.trim() || null,
         bankName: this.form.bankName?.trim() || null,

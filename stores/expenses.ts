@@ -12,10 +12,15 @@ export interface Expense {
   paymentMethod: string
   bankAccountId?: string
   departemenId: number
+  allocationScope?: 'INTERNAL' | 'PROJECT' | null
+  costCenterId?: number | null
+  projectId?: string | null
   createdBy?: number
   updatedBy?: number
   departemen?: any
   bankAccount?: any
+  costCenter?: { id: number; code?: string; name?: string }
+  project?: { id: string; projectCode?: string; name?: string }
   createdByUser?: any
   updatedByUser?: any
 }
@@ -41,6 +46,8 @@ interface ExpenseState {
   paymentMethods: { value: string; label: string }[]
   bankAccounts: any[]
   departments: any[]
+  costCenters: any[]
+  projects: any[]
 }
 
 export const useExpenseStore = defineStore('expense', {
@@ -66,6 +73,9 @@ export const useExpenseStore = defineStore('expense', {
       paymentMethod: 'cash',
       bankAccountId: undefined,
       departemenId: undefined,
+      allocationScope: 'INTERNAL',
+      costCenterId: null,
+      projectId: null,
     },
     isEditMode: false,
     showModal: false,
@@ -77,7 +87,9 @@ export const useExpenseStore = defineStore('expense', {
       { value: 'credit_card', label: 'Kartu Kredit' }
     ],
     bankAccounts: [],
-    departments: []
+    departments: [],
+    costCenters: [],
+    projects: [],
   }),
 
   actions: {
@@ -172,15 +184,65 @@ export const useExpenseStore = defineStore('expense', {
       }
     },
 
+    async fetchCostCenters() {
+      const { $api } = useNuxtApp()
+      try {
+        const response = await fetch(`${$api.costCenters()}?rows=1000&sortField=code&sortOrder=1`, {
+          headers: { Accept: 'application/json' },
+          credentials: 'include',
+        })
+        if (response.ok) {
+          const result = await response.json()
+          const rows = Array.isArray(result) ? result : (result.data ?? [])
+          this.costCenters = rows.filter((c: any) => c?.isActive !== false)
+        }
+      } catch (error) {
+        console.error('Error fetching cost centers:', error)
+      }
+    },
+
+    async fetchProjects() {
+      const { $api } = useNuxtApp()
+      try {
+        const qs = new URLSearchParams({
+          kind: 'project',
+          context: 'transaction',
+          page: '1',
+          perPage: '100',
+        })
+        const response = await fetch($api.generalLedgerFormOptions(qs.toString()), {
+          headers: { Accept: 'application/json' },
+          credentials: 'include',
+        })
+        if (response.ok) {
+          const result = await response.json()
+          this.projects = Array.isArray(result) ? result : (result.data ?? [])
+        }
+      } catch (error) {
+        console.error('Error fetching projects:', error)
+      }
+    },
+
     async saveExpense() {
       this.saving = true
       this.validationErrors = [];
       const { $api } = useNuxtApp()
 
       try {
+        const scope = this.form.allocationScope || 'INTERNAL'
+        if (scope === 'MIXED') {
+          throw new Error('Alokasi MIXED belum diaktifkan.')
+        }
+        if (scope === 'PROJECT' && !this.form.projectId) {
+          throw new Error('Project wajib dipilih untuk expense Project.')
+        }
+        if (scope === 'INTERNAL' && !this.form.departemenId) {
+          throw new Error('Departemen wajib dipilih untuk expense Internal.')
+        }
+
         const formData = new FormData()
         
-        const fieldsToSend = ['expenseNumber', 'date', 'description', 'amount', 'paymentMethod', 'bankAccountId', 'departemenId'];
+        const fieldsToSend = ['expenseNumber', 'date', 'description', 'amount', 'paymentMethod', 'bankAccountId', 'departemenId', 'allocationScope', 'costCenterId', 'projectId'];
         fieldsToSend.forEach(key => {
           const value = this.form[key as keyof typeof this.form];
           if (value !== null && value !== undefined) {
@@ -290,7 +352,12 @@ export const useExpenseStore = defineStore('expense', {
       this.validationErrors = [];
       
       if (expense) {
-        this.form = { ...expense };
+        this.form = {
+          ...expense,
+          allocationScope: expense.allocationScope || 'INTERNAL',
+          costCenterId: expense.costCenterId ?? null,
+          projectId: expense.projectId ?? null,
+        };
       } else {
         this.form = {
           expenseNumber: '',
@@ -300,12 +367,17 @@ export const useExpenseStore = defineStore('expense', {
           paymentMethod: 'cash',
           bankAccountId: undefined,
           departemenId: undefined,
+          allocationScope: 'INTERNAL',
+          costCenterId: null,
+          projectId: null,
         };
       }
       
       this.showModal = true;
       this.fetchBankAccounts();
       this.fetchDepartments();
+      this.fetchCostCenters();
+      this.fetchProjects();
     },
 
     closeModal() {
@@ -319,6 +391,9 @@ export const useExpenseStore = defineStore('expense', {
         paymentMethod: 'cash',
         bankAccountId: undefined,
         departemenId: undefined,
+        allocationScope: 'INTERNAL',
+        costCenterId: null,
+        projectId: null,
       };
       this.validationErrors = [];
     },

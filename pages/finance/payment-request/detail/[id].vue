@@ -208,6 +208,18 @@
                         {{ paymentRequest.department?.nm_departemen || paymentRequest.department?.nmDepartemen || '—' }}
                       </p>
                     </div>
+                    <div v-if="rowRequestType === 'project'" class="col-md-6">
+                      <label class="form-label text-muted">Project</label>
+                      <p class="mb-0">
+                        {{ paymentRequest.project?.projectCode || '—' }} {{ paymentRequest.project?.name || '' }}
+                      </p>
+                    </div>
+                    <div v-if="paymentRequest.costCenter || paymentRequest.costCenterId || paymentRequest.cost_center_id" class="col-md-6">
+                      <label class="form-label text-muted">Cost Center</label>
+                      <p class="mb-0">
+                        {{ paymentRequest.costCenter?.code || '' }} {{ paymentRequest.costCenter?.name || '—' }}
+                      </p>
+                    </div>
                     <div class="col-md-6">
                       <label class="form-label text-muted">Total Pengajuan</label>
                       <p class="mb-0 fw-semibold text-primary">{{ formatRupiah(getPaymentRequestTotal(paymentRequest)) }}</p>

@@ -100,6 +100,19 @@
               @search="(t) => fetchOptions('costCenter', t)"
             />
           </div>
+          <div class="col-md-2 mt-5">
+            <label class="form-label">Project</label>
+            <CustomSelect2
+              v-model="projectId"
+              :options="projectOptions"
+              :get-option-label="(o) => o.projectCode ? `${o.projectCode} — ${o.name}` : o.name"
+              :reduce="(o) => o.id"
+              searchable
+              clearable
+              placeholder="Opsional (belum didukung backend)"
+              @search="(t) => fetchProjectOptions(t)"
+            />
+          </div>
           <div class="col-md-4 mt-5">
             <label class="form-label">Customer</label>
             <CustomSelect2
@@ -220,7 +233,7 @@
                     <th>Source</th>
                     <th>Description</th>
                     <th>Customer / Vendor</th>
-                    <th>Dept / CC</th>
+                    <th>Dept / CC / Project</th>
                     <th class="text-end">Debit</th>
                     <th class="text-end">Credit</th>
                     <th class="text-end">Running Balance</th>
@@ -314,6 +327,7 @@ const fiscalPeriodId = ref(null)
 const perusahaanId = ref(null)
 const departmentId = ref(null)
 const costCenterId = ref(null)
+const projectId = ref(null)
 const customerId = ref(null)
 const vendorId = ref(null)
 const sourceType = ref(null)
@@ -326,6 +340,7 @@ const fiscalPeriodOptions = ref([])
 const perusahaanOptions = ref([])
 const departmentOptions = ref([])
 const costCenterOptions = ref([])
+const projectOptions = ref([])
 const customerOptions = ref([])
 const vendorOptions = ref([])
 const sourceOptions = ref([])
@@ -340,6 +355,7 @@ const hasAdvancedFilters = computed(() =>
       perusahaanId.value ||
       departmentId.value ||
       costCenterId.value ||
+      projectId.value ||
       customerId.value ||
       vendorId.value ||
       sourceType.value ||
@@ -366,6 +382,7 @@ function dimensionLabel(row) {
   const parts = []
   if (row.department?.name) parts.push(row.department.name)
   if (row.costCenter?.name) parts.push(row.costCenter.name)
+  if (row.project?.name) parts.push(row.project.projectCode ? `${row.project.projectCode} — ${row.project.name}` : row.project.name)
   return parts.join(' / ') || '—'
 }
 
@@ -378,6 +395,7 @@ function queryString() {
   if (perusahaanId.value) qs.set('perusahaanId', String(perusahaanId.value))
   if (departmentId.value) qs.set('departmentId', String(departmentId.value))
   if (costCenterId.value) qs.set('costCenterId', String(costCenterId.value))
+  if (projectId.value) qs.set('projectId', String(projectId.value))
   if (customerId.value) qs.set('customerId', String(customerId.value))
   if (vendorId.value) qs.set('vendorId', String(vendorId.value))
   if (sourceType.value) qs.set('sourceType', String(sourceType.value))
@@ -412,6 +430,32 @@ async function fetchOptions(kind, searchTerm = '') {
 }
 
 const onAccountSearch = useDebounceFn((term) => fetchOptions('account', term || ''), 300)
+
+/** Historical GL must include archived projects — never use active-only Progress Tracker list. */
+async function fetchProjectOptions(searchTerm = '') {
+  const { $api } = useNuxtApp()
+  try {
+    const qs = new URLSearchParams({
+      kind: 'project',
+      context: 'historical',
+      search: searchTerm || '',
+      page: '1',
+      perPage: '30',
+    })
+    const res = await fetch($api.generalLedgerFormOptions(qs.toString()), {
+      headers: { Accept: 'application/json' },
+      credentials: 'include',
+    })
+    if (!res.ok) {
+      projectOptions.value = []
+      return
+    }
+    const json = await res.json()
+    projectOptions.value = Array.isArray(json) ? json : (json.data ?? [])
+  } catch {
+    projectOptions.value = []
+  }
+}
 
 async function load() {
   if (!accountId.value) {
@@ -450,6 +494,7 @@ function resetFilters() {
   perusahaanId.value = null
   departmentId.value = null
   costCenterId.value = null
+  projectId.value = null
   customerId.value = null
   vendorId.value = null
   sourceType.value = null
@@ -491,6 +536,7 @@ function hydrateFromQuery() {
   if (q.perusahaanId) perusahaanId.value = Number(q.perusahaanId)
   if (q.departmentId) departmentId.value = Number(q.departmentId)
   if (q.costCenterId) costCenterId.value = Number(q.costCenterId)
+  if (q.projectId) projectId.value = String(q.projectId)
   if (q.customerId) customerId.value = Number(q.customerId)
   if (q.vendorId) vendorId.value = Number(q.vendorId)
   if (q.sourceType) sourceType.value = String(q.sourceType)
@@ -515,6 +561,7 @@ onMounted(async () => {
     fetchOptions('perusahaan'),
     fetchOptions('department'),
     fetchOptions('costCenter'),
+    fetchProjectOptions(),
   ])
   if (accountId.value) await load()
 })

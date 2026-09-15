@@ -33,6 +33,8 @@
                                         <li class="mb-2"><strong>Tanggal:</strong> {{ selectedStockOut.date ? new Date(selectedStockOut.date).toLocaleDateString() : '-' }}</li>
                                         <li class="mb-2"><strong>Gudang:</strong> {{ selectedStockOut.warehouse?.name || '-' }}</li>
                                         <li class="mb-2"><strong>No. Sales Order:</strong> {{ selectedStockOut.salesOrder?.noSo || '-' }}</li>
+                                        <li class="mb-2"><strong>Project:</strong> {{ selectedStockOut.project?.projectCode || selectedStockOut.projectId || '—' }}</li>
+                                        <li class="mb-2"><strong>Purpose:</strong> CUSTOMER_OWNED_SALE (Sales Issue)</li>
                                         <li class="mb-2"><strong>Status:</strong> <span >{{ selectedStockOut.status }}</span></li>
                                     </ul>
                                 </div>

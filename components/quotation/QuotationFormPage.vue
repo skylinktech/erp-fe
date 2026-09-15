@@ -35,8 +35,7 @@
                 <div class="row g-3">
                   <div class="col-md-3"><FormLabel required>Site Investment</FormLabel><CustomSelect2 v-model="form.siteInvestId" :options="siteInvests" :get-option-label="s => s ? `${s.siNumber || ''} - ${s.name || ''}` : ''" :reduce="s => s?.id" searchable clearable placeholder="Pilih Site Investment" @update:model-value="onSiteInvestChange" /><div v-if="uiErrors.siteInvestId" class="invalid-feedback d-block">{{ uiErrors.siteInvestId }}</div></div>
                   <div class="col-md-3"><FormLabel required>Customer</FormLabel><CustomSelect2 v-model="form.customerId" :options="customers || []" :get-option-label="c => c?.name || ''" :reduce="c => c?.id" searchable clearable placeholder="Pilih Customer" /><div v-if="uiErrors.customerId" class="invalid-feedback d-block">{{ uiErrors.customerId }}</div></div>
-                  <div class="col-md-3"><FormLabel required>Site</FormLabel><CustomSelect2 v-model="form.siteId" :options="sites" :get-option-label="s => s ? `${s.code || ''} - ${s.name || ''}` : ''" :reduce="s => s?.id" searchable clearable placeholder="Pilih Site" /><div v-if="uiErrors.siteId" class="invalid-feedback d-block">{{ uiErrors.siteId }}</div></div>
-                  <div class="col-md-3"><FormLabel required>Cost Center</FormLabel><CustomSelect2 v-model="form.costCenterId" :options="costCenters" :get-option-label="c => c ? `${c.code || ''} - ${c.name || ''}` : ''" :reduce="c => c?.id" searchable clearable placeholder="Pilih Cost Center" /><div v-if="uiErrors.costCenterId" class="invalid-feedback d-block">{{ uiErrors.costCenterId }}</div></div>
+                  <div class="col-md-3"><FormLabel required>Site</FormLabel><CustomSelect2 v-model="form.siteId" :options="sites" :get-option-label="s => s ? `${s.code || ''} - ${s.name || ''}` : ''" :reduce="s => s?.id" searchable clearable placeholder="Pilih Site" /><div v-if="uiErrors.siteId" class="invalid-feedback d-block">{{ uiErrors.siteId }}</div><small class="text-muted">Satu Quotation = satu Site. Multi-site: buat Quotation terpisah.</small></div>
                   <div class="col-md-3"><FormLabel required html-for="quotation-up">UP</FormLabel><input id="quotation-up" v-model="form.up" class="form-control" :class="{ 'is-invalid': uiErrors.up }" type="text" aria-required="true" /><div v-if="uiErrors.up" class="invalid-feedback d-block">{{ uiErrors.up }}</div></div>
                   <div class="col-md-3"><FormLabel required html-for="quotation-date">Tanggal Quotation</FormLabel><input id="quotation-date" v-model="form.date" class="form-control" :class="{ 'is-invalid': uiErrors.date }" type="date" aria-required="true" /><div v-if="uiErrors.date" class="invalid-feedback d-block">{{ uiErrors.date }}</div></div>
                   <div class="col-md-3"><FormLabel required html-for="quotation-valid-until">Valid Until</FormLabel><input id="quotation-valid-until" v-model="form.validUntil" class="form-control" :class="{ 'is-invalid': uiErrors.validUntil }" type="date" aria-required="true" /><div v-if="uiErrors.validUntil" class="invalid-feedback d-block">{{ uiErrors.validUntil }}</div></div>
@@ -401,7 +400,6 @@ const QUOTATION_FIELD_TABS: Record<string, string> = {
   siteInvestId: 'quotation-tab-info',
   customerId: 'quotation-tab-info',
   siteId: 'quotation-tab-info',
-  costCenterId: 'quotation-tab-info',
   up: 'quotation-tab-info',
   date: 'quotation-tab-info',
   validUntil: 'quotation-tab-info',
@@ -421,7 +419,6 @@ function validateQuotationStep(step: { id: string }): boolean {
   if (!form.value?.siteInvestId) uiErrors.value.siteInvestId = 'Site Investment wajib dipilih.'
   if (!form.value?.customerId) uiErrors.value.customerId = 'Customer wajib dipilih.'
   if (!form.value?.siteId) uiErrors.value.siteId = 'Site wajib dipilih.'
-  if (!form.value?.costCenterId) uiErrors.value.costCenterId = 'Cost Center wajib dipilih.'
   if (!String(form.value?.up || '').trim()) uiErrors.value.up = 'UP wajib diisi.'
   if (!form.value?.date) uiErrors.value.date = 'Tanggal Quotation wajib diisi.'
   if (!form.value?.validUntil) uiErrors.value.validUntil = 'Valid Until wajib diisi.'
@@ -491,7 +488,6 @@ const productSelectOptions = computed(() => {
 })
 const siteInvests = ref<any[]>([])
 const sites = ref<any[]>([])
-const costCenters = ref<any[]>([])
 const units = ref<any[]>([])
 const didPriceListLines = ref<any[]>([])
 const skipSiteInvestPrefill = ref(true)
@@ -575,15 +571,13 @@ function toggleDidOverride(idx: number) {
 
 async function loadMasters() {
   const { $api } = useNuxtApp()
-  const [siRes, siteRes, ccRes, unitRes] = await Promise.all([
+  const [siRes, siteRes, unitRes] = await Promise.all([
     fetch(`${$api.siteInvestment()}?page=1&rows=500&status=approved`, { credentials: 'include', headers: { Accept: 'application/json' } }),
     fetch(`${$api.sites()}?page=1&rows=500`, { credentials: 'include', headers: { Accept: 'application/json' } }),
-    fetch(`${$api.costCenters()}?page=1&rows=500`, { credentials: 'include', headers: { Accept: 'application/json' } }),
     fetch($api.unit(), { credentials: 'include', headers: { Accept: 'application/json' } }),
   ])
   siteInvests.value = siRes.ok ? ((await siRes.json()).data || []) : []
   sites.value = siteRes.ok ? ((await siteRes.json()).data || []) : []
-  costCenters.value = ccRes.ok ? ((await ccRes.json()).data || []) : []
   units.value = unitRes.ok ? ((await unitRes.json()).data || []) : []
   const didRes = await fetch($api.siteInvestmentPriceListLines('did'), { credentials: 'include', headers: { Accept: 'application/json' } })
   if (didRes.ok) {
@@ -614,10 +608,6 @@ function mergePrefillMasterOptions(prefill: any) {
   if (prefill?.site?.id) {
     const exists = sites.value.some((s: any) => s.id === prefill.site.id)
     if (!exists) sites.value = [...sites.value, prefill.site]
-  }
-  if (prefill?.costCenter?.id) {
-    const exists = costCenters.value.some((c: any) => c.id === prefill.costCenter.id)
-    if (!exists) costCenters.value = [...costCenters.value, prefill.costCenter]
   }
   // Ensure service dropdown options include SI-prefilled services (paginated master may miss them)
   void quotationStore.ensurePrefillServiceLabels()

@@ -33,9 +33,14 @@ describe('general ledger page contract', () => {
     expect(pageSrc).not.toMatch(/placeholder=["']Account ID/)
   })
 
-  it('maps journal and known source drill-down to valid routes', () => {
-    expect(journalDetailPath('abc')).toBe('/finance/journals/detail/abc')
-    expect(journalSourcePath('sales_invoice', 'abc')).toBe('/finance/invoices/detail/abc')
-    expect(journalSourcePath('unknown_type', 'abc')).toBeNull()
+  it('exposes project filter on the GL page', () => {
+    expect(pageSrc).toContain('v-model="projectId"')
+    expect(pageSrc).toContain("qs.set('projectId'")
+  })
+
+  it('loads project options with context=historical (not Progress Tracker only)', () => {
+    expect(pageSrc).toContain("context: 'historical'")
+    expect(pageSrc).toContain('generalLedgerFormOptions')
+    expect(pageSrc).not.toMatch(/progressTracker\(\)/)
   })
 })

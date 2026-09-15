@@ -97,6 +97,22 @@
                           </div>
                         </div>
                       </div>
+                      <div class="row mb-3">
+                        <label class="col-sm-3 col-form-label">Project <span class="text-danger">*</span></label>
+                        <div class="col-sm-9">
+                          <CustomSelect2
+                            v-model="form.projectId"
+                            :options="projects"
+                            :get-option-label="projectLabel"
+                            :reduce="(p) => p?.id"
+                            searchable
+                            clearable
+                            placeholder="Pilih project implementasi"
+                          />
+                          <div v-if="uiErrors.projectId" class="invalid-feedback d-block">{{ uiErrors.projectId }}</div>
+                          <small class="text-muted">Biasanya terisi otomatis saat memuat data dari sumber (PO).</small>
+                        </div>
+                      </div>
                       </template>
 
                       <template v-else>
@@ -317,6 +333,21 @@
                             clearable
                             placeholder="Pilih departemen"
                           />
+                        </div>
+                      </div>
+                      <div v-if="isOperationalType" class="row mb-3">
+                        <label class="col-sm-3 col-form-label">Cost Center</label>
+                        <div class="col-sm-9">
+                          <CustomSelect2
+                            v-model="form.costCenterId"
+                            :options="costCenters"
+                            :get-option-label="costCenterLabel"
+                            :reduce="(c) => c?.id"
+                            searchable
+                            clearable
+                            placeholder="Pilih cost center"
+                          />
+                          <small class="text-muted">Direkomendasikan untuk pengajuan operasional.</small>
                         </div>
                       </div>
                       <div class="row mb-3">
@@ -779,6 +810,8 @@ const sourceOptions = ref<PaymentRequestSourceOption[]>([])
 const serviceInstanceOptions = ref<ActiveServiceInstanceOption[]>([])
 const taxMasterOptions = ref<any[]>([])
 const departemens = ref<any[]>([])
+const costCenters = ref<any[]>([])
+const projects = ref<any[]>([])
 const pegawaiOptions = ref<any[]>([])
 
 const isProjectType = computed(() => (form.value.requestType || 'project') === 'project')
@@ -826,6 +859,8 @@ const {
 const PAYMENT_REQUEST_FIELD_TABS: Record<string, string> = {
   sourceType: 'info',
   sourceId: 'info',
+  projectId: 'info',
+  costCenterId: 'info',
   paymentMethod: 'info',
   paymentDate: 'info',
   description: 'info',
@@ -937,6 +972,30 @@ function findDepartemenName(id: number | null | undefined): string {
   return d?.nm_departemen || d?.nmDepartemen || '—'
 }
 
+function costCenterLabel(c: any) {
+  if (!c) return ''
+  return c.code ? `${c.code} — ${c.name}` : c.name || ''
+}
+
+function projectLabel(p: any) {
+  if (!p) return ''
+  const customerName = p.customer?.name
+  const base = p.projectCode ? `${p.projectCode} — ${p.name}` : p.name || ''
+  return customerName ? `${base} (${customerName})` : base
+}
+
+function findCostCenterName(id: number | null | undefined): string {
+  if (!id) return '—'
+  const c = costCenters.value.find((x) => Number(x.id) === Number(id))
+  return c ? costCenterLabel(c) : '—'
+}
+
+function findProjectName(id: string | null | undefined): string {
+  if (!id) return '—'
+  const p = projects.value.find((x) => String(x.id) === String(id))
+  return p ? projectLabel(p) : '—'
+}
+
 const summaryRows = computed<FormPageSummaryRow[]>(() => {
   const f = form.value
   const rows: FormPageSummaryRow[] = [
@@ -945,7 +1004,8 @@ const summaryRows = computed<FormPageSummaryRow[]>(() => {
   if (isProjectType.value) {
     rows.push(
       { label: 'Sumber', value: getSourceTypeLabel(f.sourceType) },
-      { label: 'No. Dokumen', value: f.sourceNumber || '—' }
+      { label: 'No. Dokumen', value: f.sourceNumber || '—' },
+      { label: 'Project', value: findProjectName(f.projectId) }
     )
   } else {
     rows.push(
@@ -956,6 +1016,9 @@ const summaryRows = computed<FormPageSummaryRow[]>(() => {
       { label: 'Estimasi', value: durationLabel.value },
       { label: 'Pegawai', value: employeeCount.value ? String(employeeCount.value) : '—' }
     )
+    if (isOperationalType.value) {
+      rows.push({ label: 'Cost Center', value: findCostCenterName(f.costCenterId) })
+    }
   }
   rows.push(
     { label: 'Tgl request', value: formatDateId(f.requestDate) },
@@ -1218,6 +1281,37 @@ async function loadTaxMasters() {
   }
 }
 
+async function loadCostCenters() {
+  const { $api } = useNuxtApp()
+  try {
+    const res = await fetch(`${$api.costCenters()}?rows=1000&sortField=code&sortOrder=1`, {
+      headers: { Accept: 'application/json' },
+      credentials: 'include',
+    })
+    if (!res.ok) return
+    const json = await res.json()
+    const rows = Array.isArray(json) ? json : (json.data ?? [])
+    costCenters.value = rows.filter((c: any) => c?.isActive !== false)
+  } catch {
+    costCenters.value = []
+  }
+}
+
+async function loadProjects() {
+  const { $api } = useNuxtApp()
+  try {
+    const res = await fetch(`${$api.progressTracker()}?rows=1000&sortField=name&sortOrder=asc`, {
+      headers: { Accept: 'application/json' },
+      credentials: 'include',
+    })
+    if (!res.ok) return
+    const json = await res.json()
+    projects.value = Array.isArray(json) ? json : (json.data ?? [])
+  } catch {
+    projects.value = []
+  }
+}
+
 async function loadMasterData() {
   const { $api } = useNuxtApp()
   try {
@@ -1232,6 +1326,8 @@ async function loadMasterData() {
   }
   await Promise.all([
     loadTaxMasters(),
+    loadCostCenters(),
+    isProjectType.value ? loadProjects() : Promise.resolve(),
     showEmployeesTab.value ? loadPegawaiOptions() : Promise.resolve(),
     !isProjectType.value ? loadServiceInstances() : Promise.resolve(),
   ])
@@ -1274,6 +1370,12 @@ onMounted(async () => {
       return
     }
     if (form.value.sourceType) await loadSources()
+    if (isProjectType.value && form.value.projectId) {
+      const proj = paymentRequestStore.paymentRequest?.project
+      if (proj?.id && !projects.value.some((p) => String(p.id) === String(proj.id))) {
+        projects.value.unshift(proj)
+      }
+    }
     if (showEmployeesTab.value && !pegawaiOptions.value.length) await loadPegawaiOptions()
     if (!isProjectType.value) {
       await loadServiceInstances()

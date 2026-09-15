@@ -73,7 +73,8 @@ export interface Quotation {
   siteInvestId       : string
   customerId         : number
   siteId             : number
-  costCenterId       : number
+  /** @deprecated Stage A — legacy read only; not sent on save */
+  costCenterId?      : number | null
   date               : string
   validUntil         : string
   status             : string
@@ -109,6 +110,7 @@ export interface Quotation {
   customer?          : Customer
   siteInvest?        : { id: string; siNumber?: string; name?: string }
   site?              : { id: number; code?: string; name?: string }
+  /** @deprecated Stage A — legacy read only */
   costCenter?        : { id: number; code?: string; name?: string }
   createdByUser?     : User
   approvedByUser?    : User
@@ -284,6 +286,7 @@ export const useQuotationStore = defineStore('quotation', {
             delete dataToAppend.siteInvest;
             delete dataToAppend.site;
             delete dataToAppend.costCenter;
+            delete dataToAppend.costCenterId;
             delete dataToAppend.createdByUser;
             delete dataToAppend.approvedByUser;
             delete dataToAppend.receivedByUser;
@@ -313,9 +316,6 @@ export const useQuotationStore = defineStore('quotation', {
             }
             if (!dataToAppend.siteId) {
                 throw new Error('Site harus dipilih');
-            }
-            if (!dataToAppend.costCenterId) {
-                throw new Error('Cost Center harus dipilih');
             }
             if (!dataToAppend.up || dataToAppend.up.trim() === '') {
                 throw new Error('Untuk Perhatian harus diisi');
@@ -1166,7 +1166,6 @@ export const useQuotationStore = defineStore('quotation', {
 
         this.form.customerId = data.customerId ?? null;
         this.form.siteId = data.siteId ?? null;
-        this.form.costCenterId = data.costCenterId ?? null;
 
         const items = Array.isArray(data.quotationItems) ? data.quotationItems : [];
         const services = Array.isArray(data.quotationServices) ? data.quotationServices : [];

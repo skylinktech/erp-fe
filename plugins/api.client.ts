@@ -612,6 +612,8 @@ export default defineNuxtPlugin(() => {
       `${apiBase}/accounting/reports/general-ledger/form-options${params ? `?${params}` : ''}`,
     generalLedgerExport: (params?: string) =>
       `${apiBase}/accounting/reports/general-ledger/export${params ? `?${params}` : ''}`,
+    projectProfitability: (id: string) =>
+      `${apiBase}/accounting/reports/project-profitability/${id}`,
     // Reconciliation
     reconciliationAp: (params?: string) =>
       `${apiBase}/accounting/reconciliation/ap${params ? `?${params}` : ''}`,

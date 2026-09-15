@@ -94,6 +94,27 @@
                                       }}
                                     </NuxtLink>
                                 </div>
+                                <div class="mb-1">
+                                    <span>Alokasi: </span>
+                                    <span class="badge rounded-pill bg-label-info">
+                                      {{ (purchaseOrder.allocationScope || purchaseOrder.allocation_scope || 'INTERNAL') === 'PROJECT' ? 'Project' : 'Internal' }}
+                                    </span>
+                                </div>
+                                <div
+                                  v-if="(purchaseOrder.allocationScope || purchaseOrder.allocation_scope || 'INTERNAL') === 'PROJECT'"
+                                  class="mb-1"
+                                >
+                                    <span>Project: </span>
+                                    <span>
+                                      {{
+                                        [
+                                          purchaseOrder.project?.projectCode,
+                                          purchaseOrder.project?.name,
+                                        ].filter(Boolean).join(' — ') || '-'
+                                      }}
+                                    </span>
+                                </div>
+                                <template v-else>
                                 <div
                                   v-if="purchaseOrder.department || purchaseOrder.departmentId || purchaseOrder.department_id"
                                   class="mb-1"
@@ -104,6 +125,20 @@
                                         purchaseOrder.department?.nmDepartemen ||
                                         purchaseOrder.department?.nm_departemen ||
                                         '-'
+                                      }}
+                                    </span>
+                                </div>
+                                <div
+                                  v-if="purchaseOrder.costCenter || purchaseOrder.costCenterId || purchaseOrder.cost_center_id"
+                                  class="mb-1"
+                                >
+                                    <span>Cost Center: </span>
+                                    <span>
+                                      {{
+                                        [
+                                          purchaseOrder.costCenter?.code,
+                                          purchaseOrder.costCenter?.name,
+                                        ].filter(Boolean).join(' — ') || '-'
                                       }}
                                     </span>
                                 </div>
@@ -127,6 +162,7 @@
                                       Budget tidak cukup
                                     </span>
                                 </div>
+                                </template>
                             </div>
                             </div>
                         </div>

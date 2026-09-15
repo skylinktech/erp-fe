@@ -39,6 +39,10 @@ export interface PurchaseOrder {
   purchaseRequestId? : number | null
   budgetId?          : number | null
   departmentId?      : number | null
+  allocationScope?   : 'INTERNAL' | 'PROJECT' | 'MIXED' | null
+  costCenterId?      : number | null
+  projectId?         : string | null
+  budgetPolicy?      : string | null
   rejectionReason?   : string | null
   budgetExceeded?    : boolean
   date               : string
@@ -69,6 +73,8 @@ export interface PurchaseOrder {
   cabang?            : Cabang
   budget?            : { id: number; budgetCode?: string; budgetName?: string; totalAmount?: number | string }
   department?        : { id: number; nmDepartemen?: string; nm_departemen?: string }
+  costCenter?        : { id: number; code?: string; name?: string }
+  project?           : { id: string; projectCode?: string; name?: string }
   createdByUser?     : User
   approvedByUser?    : User
   receivedByUser?    : User
@@ -139,6 +145,9 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
         purchaseRequestId: null as number | null,
         budgetId: null as number | null,
         departmentId: null as number | null,
+        allocationScope: 'INTERNAL' as 'INTERNAL' | 'PROJECT' | 'MIXED',
+        costCenterId: null as number | null,
+        projectId: null as string | null,
         purchaseOrderItems: []
       },
     stats: {
@@ -240,6 +249,8 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
             delete dataToAppend.cabang;
             delete dataToAppend.budget;
             delete dataToAppend.department;
+            delete dataToAppend.costCenter;
+            delete dataToAppend.project;
             delete dataToAppend.purchaseRequest;
             delete dataToAppend.createdByUser;
             delete dataToAppend.approvedByUser;
@@ -269,18 +280,34 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
                 delete dataToAppend.noPo;
             }
 
-            // Perusahaan, Cabang, Departemen, Budget wajib untuk semua tipe PO
+            // Perusahaan & Cabang tetap wajib untuk semua tipe PO
             if (!dataToAppend.perusahaanId) {
                 throw new Error('Perusahaan harus dipilih')
             }
             if (!dataToAppend.cabangId) {
                 throw new Error('Cabang harus dipilih')
             }
-            if (!dataToAppend.departmentId) {
-                throw new Error('Departemen harus dipilih')
+
+            // Financial dimension: wajib department/costCenter/budget hanya untuk
+            // allocationScope INTERNAL. Scope PROJECT butuh projectId, bukan budget.
+            const allocationScope = dataToAppend.allocationScope || 'INTERNAL'
+            if (allocationScope === 'MIXED') {
+                throw new Error('Alokasi MIXED belum diaktifkan. Gunakan Internal atau Project.')
             }
-            if (!dataToAppend.budgetId) {
-                throw new Error('Budget harus dipilih')
+            if (allocationScope === 'INTERNAL') {
+                if (!dataToAppend.departmentId) {
+                    throw new Error('Departemen harus dipilih untuk PO Internal')
+                }
+                if (!dataToAppend.costCenterId) {
+                    throw new Error('Cost Center harus dipilih untuk PO Internal')
+                }
+                if (!dataToAppend.budgetId) {
+                    throw new Error('Budget harus dipilih untuk PO Internal')
+                }
+            } else if (allocationScope === 'PROJECT') {
+                if (!dataToAppend.projectId) {
+                    throw new Error('Project harus dipilih untuk PO Project')
+                }
             }
             if (dataToAppend.poType === 'internal') {
                 delete dataToAppend.extNamaPerusahaan
@@ -918,6 +945,10 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
             });
 
             this.form = formData;
+            // Backward compat: PO lama tanpa allocationScope → default INTERNAL
+            if (!this.form.allocationScope) {
+                this.form.allocationScope = 'INTERNAL'
+            }
 
             // Set attachment preview jika ada
             if (purchaseOrderData.attachment) {
@@ -957,6 +988,9 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
                 purchaseRequestId: null,
                 budgetId: null,
                 departmentId: null,
+                allocationScope: 'INTERNAL',
+                costCenterId: null,
+                projectId: null,
                 purchaseOrderItems: [],
             };
             this.addItem(); // Tambahkan satu item default untuk PO baru
@@ -988,6 +1022,9 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
             purchaseRequestId: null,
             budgetId: null,
             departmentId: null,
+            allocationScope: 'INTERNAL',
+            costCenterId: null,
+            projectId: null,
             purchaseOrderItems: [],
         };
         this.validationErrors = [];

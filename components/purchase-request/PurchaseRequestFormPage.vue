@@ -63,15 +63,47 @@
                         </div>
                       </div>
                       <div class="row mb-3">
-                        <label class="col-sm-3 col-form-label">Departemen</label>
+                        <FormLabel required label-class="col-sm-3 col-form-label">Alokasi Pengeluaran</FormLabel>
+                        <div class="col-sm-9">
+                          <CustomSelect2
+                            v-model="form.allocationScope"
+                            :options="allocationScopeOptions"
+                            :get-option-label="(o) => o.label"
+                            :reduce="(o) => o.value"
+                            :clearable="false"
+                            placeholder="Pilih alokasi"
+                            @update:modelValue="handleAllocationScopeChange"
+                          />
+                          <div class="form-text">{{ allocationScopeHint }}</div>
+                        </div>
+                      </div>
+                      <div class="row mb-3">
+                        <FormLabel :required="isInternalScope" label-class="col-sm-3 col-form-label">Departemen</FormLabel>
                         <div class="col-sm-9">
                           <CustomSelect2 v-model="form.departmentId" :options="departemens" :get-option-label="(d) => d?.nm_departemen || d?.nmDepartemen || ''" :reduce="(d) => d?.id" searchable clearable placeholder="Pilih departemen" />
+                          <div v-if="uiErrors.departmentId" class="invalid-feedback d-block">{{ uiErrors.departmentId }}</div>
+                        </div>
+                      </div>
+                      <div class="row mb-3">
+                        <label class="col-sm-3 col-form-label">Cost Center</label>
+                        <div class="col-sm-9">
+                          <CustomSelect2 v-model="form.costCenterId" :options="costCenters" :get-option-label="costCenterLabel" :reduce="(c) => c?.id" searchable clearable placeholder="Pilih cost center" />
+                        </div>
+                      </div>
+                      <div v-if="isProjectScope" class="row mb-3">
+                        <FormLabel required label-class="col-sm-3 col-form-label">Project</FormLabel>
+                        <div class="col-sm-9">
+                          <CustomSelect2 v-model="form.projectId" :options="projects" :get-option-label="projectLabel" :reduce="(p) => p?.id" searchable clearable placeholder="Pilih project implementasi" />
+                          <div v-if="uiErrors.projectId" class="invalid-feedback d-block">{{ uiErrors.projectId }}</div>
                         </div>
                       </div>
                       <div class="row mb-3">
                         <label class="col-sm-3 col-form-label">Budget</label>
                         <div class="col-sm-9">
-                          <CustomSelect2 v-model="form.budgetId" :options="budgets" :get-option-label="budgetLabel" :reduce="(b) => b?.id" searchable clearable placeholder="Pilih budget" />
+                          <CustomSelect2 v-model="form.budgetId" :options="budgets" :get-option-label="budgetLabel" :reduce="(b) => b?.id" searchable clearable :disabled="isProjectScope" placeholder="Pilih budget" />
+                          <div v-if="isProjectScope" class="form-text">
+                            <i class="ri-information-line me-1"></i>Tidak menggunakan budget internal
+                          </div>
                         </div>
                       </div>
                       <div class="row mb-3">
@@ -315,7 +347,12 @@
                       Tips
                     </strong>
                     <ul class="mb-0 ps-3">
-                      <li>Pilih <strong>Budget</strong> yang sesuai cost center departemen.</li>
+                      <li v-if="isInternalScope">
+                        Alokasi <strong>Internal</strong>: pilih Departemen dan Budget yang sesuai.
+                      </li>
+                      <li v-else-if="isProjectScope">
+                        Alokasi <strong>Project</strong>: pilih Project terkait, budget internal tidak digunakan.
+                      </li>
                       <li>Setelah disimpan sebagai draft, submit PR untuk proses approval.</li>
                       <li>Item bertipe <strong>Barang</strong> + produk katalog menampilkan stok real-time per gudang.</li>
                     </ul>
@@ -366,6 +403,15 @@ const formSteps = [
 ]
 function validatePurchaseRequestStep(step: { id: string }): boolean {
   uiErrors.value = {}
+  if (step.id === 'pr-tab-info') {
+    const scope = form.value?.allocationScope || 'INTERNAL'
+    if (scope === 'INTERNAL') {
+      if (!form.value?.departmentId) uiErrors.value.departmentId = 'Departemen wajib dipilih untuk PR Internal.'
+    } else if (scope === 'PROJECT') {
+      if (!form.value?.projectId) uiErrors.value.projectId = 'Project wajib dipilih untuk PR Project.'
+    }
+    return Object.keys(uiErrors.value).length === 0
+  }
   if (step.id !== 'pr-tab-items') return true
   const items = form.value?.purchaseRequestItems || []
   const validItems = items.filter((i) => String(i.productName || '').trim() && Number(i.qty) > 0)
@@ -393,6 +439,9 @@ const {
 } = useTabbedFormNavigation({ steps: formSteps, formRoot, validateStep: validatePurchaseRequestStep })
 const PR_FIELD_TABS: Record<string, string> = {
   departmentId: 'pr-tab-info',
+  costCenterId: 'pr-tab-info',
+  projectId: 'pr-tab-info',
+  allocationScope: 'pr-tab-info',
   neededDate: 'pr-tab-info',
   purchaseRequestItems: 'pr-tab-items',
   productName: 'pr-tab-items',
@@ -404,7 +453,30 @@ const products = ref<any[]>([])
 const warehouses = ref<any[]>([])
 const departemens = ref<any[]>([])
 const budgets = ref<any[]>([])
+const costCenters = ref<any[]>([])
+const projects = ref<any[]>([])
 const units = ref<any[]>([])
+
+const allocationScopeOptions = [
+  { label: 'Internal', value: 'INTERNAL' },
+  { label: 'Project', value: 'PROJECT' },
+]
+const isInternalScope = computed(() => (form.value?.allocationScope || 'INTERNAL') === 'INTERNAL')
+const isProjectScope = computed(() => form.value?.allocationScope === 'PROJECT')
+const allocationScopeHint = computed(() =>
+  isProjectScope.value
+    ? 'Permintaan ditagihkan ke project implementasi, bukan budget internal departemen.'
+    : 'Permintaan dibebankan ke budget internal departemen.'
+)
+
+function handleAllocationScopeChange(scope: 'INTERNAL' | 'PROJECT') {
+  form.value.allocationScope = scope
+  if (scope === 'PROJECT') {
+    form.value.budgetId = null
+  } else {
+    form.value.projectId = null
+  }
+}
 
 const purchaseRequestId = computed(() => (route.params.id ? String(route.params.id) : null))
 const useApiStockCheck = computed(
@@ -528,6 +600,16 @@ function unitLabel(u: any) {
   if (!u) return ''
   return u.symbol ? `${u.name} (${u.symbol})` : u.name || ''
 }
+function costCenterLabel(c: any) {
+  if (!c) return ''
+  return c.code ? `${c.code} — ${c.name}` : c.name || ''
+}
+function projectLabel(p: any) {
+  if (!p) return ''
+  const customerName = p.customer?.name
+  const base = p.projectCode ? `${p.projectCode} — ${p.name}` : p.name || ''
+  return customerName ? `${base} (${customerName})` : base
+}
 
 function formatDateId(iso: string | null | undefined): string {
   if (!iso) return '—'
@@ -556,21 +638,43 @@ function findWarehouseName(id: number | null | undefined): string {
   return w ? warehouseLabel(w) : '—'
 }
 
+function findCostCenterName(id: number | null | undefined): string {
+  if (!id) return '—'
+  const c = costCenters.value.find((x) => Number(x.id) === Number(id))
+  return c ? costCenterLabel(c) : '—'
+}
+
+function findProjectName(id: string | null | undefined): string {
+  if (!id) return '—'
+  const p = projects.value.find((x) => String(x.id) === String(id))
+  return p ? projectLabel(p) : '—'
+}
+
 const summaryRows = computed<FormPageSummaryRow[]>(() => {
   const f = form.value
   const priority = priorityOptions.find((p) => p.value === f.priority)?.label ?? f.priority ?? '—'
-  return [
+  const scopeLabel = f.allocationScope === 'PROJECT' ? 'Project' : 'Internal'
+  const rows: FormPageSummaryRow[] = [
     { label: 'Mode', value: isEditMode.value ? 'Edit' : 'Baru' },
+    { label: 'Alokasi', value: scopeLabel },
     { label: 'Tgl request', value: formatDateId(f.requestDate) },
     { label: 'Dibutuhkan', value: formatDateId(f.neededDate) },
     { label: 'Prioritas', value: priority },
     { label: 'Departemen', value: findDepartemenName(f.departmentId) },
-    { label: 'Budget', value: findBudgetName(f.budgetId) },
+    { label: 'Cost Center', value: findCostCenterName(f.costCenterId) },
+  ]
+  if (isProjectScope.value) {
+    rows.push({ label: 'Project', value: findProjectName(f.projectId) })
+  } else {
+    rows.push({ label: 'Budget', value: findBudgetName(f.budgetId) })
+  }
+  rows.push(
     { label: 'Gudang', value: findWarehouseName(f.warehouseId) },
     { label: 'Mata uang', value: f.currency || 'IDR' },
     { label: 'Jumlah item', value: String(itemCount.value) },
-    { label: 'Total estimasi', value: formatRupiah(grandTotal.value) },
-  ]
+    { label: 'Total estimasi', value: formatRupiah(grandTotal.value) }
+  )
+  return rows
 })
 
 function onProductSelect(index: number, productId: number | null) {
@@ -626,12 +730,14 @@ async function loadStockMap() {
 async function loadMasterData() {
   const { $api } = useNuxtApp()
   const headers = { Accept: 'application/json' }
-  const [prodRes, whRes, depRes, budRes, unitRes] = await Promise.all([
+  const [prodRes, whRes, depRes, budRes, unitRes, ccRes, projRes] = await Promise.all([
     fetch($api.dataProduct('internal'), { headers, credentials: 'include' }),
     fetch($api.dataWarehouse(), { headers, credentials: 'include' }),
     fetch($api.dataDepartemen(), { headers, credentials: 'include' }),
     fetch($api.dataBudget(), { headers, credentials: 'include' }),
     fetch(`${$api.unit()}?rows=200`, { headers, credentials: 'include' }),
+    fetch(`${$api.costCenters()}?rows=1000&sortField=code&sortOrder=1`, { headers, credentials: 'include' }),
+    fetch(`${$api.progressTracker()}?rows=1000&sortField=name&sortOrder=asc`, { headers, credentials: 'include' }),
     loadStockMap(),
   ])
   if (prodRes.ok) {
@@ -653,6 +759,15 @@ async function loadMasterData() {
   if (unitRes.ok) {
     const j = await unitRes.json()
     units.value = j.data ?? (Array.isArray(j) ? j : [])
+  }
+  if (ccRes.ok) {
+    const j = await ccRes.json()
+    const rows = Array.isArray(j) ? j : (j.data ?? [])
+    costCenters.value = rows.filter((c: any) => c?.isActive !== false)
+  }
+  if (projRes.ok) {
+    const j = await projRes.json()
+    projects.value = Array.isArray(j) ? j : (j.data ?? [])
   }
 }
 

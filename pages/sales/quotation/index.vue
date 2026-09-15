@@ -127,11 +127,6 @@
                                             {{ slotProps.data.site?.name || '-' }}
                                         </template>
                                     </Column>
-                                    <Column field="costCenter.name" header="Cost Center" :sortable="true" class="text-nowrap">
-                                        <template #body="slotProps">
-                                            {{ slotProps.data.costCenter?.name || '-' }}
-                                        </template>
-                                    </Column>
                                     <Column field="createdByUser.fullName" header="Dibuat Oleh" :sortable="true" class="text-nowrap">
                                         <template #body="slotProps">
                                             <span>

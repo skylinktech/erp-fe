@@ -383,6 +383,41 @@
                                                 />
                                             </div>
                                         </div>
+                                        <div class="row g-3 mt-1">
+                                            <div class="col-md-4">
+                                                <CustomSelect2
+                                                    v-model="line.departmentId"
+                                                    :options="departemens || []"
+                                                    :get-option-label="(d) => d?.nm_departemen || d?.nmDepartemen || ''"
+                                                    :reduce="(d) => d?.id"
+                                                    searchable
+                                                    clearable
+                                                    placeholder="Departemen (opsional)"
+                                                />
+                                            </div>
+                                            <div class="col-md-4">
+                                                <CustomSelect2
+                                                    v-model="line.costCenterId"
+                                                    :options="costCenters || []"
+                                                    :get-option-label="costCenterLabel"
+                                                    :reduce="(c) => c?.id"
+                                                    searchable
+                                                    clearable
+                                                    placeholder="Cost Center (opsional)"
+                                                />
+                                            </div>
+                                            <div class="col-md-4">
+                                                <CustomSelect2
+                                                    v-model="line.projectId"
+                                                    :options="projects || []"
+                                                    :get-option-label="projectLabel"
+                                                    :reduce="(p) => p?.id"
+                                                    searchable
+                                                    clearable
+                                                    placeholder="Project (opsional)"
+                                                />
+                                            </div>
+                                        </div>
                                         <hr class="my-4">
                                     </div>
                                     <div class="mt-4 col-12">
@@ -517,6 +552,20 @@ const showModal = computed(() => journalStore.showModal)
 const validationErrors = computed(() => Array.isArray(journalStore.validationErrors) ? journalStore.validationErrors : [])
 const accounts = computed(() => Array.isArray(journalStore.accounts) ? journalStore.accounts : [])
 const journals = computed(() => Array.isArray(journalStore.journals) ? journalStore.journals : [])
+const departemens = computed(() => Array.isArray(journalStore.departemens) ? journalStore.departemens : [])
+const costCenters = computed(() => Array.isArray(journalStore.costCenters) ? journalStore.costCenters : [])
+const projects = computed(() => Array.isArray(journalStore.projects) ? journalStore.projects : [])
+
+function costCenterLabel(c) {
+  if (!c) return ''
+  return c.code ? `${c.code} — ${c.name}` : c.name || ''
+}
+function projectLabel(p) {
+  if (!p) return ''
+  const customerName = p.customer?.name
+  const base = p.projectCode ? `${p.projectCode} — ${p.name}` : p.name || ''
+  return customerName ? `${base} (${customerName})` : base
+}
 const statistics = computed(() => journalStore.statistics)
 
 const hasActiveFilters = computed(() => !!(filterStatus.value || filterStartDate.value || filterEndDate.value))
@@ -582,6 +631,7 @@ onMounted(async () => {
       journalStore.fetchAccounts(),
       journalStore.fetchJournals(),
       journalStore.fetchStatistics(),
+      journalStore.fetchDimensionOptions(),
     ])
   } catch (error) {
     console.error('Error in onMounted:', error)

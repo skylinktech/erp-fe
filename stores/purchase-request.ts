@@ -40,6 +40,9 @@ export interface PurchaseRequest {
   requestedBy?: number | null
   departmentId?: number | null
   budgetId?: number | null
+  allocationScope?: 'INTERNAL' | 'PROJECT' | 'MIXED' | null
+  costCenterId?: number | null
+  projectId?: string | null
   warehouseId?: number | null
   priority?: string
   status: string
@@ -64,6 +67,8 @@ export interface PurchaseRequest {
   approvedByUser?: { id: number; full_name?: string; fullName?: string }
   department?: { id: number; nm_departemen?: string; nmDepartemen?: string }
   budget?: { id: number; budgetCode?: string; budget_code?: string; budgetName?: string; budget_name?: string }
+  costCenter?: { id: number; code?: string; name?: string }
+  project?: { id: string; projectCode?: string; name?: string }
   warehouse?: { id: number; name: string; code?: string }
   approvalLogs?: ApprovalLogEntry[]
   currentApprovers?: ApproverInfo[]
@@ -95,6 +100,9 @@ interface PurchaseRequestState {
     requestDate: string
     departmentId: number | null
     budgetId: number | null
+    allocationScope: 'INTERNAL' | 'PROJECT' | 'MIXED'
+    costCenterId: number | null
+    projectId: string | null
     warehouseId: number | null
     priority: string
     purpose: string
@@ -171,6 +179,9 @@ export const usePurchaseRequestStore = defineStore('purchaseRequest', {
       requestDate: todayIso(),
       departmentId: null,
       budgetId: null,
+      allocationScope: 'INTERNAL',
+      costCenterId: null,
+      projectId: null,
       warehouseId: null,
       priority: 'normal',
       purpose: '',
@@ -289,10 +300,33 @@ export const usePurchaseRequestStore = defineStore('purchaseRequest', {
         return false
       }
 
+      const allocationScope = this.form.allocationScope || 'INTERNAL'
+      if (allocationScope === 'MIXED') {
+        this.saving = false
+        toast.error({ title: 'Validasi', message: 'Alokasi MIXED belum diaktifkan. Gunakan Internal atau Project.', color: 'red', position: 'bottomRight', layout: 2 })
+        return false
+      }
+      if (allocationScope === 'PROJECT') {
+        if (!this.form.projectId) {
+          this.saving = false
+          toast.error({ title: 'Validasi', message: 'Project harus dipilih untuk PR Project', color: 'red', position: 'bottomRight', layout: 2 })
+          return false
+        }
+      } else if (allocationScope === 'INTERNAL') {
+        if (!this.form.departmentId) {
+          this.saving = false
+          toast.error({ title: 'Validasi', message: 'Departemen harus dipilih untuk PR Internal', color: 'red', position: 'bottomRight', layout: 2 })
+          return false
+        }
+      }
+
       const body: Record<string, any> = {
         requestDate: this.form.requestDate || todayIso(),
         departmentId: this.form.departmentId,
-        budgetId: this.form.budgetId,
+        budgetId: allocationScope === 'PROJECT' ? null : this.form.budgetId,
+        allocationScope,
+        costCenterId: this.form.costCenterId,
+        projectId: allocationScope === 'PROJECT' ? this.form.projectId : null,
         warehouseId: this.form.warehouseId,
         priority: this.form.priority || 'normal',
         purpose: this.form.purpose?.trim() || null,
@@ -455,6 +489,9 @@ export const usePurchaseRequestStore = defineStore('purchaseRequest', {
           requestDate: (raw.requestDate ?? raw.request_date ?? todayIso()).toString().slice(0, 10),
           departmentId: raw.departmentId ?? raw.department_id ?? null,
           budgetId: raw.budgetId ?? raw.budget_id ?? null,
+          allocationScope: raw.allocationScope ?? raw.allocation_scope ?? 'INTERNAL',
+          costCenterId: raw.costCenterId ?? raw.cost_center_id ?? null,
+          projectId: raw.projectId ?? raw.project_id ?? null,
           warehouseId: raw.warehouseId ?? raw.warehouse_id ?? null,
           priority: raw.priority ?? 'normal',
           purpose: raw.purpose ?? raw.description ?? '',
@@ -469,6 +506,9 @@ export const usePurchaseRequestStore = defineStore('purchaseRequest', {
           requestDate: todayIso(),
           departmentId: null,
           budgetId: null,
+          allocationScope: 'INTERNAL',
+          costCenterId: null,
+          projectId: null,
           warehouseId: null,
           priority: 'normal',
           purpose: '',
@@ -491,6 +531,9 @@ export const usePurchaseRequestStore = defineStore('purchaseRequest', {
         requestDate: todayIso(),
         departmentId: null,
         budgetId: null,
+        allocationScope: 'INTERNAL',
+        costCenterId: null,
+        projectId: null,
         warehouseId: null,
         priority: 'normal',
         purpose: '',

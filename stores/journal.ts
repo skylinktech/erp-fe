@@ -13,9 +13,15 @@ export interface JournalLine {
   customerId?: number | null
   vendorId?: number | null
   partyType?: 'customer' | 'vendor' | ''
+  departmentId?: number | null
+  costCenterId?: number | null
+  projectId?: string | null
   account?: any
   customer?: { id: number; name?: string | null; code?: string | null } | null
   vendor?: { id: number; name?: string | null; code?: string | null } | null
+  department?: { id: number; nm_departemen?: string; nmDepartemen?: string } | null
+  costCenter?: { id: number; code?: string; name?: string } | null
+  project?: { id: string; projectCode?: string; name?: string } | null
 }
 
 export interface Journal {
@@ -68,6 +74,9 @@ interface JournalState {
   accounts: any[]
   customerOptions: Array<{ id: number; name: string; code?: string | null }>
   vendorOptions: Array<{ id: number; name: string; code?: string | null }>
+  departemens: any[]
+  costCenters: any[]
+  projects: any[]
 }
 
 export const useJournalStore = defineStore('journal', {
@@ -122,6 +131,9 @@ export const useJournalStore = defineStore('journal', {
     accounts: [],
     customerOptions: [],
     vendorOptions: [],
+    departemens: [],
+    costCenters: [],
+    projects: [],
   }),
 
   actions: {
@@ -219,6 +231,44 @@ export const useJournalStore = defineStore('journal', {
         }
       } catch (error) {
         console.error('Error fetching accounts:', error)
+      }
+    },
+
+    async fetchDimensionOptions() {
+      const { $api } = useNuxtApp()
+      const headers = { Accept: 'application/json' }
+      const opts = { headers, credentials: 'include' as const }
+      try {
+        const [depRes, ccRes, projRes] = await Promise.all([
+          fetch($api.dataDepartemen(), opts),
+          fetch(`${$api.costCenters()}?rows=1000&sortField=code&sortOrder=1`, opts),
+          fetch(
+            $api.generalLedgerFormOptions(
+              new URLSearchParams({
+                kind: 'project',
+                context: 'transaction',
+                page: '1',
+                perPage: '100',
+              }).toString()
+            ),
+            opts
+          ),
+        ])
+        if (depRes.ok) {
+          const j = await depRes.json()
+          this.departemens = Array.isArray(j) ? j : (j.data ?? j)
+        }
+        if (ccRes.ok) {
+          const j = await ccRes.json()
+          const rows = Array.isArray(j) ? j : (j.data ?? [])
+          this.costCenters = rows.filter((c: any) => c?.isActive !== false)
+        }
+        if (projRes.ok) {
+          const j = await projRes.json()
+          this.projects = Array.isArray(j) ? j : (j.data ?? [])
+        }
+      } catch (error) {
+        console.error('Error fetching journal dimension options:', error)
       }
     },
 
@@ -373,6 +423,15 @@ export const useJournalStore = defineStore('journal', {
               }
               if (line.vendorId) {
                 formData.append(`journalLines[${index}][vendorId]`, String(line.vendorId));
+              }
+              if (line.departmentId) {
+                formData.append(`journalLines[${index}][departmentId]`, String(line.departmentId));
+              }
+              if (line.costCenterId) {
+                formData.append(`journalLines[${index}][costCenterId]`, String(line.costCenterId));
+              }
+              if (line.projectId) {
+                formData.append(`journalLines[${index}][projectId]`, String(line.projectId));
               }
               console.log(`Added line ${index} to FormData`);
             } else {
@@ -746,6 +805,9 @@ export const useJournalStore = defineStore('journal', {
               customerId: null,
               vendorId: null,
               partyType: '',
+              departmentId: null,
+              costCenterId: null,
+              projectId: null,
             },
             {
               accountId: '',
@@ -755,6 +817,9 @@ export const useJournalStore = defineStore('journal', {
               customerId: null,
               vendorId: null,
               partyType: '',
+              departmentId: null,
+              costCenterId: null,
+              projectId: null,
             }
           ]
         };
@@ -762,6 +827,7 @@ export const useJournalStore = defineStore('journal', {
       
       this.showModal = true;
       this.fetchAccounts();
+      this.fetchDimensionOptions();
     },
 
     closeModal() {
@@ -783,6 +849,9 @@ export const useJournalStore = defineStore('journal', {
             customerId: null,
             vendorId: null,
             partyType: '',
+            departmentId: null,
+            costCenterId: null,
+            projectId: null,
           },
           {
             accountId: '',
@@ -792,6 +861,9 @@ export const useJournalStore = defineStore('journal', {
             customerId: null,
             vendorId: null,
             partyType: '',
+            departmentId: null,
+            costCenterId: null,
+            projectId: null,
           }
         ]
       };
@@ -807,6 +879,9 @@ export const useJournalStore = defineStore('journal', {
         customerId: null,
         vendorId: null,
         partyType: '',
+        departmentId: null,
+        costCenterId: null,
+        projectId: null,
       });
     },
 

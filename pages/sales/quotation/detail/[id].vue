@@ -132,10 +132,6 @@
                       <label class="form-label text-muted medium">Site</label>
                       <p class="mb-0 fw-medium">{{ (quotation.site?.code || '') + (quotation.site?.code && quotation.site?.name ? ' - ' : '') + (quotation.site?.name || '—') }}</p>
                     </div>
-                    <div class="col-md-6" v-if="quotation.costCenter">
-                      <label class="form-label text-muted medium">Cost Center</label>
-                      <p class="mb-0 fw-medium">{{ (quotation.costCenter?.code || '') + (quotation.costCenter?.code && quotation.costCenter?.name ? ' - ' : '') + (quotation.costCenter?.name || '—') }}</p>
-                    </div>
                     <div class="col-md-6">
                       <label class="form-label text-muted medium">Terms of Payment</label>
                       <p class="mb-0">{{ quotation.termsOfPayment || '—' }}</p>
