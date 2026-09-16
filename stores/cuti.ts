@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { useNuxtApp } from '#app'
 import { apiFetch } from '~/utils/apiFetch'
 import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
+import { enrichCutiBalanceErrorMessage } from '~/utils/cutiBalanceErrors'
 
 /* ------------------------------------------------------------------
  * Type
@@ -67,7 +68,10 @@ export interface CutiBalanceRow {
     cuti_terpakai: number
     sisa_cuti_tahun_lalu: number
     valid_sampai: string | null
-  }
+  } | null
+  configured?: boolean
+  consumption_policy?: 'required' | 'optional' | 'none'
+  annual_quota_limit?: number | null
   cuti_bersama_total?: number
 }
 
@@ -83,6 +87,13 @@ export interface CutiTahunanSummary {
   pegawai_id: number
   nm_pegawai: string | null
   tahun: number
+  configured?: boolean
+  balance?: {
+    id: number
+    sisa_jatah_cuti: number
+    cuti_terpakai: number
+  } | null
+  consumption_policy?: 'required'
   jatah_tahunan: number
   sisa_jatah_cuti: number
   cuti_terpakai: number
@@ -446,6 +457,7 @@ export const useCutiStore = defineStore('cuti', {
         return result?.data as CutiRow
       } catch (error: any) {
         const err = normalizeApiError(error, 'Cuti gagal disimpan.')
+        err.message = enrichCutiBalanceErrorMessage(err)
         toastNormalizedError(err)
         return null
       } finally {

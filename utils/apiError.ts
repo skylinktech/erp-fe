@@ -140,6 +140,8 @@ function classify(status: number | null, code: string | null, hasFieldErrors: bo
   if (upper === 'NOT_FOUND') return 'not_found'
   if (upper === 'UNAUTHORIZED' || status === 401 || status === 419) return 'auth'
   if (upper === 'FORBIDDEN' || status === 403) return 'forbidden'
+  if (upper.startsWith('CUTI_BALANCE_') && status === 409) return 'conflict'
+  if (upper === 'CUTI_BALANCE_DUPLICATE') return 'conflict'
   if (status === 404) return 'not_found'
   if (status === 409) return 'conflict'
   if (status === 429) return 'rate_limit'
@@ -319,10 +321,13 @@ export function normalizeApiError(
   const type = networkType || classify(status, code, fieldErrorList.length > 0)
 
   let message = pickRawMessage(raw, body)
+  const isDomainLeaveCode = !!(code && String(code).toUpperCase().startsWith('CUTI_BALANCE_'))
   if (type === 'validation') {
     if (!message || /^validasi gagal\.?$/i.test(message) || /^validation (failed|error)\.?$/i.test(message)) {
       message = fieldErrorList[0]?.message || fallbackFor('validation', actionFallback)
     }
+  } else if (isDomainLeaveCode && message && !isUnsafeErrorMessage(message)) {
+    // Keep backend domain message — do not replace with generic "Gagal menyimpan data".
   } else if (!message || isUnsafeErrorMessage(message) || OFETCH_STATUS_LINE.test(message)) {
     message = fallbackFor(type, actionFallback)
   }

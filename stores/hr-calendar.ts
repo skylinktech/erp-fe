@@ -4,6 +4,12 @@ import Swal from 'sweetalert2'
 import { apiFetch } from '~/utils/apiFetch'
 import { normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 import {
+  formatReconciliationSuccessMessage,
+  formatReconciliationSummaryHtml,
+  hasReconciliationWarnings,
+  type CutiBersamaReconciliationReport,
+} from '~/utils/cutiBersamaReconciliation'
+import {
   createEmptyHrCalendarForm,
   getHrCalendarColor,
   type HrCalendarEventRow,
@@ -102,6 +108,7 @@ export const useHrCalendarStore = defineStore('hr-calendar', {
     async saveEvent(): Promise<boolean> {
       const toast = useToast()
       const { $api } = useNuxtApp()
+      if (this.saving) return false
       this.saving = true
       this.validationErrors = []
 
@@ -134,8 +141,13 @@ export const useHrCalendarStore = defineStore('hr-calendar', {
         const method = this.isEditMode ? 'PUT' : 'POST'
 
         const res = await apiFetch<{
+          success?: boolean
           message?: string
-          data?: HrCalendarEventRow
+          data?: {
+            event?: HrCalendarEventRow
+            reconciliation?: CutiBersamaReconciliationReport | null
+          }
+          // legacy flat shape (pre-1D) — ignore if nested present
           cuti_bersama?: { pegawaiCount: number; totalHari: number } | null
         }>(url, {
           method,
@@ -144,17 +156,30 @@ export const useHrCalendarStore = defineStore('hr-calendar', {
           body: JSON.stringify(body),
         })
 
-        let successMessage = this.isEditMode ? 'Event diperbarui' : 'Event ditambahkan'
-        if (res?.cuti_bersama && body.tipe === 'cuti_bersama') {
-          const { pegawaiCount, totalHari } = res.cuti_bersama
-          successMessage += `. Cuti tahunan ${pegawaiCount} pegawai dipotong (${totalHari} hari total).`
-        }
+        const reconciliation =
+          body.tipe === 'cuti_bersama' ? res?.data?.reconciliation ?? null : null
 
-        toast.success({
-          title: 'Berhasil',
-          message: successMessage,
-          color: 'green',
-        })
+        if (reconciliation && hasReconciliationWarnings(reconciliation)) {
+          await Swal.fire({
+            icon: 'warning',
+            title: 'Event tersimpan dengan peringatan',
+            html: formatReconciliationSummaryHtml(reconciliation),
+            confirmButtonText: 'Mengerti',
+            width: '36rem',
+          })
+        } else if (reconciliation) {
+          toast.success({
+            title: 'Berhasil',
+            message: formatReconciliationSuccessMessage(reconciliation),
+            color: 'green',
+          })
+        } else {
+          toast.success({
+            title: 'Berhasil',
+            message: res?.message || (this.isEditMode ? 'Event diperbarui' : 'Event ditambahkan'),
+            color: 'green',
+          })
+        }
 
         this.closeModal()
         await this.refreshVisibleRange()

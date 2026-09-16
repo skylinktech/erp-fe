@@ -195,7 +195,7 @@
                     <button
                       type="submit"
                       class="btn btn-primary"
-                      :disabled="store.saving || !!leadTimeError"
+                      :disabled="store.saving || !!leadTimeError || submitBlockedByBalance"
                     >
                       <span
                         v-if="store.saving"
@@ -233,32 +233,86 @@
                     {{ selectedType.jatahCuti }} hari / tahun
                   </dd>
 
-                  <template v-if="isCutiTahunanSelected && ctBalanceSummary">
-                    <dt class="col-5 text-muted">Sisa Cuti Tahunan</dt>
+                  <template v-if="selectedBalancePolicy === 'required'">
+                    <template v-if="selectedBalanceRow?.configured && selectedBalanceRow.balance">
+                      <dt class="col-5 text-muted">Sisa saldo</dt>
+                      <dd class="col-7">
+                        <strong>{{ selectedBalanceRow.balance.sisa_jatah_cuti }}</strong> hari
+                        <span v-if="store.balancesLoading" class="text-muted"> (memuat…)</span>
+                      </dd>
+                      <dt
+                        v-if="(selectedBalanceRow.cuti_bersama_total ?? 0) > 0"
+                        class="col-5 text-muted"
+                      >
+                        Cuti Bersama
+                      </dt>
+                      <dd
+                        v-if="(selectedBalanceRow.cuti_bersama_total ?? 0) > 0"
+                        class="col-7"
+                      >
+                        -{{ selectedBalanceRow.cuti_bersama_total }} hari
+                      </dd>
+                    </template>
+                    <template v-else-if="!store.balancesLoading">
+                      <dt class="col-5 text-muted">Saldo</dt>
+                      <dd class="col-7 text-warning">Belum dikonfigurasi HR</dd>
+                    </template>
+                  </template>
+                  <template v-else-if="selectedBalancePolicy === 'optional' && selectedBalanceRow?.configured && selectedBalanceRow.balance">
+                    <dt class="col-5 text-muted">Sisa (opsional)</dt>
                     <dd class="col-7">
-                      <strong>{{ ctBalanceSummary.sisa }}</strong> hari
-                      <span v-if="store.balancesLoading" class="text-muted"> (memuat…)</span>
-                    </dd>
-                    <dt v-if="ctBalanceSummary.cutiBersama > 0" class="col-5 text-muted">Cuti Bersama</dt>
-                    <dd v-if="ctBalanceSummary.cutiBersama > 0" class="col-7">
-                      -{{ ctBalanceSummary.cutiBersama }} hari
+                      <strong>{{ selectedBalanceRow.balance.sisa_jatah_cuti }}</strong> hari
                     </dd>
                   </template>
                 </dl>
               </div>
             </div>
 
-            <div v-if="isCutiTahunanSelected && ctBalanceSummary" class="card border-info mb-4">
+            <div
+              v-if="selectedBalancePolicy === 'required' && balanceMissingForRequired"
+              class="card border-warning mb-4"
+            >
               <div class="card-body small">
-                <strong class="text-info">
-                  <i class="ri-information-line me-1"></i>Saldo Cuti Tahunan
+                <strong class="text-warning">
+                  <i class="ri-error-warning-line me-1"></i>Saldo belum diatur
                 </strong>
                 <p class="mb-0 mt-2">
-                  Jatah {{ ctBalanceSummary.jatah }} hari/tahun.
-                  <span v-if="ctBalanceSummary.cutiBersama > 0">
-                    Sudah dipotong cuti bersama {{ ctBalanceSummary.cutiBersama }} hari.
+                  Saldo {{ selectedType?.nmTipeCuti || 'cuti' }} belum dikonfigurasi oleh HR.
+                  Pengajuan tidak dapat dikirim sampai saldo dibuat.
+                </p>
+              </div>
+            </div>
+
+            <div
+              v-if="selectedBalancePolicy === 'required' && selectedBalanceRow?.configured && selectedBalanceRow.balance"
+              class="card border-info mb-4"
+            >
+              <div class="card-body small">
+                <strong class="text-info">
+                  <i class="ri-information-line me-1"></i>Saldo {{ selectedType?.nmTipeCuti }}
+                </strong>
+                <p class="mb-0 mt-2">
+                  Sisa yang dapat diajukan:
+                  <strong>{{ selectedBalanceRow.balance.sisa_jatah_cuti }} hari</strong>.
+                  <span v-if="(selectedBalanceRow.cuti_bersama_total ?? 0) > 0">
+                    Sudah dipotong cuti bersama {{ selectedBalanceRow.cuti_bersama_total }} hari.
                   </span>
-                  Sisa yang dapat diajukan: <strong>{{ ctBalanceSummary.sisa }} hari</strong>.
+                </p>
+              </div>
+            </div>
+
+            <div
+              v-if="selectedBalancePolicy === 'optional' && selectedBalanceRow?.configured && selectedBalanceRow.balance"
+              class="card border-secondary mb-4"
+            >
+              <div class="card-body small">
+                <strong>
+                  <i class="ri-information-line me-1"></i>Kuota opsional
+                </strong>
+                <p class="mb-0 mt-2">
+                  Pegawai memiliki jatah {{ selectedType?.nmTipeCuti }}:
+                  sisa <strong>{{ selectedBalanceRow.balance.sisa_jatah_cuti }} hari</strong>.
+                  Tanpa jatah, pengajuan tetap diizinkan.
                 </p>
               </div>
             </div>
@@ -290,7 +344,6 @@ import { useCutiStore, type CutiTypeRow } from '~/stores/cuti'
 import {
   KODE_CUTI_IZIN,
   KODE_CUTI_SAKIT,
-  KODE_CUTI_TAHUNAN,
   MAX_BACKDATE_SAKIT_DAYS,
   MIN_LEAD_TIME_DAYS_CUTI,
   formatDurasiCuti,
@@ -299,6 +352,10 @@ import {
   computeKonsumsiSaldo,
   requiresSakitDoctorNote,
 } from '~/constants/hrd/cutiForm'
+import {
+  resolveCutiTypeBalancePolicy,
+  type CutiBalanceConsumption,
+} from '~/constants/hrd/cutiBalancePolicy'
 
 const route = useRoute()
 const router = useRouter()
@@ -329,17 +386,31 @@ const selectedType = computed<CutiTypeRow | null>(
 )
 const isIzinSelected = computed(() => selectedType.value?.kodeCuti === KODE_CUTI_IZIN)
 const isSakitSelected = computed(() => selectedType.value?.kodeCuti === KODE_CUTI_SAKIT)
-const isCutiTahunanSelected = computed(() => selectedType.value?.kodeCuti === KODE_CUTI_TAHUNAN)
 
-const ctBalanceSummary = computed(() => {
-  const row = store.balances.find((b) => b.cuti_type.kodeCuti === KODE_CUTI_TAHUNAN)
-  if (!row) return null
-  return {
-    jatah: row.cuti_type.jatahCuti,
-    sisa: row.balance.sisa_jatah_cuti,
-    cutiBersama: row.cuti_bersama_total ?? 0,
-  }
+const selectedBalancePolicy = computed<CutiBalanceConsumption>(() =>
+  resolveCutiTypeBalancePolicy(selectedType.value?.kodeCuti).consumption
+)
+
+const selectedBalanceRow = computed(() => {
+  if (!selectedType.value) return null
+  return (
+    store.balances.find((b) => b.cuti_type.id === selectedType.value!.id) ||
+    store.balances.find((b) => b.cuti_type.kodeCuti === selectedType.value!.kodeCuti) ||
+    null
+  )
 })
+
+const balanceMissingForRequired = computed(() => {
+  if (selectedBalancePolicy.value !== 'required') return false
+  if (store.balancesLoading) return false
+  const row = selectedBalanceRow.value
+  if (!row) return true
+  if (row.configured === false) return true
+  return !row.balance
+})
+
+/** Required tanpa balance → disable submit. Optional/none tidak memblokir. */
+const submitBlockedByBalance = computed(() => balanceMissingForRequired.value)
 
 async function refreshBalanceForForm() {
   const tahun = store.form.tanggalMulai
@@ -356,7 +427,7 @@ async function refreshBalanceForForm() {
 watch(
   () => [store.form.cuti_type_id, store.form.tanggalMulai, store.form.pegawai_id] as const,
   () => {
-    if (isCutiTahunanSelected.value) {
+    if (selectedBalancePolicy.value !== 'none') {
       void refreshBalanceForForm()
     }
   }
@@ -457,6 +528,11 @@ function onFileChange(e: Event) {
 }
 
 async function handleSubmit() {
+  if (submitBlockedByBalance.value) {
+    return alertErr(
+      `Saldo ${selectedType.value?.nmTipeCuti || 'cuti'} belum dikonfigurasi. Hubungi HR.`
+    )
+  }
   // Validasi cepat sebelum hit API
   if (!store.form.cuti_type_id) return alertErr('Tipe cuti wajib dipilih')
   if (!store.form.tanggalMulai || !store.form.tanggalSelesai)

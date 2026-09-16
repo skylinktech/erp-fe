@@ -41,6 +41,24 @@
           </p>
         </div>
 
+        <div v-else-if="summary.configured === false" class="text-center py-5">
+          <i class="ri-calendar-todo-line ri-32px text-muted d-block mb-2"></i>
+          <p class="mb-2">
+            Saldo Cuti Tahunan tahun {{ summary.tahun }} belum diatur oleh HR.
+          </p>
+          <NuxtLink
+            v-if="canCreateSaldo"
+            to="/hrd/saldo-cuti"
+            class="btn btn-sm btn-primary"
+          >
+            <i class="ri-add-line me-1"></i>
+            Atur Saldo Cuti
+          </NuxtLink>
+          <p v-else class="small text-muted mb-0">
+            Hubungi HR untuk pengaturan saldo cuti.
+          </p>
+        </div>
+
         <template v-else>
           <div class="pb-8 pt-5 mb-6">
             <div class="row g-3">
@@ -161,6 +179,9 @@ const tahunOptions = computed(() => [currentYear - 1, currentYear, currentYear +
 
 const canViewKalender = computed(
   () => userHasRole('superadmin') || userHasPermission('view_kalender')
+)
+const canCreateSaldo = computed(
+  () => userHasRole('superadmin') || userHasPermission('create_saldo_cuti')
 )
 
 function reload() {

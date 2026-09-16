@@ -661,6 +661,7 @@ async function loadPegawaiCutiBalancesOnly() {
 }
 
 function cutiBalanceNum(br: Record<string, any>, snake: string, camel: string): string {
+  if (br.configured === false || br.balance == null) return '—'
   const b = br.balance
   if (!b) return '—'
   const v = b[snake] ?? b[camel]
@@ -668,6 +669,11 @@ function cutiBalanceNum(br: Record<string, any>, snake: string, camel: string): 
 }
 
 function cutiBalanceKuotaHari(br: Record<string, any>): string {
+  if (br.configured === false || br.balance == null) {
+    if (br.consumption_policy === 'required') return 'Belum diatur'
+    if (br.consumption_policy === 'none') return 'Tidak dipakai'
+    return '—'
+  }
   const j = br.cuti_type?.jatahCuti ?? br.cuti_type?.jatah_cuti
   if (j == null) return '—'
   const n = Number(j)
@@ -683,6 +689,7 @@ const cutiBalanceTotals = computed(() => {
   let sisa = 0
   let kuotaRef = 0
   for (const br of pegawaiCutiBalances.value) {
+    if (br.configured === false || !br.balance) continue
     const b = br.balance || {}
     const t = Number(b.cuti_terpakai ?? b.cutiTerpakai ?? 0) || 0
     const s = Number(b.sisa_jatah_cuti ?? b.sisaJatahCuti ?? 0) || 0

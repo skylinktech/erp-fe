@@ -159,6 +159,10 @@ export default defineNuxtPlugin(() => {
     cutiStats            : () => `${apiBase}/cuti/stats`,
     cutiBalanceList      : () => `${apiBase}/cuti-balance`,
     cutiBalanceShow      : (id: number | string) => `${apiBase}/cuti-balance/${id}`,
+    cutiBalanceEligibility: (pegawaiId: number | string, tahun?: number) => {
+      const qs = tahun != null ? `?tahun=${tahun}` : ''
+      return `${apiBase}/cuti-balance/eligibility/${pegawaiId}${qs}`
+    },
     lembur               : () => `${apiBase}/lembur`,
     lemburShow           : (id: number | string) => `${apiBase}/lembur/${id}`,
     lemburCetak          : (id: number | string) => `${apiBase}/lembur/${id}/cetak`,

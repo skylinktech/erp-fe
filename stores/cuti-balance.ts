@@ -3,7 +3,21 @@ import { useNuxtApp } from '#app'
 import Swal from 'sweetalert2'
 import { apiFetch } from '~/utils/apiFetch'
 import { normalizeApiError, toastNormalizedError } from '~/utils/apiError'
+import { enrichCutiBalanceErrorMessage } from '~/utils/cutiBalanceErrors'
+import {
+  MANUAL_SALDO_COPY,
+  allowsManualBalanceProvision,
+  annualQuotaLimit,
+  normalizeKodeCuti,
+} from '~/constants/hrd/cutiBalancePolicy'
 import type { CutiBersamaBreakdownItem, CutiTypeRow } from '~/stores/cuti'
+
+export interface CutiBalanceConsumptionFloor {
+  approved_leave_days: number
+  cuti_bersama_adjustments: number
+  cancellation_reversals: number
+  minimum_cuti_terpakai: number
+}
 
 export interface CutiBalanceRow {
   id: number
@@ -30,6 +44,7 @@ export interface CutiBalanceRow {
     jatahCuti: number
   } | null
   breakdown?: CutiBersamaBreakdownItem[]
+  consumption_floor?: CutiBalanceConsumptionFloor
 }
 
 export interface CutiBalanceFormModel {
@@ -37,11 +52,27 @@ export interface CutiBalanceFormModel {
   pegawai_id: number | null
   cuti_type_id: number | null
   tahun: number
-  sisa_jatah_cuti: number
+  sisa_jatah_cuti: number | null
   cuti_terpakai: number
   sisa_cuti_tahun_lalu: number
   valid_sampai: string
-  auto_prorata: boolean
+}
+
+export interface PegawaiEligibilityMeta {
+  pegawai_id: number
+  nm_pegawai: string | null
+  status_pegawai: number | null
+  status_label: string
+  tgl_masuk: string | null
+  kontrak_aktif: boolean
+  eligible_at: string | null
+  tenure_met: boolean
+  status_eligible: boolean
+  business_today: string | null
+  tahun: number
+  can_provision_ct: boolean
+  can_provision: boolean
+  reasons: string[]
 }
 
 function emptyForm(): CutiBalanceFormModel {
@@ -50,16 +81,17 @@ function emptyForm(): CutiBalanceFormModel {
     pegawai_id: null,
     cuti_type_id: null,
     tahun: new Date().getFullYear(),
-    sisa_jatah_cuti: 0,
+    sisa_jatah_cuti: null,
     cuti_terpakai: 0,
     sisa_cuti_tahun_lalu: 0,
     valid_sampai: `${new Date().getFullYear()}-12-31`,
-    auto_prorata: true,
   }
 }
 
 export const CUTI_BALANCE_INELIGIBLE_KONTRAK_MESSAGE =
   'Saldo cuti hanya dapat diisi untuk pegawai yang kontraknya sudah disetujui (aktif). Pegawai tanpa kontrak, masih ditinjau, atau belum disetujui tidak dapat ditambahkan.'
+
+export { MANUAL_SALDO_COPY }
 
 /** Normalisasi ke `YYYY-MM-DD` agar `<input type="date">` dan validator VineJS selaras. */
 function toDateOnly(value: string | Date | null | undefined): string | null {
@@ -100,12 +132,15 @@ interface CutiBalanceState {
   }
   cutiTypes: CutiTypeRow[]
   pegawaiOptions: Array<{ id: number; label: string }>
+  eligibility: PegawaiEligibilityMeta | null
+  eligibilityLoading: boolean
   form: CutiBalanceFormModel
   isEditMode: boolean
   showModal: boolean
   showDetailModal: boolean
   saving: boolean
   validationErrors: string[]
+  editFloor: CutiBalanceConsumptionFloor | null
 }
 
 export const useCutiBalanceStore = defineStore('cuti-balance', {
@@ -128,13 +163,33 @@ export const useCutiBalanceStore = defineStore('cuti-balance', {
     },
     cutiTypes: [],
     pegawaiOptions: [],
+    eligibility: null,
+    eligibilityLoading: false,
     form: emptyForm(),
     isEditMode: false,
     showModal: false,
     showDetailModal: false,
     saving: false,
     validationErrors: [],
+    editFloor: null,
   }),
+
+  getters: {
+    provisionableCutiTypes(state): CutiTypeRow[] {
+      return state.cutiTypes.filter((t) => allowsManualBalanceProvision(t.kodeCuti))
+    },
+    selectedType(state): CutiTypeRow | null {
+      return state.cutiTypes.find((t) => t.id === state.form.cuti_type_id) ?? null
+    },
+    selectedQuotaLimit(): number | null {
+      return annualQuotaLimit(this.selectedType?.kodeCuti)
+    },
+    allocatedPreview(state): number {
+      const sisa = Number(state.form.sisa_jatah_cuti ?? 0)
+      const terpakai = Number(state.form.cuti_terpakai ?? 0)
+      return (Number.isFinite(sisa) ? sisa : 0) + (Number.isFinite(terpakai) ? terpakai : 0)
+    },
+  },
 
   actions: {
     async fetchCutiTypes() {
@@ -166,6 +221,22 @@ export const useCutiBalanceStore = defineStore('cuti-balance', {
         }))
       } catch {
         this.pegawaiOptions = []
+      }
+    },
+
+    async fetchEligibility(pegawaiId: number, tahun?: number) {
+      const { $api } = useNuxtApp()
+      this.eligibilityLoading = true
+      try {
+        const res = await apiFetch<{ data: PegawaiEligibilityMeta }>(
+          $api.cutiBalanceEligibility(pegawaiId, tahun ?? this.form.tahun),
+          { credentials: 'include' }
+        )
+        this.eligibility = res.data ?? null
+      } catch {
+        this.eligibility = null
+      } finally {
+        this.eligibilityLoading = false
       }
     },
 
@@ -213,6 +284,9 @@ export const useCutiBalanceStore = defineStore('cuti-balance', {
           credentials: 'include',
         })
         this.detail = res.data ?? null
+        if (res.data?.consumption_floor) {
+          this.editFloor = res.data.consumption_floor
+        }
       } catch {
         this.detail = null
       } finally {
@@ -223,6 +297,8 @@ export const useCutiBalanceStore = defineStore('cuti-balance', {
     openCreate() {
       this.isEditMode = false
       this.validationErrors = []
+      this.eligibility = null
+      this.editFloor = null
       this.form = emptyForm()
       this.showModal = true
       void this.fetchPegawaiOptions()
@@ -231,6 +307,8 @@ export const useCutiBalanceStore = defineStore('cuti-balance', {
     openEdit(row: CutiBalanceRow) {
       this.isEditMode = true
       this.validationErrors = []
+      this.eligibility = null
+      this.editFloor = row.consumption_floor ?? null
       this.form = {
         id: row.id,
         pegawai_id: row.pegawaiId,
@@ -240,9 +318,9 @@ export const useCutiBalanceStore = defineStore('cuti-balance', {
         cuti_terpakai: row.cuti_terpakai,
         sisa_cuti_tahun_lalu: row.sisa_cuti_tahun_lalu,
         valid_sampai: toDateOnly(row.valid_sampai) || `${row.tahun}-12-31`,
-        auto_prorata: false,
       }
       this.showModal = true
+      void this.fetchDetail(row.id)
     },
 
     async openDetail(row: CutiBalanceRow) {
@@ -255,6 +333,8 @@ export const useCutiBalanceStore = defineStore('cuti-balance', {
       this.showModal = false
       this.isEditMode = false
       this.validationErrors = []
+      this.eligibility = null
+      this.editFloor = null
       this.form = emptyForm()
     },
 
@@ -263,9 +343,32 @@ export const useCutiBalanceStore = defineStore('cuti-balance', {
       this.detail = null
     },
 
+    buildCreatePayload() {
+      return {
+        pegawai_id: this.form.pegawai_id,
+        cuti_type_id: this.form.cuti_type_id,
+        tahun: this.form.tahun,
+        sisa_jatah_cuti: Number(this.form.sisa_jatah_cuti),
+        cuti_terpakai: Number(this.form.cuti_terpakai ?? 0),
+        sisa_cuti_tahun_lalu: Number(this.form.sisa_cuti_tahun_lalu ?? 0),
+        valid_sampai: toDateOnly(this.form.valid_sampai),
+      }
+    },
+
+    buildUpdatePayload() {
+      // Identity fields must NOT be sent on PUT (backend rejects as immutable).
+      return {
+        sisa_jatah_cuti: Number(this.form.sisa_jatah_cuti),
+        cuti_terpakai: Number(this.form.cuti_terpakai),
+        sisa_cuti_tahun_lalu: Number(this.form.sisa_cuti_tahun_lalu ?? 0),
+        valid_sampai: toDateOnly(this.form.valid_sampai),
+      }
+    },
+
     async save(): Promise<boolean> {
       const toast = useToast()
       const { $api } = useNuxtApp()
+      if (this.saving) return false
       this.saving = true
       this.validationErrors = []
 
@@ -285,6 +388,37 @@ export const useCutiBalanceStore = defineStore('cuti-balance', {
           this.saving = false
           return false
         }
+        const kode = normalizeKodeCuti(this.selectedType?.kodeCuti)
+        if (!allowsManualBalanceProvision(kode)) {
+          this.validationErrors = [
+            'Tipe CM/CTB tidak memakai saldo manual dan tidak dapat dipilih untuk provisioning.',
+          ]
+          this.saving = false
+          return false
+        }
+        if (this.form.sisa_jatah_cuti === null || this.form.sisa_jatah_cuti === undefined) {
+          this.validationErrors = ['Sisa jatah cuti wajib diisi secara eksplisit']
+          this.saving = false
+          return false
+        }
+        if (kode === 'CT' && this.eligibility && !this.eligibility.can_provision_ct) {
+          this.validationErrors =
+            this.eligibility.reasons.length > 0
+              ? this.eligibility.reasons
+              : ['Pegawai belum eligible untuk saldo Cuti Tahunan.']
+          this.saving = false
+          return false
+        }
+      }
+
+      if (this.isEditMode && this.editFloor) {
+        if (Number(this.form.cuti_terpakai) < this.editFloor.minimum_cuti_terpakai) {
+          this.validationErrors = [
+            `Cuti terpakai tidak boleh lebih kecil dari konsumsi aktual (${this.editFloor.minimum_cuti_terpakai}).`,
+          ]
+          this.saving = false
+          return false
+        }
       }
 
       try {
@@ -293,24 +427,7 @@ export const useCutiBalanceStore = defineStore('cuti-balance', {
             ? $api.cutiBalanceShow(this.form.id)
             : $api.cutiBalanceList()
         const method = this.isEditMode ? 'PUT' : 'POST'
-
-        const body = this.isEditMode
-          ? {
-              sisa_jatah_cuti: this.form.sisa_jatah_cuti,
-              cuti_terpakai: this.form.cuti_terpakai,
-              sisa_cuti_tahun_lalu: this.form.sisa_cuti_tahun_lalu,
-              valid_sampai: toDateOnly(this.form.valid_sampai),
-            }
-          : {
-              pegawai_id: this.form.pegawai_id,
-              cuti_type_id: this.form.cuti_type_id,
-              tahun: this.form.tahun,
-              sisa_jatah_cuti: this.form.auto_prorata ? undefined : this.form.sisa_jatah_cuti,
-              cuti_terpakai: this.form.cuti_terpakai,
-              sisa_cuti_tahun_lalu: this.form.sisa_cuti_tahun_lalu,
-              valid_sampai: toDateOnly(this.form.valid_sampai),
-              auto_prorata: this.form.auto_prorata,
-            }
+        const body = this.isEditMode ? this.buildUpdatePayload() : this.buildCreatePayload()
 
         await apiFetch(url, {
           method,
@@ -329,7 +446,10 @@ export const useCutiBalanceStore = defineStore('cuti-balance', {
         return true
       } catch (error: any) {
         const err = normalizeApiError(error, 'Saldo Cuti gagal disimpan.')
-        this.validationErrors = err.fieldErrorList
+        err.message = enrichCutiBalanceErrorMessage(err)
+        this.validationErrors = err.fieldErrorList.length
+          ? err.fieldErrorList.map((e) => e.message)
+          : [err.message]
         toastNormalizedError(err)
         return false
       } finally {
@@ -365,6 +485,7 @@ export const useCutiBalanceStore = defineStore('cuti-balance', {
         return true
       } catch (error: any) {
         const err = normalizeApiError(error, 'Saldo Cuti gagal dihapus.')
+        err.message = enrichCutiBalanceErrorMessage(err)
         toastNormalizedError(err)
         return false
       }

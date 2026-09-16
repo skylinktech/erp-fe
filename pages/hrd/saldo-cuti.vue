@@ -6,6 +6,10 @@
         Kelola jatah cuti per pegawai, tipe, dan tahun. Termasuk potongan cuti bersama dan pengajuan
         yang disetujui.
       </p>
+      <p class="small text-muted mb-6">
+        <i class="ri-information-line me-1"></i>
+        {{ MANUAL_SALDO_COPY }}
+      </p>
 
       <div class="row g-6 mb-6">
         <div class="col-12">
@@ -83,25 +87,25 @@
                 @page="onPage"
                 @sort="onSort"
               >
-                <Column field="id" header="#" style="width: 5%" />
-                <Column header="Pegawai" style="width: 18%">
+                <Column field="id" header="#" style="width: 4%" />
+                <Column header="Pegawai" style="width: 16%">
                   <template #body="{ data }">
                     <div class="fw-medium">{{ data.pegawai?.nmPegawai || '-' }}</div>
                     <small class="text-muted">{{ data.pegawai?.nikPegawai || '-' }}</small>
                   </template>
                 </Column>
-                <Column header="Tipe" style="width: 12%">
+                <Column header="Tipe" style="width: 8%">
                   <template #body="{ data }">
                     <span class="badge bg-label-secondary">
                       {{ data.cutiType?.kodeCuti || data.cutiType?.nmTipeCuti || '-' }}
                     </span>
                   </template>
                 </Column>
-                <Column field="tahun" header="Tahun" style="width: 8%" :sortable="true" />
-                <Column header="Jatah" style="width: 8%">
+                <Column field="tahun" header="Tahun" style="width: 6%" :sortable="true" />
+                <Column header="Jatah awal" style="width: 8%">
                   <template #body="{ data }">{{ data.jatah_awal }} hari</template>
                 </Column>
-                <Column header="Cuti Bersama" style="width: 10%">
+                <Column header="Cuti Bersama" style="width: 9%">
                   <template #body="{ data }">
                     <span v-if="data.cuti_bersama_total > 0" class="text-warning">
                       -{{ data.cuti_bersama_total }}
@@ -109,7 +113,7 @@
                     <span v-else class="text-muted">0</span>
                   </template>
                 </Column>
-                <Column header="Cuti Diambil" style="width: 10%">
+                <Column header="Pengajuan approved" style="width: 10%">
                   <template #body="{ data }">
                     <span v-if="data.cuti_pengajuan_terpakai > 0">
                       -{{ data.cuti_pengajuan_terpakai }}
@@ -117,12 +121,15 @@
                     <span v-else class="text-muted">0</span>
                   </template>
                 </Column>
-                <Column header="Sisa" style="width: 8%">
+                <Column header="Cuti terpakai" style="width: 9%">
+                  <template #body="{ data }">{{ data.cuti_terpakai }}</template>
+                </Column>
+                <Column header="Sisa tersedia" style="width: 8%">
                   <template #body="{ data }">
                     <strong class="text-success">{{ sisaTampil(data) }}</strong>
                   </template>
                 </Column>
-                <Column header="Valid Sampai" style="width: 12%">
+                <Column header="Valid sampai" style="width: 10%">
                   <template #body="{ data }">
                     {{ formatDate(data.valid_sampai) }}
                   </template>
@@ -155,8 +162,8 @@
       :title="store.isEditMode ? 'Edit Saldo Cuti' : 'Tambah Saldo Cuti'"
       :description="
         store.isEditMode
-          ? 'Sesuaikan sisa jatah dan cuti terpakai pegawai.'
-          : 'Buat saldo cuti baru untuk pegawai. Pro-rata otomatis jika pegawai masuk di tengah tahun.'
+          ? 'Sesuaikan sisa jatah dan cuti terpakai pegawai. Pegawai, tipe, dan tahun tidak dapat diubah.'
+          : MANUAL_SALDO_COPY
       "
       :validation-errors-from-parent="store.validationErrors"
       dialog-class="modal-lg"
@@ -165,23 +172,61 @@
         <div class="row g-4">
           <div v-if="!store.isEditMode" class="col-md-6">
             <label class="form-label">Pegawai <span class="text-danger">*</span></label>
-            <select v-model.number="store.form.pegawai_id" class="form-select" required>
+            <select
+              v-model.number="store.form.pegawai_id"
+              class="form-select"
+              required
+              @change="onPegawaiChange"
+            >
               <option :value="null" disabled>— Pilih pegawai —</option>
               <option v-for="p in pegawaiOptions" :key="p.id" :value="p.id">{{ p.label }}</option>
             </select>
             <p class="small text-muted mt-1 mb-0">
-              Hanya pegawai dengan kontrak aktif (sudah disetujui). Kontrak ditinjau / belum disetujui tidak dapat diisi saldo cuti.
+              Filter awal: kontrak aktif. Validasi final tetap di backend.
             </p>
+            <div v-if="store.eligibilityLoading" class="small text-muted mt-2">Memuat eligibility…</div>
+            <div v-else-if="store.eligibility" class="small mt-2 border rounded p-2 bg-label-secondary">
+              <div>Status: <strong>{{ store.eligibility.status_label }}</strong></div>
+              <div>Tanggal masuk: {{ formatDate(store.eligibility.tgl_masuk) }}</div>
+              <div>
+                Kontrak aktif:
+                <strong :class="store.eligibility.kontrak_aktif ? 'text-success' : 'text-danger'">
+                  {{ store.eligibility.kontrak_aktif ? 'Ya' : 'Tidak' }}
+                </strong>
+              </div>
+              <div v-if="store.eligibility.eligible_at">
+                Eligible CT mulai: <strong>{{ formatDate(store.eligibility.eligible_at) }}</strong>
+              </div>
+              <ul v-if="store.eligibility.reasons.length" class="mb-0 mt-1 text-danger ps-3">
+                <li v-for="(r, i) in store.eligibility.reasons" :key="i">{{ r }}</li>
+              </ul>
+            </div>
           </div>
+          <div v-else class="col-md-6">
+            <label class="form-label">Pegawai</label>
+            <input
+              class="form-control"
+              disabled
+              :value="editPegawaiLabel"
+            />
+          </div>
+
           <div v-if="!store.isEditMode" class="col-md-6">
             <label class="form-label">Tipe Cuti <span class="text-danger">*</span></label>
             <select v-model.number="store.form.cuti_type_id" class="form-select" required>
               <option :value="null" disabled>— Pilih tipe —</option>
-              <option v-for="t in cutiTypes" :key="t.id" :value="t.id">
+              <option v-for="t in provisionableTypes" :key="t.id" :value="t.id">
                 {{ t.nmTipeCuti }} ({{ t.kodeCuti }})
+                <template v-if="quotaHint(t.kodeCuti)"> — max {{ quotaHint(t.kodeCuti) }}</template>
               </option>
             </select>
+            <p class="small text-muted mt-1 mb-0">CM/CTB tidak dapat dipilih (tidak memakai saldo).</p>
           </div>
+          <div v-else class="col-md-6">
+            <label class="form-label">Tipe Cuti</label>
+            <input class="form-control" disabled :value="editTypeLabel" />
+          </div>
+
           <div v-if="!store.isEditMode" class="col-md-6">
             <label class="form-label">Tahun <span class="text-danger">*</span></label>
             <input
@@ -191,62 +236,52 @@
               min="2000"
               max="2100"
               required
-              @change="syncValidSampai"
+              @change="onTahunChange"
             />
           </div>
-          <div v-if="!store.isEditMode" class="col-md-6 d-flex align-items-end">
-            <div v-if="selectedTypeHasDefaultQuota" class="form-check">
-              <input
-                id="auto-prorata"
-                v-model="store.form.auto_prorata"
-                class="form-check-input"
-                type="checkbox"
-              />
-              <label class="form-check-label" for="auto-prorata">
-                Hitung jatah pro-rata otomatis
-              </label>
-            </div>
-            <p v-else class="small text-muted mb-2">
-              Tipe ini tidak punya jatah default. Isi sisa jatah sesuai kuota pegawai.
-            </p>
+          <div v-else class="col-md-6">
+            <label class="form-label">Tahun</label>
+            <input class="form-control" disabled :value="store.form.tahun" />
           </div>
-          <div
-            v-if="store.isEditMode || !store.form.auto_prorata || !selectedTypeHasDefaultQuota"
-            class="col-md-6"
-          >
+
+          <div class="col-md-6">
             <label class="form-label">
-              Sisa Jatah Cuti
-              <span v-if="store.isEditMode" class="text-danger">*</span>
+              Sisa jatah cuti <span class="text-danger">*</span>
             </label>
             <input
               v-model.number="store.form.sisa_jatah_cuti"
               type="number"
               class="form-control"
               min="0"
-              :required="store.isEditMode"
-            />
-          </div>
-          <div v-if="store.isEditMode" class="col-md-6">
-            <label class="form-label">Cuti Terpakai <span class="text-danger">*</span></label>
-            <input
-              v-model.number="store.form.cuti_terpakai"
-              type="number"
-              class="form-control"
-              min="0"
+              :max="quotaMax ?? undefined"
               required
             />
+            <p v-if="quotaMax != null" class="small text-muted mt-1 mb-0">
+              Maksimum alokasi tipe ini: {{ quotaMax }} hari (UX hint — backend sumber kebenaran).
+            </p>
           </div>
-          <div v-if="!store.isEditMode" class="col-md-6">
-            <label class="form-label">Cuti Terpakai (awal)</label>
+
+          <div class="col-md-6">
+            <label class="form-label">
+              Cuti terpakai
+              <span v-if="store.isEditMode" class="text-danger">*</span>
+            </label>
             <input
               v-model.number="store.form.cuti_terpakai"
               type="number"
               class="form-control"
-              min="0"
+              :min="floorMin"
+              required
             />
+            <p v-if="store.isEditMode && store.editFloor" class="small text-muted mt-1 mb-0">
+              Floor konsumsi: {{ store.editFloor.minimum_cuti_terpakai }}
+              (approved {{ store.editFloor.approved_leave_days }}
+              + CB {{ store.editFloor.cuti_bersama_adjustments }}).
+            </p>
           </div>
+
           <div class="col-md-6">
-            <label class="form-label">Sisa Cuti Tahun Lalu</label>
+            <label class="form-label">Sisa tahun lalu</label>
             <input
               v-model.number="store.form.sisa_cuti_tahun_lalu"
               type="number"
@@ -255,8 +290,18 @@
             />
           </div>
           <div class="col-md-6">
-            <label class="form-label">Valid Sampai</label>
+            <label class="form-label">Valid sampai</label>
             <input v-model="store.form.valid_sampai" type="date" class="form-control" />
+          </div>
+
+          <div class="col-12">
+            <div class="alert alert-info mb-0 py-2 small">
+              Total alokasi = Sisa jatah + Cuti terpakai =
+              <strong>{{ allocatedPreview }}</strong>
+              <template v-if="quotaMax != null">
+                dari maksimal <strong>{{ quotaMax }}</strong>
+              </template>
+            </div>
           </div>
         </div>
 
@@ -264,7 +309,11 @@
           <button type="button" class="btn btn-outline-secondary" @click="store.closeModal()">
             Batal
           </button>
-          <button type="submit" class="btn btn-primary" :disabled="store.saving">
+          <button
+            type="submit"
+            class="btn btn-primary"
+            :disabled="store.saving || createBlockedByEligibility"
+          >
             <span
               v-if="store.saving"
               class="spinner-border spinner-border-sm me-1"
@@ -311,6 +360,8 @@
                 <dd class="col-8 text-warning">-{{ detail.cuti_bersama_total }} hari</dd>
                 <dt class="col-4 text-muted">Cuti Diambil</dt>
                 <dd class="col-8">-{{ detail.cuti_pengajuan_terpakai }} hari</dd>
+                <dt class="col-4 text-muted">Cuti terpakai (canonical)</dt>
+                <dd class="col-8">{{ detail.cuti_terpakai }} hari</dd>
                 <dt class="col-4 text-muted">Sisa</dt>
                 <dd class="col-8"><strong class="text-success">{{ sisaTampil(detail) }} hari</strong></dd>
               </dl>
@@ -356,7 +407,12 @@ import Column from 'primevue/column'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
 import Modal from '~/components/modal/Modal.vue'
-import { useCutiBalanceStore, type CutiBalanceRow } from '~/stores/cuti-balance'
+import {
+  useCutiBalanceStore,
+  MANUAL_SALDO_COPY,
+  type CutiBalanceRow,
+} from '~/stores/cuti-balance'
+import { annualQuotaLimit, KODE_CUTI_TAHUNAN } from '~/constants/hrd/cutiBalancePolicy'
 import { usePermissions } from '~/composables/usePermissions'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import { useBootstrapModal } from '~/composables/useBootstrapModal'
@@ -392,28 +448,44 @@ const canDelete = computed(
   () => userHasRole('superadmin') || userHasPermission('delete_saldo_cuti')
 )
 
-const selectedCreateType = computed(
-  () => cutiTypes.value.find((t) => t.id === store.form.cuti_type_id) ?? null
-)
-const selectedTypeHasDefaultQuota = computed(
-  () => Number(selectedCreateType.value?.jatahCuti ?? 0) > 0
+const provisionableTypes = computed(() => store.provisionableCutiTypes)
+const allocatedPreview = computed(() => store.allocatedPreview)
+const quotaMax = computed(() => store.selectedQuotaLimit)
+const floorMin = computed(() =>
+  store.isEditMode && store.editFloor ? store.editFloor.minimum_cuti_terpakai : 0
 )
 
-function sisaTampil(row: Pick<CutiBalanceRow, 'jatah_awal' | 'cuti_bersama_total' | 'cuti_pengajuan_terpakai' | 'sisa_tersedia' | 'sisa_jatah_cuti'>) {
-  if (row.sisa_tersedia != null) return row.sisa_tersedia
-  const jatah = Number(row.jatah_awal ?? 0)
-  const bersama = Number(row.cuti_bersama_total ?? 0)
-  const diambil = Number(row.cuti_pengajuan_terpakai ?? 0)
-  return Math.max(0, jatah - bersama - diambil)
+const createBlockedByEligibility = computed(() => {
+  if (store.isEditMode) return false
+  const kode = store.selectedType?.kodeCuti
+  if (kode !== KODE_CUTI_TAHUNAN) return false
+  if (!store.eligibility) return false
+  return !store.eligibility.can_provision_ct
+})
+
+const editPegawaiLabel = computed(() => {
+  const row = store.detail || store.rows.find((r) => r.id === store.form.id)
+  return row?.pegawai?.nmPegawai || `Pegawai #${store.form.pegawai_id}`
+})
+const editTypeLabel = computed(() => {
+  const row = store.detail || store.rows.find((r) => r.id === store.form.id)
+  const t = row?.cutiType
+  return t ? `${t.nmTipeCuti} (${t.kodeCuti})` : `Tipe #${store.form.cuti_type_id}`
+})
+
+function quotaHint(kode: string | null | undefined) {
+  return annualQuotaLimit(kode)
 }
 
-watch(
-  () => store.form.cuti_type_id,
-  () => {
-    if (store.isEditMode) return
-    store.form.auto_prorata = selectedTypeHasDefaultQuota.value
-  }
-)
+function sisaTampil(row: Pick<CutiBalanceRow, 'sisa_tersedia' | 'jatah_awal' | 'cuti_bersama_total' | 'cuti_pengajuan_terpakai'>) {
+  if (row.sisa_tersedia != null) return row.sisa_tersedia
+  return Math.max(
+    0,
+    Number(row.jatah_awal ?? 0) -
+      Number(row.cuti_bersama_total ?? 0) -
+      Number(row.cuti_pengajuan_terpakai ?? 0)
+  )
+}
 
 setListTitle('Saldo Cuti', 0)
 
@@ -471,6 +543,19 @@ function formatDate(value: string | null | undefined): string {
 function syncValidSampai() {
   if (store.form.tahun) {
     store.form.valid_sampai = `${store.form.tahun}-12-31`
+  }
+}
+
+function onPegawaiChange() {
+  if (store.form.pegawai_id) {
+    void store.fetchEligibility(store.form.pegawai_id, store.form.tahun)
+  }
+}
+
+function onTahunChange() {
+  syncValidSampai()
+  if (store.form.pegawai_id) {
+    void store.fetchEligibility(store.form.pegawai_id, store.form.tahun)
   }
 }
 
