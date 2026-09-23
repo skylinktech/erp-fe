@@ -315,38 +315,54 @@ const modalDescription = computed(() =>
 const permissionMenuCount = computed(() => menuDetailsWithPermissions.value.length)
 
 const statItems = computed(() => [
-  {
+{
     key: 'total',
     label: 'Total Role',
     value: totalRecords.value || 0,
     icon: 'ri-shield-user-line',
     iconBgClass: 'bg-label-primary',
     subtitle: 'Role terdaftar',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah keseluruhan data Roles yang terdaftar berdasarkan statistik API.',
+    },
   },
-  {
+{
     key: 'permissions',
     label: 'Permission',
     value: permissions.value?.length || 0,
     icon: 'ri-key-2-line',
     iconBgClass: 'bg-label-info',
     subtitle: 'Hak akses tersedia',
+    info: {
+      title: 'Permission',
+      description: 'Ringkasan metrik "Permission" pada daftar Roles berdasarkan data statistik API/store.',
+    },
   },
-  {
+{
     key: 'menus',
     label: 'Menu Akses',
     value: permissionMenuCount.value || 0,
     icon: 'ri-menu-line',
     iconBgClass: 'bg-label-success',
     subtitle: 'Grup menu',
+    info: {
+      title: 'Menu Akses',
+      description: 'Ringkasan metrik "Menu Akses" pada daftar Roles berdasarkan data statistik API/store.',
+    },
   },
-  {
+{
     key: 'page',
     label: 'Ditampilkan',
     value: roles.value?.length || 0,
     icon: 'ri-list-check-2',
     iconBgClass: 'bg-label-warning',
     subtitle: 'Baris halaman ini',
-  },
+    info: {
+      title: 'Ditampilkan',
+      description: 'Ringkasan metrik "Ditampilkan" pada daftar Roles berdasarkan data statistik API/store.',
+    },
+  }
 ])
 
 onMounted(() => {

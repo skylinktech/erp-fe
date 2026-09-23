@@ -186,6 +186,10 @@ const statItems = computed(() => [
     value: summary.value.total ?? totalRecords.value,
     icon: 'ri-file-shield-2-line',
     iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah keseluruhan data Warrantyclaimstab yang terdaftar dalam sistem berdasarkan statistik API.',
+    },
   },
   {
     key: 'open',
@@ -193,6 +197,10 @@ const statItems = computed(() => [
     value: summaryCount('DRAFT', 'SUBMITTED', 'UNDER_PROVIDER_REVIEW'),
     icon: 'ri-time-line',
     iconBgClass: 'bg-label-warning',
+    info: {
+      title: 'In Progress',
+      description: 'Ringkasan metrik "In Progress" pada daftar Warrantyclaimstab berdasarkan data statistik API/store.',
+    },
   },
   {
     key: 'approved',
@@ -200,6 +208,10 @@ const statItems = computed(() => [
     value: summaryCount('APPROVED'),
     icon: 'ri-checkbox-circle-line',
     iconBgClass: 'bg-label-success',
+    info: {
+      title: 'Approved',
+      description: 'Jumlah dokumen Warrantyclaimstab yang telah disetujui.',
+    },
   },
   {
     key: 'rejected',
@@ -207,6 +219,10 @@ const statItems = computed(() => [
     value: summaryCount('REJECTED'),
     icon: 'ri-close-circle-line',
     iconBgClass: 'bg-label-danger',
+    info: {
+      title: 'Rejected',
+      description: 'Jumlah dokumen Warrantyclaimstab yang ditolak.',
+    },
   },
 ])
 

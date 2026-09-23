@@ -351,10 +351,30 @@ const { pageRows, globalFilterValue, filters, myDataTableRef, exportData, unique
 ])
 
 const statItems = computed<ListPageStatItem[]>(() => [
-  { label: 'Components', value: store.components.length, icon: 'ri-price-tag-3-line', iconBgClass: 'bg-label-primary' },
-  { label: 'Structures', value: store.structures.length, icon: 'ri-organization-chart', iconBgClass: 'bg-label-info' },
-  { label: 'Profiles', value: store.profiles.length, icon: 'ri-user-settings-line', iconBgClass: 'bg-label-secondary' },
-  { label: 'Compensation', value: store.compensations.length, icon: 'ri-money-cny-circle-line', iconBgClass: 'bg-label-success' },
+  { label: 'Components', value: store.components.length, icon: 'ri-price-tag-3-line', iconBgClass: 'bg-label-primary' ,
+    info: {
+      title: 'Components',
+      description: 'Ringkasan metrik "Components" pada daftar Configuration berdasarkan data statistik API/store.',
+    },
+  },
+  { label: 'Structures', value: store.structures.length, icon: 'ri-organization-chart', iconBgClass: 'bg-label-info' ,
+    info: {
+      title: 'Structures',
+      description: 'Ringkasan metrik "Structures" pada daftar Configuration berdasarkan data statistik API/store.',
+    },
+  },
+  { label: 'Profiles', value: store.profiles.length, icon: 'ri-user-settings-line', iconBgClass: 'bg-label-secondary' ,
+    info: {
+      title: 'Profiles',
+      description: 'Ringkasan metrik "Profiles" pada daftar Configuration berdasarkan data statistik API/store.',
+    },
+  },
+  { label: 'Compensation', value: store.compensations.length, icon: 'ri-money-cny-circle-line', iconBgClass: 'bg-label-success' ,
+    info: {
+      title: 'Compensation',
+      description: 'Ringkasan metrik "Compensation" pada daftar Configuration berdasarkan data statistik API/store.',
+    },
+  },
 ])
 
 const structureForm = reactive({

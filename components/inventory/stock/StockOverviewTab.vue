@@ -1,69 +1,6 @@
 <template>
 <div>
-            <div class="row g-6 mb-6">
-                <div class="col-xl col-lg-6 col-md-6" v-if="loading && stats.total === undefined">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="skeleton-loader me-3" style="width: 40px; height: 40px; border-radius: 8px;"></div>
-                                <div class="flex-grow-1">
-                                    <div class="skeleton-loader mb-2" style="width: 60%; height: 16px;"></div>
-                                    <div class="skeleton-loader" style="width: 40%; height: 20px;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div v-else-if="stats.total !== undefined" class="col-xl col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Total Stock</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-primary"><i class="ri-stack-line"></i></span>
-                                </div>
-                            </div>
-                            <div class="account-heading">
-                                <h5 class="mb-1">{{ stats.total }}</h5>
-                                <span class="text-muted">Item stok</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="col-6" v-if="loading && stats.perWarehouse.length === 0">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="skeleton-loader me-3" style="width: 40px; height: 40px; border-radius: 8px;"></div>
-                                <div class="flex-grow-1">
-                                    <div class="skeleton-loader mb-2" style="width: 70%; height: 16px;"></div>
-                                    <div class="skeleton-loader" style="width: 50%; height: 20px;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div
-                    v-else-if="stats.perWarehouse.length > 0"
-                    class="col-xl col-lg-6 col-md-6"
-                >
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Total Stock Per Gudang</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-info"><i class="ri-store-2-line"></i></span>
-                                </div>
-                            </div>
-                            <div class="account-heading">
-                                <h5 class="mb-1">{{ stats.perWarehouse.length }}</h5>
-                                <span class="text-muted">Gudang</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <ListPageStatsCards :items="statItems" :loading="loading" />
 
             <div class="card mb-6">
                 <div class="card-body">
@@ -376,6 +313,7 @@ import { useImageUrl } from '~/composables/useImageUrl'
 import Swal from 'sweetalert2'
 import Modal from '~/components/modal/Modal.vue'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
+import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
 
 // Composables
 const { setListTitle, setFormTitle } = useDynamicTitle()
@@ -391,6 +329,34 @@ const productStore    = useProductStore()
 const warehouseStore  = useWarehouseStore()
 const permissionStore = usePermissionsStore()
 const { stocks, totalRecords, stats, params, loading, form, isEditMode, showModal, validationErrors } = storeToRefs(stocksStore)
+
+const statItems = computed(() => [
+  {
+    key: 'total-stock',
+    label: 'Total Stock',
+    value: stats.value.total,
+    subtitle: 'Item stok',
+    icon: 'ri-stack-line',
+    iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah keseluruhan data Stock Overview yang terdaftar dalam sistem berdasarkan statistik API.',
+    },
+  },
+  {
+    key: 'total-stock-per-gudang',
+    label: 'Total Stock Per Gudang',
+    value: stats.value.perWarehouse.length,
+    subtitle: 'Gudang',
+    icon: 'ri-store-2-line',
+    iconBgClass: 'bg-label-info',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah keseluruhan data Stock Overview yang terdaftar dalam sistem berdasarkan statistik API.',
+    },
+  }
+])
+
 const { allProducts }   = storeToRefs(productStore)
 const { warehouseList } = storeToRefs(warehouseStore)
 const globalFilterValue = ref('');

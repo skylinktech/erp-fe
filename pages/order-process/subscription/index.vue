@@ -4,109 +4,7 @@
       
       <p class="mb-6">Daftar Subscription yang terdaftar di sistem</p>
 
-      <!-- Statistics Cards -->
-      <div class="row g-6 mb-6">
-        <div class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">Total Subscription</p>
-                <div class="avatar">
-                  <span class="avatar-initial rounded bg-label-primary">
-                    <i class="ri-file-list-3-line"></i>
-                  </span>
-                </div>
-              </div>
-              <div class="d-flex justify-content-between align-items-center">
-                <div class="account-heading">
-                  <h5 class="mb-1">{{ statistics?.totalSubscriptions || 0 }}</h5>
-                  <span class="text-muted">Subscription terdaftar</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">Draft</p>
-                <div class="avatar">
-                  <span class="avatar-initial rounded bg-label-secondary">
-                    <i class="ri-draft-line"></i>
-                  </span>
-                </div>
-              </div>
-              <div class="d-flex justify-content-between align-items-center">
-                <div class="account-heading">
-                  <h5 class="mb-1">{{ statistics?.draftSubscriptions || 0 }}</h5>
-                  <span class="text-muted">Draft</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">Signed</p>
-                <div class="avatar">
-                  <span class="avatar-initial rounded bg-label-info">
-                    <i class="ri-file-check-line"></i>
-                  </span>
-                </div>
-              </div>
-              <div class="d-flex justify-content-between align-items-center">
-                <div class="account-heading">
-                  <h5 class="mb-1">{{ statistics?.signedSubscriptions || 0 }}</h5>
-                  <span class="text-muted">Signed</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">Active</p>
-                <div class="avatar">
-                  <span class="avatar-initial rounded bg-label-success">
-                    <i class="ri-checkbox-circle-line"></i>
-                  </span>
-                </div>
-              </div>
-              <div class="d-flex justify-content-between align-items-center">
-                <div class="account-heading">
-                  <h5 class="mb-1">{{ statistics?.activeSubscriptions || 0 }}</h5>
-                  <span class="text-muted">Active</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">Canceled</p>
-                <div class="avatar">
-                  <span class="avatar-initial rounded bg-label-danger">
-                    <i class="ri-close-circle-line"></i>
-                  </span>
-                </div>
-              </div>
-              <div class="d-flex justify-content-between align-items-center">
-                <div class="account-heading">
-                  <h5 class="mb-1">{{ statistics?.canceledSubscriptions || 0 }}</h5>
-                  <span class="text-muted">Canceled</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <ListPageStatsCards :items="statItems" />
 
       <div class="row g-6">
         <div class="col-12">
@@ -253,6 +151,7 @@ import { usePermissions } from '~/composables/usePermissions'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
 import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
+import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
 import Column from 'primevue/column'
 import { useDebounceFn } from '@vueuse/core'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
@@ -265,6 +164,72 @@ const { userHasPermission, userHasRole } = usePermissions()
 
 const { subscriptions, loading, totalRecords, params, statistics } = storeToRefs(subscriptionStore)
 const { customers } = storeToRefs(customerStore)
+
+const statItems = computed(() => [
+  {
+    key: 'total',
+    label: 'Total Subscription',
+    value: statistics.value?.totalSubscriptions ?? 0,
+    subtitle: 'Subscription terdaftar',
+    icon: 'ri-file-list-3-line',
+    iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description:
+        'Jumlah seluruh dokumen Subscription yang terdaftar dalam sistem, mencakup semua status.',
+    },
+  },
+  {
+    key: 'draft',
+    label: 'Draft',
+    value: statistics.value?.draftSubscriptions ?? 0,
+    subtitle: 'Draft',
+    icon: 'ri-draft-line',
+    iconBgClass: 'bg-label-secondary',
+    info: {
+      title: 'Draft',
+      description:
+        'Jumlah dokumen Subscription berstatus Draft yang belum diproses lebih lanjut.',
+    },
+  },
+  {
+    key: 'signed',
+    label: 'Signed',
+    value: statistics.value?.signedSubscriptions ?? 0,
+    subtitle: 'Signed',
+    icon: 'ri-file-check-line',
+    iconBgClass: 'bg-label-info',
+    info: {
+      title: 'Signed',
+      description:
+        'Jumlah dokumen Subscription yang telah ditandatangani dan menunggu atau menjalani proses aktivasi.',
+    },
+  },
+  {
+    key: 'active',
+    label: 'Active',
+    value: statistics.value?.activeSubscriptions ?? 0,
+    subtitle: 'Active',
+    icon: 'ri-checkbox-circle-line',
+    iconBgClass: 'bg-label-success',
+    info: {
+      title: 'Active',
+      description: 'Jumlah Subscription yang saat ini berstatus aktif.',
+    },
+  },
+  {
+    key: 'canceled',
+    label: 'Canceled',
+    value: statistics.value?.canceledSubscriptions ?? 0,
+    subtitle: 'Canceled',
+    icon: 'ri-close-circle-line',
+    iconBgClass: 'bg-label-danger',
+    info: {
+      title: 'Canceled',
+      description: 'Jumlah dokumen Subscription yang telah dibatalkan.',
+    },
+  },
+])
 
 const tableControls = ref({ rows: 10, search: '' })
 const filters = ref({ search: '', customerId: null, status: null })

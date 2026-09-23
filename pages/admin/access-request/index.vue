@@ -6,72 +6,7 @@
         Kelola permintaan akses pegawai terhadap modul dan menu aplikasi
       </p>
 
-      <div class="row g-6 mb-6">
-        <div v-if="stats.draft !== undefined" class="col-xl col-lg-6 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">Draft</p>
-                <div class="avatar">
-                  <span class="avatar-initial rounded bg-label-secondary"><i class="ri-draft-line"></i></span>
-                </div>
-              </div>
-              <div class="account-heading">
-                <h5 class="mb-1">{{ stats.draft }}</h5>
-                <span class="text-muted">Permintaan</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div v-if="stats.pending !== undefined" class="col-xl col-lg-6 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">Pending</p>
-                <div class="avatar">
-                  <span class="avatar-initial rounded bg-label-warning"><i class="ri-time-line"></i></span>
-                </div>
-              </div>
-              <div class="account-heading">
-                <h5 class="mb-1">{{ stats.pending }}</h5>
-                <span class="text-muted">Permintaan</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div v-if="stats.approved !== undefined" class="col-xl col-lg-6 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">Approved</p>
-                <div class="avatar">
-                  <span class="avatar-initial rounded bg-label-success"><i class="ri-checkbox-circle-line"></i></span>
-                </div>
-              </div>
-              <div class="account-heading">
-                <h5 class="mb-1">{{ stats.approved }}</h5>
-                <span class="text-muted">Permintaan</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div v-if="stats.rejected !== undefined" class="col-xl col-lg-6 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">Rejected</p>
-                <div class="avatar">
-                  <span class="avatar-initial rounded bg-label-danger"><i class="ri-close-circle-line"></i></span>
-                </div>
-              </div>
-              <div class="account-heading">
-                <h5 class="mb-1">{{ stats.rejected }}</h5>
-                <span class="text-muted">Permintaan</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <ListPageStatsCards :items="statItems" />
 
       <!-- Table -->
       <div class="row g-6">
@@ -327,6 +262,7 @@ import { useAccessRequestStore } from '~/stores/access-request'
 import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
+import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
 import InputText from 'primevue/inputtext'
 import DataTable from 'primevue/datatable'
@@ -350,6 +286,67 @@ const selectedPegawaiData = ref(null)
 
 const rowsPerPageOptionsArray = ref([10, 25, 50, 100])
 const masterPermissionNames = ['View', 'Create', 'Edit', 'Delete', 'Show', 'Approve', 'Reject', 'Access']
+
+const statItems = computed(() => {
+    const items = []
+  if (stats.value.draft !== undefined) {
+    items.push({
+      key: 'draft',
+      label: 'Draft',
+      value: stats.value.draft ?? 0,
+      subtitle: 'Permintaan',
+      icon: 'ri-draft-line',
+      iconBgClass: 'bg-label-secondary',
+      info: {
+        title: 'Draft',
+        description: 'Jumlah permintaan akses yang masih berstatus Draft dan belum diajukan ke approval.',
+      },
+    })
+  }
+  if (stats.value.pending !== undefined) {
+    items.push({
+      key: 'pending',
+      label: 'Pending',
+      value: stats.value.pending ?? 0,
+      subtitle: 'Permintaan',
+      icon: 'ri-time-line',
+      iconBgClass: 'bg-label-warning',
+      info: {
+        title: 'Pending',
+        description: 'Jumlah permintaan akses yang sedang menunggu persetujuan approval workflow.',
+      },
+    })
+  }
+  if (stats.value.approved !== undefined) {
+    items.push({
+      key: 'approved',
+      label: 'Approved',
+      value: stats.value.approved ?? 0,
+      subtitle: 'Permintaan',
+      icon: 'ri-checkbox-circle-line',
+      iconBgClass: 'bg-label-success',
+      info: {
+        title: 'Approved',
+        description: 'Jumlah permintaan akses yang sudah disetujui dan aksesnya aktif.',
+      },
+    })
+  }
+  if (stats.value.rejected !== undefined) {
+    items.push({
+      key: 'rejected',
+      label: 'Rejected',
+      value: stats.value.rejected ?? 0,
+      subtitle: 'Permintaan',
+      icon: 'ri-close-circle-line',
+      iconBgClass: 'bg-label-danger',
+      info: {
+        title: 'Rejected',
+        description: 'Jumlah permintaan akses yang ditolak pada proses approval.',
+      },
+    })
+  }
+  return items
+})
 
 const hasActiveFilters = computed(() => !!params.value.status)
 

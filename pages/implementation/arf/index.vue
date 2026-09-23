@@ -161,10 +161,10 @@ const formatRupiah = useFormatRupiah()
 const { arfs, loading, totalRecords, params, statistics } = storeToRefs(arfStore)
 
 const statItems = computed(() => [
-  { key: 'total', label: 'Total ARF', value: statistics.value?.totalArfs || 0, icon: 'ri-file-edit-line', iconBgClass: 'bg-label-primary' },
-  { key: 'draft', label: 'Draft', value: statistics.value?.draftArfs || 0, icon: 'ri-draft-line', iconBgClass: 'bg-label-secondary' },
-  { key: 'pending', label: 'Pending', value: statistics.value?.pendingArfs || 0, icon: 'ri-time-line', iconBgClass: 'bg-label-warning' },
-  { key: 'approved', label: 'Approved', value: statistics.value?.approvedArfs || 0, icon: 'ri-checkbox-circle-line', iconBgClass: 'bg-label-success' },
+  { key: 'total', label: 'Total ARF', value: statistics.value?.totalArfs || 0, icon: 'ri-file-edit-line', iconBgClass: 'bg-label-primary', info: { title: 'Jumlah Keseluruhan', description: 'Jumlah seluruh ARF (Activation Request Form) yang terdaftar dalam sistem, mencakup semua status.' } },
+  { key: 'draft', label: 'Draft', value: statistics.value?.draftArfs || 0, icon: 'ri-draft-line', iconBgClass: 'bg-label-secondary', info: { title: 'Draft', description: 'Jumlah ARF berstatus Draft yang belum diajukan untuk approval.' } },
+  { key: 'pending', label: 'Pending', value: statistics.value?.pendingArfs || 0, icon: 'ri-time-line', iconBgClass: 'bg-label-warning', info: { title: 'Pending', description: 'Jumlah ARF yang masih menunggu persetujuan.' } },
+  { key: 'approved', label: 'Approved', value: statistics.value?.approvedArfs || 0, icon: 'ri-checkbox-circle-line', iconBgClass: 'bg-label-success', info: { title: 'Approved', description: 'Jumlah ARF yang telah disetujui.' } },
 ])
 const { userHasRole, userHasPermission } = usePermissions()
 const { canApproveArf, canRejectArf } = useArfApproval()

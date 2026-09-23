@@ -19,88 +19,7 @@
                 Buka Finance Invoices
               </NuxtLink>
             </div>
-            <div class="row g-6 mb-6">
-                <div class="col-xl col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Total Invoice</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-primary"><i class="ri-file-list-3-line"></i></span>
-                                </div>
-                            </div>
-                            <div class="account-heading">
-                                <h5 class="mb-1">{{ statistics?.counts?.total || 0 }}</h5>
-                                <span class="text-muted">Invoice terdaftar</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Unpaid</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-danger"><i class="ri-close-circle-line"></i></span>
-                                </div>
-                            </div>
-                            <div class="account-heading">
-                                <h5 class="mb-1">{{ statistics?.counts?.unpaid || 0 }}</h5>
-                                <span class="text-muted">{{ statistics?.percentages?.unpaid || 0 }}% · {{ formatRupiah(statistics?.amounts?.unpaid || 0) }}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Partial</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-warning"><i class="ri-time-line"></i></span>
-                                </div>
-                            </div>
-                            <div class="account-heading">
-                                <h5 class="mb-1">{{ statistics?.counts?.partial || 0 }}</h5>
-                                <span class="text-muted">{{ statistics?.percentages?.partial || 0 }}% · {{ formatRupiah(statistics?.amounts?.partial || 0) }}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Paid</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-success"><i class="ri-checkbox-circle-line"></i></span>
-                                </div>
-                            </div>
-                            <div class="account-heading">
-                                <h5 class="mb-1">{{ statistics?.counts?.paid || 0 }}</h5>
-                                <span class="text-muted">{{ statistics?.percentages?.paid || 0 }}% · {{ formatRupiah(statistics?.amounts?.paid || 0) }}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl col-lg-6 col-md-6">
-                    <div class="card border-warning">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0 text-warning"><i class="ri-alert-line me-1"></i> Outstanding</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-warning"><i class="ri-money-dollar-circle-line"></i></span>
-                                </div>
-                            </div>
-                            <div class="account-heading">
-                                <h5 class="mb-1">{{ formatRupiah(statistics?.amounts?.outstanding || 0) }}</h5>
-                                <span class="text-muted">{{ (statistics?.counts?.unpaid || 0) + (statistics?.counts?.partial || 0) }} invoice belum lunas</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <ListPageStatsCards :items="statItems" />
 
             <div class="row g-6">
                 <div class="col-12">
@@ -877,6 +796,7 @@ import { useRouter } from 'vue-router'
 import Swal from 'sweetalert2'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import { useImageUrl } from '~/composables/useImageUrl'
+import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
 
 // Composables
 const { setListTitle, setFormTitle } = useDynamicTitle()
@@ -900,6 +820,71 @@ const permissionStore       = usePermissionsStore()
 const salesOrderStore       = useSalesOrderStore()
 
 const { salesInvoices, loading, saving, totalRecords, params, form, isEditMode, showModal, validationErrors, statistics } = storeToRefs(salesInvoiceStore)
+
+const statItems = computed(() => [
+  {
+    key: 'total-invoice',
+    label: 'Total Invoice',
+    value: statistics.value?.counts?.total ?? 0,
+    subtitle: 'Invoice terdaftar',
+    icon: 'ri-file-list-3-line',
+    iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah keseluruhan data Sales Invoice yang terdaftar dalam sistem berdasarkan statistik API.',
+    },
+  },
+  {
+    key: 'unpaid',
+    label: 'Unpaid',
+    value: statistics.value?.counts?.unpaid ?? 0,
+    subtitle: `${statistics.value?.percentages?.unpaid ?? 0}% · ${formatRupiah(statistics.value?.amounts?.unpaid ?? 0)}`,
+    icon: 'ri-close-circle-line',
+    iconBgClass: 'bg-label-danger',
+    info: {
+      title: 'Unpaid',
+      description: 'Jumlah dan nilai dokumen Sales Invoice yang belum dibayar sama sekali.',
+    },
+  },
+  {
+    key: 'partial',
+    label: 'Partial',
+    value: statistics.value?.counts?.partial ?? 0,
+    subtitle: `${statistics.value?.percentages?.partial ?? 0}% · ${formatRupiah(statistics.value?.amounts?.partial ?? 0)}`,
+    icon: 'ri-time-line',
+    iconBgClass: 'bg-label-warning',
+    info: {
+      title: 'Partial',
+      description: 'Jumlah dan nilai dokumen Sales Invoice yang sudah dibayar sebagian.',
+    },
+  },
+  {
+    key: 'paid',
+    label: 'Paid',
+    value: statistics.value?.counts?.paid ?? 0,
+    subtitle: `${statistics.value?.percentages?.paid ?? 0}% · ${formatRupiah(statistics.value?.amounts?.paid ?? 0)}`,
+    icon: 'ri-checkbox-circle-line',
+    iconBgClass: 'bg-label-success',
+    info: {
+      title: 'Paid',
+      description: 'Jumlah dan nilai dokumen Sales Invoice yang sudah lunas dibayar.',
+    },
+  },
+  {
+    key: 'outstanding',
+    label: 'Outstanding',
+    value: formatRupiah(statistics.value?.amounts?.outstanding ?? 0),
+    subtitle: `${(statistics.value?.counts?.unpaid ?? 0) + (statistics.value?.counts?.partial ?? 0)} invoice belum lunas`,
+    icon: 'ri-money-dollar-circle-line',
+    iconBgClass: 'bg-label-warning',
+    valueClass: 'text-warning',
+    info: {
+      title: 'Outstanding',
+      description: 'Total nilai Sales Invoice yang masih belum lunas, gabungan dari invoice berstatus Unpaid dan Partial.',
+    },
+  },
+])
+
 const { customers }   = storeToRefs(customerStore)
 const { salesOrdersForSelect, customerProducts: rawCustomerProducts } = storeToRefs(salesOrderStore)
 const { warehouses }  = storeToRefs(warehouseStore)

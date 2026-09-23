@@ -4,68 +4,7 @@
       Status operasional layanan pelanggan (Active, Suspended, Terminated) — SSOT Service Instance.
     </p>
 
-    <div class="row g-6 mb-6">
-      <div class="col-xl-3 col-lg-6 col-md-6">
-        <div class="card">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-              <p class="mb-0">Active</p>
-              <div class="avatar">
-                <span class="avatar-initial rounded bg-label-success">
-                  <i class="ri-checkbox-circle-line"></i>
-                </span>
-              </div>
-            </div>
-            <h5 class="mb-0">{{ summary.active ?? 0 }}</h5>
-          </div>
-        </div>
-      </div>
-      <div class="col-xl-3 col-lg-6 col-md-6">
-        <div class="card">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-              <p class="mb-0">Suspended</p>
-              <div class="avatar">
-                <span class="avatar-initial rounded bg-label-warning">
-                  <i class="ri-pause-circle-line"></i>
-                </span>
-              </div>
-            </div>
-            <h5 class="mb-0">{{ summary.suspended ?? 0 }}</h5>
-          </div>
-        </div>
-      </div>
-      <div class="col-xl-3 col-lg-6 col-md-6">
-        <div class="card">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-              <p class="mb-0">Terminated</p>
-              <div class="avatar">
-                <span class="avatar-initial rounded bg-label-secondary">
-                  <i class="ri-close-circle-line"></i>
-                </span>
-              </div>
-            </div>
-            <h5 class="mb-0">{{ summary.terminated ?? 0 }}</h5>
-          </div>
-        </div>
-      </div>
-      <div class="col-xl-3 col-lg-6 col-md-6">
-        <div class="card">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-              <p class="mb-0">Billable</p>
-              <div class="avatar">
-                <span class="avatar-initial rounded bg-label-primary">
-                  <i class="ri-bill-line"></i>
-                </span>
-              </div>
-            </div>
-            <h5 class="mb-0">{{ summary.billable ?? 0 }}</h5>
-          </div>
-        </div>
-      </div>
-    </div>
+        <ListPageStatsCards :items="statItems" />
 
     <div class="row g-6">
       <div class="col-12">
@@ -294,6 +233,7 @@ import { useDebounceFn } from '@vueuse/core'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
 import CollapsibleFilterCard from '~/components/list/CollapsibleFilterCard.vue'
+import ListPageStatsCards, { type ListPageStatItem } from '~/components/list/ListPageStatsCards.vue'
 import FilterField from '~/components/list/FilterField.vue'
 import FilterFieldsRow from '~/components/list/FilterFieldsRow.vue'
 import { useServiceInstanceStore } from '~/stores/service-instances'
@@ -313,6 +253,53 @@ const canEditCustomerService = computed(
   () => userHasRole('superadmin') || userHasPermission('edit_customer_service')
 )
 const summary = computed(() => store.summary || {})
+
+const statItems = computed<ListPageStatItem[]>(() => [
+  {
+    key: 'active',
+    label: 'Active',
+    value: summary.value.active ?? 0,
+    icon: 'ri-checkbox-circle-line',
+    iconBgClass: 'bg-label-success',
+    info: {
+      title: 'Active',
+      description: 'Jumlah service instance pelanggan berstatus Active (sedang beroperasi).',
+    },
+  },
+  {
+    key: 'suspended',
+    label: 'Suspended',
+    value: summary.value.suspended ?? 0,
+    icon: 'ri-pause-circle-line',
+    iconBgClass: 'bg-label-warning',
+    info: {
+      title: 'Suspended',
+      description: 'Jumlah service instance pelanggan berstatus Suspended (ditangguhkan sementara).',
+    },
+  },
+  {
+    key: 'terminated',
+    label: 'Terminated',
+    value: summary.value.terminated ?? 0,
+    icon: 'ri-close-circle-line',
+    iconBgClass: 'bg-label-secondary',
+    info: {
+      title: 'Terminated',
+      description: 'Jumlah service instance pelanggan berstatus Terminated (dihentikan).',
+    },
+  },
+  {
+    key: 'billable',
+    label: 'Billable',
+    value: summary.value.billable ?? 0,
+    icon: 'ri-bill-line',
+    iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Billable',
+      description: 'Jumlah service instance pelanggan yang masuk kategori billable menurut ringkasan API.',
+    },
+  },
+])
 
 const rowsPerPageOptions = [10, 20, 50, 100]
 const tableControls = reactive({ rows: 10 })

@@ -14,153 +14,7 @@
       />
 
       <div v-show="activeTab === 'payments'">
-      <!-- Payment Statistics Cards -->
-      <div class="row g-6 mb-6">
-        <div class="col-xl-3 col-lg-6 col-md-6" v-if="apPaymentStore.loading">
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex align-items-center">
-                <div class="skeleton-loader me-3" style="width: 40px; height: 40px; border-radius: 8px;"></div>
-                <div class="flex-grow-1">
-                  <div class="skeleton-loader mb-2" style="width: 60%; height: 16px;"></div>
-                  <div class="skeleton-loader" style="width: 40%; height: 20px;"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-xl-3 col-lg-6 col-md-6" v-else>
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">Total Pembayaran</p>
-                <div class="avatar">
-                  <span class="avatar-initial rounded bg-label-primary">
-                    <i class="ri-money-dollar-circle-line"></i>
-                  </span>
-                </div>
-              </div>
-              <div class="d-flex justify-content-between align-items-center">
-                <div class="payment-heading">
-                  <h5 class="mb-1">{{ apPaymentStore.totalRecords }}</h5>
-                  <span class="text-muted">Pembayaran Aktif</span>
-                </div>
-                <a href="javascript:void(0);" class="text-secondary">
-                  <i class="ri-file-copy-line ri-22px"></i>
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-xl-3 col-lg-6 col-md-6" v-if="apPaymentStore.loading">
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex align-items-center">
-                <div class="skeleton-loader me-3" style="width: 40px; height: 40px; border-radius: 8px;"></div>
-                <div class="flex-grow-1">
-                  <div class="skeleton-loader mb-2" style="width: 60%; height: 16px;"></div>
-                  <div class="skeleton-loader" style="width: 40%; height: 20px;"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-xl-3 col-lg-6 col-md-6" v-else>
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">Draft</p>
-                <div class="avatar">
-                  <span class="avatar-initial rounded bg-label-warning">
-                    <i class="ri-file-list-line"></i>
-                  </span>
-                </div>
-              </div>
-              <div class="d-flex justify-content-between align-items-center">
-                <div class="payment-heading">
-                  <h5 class="mb-1">{{ draftCount }}</h5>
-                  <span class="text-muted">Menunggu Konfirmasi</span>
-                </div>
-                <a href="javascript:void(0);" class="text-secondary">
-                  <i class="ri-file-copy-line ri-22px"></i>
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-xl-3 col-lg-6 col-md-6" v-if="apPaymentStore.loading">
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex align-items-center">
-                <div class="skeleton-loader me-3" style="width: 40px; height: 40px; border-radius: 8px;"></div>
-                <div class="flex-grow-1">
-                  <div class="skeleton-loader mb-2" style="width: 60%; height: 16px;"></div>
-                  <div class="skeleton-loader" style="width: 40%; height: 20px;"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-xl-3 col-lg-6 col-md-6" v-else>
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">Dikonfirmasi</p>
-                <div class="avatar">
-                  <span class="avatar-initial rounded bg-label-success">
-                    <i class="ri-checkbox-circle-line"></i>
-                  </span>
-                </div>
-              </div>
-              <div class="d-flex justify-content-between align-items-center">
-                <div class="payment-heading">
-                  <h5 class="mb-1">{{ confirmedCount }}</h5>
-                  <span class="text-muted">Sudah Dikonfirmasi</span>
-                </div>
-                <a href="javascript:void(0);" class="text-secondary">
-                  <i class="ri-file-copy-line ri-22px"></i>
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-xl-3 col-lg-6 col-md-6" v-if="apPaymentStore.loading">
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex align-items-center">
-                <div class="skeleton-loader me-3" style="width: 40px; height: 40px; border-radius: 8px;"></div>
-                <div class="flex-grow-1">
-                  <div class="skeleton-loader mb-2" style="width: 60%; height: 16px;"></div>
-                  <div class="skeleton-loader" style="width: 40%; height: 20px;"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-xl-3 col-lg-6 col-md-6" v-else>
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">Total Nilai</p>
-                <div class="avatar">
-                  <span class="avatar-initial rounded bg-label-info">
-                    <i class="ri-exchange-funds-line"></i>
-                  </span>
-                </div>
-              </div>
-              <div class="d-flex justify-content-between align-items-center">
-                <div class="payment-heading">
-                  <h5 class="mb-1">{{ formatRupiah(totalAmount) }}</h5>
-                  <span class="text-muted">Total Pembayaran</span>
-                </div>
-                <a href="javascript:void(0);" class="text-secondary">
-                  <i class="ri-file-copy-line ri-22px"></i>
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <ListPageStatsCards :items="statItems" :loading="loading" />
 
       <!-- Payment Table -->
       <div class="row g-6">
@@ -664,6 +518,7 @@ import FinanceWorkspaceTabs from '~/components/finance/FinanceWorkspaceTabs.vue'
 import ApOpenBillsPanel from '~/components/finance/ap/ApOpenBillsPanel.vue'
 import ApAgingPanel from '~/components/finance/ap/ApAgingPanel.vue'
 import { useFinanceWorkspaceTabs } from '~/composables/useFinanceWorkspaceTabs'
+import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
 
 const { setListTitle, setFormTitle } = useDynamicTitle()
 
@@ -723,6 +578,7 @@ const totalAmount = computed(() =>
 )
 
 const params = computed(() => apPaymentStore.params || {})
+const loading = computed(() => apPaymentStore.loading || false)
 
 // Vendor data
 const vendorOptions = computed(() => {
@@ -737,6 +593,58 @@ const showModal = computed(() => apPaymentStore.showModal || false)
 const validationErrors = computed(() => apPaymentStore.validationErrors || [])
 
 // Lifecycle
+const statItems = computed(() => [
+  {
+    key: 'total-pembayaran',
+    label: 'Total Pembayaran',
+    value: apPaymentStore.totalRecords,
+    subtitle: 'Pembayaran Aktif',
+    icon: 'ri-money-dollar-circle-line',
+    iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah (dokumen) seluruh pembayaran ke vendor (AP Payment) yang terdaftar, mencakup semua status.',
+    },
+  },
+  {
+    key: 'draft',
+    label: 'Draft',
+    value: draftCount.value,
+    subtitle: 'Menunggu Konfirmasi',
+    icon: 'ri-file-list-line',
+    iconBgClass: 'bg-label-warning',
+    info: {
+      title: 'Draft',
+      description: 'Jumlah (dokumen) AP Payment berstatus Draft yang belum dikonfirmasi.',
+    },
+  },
+  {
+    key: 'dikonfirmasi',
+    label: 'Dikonfirmasi',
+    value: confirmedCount.value,
+    subtitle: 'Sudah Dikonfirmasi',
+    icon: 'ri-checkbox-circle-line',
+    iconBgClass: 'bg-label-success',
+    info: {
+      title: 'Dikonfirmasi',
+      description: 'Jumlah (dokumen) AP Payment yang telah dikonfirmasi dan tercatat sebagai pembayaran ke vendor.',
+    },
+  },
+  {
+    key: 'total-nilai',
+    label: 'Total Nilai',
+    value: formatRupiah(totalAmount.value),
+    subtitle: 'Total Pembayaran',
+    icon: 'ri-exchange-funds-line',
+    iconBgClass: 'bg-label-info',
+    info: {
+      title: 'Total Nilai Pembayaran',
+      description: 'Total nilai uang (Rupiah) dari seluruh pembayaran ke vendor pada halaman ini.',
+    },
+  }
+])
+
+
 onMounted(async () => {
   try {
     await permissionStore.fetchPermissions()

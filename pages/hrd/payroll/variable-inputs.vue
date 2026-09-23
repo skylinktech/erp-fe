@@ -186,10 +186,30 @@ function resetFilters() {
 const statItems = computed<ListPageStatItem[]>(() => {
   const s = store.variableStats || {}
   return [
-    { label: 'Total', value: s.total ?? 0, icon: 'ri-list-check-2', iconBgClass: 'bg-label-primary' },
-    { label: 'Draft', value: s.draft ?? 0, icon: 'ri-draft-line', iconBgClass: 'bg-label-secondary' },
-    { label: 'Approved', value: s.approved ?? 0, icon: 'ri-checkbox-circle-line', iconBgClass: 'bg-label-success' },
-    { label: 'Rejected', value: s.rejected ?? 0, icon: 'ri-close-circle-line', iconBgClass: 'bg-label-danger' },
+    { label: 'Total', value: s.total ?? 0, icon: 'ri-list-check-2', iconBgClass: 'bg-label-primary' ,
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah keseluruhan data Variable Inputs yang terdaftar dalam sistem berdasarkan statistik API.',
+    },
+  },
+    { label: 'Draft', value: s.draft ?? 0, icon: 'ri-draft-line', iconBgClass: 'bg-label-secondary' ,
+    info: {
+      title: 'Draft',
+      description: 'Jumlah dokumen Variable Inputs berstatus Draft yang belum diproses lebih lanjut.',
+    },
+  },
+    { label: 'Approved', value: s.approved ?? 0, icon: 'ri-checkbox-circle-line', iconBgClass: 'bg-label-success' ,
+    info: {
+      title: 'Approved',
+      description: 'Jumlah dokumen Variable Inputs yang telah disetujui.',
+    },
+  },
+    { label: 'Rejected', value: s.rejected ?? 0, icon: 'ri-close-circle-line', iconBgClass: 'bg-label-danger' ,
+    info: {
+      title: 'Rejected',
+      description: 'Jumlah dokumen Variable Inputs yang ditolak.',
+    },
+  },
   ]
 })
 

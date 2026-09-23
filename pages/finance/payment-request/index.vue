@@ -20,52 +20,7 @@
         Anda tidak memiliki permission untuk melihat tab Payment Request manapun.
       </div>
 
-      <div class="row g-6 mb-6">
-        <div class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">Total</p>
-                <div class="avatar"><span class="avatar-initial rounded bg-label-primary"><i class="ri-hand-coin-line"></i></span></div>
-              </div>
-              <h5 class="mb-0">{{ statistics?.totalPaymentRequests || 0 }}</h5>
-            </div>
-          </div>
-        </div>
-        <div class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">Draft</p>
-                <div class="avatar"><span class="avatar-initial rounded bg-label-secondary"><i class="ri-draft-line"></i></span></div>
-              </div>
-              <h5 class="mb-0">{{ statistics?.draftPaymentRequests || 0 }}</h5>
-            </div>
-          </div>
-        </div>
-        <div class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">Pending</p>
-                <div class="avatar"><span class="avatar-initial rounded bg-label-warning"><i class="ri-time-line"></i></span></div>
-              </div>
-              <h5 class="mb-0">{{ statistics?.pendingPaymentRequests || 0 }}</h5>
-            </div>
-          </div>
-        </div>
-        <div class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">Approved</p>
-                <div class="avatar"><span class="avatar-initial rounded bg-label-success"><i class="ri-checkbox-circle-line"></i></span></div>
-              </div>
-              <h5 class="mb-0">{{ statistics?.approvedPaymentRequests || 0 }}</h5>
-            </div>
-          </div>
-        </div>
-      </div>
+      <ListPageStatsCards :items="statItems" />
 
       <CollapsibleFilterCard
         title="Filter Payment Request"
@@ -330,6 +285,7 @@ import {
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
 import CollapsibleFilterCard from '~/components/list/CollapsibleFilterCard.vue'
+import ListPageStatsCards, { type ListPageStatItem } from '~/components/list/ListPageStatsCards.vue'
 import FilterField from '~/components/list/FilterField.vue'
 import Column from 'primevue/column'
 import Dropdown from 'primevue/dropdown'
@@ -354,6 +310,53 @@ const {
 const { getAttachmentUrl, getFileIcon } = useImageUrl()
 const formatRupiah = useFormatRupiah()
 const { paymentRequests, loading, totalRecords, params, statistics } = storeToRefs(paymentRequestStore)
+
+const statItems = computed<ListPageStatItem[]>(() => [
+  {
+    key: 'total',
+    label: 'Total',
+    value: statistics.value?.totalPaymentRequests ?? 0,
+    icon: 'ri-hand-coin-line',
+    iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah seluruh dokumen Payment Request yang terdaftar dalam sistem, mencakup semua status pada tab aktif.',
+    },
+  },
+  {
+    key: 'draft',
+    label: 'Draft',
+    value: statistics.value?.draftPaymentRequests ?? 0,
+    icon: 'ri-draft-line',
+    iconBgClass: 'bg-label-secondary',
+    info: {
+      title: 'Draft',
+      description: 'Jumlah dokumen Payment Request berstatus Draft yang belum diproses lebih lanjut.',
+    },
+  },
+  {
+    key: 'pending',
+    label: 'Pending',
+    value: statistics.value?.pendingPaymentRequests ?? 0,
+    icon: 'ri-time-line',
+    iconBgClass: 'bg-label-warning',
+    info: {
+      title: 'Pending',
+      description: 'Jumlah dokumen Payment Request berstatus Pending yang menunggu persetujuan.',
+    },
+  },
+  {
+    key: 'approved',
+    label: 'Approved',
+    value: statistics.value?.approvedPaymentRequests ?? 0,
+    icon: 'ri-checkbox-circle-line',
+    iconBgClass: 'bg-label-success',
+    info: {
+      title: 'Approved',
+      description: 'Jumlah dokumen Payment Request yang telah disetujui.',
+    },
+  },
+])
 const tableControls = ref({ rows: 10 })
 const filters = ref({ status: null as string | null, priority: null as string | null, sourceType: null as string | null })
 const exportingCsv = ref(false)

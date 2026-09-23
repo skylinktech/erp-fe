@@ -402,6 +402,10 @@ const statItems = computed(() => [
     value: summary.value.queue ?? summary.value.total ?? totalRecords.value,
     icon: 'ri-list-check-2',
     iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Queue Total',
+      description: 'Ringkasan metrik "Queue Total" pada daftar Equipmentinspectiontab berdasarkan data statistik API/store.',
+    },
   },
   {
     key: 'returned',
@@ -409,6 +413,10 @@ const statItems = computed(() => [
     value: summaryCount('RETURNED'),
     icon: 'ri-arrow-go-back-line',
     iconBgClass: 'bg-label-secondary',
+    info: {
+      title: 'Returned',
+      description: 'Ringkasan metrik "Returned" pada daftar Equipmentinspectiontab berdasarkan data statistik API/store.',
+    },
   },
   {
     key: 'insp',
@@ -416,6 +424,10 @@ const statItems = computed(() => [
     value: summaryCount('UNDER_INSPECTION'),
     icon: 'ri-search-eye-line',
     iconBgClass: 'bg-label-warning',
+    info: {
+      title: 'Under Inspection',
+      description: 'Ringkasan metrik "Under Inspection" pada daftar Equipmentinspectiontab berdasarkan data statistik API/store.',
+    },
   },
   {
     key: 'page',
@@ -423,6 +435,10 @@ const statItems = computed(() => [
     value: displayRows.value.length,
     icon: 'ri-file-list-line',
     iconBgClass: 'bg-label-info',
+    info: {
+      title: 'This Page',
+      description: 'Ringkasan metrik "This Page" pada daftar Equipmentinspectiontab berdasarkan data statistik API/store.',
+    },
   },
 ])
 

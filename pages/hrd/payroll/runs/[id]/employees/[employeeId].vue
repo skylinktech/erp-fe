@@ -67,10 +67,30 @@ const employee = computed(() => detail.value?.employee || {})
 const snapshot = computed(() => employee.value.employeeSnapshot || {})
 const lines = computed(() => detail.value?.lines || [])
 const statItems = computed<ListPageStatItem[]>(() => [
-  { label: 'Gross', value: money(employee.value.grossAmount), icon: 'ri-money-dollar-circle-line', iconBgClass: 'bg-label-info' },
-  { label: 'Deduction', value: money(employee.value.employeeDeductionAmount), icon: 'ri-subtract-line', iconBgClass: 'bg-label-warning' },
-  { label: 'PPh 21', value: money(employee.value.taxAmount), icon: 'ri-percent-line', iconBgClass: 'bg-label-danger' },
-  { label: 'Net Pay', value: money(employee.value.netPayAmount), icon: 'ri-wallet-3-line', iconBgClass: 'bg-label-success' },
+  { label: 'Gross', value: money(employee.value.grossAmount), icon: 'ri-money-dollar-circle-line', iconBgClass: 'bg-label-info' ,
+    info: {
+      title: 'Gross',
+      description: 'Ringkasan metrik "Gross" pada daftar [Employeeid] berdasarkan data statistik API/store.',
+    },
+  },
+  { label: 'Deduction', value: money(employee.value.employeeDeductionAmount), icon: 'ri-subtract-line', iconBgClass: 'bg-label-warning' ,
+    info: {
+      title: 'Deduction',
+      description: 'Ringkasan metrik "Deduction" pada daftar [Employeeid] berdasarkan data statistik API/store.',
+    },
+  },
+  { label: 'PPh 21', value: money(employee.value.taxAmount), icon: 'ri-percent-line', iconBgClass: 'bg-label-danger' ,
+    info: {
+      title: 'PPh 21',
+      description: 'Ringkasan metrik "PPh 21" pada daftar [Employeeid] berdasarkan data statistik API/store.',
+    },
+  },
+  { label: 'Net Pay', value: money(employee.value.netPayAmount), icon: 'ri-wallet-3-line', iconBgClass: 'bg-label-success' ,
+    info: {
+      title: 'Net Pay',
+      description: 'Ringkasan metrik "Net Pay" pada daftar [Employeeid] berdasarkan data statistik API/store.',
+    },
+  },
 ])
 const earnings = computed(() => lines.value.filter((l: PayrollLine) => (l.componentType || (l as { component_type?: string }).component_type) === 'EARNING'))
 const deductions = computed(() => lines.value.filter((l: PayrollLine) => (l.componentType || (l as { component_type?: string }).component_type) === 'DEDUCTION'))

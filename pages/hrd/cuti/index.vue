@@ -5,92 +5,7 @@
         
         <p class="mb-6">Kelola pengajuan cuti seluruh pegawai dengan workflow approval multi-step.</p>
 
-        <!-- Statistics Cards -->
-        <div class="row g-6 mb-6">
-          <div class="col-xl-3 col-lg-6 col-md-6">
-            <div class="card h-100">
-              <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                  <p class="mb-0">Total Pengajuan</p>
-                  <div class="avatar">
-                    <span class="avatar-initial rounded bg-label-primary">
-                      <i class="ri-file-list-3-line"></i>
-                    </span>
-                  </div>
-                </div>
-                <div class="d-flex justify-content-between align-items-center">
-                  <div class="account-heading">
-                    <h5 class="mb-1">{{ stats.total || 0 }}</h5>
-                    <span class="text-muted small">Pengajuan tahun ini</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-xl-3 col-lg-6 col-md-6">
-            <div class="card h-100">
-              <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                  <p class="mb-0">Disetujui</p>
-                  <div class="avatar">
-                    <span class="avatar-initial rounded bg-label-success">
-                      <i class="ri-checkbox-circle-line"></i>
-                    </span>
-                  </div>
-                </div>
-                <div class="d-flex justify-content-between align-items-center">
-                  <div class="account-heading">
-                    <h5 class="mb-1">{{ stats.approved || 0 }}</h5>
-                    <span class="text-muted small">Cuti disetujui</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-xl-3 col-lg-6 col-md-6">
-            <div class="card h-100">
-              <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                  <p class="mb-0">Menunggu</p>
-                  <div class="avatar">
-                    <span class="avatar-initial rounded bg-label-warning">
-                      <i class="ri-time-line"></i>
-                    </span>
-                  </div>
-                </div>
-                <div class="d-flex justify-content-between align-items-center">
-                  <div class="account-heading">
-                    <h5 class="mb-1">{{ stats.menunggu || 0 }}</h5>
-                    <span class="text-muted small">Menunggu approval</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-xl-3 col-lg-6 col-md-6">
-            <div class="card h-100">
-              <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                  <p class="mb-0">Ditolak</p>
-                  <div class="avatar">
-                    <span class="avatar-initial rounded bg-label-danger">
-                      <i class="ri-close-circle-line"></i>
-                    </span>
-                  </div>
-                </div>
-                <div class="d-flex justify-content-between align-items-center">
-                  <div class="account-heading">
-                    <h5 class="mb-1">{{ stats.rejected || 0 }}</h5>
-                    <span class="text-muted small">Cuti ditolak</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <ListPageStatsCards :items="statItems" />
 
         <!-- Saldo CT & breakdown cuti bersama -->
         <div class="row g-6 mb-6">
@@ -485,6 +400,7 @@ import Column from 'primevue/column'
 import Menu from 'primevue/menu'
 import Swal from 'sweetalert2'
 import { useBootstrapModal } from '~/composables/useBootstrapModal'
+import ListPageStatsCards, { type ListPageStatItem } from '~/components/list/ListPageStatsCards.vue'
 
 const store = useCutiStore()
 const { getAttachmentUrl } = useImageUrl()
@@ -799,6 +715,58 @@ async function destroy(row: CutiRow) {
   if (!r.isConfirmed) return
   await store.destroy(row.id)
 }
+
+const statItems = computed<ListPageStatItem[]>(() => [
+  {
+    key: 'total-pengajuan',
+    label: 'Total Pengajuan',
+    value: stats.value.total ?? 0,
+    subtitle: 'Pengajuan tahun ini',
+    icon: 'ri-file-list-3-line',
+    iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Total Pengajuan',
+      description: 'Jumlah seluruh pengajuan cuti/izin/sakit yang dibuat pada tahun berjalan.',
+    },
+  },
+  {
+    key: 'disetujui',
+    label: 'Disetujui',
+    value: stats.value.approved ?? 0,
+    subtitle: 'Cuti disetujui',
+    icon: 'ri-checkbox-circle-line',
+    iconBgClass: 'bg-label-success',
+    info: {
+      title: 'Disetujui',
+      description: 'Jumlah pengajuan cuti yang telah disetujui melalui workflow approval.',
+    },
+  },
+  {
+    key: 'menunggu',
+    label: 'Menunggu',
+    value: stats.value.menunggu ?? 0,
+    subtitle: 'Menunggu approval',
+    icon: 'ri-time-line',
+    iconBgClass: 'bg-label-warning',
+    info: {
+      title: 'Menunggu',
+      description: 'Jumlah pengajuan cuti yang masih menunggu proses approval dari atasan/approver terkait.',
+    },
+  },
+  {
+    key: 'ditolak',
+    label: 'Ditolak',
+    value: stats.value.rejected ?? 0,
+    subtitle: 'Cuti ditolak',
+    icon: 'ri-close-circle-line',
+    iconBgClass: 'bg-label-danger',
+    info: {
+      title: 'Ditolak',
+      description: 'Jumlah pengajuan cuti yang ditolak oleh approver.',
+    },
+  }
+])
+
 
 onMounted(async () => {
   // Parallel fetch — types & data table & stats card.

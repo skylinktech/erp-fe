@@ -3,22 +3,7 @@
     <div class="container-xxl flex-grow-1">
       <p class="mb-6">Kelola kehadiran pegawai: ringkasan per periode, punch, jadwal kerja, dan koreksi.</p>
 
-      <div class="row g-6 mb-6">
-        <div v-for="card in statCards" :key="card.label" class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card h-100">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">{{ card.label }}</p>
-                <div class="avatar">
-                  <span :class="['avatar-initial rounded', card.iconClass]"><i :class="card.icon"></i></span>
-                </div>
-              </div>
-              <h5 class="mb-1">{{ card.value }}</h5>
-              <span class="text-muted small">{{ card.subtitle }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
+      <ListPageStatsCards :items="statCards" />
 
       <ul class="nav nav-tabs mb-4">
         <li v-for="tab in tabs" :key="tab.id" class="nav-item">
@@ -381,6 +366,7 @@ import CustomSelect2 from '~/components/CustomSelect2.vue'
 import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
+import ListPageStatsCards, { type ListPageStatItem } from '~/components/list/ListPageStatsCards.vue'
 import { normalizeApiError, toastNormalizedError } from '~/utils/apiError'
 import {
   ATTENDANCE_STATE_OPTIONS,
@@ -467,15 +453,103 @@ const dailyStateFilterOptions = ATTENDANCE_STATE_OPTIONS.map((s) => ({
   label: s.label,
 }))
 
-const statCards = computed(() => [
-  { label: 'Pegawai', value: store.stats.totalEmployee, subtitle: 'Dalam periode', icon: 'ri-team-line', iconClass: 'bg-label-primary' },
-  { label: 'Hadir', value: store.stats.present, subtitle: 'Hari hadir (agregat)', icon: 'ri-checkbox-circle-line', iconClass: 'bg-label-success' },
-  { label: 'Absen', value: store.stats.absent, subtitle: 'Hari absen', icon: 'ri-close-circle-line', iconClass: 'bg-label-danger' },
-  { label: 'Terlambat', value: store.stats.late, subtitle: 'Kejadian terlambat', icon: 'ri-time-line', iconClass: 'bg-label-warning' },
-  { label: 'Cuti dibayar', value: store.stats.paidLeave, subtitle: 'Hari', icon: 'ri-calendar-check-line', iconClass: 'bg-label-info' },
-  { label: 'Cuti tidak dibayar', value: store.stats.unpaidLeave, subtitle: 'Hari', icon: 'ri-calendar-close-line', iconClass: 'bg-label-secondary' },
-  { label: 'Lembur', value: formatMinutesAsHours(store.stats.overtimeMinutes || Math.round((store.stats.overtimeHours || 0) * 60)), subtitle: 'Approved', icon: 'ri-timer-line', iconClass: 'bg-label-primary' },
-  { label: 'Incomplete', value: store.stats.incomplete, subtitle: 'Punch tidak lengkap', icon: 'ri-error-warning-line', iconClass: 'bg-label-warning' },
+const statCards = computed<ListPageStatItem[]>(() => [
+  {
+    key: 'pegawai',
+    label: 'Pegawai',
+    value: store.stats.totalEmployee ?? 0,
+    subtitle: 'Dalam periode',
+    icon: 'ri-team-line',
+    iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Pegawai',
+      description: 'Jumlah pegawai yang masuk dalam perhitungan statistik Kehadiran pada periode terpilih.',
+    },
+  },
+  {
+    key: 'hadir',
+    label: 'Hadir',
+    value: store.stats.present ?? 0,
+    subtitle: 'Hari hadir (agregat)',
+    icon: 'ri-checkbox-circle-line',
+    iconBgClass: 'bg-label-success',
+    info: {
+      title: 'Hadir',
+      description: 'Jumlah hari hadir (agregat seluruh pegawai) pada periode kehadiran terpilih.',
+    },
+  },
+  {
+    key: 'absen',
+    label: 'Absen',
+    value: store.stats.absent ?? 0,
+    subtitle: 'Hari absen',
+    icon: 'ri-close-circle-line',
+    iconBgClass: 'bg-label-danger',
+    info: {
+      title: 'Absen',
+      description: 'Jumlah hari absen (tanpa kehadiran) pada periode kehadiran terpilih.',
+    },
+  },
+  {
+    key: 'terlambat',
+    label: 'Terlambat',
+    value: store.stats.late ?? 0,
+    subtitle: 'Kejadian terlambat',
+    icon: 'ri-time-line',
+    iconBgClass: 'bg-label-warning',
+    info: {
+      title: 'Terlambat',
+      description: 'Jumlah kejadian keterlambatan check-in pada periode kehadiran terpilih.',
+    },
+  },
+  {
+    key: 'cuti-dibayar',
+    label: 'Cuti dibayar',
+    value: store.stats.paidLeave ?? 0,
+    subtitle: 'Hari',
+    icon: 'ri-calendar-check-line',
+    iconBgClass: 'bg-label-info',
+    info: {
+      title: 'Cuti Dibayar',
+      description: 'Jumlah hari cuti yang tetap dibayar (paid leave) pada periode kehadiran terpilih.',
+    },
+  },
+  {
+    key: 'cuti-tidak-dibayar',
+    label: 'Cuti tidak dibayar',
+    value: store.stats.unpaidLeave ?? 0,
+    subtitle: 'Hari',
+    icon: 'ri-calendar-close-line',
+    iconBgClass: 'bg-label-secondary',
+    info: {
+      title: 'Cuti Tidak Dibayar',
+      description: 'Jumlah hari cuti tanpa upah (unpaid leave) pada periode kehadiran terpilih.',
+    },
+  },
+  {
+    key: 'lembur',
+    label: 'Lembur',
+    value: formatMinutesAsHours(store.stats.overtimeMinutes || Math.round((store.stats.overtimeHours || 0) * 60)),
+    subtitle: 'Approved',
+    icon: 'ri-timer-line',
+    iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Lembur',
+      description: 'Total jam lembur yang telah disetujui (approved) pada periode kehadiran terpilih.',
+    },
+  },
+  {
+    key: 'incomplete',
+    label: 'Incomplete',
+    value: store.stats.incomplete ?? 0,
+    subtitle: 'Punch tidak lengkap',
+    icon: 'ri-error-warning-line',
+    iconBgClass: 'bg-label-warning',
+    info: {
+      title: 'Incomplete',
+      description: 'Jumlah hari dengan punch (check-in/check-out) tidak lengkap pada periode terpilih.',
+    },
+  },
 ])
 
 function formatDate(v: any) {

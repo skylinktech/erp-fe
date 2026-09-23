@@ -7,153 +7,7 @@
                 Kelola aset tetap dan perhitungan penyusutan
             </p>
 
-            <!-- Asset Statistics Cards -->
-            <div class="row g-6 mb-6">
-                <div class="col-xl-3 col-lg-6 col-md-6" v-if="loading">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="skeleton-loader me-3" style="width: 40px; height: 40px; border-radius: 8px;"></div>
-                                <div class="flex-grow-1">
-                                    <div class="skeleton-loader mb-2" style="width: 60%; height: 16px;"></div>
-                                    <div class="skeleton-loader" style="width: 40%; height: 20px;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6" v-else>
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Total Aset</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-primary">
-                                        <i class="ri-building-line"></i>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="asset-heading">
-                                    <h5 class="mb-1">{{ assets.length }}</h5>
-                                    <span class="text-muted">Aset Terdaftar</span>
-                                </div>
-                                <a href="javascript:void(0);" class="text-secondary">
-                                    <i class="ri-file-copy-line ri-22px"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6" v-if="loading">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="skeleton-loader me-3" style="width: 40px; height: 40px; border-radius: 8px;"></div>
-                                <div class="flex-grow-1">
-                                    <div class="skeleton-loader mb-2" style="width: 60%; height: 16px;"></div>
-                                    <div class="skeleton-loader" style="width: 40%; height: 20px;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6" v-else>
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Total Nilai</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-success">
-                                        <i class="ri-money-dollar-circle-line"></i>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="asset-heading">
-                                    <h5 class="mb-1">{{ formatRupiah(totalValue) }}</h5>
-                                    <span class="text-muted">Nilai Aset</span>
-                                </div>
-                                <a href="javascript:void(0);" class="text-secondary">
-                                    <i class="ri-file-copy-line ri-22px"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6" v-if="loading">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="skeleton-loader me-3" style="width: 40px; height: 40px; border-radius: 8px;"></div>
-                                <div class="flex-grow-1">
-                                    <div class="skeleton-loader mb-2" style="width: 60%; height: 16px;"></div>
-                                    <div class="skeleton-loader" style="width: 40%; height: 20px;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6" v-else>
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Aset Aktif</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-warning">
-                                        <i class="ri-check-line"></i>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="asset-heading">
-                                    <h5 class="mb-1">{{ activeAssetCount }}</h5>
-                                    <span class="text-muted">Aset Aktif</span>
-                                </div>
-                                <a href="javascript:void(0);" class="text-secondary">
-                                    <i class="ri-file-copy-line ri-22px"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6" v-if="loading">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="skeleton-loader me-3" style="width: 40px; height: 40px; border-radius: 8px;"></div>
-                                <div class="flex-grow-1">
-                                    <div class="skeleton-loader mb-2" style="width: 60%; height: 16px;"></div>
-                                    <div class="skeleton-loader" style="width: 40%; height: 20px;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6" v-else>
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Total Penyusutan</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-info">
-                                        <i class="ri-calculator-line"></i>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="asset-heading">
-                                    <h5 class="mb-1">{{ formatRupiah(totalDepreciation) }}</h5>
-                                    <span class="text-muted">Akumulasi Penyusutan</span>
-                                </div>
-                                <a href="javascript:void(0);" class="text-secondary">
-                                    <i class="ri-file-copy-line ri-22px"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <ListPageStatsCards :items="statItems" :loading="loading" />
 
             <!-- Asset Table -->
             <div class="row g-6">
@@ -522,6 +376,7 @@ import Dropdown from 'primevue/dropdown'
 import Column from 'primevue/column'
 import InputText from 'primevue/inputtext'
 import 'vue-select/dist/vue-select.css'
+import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
 
 const { setListTitle, setFormTitle } = useDynamicTitle()
 
@@ -673,6 +528,58 @@ const fetchAssetsSummary = async () => {
     console.error('Error fetching assets summary:', error)
   }
 }
+
+const statItems = computed(() => [
+  {
+    key: 'total-aset',
+    label: 'Total Aset',
+    value: assets.value.length,
+    subtitle: 'Aset Terdaftar',
+    icon: 'ri-building-line',
+    iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah (unit) seluruh aset tetap yang terdaftar dalam sistem, mencakup semua status.',
+    },
+  },
+  {
+    key: 'total-nilai',
+    label: 'Total Nilai',
+    value: formatRupiah(totalValue.value),
+    subtitle: 'Nilai Aset',
+    icon: 'ri-money-dollar-circle-line',
+    iconBgClass: 'bg-label-success',
+    info: {
+      title: 'Total Nilai Aset',
+      description: 'Total nilai uang (Rupiah) perolehan (acquisition cost) dari seluruh aset tetap.',
+    },
+  },
+  {
+    key: 'aset-aktif',
+    label: 'Aset Aktif',
+    value: activeAssetCount.value,
+    subtitle: 'Aset Aktif',
+    icon: 'ri-check-line',
+    iconBgClass: 'bg-label-warning',
+    info: {
+      title: 'Aset Aktif',
+      description: 'Jumlah (unit) aset tetap yang berstatus Aktif dan masih digunakan.',
+    },
+  },
+  {
+    key: 'total-penyusutan',
+    label: 'Total Penyusutan',
+    value: formatRupiah(totalDepreciation.value),
+    subtitle: 'Akumulasi Penyusutan',
+    icon: 'ri-calculator-line',
+    iconBgClass: 'bg-label-info',
+    info: {
+      title: 'Total Penyusutan',
+      description: 'Total nilai uang (Rupiah) akumulasi penyusutan, dihitung dari selisih nilai perolehan dan nilai sisa seluruh aset.',
+    },
+  }
+])
+
 
 onMounted(async () => {
     try {

@@ -7,153 +7,7 @@
                 Kelola pengeluaran dan biaya operasional perusahaan
             </p>
 
-            <!-- Expense Statistics Cards -->
-            <div class="row g-6 mb-6">
-                <div class="col-xl-3 col-lg-6 col-md-6" v-if="loading">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="skeleton-loader me-3" style="width: 40px; height: 40px; border-radius: 8px;"></div>
-                                <div class="flex-grow-1">
-                                    <div class="skeleton-loader mb-2" style="width: 60%; height: 16px;"></div>
-                                    <div class="skeleton-loader" style="width: 40%; height: 20px;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6" v-else>
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Total Pengeluaran</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-primary">
-                                        <i class="ri-money-dollar-circle-line"></i>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="expense-heading">
-                                    <h5 class="mb-1">{{ formatRupiah(totalExpenses) }}</h5>
-                                    <span class="text-muted">Total Pengeluaran</span>
-                                </div>
-                                <a href="javascript:void(0);" class="text-secondary">
-                                    <i class="ri-file-copy-line ri-22px"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6" v-if="loading">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="skeleton-loader me-3" style="width: 40px; height: 40px; border-radius: 8px;"></div>
-                                <div class="flex-grow-1">
-                                    <div class="skeleton-loader mb-2" style="width: 60%; height: 16px;"></div>
-                                    <div class="skeleton-loader" style="width: 40%; height: 20px;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6" v-else>
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Draft</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-warning">
-                                        <i class="ri-file-text-line"></i>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="expense-heading">
-                                    <h5 class="mb-1">{{ draftCount }}</h5>
-                                    <span class="text-muted">Menunggu Persetujuan</span>
-                                </div>
-                                <a href="javascript:void(0);" class="text-secondary">
-                                    <i class="ri-file-copy-line ri-22px"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6" v-if="loading">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="skeleton-loader me-3" style="width: 40px; height: 40px; border-radius: 8px;"></div>
-                                <div class="flex-grow-1">
-                                    <div class="skeleton-loader mb-2" style="width: 60%; height: 16px;"></div>
-                                    <div class="skeleton-loader" style="width: 40%; height: 20px;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6" v-else>
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Disetujui</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-success">
-                                        <i class="ri-check-line"></i>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="expense-heading">
-                                    <h5 class="mb-1">{{ approvedCount }}</h5>
-                                    <span class="text-muted">Pengeluaran Disetujui</span>
-                                </div>
-                                <a href="javascript:void(0);" class="text-secondary">
-                                    <i class="ri-file-copy-line ri-22px"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6" v-if="loading">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="skeleton-loader me-3" style="width: 40px; height: 40px; border-radius: 8px;"></div>
-                                <div class="flex-grow-1">
-                                    <div class="skeleton-loader mb-2" style="width: 60%; height: 16px;"></div>
-                                    <div class="skeleton-loader" style="width: 40%; height: 20px;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6" v-else>
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Dibayar</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-info">
-                                        <i class="ri-bank-card-line"></i>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="expense-heading">
-                                    <h5 class="mb-1">{{ paidCount }}</h5>
-                                    <span class="text-muted">Pengeluaran Dibayar</span>
-                                </div>
-                                <a href="javascript:void(0);" class="text-secondary">
-                                    <i class="ri-file-copy-line ri-22px"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <ListPageStatsCards :items="statItems" :loading="loading" />
 
             <!-- Expense Table -->
             <div class="row g-6">
@@ -449,6 +303,7 @@ import Dropdown from 'primevue/dropdown'
 import Column from 'primevue/column'
 import InputText from 'primevue/inputtext'
 import Swal from 'sweetalert2'
+import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
 
 const { setListTitle, setFormTitle } = useDynamicTitle()
 
@@ -546,6 +401,58 @@ const exportData = (format) => {
 const { userHasRole, userHasPermission } = usePermissions();
 
 // Lifecycle
+const statItems = computed(() => [
+  {
+    key: 'total-pengeluaran',
+    label: 'Total Pengeluaran',
+    value: formatRupiah(totalExpenses.value),
+    subtitle: 'Total Pengeluaran',
+    icon: 'ri-money-dollar-circle-line',
+    iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Total Nilai Pengeluaran',
+      description: 'Total nilai uang (Rupiah) dari seluruh pengeluaran yang tercatat pada halaman ini.',
+    },
+  },
+  {
+    key: 'draft',
+    label: 'Draft',
+    value: draftCount.value,
+    subtitle: 'Menunggu Persetujuan',
+    icon: 'ri-file-text-line',
+    iconBgClass: 'bg-label-warning',
+    info: {
+      title: 'Draft',
+      description: 'Jumlah (dokumen) pengeluaran berstatus Draft. Metrik ini belum tersedia pada skema data saat ini sehingga selalu bernilai 0.',
+    },
+  },
+  {
+    key: 'disetujui',
+    label: 'Disetujui',
+    value: approvedCount.value,
+    subtitle: 'Pengeluaran Disetujui',
+    icon: 'ri-check-line',
+    iconBgClass: 'bg-label-success',
+    info: {
+      title: 'Disetujui',
+      description: 'Jumlah (dokumen) pengeluaran yang telah disetujui. Metrik ini belum tersedia pada skema data saat ini sehingga selalu bernilai 0.',
+    },
+  },
+  {
+    key: 'dibayar',
+    label: 'Dibayar',
+    value: paidCount.value,
+    subtitle: 'Pengeluaran Dibayar',
+    icon: 'ri-bank-card-line',
+    iconBgClass: 'bg-label-info',
+    info: {
+      title: 'Dibayar',
+      description: 'Jumlah (dokumen) pengeluaran yang telah dibayar. Metrik ini belum tersedia pada skema data saat ini sehingga selalu bernilai 0.',
+    },
+  }
+])
+
+
 onMounted(async () => {
     try {
         await permissionStore.fetchPermissions()

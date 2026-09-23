@@ -243,6 +243,10 @@ const statItems = computed(() => [
     value: summary.value.total ?? totalRecords.value,
     icon: 'ri-cpu-line',
     iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah keseluruhan data Equipmentregistertab yang terdaftar dalam sistem berdasarkan statistik API.',
+    },
   },
   {
     key: 'available',
@@ -250,6 +254,10 @@ const statItems = computed(() => [
     value: summaryCount('AVAILABLE'),
     icon: 'ri-checkbox-circle-line',
     iconBgClass: 'bg-label-success',
+    info: {
+      title: 'Available',
+      description: 'Ringkasan metrik "Available" pada daftar Equipmentregistertab berdasarkan data statistik API/store.',
+    },
   },
   {
     key: 'installed',
@@ -257,6 +265,10 @@ const statItems = computed(() => [
     value: summaryCount('INSTALLED'),
     icon: 'ri-map-pin-line',
     iconBgClass: 'bg-label-info',
+    info: {
+      title: 'Installed',
+      description: 'Ringkasan metrik "Installed" pada daftar Equipmentregistertab berdasarkan data statistik API/store.',
+    },
   },
   {
     key: 'recovery',
@@ -264,6 +276,10 @@ const statItems = computed(() => [
     value: summaryCount('UNDER_INSPECTION', 'UNDER_RMA', 'RETURNED'),
     icon: 'ri-tools-line',
     iconBgClass: 'bg-label-warning',
+    info: {
+      title: 'Inspection / RMA',
+      description: 'Ringkasan metrik "Inspection / RMA" pada daftar Equipmentregistertab berdasarkan data statistik API/store.',
+    },
   },
 ])
 

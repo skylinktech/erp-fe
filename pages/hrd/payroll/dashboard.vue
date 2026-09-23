@@ -95,14 +95,54 @@ const recentRuns = computed(() => store.runs.slice(0, 8))
 const statItems = computed<ListPageStatItem[]>(() => {
   const d = dashboard.value
   return [
-    { label: 'Headcount', value: d.payrollHeadcount ?? d.currentStatus?.headcount ?? 0, icon: 'ri-team-line', iconBgClass: 'bg-label-primary' },
-    { label: 'Gross Payroll', value: money(d.grossPayroll ?? d.currentStatus?.gross), icon: 'ri-money-dollar-circle-line', iconBgClass: 'bg-label-info' },
-    { label: 'Net Payroll', value: money(d.netPayroll ?? d.currentStatus?.net), icon: 'ri-wallet-3-line', iconBgClass: 'bg-label-success' },
-    { label: 'PPh 21', value: money(d.pph21), icon: 'ri-percent-line', iconBgClass: 'bg-label-warning' },
-    { label: 'BPJS Karyawan', value: money(d.bpjsEmployee), icon: 'ri-heart-pulse-line', iconBgClass: 'bg-label-danger' },
-    { label: 'BPJS Perusahaan', value: money(d.bpjsEmployer), icon: 'ri-building-line', iconBgClass: 'bg-label-secondary' },
-    { label: 'Employer Cost', value: money(d.employerCost ?? d.currentStatus?.employer_cost), icon: 'ri-funds-line', iconBgClass: 'bg-label-info' },
-    { label: 'Exceptions', value: d.exceptions ?? d.currentStatus?.exceptions ?? 0, icon: 'ri-error-warning-line', iconBgClass: 'bg-label-danger' },
+    { label: 'Headcount', value: d.payrollHeadcount ?? d.currentStatus?.headcount ?? 0, icon: 'ri-team-line', iconBgClass: 'bg-label-primary' ,
+    info: {
+      title: 'Headcount',
+      description: 'Ringkasan metrik "Headcount" pada daftar Dashboard berdasarkan data statistik API/store.',
+    },
+  },
+    { label: 'Gross Payroll', value: money(d.grossPayroll ?? d.currentStatus?.gross), icon: 'ri-money-dollar-circle-line', iconBgClass: 'bg-label-info' ,
+    info: {
+      title: 'Gross Payroll',
+      description: 'Ringkasan metrik "Gross Payroll" pada daftar Dashboard berdasarkan data statistik API/store.',
+    },
+  },
+    { label: 'Net Payroll', value: money(d.netPayroll ?? d.currentStatus?.net), icon: 'ri-wallet-3-line', iconBgClass: 'bg-label-success' ,
+    info: {
+      title: 'Net Payroll',
+      description: 'Ringkasan metrik "Net Payroll" pada daftar Dashboard berdasarkan data statistik API/store.',
+    },
+  },
+    { label: 'PPh 21', value: money(d.pph21), icon: 'ri-percent-line', iconBgClass: 'bg-label-warning' ,
+    info: {
+      title: 'PPh 21',
+      description: 'Ringkasan metrik "PPh 21" pada daftar Dashboard berdasarkan data statistik API/store.',
+    },
+  },
+    { label: 'BPJS Karyawan', value: money(d.bpjsEmployee), icon: 'ri-heart-pulse-line', iconBgClass: 'bg-label-danger' ,
+    info: {
+      title: 'BPJS Karyawan',
+      description: 'Ringkasan metrik "BPJS Karyawan" pada daftar Dashboard berdasarkan data statistik API/store.',
+    },
+  },
+    { label: 'BPJS Perusahaan', value: money(d.bpjsEmployer), icon: 'ri-building-line', iconBgClass: 'bg-label-secondary' ,
+    info: {
+      title: 'Perusahaan',
+      description: 'Jumlah data perusahaan yang terdaftar.',
+    },
+  },
+    { label: 'Employer Cost', value: money(d.employerCost ?? d.currentStatus?.employer_cost), icon: 'ri-funds-line', iconBgClass: 'bg-label-info' ,
+    info: {
+      title: 'Employer Cost',
+      description: 'Ringkasan metrik "Employer Cost" pada daftar Dashboard berdasarkan data statistik API/store.',
+    },
+  },
+    { label: 'Exceptions', value: d.exceptions ?? d.currentStatus?.exceptions ?? 0, icon: 'ri-error-warning-line', iconBgClass: 'bg-label-danger' ,
+    info: {
+      title: 'Exceptions',
+      description: 'Ringkasan metrik "Exceptions" pada daftar Dashboard berdasarkan data statistik API/store.',
+    },
+  },
   ]
 })
 

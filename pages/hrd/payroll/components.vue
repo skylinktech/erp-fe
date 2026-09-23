@@ -164,10 +164,47 @@ const statItems = computed<ListPageStatItem[]>(() => {
   const list = rows.value
   const typeOf = (r: Record<string, unknown>) => String(r.componentType || r.component_type || '')
   return [
-    { label: 'Total', value: list.length, icon: 'ri-price-tag-3-line', iconBgClass: 'bg-label-primary' },
-    { label: 'Earning', value: list.filter((r) => typeOf(r) === 'EARNING').length, icon: 'ri-add-circle-line', iconBgClass: 'bg-label-success' },
-    { label: 'Deduction', value: list.filter((r) => typeOf(r) === 'DEDUCTION').length, icon: 'ri-indeterminate-circle-line', iconBgClass: 'bg-label-warning' },
-    { label: 'Aktif', value: list.filter((r) => r.isActive !== false).length, icon: 'ri-checkbox-circle-line', iconBgClass: 'bg-label-info' },
+    {
+      label: 'Total',
+      value: list.length,
+      icon: 'ri-price-tag-3-line',
+      iconBgClass: 'bg-label-primary',
+      info: {
+        title: 'Jumlah Keseluruhan',
+        description:
+          'Jumlah seluruh salary component yang dimuat pada daftar (agregasi client-side dari data tabel).',
+      },
+    },
+    {
+      label: 'Earning',
+      value: list.filter((r) => typeOf(r) === 'EARNING').length,
+      icon: 'ri-add-circle-line',
+      iconBgClass: 'bg-label-success',
+      info: {
+        title: 'Earning',
+        description: 'Jumlah salary component bertipe EARNING pada daftar yang dimuat.',
+      },
+    },
+    {
+      label: 'Deduction',
+      value: list.filter((r) => typeOf(r) === 'DEDUCTION').length,
+      icon: 'ri-indeterminate-circle-line',
+      iconBgClass: 'bg-label-warning',
+      info: {
+        title: 'Deduction',
+        description: 'Jumlah salary component bertipe DEDUCTION pada daftar yang dimuat.',
+      },
+    },
+    {
+      label: 'Aktif',
+      value: list.filter((r) => r.isActive !== false).length,
+      icon: 'ri-checkbox-circle-line',
+      iconBgClass: 'bg-label-info',
+      info: {
+        title: 'Aktif',
+        description: 'Jumlah salary component berstatus aktif pada daftar yang dimuat.',
+      },
+    },
   ]
 })
 

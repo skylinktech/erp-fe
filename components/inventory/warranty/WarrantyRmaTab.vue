@@ -187,6 +187,10 @@ const statItems = computed(() => [
     value: summary.value.total ?? totalRecords.value,
     icon: 'ri-truck-line',
     iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah keseluruhan data Warrantyrmatab yang terdaftar dalam sistem berdasarkan statistik API.',
+    },
   },
   {
     key: 'ready',
@@ -194,6 +198,10 @@ const statItems = computed(() => [
     value: summaryCount('AUTHORIZED', 'READY_TO_SHIP'),
     icon: 'ri-time-line',
     iconBgClass: 'bg-label-warning',
+    info: {
+      title: 'Ready / Authorized',
+      description: 'Ringkasan metrik "Ready / Authorized" pada daftar Warrantyrmatab berdasarkan data statistik API/store.',
+    },
   },
   {
     key: 'shipped',
@@ -201,6 +209,10 @@ const statItems = computed(() => [
     value: summaryCount('SHIPPED_TO_PROVIDER'),
     icon: 'ri-send-plane-line',
     iconBgClass: 'bg-label-success',
+    info: {
+      title: 'Shipped',
+      description: 'Ringkasan metrik "Shipped" pada daftar Warrantyrmatab berdasarkan data statistik API/store.',
+    },
   },
   {
     key: 'cancelled',
@@ -208,6 +220,10 @@ const statItems = computed(() => [
     value: summaryCount('CANCELLED'),
     icon: 'ri-close-circle-line',
     iconBgClass: 'bg-label-secondary',
+    info: {
+      title: 'Cancelled',
+      description: 'Jumlah dokumen Warrantyrmatab yang telah dibatalkan.',
+    },
   },
 ])
 

@@ -6,73 +6,7 @@
         Konfigurasi master pajak (PPN, PPh, dll.) beserta histori tarif efektif
       </p>
 
-      <div class="row g-6 mb-6">
-        <div class="col-xl-3 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div v-if="loadingStats" class="skeleton-loader" style="height:48px"></div>
-              <template v-else>
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                  <p class="mb-0">Total Master</p>
-                  <span class="avatar-initial rounded bg-label-primary p-2">
-                    <i class="ri-percent-line"></i>
-                  </span>
-                </div>
-                <h5 class="mb-0">{{ statistics.total }}</h5>
-              </template>
-            </div>
-          </div>
-        </div>
-        <div class="col-xl-3 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div v-if="loadingStats" class="skeleton-loader" style="height:48px"></div>
-              <template v-else>
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                  <p class="mb-0">Aktif</p>
-                  <span class="avatar-initial rounded bg-label-success p-2">
-                    <i class="ri-checkbox-circle-line"></i>
-                  </span>
-                </div>
-                <h5 class="mb-0 text-success">{{ statistics.active }}</h5>
-              </template>
-            </div>
-          </div>
-        </div>
-        <div class="col-xl-3 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div v-if="loadingStats" class="skeleton-loader" style="height:48px"></div>
-              <template v-else>
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                  <p class="mb-0">Output</p>
-                  <span class="avatar-initial rounded bg-label-info p-2">
-                    <i class="ri-arrow-up-circle-line"></i>
-                  </span>
-                </div>
-                <h5 class="mb-0">{{ statistics.output }}</h5>
-              </template>
-            </div>
-          </div>
-        </div>
-        <div class="col-xl-3 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div v-if="loadingStats" class="skeleton-loader" style="height:48px"></div>
-              <template v-else>
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                  <p class="mb-0">Withholding</p>
-                  <span class="avatar-initial rounded bg-label-warning p-2">
-                    <i class="ri-arrow-down-circle-line"></i>
-                  </span>
-                </div>
-                <h5 class="mb-0">{{ statistics.withholding }}</h5>
-                <small class="text-muted">{{ statistics.rates }} histori tarif</small>
-              </template>
-            </div>
-          </div>
-        </div>
-      </div>
+            <ListPageStatsCards :items="statItems" :loading="loadingStats" />
 
       <div class="card mb-6">
         <div class="card-body">
@@ -380,6 +314,7 @@ import Dropdown from 'primevue/dropdown'
 import Column from 'primevue/column'
 import InputText from 'primevue/inputtext'
 import Dialog from 'primevue/dialog'
+import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
 
 const store = useTaxMasterStore()
 const { userHasRole, userHasPermission } = usePermissions()
@@ -391,6 +326,55 @@ const loadingStats = computed(() => store.loadingStats)
 const totalRecords = computed(() => store.totalRecords)
 const params = computed(() => store.params)
 const statistics = computed(() => store.statistics)
+const statItems = computed(() => [
+  {
+    key: 'total',
+    label: 'Total Master',
+    value: statistics.value?.total ?? 0,
+    icon: 'ri-percent-line',
+    iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah seluruh Tax Master yang terdaftar dalam sistem, mencakup semua tipe dan status.',
+    },
+  },
+  {
+    key: 'active',
+    label: 'Aktif',
+    value: statistics.value?.active ?? 0,
+    icon: 'ri-checkbox-circle-line',
+    iconBgClass: 'bg-label-success',
+    valueClass: 'text-success',
+    info: {
+      title: 'Aktif',
+      description: 'Jumlah Tax Master yang saat ini berstatus aktif.',
+    },
+  },
+  {
+    key: 'output',
+    label: 'Output',
+    value: statistics.value?.output ?? 0,
+    icon: 'ri-arrow-up-circle-line',
+    iconBgClass: 'bg-label-info',
+    info: {
+      title: 'Output',
+      description: 'Jumlah Tax Master bertipe OUTPUT (pajak keluaran).',
+    },
+  },
+  {
+    key: 'withholding',
+    label: 'Withholding',
+    value: statistics.value?.withholding ?? 0,
+    subtitle: `${statistics.value?.rates ?? 0} histori tarif`,
+    icon: 'ri-arrow-down-circle-line',
+    iconBgClass: 'bg-label-warning',
+    info: {
+      title: 'Withholding',
+      description: 'Jumlah Tax Master bertipe WITHHOLDING (pajak dipotong). Subtitle menampilkan jumlah histori tarif terkait.',
+    },
+  },
+])
+
 
 const rowsOptions = ref([10, 25, 50, 100])
 const searchQuery = ref('')

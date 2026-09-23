@@ -180,10 +180,30 @@ function resetFilters() {
 const statItems = computed<ListPageStatItem[]>(() => {
   const list = rows.value
   return [
-    { label: 'Total', value: list.length, icon: 'ri-organization-chart', iconBgClass: 'bg-label-primary' },
-    { label: 'Aktif', value: list.filter((r) => r.isActive !== false).length, icon: 'ri-checkbox-circle-line', iconBgClass: 'bg-label-success' },
-    { label: 'Dengan komponen', value: list.filter((r) => (r.components as unknown[] | undefined)?.length).length, icon: 'ri-list-check', iconBgClass: 'bg-label-info' },
-    { label: 'Kosong', value: list.filter((r) => !(r.components as unknown[] | undefined)?.length).length, icon: 'ri-inbox-line', iconBgClass: 'bg-label-warning' },
+    { label: 'Total', value: list.length, icon: 'ri-organization-chart', iconBgClass: 'bg-label-primary' ,
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah keseluruhan data Structures yang terdaftar dalam sistem berdasarkan statistik API.',
+    },
+  },
+    { label: 'Aktif', value: list.filter((r) => r.isActive !== false).length, icon: 'ri-checkbox-circle-line', iconBgClass: 'bg-label-success' ,
+    info: {
+      title: 'Aktif',
+      description: 'Ringkasan metrik "Aktif" pada daftar Structures berdasarkan data statistik API/store.',
+    },
+  },
+    { label: 'Dengan komponen', value: list.filter((r) => (r.components as unknown[] | undefined)?.length).length, icon: 'ri-list-check', iconBgClass: 'bg-label-info' ,
+    info: {
+      title: 'Dengan komponen',
+      description: 'Ringkasan metrik "Dengan komponen" pada daftar Structures berdasarkan data statistik API/store.',
+    },
+  },
+    { label: 'Kosong', value: list.filter((r) => !(r.components as unknown[] | undefined)?.length).length, icon: 'ri-inbox-line', iconBgClass: 'bg-label-warning' ,
+    info: {
+      title: 'Kosong',
+      description: 'Ringkasan metrik "Kosong" pada daftar Structures berdasarkan data statistik API/store.',
+    },
+  },
   ]
 })
 

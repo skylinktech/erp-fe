@@ -8,41 +8,7 @@
           <p class="mb-6">
           List suratJalan yang terdaftar di sistem
           </p>
-          <!-- suratJalan cards -->
-          <div class="row g-6 mb-6">
-              <div class="col-xl col-lg-6 col-md-6">
-                  <div class="card">
-                      <div class="card-body">
-                          <div class="d-flex justify-content-between align-items-center mb-4">
-                              <p class="mb-0">Total Surat Jalan</p>
-                              <div class="avatar">
-                                  <span class="avatar-initial rounded bg-label-primary"><i class="ri-truck-line"></i></span>
-                              </div>
-                          </div>
-                          <div class="account-heading">
-                              <h5 class="mb-1">{{ statistics?.totalSuratJalans || 0 }}</h5>
-                              <span class="text-muted">Surat jalan terdaftar</span>
-                          </div>
-                      </div>
-                  </div>
-              </div>
-              <div class="col-xl col-lg-6 col-md-6">
-                  <div class="card">
-                      <div class="card-body">
-                          <div class="d-flex justify-content-between align-items-center mb-4">
-                              <p class="mb-0">From Delivered SO</p>
-                              <div class="avatar">
-                                  <span class="avatar-initial rounded bg-label-success"><i class="ri-checkbox-circle-line"></i></span>
-                              </div>
-                          </div>
-                          <div class="account-heading">
-                              <h5 class="mb-1">{{ statistics?.withDeliveredSO || 0 }}</h5>
-                              <span class="text-muted">Dari SO delivered</span>
-                          </div>
-                      </div>
-                  </div>
-              </div>
-          </div>
+          <ListPageStatsCards :items="statItems" />
 
           <div class="row g-6">
               <div class="col-12">
@@ -448,6 +414,7 @@ import 'vue-select/dist/vue-select.css'
 import { useDebounceFn } from '@vueuse/core'
 import { useRouter } from 'vue-router'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
+import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
 
 // Composables
 const { setListTitle, setFormTitle } = useDynamicTitle()
@@ -471,6 +438,34 @@ const permissionStore       = usePermissionsStore()
 const salesOrderStore       = useSalesOrderStore()
 
 const { suratJalans, loading, totalRecords, params, form, isEditMode, showModal, validationErrors, statistics } = storeToRefs(suratJalanStore)
+
+const statItems = computed(() => [
+  {
+    key: 'total-surat-jalan',
+    label: 'Total Surat Jalan',
+    value: statistics.value?.totalSuratJalans ?? 0,
+    subtitle: 'Surat jalan terdaftar',
+    icon: 'ri-truck-line',
+    iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah keseluruhan data Surat Jalan yang terdaftar dalam sistem berdasarkan statistik API.',
+    },
+  },
+  {
+    key: 'from-delivered-so',
+    label: 'From Delivered SO',
+    value: statistics.value?.withDeliveredSO ?? 0,
+    subtitle: 'Dari SO delivered',
+    icon: 'ri-checkbox-circle-line',
+    iconBgClass: 'bg-label-success',
+    info: {
+      title: 'From Delivered SO',
+      description: 'Jumlah Surat Jalan yang dibuat dari Sales Order yang statusnya sudah delivered.',
+    },
+  }
+])
+
 const { customers }   = storeToRefs(customerStore)
 const { salesOrders, customerProducts } = storeToRefs(salesOrderStore)
 const { warehouses }  = storeToRefs(warehouseStore)

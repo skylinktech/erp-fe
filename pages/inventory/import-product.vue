@@ -387,7 +387,7 @@ const uploadFile = async () => {
 
         // Reset file input
         if (fileInput.value) {
-            fileInput.value.value = ''
+            fileInput.value = ''
         }
         selectedFile.value = null
 

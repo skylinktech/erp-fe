@@ -309,38 +309,54 @@ const modalDescription = computed(() =>
 )
 
 const statItems = computed(() => [
-  {
+{
     key: 'total',
     label: 'Total Menu Detail',
     value: statistics.value.total || totalRecords.value || 0,
     icon: 'ri-menu-2-line',
     iconBgClass: 'bg-label-primary',
     subtitle: 'Menu terdaftar',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah keseluruhan data Menu Detail yang terdaftar berdasarkan statistik API.',
+    },
   },
-  {
+{
     key: 'aktif',
     label: 'Aktif',
     value: statistics.value.aktif || 0,
     icon: 'ri-checkbox-circle-line',
     iconBgClass: 'bg-label-success',
     subtitle: 'Status aktif',
+    info: {
+      title: 'Aktif',
+      description: 'Ringkasan metrik "Aktif" pada daftar Menu Detail berdasarkan data statistik API/store.',
+    },
   },
-  {
+{
     key: 'nonaktif',
     label: 'Nonaktif',
     value: statistics.value.nonaktif || 0,
     icon: 'ri-close-circle-line',
     iconBgClass: 'bg-label-danger',
     subtitle: 'Status nonaktif',
+    info: {
+      title: 'Nonaktif',
+      description: 'Ringkasan metrik "Nonaktif" pada daftar Menu Detail berdasarkan data statistik API/store.',
+    },
   },
-  {
+{
     key: 'referenceable',
     label: 'Referenceable',
     value: statistics.value.referenceable || 0,
     icon: 'ri-link',
     iconBgClass: 'bg-label-info',
     subtitle: 'Bisa direferensikan',
-  },
+    info: {
+      title: 'Referenceable',
+      description: 'Ringkasan metrik "Referenceable" pada daftar Menu Detail berdasarkan data statistik API/store.',
+    },
+  }
 ])
 
 const isReferenceable = computed({

@@ -202,11 +202,36 @@ const hasActiveFilters = computed(() => Boolean(filters.value.periodId || filter
 const statItems = computed<ListPageStatItem[]>(() => {
   const s = store.runStats || {}
   return [
-    { label: 'Total', value: s.total ?? 0, icon: 'ri-file-list-3-line', iconBgClass: 'bg-label-primary' },
-    { label: 'Draft', value: s.draft ?? 0, icon: 'ri-draft-line', iconBgClass: 'bg-label-secondary' },
-    { label: 'Review', value: s.review ?? 0, icon: 'ri-eye-line', iconBgClass: 'bg-label-info' },
-    { label: 'Submitted', value: s.submitted ?? 0, icon: 'ri-time-line', iconBgClass: 'bg-label-warning' },
-    { label: 'Posted', value: s.posted ?? 0, icon: 'ri-checkbox-circle-line', iconBgClass: 'bg-label-success' },
+    { label: 'Total', value: s.total ?? 0, icon: 'ri-file-list-3-line', iconBgClass: 'bg-label-primary' ,
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah keseluruhan data Runs yang terdaftar dalam sistem berdasarkan statistik API.',
+    },
+  },
+    { label: 'Draft', value: s.draft ?? 0, icon: 'ri-draft-line', iconBgClass: 'bg-label-secondary' ,
+    info: {
+      title: 'Draft',
+      description: 'Jumlah dokumen Runs berstatus Draft yang belum diproses lebih lanjut.',
+    },
+  },
+    { label: 'Review', value: s.review ?? 0, icon: 'ri-eye-line', iconBgClass: 'bg-label-info' ,
+    info: {
+      title: 'Review',
+      description: 'Ringkasan metrik "Review" pada daftar Runs berdasarkan data statistik API/store.',
+    },
+  },
+    { label: 'Submitted', value: s.submitted ?? 0, icon: 'ri-time-line', iconBgClass: 'bg-label-warning' ,
+    info: {
+      title: 'Submitted',
+      description: 'Jumlah dokumen Runs yang telah disubmit.',
+    },
+  },
+    { label: 'Posted', value: s.posted ?? 0, icon: 'ri-checkbox-circle-line', iconBgClass: 'bg-label-success' ,
+    info: {
+      title: 'Posted',
+      description: 'Ringkasan metrik "Posted" pada daftar Runs berdasarkan data statistik API/store.',
+    },
+  },
   ]
 })
 

@@ -6,24 +6,8 @@
             <p class="mb-6">
             List warehouse yang terdaftar di sistem
             </p>
-            <div class="row g-6 mb-6">
-                <div v-if="stats.total !== undefined" class="col-xl col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Total Gudang</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-primary"><i class="ri-store-2-line"></i></span>
-                                </div>
-                            </div>
-                            <div class="account-heading">
-                                <h5 class="mb-1">{{ stats.total }}</h5>
-                                <span class="text-muted">Gudang terdaftar</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <ListPageStatsCards :items="statItems" />
+
             <div class="row g-6">
                 <div class="col-12">
                     <h4 class="mt-6 mb-1">Data Gudang</h4>
@@ -200,6 +184,7 @@ import { usePermissions } from '~/composables/usePermissions'
 import { usePermissionsStore } from '~/stores/permissions'
 import { useUserStore } from '~/stores/user'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
+import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
 
 // Composables
 const { setListTitle, setFormTitle } = useDynamicTitle()
@@ -211,6 +196,22 @@ const warehouseStore = useWarehouseStore()
 const permissionStore = usePermissionsStore()
 const userStore = useUserStore()
 const { warehouses, loading, stats, totalRecords, params, form, isEditMode, showModal, validationErrors } = storeToRefs(warehouseStore)
+
+const statItems = computed(() => [
+  {
+    key: 'total-gudang',
+    label: 'Total Gudang',
+    value: stats.value.total,
+    subtitle: 'Gudang terdaftar',
+    icon: 'ri-store-2-line',
+    iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah keseluruhan data Gudang yang terdaftar dalam sistem berdasarkan statistik API.',
+    },
+  }
+])
+
 
 const globalFilterValue = ref('')
 

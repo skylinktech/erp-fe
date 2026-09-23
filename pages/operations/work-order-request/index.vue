@@ -178,10 +178,10 @@ const { workOrderRequests, loading, totalRecords, params, statistics } = storeTo
 const { getStatusBadge } = useApprovalStatus()
 
 const statItems = computed(() => [
-  { key: 'total', label: 'Total WOR', value: statistics.value.total, icon: 'ri-file-list-3-line', iconBgClass: 'bg-label-primary' },
-  { key: 'pending', label: 'Pending', value: statistics.value.pending, icon: 'ri-time-line', iconBgClass: 'bg-label-warning' },
-  { key: 'approved', label: 'Approved', value: statistics.value.approved, icon: 'ri-checkbox-circle-line', iconBgClass: 'bg-label-success' },
-  { key: 'highUrgency', label: 'Urgency Tinggi', value: statistics.value.highUrgency, icon: 'ri-alarm-warning-line', iconBgClass: 'bg-label-danger' },
+  { key: 'total', label: 'Total WOR', value: statistics.value.total, icon: 'ri-file-list-3-line', iconBgClass: 'bg-label-primary', info: { title: 'Jumlah Keseluruhan', description: 'Jumlah seluruh Work Order Request (WOR) yang terdaftar dalam sistem, mencakup semua status.' } },
+  { key: 'pending', label: 'Pending', value: statistics.value.pending, icon: 'ri-time-line', iconBgClass: 'bg-label-warning', info: { title: 'Pending', description: 'Jumlah Work Order Request yang masih menunggu persetujuan.' } },
+  { key: 'approved', label: 'Approved', value: statistics.value.approved, icon: 'ri-checkbox-circle-line', iconBgClass: 'bg-label-success', info: { title: 'Approved', description: 'Jumlah Work Order Request yang telah disetujui.' } },
+  { key: 'highUrgency', label: 'Urgency Tinggi', value: statistics.value.highUrgency, icon: 'ri-alarm-warning-line', iconBgClass: 'bg-label-danger', info: { title: 'Urgency Tinggi', description: 'Jumlah Work Order Request dengan urgency level High yang perlu penanganan segera.' } },
 ])
 
 const tableControls = ref({ rows: 10 })

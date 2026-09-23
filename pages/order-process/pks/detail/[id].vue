@@ -33,6 +33,7 @@
                 <PageBreadcrumb class="mt-1" :current-label="(pks as any).noPks || (pks as any).no_pks || '—'" />
                 <small class="text-muted">{{ formatDateTime((pks as any).createdAt) }}</small>
               </div>
+              <span :class="pksTypeBadge.class" class="badge">{{ pksTypeBadge.text }}</span>
               <span :class="getStatusBadge((pks as any).status).class" class="badge">{{ getStatusBadge((pks as any).status).text }}</span>
             </div>
 
@@ -78,22 +79,40 @@
             </div>
             <div class="card-body px-5 pt-0 pb-4">
               <div class="d-flex flex-wrap align-items-center gap-2 process-flow">
-                <NuxtLink
-                  v-if="firstSubscriptionId"
-                  :to="`/order-process/subscription/detail/${firstSubscriptionId}`"
-                  class="process-pill process-pill-done text-decoration-none"
-                >
-                  <i class="ri-check-line me-1"></i> Subscription
-                </NuxtLink>
-                <span v-else class="process-pill process-pill-done">
-                  <i class="ri-check-line me-1"></i> Subscription
-                </span>
-                <span class="process-arrow text-muted">&gt;</span>
-                <span class="process-pill process-pill-active">
-                  <i class="ri-file-text-line me-1"></i> PKS
-                </span>
-                <span class="process-arrow text-muted">&gt;</span>
-                <span class="process-pill process-pill-inactive">Implementation</span>
+                <template v-if="isCustomer">
+                  <NuxtLink
+                    v-if="firstSubscriptionId"
+                    :to="`/order-process/subscription/detail/${firstSubscriptionId}`"
+                    class="process-pill process-pill-done text-decoration-none"
+                  >
+                    <i class="ri-check-line me-1"></i> Subscription
+                  </NuxtLink>
+                  <span v-else class="process-pill process-pill-done">
+                    <i class="ri-check-line me-1"></i> Subscription
+                  </span>
+                  <span class="process-arrow text-muted">&gt;</span>
+                  <span class="process-pill process-pill-active">
+                    <i class="ri-file-text-line me-1"></i> PKS Customer
+                  </span>
+                  <span class="process-arrow text-muted">&gt;</span>
+                  <span class="process-pill process-pill-inactive">Implementation</span>
+                </template>
+                <template v-else>
+                  <NuxtLink
+                    v-if="purchaseOrderId"
+                    :to="`/purchasing/purchase-order-detail?id=${purchaseOrderId}`"
+                    class="process-pill process-pill-done text-decoration-none"
+                  >
+                    <i class="ri-check-line me-1"></i> Purchase Order
+                  </NuxtLink>
+                  <span v-else class="process-pill process-pill-done">
+                    <i class="ri-check-line me-1"></i> Purchase Order
+                  </span>
+                  <span class="process-arrow text-muted">&gt;</span>
+                  <span class="process-pill process-pill-active">
+                    <i class="ri-file-text-line me-1"></i> PKS Vendor
+                  </span>
+                </template>
               </div>
             </div>
           </div>
@@ -117,41 +136,77 @@
                       <p class="mb-0 fw-medium">{{ (pks as any).noPks || (pks as any).no_pks || '—' }}</p>
                     </div>
                     <div class="col-md-6">
-                      <label class="form-label text-muted medium">Customer</label>
-                      <p class="mb-0 fw-medium">{{ (pks as any).customerName || (pks as any).customer_name || (pks as any).customer?.name || '—' }}</p>
+                      <label class="form-label text-muted medium">Tipe PKS</label>
+                      <p class="mb-0 fw-medium">{{ pksTypeBadge.text }}</p>
                     </div>
-                    <div class="col-md-6">
-                      <label class="form-label text-muted medium">Contract Start Date</label>
-                      <p class="mb-0">{{ formatDate((pks as any).contractStartDate || (pks as any).contract_start_date) }}</p>
-                    </div>
-                    <div class="col-md-6">
-                      <label class="form-label text-muted medium">Contract End Date</label>
-                      <p class="mb-0">{{ formatDate((pks as any).contractEndDate || (pks as any).contract_end_date) }}</p>
-                    </div>
-                    <div class="col-md-6">
-                      <label class="form-label text-muted medium">Signing Location</label>
-                      <p class="mb-0">{{ (pks as any).signingLocation || (pks as any).signing_location || '—' }}</p>
-                    </div>
-                    <div class="col-md-6">
-                      <label class="form-label text-muted medium">Signing Date</label>
-                      <p class="mb-0">{{ formatDate((pks as any).signingDate || (pks as any).signing_date) }}</p>
-                    </div>
-                    <div class="col-md-6">
-                      <label class="form-label text-muted medium">Customer PIC</label>
-                      <p class="mb-0">{{ (pks as any).custPic || (pks as any).cust_pic || '—' }}</p>
-                    </div>
-                    <div class="col-md-6">
-                      <label class="form-label text-muted medium">No. Tlp Customer PIC</label>
-                      <p class="mb-0">{{ (pks as any).custPicNoTlp || (pks as any).cust_pic_no_tlp || '—' }}</p>
-                    </div>
-                    <div class="col-md-6">
-                      <label class="form-label text-muted medium">Site PIC</label>
-                      <p class="mb-0">{{ (pks as any).sitePic || (pks as any).site_pic || '—' }}</p>
-                    </div>
-                    <div class="col-md-6">
-                      <label class="form-label text-muted medium">No. Tlp Site PIC</label>
-                      <p class="mb-0">{{ (pks as any).sitePicNoTlp || (pks as any).site_pic_no_tlp || '—' }}</p>
-                    </div>
+
+                    <template v-if="isCustomer">
+                      <div class="col-md-6">
+                        <label class="form-label text-muted medium">Customer</label>
+                        <p class="mb-0 fw-medium">{{ (pks as any).customerName || (pks as any).customer_name || (pks as any).customer?.name || '—' }}</p>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label text-muted medium">Contract Start Date</label>
+                        <p class="mb-0">{{ formatDate((pks as any).contractStartDate || (pks as any).contract_start_date) }}</p>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label text-muted medium">Contract End Date</label>
+                        <p class="mb-0">{{ formatDate((pks as any).contractEndDate || (pks as any).contract_end_date) }}</p>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label text-muted medium">Signing Location</label>
+                        <p class="mb-0">{{ (pks as any).signingLocation || (pks as any).signing_location || '—' }}</p>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label text-muted medium">Signing Date</label>
+                        <p class="mb-0">{{ formatDate((pks as any).signingDate || (pks as any).signing_date) }}</p>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label text-muted medium">Customer PIC</label>
+                        <p class="mb-0">{{ (pks as any).custPic || (pks as any).cust_pic || '—' }}</p>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label text-muted medium">No. Tlp Customer PIC</label>
+                        <p class="mb-0">{{ (pks as any).custPicNoTlp || (pks as any).cust_pic_no_tlp || '—' }}</p>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label text-muted medium">Site PIC</label>
+                        <p class="mb-0">{{ (pks as any).sitePic || (pks as any).site_pic || '—' }}</p>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label text-muted medium">No. Tlp Site PIC</label>
+                        <p class="mb-0">{{ (pks as any).sitePicNoTlp || (pks as any).site_pic_no_tlp || '—' }}</p>
+                      </div>
+                    </template>
+
+                    <template v-else>
+                      <div class="col-md-6">
+                        <label class="form-label text-muted medium">Vendor</label>
+                        <p class="mb-0 fw-medium">{{ (pks as any).vendor?.name || '—' }}</p>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label text-muted medium">No. Surat</label>
+                        <p class="mb-0 fw-medium">{{ (pks as any).noSurat || (pks as any).no_surat || '—' }}</p>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label text-muted medium">Nominal</label>
+                        <p class="mb-0 fw-medium">{{ formatNominal((pks as any).nominal) }}</p>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label text-muted medium">Purchase Order</label>
+                        <p class="mb-0 fw-medium">
+                          <NuxtLink
+                            v-if="purchaseOrderId"
+                            :to="`/purchasing/purchase-order-detail?id=${purchaseOrderId}`"
+                            class="text-primary"
+                          >
+                            {{ purchaseOrderNo }}
+                          </NuxtLink>
+                          <span v-else>—</span>
+                        </p>
+                      </div>
+                    </template>
+
                     <div class="col-md-6" v-if="(pks as any).approvedAt || (pks as any).approved_at">
                       <label class="form-label text-muted medium">Approved At</label>
                       <p class="mb-0">{{ formatDateTime((pks as any).approvedAt || (pks as any).approved_at) }}</p>
@@ -168,8 +223,8 @@
                 </div>
               </div>
 
-              <!-- Subscriptions -->
-              <div class="card mb-4">
+              <!-- Subscriptions (Customer only) -->
+              <div v-if="isCustomer" class="card mb-4">
                 <div class="card-header border-0 bg-transparent px-5 py-4 d-flex justify-content-between align-items-center">
                   <h5 class="card-title mb-0 d-flex align-items-center">
                     <i class="ri-file-list-3-line me-2 text-primary"></i>
@@ -218,7 +273,7 @@
                 </div>
               </div>
 
-              <!-- Documents -->
+              <!-- Documents (both types) -->
               <div class="card mb-4">
                 <div class="card-header border-0 bg-transparent px-5 py-4 d-flex justify-content-between align-items-center">
                   <h5 class="card-title mb-0 d-flex align-items-center">
@@ -268,8 +323,16 @@
                     <span :class="getStatusBadge((pks as any).status).class" class="badge">{{ getStatusBadge((pks as any).status).text }}</span>
                   </div>
                   <div class="d-flex justify-content-between py-1">
+                    <label class="form-label text-muted medium mb-0">Tipe</label>
+                    <span :class="pksTypeBadge.class" class="badge">{{ pksTypeBadge.text }}</span>
+                  </div>
+                  <div v-if="isCustomer" class="d-flex justify-content-between py-1">
                     <label class="form-label text-muted medium mb-0">Jumlah Subscription</label>
                     <p class="mb-0 fw-medium">{{ (pksSubscriptions || []).length }}</p>
+                  </div>
+                  <div v-else class="d-flex justify-content-between py-1">
+                    <label class="form-label text-muted medium mb-0">Nominal</label>
+                    <p class="mb-0 fw-medium">{{ formatNominal((pks as any).nominal) }}</p>
                   </div>
                   <div class="d-flex justify-content-between py-1">
                     <label class="form-label text-muted medium mb-0">Jumlah Dokumen</label>
@@ -279,7 +342,7 @@
               </div>
 
               <!-- Informasi Customer -->
-              <div class="card mb-4">
+              <div v-if="isCustomer" class="card mb-4">
                 <div class="card-header border-0 bg-transparent px-5 py-4">
                   <h5 class="card-title mb-0 d-flex align-items-center">
                     <i class="ri-user-line me-2 text-primary"></i>
@@ -309,6 +372,51 @@
                   </div>
                 </div>
               </div>
+
+              <!-- Informasi Vendor -->
+              <div v-else class="card mb-4">
+                <div class="card-header border-0 bg-transparent px-5 py-4">
+                  <h5 class="card-title mb-0 d-flex align-items-center">
+                    <i class="ri-store-2-line me-2 text-primary"></i>
+                    Informasi Vendor
+                  </h5>
+                </div>
+                <div class="card-body px-5 pt-4 pb-4">
+                  <div class="mb-3">
+                    <label class="form-label text-muted mb-1">Nama Vendor</label>
+                    <p class="mb-0 fw-medium">{{ (pks as any).vendor?.name || '—' }}</p>
+                  </div>
+                  <div v-if="(pks as any).vendor?.phone" class="mb-3">
+                    <label class="form-label text-muted mb-1">Telepon</label>
+                    <p class="mb-0 fw-medium">{{ (pks as any).vendor.phone }}</p>
+                  </div>
+                  <div v-if="(pks as any).vendor?.email" class="mb-3">
+                    <label class="form-label text-muted mb-1">Email</label>
+                    <p class="mb-0 fw-medium">{{ (pks as any).vendor.email }}</p>
+                  </div>
+                  <div v-if="(pks as any).vendor?.address" class="mb-3">
+                    <label class="form-label text-muted mb-1">Alamat</label>
+                    <p class="mb-0 fw-medium text-break">{{ (pks as any).vendor.address }}</p>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label text-muted mb-1">Purchase Order</label>
+                    <p class="mb-0 fw-medium">
+                      <NuxtLink
+                        v-if="purchaseOrderId"
+                        :to="`/purchasing/purchase-order-detail?id=${purchaseOrderId}`"
+                        class="text-primary"
+                      >
+                        {{ purchaseOrderNo }}
+                      </NuxtLink>
+                      <span v-else>—</span>
+                    </p>
+                  </div>
+                  <div class="mb-0">
+                    <label class="form-label text-muted mb-1">No. Surat</label>
+                    <p class="mb-0 fw-medium">{{ (pks as any).noSurat || (pks as any).no_surat || '—' }}</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </template>
@@ -321,7 +429,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import { usePksStore } from '~/stores/pks'
+import { usePksStore, resolvePksType } from '~/stores/pks'
 import { usePermissions } from '~/composables/usePermissions'
 import { useImageUrl } from '~/composables/useImageUrl'
 
@@ -335,6 +443,23 @@ const submitting = ref(false)
 
 const id = computed(() => String(route.params.id || ''))
 
+const isCustomer = computed(() => resolvePksType(pks.value as any) === 'CUSTOMER')
+
+const pksTypeBadge = computed(() => {
+  if (isCustomer.value) return { text: 'PKS Customer', class: 'badge rounded-pill bg-label-info' }
+  return { text: 'PKS Vendor', class: 'badge rounded-pill bg-label-warning' }
+})
+
+const purchaseOrderId = computed(() => {
+  const raw = pks.value as any
+  return raw?.purchaseOrderId || raw?.purchase_order_id || raw?.purchaseOrder?.id || null
+})
+
+const purchaseOrderNo = computed(() => {
+  const raw = pks.value as any
+  return raw?.purchaseOrder?.noPo || raw?.purchaseOrder?.no_po || purchaseOrderId.value || '—'
+})
+
 function formatDate (v: any) {
   if (!v) return '—'
   return new Date(v).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
@@ -343,6 +468,13 @@ function formatDate (v: any) {
 function formatDateTime (v: any) {
   if (!v) return '—'
   return new Date(v).toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+}
+
+function formatNominal (v: any) {
+  if (v == null || v === '') return '—'
+  const n = Number(v)
+  if (Number.isNaN(n)) return String(v)
+  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n)
 }
 
 function getStatusBadge (status: string) {
@@ -473,4 +605,3 @@ definePageMeta({
   user-select: none;
 }
 </style>
-

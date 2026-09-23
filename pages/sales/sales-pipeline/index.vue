@@ -3,89 +3,7 @@
     <div class="container-xxl flex-grow-1 container-py-2">
       <p class="mb-6">Kelola opportunities dan deals di dalam sales pipeline</p>
 
-      <!-- Statistics Cards -->
-      <div class="row g-6 mb-6">
-        <div class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">Total Opportunities</p>
-                <div class="avatar">
-                  <span class="avatar-initial rounded bg-label-primary">
-                    <i class="ri-file-list-3-line"></i>
-                  </span>
-                </div>
-              </div>
-              <div class="d-flex justify-content-between align-items-center">
-                <div class="account-heading">
-                  <h5 class="mb-1">{{ totalOpportunities }}</h5>
-                  <span class="text-muted">Opportunities</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">Total Value</p>
-                <div class="avatar">
-                  <span class="avatar-initial rounded bg-label-success">
-                    <i class="ri-money-dollar-circle-line"></i>
-                  </span>
-                </div>
-              </div>
-              <div class="d-flex justify-content-between align-items-center">
-                <div class="account-heading">
-                  <h5 class="mb-1">{{ formatRupiah(totalValue) }}</h5>
-                  <span class="text-muted">Total Nilai</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">Forecast Value</p>
-                <div class="avatar">
-                  <span class="avatar-initial rounded bg-label-info">
-                    <i class="ri-line-chart-line"></i>
-                  </span>
-                </div>
-              </div>
-              <div class="d-flex justify-content-between align-items-center">
-                <div class="account-heading">
-                  <h5 class="mb-1">{{ formatRupiah(forecastValue) }}</h5>
-                  <span class="text-muted">Perkiraan</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">Active Opportunities</p>
-                <div class="avatar">
-                  <span class="avatar-initial rounded bg-label-warning">
-                    <i class="ri-checkbox-circle-line"></i>
-                  </span>
-                </div>
-              </div>
-              <div class="d-flex justify-content-between align-items-center">
-                <div class="account-heading">
-                  <h5 class="mb-1">{{ activeOpportunities }}</h5>
-                  <span class="text-muted">Aktif</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <ListPageStatsCards :items="statItems" />
 
       <!-- Tab Navigation -->
       <div class="card mb-4">
@@ -451,6 +369,7 @@ import Column from 'primevue/column'
 import InputText from 'primevue/inputtext'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import Swal from 'sweetalert2'
+import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
 
 const { setListTitle } = useDynamicTitle()
 const salesPipelineStore = useSalesPipelineStore()
@@ -464,6 +383,58 @@ const {
   forecast,
 } = storeToRefs(salesPipelineStore)
 
+
+
+const statItems = computed(() => [
+  {
+    key: 'total-opportunities',
+    label: 'Total Opportunities',
+    value: totalOpportunities.value,
+    subtitle: 'Opportunities',
+    icon: 'ri-file-list-3-line',
+    iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah seluruh dokumen Sales Pipeline yang terdaftar dalam sistem, mencakup semua status.',
+    },
+  },
+  {
+    key: 'total-value',
+    label: 'Total Value',
+    value: formatRupiah(totalValue.value),
+    subtitle: 'Total Nilai',
+    icon: 'ri-money-dollar-circle-line',
+    iconBgClass: 'bg-label-success',
+    info: {
+      title: 'Total Value',
+      description: 'Total estimasi nilai (estimated value) dari seluruh opportunity yang ada di Sales Pipeline.',
+    },
+  },
+  {
+    key: 'forecast-value',
+    label: 'Forecast Value',
+    value: formatRupiah(forecastValue.value),
+    subtitle: 'Perkiraan',
+    icon: 'ri-line-chart-line',
+    iconBgClass: 'bg-label-info',
+    info: {
+      title: 'Forecast Value',
+      description: 'Perkiraan nilai yang akan didapat, dihitung dari estimated value setiap opportunity dikalikan probability stage-nya.',
+    },
+  },
+  {
+    key: 'active-opportunities',
+    label: 'Active Opportunities',
+    value: activeOpportunities.value,
+    subtitle: 'Aktif',
+    icon: 'ri-checkbox-circle-line',
+    iconBgClass: 'bg-label-warning',
+    info: {
+      title: 'Active Opportunities',
+      description: 'Jumlah opportunity yang masih berstatus aktif (belum ditandai WON/LOST atau non-aktif).',
+    },
+  }
+])
 const activeTab = ref('pipeline')
 
 // Forecast related

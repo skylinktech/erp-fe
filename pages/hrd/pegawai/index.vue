@@ -9,88 +9,7 @@
                 <p class="mb-6">
                 List pegawai yang terdaftar di sistem
                 </p>
-                <div class="row g-6 mb-6">
-                    <div class="col-xl col-lg-6 col-md-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-center mb-4">
-                                    <p class="mb-0">Total Pegawai</p>
-                                    <div class="avatar">
-                                        <span class="avatar-initial rounded bg-label-primary"><i class="ri-team-line"></i></span>
-                                    </div>
-                                </div>
-                                <div class="account-heading">
-                                    <h5 class="mb-1">{{ stats?.total ?? 0 }}</h5>
-                                    <span class="text-muted">Pegawai terdaftar</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl col-lg-6 col-md-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-center mb-4">
-                                    <p class="mb-0">PKWTT</p>
-                                    <div class="avatar">
-                                        <span class="avatar-initial rounded bg-label-success"><i class="ri-briefcase-line"></i></span>
-                                    </div>
-                                </div>
-                                <div class="account-heading">
-                                    <h5 class="mb-1">{{ stats?.pkwtt ?? 0 }}</h5>
-                                    <span class="text-muted">Pegawai PKWTT</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl col-lg-6 col-md-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-center mb-4">
-                                    <p class="mb-0">PKWT</p>
-                                    <div class="avatar">
-                                        <span class="avatar-initial rounded bg-label-info"><i class="ri-time-line"></i></span>
-                                    </div>
-                                </div>
-                                <div class="account-heading">
-                                    <h5 class="mb-1">{{ stats?.pkwt ?? 0 }}</h5>
-                                    <span class="text-muted">Pegawai PKWT</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl col-lg-6 col-md-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-center mb-4">
-                                    <p class="mb-0">Freelance</p>
-                                    <div class="avatar">
-                                        <span class="avatar-initial rounded bg-label-warning"><i class="ri-user-star-line"></i></span>
-                                    </div>
-                                </div>
-                                <div class="account-heading">
-                                    <h5 class="mb-1">{{ stats?.freelance ?? 0 }}</h5>
-                                    <span class="text-muted">Freelance</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl col-lg-6 col-md-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-center mb-4">
-                                    <p class="mb-0">Resign</p>
-                                    <div class="avatar">
-                                        <span class="avatar-initial rounded bg-label-danger"><i class="ri-user-unfollow-line"></i></span>
-                                    </div>
-                                </div>
-                                <div class="account-heading">
-                                    <h5 class="mb-1">{{ stats?.resign ?? 0 }}</h5>
-                                    <span class="text-muted">Resign</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <ListPageStatsCards :items="statItems" />
 
                 <div class="row g-6">
                     <div class="col-12">
@@ -248,6 +167,7 @@ import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import Column from 'primevue/column'
 import Menu from 'primevue/menu'
+import ListPageStatsCards, { type ListPageStatItem } from '~/components/list/ListPageStatsCards.vue'
 
 type PegawaiRow = {
   id_pegawai: number
@@ -259,6 +179,70 @@ const userStore = useUserStore()
 const { userHasPermission, userHasRole } = usePermissions()
 
 const { pegawais, loading, totalRecords, params, stats } = storeToRefs(pegawaiStore)
+
+const statItems = computed<ListPageStatItem[]>(() => [
+  {
+    key: 'total-pegawai',
+    label: 'Total Pegawai',
+    value: stats.value?.total ?? 0,
+    subtitle: 'Pegawai terdaftar',
+    icon: 'ri-team-line',
+    iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah keseluruhan data Pegawai yang terdaftar dalam sistem berdasarkan statistik API.',
+    },
+  },
+  {
+    key: 'pkwtt',
+    label: 'PKWTT',
+    value: stats.value?.pkwtt ?? 0,
+    subtitle: 'Pegawai PKWTT',
+    icon: 'ri-briefcase-line',
+    iconBgClass: 'bg-label-success',
+    info: {
+      title: 'PKWTT',
+      description: 'Jumlah pegawai dengan status kontrak kerja PKWTT (Perjanjian Kerja Waktu Tidak Tertentu / karyawan tetap).',
+    },
+  },
+  {
+    key: 'pkwt',
+    label: 'PKWT',
+    value: stats.value?.pkwt ?? 0,
+    subtitle: 'Pegawai PKWT',
+    icon: 'ri-time-line',
+    iconBgClass: 'bg-label-info',
+    info: {
+      title: 'PKWT',
+      description: 'Jumlah pegawai dengan status kontrak kerja PKWT (Perjanjian Kerja Waktu Tertentu / karyawan kontrak).',
+    },
+  },
+  {
+    key: 'freelance',
+    label: 'Freelance',
+    value: stats.value?.freelance ?? 0,
+    subtitle: 'Freelance',
+    icon: 'ri-user-star-line',
+    iconBgClass: 'bg-label-warning',
+    info: {
+      title: 'Freelance',
+      description: 'Ringkasan metrik "Freelance" pada daftar Pegawai berdasarkan data statistik yang disediakan API/store.',
+    },
+  },
+  {
+    key: 'resign',
+    label: 'Resign',
+    value: stats.value?.resign ?? 0,
+    subtitle: 'Resign',
+    icon: 'ri-user-unfollow-line',
+    iconBgClass: 'bg-label-danger',
+    info: {
+      title: 'Resign',
+      description: 'Ringkasan metrik "Resign" pada daftar Pegawai berdasarkan data statistik yang disediakan API/store.',
+    },
+  }
+])
+
 const myDataTableRef = ref(null)
 
 const { setListTitle } = useDynamicTitle()

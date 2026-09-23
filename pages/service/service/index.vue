@@ -323,6 +323,10 @@ const statItems = computed(() => [
     icon: 'ri-service-line',
     iconBgClass: 'bg-label-primary',
     subtitle: 'Semua service line',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah seluruh master service yang terdaftar dalam sistem berdasarkan statistik API.',
+    },
   },
   {
     key: 'withPlan',
@@ -330,6 +334,10 @@ const statItems = computed(() => [
     value: statistics.value.withPlan,
     icon: 'ri-file-list-3-line',
     iconBgClass: 'bg-label-info',
+    info: {
+      title: 'Dengan Plan',
+      description: 'Ringkasan metrik "Dengan Plan" pada daftar Service berdasarkan data statistik API/store.',
+    },
   },
   {
     key: 'leased',
@@ -338,6 +346,10 @@ const statItems = computed(() => [
     icon: 'ri-links-line',
     iconBgClass: 'bg-label-success',
     valueClass: 'text-success',
+    info: {
+      title: 'Leased',
+      description: 'Ringkasan metrik "Leased" pada daftar Service berdasarkan data statistik API/store.',
+    },
   },
   {
     key: 'addQuota',
@@ -345,6 +357,10 @@ const statItems = computed(() => [
     value: statistics.value.addQuota,
     icon: 'ri-add-circle-line',
     iconBgClass: 'bg-label-warning',
+    info: {
+      title: 'Add Quota',
+      description: 'Ringkasan metrik "Add Quota" pada daftar Service berdasarkan data statistik API/store.',
+    },
   },
 ])
 

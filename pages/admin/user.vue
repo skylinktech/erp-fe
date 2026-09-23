@@ -6,88 +6,7 @@
             <p class="mb-6">
             List User yang terdaftar di sistem
             </p>
-            <div class="row g-6 mb-6">
-                <div v-if="stats.total !== undefined" class="col-xl col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Total User</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-primary"><i class="ri-team-line"></i></span>
-                                </div>
-                            </div>
-                            <div class="account-heading">
-                                <h5 class="mb-1">{{ stats.total }}</h5>
-                                <span class="text-muted">Akun terdaftar</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div v-if="stats.aktif !== undefined" class="col-xl col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Aktif</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-success"><i class="ri-user-follow-line"></i></span>
-                                </div>
-                            </div>
-                            <div class="account-heading">
-                                <h5 class="mb-1">{{ stats.aktif }}</h5>
-                                <span class="text-muted">User aktif</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div v-if="stats.tidakAktif !== undefined" class="col-xl col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Tidak Aktif</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-danger"><i class="ri-user-forbid-line"></i></span>
-                                </div>
-                            </div>
-                            <div class="account-heading">
-                                <h5 class="mb-1">{{ stats.tidakAktif }}</h5>
-                                <span class="text-muted">User nonaktif</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div v-if="stats.totalSuperadmin !== undefined" class="col-xl col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Superadmin</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-warning"><i class="ri-shield-star-line"></i></span>
-                                </div>
-                            </div>
-                            <div class="account-heading">
-                                <h5 class="mb-1">{{ stats.totalSuperadmin }}</h5>
-                                <span class="text-muted">User</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div v-if="stats.totalAdmin !== undefined" class="col-xl col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Admin</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-info"><i class="ri-admin-line"></i></span>
-                                </div>
-                            </div>
-                            <div class="account-heading">
-                                <h5 class="mb-1">{{ stats.totalAdmin }}</h5>
-                                <span class="text-muted">User</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <ListPageStatsCards :items="statItems" />
 
             <div class="row g-6">
                 <div class="col-12">
@@ -321,6 +240,7 @@ import { storeToRefs } from 'pinia'
 import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
+import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
 import { useUserManagementStore } from '~/stores/userManagement'
 import vSelect from 'vue-select'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
@@ -348,6 +268,81 @@ const {
 } = storeToRefs(userStore)
 
 const globalFilterValue = ref('')
+
+const statItems = computed(() => {
+    const items = []
+    if (stats.value.total !== undefined) {
+        items.push({
+            key: 'total',
+            label: 'Total User',
+            value: stats.value.total ?? 0,
+            subtitle: 'Akun terdaftar',
+            icon: 'ri-team-line',
+            iconBgClass: 'bg-label-primary',
+            info: {
+                title: 'Total User',
+                description: 'Jumlah seluruh akun user yang terdaftar di sistem, baik aktif maupun tidak aktif.',
+            },
+        })
+    }
+    if (stats.value.aktif !== undefined) {
+        items.push({
+            key: 'aktif',
+            label: 'Aktif',
+            value: stats.value.aktif ?? 0,
+            subtitle: 'User aktif',
+            icon: 'ri-user-follow-line',
+            iconBgClass: 'bg-label-success',
+            info: {
+                title: 'Aktif',
+                description: 'Jumlah user dengan status aktif yang dapat login ke sistem.',
+            },
+        })
+    }
+    if (stats.value.tidakAktif !== undefined) {
+        items.push({
+            key: 'tidak-aktif',
+            label: 'Tidak Aktif',
+            value: stats.value.tidakAktif ?? 0,
+            subtitle: 'User nonaktif',
+            icon: 'ri-user-forbid-line',
+            iconBgClass: 'bg-label-danger',
+            info: {
+                title: 'Tidak Aktif',
+                description: 'Jumlah user dengan status tidak aktif sehingga tidak dapat login ke sistem.',
+            },
+        })
+    }
+    if (stats.value.totalSuperadmin !== undefined) {
+        items.push({
+            key: 'superadmin',
+            label: 'Superadmin',
+            value: stats.value.totalSuperadmin ?? 0,
+            subtitle: 'User',
+            icon: 'ri-shield-star-line',
+            iconBgClass: 'bg-label-warning',
+            info: {
+                title: 'Superadmin',
+                description: 'Jumlah user dengan role Superadmin yang memiliki akses penuh ke seluruh modul.',
+            },
+        })
+    }
+    if (stats.value.totalAdmin !== undefined) {
+        items.push({
+            key: 'admin',
+            label: 'Admin',
+            value: stats.value.totalAdmin ?? 0,
+            subtitle: 'User',
+            icon: 'ri-admin-line',
+            iconBgClass: 'bg-label-info',
+            info: {
+                title: 'Admin',
+                description: 'Jumlah user dengan role Admin di sistem.',
+            },
+        })
+    }
+    return items
+})
 
 const status = ref([
     { label: 'Aktif', value: true },

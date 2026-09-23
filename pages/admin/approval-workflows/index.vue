@@ -10,26 +10,7 @@
         Kelola konfigurasi workflow approval berjenjang untuk berbagai entitas (Purchase Order, Purchase Request, Quotation, Sales Order, Kontrak Pegawai, dll).
       </p>
 
-      <div class="row g-6 mb-6">
-        <div v-for="card in statCards" :key="card.label" class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card h-100">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">{{ card.label }}</p>
-                <div class="avatar">
-                  <span :class="['avatar-initial rounded', card.iconClass]">
-                    <i :class="card.icon"></i>
-                  </span>
-                </div>
-              </div>
-              <div class="account-heading">
-                <h5 class="mb-1">{{ card.value }}</h5>
-                <span class="text-muted small">{{ card.subtitle }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <ListPageStatsCards :items="statItems" />
 
       <div class="row g-6">
         <div class="col-12">
@@ -261,6 +242,7 @@
 import { useDebounceFn } from '@vueuse/core'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
 import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
+import ListPageStatsCards, { type ListPageStatItem } from '~/components/list/ListPageStatsCards.vue'
 import type { ApprovalWorkflowEntity } from '~/stores/approval-workflows'
 
 definePageMeta({
@@ -321,34 +303,54 @@ function resetFilters() {
   load()
 }
 
-const statCards = computed(() => [
+const statItems = computed<ListPageStatItem[]>(() => [
   {
+    key: 'total',
     label: 'Total Workflow',
-    value: stats.value.total || 0,
+    value: stats.value.total ?? 0,
     subtitle: 'Workflow terdaftar',
     icon: 'ri-git-branch-line',
-    iconClass: 'bg-label-primary',
+    iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Total Workflow',
+      description: 'Jumlah seluruh workflow approval yang terdaftar, baik aktif maupun nonaktif.',
+    },
   },
   {
+    key: 'aktif',
     label: 'Aktif',
-    value: stats.value.aktif || 0,
+    value: stats.value.aktif ?? 0,
     subtitle: 'Workflow aktif',
     icon: 'ri-checkbox-circle-line',
-    iconClass: 'bg-label-success',
+    iconBgClass: 'bg-label-success',
+    info: {
+      title: 'Aktif',
+      description: 'Jumlah workflow approval yang sedang aktif dan digunakan untuk memproses dokumen.',
+    },
   },
   {
+    key: 'nonaktif',
     label: 'Nonaktif',
-    value: stats.value.nonaktif || 0,
+    value: stats.value.nonaktif ?? 0,
     subtitle: 'Workflow nonaktif',
     icon: 'ri-close-circle-line',
-    iconClass: 'bg-label-secondary',
+    iconBgClass: 'bg-label-secondary',
+    info: {
+      title: 'Nonaktif',
+      description: 'Jumlah workflow approval yang dinonaktifkan dan tidak digunakan saat ini.',
+    },
   },
   {
+    key: 'entities',
     label: 'Entity Types',
-    value: stats.value.entities || 0,
-    subtitle: `${stats.value.total_steps || 0} total step`,
+    value: stats.value.entities ?? 0,
+    subtitle: `${stats.value.total_steps ?? 0} total step`,
     icon: 'ri-node-tree',
-    iconClass: 'bg-label-info',
+    iconBgClass: 'bg-label-info',
+    info: {
+      title: 'Entity Types',
+      description: 'Jumlah entity type unik yang sudah memiliki workflow, beserta total step approval di seluruh workflow.',
+    },
   },
 ])
 

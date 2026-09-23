@@ -18,89 +18,7 @@
             Review dan approve/reject price adjustment requests dari sales team
           </p>
 
-          <!-- Statistics Cards -->
-          <div class="row g-6 mb-6">
-            <div class="col-xl-3 col-lg-6 col-md-6">
-              <div class="card">
-                <div class="card-body">
-                  <div class="d-flex justify-content-between align-items-center mb-4">
-                    <p class="mb-0">Pending Approval</p>
-                    <div class="avatar">
-                      <span class="avatar-initial rounded bg-label-warning">
-                        <i class="ri-time-line"></i>
-                      </span>
-                    </div>
-                  </div>
-                  <div class="d-flex justify-content-between align-items-center">
-                    <div class="account-heading">
-                      <h5 class="mb-1">{{ statistics.pending }}</h5>
-                      <span class="text-muted">Menunggu review</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="col-xl-3 col-lg-6 col-md-6">
-              <div class="card">
-                <div class="card-body">
-                  <div class="d-flex justify-content-between align-items-center mb-4">
-                    <p class="mb-0">Approved</p>
-                    <div class="avatar">
-                      <span class="avatar-initial rounded bg-label-success">
-                        <i class="ri-checkbox-circle-line"></i>
-                      </span>
-                    </div>
-                  </div>
-                  <div class="d-flex justify-content-between align-items-center">
-                    <div class="account-heading">
-                      <h5 class="mb-1">{{ statistics.approved }}</h5>
-                      <span class="text-muted">Disetujui</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="col-xl-3 col-lg-6 col-md-6">
-              <div class="card">
-                <div class="card-body">
-                  <div class="d-flex justify-content-between align-items-center mb-4">
-                    <p class="mb-0">Rejected</p>
-                    <div class="avatar">
-                      <span class="avatar-initial rounded bg-label-danger">
-                        <i class="ri-close-circle-line"></i>
-                      </span>
-                    </div>
-                  </div>
-                  <div class="d-flex justify-content-between align-items-center">
-                    <div class="account-heading">
-                      <h5 class="mb-1">{{ statistics.rejected }}</h5>
-                      <span class="text-muted">Ditolak</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="col-xl-3 col-lg-6 col-md-6">
-              <div class="card">
-                <div class="card-body">
-                  <div class="d-flex justify-content-between align-items-center mb-4">
-                    <p class="mb-0">Draft</p>
-                    <div class="avatar">
-                      <span class="avatar-initial rounded bg-label-secondary">
-                        <i class="ri-draft-line"></i>
-                      </span>
-                    </div>
-                  </div>
-                  <div class="d-flex justify-content-between align-items-center">
-                    <div class="account-heading">
-                      <h5 class="mb-1">{{ statistics.draft }}</h5>
-                      <span class="text-muted">Draft</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <ListPageStatsCards :items="statItems" />
 
           <div class="row g-6">
             <div class="col-12">
@@ -397,6 +315,7 @@ import { useDebounceFn } from '@vueuse/core'
 import { usePermissions } from '~/composables/usePermissions'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import { useFormatRupiah } from '~/composables/formatRupiah'
+import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
 
 // Composables
 const { setListTitle } = useDynamicTitle()
@@ -408,6 +327,58 @@ const store = usePriceAdjustmentRequestStore()
 
 const { requests, loading, totalRecords, params, statistics } = storeToRefs(store)
 
+
+
+const statItems = computed(() => [
+  {
+    key: 'pending-approval',
+    label: 'Pending Approval',
+    value: statistics.value.pending,
+    subtitle: 'Menunggu review',
+    icon: 'ri-time-line',
+    iconBgClass: 'bg-label-warning',
+    info: {
+      title: 'Pending Approval',
+      description: 'Jumlah (dokumen) price adjustment request yang berstatus Pending dan menunggu review approval.',
+    },
+  },
+  {
+    key: 'approved',
+    label: 'Approved',
+    value: statistics.value.approved,
+    subtitle: 'Disetujui',
+    icon: 'ri-checkbox-circle-line',
+    iconBgClass: 'bg-label-success',
+    info: {
+      title: 'Approved',
+      description: 'Jumlah dokumen Pricing Approval yang telah disetujui.',
+    },
+  },
+  {
+    key: 'rejected',
+    label: 'Rejected',
+    value: statistics.value.rejected,
+    subtitle: 'Ditolak',
+    icon: 'ri-close-circle-line',
+    iconBgClass: 'bg-label-danger',
+    info: {
+      title: 'Rejected',
+      description: 'Jumlah dokumen Pricing Approval yang ditolak.',
+    },
+  },
+  {
+    key: 'draft',
+    label: 'Draft',
+    value: statistics.value.draft,
+    subtitle: 'Draft',
+    icon: 'ri-draft-line',
+    iconBgClass: 'bg-label-secondary',
+    info: {
+      title: 'Draft',
+      description: 'Jumlah dokumen Pricing Approval berstatus Draft yang belum diproses lebih lanjut.',
+    },
+  }
+])
 const rowsPerPageOptionsArray = ref([10, 25, 50, 100])
 
 // Table controls state

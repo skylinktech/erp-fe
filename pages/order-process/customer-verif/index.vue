@@ -16,109 +16,7 @@
                 
                 <p class="mb-6">List customer verification yang terdaftar di sistem</p>
 
-                <!-- Statistics Cards -->
-                <div class="row g-6 mb-6">
-                    <div class="col-xl-3 col-lg-6 col-md-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-center mb-4">
-                                    <p class="mb-0">Total Customer Verification</p>
-                                    <div class="avatar">
-                                        <span class="avatar-initial rounded bg-label-primary">
-                                            <i class="ri-file-check-line"></i>
-                                        </span>
-                                    </div>
-                                </div>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div class="account-heading">
-                                        <h5 class="mb-1">{{ stats.total || 0 }}</h5>
-                                        <span class="text-muted">Customer Verification terdaftar</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl-3 col-lg-6 col-md-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-center mb-4">
-                                    <p class="mb-0">Draft</p>
-                                    <div class="avatar">
-                                        <span class="avatar-initial rounded bg-label-secondary">
-                                            <i class="ri-draft-line"></i>
-                                        </span>
-                                    </div>
-                                </div>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div class="account-heading">
-                                        <h5 class="mb-1">{{ stats.draft || 0 }}</h5>
-                                        <span class="text-muted">Draft</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl-3 col-lg-6 col-md-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-center mb-4">
-                                    <p class="mb-0">Pending</p>
-                                    <div class="avatar">
-                                        <span class="avatar-initial rounded bg-label-warning">
-                                            <i class="ri-time-line"></i>
-                                        </span>
-                                    </div>
-                                </div>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div class="account-heading">
-                                        <h5 class="mb-1">{{ stats.pending || 0 }}</h5>
-                                        <span class="text-muted">Pending</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl-3 col-lg-6 col-md-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-center mb-4">
-                                    <p class="mb-0">Verified</p>
-                                    <div class="avatar">
-                                        <span class="avatar-initial rounded bg-label-success">
-                                            <i class="ri-checkbox-circle-line"></i>
-                                        </span>
-                                    </div>
-                                </div>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div class="account-heading">
-                                        <h5 class="mb-1">{{ stats.verified || 0 }}</h5>
-                                        <span class="text-muted">Verified</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl-3 col-lg-6 col-md-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-center mb-4">
-                                    <p class="mb-0">Unverified</p>
-                                    <div class="avatar">
-                                        <span class="avatar-initial rounded bg-label-danger">
-                                            <i class="ri-close-circle-line"></i>
-                                        </span>
-                                    </div>
-                                </div>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div class="account-heading">
-                                        <h5 class="mb-1">{{ stats.unverified || 0 }}</h5>
-                                        <span class="text-muted">Unverified</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <ListPageStatsCards :items="statItems" />
 
                 <!-- Filters -->
                 <div class="row g-6">
@@ -518,6 +416,7 @@ import { useTabbedFormNavigation } from '~/composables/useTabbedFormNavigation'
 import { useDebounceFn } from '@vueuse/core'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import { formatSiteInvestmentOptionLabel } from '~/constants/labels/sales'
+import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
 
 const { setListTitle } = useDynamicTitle()
 const route = useRoute()
@@ -531,6 +430,70 @@ const { userHasPermission, userHasRole } = usePermissions()
 const { getAttachmentUrl, isImageFile } = useImageUrl()
 
 const { customerVerifs, loading, saving, totalRecords, params, form, isEditMode, showModal, validationErrors, approvedSiteInvestments, stats } = storeToRefs(customerVerifStore)
+
+
+const statItems = computed(() => [
+  {
+    key: 'total-customer-verification',
+    label: 'Total Customer Verification',
+    value: stats.value.total ?? 0,
+    subtitle: 'Customer Verification terdaftar',
+    icon: 'ri-file-check-line',
+    iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah seluruh dokumen Customer Verification yang terdaftar dalam sistem, mencakup semua status.',
+    },
+  },
+  {
+    key: 'draft',
+    label: 'Draft',
+    value: stats.value.draft ?? 0,
+    subtitle: 'Draft',
+    icon: 'ri-draft-line',
+    iconBgClass: 'bg-label-secondary',
+    info: {
+      title: 'Draft',
+      description: 'Jumlah dokumen Customer Verification berstatus Draft yang belum diproses lebih lanjut.',
+    },
+  },
+  {
+    key: 'pending',
+    label: 'Pending',
+    value: stats.value.pending ?? 0,
+    subtitle: 'Pending',
+    icon: 'ri-time-line',
+    iconBgClass: 'bg-label-warning',
+    info: {
+      title: 'Pending',
+      description: 'Jumlah dokumen Customer Verification berstatus Pending yang menunggu proses atau persetujuan.',
+    },
+  },
+  {
+    key: 'verified',
+    label: 'Verified',
+    value: stats.value.verified ?? 0,
+    subtitle: 'Verified',
+    icon: 'ri-checkbox-circle-line',
+    iconBgClass: 'bg-label-success',
+    info: {
+      title: 'Verified',
+      description: 'Jumlah dokumen Customer Verification yang telah diverifikasi.',
+    },
+  },
+  {
+    key: 'unverified',
+    label: 'Unverified',
+    value: stats.value.unverified ?? 0,
+    subtitle: 'Unverified',
+    icon: 'ri-close-circle-line',
+    iconBgClass: 'bg-label-danger',
+    info: {
+      title: 'Unverified',
+      description: 'Jumlah dokumen Customer Verification yang belum terverifikasi atau gagal verifikasi.',
+    },
+  }
+])
 const { customers } = storeToRefs(customerStore)
 const { permissions } = storeToRefs(permissionStore)
 

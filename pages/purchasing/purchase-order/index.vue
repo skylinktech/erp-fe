@@ -14,88 +14,7 @@
             <p class="mb-6">
             List purchase order yang terdaftar di sistem
             </p>
-            <div class="row g-6 mb-6">
-                <div class="col-xl col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Total Purchase Order</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-primary"><i class="ri-file-list-3-line"></i></span>
-                                </div>
-                            </div>
-                            <div class="account-heading">
-                                <h5 class="mb-1">{{ stats?.total ?? 0 }}</h5>
-                                <span class="text-muted">PO terdaftar</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Approved</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-success"><i class="ri-checkbox-circle-line"></i></span>
-                                </div>
-                            </div>
-                            <div class="account-heading">
-                                <h5 class="mb-1">{{ stats?.approved ?? 0 }}</h5>
-                                <span class="text-muted">Approved</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Rejected</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-danger"><i class="ri-close-circle-line"></i></span>
-                                </div>
-                            </div>
-                            <div class="account-heading">
-                                <h5 class="mb-1">{{ stats?.rejected ?? 0 }}</h5>
-                                <span class="text-muted">Rejected</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Received</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-info"><i class="ri-inbox-archive-line"></i></span>
-                                </div>
-                            </div>
-                            <div class="account-heading">
-                                <h5 class="mb-1">{{ stats?.received ?? 0 }}</h5>
-                                <span class="text-muted">Received</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Draft</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-secondary"><i class="ri-draft-line"></i></span>
-                                </div>
-                            </div>
-                            <div class="account-heading">
-                                <h5 class="mb-1">{{ stats?.draft ?? 0 }}</h5>
-                                <span class="text-muted">Draft</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <ListPageStatsCards :items="statItems" />
 
             <div class="row g-6">
                 <div class="col-12">
@@ -746,6 +665,7 @@ import Dropdown from 'primevue/dropdown'
 import Column from 'primevue/column'
 import InputText from 'primevue/inputtext'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
+import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
 
 // Composables
 const { setListTitle, setFormTitle } = useDynamicTitle()
@@ -769,6 +689,70 @@ const { userHasPermission, userHasRole } = usePermissions();
 const permissionStore       = usePermissionsStore()
 
 const { purchaseOrders, loading, totalRecords, params, form, isEditMode, showModal, validationErrors, stats } = storeToRefs(purchaseOrderStore)
+
+const statItems = computed(() => [
+  {
+    key: 'total-purchase-order',
+    label: 'Total Purchase Order',
+    value: stats.value?.total ?? 0,
+    subtitle: 'PO terdaftar',
+    icon: 'ri-file-list-3-line',
+    iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah keseluruhan data Purchase Order yang terdaftar dalam sistem berdasarkan statistik API.',
+    },
+  },
+  {
+    key: 'approved',
+    label: 'Approved',
+    value: stats.value?.approved ?? 0,
+    subtitle: 'Approved',
+    icon: 'ri-checkbox-circle-line',
+    iconBgClass: 'bg-label-success',
+    info: {
+      title: 'Approved',
+      description: 'Jumlah dokumen Purchase Order yang telah disetujui.',
+    },
+  },
+  {
+    key: 'rejected',
+    label: 'Rejected',
+    value: stats.value?.rejected ?? 0,
+    subtitle: 'Rejected',
+    icon: 'ri-close-circle-line',
+    iconBgClass: 'bg-label-danger',
+    info: {
+      title: 'Rejected',
+      description: 'Jumlah dokumen Purchase Order yang ditolak.',
+    },
+  },
+  {
+    key: 'received',
+    label: 'Received',
+    value: stats.value?.received ?? 0,
+    subtitle: 'Received',
+    icon: 'ri-inbox-archive-line',
+    iconBgClass: 'bg-label-info',
+    info: {
+      title: 'Received',
+      description: 'Jumlah dokumen Purchase Order yang barangnya sudah diterima (received).',
+    },
+  },
+  {
+    key: 'draft',
+    label: 'Draft',
+    value: stats.value?.draft ?? 0,
+    subtitle: 'Draft',
+    icon: 'ri-draft-line',
+    iconBgClass: 'bg-label-secondary',
+    info: {
+      title: 'Draft',
+      description: 'Jumlah dokumen Purchase Order berstatus Draft yang belum diproses lebih lanjut.',
+    },
+  }
+])
+
 const { vendors }     = storeToRefs(vendorStore)
 const { perusahaans } = storeToRefs(perusahaanStore)
 const { cabangs }     = storeToRefs(cabangStore)

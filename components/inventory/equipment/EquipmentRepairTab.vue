@@ -186,6 +186,10 @@ const statItems = computed(() => [
     value: summary.value.total ?? totalRecords.value,
     icon: 'ri-tools-line',
     iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah keseluruhan data Equipmentrepairtab yang terdaftar dalam sistem berdasarkan statistik API.',
+    },
   },
   {
     key: 'progress',
@@ -193,6 +197,10 @@ const statItems = computed(() => [
     value: summaryCount('IN_PROGRESS', 'REQUESTED'),
     icon: 'ri-time-line',
     iconBgClass: 'bg-label-warning',
+    info: {
+      title: 'In Progress',
+      description: 'Ringkasan metrik "In Progress" pada daftar Equipmentrepairtab berdasarkan data statistik API/store.',
+    },
   },
   {
     key: 'done',
@@ -200,6 +208,10 @@ const statItems = computed(() => [
     value: summaryCount('COMPLETED'),
     icon: 'ri-checkbox-circle-line',
     iconBgClass: 'bg-label-success',
+    info: {
+      title: 'Completed',
+      description: 'Jumlah dokumen Equipmentrepairtab yang sudah selesai.',
+    },
   },
 ])
 

@@ -18,99 +18,7 @@
             <p class="mb-6">
             List salesOrder yang terdaftar di sistem
             </p>
-            <!-- Statistics Cards (layout konsisten dengan Quotation) -->
-            <div class="row g-6 mb-6">
-                <div class="col-xl col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Total Sales Order</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-primary">
-                                        <i class="ri-file-list-3-line"></i>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="account-heading">
-                                <h5 class="mb-1">{{ stats?.total ?? 0 }}</h5>
-                                <span class="text-muted">Sales Order terdaftar</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Approved</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-success">
-                                        <i class="ri-checkbox-circle-line"></i>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="account-heading">
-                                <h5 class="mb-1">{{ stats?.approved ?? 0 }}</h5>
-                                <span class="text-muted">Approved</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Rejected</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-danger">
-                                        <i class="ri-close-circle-line"></i>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="account-heading">
-                                <h5 class="mb-1">{{ stats?.rejected ?? 0 }}</h5>
-                                <span class="text-muted">Rejected</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Partial</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-warning">
-                                        <i class="ri-percent-line"></i>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="account-heading">
-                                <h5 class="mb-1">{{ stats?.partial ?? 0 }}</h5>
-                                <span class="text-muted">Partial</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Delivered</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-info">
-                                        <i class="ri-truck-line"></i>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="account-heading">
-                                <h5 class="mb-1">{{ stats?.delivered ?? 0 }}</h5>
-                                <span class="text-muted">Delivered</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <ListPageStatsCards :items="statItems" />
 
             <div class="row g-6">
                 <div class="col-12">
@@ -691,6 +599,7 @@ import { useRouter } from 'vue-router'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import { useImageUrl } from '~/composables/useImageUrl'
 import Swal from 'sweetalert2'
+import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
 
 // Composables
 const { setListTitle, setFormTitle } = useDynamicTitle()
@@ -717,6 +626,70 @@ const permissionStore       = usePermissionsStore()
 
 const { salesOrders, loading, saving, totalRecords, params, form, isEditMode, showModal, validationErrors, customerProducts, stats } = storeToRefs(salesOrderStore)
 const { quotations } = storeToRefs(quotationStore)
+
+const statItems = computed(() => [
+  {
+    key: 'total-sales-order',
+    label: 'Total Sales Order',
+    value: stats.value?.total ?? 0,
+    subtitle: 'Sales Order terdaftar',
+    icon: 'ri-file-list-3-line',
+    iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah keseluruhan data Sales Order yang terdaftar dalam sistem berdasarkan statistik API.',
+    },
+  },
+  {
+    key: 'approved',
+    label: 'Approved',
+    value: stats.value?.approved ?? 0,
+    subtitle: 'Approved',
+    icon: 'ri-checkbox-circle-line',
+    iconBgClass: 'bg-label-success',
+    info: {
+      title: 'Approved',
+      description: 'Jumlah dokumen Sales Order yang telah disetujui.',
+    },
+  },
+  {
+    key: 'rejected',
+    label: 'Rejected',
+    value: stats.value?.rejected ?? 0,
+    subtitle: 'Rejected',
+    icon: 'ri-close-circle-line',
+    iconBgClass: 'bg-label-danger',
+    info: {
+      title: 'Rejected',
+      description: 'Jumlah dokumen Sales Order yang ditolak.',
+    },
+  },
+  {
+    key: 'partial',
+    label: 'Partial',
+    value: stats.value?.partial ?? 0,
+    subtitle: 'Partial',
+    icon: 'ri-percent-line',
+    iconBgClass: 'bg-label-warning',
+    info: {
+      title: 'Partial',
+      description: 'Jumlah dokumen Sales Order berstatus Partial (pemenuhan sebagian).',
+    },
+  },
+  {
+    key: 'delivered',
+    label: 'Delivered',
+    value: stats.value?.delivered ?? 0,
+    subtitle: 'Delivered',
+    icon: 'ri-truck-line',
+    iconBgClass: 'bg-label-info',
+    info: {
+      title: 'Delivered',
+      description: 'Jumlah dokumen Sales Order yang sudah delivered.',
+    },
+  }
+])
+
 const { customers }   = storeToRefs(customerStore)
 const { perusahaans } = storeToRefs(perusahaanStore)
 const { cabangs }     = storeToRefs(cabangStore)

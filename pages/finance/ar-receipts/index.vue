@@ -14,153 +14,7 @@
             />
 
             <div v-show="activeTab === 'receipts'">
-            <!-- Receipt Statistics Cards -->
-            <div class="row g-6 mb-6">
-                <div class="col-xl-3 col-lg-6 col-md-6" v-if="loading">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="skeleton-loader me-3" style="width: 40px; height: 40px; border-radius: 8px;"></div>
-                                <div class="flex-grow-1">
-                                    <div class="skeleton-loader mb-2" style="width: 60%; height: 16px;"></div>
-                                    <div class="skeleton-loader" style="width: 40%; height: 20px;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6" v-else>
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Total Penerimaan</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-primary">
-                                        <i class="ri-money-dollar-circle-line"></i>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="account-heading">
-                                    <h5 class="mb-1">{{ receipts.length }}</h5>
-                                    <span class="text-muted">Penerimaan Aktif</span>
-                                </div>
-                                <a href="javascript:void(0);" class="text-secondary">
-                                    <i class="ri-file-copy-line ri-22px"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6" v-if="loading">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="skeleton-loader me-3" style="width: 40px; height: 40px; border-radius: 8px;"></div>
-                                <div class="flex-grow-1">
-                                    <div class="skeleton-loader mb-2" style="width: 60%; height: 16px;"></div>
-                                    <div class="skeleton-loader" style="width: 40%; height: 20px;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6" v-else>
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Draft</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-warning">
-                                        <i class="ri-file-list-line"></i>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="account-heading">
-                                    <h5 class="mb-1">{{ draftCount }}</h5>
-                                    <span class="text-muted">Menunggu Konfirmasi</span>
-                                </div>
-                                <a href="javascript:void(0);" class="text-secondary">
-                                    <i class="ri-file-copy-line ri-22px"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6" v-if="loading">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="skeleton-loader me-3" style="width: 40px; height: 40px; border-radius: 8px;"></div>
-                                <div class="flex-grow-1">
-                                    <div class="skeleton-loader mb-2" style="width: 60%; height: 16px;"></div>
-                                    <div class="skeleton-loader" style="width: 40%; height: 20px;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6" v-else>
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Dikonfirmasi</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-success">
-                                        <i class="ri-checkbox-circle-line"></i>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="account-heading">
-                                    <h5 class="mb-1">{{ confirmedCount }}</h5>
-                                    <span class="text-muted">Sudah Dikonfirmasi</span>
-                                </div>
-                                <a href="javascript:void(0);" class="text-secondary">
-                                    <i class="ri-file-copy-line ri-22px"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6" v-if="loading">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="skeleton-loader me-3" style="width: 40px; height: 40px; border-radius: 8px;"></div>
-                                <div class="flex-grow-1">
-                                    <div class="skeleton-loader mb-2" style="width: 60%; height: 16px;"></div>
-                                    <div class="skeleton-loader" style="width: 40%; height: 20px;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6" v-else>
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Total Nilai</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-info">
-                                        <i class="ri-exchange-funds-line"></i>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="account-heading">
-                                    <h5 class="mb-1">{{ formatCurrency(totalAmount) }}</h5>
-                                    <span class="text-muted">Total Penerimaan</span>
-                                </div>
-                                <a href="javascript:void(0);" class="text-secondary">
-                                    <i class="ri-file-copy-line ri-22px"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <ListPageStatsCards :items="statItems" :loading="loading" />
 
             <div class="row g-6">
                 <div class="col-12">
@@ -585,6 +439,7 @@ import FinanceWorkspaceTabs from '~/components/finance/FinanceWorkspaceTabs.vue'
 import ArOpenInvoicesPanel from '~/components/finance/ar/ArOpenInvoicesPanel.vue'
 import ArAgingPanel from '~/components/finance/ar/ArAgingPanel.vue'
 import { useFinanceWorkspaceTabs } from '~/composables/useFinanceWorkspaceTabs'
+import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
 
 const { setListTitle, setFormTitle } = useDynamicTitle()
 
@@ -756,6 +611,58 @@ const exportData = (format) => {
 const { userHasRole, userHasPermission } = usePermissions();
 
 // Lifecycle
+const statItems = computed(() => [
+  {
+    key: 'total-penerimaan',
+    label: 'Total Penerimaan',
+    value: receipts.value.length,
+    subtitle: 'Penerimaan Aktif',
+    icon: 'ri-money-dollar-circle-line',
+    iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah (dokumen) seluruh penerimaan piutang (AR Receipt) pada halaman ini, mencakup semua status.',
+    },
+  },
+  {
+    key: 'draft',
+    label: 'Draft',
+    value: draftCount.value,
+    subtitle: 'Menunggu Konfirmasi',
+    icon: 'ri-file-list-line',
+    iconBgClass: 'bg-label-warning',
+    info: {
+      title: 'Draft',
+      description: 'Jumlah (dokumen) AR Receipt berstatus Draft yang belum dikonfirmasi.',
+    },
+  },
+  {
+    key: 'dikonfirmasi',
+    label: 'Dikonfirmasi',
+    value: confirmedCount.value,
+    subtitle: 'Sudah Dikonfirmasi',
+    icon: 'ri-checkbox-circle-line',
+    iconBgClass: 'bg-label-success',
+    info: {
+      title: 'Dikonfirmasi',
+      description: 'Jumlah (dokumen) AR Receipt yang telah dikonfirmasi dan tercatat sebagai penerimaan piutang.',
+    },
+  },
+  {
+    key: 'total-nilai',
+    label: 'Total Nilai',
+    value: formatCurrency(totalAmount.value),
+    subtitle: 'Total Penerimaan',
+    icon: 'ri-exchange-funds-line',
+    iconBgClass: 'bg-label-info',
+    info: {
+      title: 'Total Nilai Penerimaan',
+      description: 'Total nilai uang (Rupiah) dari seluruh penerimaan piutang pada halaman ini.',
+    },
+  }
+])
+
+
 onMounted(async () => {
     try {
         await permissionStore.fetchPermissions()

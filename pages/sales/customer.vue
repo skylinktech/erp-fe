@@ -6,72 +6,7 @@
             <p class="mb-6">
             List customer yang terdaftar di sistem
             </p>
-            <div class="row g-6 mb-6">
-                <div class="col-xl-3 col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Total Customer</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-primary"><i class="ri-team-line"></i></span>
-                                </div>
-                            </div>
-                            <div class="account-heading">
-                                <h5 class="mb-1">{{ totalRecords }}</h5>
-                                <span class="text-muted">Customer terdaftar</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Prospect</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-info"><i class="ri-user-search-line"></i></span>
-                                </div>
-                            </div>
-                            <div class="account-heading">
-                                <h5 class="mb-1">{{ customerTypeCounts.prospect }}</h5>
-                                <span class="text-muted">Pada halaman ini</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Regular</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-success"><i class="ri-user-follow-line"></i></span>
-                                </div>
-                            </div>
-                            <div class="account-heading">
-                                <h5 class="mb-1">{{ customerTypeCounts.regular }}</h5>
-                                <span class="text-muted">Pada halaman ini</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">VIP</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-warning"><i class="ri-vip-crown-line"></i></span>
-                                </div>
-                            </div>
-                            <div class="account-heading">
-                                <h5 class="mb-1">{{ customerTypeCounts.vip }}</h5>
-                                <span class="text-muted">Pada halaman ini</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <ListPageStatsCards :items="statItems" />
 
             <div class="row g-6">
                 <div class="col-12">
@@ -342,6 +277,7 @@ import { useUserStore } from '~/stores/user'
 import { useRouter } from 'vue-router'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import { useImageUrl } from '~/composables/useImageUrl';
+import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
 
 // Composables
 const { setListTitle, setFormTitle } = useDynamicTitle()
@@ -358,6 +294,58 @@ const userStore                          = useUserStore()
 
 const { customers, loading, totalRecords, params, form, isEditMode, showModal, validationErrors } = storeToRefs(customerStore)
 const { permissions } = storeToRefs(permissionStore)
+
+const statItems = computed(() => [
+  {
+    key: 'total-customer',
+    label: 'Total Customer',
+    value: totalRecords.value,
+    subtitle: 'Customer terdaftar',
+    icon: 'ri-team-line',
+    iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah keseluruhan data Customer yang terdaftar dalam sistem berdasarkan statistik API.',
+    },
+  },
+  {
+    key: 'prospect',
+    label: 'Prospect',
+    value: customerTypeCounts.prospect,
+    subtitle: 'Pada halaman ini',
+    icon: 'ri-user-search-line',
+    iconBgClass: 'bg-label-info',
+    info: {
+      title: 'Prospect',
+      description: 'Jumlah Customer bertipe Prospect pada baris data yang sedang dimuat di halaman ini (bukan total keseluruhan).',
+    },
+  },
+  {
+    key: 'regular',
+    label: 'Regular',
+    value: customerTypeCounts.regular,
+    subtitle: 'Pada halaman ini',
+    icon: 'ri-user-follow-line',
+    iconBgClass: 'bg-label-success',
+    info: {
+      title: 'Regular',
+      description: 'Jumlah Customer bertipe Regular pada baris data yang sedang dimuat di halaman ini (bukan total keseluruhan).',
+    },
+  },
+  {
+    key: 'vip',
+    label: 'VIP',
+    value: customerTypeCounts.vip,
+    subtitle: 'Pada halaman ini',
+    icon: 'ri-vip-crown-line',
+    iconBgClass: 'bg-label-warning',
+    info: {
+      title: 'VIP',
+      description: 'Jumlah Customer bertipe VIP pada baris data yang sedang dimuat di halaman ini (bukan total keseluruhan).',
+    },
+  }
+])
+
 
 const globalFilterValue = ref('')
 const rowsPerPageOptionsArray = ref([10, 25, 50, 100]);

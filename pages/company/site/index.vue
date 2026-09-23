@@ -7,45 +7,7 @@
         Kelola site untuk kebutuhan lokasi kantor, gudang, tower, project, dan lainnya.
       </p>
 
-      <!-- Statistics Cards -->
-      <div class="row g-6 mb-6">
-        <div class="col-xl-3 col-lg-6 col-md-6" v-if="loading">
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex align-items-center">
-                <div class="skeleton-loader me-3" style="width: 40px; height: 40px; border-radius: 8px;"></div>
-                <div class="flex-grow-1">
-                  <div class="skeleton-loader mb-2" style="width: 60%; height: 16px;"></div>
-                  <div class="skeleton-loader" style="width: 40%; height: 20px;"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-xl-3 col-lg-6 col-md-6" v-else>
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">Total Site</p>
-                <div class="avatar">
-                  <span class="avatar-initial rounded bg-label-primary">
-                    <i class="ri-map-pin-line"></i>
-                  </span>
-                </div>
-              </div>
-              <div class="d-flex justify-content-between align-items-center">
-                <div class="account-heading">
-                  <h5 class="mb-1">{{ totalSites }}</h5>
-                  <span class="text-muted">Site terdaftar</span>
-                </div>
-                <a href="javascript:void(0);" class="text-secondary">
-                  <i class="ri-file-copy-line ri-22px"></i>
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <ListPageStatsCards :items="statItems" :loading="loading" />
 
       <div class="row g-6">
         <div class="col-12">
@@ -367,6 +329,7 @@ import { usePermissionsStore } from '~/stores/permissions'
 import { usePermissions } from '~/composables/usePermissions'
 import { useDebounceFn } from '@vueuse/core'
 import Modal from '~/components/modal/Modal.vue'
+import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
 import Column from 'primevue/column'
 import Dropdown from 'primevue/dropdown'
 import InputText from 'primevue/inputtext'
@@ -395,6 +358,20 @@ const loading = computed(() => siteStore.loading)
 const sites = computed(() => siteStore.sites || [])
 const totalRecords = computed(() => siteStore.totalRecords || 0)
 const totalSites = computed(() => totalRecords.value)
+const statItems = computed(() => [
+  {
+    key: 'total',
+    label: 'Total Site',
+    value: totalSites.value ?? 0,
+    subtitle: 'Site terdaftar',
+    icon: 'ri-map-pin-line',
+    iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Total Site',
+      description: 'Jumlah seluruh site (kantor, gudang, tower, project, dll.) yang terdaftar di sistem.',
+    },
+  },
+])
 const params = computed(() => siteStore.params)
 const form = computed(() => siteStore.form)
 const isEditMode = computed(() => siteStore.isEditMode)

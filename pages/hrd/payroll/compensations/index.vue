@@ -137,10 +137,30 @@ function resetFilters() {
 const statItems = computed<ListPageStatItem[]>(() => {
   const list = rows.value
   return [
-    { label: 'Total', value: list.length, icon: 'ri-money-cny-circle-line', iconBgClass: 'bg-label-primary' },
-    { label: 'Draft', value: list.filter((r) => String(r.status) === 'DRAFT').length, icon: 'ri-draft-line', iconBgClass: 'bg-label-secondary' },
-    { label: 'Active', value: list.filter((r) => String(r.status) === 'ACTIVE').length, icon: 'ri-checkbox-circle-line', iconBgClass: 'bg-label-success' },
-    { label: 'Inactive', value: list.filter((r) => !['DRAFT', 'ACTIVE'].includes(String(r.status))).length, icon: 'ri-stop-circle-line', iconBgClass: 'bg-label-warning' },
+    { label: 'Total', value: list.length, icon: 'ri-money-cny-circle-line', iconBgClass: 'bg-label-primary' ,
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah keseluruhan data Compensations yang terdaftar dalam sistem berdasarkan statistik API.',
+    },
+  },
+    { label: 'Draft', value: list.filter((r) => String(r.status) === 'DRAFT').length, icon: 'ri-draft-line', iconBgClass: 'bg-label-secondary' ,
+    info: {
+      title: 'Draft',
+      description: 'Jumlah dokumen Compensations berstatus Draft yang belum diproses lebih lanjut.',
+    },
+  },
+    { label: 'Active', value: list.filter((r) => String(r.status) === 'ACTIVE').length, icon: 'ri-checkbox-circle-line', iconBgClass: 'bg-label-success' ,
+    info: {
+      title: 'Active',
+      description: 'Jumlah dokumen Compensations yang saat ini berstatus aktif.',
+    },
+  },
+    { label: 'Inactive', value: list.filter((r) => !['DRAFT', 'ACTIVE'].includes(String(r.status))).length, icon: 'ri-stop-circle-line', iconBgClass: 'bg-label-warning' ,
+    info: {
+      title: 'Inactive',
+      description: 'Jumlah dokumen Compensations yang tidak aktif.',
+    },
+  },
   ]
 })
 

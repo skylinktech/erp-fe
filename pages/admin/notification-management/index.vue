@@ -5,23 +5,7 @@
         Kelola event policy, delivery log, dan pengaturan global notifikasi SkyFlow. Recipient rules dan template dikonfigurasi per event melalui editor policy. Channel dan superadmin feed dikelola di tab Global Settings.
       </p>
 
-      <div class="row g-6 mb-6">
-        <div v-for="card in statCards" :key="card.label" class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card h-100">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">{{ card.label }}</p>
-                <div class="avatar">
-                  <span :class="['avatar-initial rounded', card.iconClass]">
-                    <i :class="card.icon"></i>
-                  </span>
-                </div>
-              </div>
-              <h5 class="mb-0">{{ card.value }}</h5>
-            </div>
-          </div>
-        </div>
-      </div>
+      <ListPageStatsCards :items="statItems" />
 
       <ul class="nav nav-tabs mb-4">
         <li v-for="tab in tabs" :key="tab.key" class="nav-item">
@@ -802,6 +786,7 @@
 import { useDebounceFn } from '@vueuse/core'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
 import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
+import ListPageStatsCards, { type ListPageStatItem } from '~/components/list/ListPageStatsCards.vue'
 import type { NotificationCatalogRow, NotificationPolicy } from '~/stores/notification-management'
 
 type CreateEventOption = {
@@ -968,11 +953,51 @@ function filterEventOption(
     .some((value) => String(value).toLowerCase().includes(q))
 }
 
-const statCards = computed(() => [
-  { label: 'Registered events', value: store.totalRecords, icon: 'ri-notification-3-line', iconClass: 'bg-label-primary' },
-  { label: 'Configured', value: store.catalog.filter((r) => r.policyId).length, icon: 'ri-checkbox-circle-line', iconClass: 'bg-label-success' },
-  { label: 'Not configured', value: store.catalog.filter((r) => !r.policyId && r.policyStatus !== 'ORPHANED_POLICY').length, icon: 'ri-node-tree', iconClass: 'bg-label-info' },
-  { label: 'Failed outbox', value: store.logs.filter((r) => r.status === 'failed' || r.status === 'dead').length, icon: 'ri-error-warning-line', iconClass: 'bg-label-danger' },
+const statItems = computed<ListPageStatItem[]>(() => [
+  {
+    key: 'registered',
+    label: 'Registered events',
+    value: store.totalRecords ?? 0,
+    icon: 'ri-notification-3-line',
+    iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Registered Events',
+      description: 'Jumlah event notifikasi yang terdaftar di centralized event registry backend.',
+    },
+  },
+  {
+    key: 'configured',
+    label: 'Configured',
+    value: store.catalog.filter((r) => r.policyId).length,
+    icon: 'ri-checkbox-circle-line',
+    iconBgClass: 'bg-label-success',
+    info: {
+      title: 'Configured',
+      description: 'Jumlah event yang sudah memiliki notification policy terkonfigurasi.',
+    },
+  },
+  {
+    key: 'not-configured',
+    label: 'Not configured',
+    value: store.catalog.filter((r) => !r.policyId && r.policyStatus !== 'ORPHANED_POLICY').length,
+    icon: 'ri-node-tree',
+    iconBgClass: 'bg-label-info',
+    info: {
+      title: 'Not Configured',
+      description: 'Jumlah event terdaftar yang belum memiliki notification policy.',
+    },
+  },
+  {
+    key: 'failed-outbox',
+    label: 'Failed outbox',
+    value: store.logs.filter((r) => r.status === 'failed' || r.status === 'dead').length,
+    icon: 'ri-error-warning-line',
+    iconBgClass: 'bg-label-danger',
+    info: {
+      title: 'Failed Outbox',
+      description: 'Jumlah delivery log dengan status failed atau dead yang gagal dikirim ke penerima.',
+    },
+  },
 ])
 
 const templateTypes = computed(() => {

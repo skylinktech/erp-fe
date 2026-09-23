@@ -226,10 +226,10 @@ import Column from 'primevue/column'
   const { customers }   = storeToRefs(customerStore)
 
 const statItems = computed(() => [
-  { key: 'total', label: 'Total Quotations', value: statistics.value?.totalQuotations || 0, icon: 'ri-file-text-line', iconBgClass: 'bg-label-primary', subtitle: 'Quotation terdaftar' },
-  { key: 'approved', label: 'Approved', value: statistics.value?.approvedQuotations || 0, icon: 'ri-checkbox-circle-line', iconBgClass: 'bg-label-success', subtitle: 'Approved' },
-  { key: 'pending', label: 'Pending', value: statistics.value?.pendingQuotations || 0, icon: 'ri-time-line', iconBgClass: 'bg-label-warning', subtitle: 'Pending' },
-  { key: 'rejected', label: 'Rejected', value: statistics.value?.rejectedQuotations || 0, icon: 'ri-close-circle-line', iconBgClass: 'bg-label-danger', subtitle: 'Rejected' },
+  { key: 'total', label: 'Total Quotations', value: statistics.value?.totalQuotations || 0, icon: 'ri-file-text-line', iconBgClass: 'bg-label-primary', subtitle: 'Quotation terdaftar', info: { title: 'Jumlah Keseluruhan', description: 'Jumlah seluruh Quotation yang terdaftar dalam sistem, mencakup semua status.' } },
+  { key: 'approved', label: 'Approved', value: statistics.value?.approvedQuotations || 0, icon: 'ri-checkbox-circle-line', iconBgClass: 'bg-label-success', subtitle: 'Approved', info: { title: 'Approved', description: 'Jumlah Quotation yang telah disetujui.' } },
+  { key: 'pending', label: 'Pending', value: statistics.value?.pendingQuotations || 0, icon: 'ri-time-line', iconBgClass: 'bg-label-warning', subtitle: 'Pending', info: { title: 'Pending', description: 'Jumlah Quotation yang masih menunggu persetujuan.' } },
+  { key: 'rejected', label: 'Rejected', value: statistics.value?.rejectedQuotations || 0, icon: 'ri-close-circle-line', iconBgClass: 'bg-label-danger', subtitle: 'Rejected', info: { title: 'Rejected', description: 'Jumlah Quotation yang ditolak.' } },
 ])
 
 // State

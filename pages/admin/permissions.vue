@@ -9,57 +9,8 @@
                         <p class="mb-6">
                             List permissions yang terdaftar di sistem
                         </p>
-                        <div class="row g-6 mb-6">
-                            <div class="col-xl col-lg-6 col-md-6" v-if="loading && stats.total === undefined">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <div class="d-flex align-items-center">
-                                            <div class="skeleton-loader me-3" style="width: 40px; height: 40px; border-radius: 8px;"></div>
-                                            <div class="flex-grow-1">
-                                                <div class="skeleton-loader mb-2" style="width: 60%; height: 16px;"></div>
-                                                <div class="skeleton-loader" style="width: 40%; height: 20px;"></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div v-else-if="stats.total !== undefined" class="col-xl col-lg-6 col-md-6">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <div class="d-flex justify-content-between align-items-center mb-4">
-                                            <p class="mb-0">Total Permission</p>
-                                            <div class="avatar">
-                                                <span class="avatar-initial rounded bg-label-primary"><i class="ri-lock-2-line"></i></span>
-                                            </div>
-                                        </div>
-                                        <div class="account-heading">
-                                            <h5 class="mb-1">{{ stats.total }}</h5>
-                                            <span class="text-muted">Permission terdaftar</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div
-                                v-for="role in stats.roles"
-                                :key="role.id"
-                                class="col-xl col-lg-6 col-md-6"
-                            >
-                                <div class="card">
-                                    <div class="card-body">
-                                        <div class="d-flex justify-content-between align-items-center mb-4">
-                                            <p class="mb-0 text-capitalize">{{ role.name }}</p>
-                                            <div class="avatar">
-                                                <span class="avatar-initial rounded bg-label-info"><i class="ri-shield-user-line"></i></span>
-                                            </div>
-                                        </div>
-                                        <div class="account-heading">
-                                            <h5 class="mb-1">{{ role.total }}</h5>
-                                            <span class="text-muted">Permission pada role</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <ListPageStatsCards :items="statItems" :loading="loading && stats.total === undefined" />
+
             
                         <div class="row g-6">
                             <div class="col-12">
@@ -327,6 +278,7 @@ import { ref, computed, onMounted, watch, onBeforeUnmount, nextTick } from 'vue'
 import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
+import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
 import { usePermissionsStore } from '~/stores/permissions'
 import { useLayoutStore } from '~/stores/layout'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
@@ -360,6 +312,39 @@ const lazyParams = ref({
 const stats = ref({
   total : undefined,
   roles: []
+})
+
+const statItems = computed(() => {
+    const items = []
+    if (stats.value.total !== undefined) {
+        items.push({
+            key: 'total',
+            label: 'Total Permission',
+            value: stats.value.total ?? 0,
+            subtitle: 'Permission terdaftar',
+            icon: 'ri-lock-2-line',
+            iconBgClass: 'bg-label-primary',
+            info: {
+                title: 'Total Permission',
+                description: 'Jumlah seluruh permission yang terdaftar di sistem, termasuk yang belum ditautkan ke role.',
+            },
+        })
+    }
+    for (const role of stats.value.roles || []) {
+        items.push({
+            key: `role-${role.id}`,
+            label: role.name,
+            value: role.total ?? 0,
+            subtitle: 'Permission pada role',
+            icon: 'ri-shield-user-line',
+            iconBgClass: 'bg-label-info',
+            info: {
+                title: role.name,
+                description: `Jumlah permission yang saat ini ditautkan ke role ${role.name}.`,
+            },
+        })
+    }
+    return items
 })
 
 const filters = ref({

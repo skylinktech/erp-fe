@@ -6,144 +6,7 @@
                 Kelola tagihan pelanggan untuk perangkat yang sudah terpasang dan aktif di lokasi
             </p>
 
-            <!-- ── Statistics Cards ──────────────────────────────────────────── -->
-            <div class="row g-6 mb-6">
-                <!-- Total Invoice -->
-                <div class="col-xl-3 col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div v-if="loadingStats" class="d-flex align-items-center">
-                                <div class="skeleton-loader me-3" style="width:40px;height:40px;border-radius:8px"></div>
-                                <div class="flex-grow-1">
-                                    <div class="skeleton-loader mb-2" style="width:60%;height:16px"></div>
-                                    <div class="skeleton-loader" style="width:40%;height:20px"></div>
-                                </div>
-                            </div>
-                            <template v-else>
-                                <div class="d-flex justify-content-between align-items-center mb-4">
-                                    <p class="mb-0">Total Invoice</p>
-                                    <div class="avatar">
-                                        <span class="avatar-initial rounded bg-label-primary">
-                                            <i class="ri-bill-line"></i>
-                                        </span>
-                                    </div>
-                                </div>
-                                <div class="d-flex justify-content-between align-items-end">
-                                    <div>
-                                        <h5 class="mb-0">{{ statistics?.counts.total ?? 0 }}</h5>
-                                        <small class="text-muted">Invoice Terdaftar</small>
-                                    </div>
-                                    <span class="text-muted small">
-                                        {{ formatRupiah(statistics?.amounts.grandTotal ?? 0) }}
-                                    </span>
-                                </div>
-                            </template>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Unpaid -->
-                <div class="col-xl-3 col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div v-if="loadingStats" class="d-flex align-items-center">
-                                <div class="skeleton-loader me-3" style="width:40px;height:40px;border-radius:8px"></div>
-                                <div class="flex-grow-1">
-                                    <div class="skeleton-loader mb-2" style="width:60%;height:16px"></div>
-                                    <div class="skeleton-loader" style="width:40%;height:20px"></div>
-                                </div>
-                            </div>
-                            <template v-else>
-                                <div class="d-flex justify-content-between align-items-center mb-4">
-                                    <p class="mb-0">Belum Dibayar</p>
-                                    <div class="avatar">
-                                        <span class="avatar-initial rounded bg-label-danger">
-                                            <i class="ri-error-warning-line"></i>
-                                        </span>
-                                    </div>
-                                </div>
-                                <div class="d-flex justify-content-between align-items-end">
-                                    <div>
-                                        <h5 class="mb-0 text-danger">{{ statistics?.counts.unpaid ?? 0 }}</h5>
-                                        <small class="text-muted">Invoice Unpaid</small>
-                                    </div>
-                                    <span class="text-danger small fw-semibold">
-                                        {{ formatRupiah(statistics?.amounts.unpaid ?? 0) }}
-                                    </span>
-                                </div>
-                            </template>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Partial -->
-                <div class="col-xl-3 col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div v-if="loadingStats" class="d-flex align-items-center">
-                                <div class="skeleton-loader me-3" style="width:40px;height:40px;border-radius:8px"></div>
-                                <div class="flex-grow-1">
-                                    <div class="skeleton-loader mb-2" style="width:60%;height:16px"></div>
-                                    <div class="skeleton-loader" style="width:40%;height:20px"></div>
-                                </div>
-                            </div>
-                            <template v-else>
-                                <div class="d-flex justify-content-between align-items-center mb-4">
-                                    <p class="mb-0">Sebagian Dibayar</p>
-                                    <div class="avatar">
-                                        <span class="avatar-initial rounded bg-label-warning">
-                                            <i class="ri-timer-line"></i>
-                                        </span>
-                                    </div>
-                                </div>
-                                <div class="d-flex justify-content-between align-items-end">
-                                    <div>
-                                        <h5 class="mb-0 text-warning">{{ statistics?.counts.partial ?? 0 }}</h5>
-                                        <small class="text-muted">Invoice Partial</small>
-                                    </div>
-                                    <span class="text-warning small fw-semibold">
-                                        {{ formatRupiah(statistics?.amounts.partial ?? 0) }}
-                                    </span>
-                                </div>
-                            </template>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Paid -->
-                <div class="col-xl-3 col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div v-if="loadingStats" class="d-flex align-items-center">
-                                <div class="skeleton-loader me-3" style="width:40px;height:40px;border-radius:8px"></div>
-                                <div class="flex-grow-1">
-                                    <div class="skeleton-loader mb-2" style="width:60%;height:16px"></div>
-                                    <div class="skeleton-loader" style="width:40%;height:20px"></div>
-                                </div>
-                            </div>
-                            <template v-else>
-                                <div class="d-flex justify-content-between align-items-center mb-4">
-                                    <p class="mb-0">Lunas</p>
-                                    <div class="avatar">
-                                        <span class="avatar-initial rounded bg-label-success">
-                                            <i class="ri-checkbox-circle-line"></i>
-                                        </span>
-                                    </div>
-                                </div>
-                                <div class="d-flex justify-content-between align-items-end">
-                                    <div>
-                                        <h5 class="mb-0 text-success">{{ statistics?.counts.paid ?? 0 }}</h5>
-                                        <small class="text-muted">Invoice Lunas</small>
-                                    </div>
-                                    <span class="text-success small fw-semibold">
-                                        {{ formatRupiah(statistics?.amounts.paid ?? 0) }}
-                                    </span>
-                                </div>
-                            </template>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                        <ListPageStatsCards :items="statItems" :loading="loadingStats" />
 
             <!-- ── Filter Card ────────────────────────────────────────────────── -->
             <div class="card mb-6 invoice-filter-card">
@@ -864,6 +727,7 @@ import Dropdown from 'primevue/dropdown'
 import Column from 'primevue/column'
 import InputText from 'primevue/inputtext'
 import Dialog from 'primevue/dialog'
+import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
 
 // ── Setup ─────────────────────────────────────────────────────────────────────
 
@@ -882,6 +746,60 @@ const billableItems  = computed(() => store.billableItems  ?? [])
 const statistics     = computed(() => store.statistics)
 const loading        = computed(() => store.loading)
 const loadingStats   = computed(() => store.loadingStats)
+
+const statItems = computed(() => [
+  {
+    key: 'total',
+    label: 'Total Invoice',
+    value: statistics.value?.counts?.total ?? 0,
+    subtitle: `Invoice Terdaftar · ${formatRupiah(statistics.value?.amounts?.grandTotal ?? 0)}`,
+    icon: 'ri-bill-line',
+    iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah seluruh invoice yang terdaftar. Subtitle menampilkan total nominal grand total dari statistik API (bukan hanya halaman saat ini).',
+    },
+  },
+  {
+    key: 'unpaid',
+    label: 'Belum Dibayar',
+    value: statistics.value?.counts?.unpaid ?? 0,
+    subtitle: `Invoice Unpaid · ${formatRupiah(statistics.value?.amounts?.unpaid ?? 0)}`,
+    icon: 'ri-error-warning-line',
+    iconBgClass: 'bg-label-danger',
+    valueClass: 'text-danger',
+    info: {
+      title: 'Belum Dibayar',
+      description: 'Jumlah invoice berstatus unpaid beserta total nominal outstanding unpaid dari statistik API.',
+    },
+  },
+  {
+    key: 'partial',
+    label: 'Sebagian Dibayar',
+    value: statistics.value?.counts?.partial ?? 0,
+    subtitle: `Invoice Partial · ${formatRupiah(statistics.value?.amounts?.partial ?? 0)}`,
+    icon: 'ri-timer-line',
+    iconBgClass: 'bg-label-warning',
+    valueClass: 'text-warning',
+    info: {
+      title: 'Sebagian Dibayar',
+      description: 'Jumlah invoice berstatus partial beserta total nominal yang masih tersisa dari statistik API.',
+    },
+  },
+  {
+    key: 'paid',
+    label: 'Lunas',
+    value: statistics.value?.counts?.paid ?? 0,
+    subtitle: `Invoice Lunas · ${formatRupiah(statistics.value?.amounts?.paid ?? 0)}`,
+    icon: 'ri-checkbox-circle-line',
+    iconBgClass: 'bg-label-success',
+    valueClass: 'text-success',
+    info: {
+      title: 'Lunas',
+      description: 'Jumlah invoice yang sudah lunas beserta total nominal paid dari statistik API.',
+    },
+  },
+])
 const loadingBillable= computed(() => store.loadingBillable)
 const totalRecords   = computed(() => store.totalRecords)
 const totalBillable  = computed(() => store.totalBillable)

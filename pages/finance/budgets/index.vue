@@ -7,89 +7,7 @@
         Kelola budget untuk perencanaan dan kontrol keuangan.
       </p>
 
-      <!-- Statistics Cards -->
-      <div class="row g-6 mb-6">
-        <div class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">Total Budget</p>
-                <div class="avatar">
-                  <span class="avatar-initial rounded bg-label-primary">
-                    <i class="ri-funds-line"></i>
-                  </span>
-                </div>
-              </div>
-              <div class="d-flex justify-content-between align-items-center">
-                <div class="account-heading">
-                  <h5 class="mb-1">{{ statistics.totalBudgets }}</h5>
-                  <span class="text-muted">Budget terdaftar</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">Draft</p>
-                <div class="avatar">
-                  <span class="avatar-initial rounded bg-label-secondary">
-                    <i class="ri-draft-line"></i>
-                  </span>
-                </div>
-              </div>
-              <div class="d-flex justify-content-between align-items-center">
-                <div class="account-heading">
-                  <h5 class="mb-1">{{ statistics.draftBudgets }}</h5>
-                  <span class="text-muted">Draft</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">Approved</p>
-                <div class="avatar">
-                  <span class="avatar-initial rounded bg-label-success">
-                    <i class="ri-checkbox-circle-line"></i>
-                  </span>
-                </div>
-              </div>
-              <div class="d-flex justify-content-between align-items-center">
-                <div class="account-heading">
-                  <h5 class="mb-1">{{ statistics.approvedBudgets }}</h5>
-                  <span class="text-muted">Approved</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">Rejected</p>
-                <div class="avatar">
-                  <span class="avatar-initial rounded bg-label-danger">
-                    <i class="ri-close-circle-line"></i>
-                  </span>
-                </div>
-              </div>
-              <div class="d-flex justify-content-between align-items-center">
-                <div class="account-heading">
-                  <h5 class="mb-1">{{ statistics.rejectedBudgets }}</h5>
-                  <span class="text-muted">Rejected</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <ListPageStatsCards :items="statItems" />
 
       <div class="row g-6">
         <div class="col-12">
@@ -463,12 +381,65 @@ import InputText from 'primevue/inputtext'
 import DataTable from 'primevue/datatable'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import { useFormatRupiah } from '~/composables/formatRupiah'
+import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
 
 const { setListTitle } = useDynamicTitle()
 const formatRupiah = useFormatRupiah()
 
 // Stores
 const budgetStore = useBudgetStore()
+
+const statItems = computed(() => [
+  {
+    key: 'total-budget',
+    label: 'Total Budget',
+    value: statistics.value.totalBudgets,
+    subtitle: 'Budget terdaftar',
+    icon: 'ri-funds-line',
+    iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah seluruh dokumen Budget yang terdaftar dalam sistem, mencakup semua status.',
+    },
+  },
+  {
+    key: 'draft',
+    label: 'Draft',
+    value: statistics.value.draftBudgets,
+    subtitle: 'Draft',
+    icon: 'ri-draft-line',
+    iconBgClass: 'bg-label-secondary',
+    info: {
+      title: 'Draft',
+      description: 'Jumlah dokumen Budget berstatus Draft yang belum diproses lebih lanjut.',
+    },
+  },
+  {
+    key: 'approved',
+    label: 'Approved',
+    value: statistics.value.approvedBudgets,
+    subtitle: 'Approved',
+    icon: 'ri-checkbox-circle-line',
+    iconBgClass: 'bg-label-success',
+    info: {
+      title: 'Approved',
+      description: 'Jumlah dokumen Budget yang telah disetujui.',
+    },
+  },
+  {
+    key: 'rejected',
+    label: 'Rejected',
+    value: statistics.value.rejectedBudgets,
+    subtitle: 'Rejected',
+    icon: 'ri-close-circle-line',
+    iconBgClass: 'bg-label-danger',
+    info: {
+      title: 'Rejected',
+      description: 'Jumlah dokumen Budget yang ditolak.',
+    },
+  }
+])
+
 const costCenterStore = useCostCenterStore()
 const siteStore = useSiteStore()
 const userStore = useUserStore()

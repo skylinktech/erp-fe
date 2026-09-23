@@ -26,6 +26,8 @@ export interface PksSubscription {
   }
 }
 
+export type PksType = 'CUSTOMER' | 'VENDOR'
+
 export interface Pks {
   id: string
   noPks: string
@@ -45,15 +47,30 @@ export interface Pks {
   status: 'draft' | 'signed' | 'active' | 'expired' | 'terminated'
   createdAt: string
   updatedAt: string
+  /** Canonical type — prefer over isInternal/isExternal in UI. */
+  pksType?: PksType | null
   isInternal?: boolean
   isExternal?: boolean
   noSurat?: string | null
   vendorId?: number | null
   nominal?: number | null
   purchaseOrderId?: string | null
-  customer?: { id: number; name: string }
+  customer?: { id: number; name: string; code?: string }
+  vendor?: { id: number; name: string; email?: string; phone?: string }
+  purchaseOrder?: { id: string; noPo?: string; no_po?: string; poType?: string; status?: string; total?: number }
   pksSubscriptions?: PksSubscription[]
   pksDocuments?: PksDocument[]
+}
+
+export function resolvePksType(row: Partial<Pks> | null | undefined): PksType {
+  if (!row) return 'CUSTOMER'
+  const raw = (row as any).pksType ?? (row as any).pks_type
+  if (raw === 'CUSTOMER' || raw === 'VENDOR') return raw
+  if (raw === 'INTERNAL' || String(raw).toUpperCase() === 'INTERNAL') return 'CUSTOMER'
+  if (raw === 'EXTERNAL' || String(raw).toUpperCase() === 'EXTERNAL') return 'VENDOR'
+  const isExternal = row.isExternal ?? (row as any).is_external
+  if (isExternal === true || isExternal === 'true' || isExternal === 1) return 'VENDOR'
+  return 'CUSTOMER'
 }
 
 interface PksState {
@@ -71,10 +88,13 @@ interface PksState {
     draw: number
     search: string
     customerId?: number | null
+    vendorId?: number | null
+    pksType?: PksType | null
     status?: string | null
   }
   form: {
     id?: string | null
+    pksType: PksType
     isInternal: boolean
     isExternal: boolean
     customerId: number | null
@@ -107,6 +127,8 @@ interface PksState {
     activePks: number
     expiredPks: number
     terminatedPks: number
+    customerPks: number
+    vendorPks: number
   }
 }
 
@@ -126,10 +148,13 @@ export const usePksStore = defineStore('pks', {
       draw: 1,
       search: '',
       customerId: null,
+      vendorId: null,
+      pksType: null,
       status: null,
     },
     form: {
       id: null,
+      pksType: 'CUSTOMER',
       isInternal: true,
       isExternal: false,
       customerId: null,
@@ -162,6 +187,8 @@ export const usePksStore = defineStore('pks', {
       activePks: 0,
       expiredPks: 0,
       terminatedPks: 0,
+      customerPks: 0,
+      vendorPks: 0,
     },
   }),
 
@@ -182,6 +209,8 @@ export const usePksStore = defineStore('pks', {
           search: this.params.search || '',
         })
         if (this.params.customerId != null) sp.append('customerId', String(this.params.customerId))
+        if (this.params.vendorId != null) sp.append('vendorId', String(this.params.vendorId))
+        if (this.params.pksType) sp.append('pksType', this.params.pksType)
         if (this.params.status) sp.append('status', this.params.status)
         url.search = sp.toString()
 
@@ -241,9 +270,11 @@ export const usePksStore = defineStore('pks', {
       const formData = new FormData()
       let timeoutId: ReturnType<typeof setTimeout> | null = null
 
-      // Mode internal/external (untuk backend menentukan skema validasi + field mana yang dipakai)
-      formData.append('isInternal', String(this.form.isInternal))
-      formData.append('isExternal', String(this.form.isExternal))
+      // Canonical type preferred; legacy flags kept for compatibility
+      const pksType = this.form.pksType || (this.form.isExternal ? 'VENDOR' : 'CUSTOMER')
+      formData.append('pksType', pksType)
+      formData.append('isInternal', String(pksType === 'CUSTOMER'))
+      formData.append('isExternal', String(pksType === 'VENDOR'))
 
       // External fields
       if (this.form.noSurat) formData.append('noSurat', this.form.noSurat)
@@ -382,10 +413,12 @@ export const usePksStore = defineStore('pks', {
         const formatDate = (dateStr: string | null) => dateStr ? new Date(dateStr).toISOString().split('T')[0] : null
         const { getAttachmentUrl } = useImageUrl()
         
+        const pksType = resolvePksType(raw)
         this.form = {
           id: raw.id,
-          isInternal: raw.isInternal ?? raw.is_internal ?? true,
-          isExternal: raw.isExternal ?? raw.is_external ?? false,
+          pksType,
+          isInternal: pksType === 'CUSTOMER',
+          isExternal: pksType === 'VENDOR',
           customerId: raw.customerId ?? raw.customer_id ?? raw.customer?.id ?? null,
           customerName: raw.customerName ?? raw.customer_name ?? raw.customer?.name ?? '',
           description: raw.description ?? '',
@@ -440,6 +473,7 @@ export const usePksStore = defineStore('pks', {
     resetForm() {
       this.form = {
         id: null,
+        pksType: 'CUSTOMER',
         isInternal: true,
         isExternal: false,
         customerId: null,
@@ -462,6 +496,12 @@ export const usePksStore = defineStore('pks', {
         pksSubscriptions: [],
         pksDocuments: [],
       }
+    },
+
+    setPksType(pksType: PksType) {
+      this.form.pksType = pksType
+      this.form.isInternal = pksType === 'CUSTOMER'
+      this.form.isExternal = pksType === 'VENDOR'
     },
 
     addSubscription() {
@@ -514,8 +554,16 @@ export const usePksStore = defineStore('pks', {
       this.fetchPks()
     },
 
-    setFilters(f: { customerId?: number | null; status?: string | null; search?: string }) {
-      this.params.customerId = f.customerId
+    setFilters(f: {
+      customerId?: number | null
+      vendorId?: number | null
+      pksType?: PksType | null
+      status?: string | null
+      search?: string
+    }) {
+      if (f.customerId !== undefined) this.params.customerId = f.customerId
+      if (f.vendorId !== undefined) this.params.vendorId = f.vendorId
+      if (f.pksType !== undefined) this.params.pksType = f.pksType
       this.params.status = f.status ?? null
       if (f.search !== undefined) this.params.search = f.search
       this.params.first = 0

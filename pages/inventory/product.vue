@@ -4,26 +4,7 @@
             
             <p class="mb-6">Kelola master data produk dan komponen kit.</p>
 
-            <div class="row g-6 mb-6">
-                <div v-for="card in statCards" :key="card.label" class="col-xl-3 col-lg-6 col-md-6">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">{{ card.label }}</p>
-                                <div class="avatar">
-                                    <span :class="['avatar-initial rounded', card.iconClass]">
-                                        <i :class="card.icon"></i>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="account-heading">
-                                <h5 class="mb-1">{{ card.value }}</h5>
-                                <span class="text-muted small">{{ card.subtitle }}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <ListPageStatsCards :items="statCards" />
 
             <CollapsibleFilterCard
                 title="Filter Product"
@@ -525,6 +506,7 @@ import { useUnitStore } from '~/stores/unit'
 import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
+import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
 import CollapsibleFilterCard from '~/components/list/CollapsibleFilterCard.vue'
 import FilterFieldsRow from '~/components/list/FilterFieldsRow.vue'
 import FilterField from '~/components/list/FilterField.vue'
@@ -624,34 +606,54 @@ const modalDescription = computed(() =>
 )
 
 const statCards = computed(() => [
-    {
-        label: 'Total Product',
-        value: statistics.value.total || 0,
-        subtitle: 'Product terdaftar',
-        icon: 'ri-box-3-line',
-        iconClass: 'bg-label-primary',
+  {
+    key: 'total-product',
+    label: 'Total Product',
+    value: statistics.value.total ?? 0,
+    subtitle: 'Product terdaftar',
+    icon: 'ri-box-3-line',
+    iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah keseluruhan data Product yang terdaftar berdasarkan statistik API.',
     },
-    {
-        label: 'Internal',
-        value: statistics.value.internal || 0,
-        subtitle: 'Khusus penggunaan internal',
-        icon: 'ri-building-line',
-        iconClass: 'bg-label-info',
+  },
+  {
+    key: 'internal',
+    label: 'Internal',
+    value: statistics.value.internal ?? 0,
+    subtitle: 'Khusus penggunaan internal',
+    icon: 'ri-building-line',
+    iconBgClass: 'bg-label-info',
+    info: {
+      title: 'Internal',
+      description: 'Jumlah product dengan scope penggunaan internal.',
     },
-    {
-        label: 'Eksternal',
-        value: statistics.value.external || 0,
-        subtitle: 'Khusus client / eksternal',
-        icon: 'ri-user-star-line',
-        iconClass: 'bg-label-warning',
+  },
+  {
+    key: 'eksternal',
+    label: 'Eksternal',
+    value: statistics.value.external ?? 0,
+    subtitle: 'Khusus client / eksternal',
+    icon: 'ri-user-star-line',
+    iconBgClass: 'bg-label-warning',
+    info: {
+      title: 'Eksternal',
+      description: 'Jumlah product dengan scope penggunaan eksternal/client.',
     },
-    {
-        label: 'Keduanya',
-        value: statistics.value.both || 0,
-        subtitle: 'Internal & eksternal',
-        icon: 'ri-exchange-line',
-        iconClass: 'bg-label-secondary',
+  },
+  {
+    key: 'keduanya',
+    label: 'Keduanya',
+    value: statistics.value.both ?? 0,
+    subtitle: 'Internal & eksternal',
+    icon: 'ri-exchange-line',
+    iconBgClass: 'bg-label-secondary',
+    info: {
+      title: 'Keduanya',
+      description: 'Jumlah product yang dapat dipakai internal dan eksternal.',
     },
+  },
 ])
 
 const hasActiveFilters = computed(() =>

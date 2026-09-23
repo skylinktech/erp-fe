@@ -127,8 +127,18 @@ const selectedIsManual = computed(() =>
   isManualAmountMethod(String(selectedCatalog.value?.calculationMethod || selectedCatalog.value?.calculation_method || ''))
 )
 const statItems = computed<ListPageStatItem[]>(() => [
-  { label: 'Components', value: components.value.length, icon: 'ri-list-check-2', iconBgClass: 'bg-label-primary' },
-  { label: 'Required', value: components.value.filter((c) => c.isRequired ?? c.is_required).length, icon: 'ri-asterisk', iconBgClass: 'bg-label-warning' },
+  { label: 'Components', value: components.value.length, icon: 'ri-list-check-2', iconBgClass: 'bg-label-primary' ,
+    info: {
+      title: 'Components',
+      description: 'Ringkasan metrik "Components" pada daftar [Id] berdasarkan data statistik API/store.',
+    },
+  },
+  { label: 'Required', value: components.value.filter((c) => c.isRequired ?? c.is_required).length, icon: 'ri-asterisk', iconBgClass: 'bg-label-warning' ,
+    info: {
+      title: 'Required',
+      description: 'Ringkasan metrik "Required" pada daftar [Id] berdasarkan data statistik API/store.',
+    },
+  },
 ])
 
 async function load() {

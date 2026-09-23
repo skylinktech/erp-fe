@@ -6,131 +6,7 @@
         Komponen penambah/pengurang tagihan sebelum Billing Preparation
       </p>
 
-      <!-- Statistics Cards -->
-      <div class="row g-6 mb-6">
-        <div class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div v-if="loadingStats" class="d-flex align-items-center">
-                <div class="skeleton-loader me-3" style="width:40px;height:40px;border-radius:8px"></div>
-                <div class="flex-grow-1">
-                  <div class="skeleton-loader mb-2" style="width:60%;height:16px"></div>
-                  <div class="skeleton-loader" style="width:40%;height:20px"></div>
-                </div>
-              </div>
-              <template v-else>
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                  <p class="mb-0">Total</p>
-                  <div class="avatar">
-                    <span class="avatar-initial rounded bg-label-primary">
-                      <i class="ri-file-list-3-line"></i>
-                    </span>
-                  </div>
-                </div>
-                <div class="d-flex justify-content-between align-items-end">
-                  <div>
-                    <h5 class="mb-0">{{ statistics.total }}</h5>
-                    <small class="text-muted">Semua adjustment</small>
-                  </div>
-                </div>
-              </template>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div v-if="loadingStats" class="d-flex align-items-center">
-                <div class="skeleton-loader me-3" style="width:40px;height:40px;border-radius:8px"></div>
-                <div class="flex-grow-1">
-                  <div class="skeleton-loader mb-2" style="width:60%;height:16px"></div>
-                  <div class="skeleton-loader" style="width:40%;height:20px"></div>
-                </div>
-              </div>
-              <template v-else>
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                  <p class="mb-0">Draft</p>
-                  <div class="avatar">
-                    <span class="avatar-initial rounded bg-label-secondary">
-                      <i class="ri-draft-line"></i>
-                    </span>
-                  </div>
-                </div>
-                <div class="d-flex justify-content-between align-items-end">
-                  <div>
-                    <h5 class="mb-0">{{ statistics.draft }}</h5>
-                    <small class="text-muted">Menunggu approve</small>
-                  </div>
-                </div>
-              </template>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div v-if="loadingStats" class="d-flex align-items-center">
-                <div class="skeleton-loader me-3" style="width:40px;height:40px;border-radius:8px"></div>
-                <div class="flex-grow-1">
-                  <div class="skeleton-loader mb-2" style="width:60%;height:16px"></div>
-                  <div class="skeleton-loader" style="width:40%;height:20px"></div>
-                </div>
-              </div>
-              <template v-else>
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                  <p class="mb-0">Approved</p>
-                  <div class="avatar">
-                    <span class="avatar-initial rounded bg-label-success">
-                      <i class="ri-checkbox-circle-line"></i>
-                    </span>
-                  </div>
-                </div>
-                <div class="d-flex justify-content-between align-items-end">
-                  <div>
-                    <h5 class="mb-0 text-success">{{ statistics.approved }}</h5>
-                    <small class="text-muted">Siap ke preparation</small>
-                  </div>
-                  <span class="text-success small fw-semibold">
-                    {{ formatRupiah(statistics.approvedAmount) }}
-                  </span>
-                </div>
-              </template>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div v-if="loadingStats" class="d-flex align-items-center">
-                <div class="skeleton-loader me-3" style="width:40px;height:40px;border-radius:8px"></div>
-                <div class="flex-grow-1">
-                  <div class="skeleton-loader mb-2" style="width:60%;height:16px"></div>
-                  <div class="skeleton-loader" style="width:40%;height:20px"></div>
-                </div>
-              </div>
-              <template v-else>
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                  <p class="mb-0">Cancelled</p>
-                  <div class="avatar">
-                    <span class="avatar-initial rounded bg-label-danger">
-                      <i class="ri-close-circle-line"></i>
-                    </span>
-                  </div>
-                </div>
-                <div class="d-flex justify-content-between align-items-end">
-                  <div>
-                    <h5 class="mb-0 text-danger">{{ statistics.cancelled }}</h5>
-                    <small class="text-muted">Dibatalkan</small>
-                  </div>
-                </div>
-              </template>
-            </div>
-          </div>
-        </div>
-      </div>
+            <ListPageStatsCards :items="statItems" :loading="loadingStats" />
 
       <CollapsibleFilterCard
         title="Filter Billing Adjustment"
@@ -365,6 +241,7 @@ import { usePermissions } from '~/composables/usePermissions'
 import { useFormatRupiah, parseRupiahToNumber } from '~/composables/formatRupiah'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import { useImageUrl } from '~/composables/useImageUrl'
+import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
 
 definePageMeta({
   layout: 'default',
@@ -375,8 +252,61 @@ definePageMeta({
 const store = useBillingAdjustmentStore()
 const customerStore = useCustomerStore()
 const { rows, loading, loadingStats, totalRecords, statistics } = storeToRefs(store)
-const { userHasRole, userHasPermission } = usePermissions()
+
 const formatRupiah = useFormatRupiah()
+const statItems = computed(() => [
+  {
+    key: 'total',
+    label: 'Total',
+    value: statistics.value?.total ?? 0,
+    subtitle: 'Semua adjustment',
+    icon: 'ri-file-list-3-line',
+    iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah seluruh Billing Adjustment yang terdaftar dalam sistem, mencakup semua status.',
+    },
+  },
+  {
+    key: 'draft',
+    label: 'Draft',
+    value: statistics.value?.draft ?? 0,
+    subtitle: 'Menunggu approve',
+    icon: 'ri-draft-line',
+    iconBgClass: 'bg-label-secondary',
+    info: {
+      title: 'Draft',
+      description: 'Jumlah Billing Adjustment berstatus Draft yang menunggu persetujuan.',
+    },
+  },
+  {
+    key: 'approved',
+    label: 'Approved',
+    value: statistics.value?.approved ?? 0,
+    subtitle: `Siap ke preparation · ${formatRupiah(statistics.value?.approvedAmount ?? 0)}`,
+    icon: 'ri-checkbox-circle-line',
+    iconBgClass: 'bg-label-success',
+    valueClass: 'text-success',
+    info: {
+      title: 'Approved',
+      description: 'Jumlah Billing Adjustment yang telah disetujui dan siap ke preparation. Subtitle menampilkan total nominal approved dari statistik API.',
+    },
+  },
+  {
+    key: 'cancelled',
+    label: 'Cancelled',
+    value: statistics.value?.cancelled ?? 0,
+    subtitle: 'Dibatalkan',
+    icon: 'ri-close-circle-line',
+    iconBgClass: 'bg-label-danger',
+    valueClass: 'text-danger',
+    info: {
+      title: 'Cancelled',
+      description: 'Jumlah Billing Adjustment yang telah dibatalkan.',
+    },
+  },
+])
+const { userHasRole, userHasPermission } = usePermissions()
 const { setListTitle } = useDynamicTitle()
 const { getAttachmentUrl } = useImageUrl()
 

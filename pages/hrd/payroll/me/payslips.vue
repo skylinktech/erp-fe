@@ -72,9 +72,24 @@ const showingFrom = computed(() => (total.value === 0 ? 0 : (page.value - 1) * p
 const showingTo = computed(() => Math.min(page.value * perPage.value, total.value))
 
 const statItems = computed<ListPageStatItem[]>(() => [
-  { label: 'Payslip', value: stats.value.total, icon: 'ri-file-user-line', iconBgClass: 'bg-label-primary' },
-  { label: 'Pending', value: stats.value.pending, icon: 'ri-time-line', iconBgClass: 'bg-label-warning' },
-  { label: 'Paid', value: stats.value.paid, icon: 'ri-checkbox-circle-line', iconBgClass: 'bg-label-success' },
+  { label: 'Payslip', value: stats.value.total, icon: 'ri-file-user-line', iconBgClass: 'bg-label-primary' ,
+    info: {
+      title: 'Payslip',
+      description: 'Ringkasan metrik "Payslip" pada daftar Payslips berdasarkan data statistik API/store.',
+    },
+  },
+  { label: 'Pending', value: stats.value.pending, icon: 'ri-time-line', iconBgClass: 'bg-label-warning' ,
+    info: {
+      title: 'Pending',
+      description: 'Jumlah dokumen Payslips berstatus Pending yang menunggu proses atau persetujuan.',
+    },
+  },
+  { label: 'Paid', value: stats.value.paid, icon: 'ri-checkbox-circle-line', iconBgClass: 'bg-label-success' ,
+    info: {
+      title: 'Paid',
+      description: 'Jumlah dokumen Payslips yang sudah dibayar.',
+    },
+  },
 ])
 
 async function loadMine() {

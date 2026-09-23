@@ -6,131 +6,7 @@
         Siapkan tagihan dari Service Line + Adjustment. Set Ready untuk generate Finance Invoice.
       </p>
 
-      <!-- Statistics Cards -->
-      <div class="row g-6 mb-6">
-        <div class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div v-if="loadingStats" class="d-flex align-items-center">
-                <div class="skeleton-loader me-3" style="width:40px;height:40px;border-radius:8px"></div>
-                <div class="flex-grow-1">
-                  <div class="skeleton-loader mb-2" style="width:60%;height:16px"></div>
-                  <div class="skeleton-loader" style="width:40%;height:20px"></div>
-                </div>
-              </div>
-              <template v-else>
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                  <p class="mb-0">Total</p>
-                  <div class="avatar">
-                    <span class="avatar-initial rounded bg-label-primary">
-                      <i class="ri-file-list-3-line"></i>
-                    </span>
-                  </div>
-                </div>
-                <div class="d-flex justify-content-between align-items-end">
-                  <div>
-                    <h5 class="mb-0">{{ statistics.total }}</h5>
-                    <small class="text-muted">Semua preparation</small>
-                  </div>
-                </div>
-              </template>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div v-if="loadingStats" class="d-flex align-items-center">
-                <div class="skeleton-loader me-3" style="width:40px;height:40px;border-radius:8px"></div>
-                <div class="flex-grow-1">
-                  <div class="skeleton-loader mb-2" style="width:60%;height:16px"></div>
-                  <div class="skeleton-loader" style="width:40%;height:20px"></div>
-                </div>
-              </div>
-              <template v-else>
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                  <p class="mb-0">Draft</p>
-                  <div class="avatar">
-                    <span class="avatar-initial rounded bg-label-secondary">
-                      <i class="ri-draft-line"></i>
-                    </span>
-                  </div>
-                </div>
-                <div class="d-flex justify-content-between align-items-end">
-                  <div>
-                    <h5 class="mb-0">{{ statistics.draft }}</h5>
-                    <small class="text-muted">Sedang disiapkan</small>
-                  </div>
-                </div>
-              </template>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div v-if="loadingStats" class="d-flex align-items-center">
-                <div class="skeleton-loader me-3" style="width:40px;height:40px;border-radius:8px"></div>
-                <div class="flex-grow-1">
-                  <div class="skeleton-loader mb-2" style="width:60%;height:16px"></div>
-                  <div class="skeleton-loader" style="width:40%;height:20px"></div>
-                </div>
-              </div>
-              <template v-else>
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                  <p class="mb-0">Ready</p>
-                  <div class="avatar">
-                    <span class="avatar-initial rounded bg-label-warning">
-                      <i class="ri-send-plane-line"></i>
-                    </span>
-                  </div>
-                </div>
-                <div class="d-flex justify-content-between align-items-end">
-                  <div>
-                    <h5 class="mb-0 text-warning">{{ statistics.ready }}</h5>
-                    <small class="text-muted">Menunggu invoice</small>
-                  </div>
-                  <span class="text-warning small fw-semibold">
-                    {{ formatRupiah(statistics.readyAmount) }}
-                  </span>
-                </div>
-              </template>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div v-if="loadingStats" class="d-flex align-items-center">
-                <div class="skeleton-loader me-3" style="width:40px;height:40px;border-radius:8px"></div>
-                <div class="flex-grow-1">
-                  <div class="skeleton-loader mb-2" style="width:60%;height:16px"></div>
-                  <div class="skeleton-loader" style="width:40%;height:20px"></div>
-                </div>
-              </div>
-              <template v-else>
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                  <p class="mb-0">Invoiced</p>
-                  <div class="avatar">
-                    <span class="avatar-initial rounded bg-label-success">
-                      <i class="ri-checkbox-circle-line"></i>
-                    </span>
-                  </div>
-                </div>
-                <div class="d-flex justify-content-between align-items-end">
-                  <div>
-                    <h5 class="mb-0 text-success">{{ statistics.invoiced }}</h5>
-                    <small class="text-muted">Sudah diinvoice</small>
-                  </div>
-                </div>
-              </template>
-            </div>
-          </div>
-        </div>
-      </div>
+            <ListPageStatsCards :items="statItems" :loading="loadingStats" />
 
       <CollapsibleFilterCard
         title="Filter Billing Preparation"
@@ -490,6 +366,7 @@ import { usePermissions } from '~/composables/usePermissions'
 import { useFormatRupiah } from '~/composables/formatRupiah'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
+import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
 
 definePageMeta({
   layout: 'default',
@@ -502,6 +379,59 @@ const store = useBillingPreparationStore()
 const taxMasterStore = useTaxMasterStore()
 const customerStore = useCustomerStore()
 const { rows, loading, loadingStats, totalRecords, statistics } = storeToRefs(store)
+const statItems = computed(() => [
+  {
+    key: 'total',
+    label: 'Total',
+    value: statistics.value?.total ?? 0,
+    subtitle: 'Semua preparation',
+    icon: 'ri-file-list-3-line',
+    iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah seluruh Billing Preparation yang terdaftar dalam sistem, mencakup semua status.',
+    },
+  },
+  {
+    key: 'draft',
+    label: 'Draft',
+    value: statistics.value?.draft ?? 0,
+    subtitle: 'Draft',
+    icon: 'ri-draft-line',
+    iconBgClass: 'bg-label-secondary',
+    info: {
+      title: 'Draft',
+      description: 'Jumlah Billing Preparation berstatus Draft yang belum diproses lebih lanjut.',
+    },
+  },
+  {
+    key: 'ready',
+    label: 'Ready',
+    value: statistics.value?.ready ?? 0,
+    subtitle: `Ready · ${formatRupiah(statistics.value?.readyAmount ?? 0)}`,
+    icon: 'ri-timer-line',
+    iconBgClass: 'bg-label-warning',
+    valueClass: 'text-warning',
+    info: {
+      title: 'Ready',
+      description: 'Jumlah Billing Preparation berstatus Ready beserta total nominal ready dari statistik API.',
+    },
+  },
+  {
+    key: 'invoiced',
+    label: 'Invoiced',
+    value: statistics.value?.invoiced ?? 0,
+    subtitle: 'Sudah diinvoice',
+    icon: 'ri-checkbox-circle-line',
+    iconBgClass: 'bg-label-success',
+    valueClass: 'text-success',
+    info: {
+      title: 'Invoiced',
+      description: 'Jumlah Billing Preparation yang sudah menjadi invoice.',
+    },
+  },
+])
+
 const { userHasRole, userHasPermission } = usePermissions()
 const formatRupiah = useFormatRupiah()
 const { setListTitle } = useDynamicTitle()

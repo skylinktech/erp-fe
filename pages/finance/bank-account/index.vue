@@ -7,153 +7,7 @@
                 Kelola rekening bank untuk transaksi keuangan
             </p>
 
-            <!-- Bank Account Statistics Cards -->
-            <div class="row g-6 mb-6">
-                <div class="col-xl-3 col-lg-6 col-md-6" v-if="loading">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="skeleton-loader me-3" style="width: 40px; height: 40px; border-radius: 8px;"></div>
-                                <div class="flex-grow-1">
-                                    <div class="skeleton-loader mb-2" style="width: 60%; height: 16px;"></div>
-                                    <div class="skeleton-loader" style="width: 40%; height: 20px;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6" v-else>
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Total Rekening</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-primary">
-                                        <i class="ri-bank-line"></i>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="bank-heading">
-                                    <h5 class="mb-1">{{ bankAccounts.length }}</h5>
-                                    <span class="text-muted">Rekening Terdaftar</span>
-                                </div>
-                                <a href="javascript:void(0);" class="text-secondary">
-                                    <i class="ri-file-copy-line ri-22px"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6" v-if="loading">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="skeleton-loader me-3" style="width: 40px; height: 40px; border-radius: 8px;"></div>
-                                <div class="flex-grow-1">
-                                    <div class="skeleton-loader mb-2" style="width: 60%; height: 16px;"></div>
-                                    <div class="skeleton-loader" style="width: 40%; height: 20px;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6" v-else>
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Unreconciled</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-success">
-                                        <i class="ri-check-line"></i>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="bank-heading">
-                                    <h5 class="mb-1">{{ totalUnreconciled }}</h5>
-                                    <span class="text-muted">Transaksi belum rekonsiliasi</span>
-                                </div>
-                                <a href="javascript:void(0);" class="text-secondary">
-                                    <i class="ri-file-copy-line ri-22px"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6" v-if="loading">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="skeleton-loader me-3" style="width: 40px; height: 40px; border-radius: 8px;"></div>
-                                <div class="flex-grow-1">
-                                    <div class="skeleton-loader mb-2" style="width: 60%; height: 16px;"></div>
-                                    <div class="skeleton-loader" style="width: 40%; height: 20px;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6" v-else>
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Total Ledger Balance</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-warning">
-                                        <i class="ri-money-dollar-circle-line"></i>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="bank-heading">
-                                    <h5 class="mb-1">{{ formatRupiah(totalLedgerBalance) }}</h5>
-                                    <span class="text-muted">Saldo Ledger</span>
-                                </div>
-                                <a href="javascript:void(0);" class="text-secondary">
-                                    <i class="ri-file-copy-line ri-22px"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6" v-if="loading">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="skeleton-loader me-3" style="width: 40px; height: 40px; border-radius: 8px;"></div>
-                                <div class="flex-grow-1">
-                                    <div class="skeleton-loader mb-2" style="width: 60%; height: 16px;"></div>
-                                    <div class="skeleton-loader" style="width: 40%; height: 20px;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6" v-else>
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Total Saldo Awal</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-info">
-                                        <i class="ri-star-line"></i>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="bank-heading">
-                                    <h5 class="mb-1">{{ formatRupiah(totalOpeningBalance) }}</h5>
-                                    <span class="text-muted">Opening Balance</span>
-                                </div>
-                                <a href="javascript:void(0);" class="text-secondary">
-                                    <i class="ri-file-copy-line ri-22px"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <ListPageStatsCards :items="statItems" :loading="loading" />
 
             <!-- Bank Account Table -->
             <div class="row g-6">
@@ -402,6 +256,7 @@ import Dropdown from 'primevue/dropdown'
 import Column from 'primevue/column'
 import InputText from 'primevue/inputtext'
 import Swal from 'sweetalert2'
+import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
 
 const { setListTitle, setFormTitle } = useDynamicTitle()
 
@@ -479,6 +334,58 @@ const exportData = (format) => {
 const { userHasRole, userHasPermission } = usePermissions();
 
 // Lifecycle
+const statItems = computed(() => [
+  {
+    key: 'total-rekening',
+    label: 'Total Rekening',
+    value: bankAccounts.value.length,
+    subtitle: 'Rekening Terdaftar',
+    icon: 'ri-bank-line',
+    iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah (unit) seluruh rekening bank yang terdaftar dalam sistem.',
+    },
+  },
+  {
+    key: 'unreconciled',
+    label: 'Unreconciled',
+    value: totalUnreconciled.value,
+    subtitle: 'Transaksi belum rekonsiliasi',
+    icon: 'ri-check-line',
+    iconBgClass: 'bg-label-success',
+    info: {
+      title: 'Unreconciled',
+      description: 'Jumlah (transaksi) total transaksi bank yang belum direkonsiliasi (unreconciled) pada seluruh rekening.',
+    },
+  },
+  {
+    key: 'total-ledger-balance',
+    label: 'Total Ledger Balance',
+    value: formatRupiah(totalLedgerBalance.value),
+    subtitle: 'Saldo Ledger',
+    icon: 'ri-money-dollar-circle-line',
+    iconBgClass: 'bg-label-warning',
+    info: {
+      title: 'Total Ledger Balance',
+      description: 'Total nilai uang (Rupiah) saldo ledger (buku besar) dari seluruh rekening bank.',
+    },
+  },
+  {
+    key: 'total-saldo-awal',
+    label: 'Total Saldo Awal',
+    value: formatRupiah(totalOpeningBalance.value),
+    subtitle: 'Opening Balance',
+    icon: 'ri-star-line',
+    iconBgClass: 'bg-label-info',
+    info: {
+      title: 'Total Saldo Awal',
+      description: 'Total nilai uang (Rupiah) saldo awal (opening balance) dari seluruh rekening bank.',
+    },
+  }
+])
+
+
 onMounted(async () => {
     try {
         await permissionStore.fetchPermissions()

@@ -125,10 +125,10 @@ const formatRupiah = useFormatRupiah()
 const { purchaseRequests, loading, totalRecords, params, statistics } = storeToRefs(purchaseRequestStore)
 
 const statItems = computed(() => [
-  { key: 'total', label: 'Total PR', value: statistics.value?.totalPurchaseRequests || 0, icon: 'ri-file-list-3-line', iconBgClass: 'bg-label-primary' },
-  { key: 'draft', label: 'Draft', value: statistics.value?.draftPurchaseRequests || 0, icon: 'ri-draft-line', iconBgClass: 'bg-label-secondary' },
-  { key: 'pending', label: 'Pending', value: statistics.value?.pendingPurchaseRequests || 0, icon: 'ri-time-line', iconBgClass: 'bg-label-warning' },
-  { key: 'approved', label: 'Approved', value: statistics.value?.approvedPurchaseRequests || 0, icon: 'ri-checkbox-circle-line', iconBgClass: 'bg-label-success' },
+  { key: 'total', label: 'Total PR', value: statistics.value?.totalPurchaseRequests || 0, icon: 'ri-file-list-3-line', iconBgClass: 'bg-label-primary', info: { title: 'Jumlah Keseluruhan', description: 'Jumlah seluruh Purchase Request (PR) yang terdaftar dalam sistem, mencakup semua status.' } },
+  { key: 'draft', label: 'Draft', value: statistics.value?.draftPurchaseRequests || 0, icon: 'ri-draft-line', iconBgClass: 'bg-label-secondary', info: { title: 'Draft', description: 'Jumlah Purchase Request berstatus Draft yang belum diajukan untuk approval.' } },
+  { key: 'pending', label: 'Pending', value: statistics.value?.pendingPurchaseRequests || 0, icon: 'ri-time-line', iconBgClass: 'bg-label-warning', info: { title: 'Pending', description: 'Jumlah Purchase Request yang masih menunggu persetujuan.' } },
+  { key: 'approved', label: 'Approved', value: statistics.value?.approvedPurchaseRequests || 0, icon: 'ri-checkbox-circle-line', iconBgClass: 'bg-label-success', info: { title: 'Approved', description: 'Jumlah Purchase Request yang telah disetujui.' } },
 ])
 const tableControls = ref({ rows: 10 })
 const filters = ref({ status: null, priority: null })

@@ -221,38 +221,54 @@ const summaryFromGroups = computed(() => {
 })
 
 const statItems = computed(() => [
-  {
+{
     key: 'total',
     label: 'Total Menu Group',
     value: totalRecords.value || menuGroups.value?.length || 0,
     icon: 'ri-folder-3-line',
     iconBgClass: 'bg-label-primary',
     subtitle: 'Group terdaftar',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah keseluruhan data Menu Group yang terdaftar berdasarkan statistik API.',
+    },
   },
-  {
+{
     key: 'jenis',
     label: 'Jenis Menu',
     value: summaryFromGroups.value.jenisCount,
     icon: 'ri-apps-2-line',
     iconBgClass: 'bg-label-info',
     subtitle: 'Kategori unik',
+    info: {
+      title: 'Jenis Menu',
+      description: 'Ringkasan metrik "Jenis Menu" pada daftar Menu Group berdasarkan data statistik API/store.',
+    },
   },
-  {
+{
     key: 'icon',
     label: 'Dengan Icon',
     value: summaryFromGroups.value.withIcon,
     icon: 'ri-remixicon-line',
     iconBgClass: 'bg-label-success',
     subtitle: 'Sudah punya icon',
+    info: {
+      title: 'Dengan Icon',
+      description: 'Ringkasan metrik "Dengan Icon" pada daftar Menu Group berdasarkan data statistik API/store.',
+    },
   },
-  {
+{
     key: 'page',
     label: 'Ditampilkan',
     value: menuGroups.value?.length || 0,
     icon: 'ri-list-check-2',
     iconBgClass: 'bg-label-warning',
     subtitle: 'Baris halaman ini',
-  },
+    info: {
+      title: 'Ditampilkan',
+      description: 'Ringkasan metrik "Ditampilkan" pada daftar Menu Group berdasarkan data statistik API/store.',
+    },
+  }
 ])
 
 const jenisMenuOptions = [

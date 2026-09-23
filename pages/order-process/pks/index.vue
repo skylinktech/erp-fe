@@ -2,103 +2,61 @@
   <div class="content-wrapper">
     <div class="container-xxl flex-grow-1">
       
-      <p class="mb-6">Daftar PKS yang terdaftar di sistem</p>
+      <p class="mb-6">Daftar PKS Customer dan PKS Vendor yang terdaftar di sistem</p>
 
-      <!-- Statistics Cards -->
-      <div class="row g-6 mb-6">
-        <div class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">Total PKS</p>
-                <div class="avatar">
-                  <span class="avatar-initial rounded bg-label-primary">
-                    <i class="ri-file-list-3-line"></i>
-                  </span>
-                </div>
-              </div>
-              <div class="d-flex justify-content-between align-items-center">
-                <div class="account-heading">
-                  <h5 class="mb-1">{{ statistics?.totalPks || 0 }}</h5>
-                  <span class="text-muted">PKS terdaftar</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">Draft</p>
-                <div class="avatar">
-                  <span class="avatar-initial rounded bg-label-secondary">
-                    <i class="ri-draft-line"></i>
-                  </span>
-                </div>
-              </div>
-              <div class="d-flex justify-content-between align-items-center">
-                <div class="account-heading">
-                  <h5 class="mb-1">{{ statistics?.draftPks || 0 }}</h5>
-                  <span class="text-muted">Draft</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">Signed</p>
-                <div class="avatar">
-                  <span class="avatar-initial rounded bg-label-info">
-                    <i class="ri-file-check-line"></i>
-                  </span>
-                </div>
-              </div>
-              <div class="d-flex justify-content-between align-items-center">
-                <div class="account-heading">
-                  <h5 class="mb-1">{{ statistics?.signedPks || 0 }}</h5>
-                  <span class="text-muted">Signed</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">Active</p>
-                <div class="avatar">
-                  <span class="avatar-initial rounded bg-label-success">
-                    <i class="ri-checkbox-circle-line"></i>
-                  </span>
-                </div>
-              </div>
-              <div class="d-flex justify-content-between align-items-center">
-                <div class="account-heading">
-                  <h5 class="mb-1">{{ statistics?.activePks || 0 }}</h5>
-                  <span class="text-muted">Active</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <ListPageStatsCards :items="statItems" />
 
       <div class="row g-6">
         <div class="col-12">
           <CollapsibleFilterCard title="Filter PKS" :has-active-filters="hasActiveFilters" @reset="resetFilters">
             <FilterFieldsRow>
               <FilterField>
+                <label class="form-label">Tipe PKS</label>
+                <CustomSelect2
+                  v-model="filters.pksType"
+                  :options="pksTypeOptions"
+                  :get-option-label="o => o.label"
+                  :reduce="o => o.value"
+                  searchable
+                  clearable
+                  placeholder="Semua Tipe"
+                />
+              </FilterField>
+              <FilterField>
                 <label class="form-label">Customer</label>
-                <CustomSelect2 v-model="filters.customerId" :options="customers || []" :get-option-label="o => o?.name ?? ''" :reduce="o => o?.id" searchable clearable placeholder="Pilih Customer" />
+                <CustomSelect2
+                  v-model="filters.customerId"
+                  :options="customers || []"
+                  :get-option-label="o => o?.name ?? ''"
+                  :reduce="o => o?.id"
+                  searchable
+                  clearable
+                  placeholder="Pilih Customer"
+                />
+              </FilterField>
+              <FilterField>
+                <label class="form-label">Vendor</label>
+                <CustomSelect2
+                  v-model="filters.vendorId"
+                  :options="vendors || []"
+                  :get-option-label="o => o?.name ?? ''"
+                  :reduce="o => o?.id"
+                  searchable
+                  clearable
+                  placeholder="Pilih Vendor"
+                />
               </FilterField>
               <FilterField>
                 <label class="form-label">Status</label>
-                <CustomSelect2 v-model="filters.status" :options="statusOptions" :get-option-label="o => o.label" :reduce="o => o.value" searchable clearable placeholder="Pilih Status" />
+                <CustomSelect2
+                  v-model="filters.status"
+                  :options="statusOptions"
+                  :get-option-label="o => o.label"
+                  :reduce="o => o.value"
+                  searchable
+                  clearable
+                  placeholder="Pilih Status"
+                />
               </FilterField>
             </FilterFieldsRow>
           </CollapsibleFilterCard>
@@ -128,7 +86,7 @@
                 <span class="p-input-icon-left">
                   <InputText
                     v-model="globalFilterValue"
-                    placeholder="Cari PKS..."
+                    placeholder="Cari No. PKS, Vendor, No. Surat, PO..."
                     class="w-full md:w-20rem"
                   />
                 </span>
@@ -160,22 +118,25 @@
                 </Column>
                 <Column header="Tipe PKS" :sortable="false">
                   <template #body="slotProps">
-                    <span>
-                      {{ slotProps.data.isInternal ? 'Internal' : 'External' }}
+                    <span :class="pksTypeBadge(slotProps.data).class">
+                      {{ pksTypeBadge(slotProps.data).text }}
                     </span>
                   </template>
                 </Column>
-                <Column field="customer.name" header="Customer" :sortable="true" />
+                <Column header="Mitra" :sortable="false">
+                  <template #body="slotProps">
+                    {{ partnerName(slotProps.data) }}
+                  </template>
+                </Column>
+                <Column header="Referensi" :sortable="false">
+                  <template #body="slotProps">
+                    {{ referenceLabel(slotProps.data) }}
+                  </template>
+                </Column>
                 <Column field="status" header="Status" :sortable="true">
                   <template #body="slotProps">
                     <span :class="getStatusBadge(slotProps.data.status).class">{{ getStatusBadge(slotProps.data.status).text }}</span>
                   </template>
-                </Column>
-                <Column field="contractStartDate" header="Contract Start" :sortable="true">
-                  <template #body="slotProps">{{ slotProps.data.contractStartDate || slotProps.data.contract_start_date ? new Date(slotProps.data.contractStartDate || slotProps.data.contract_start_date).toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-' }}</template>
-                </Column>
-                <Column field="contractEndDate" header="Contract End" :sortable="true">
-                  <template #body="slotProps">{{ slotProps.data.contractEndDate || slotProps.data.contract_end_date ? new Date(slotProps.data.contractEndDate || slotProps.data.contract_end_date).toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-' }}</template>
                 </Column>
                 <Column field="createdAt" header="Tanggal" :sortable="true">
                   <template #body="slotProps">{{ slotProps.data.createdAt ? new Date(slotProps.data.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-' }}</template>
@@ -214,8 +175,9 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import { usePksStore } from '~/stores/pks'
+import { usePksStore, resolvePksType } from '~/stores/pks'
 import { useCustomerStore } from '~/stores/customer'
+import { useVendorStore } from '~/stores/vendor'
 import { usePermissions } from '~/composables/usePermissions'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
@@ -224,28 +186,101 @@ import Dropdown from 'primevue/dropdown'
 import InputText from 'primevue/inputtext'
 import { useDebounceFn } from '@vueuse/core'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
+import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
 
 const { setListTitle } = useDynamicTitle()
 const pksStore = usePksStore()
 const customerStore = useCustomerStore()
+const vendorStore = useVendorStore()
 const { userHasPermission, userHasRole } = usePermissions()
 
 const { pksList, loading, totalRecords, params, statistics } = storeToRefs(pksStore)
 const { customers } = storeToRefs(customerStore)
+const { vendors } = storeToRefs(vendorStore)
+
+const statItems = computed(() => [
+  {
+    key: 'total-pks',
+    label: 'Total PKS',
+    value: statistics.value?.totalPks ?? 0,
+    subtitle: 'Semua tipe',
+    icon: 'ri-file-list-3-line',
+    iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah seluruh dokumen PKS Customer dan PKS Vendor yang terdaftar.',
+    },
+  },
+  {
+    key: 'customer-pks',
+    label: 'PKS Customer',
+    value: statistics.value?.customerPks ?? 0,
+    subtitle: 'Berbasis customer',
+    icon: 'ri-user-line',
+    iconBgClass: 'bg-label-info',
+    info: {
+      title: 'PKS Customer',
+      description: 'PKS yang terhubung ke Customer dan Subscription (sebelumnya disebut Internal).',
+    },
+  },
+  {
+    key: 'vendor-pks',
+    label: 'PKS Vendor',
+    value: statistics.value?.vendorPks ?? 0,
+    subtitle: 'Berbasis vendor',
+    icon: 'ri-store-2-line',
+    iconBgClass: 'bg-label-warning',
+    info: {
+      title: 'PKS Vendor',
+      description: 'PKS yang terhubung ke Vendor dan Purchase Order (sebelumnya disebut External).',
+    },
+  },
+  {
+    key: 'draft',
+    label: 'Draft',
+    value: statistics.value?.draftPks ?? 0,
+    subtitle: 'Draft',
+    icon: 'ri-draft-line',
+    iconBgClass: 'bg-label-secondary',
+    info: {
+      title: 'Draft',
+      description: 'Jumlah dokumen PKS berstatus Draft yang belum di-signed.',
+    },
+  },
+  {
+    key: 'signed',
+    label: 'Signed',
+    value: statistics.value?.signedPks ?? 0,
+    subtitle: 'Signed',
+    icon: 'ri-file-check-line',
+    iconBgClass: 'bg-label-success',
+    info: {
+      title: 'Signed',
+      description: 'Jumlah dokumen PKS yang telah ditandatangani.',
+    },
+  },
+])
 
 const tableControls = ref({ rows: 10, search: '' })
-const filters = ref({ search: '', customerId: null, status: null })
+const filters = ref({ search: '', customerId: null, vendorId: null, pksType: null, status: null })
 
 const hasActiveFilters = computed(
-  () => !!filters.value.customerId || !!filters.value.status
+  () => !!filters.value.customerId || !!filters.value.vendorId || !!filters.value.pksType || !!filters.value.status
 )
 
 function resetFilters() {
   filters.value.customerId = null
+  filters.value.vendorId = null
+  filters.value.pksType = null
   filters.value.status = null
 }
 const globalFilterValue = ref('')
 const rowsPerPageOptionsArray = ref([10, 25, 50, 100])
+
+const pksTypeOptions = [
+  { label: 'PKS Customer', value: 'CUSTOMER' },
+  { label: 'PKS Vendor', value: 'VENDOR' },
+]
 
 const statusOptions = [
   { label: 'Draft', value: 'draft' },
@@ -254,6 +289,35 @@ const statusOptions = [
   { label: 'Expired', value: 'expired' },
   { label: 'Terminated', value: 'terminated' },
 ]
+
+function pksTypeBadge(row) {
+  const t = resolvePksType(row)
+  if (t === 'VENDOR') return { text: 'PKS Vendor', class: 'badge rounded-pill bg-label-warning' }
+  return { text: 'PKS Customer', class: 'badge rounded-pill bg-label-info' }
+}
+
+function partnerName(row) {
+  const t = resolvePksType(row)
+  if (t === 'VENDOR') {
+    return row.vendor?.name || '—'
+  }
+  return row.customer?.name || row.customerName || row.customer_name || '—'
+}
+
+function referenceLabel(row) {
+  const t = resolvePksType(row)
+  if (t === 'VENDOR') {
+    const noSurat = row.noSurat || row.no_surat
+    const po = row.purchaseOrder?.noPo || row.purchaseOrder?.no_po || row.purchase_order?.no_po
+    if (noSurat && po) return `${noSurat} · ${po}`
+    return noSurat || po || '—'
+  }
+  const start = row.contractStartDate || row.contract_start_date
+  const end = row.contractEndDate || row.contract_end_date
+  if (!start && !end) return '—'
+  const fmt = (d) => d ? new Date(d).toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'
+  return `${fmt(start)} – ${fmt(end)}`
+}
 
 function getStatusBadge(status) {
   if (!status) return { text: '-', class: 'badge rounded-pill bg-label-light' }
@@ -280,12 +344,21 @@ const debouncedSearch = useDebounceFn(() => {
   pksStore.setSearch(globalFilterValue.value)
 }, 500)
 watch(globalFilterValue, debouncedSearch)
-watch(filters, (f) => { pksStore.setFilters({ customerId: f.customerId, status: f.status, search: f.search }) }, { deep: true })
+watch(filters, (f) => {
+  pksStore.setFilters({
+    customerId: f.customerId,
+    vendorId: f.vendorId,
+    pksType: f.pksType,
+    status: f.status,
+    search: f.search,
+  })
+}, { deep: true })
 
 onMounted(() => {
   pksStore.fetchPks()
   pksStore.fetchStatistics()
   customerStore.fetchCustomers()
+  vendorStore.fetchVendors?.(true)
   setListTitle('PKS', pksList.value?.length ?? 0)
   tableControls.value.rows = Number(params.value.rows) || 10
   globalFilterValue.value = params.value.search || ''

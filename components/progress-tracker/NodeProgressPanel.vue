@@ -225,7 +225,7 @@ async function submitStatus() {
     )
     statusNotes.value = ''
     pendingFiles.value = []
-    if (fileInput.value) fileInput.value.value = ''
+    if (fileInput.value) fileInput.value = ''
     emit('updated')
   } catch (e: any) {
     await Swal.fire({

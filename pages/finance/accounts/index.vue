@@ -7,153 +7,8 @@
                 Kelola Chart of Accounts (COA) untuk sistem akuntansi
             </p>
 
-            <!-- Account Statistics Cards -->
-            <div class="row g-6 mb-6">
-                <div class="col-xl-3 col-lg-6 col-md-6" v-if="loading">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="skeleton-loader me-3" style="width: 40px; height: 40px; border-radius: 8px;"></div>
-                                <div class="flex-grow-1">
-                                    <div class="skeleton-loader mb-2" style="width: 60%; height: 16px;"></div>
-                                    <div class="skeleton-loader" style="width: 40%; height: 20px;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6" v-else>
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Total Akun</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-primary">
-                                        <i class="ri-bank-card-line"></i>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="account-heading">
-                                    <h5 class="mb-1">{{ totalAccountsCount }}</h5>
-                                    <span class="text-muted">Akun Aktif</span>
-                                </div>
-                                <a href="javascript:void(0);" class="text-secondary">
-                                    <i class="ri-file-copy-line ri-22px"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6" v-if="loading">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="skeleton-loader me-3" style="width: 40px; height: 40px; border-radius: 8px;"></div>
-                                <div class="flex-grow-1">
-                                    <div class="skeleton-loader mb-2" style="width: 60%; height: 16px;"></div>
-                                    <div class="skeleton-loader" style="width: 40%; height: 20px;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6" v-else>
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Asset</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-success">
-                                        <i class="ri-money-dollar-circle-line"></i>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="account-heading">
-                                    <h5 class="mb-1">{{ assetCount }}</h5>
-                                    <span class="text-muted">Akun Asset</span>
-                                </div>
-                                <a href="javascript:void(0);" class="text-secondary">
-                                    <i class="ri-file-copy-line ri-22px"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6" v-if="loading">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="skeleton-loader me-3" style="width: 40px; height: 40px; border-radius: 8px;"></div>
-                                <div class="flex-grow-1">
-                                    <div class="skeleton-loader mb-2" style="width: 60%; height: 16px;"></div>
-                                    <div class="skeleton-loader" style="width: 40%; height: 20px;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6" v-else>
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Liability</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-warning">
-                                        <i class="ri-exchange-funds-line"></i>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="account-heading">
-                                    <h5 class="mb-1">{{ liabilityCount }}</h5>
-                                    <span class="text-muted">Akun Liability</span>
-                                </div>
-                                <a href="javascript:void(0);" class="text-secondary">
-                                    <i class="ri-file-copy-line ri-22px"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6" v-if="loading">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="skeleton-loader me-3" style="width: 40px; height: 40px; border-radius: 8px;"></div>
-                                <div class="flex-grow-1">
-                                    <div class="skeleton-loader mb-2" style="width: 60%; height: 16px;"></div>
-                                    <div class="skeleton-loader" style="width: 40%; height: 20px;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-lg-6 col-md-6" v-else>
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Equity</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-info">
-                                        <i class="ri-user-star-line"></i>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="account-heading">
-                                    <h5 class="mb-1">{{ equityCount }}</h5>
-                                    <span class="text-muted">Akun Equity</span>
-                                </div>
-                                <a href="javascript:void(0);" class="text-secondary">
-                                    <i class="ri-file-copy-line ri-22px"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <ListPageStatsCards :items="statItems" :loading="loading" />
+
             
             <div class="row g-6">
                 <div class="col-12">
@@ -425,6 +280,7 @@ import InputText from 'primevue/inputtext'
 import DataTable from 'primevue/datatable'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import ExpandedRowContent from '~/components/table/ExpandedRowContent.vue'
+import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
 
 const { setListTitle, setFormTitle } = useDynamicTitle()
 
@@ -633,6 +489,58 @@ const exportData = (format) => {
 const { userHasRole, userHasPermission } = usePermissions()
 
 // Lifecycle
+const statItems = computed(() => [
+  {
+    key: 'total-akun',
+    label: 'Total Akun',
+    value: totalAccountsCount.value,
+    subtitle: 'Akun Aktif',
+    icon: 'ri-bank-card-line',
+    iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah seluruh akun (Chart of Accounts) yang terdaftar dalam sistem, mencakup semua kategori akun.',
+    },
+  },
+  {
+    key: 'asset',
+    label: 'Asset',
+    value: assetCount.value,
+    subtitle: 'Akun Asset',
+    icon: 'ri-money-dollar-circle-line',
+    iconBgClass: 'bg-label-success',
+    info: {
+      title: 'Akun Asset',
+      description: 'Jumlah akun dengan kategori Asset (aktiva) pada Chart of Accounts.',
+    },
+  },
+  {
+    key: 'liability',
+    label: 'Liability',
+    value: liabilityCount.value,
+    subtitle: 'Akun Liability',
+    icon: 'ri-exchange-funds-line',
+    iconBgClass: 'bg-label-warning',
+    info: {
+      title: 'Akun Liability',
+      description: 'Jumlah akun dengan kategori Liability (kewajiban) pada Chart of Accounts.',
+    },
+  },
+  {
+    key: 'equity',
+    label: 'Equity',
+    value: equityCount.value,
+    subtitle: 'Akun Equity',
+    icon: 'ri-user-star-line',
+    iconBgClass: 'bg-label-info',
+    info: {
+      title: 'Akun Equity',
+      description: 'Jumlah akun dengan kategori Equity (ekuitas) pada Chart of Accounts.',
+    },
+  }
+])
+
+
 onMounted(async () => {
     try {
         await permissionStore.fetchPermissions()

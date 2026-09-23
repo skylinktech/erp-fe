@@ -198,6 +198,10 @@ const statItems = computed(() => [
     value: summary.value.total ?? totalRecords.value,
     icon: 'ri-delete-bin-line',
     iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah keseluruhan data Equipmentscraptab yang terdaftar dalam sistem berdasarkan statistik API.',
+    },
   },
   {
     key: 'requested',
@@ -205,6 +209,10 @@ const statItems = computed(() => [
     value: summaryCount('REQUESTED'),
     icon: 'ri-time-line',
     iconBgClass: 'bg-label-warning',
+    info: {
+      title: 'Requested',
+      description: 'Ringkasan metrik "Requested" pada daftar Equipmentscraptab berdasarkan data statistik API/store.',
+    },
   },
   {
     key: 'approved',
@@ -212,6 +220,10 @@ const statItems = computed(() => [
     value: summaryCount('APPROVED'),
     icon: 'ri-checkbox-circle-line',
     iconBgClass: 'bg-label-info',
+    info: {
+      title: 'Approved',
+      description: 'Jumlah dokumen Equipmentscraptab yang telah disetujui.',
+    },
   },
   {
     key: 'executed',
@@ -219,6 +231,10 @@ const statItems = computed(() => [
     value: summaryCount('EXECUTED'),
     icon: 'ri-close-circle-line',
     iconBgClass: 'bg-label-danger',
+    info: {
+      title: 'Executed',
+      description: 'Ringkasan metrik "Executed" pada daftar Equipmentscraptab berdasarkan data statistik API/store.',
+    },
   },
 ])
 

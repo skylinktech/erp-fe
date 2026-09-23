@@ -117,10 +117,10 @@ const displayRows = computed(() => {
 const statItems = computed<ListPageStatItem[]>(() => {
   const s = store.payslipStats || {}
   return [
-    { label: 'Total', value: s.total ?? 0, icon: 'ri-file-text-line', iconBgClass: 'bg-label-primary' },
-    { label: 'Pending', value: s.pending ?? 0, icon: 'ri-time-line', iconBgClass: 'bg-label-warning' },
-    { label: 'Paid', value: s.paid ?? 0, icon: 'ri-checkbox-circle-line', iconBgClass: 'bg-label-success' },
-    { label: 'Failed', value: s.failed ?? 0, icon: 'ri-error-warning-line', iconBgClass: 'bg-label-danger' },
+    { label: 'Total', value: s.total ?? 0, icon: 'ri-file-text-line', iconBgClass: 'bg-label-primary', info: { title: 'Jumlah Keseluruhan', description: 'Jumlah seluruh payslip pada ringkasan statistik payroll.' } },
+    { label: 'Pending', value: s.pending ?? 0, icon: 'ri-time-line', iconBgClass: 'bg-label-warning', info: { title: 'Pending', description: 'Jumlah payslip berstatus Pending yang menunggu pembayaran.' } },
+    { label: 'Paid', value: s.paid ?? 0, icon: 'ri-checkbox-circle-line', iconBgClass: 'bg-label-success', info: { title: 'Paid', description: 'Jumlah payslip yang sudah dibayar.' } },
+    { label: 'Failed', value: s.failed ?? 0, icon: 'ri-error-warning-line', iconBgClass: 'bg-label-danger', info: { title: 'Failed', description: 'Jumlah payslip dengan status Failed pada proses pembayaran.' } },
   ]
 })
 

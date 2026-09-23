@@ -10,26 +10,7 @@
         Kelola master entity type untuk approval workflow. Tambah entity baru tanpa perlu ubah kode aplikasi.
       </p>
 
-      <div class="row g-6 mb-6">
-        <div v-for="card in statCards" :key="card.label" class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card h-100">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">{{ card.label }}</p>
-                <div class="avatar">
-                  <span :class="['avatar-initial rounded', card.iconClass]">
-                    <i :class="card.icon"></i>
-                  </span>
-                </div>
-              </div>
-              <div class="account-heading">
-                <h5 class="mb-1">{{ card.value }}</h5>
-                <span class="text-muted small">{{ card.subtitle }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <ListPageStatsCards :items="statItems" />
 
       <div class="row g-6">
         <div class="col-12">
@@ -277,6 +258,7 @@
 <script setup lang="ts">
 import { useDebounceFn } from '@vueuse/core'
 import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
+import ListPageStatsCards, { type ListPageStatItem } from '~/components/list/ListPageStatsCards.vue'
 
 definePageMeta({
   title: "Approval Workflow Entities",
@@ -303,34 +285,54 @@ function resetFilters() {
   reload()
 }
 
-const statCards = computed(() => [
+const statItems = computed<ListPageStatItem[]>(() => [
   {
+    key: 'total',
     label: 'Total Entity',
-    value: stats.value.total || 0,
+    value: stats.value.total ?? 0,
     subtitle: 'Entity terdaftar',
     icon: 'ri-node-tree',
-    iconClass: 'bg-label-primary',
+    iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Total Entity',
+      description: 'Jumlah seluruh entity type yang terdaftar untuk approval workflow, baik aktif maupun nonaktif.',
+    },
   },
   {
+    key: 'aktif',
     label: 'Aktif',
-    value: stats.value.aktif || 0,
+    value: stats.value.aktif ?? 0,
     subtitle: 'Entity aktif',
     icon: 'ri-checkbox-circle-line',
-    iconClass: 'bg-label-success',
+    iconBgClass: 'bg-label-success',
+    info: {
+      title: 'Aktif',
+      description: 'Jumlah entity type yang aktif dan dapat dikaitkan dengan workflow approval.',
+    },
   },
   {
+    key: 'nonaktif',
     label: 'Nonaktif',
-    value: stats.value.nonaktif || 0,
+    value: stats.value.nonaktif ?? 0,
     subtitle: 'Entity nonaktif',
     icon: 'ri-close-circle-line',
-    iconClass: 'bg-label-secondary',
+    iconBgClass: 'bg-label-secondary',
+    info: {
+      title: 'Nonaktif',
+      description: 'Jumlah entity type yang dinonaktifkan sehingga tidak dapat dipilih pada workflow baru.',
+    },
   },
   {
+    key: 'modules',
     label: 'Modul',
-    value: stats.value.modules || 0,
+    value: stats.value.modules ?? 0,
     subtitle: 'Grup modul unik',
     icon: 'ri-apps-line',
-    iconClass: 'bg-label-info',
+    iconBgClass: 'bg-label-info',
+    info: {
+      title: 'Modul',
+      description: 'Jumlah grup modul unik (misalnya procurement, sales, hr) yang menaungi entity type ini.',
+    },
   },
 ])
 

@@ -227,10 +227,30 @@ function resetFilters() {
 const statItems = computed<ListPageStatItem[]>(() => {
   const list = rows.value
   return [
-    { label: 'Total', value: list.length, icon: 'ri-user-settings-line', iconBgClass: 'bg-label-primary' },
-    { label: 'Eligible', value: list.filter((r) => r.payrollEligible ?? r.payroll_eligible).length, icon: 'ri-user-follow-line', iconBgClass: 'bg-label-success' },
-    { label: 'GROSS', value: list.filter((r) => String(r.taxMethod || r.tax_method) === 'GROSS').length, icon: 'ri-percent-line', iconBgClass: 'bg-label-info' },
-    { label: 'NET / GROSS_UP', value: list.filter((r) => ['NET', 'GROSS_UP'].includes(String(r.taxMethod || r.tax_method))).length, icon: 'ri-exchange-line', iconBgClass: 'bg-label-warning' },
+    { label: 'Total', value: list.length, icon: 'ri-user-settings-line', iconBgClass: 'bg-label-primary' ,
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah keseluruhan data Profiles yang terdaftar dalam sistem berdasarkan statistik API.',
+    },
+  },
+    { label: 'Eligible', value: list.filter((r) => r.payrollEligible ?? r.payroll_eligible).length, icon: 'ri-user-follow-line', iconBgClass: 'bg-label-success' ,
+    info: {
+      title: 'Eligible',
+      description: 'Ringkasan metrik "Eligible" pada daftar Profiles berdasarkan data statistik API/store.',
+    },
+  },
+    { label: 'GROSS', value: list.filter((r) => String(r.taxMethod || r.tax_method) === 'GROSS').length, icon: 'ri-percent-line', iconBgClass: 'bg-label-info' ,
+    info: {
+      title: 'GROSS',
+      description: 'Ringkasan metrik "GROSS" pada daftar Profiles berdasarkan data statistik API/store.',
+    },
+  },
+    { label: 'NET / GROSS_UP', value: list.filter((r) => ['NET', 'GROSS_UP'].includes(String(r.taxMethod || r.tax_method))).length, icon: 'ri-exchange-line', iconBgClass: 'bg-label-warning' ,
+    info: {
+      title: 'NET / GROSS_UP',
+      description: 'Ringkasan metrik "NET / GROSS_UP" pada daftar Profiles berdasarkan data statistik API/store.',
+    },
+  },
   ]
 })
 

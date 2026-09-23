@@ -1,55 +1,7 @@
 <template>
 <div>
-                        <div class="row g-6 mb-6">
-                <div v-if="stats.total !== undefined" class="col-xl-4 col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Total Stock In</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-primary"><i class="ri-inbox-archive-line"></i></span>
-                                </div>
-                            </div>
-                            <div class="account-heading">
-                                <h5 class="mb-1">{{ stats.total }}</h5>
-                                <span class="text-muted">Stock in terdaftar</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div v-if="stats.draft !== undefined" class="col-xl-4 col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Draft</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-secondary"><i class="ri-draft-line"></i></span>
-                                </div>
-                            </div>
-                            <div class="account-heading">
-                                <h5 class="mb-1">{{ stats.draft }}</h5>
-                                <span class="text-muted">Stock in draft</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div v-if="stats.posted !== undefined" class="col-xl-4 col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Posted</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-success"><i class="ri-checkbox-circle-line"></i></span>
-                                </div>
-                            </div>
-                            <div class="account-heading">
-                                <h5 class="mb-1">{{ stats.posted }}</h5>
-                                <span class="text-muted">Stock in posted</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                        <ListPageStatsCards :items="statItems" />
+
             <div class="row g-6">
                 <div class="col-12">
                                         <div class="card">
@@ -225,6 +177,7 @@ import { usePermissions } from '~/composables/usePermissions'
 import { usePermissionsStore } from '~/stores/permissions'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import { toastApiError } from '~/utils/apiError'
+import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
 
 // Composables
 const { setListTitle, setFormTitle } = useDynamicTitle()
@@ -239,6 +192,46 @@ const stockInStore              = useStockStore()
 const warehouseStore            = useWarehouseStore()
 const { stockIns, totalRecords, stats, params } = storeToRefs(stockInStore)
 const { warehouse: warehouses } = storeToRefs(warehouseStore)
+
+const statItems = computed(() => [
+  {
+    key: 'total-stock-in',
+    label: 'Total Stock In',
+    value: stats.value.total,
+    subtitle: 'Stock in terdaftar',
+    icon: 'ri-inbox-archive-line',
+    iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah keseluruhan data Stock In yang terdaftar dalam sistem berdasarkan statistik API.',
+    },
+  },
+  {
+    key: 'draft',
+    label: 'Draft',
+    value: stats.value.draft,
+    subtitle: 'Stock in draft',
+    icon: 'ri-draft-line',
+    iconBgClass: 'bg-label-secondary',
+    info: {
+      title: 'Draft',
+      description: 'Jumlah dokumen Stock In berstatus Draft yang belum diproses lebih lanjut.',
+    },
+  },
+  {
+    key: 'posted',
+    label: 'Posted',
+    value: stats.value.posted,
+    subtitle: 'Stock in posted',
+    icon: 'ri-checkbox-circle-line',
+    iconBgClass: 'bg-label-success',
+    info: {
+      title: 'Posted',
+      description: 'Ringkasan metrik "Posted" pada daftar Stock In berdasarkan data statistik yang disediakan API/store.',
+    },
+  }
+])
+
 const loading                   = ref(false);
 const globalFilterValue         = ref('');
 const router                    = useRouter()

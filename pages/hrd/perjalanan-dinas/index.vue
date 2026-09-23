@@ -4,26 +4,7 @@
       
       <p class="mb-6">Ajukan dan kelola perjalanan dinas pegawai (SPPD) dengan workflow approval.</p>
 
-      <div class="row g-6 mb-6">
-        <div v-for="card in statCards" :key="card.label" class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card h-100">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">{{ card.label }}</p>
-                <div class="avatar">
-                  <span :class="['avatar-initial rounded', card.iconClass]">
-                    <i :class="card.icon"></i>
-                  </span>
-                </div>
-              </div>
-              <div class="account-heading">
-                <h5 class="mb-1">{{ card.value }}</h5>
-                <span class="text-muted small">{{ card.subtitle }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <ListPageStatsCards :items="statCards" />
 
       <div v-if="!loading && !workflowConfigured" class="alert alert-warning mb-4">
         Approval workflow entitas <code>perjalanan_dinas</code> belum dikonfigurasi.
@@ -156,6 +137,7 @@ import Column from 'primevue/column'
 import Menu from 'primevue/menu'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
+import ListPageStatsCards, { type ListPageStatItem } from '~/components/list/ListPageStatsCards.vue'
 import { usePerjalananDinasStore, type PerjalananDinasRow } from '~/stores/perjalanan-dinas'
 import { usePermissions } from '~/composables/usePermissions'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
@@ -189,34 +171,54 @@ const activeRow = ref<PerjalananDinasRow | null>(null)
 
 setListTitle('Perjalanan Dinas', 0)
 
-const statCards = computed(() => [
+const statCards = computed<ListPageStatItem[]>(() => [
   {
+    key: 'total-pengajuan',
     label: 'Total Pengajuan',
-    value: stats.value.total || 0,
+    value: stats.value.total ?? 0,
     subtitle: 'SPPD tahun ini',
     icon: 'ri-file-list-3-line',
-    iconClass: 'bg-label-primary',
+    iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Total Pengajuan',
+      description: 'Jumlah keseluruhan pengajuan SPPD (Perjalanan Dinas) tahun ini, mencakup semua status.',
+    },
   },
   {
+    key: 'disetujui',
     label: 'Disetujui',
-    value: stats.value.approved || 0,
+    value: stats.value.approved ?? 0,
     subtitle: 'Perjalanan dinas disetujui',
     icon: 'ri-checkbox-circle-line',
-    iconClass: 'bg-label-success',
+    iconBgClass: 'bg-label-success',
+    info: {
+      title: 'Disetujui',
+      description: 'Jumlah dokumen Perjalanan Dinas yang telah disetujui melalui approval workflow.',
+    },
   },
   {
+    key: 'menunggu',
     label: 'Menunggu',
-    value: stats.value.menunggu || 0,
+    value: stats.value.menunggu ?? 0,
     subtitle: 'Menunggu approval',
     icon: 'ri-time-line',
-    iconClass: 'bg-label-warning',
+    iconBgClass: 'bg-label-warning',
+    info: {
+      title: 'Menunggu',
+      description: 'Jumlah dokumen Perjalanan Dinas yang masih menunggu proses approval.',
+    },
   },
   {
+    key: 'total-biaya-disetujui',
     label: 'Total Biaya Disetujui',
     value: formatRupiah(stats.value.total_biaya_disetujui),
     subtitle: 'Nilai SPPD disetujui',
     icon: 'ri-money-dollar-circle-line',
-    iconClass: 'bg-label-info',
+    iconBgClass: 'bg-label-info',
+    info: {
+      title: 'Total Biaya Disetujui',
+      description: 'Total nilai uang (nominal) SPPD yang telah disetujui, bukan jumlah dokumen.',
+    },
   },
 ])
 

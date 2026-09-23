@@ -9,30 +9,7 @@
         <NuxtLink to="/admin/approval-workflows">Atur di Approval Workflows</NuxtLink>.
       </div>
 
-      <div class="row g-6 mb-6">
-        <div
-          v-for="card in summaryCards"
-          :key="card.key"
-          class="col-xl col-lg-6 col-md-6"
-        >
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">{{ card.label }}</p>
-                <div class="avatar">
-                  <span class="avatar-initial rounded" :class="card.avatarClass">
-                    <i :class="card.icon"></i>
-                  </span>
-                </div>
-              </div>
-              <div class="account-heading">
-                <h5 class="mb-1">{{ card.value }}</h5>
-                <span class="text-muted">{{ card.caption }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <ListPageStatsCards :items="summaryCards" />
 
       <CollapsibleFilterCard
         title="Filter Progress Tracker"
@@ -196,6 +173,7 @@ import {
   getProjectApprovalStatus,
 } from '~/constants/implementation/progressTrackerStatuses'
 import Swal from 'sweetalert2'
+import ListPageStatsCards, { type ListPageStatItem } from '~/components/list/ListPageStatsCards.vue'
 
 definePageMeta({
   layout: 'default',
@@ -248,46 +226,66 @@ const canDelete = computed(
   () => userHasRole('superadmin') || userHasPermission('delete_progress_tracker')
 )
 
-const summaryCards = computed(() => [
+const summaryCards = computed<ListPageStatItem[]>(() => [
   {
     key: 'total',
     label: 'Total Project',
     value: statistics.value.totalProjects ?? 0,
-    caption: 'Semua project',
+    subtitle: 'Semua project',
     icon: 'ri-route-line',
-    avatarClass: 'bg-label-primary',
+    iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah seluruh project Progress Tracker yang terdaftar dalam sistem, mencakup semua status.',
+    },
   },
   {
     key: 'active',
     label: 'Active',
     value: statistics.value.activeProjects ?? 0,
-    caption: 'Sedang berjalan',
+    subtitle: 'Sedang berjalan',
     icon: 'ri-play-circle-line',
-    avatarClass: 'bg-label-success',
+    iconBgClass: 'bg-label-success',
+    info: {
+      title: 'Active',
+      description: 'Jumlah project Progress Tracker yang sedang berjalan (active).',
+    },
   },
   {
     key: 'completed',
     label: 'Completed',
     value: statistics.value.completedProjects ?? 0,
-    caption: 'Selesai',
+    subtitle: 'Selesai',
     icon: 'ri-checkbox-circle-line',
-    avatarClass: 'bg-label-info',
+    iconBgClass: 'bg-label-info',
+    info: {
+      title: 'Completed',
+      description: 'Jumlah project Progress Tracker yang sudah selesai (completed).',
+    },
   },
   {
     key: 'on_hold',
     label: 'On Hold',
     value: statistics.value.onHoldProjects ?? 0,
-    caption: 'Ditahan',
+    subtitle: 'Ditahan',
     icon: 'ri-pause-circle-line',
-    avatarClass: 'bg-label-warning',
+    iconBgClass: 'bg-label-warning',
+    info: {
+      title: 'On Hold',
+      description: 'Jumlah project Progress Tracker yang ditahan (on hold).',
+    },
   },
   {
     key: 'cancelled',
     label: 'Cancelled',
     value: statistics.value.cancelledProjects ?? 0,
-    caption: 'Dibatalkan',
+    subtitle: 'Dibatalkan',
     icon: 'ri-close-circle-line',
-    avatarClass: 'bg-label-danger',
+    iconBgClass: 'bg-label-danger',
+    info: {
+      title: 'Cancelled',
+      description: 'Jumlah project Progress Tracker yang telah dibatalkan.',
+    },
   },
 ])
 

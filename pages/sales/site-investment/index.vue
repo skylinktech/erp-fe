@@ -315,12 +315,12 @@ function formatSiDate(value) {
 const { siteInvests, loading, totalRecords, params, stats } = storeToRefs(siteInvestStore)
 
 const statItems = computed(() => [
-    { key: 'total', label: 'Total Site Investment', value: stats.value.total || 0, icon: 'ri-building-line', iconBgClass: 'bg-label-primary', subtitle: 'Site Investment terdaftar' },
-    { key: 'draft', label: 'Draft', value: stats.value.draft || 0, icon: 'ri-draft-line', iconBgClass: 'bg-label-secondary', subtitle: 'Draft' },
-    { key: 'pending', label: 'Pending', value: stats.value.pending || 0, icon: 'ri-time-line', iconBgClass: 'bg-label-warning', subtitle: 'Pending' },
-    { key: 'approved', label: 'Approved', value: stats.value.approved || 0, icon: 'ri-checkbox-circle-line', iconBgClass: 'bg-label-success', subtitle: 'Approved' },
-    { key: 'rejected', label: 'Rejected', value: stats.value.rejected || 0, icon: 'ri-close-circle-line', iconBgClass: 'bg-label-danger', subtitle: 'Rejected' },
-    { key: 'expired', label: 'Expired', value: stats.value.expired || 0, icon: 'ri-pass-expired-line', iconBgClass: 'bg-label-secondary', subtitle: 'Expired' },
+    { key: 'total', label: 'Total Site Investment', value: stats.value.total || 0, icon: 'ri-building-line', iconBgClass: 'bg-label-primary', subtitle: 'Site Investment terdaftar', info: { title: 'Jumlah Keseluruhan', description: 'Jumlah seluruh dokumen Site Investment yang terdaftar dalam sistem, mencakup semua status.' } },
+    { key: 'draft', label: 'Draft', value: stats.value.draft || 0, icon: 'ri-draft-line', iconBgClass: 'bg-label-secondary', subtitle: 'Draft', info: { title: 'Draft', description: 'Jumlah dokumen Site Investment berstatus Draft yang belum diajukan untuk approval.' } },
+    { key: 'pending', label: 'Pending', value: stats.value.pending || 0, icon: 'ri-time-line', iconBgClass: 'bg-label-warning', subtitle: 'Pending', info: { title: 'Pending', description: 'Jumlah dokumen Site Investment yang masih menunggu persetujuan.' } },
+    { key: 'approved', label: 'Approved', value: stats.value.approved || 0, icon: 'ri-checkbox-circle-line', iconBgClass: 'bg-label-success', subtitle: 'Approved', info: { title: 'Approved', description: 'Jumlah dokumen Site Investment yang telah disetujui.' } },
+    { key: 'rejected', label: 'Rejected', value: stats.value.rejected || 0, icon: 'ri-close-circle-line', iconBgClass: 'bg-label-danger', subtitle: 'Rejected', info: { title: 'Rejected', description: 'Jumlah dokumen Site Investment yang ditolak.' } },
+    { key: 'expired', label: 'Expired', value: stats.value.expired || 0, icon: 'ri-pass-expired-line', iconBgClass: 'bg-label-secondary', subtitle: 'Expired', info: { title: 'Expired', description: 'Jumlah dokumen Site Investment yang sudah melewati masa berlakunya.' } },
 ])
 const { customerSelectOptions } = storeToRefs(customerStore)
 

@@ -176,10 +176,30 @@ function resetFilters() {
 const statItems = computed<ListPageStatItem[]>(() => {
   const list = rows.value
   return [
-    { label: 'Total', value: list.length, icon: 'ri-percent-line', iconBgClass: 'bg-label-primary' },
-    { label: 'GROSS', value: list.filter((r) => String(r.taxMethod || r.tax_method) === 'GROSS').length, icon: 'ri-funds-line', iconBgClass: 'bg-label-info' },
-    { label: 'NET', value: list.filter((r) => String(r.taxMethod || r.tax_method) === 'NET').length, icon: 'ri-wallet-3-line', iconBgClass: 'bg-label-success' },
-    { label: 'GROSS_UP', value: list.filter((r) => String(r.taxMethod || r.tax_method) === 'GROSS_UP').length, icon: 'ri-arrow-up-circle-line', iconBgClass: 'bg-label-warning' },
+    { label: 'Total', value: list.length, icon: 'ri-percent-line', iconBgClass: 'bg-label-primary' ,
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah keseluruhan data Tax Profiles yang terdaftar dalam sistem berdasarkan statistik API.',
+    },
+  },
+    { label: 'GROSS', value: list.filter((r) => String(r.taxMethod || r.tax_method) === 'GROSS').length, icon: 'ri-funds-line', iconBgClass: 'bg-label-info' ,
+    info: {
+      title: 'GROSS',
+      description: 'Ringkasan metrik "GROSS" pada daftar Tax Profiles berdasarkan data statistik API/store.',
+    },
+  },
+    { label: 'NET', value: list.filter((r) => String(r.taxMethod || r.tax_method) === 'NET').length, icon: 'ri-wallet-3-line', iconBgClass: 'bg-label-success' ,
+    info: {
+      title: 'NET',
+      description: 'Ringkasan metrik "NET" pada daftar Tax Profiles berdasarkan data statistik API/store.',
+    },
+  },
+    { label: 'GROSS_UP', value: list.filter((r) => String(r.taxMethod || r.tax_method) === 'GROSS_UP').length, icon: 'ri-arrow-up-circle-line', iconBgClass: 'bg-label-warning' ,
+    info: {
+      title: 'GROSS_UP',
+      description: 'Ringkasan metrik "GROSS_UP" pada daftar Tax Profiles berdasarkan data statistik API/store.',
+    },
+  },
   ]
 })
 

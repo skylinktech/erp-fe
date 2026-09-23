@@ -6,88 +6,8 @@
             <p class="mb-6">
             List jabatan yang terdaftar di sistem
             </p>
-            <div class="row g-6 mb-6">
-                <div v-if="stats.total !== undefined" class="col-xl col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Total Jabatan</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-primary"><i class="ri-briefcase-line"></i></span>
-                                </div>
-                            </div>
-                            <div class="account-heading">
-                                <h5 class="mb-1">{{ stats.total }}</h5>
-                                <span class="text-muted">Jabatan terdaftar</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div v-if="stats.direktur_utama !== undefined" class="col-xl col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Direktur Utama</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-success"><i class="ri-user-star-line"></i></span>
-                                </div>
-                            </div>
-                            <div class="account-heading">
-                                <h5 class="mb-1">{{ stats.direktur_utama }}</h5>
-                                <span class="text-muted">Pegawai</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div v-if="stats.direktur_keuangan !== undefined" class="col-xl col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Direktur Keuangan</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-info"><i class="ri-funds-line"></i></span>
-                                </div>
-                            </div>
-                            <div class="account-heading">
-                                <h5 class="mb-1">{{ stats.direktur_keuangan }}</h5>
-                                <span class="text-muted">Pegawai</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div v-if="stats.direktur_operasional !== undefined" class="col-xl col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Direktur Operasional</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-warning"><i class="ri-settings-3-line"></i></span>
-                                </div>
-                            </div>
-                            <div class="account-heading">
-                                <h5 class="mb-1">{{ stats.direktur_operasional }}</h5>
-                                <span class="text-muted">Pegawai</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div v-if="stats.general_manager !== undefined" class="col-xl col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">General Manager</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-secondary"><i class="ri-team-line"></i></span>
-                                </div>
-                            </div>
-                            <div class="account-heading">
-                                <h5 class="mb-1">{{ stats.general_manager }}</h5>
-                                <span class="text-muted">Pegawai</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <ListPageStatsCards :items="statItems" />
+
             <div class="row g-6">
                 <div class="col-12">
                     <h4 class="mt-6 mb-1">Data Jabatan</h4>
@@ -242,6 +162,7 @@ import Menu from 'primevue/menu'
 import { useDebounceFn } from '@vueuse/core'
 import { useUserStore } from '~/stores/user'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
+import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
 import {
   JABATAN_LEVEL_OPTIONS,
   getJabatanLevelBadgeClass,
@@ -258,6 +179,70 @@ const userStore = useUserStore()
 const { userHasPermission, userHasRole } = usePermissions();
 
 const { jabatans, loading, stats, totalRecords, params, form, isEditMode, showModal, validationErrors } = storeToRefs(jabatanStore)
+
+const statItems = computed(() => [
+  {
+    key: 'total-jabatan',
+    label: 'Total Jabatan',
+    value: stats.value.total,
+    subtitle: 'Jabatan terdaftar',
+    icon: 'ri-briefcase-line',
+    iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah keseluruhan data Jabatan yang terdaftar dalam sistem berdasarkan statistik API.',
+    },
+  },
+  {
+    key: 'direktur-utama',
+    label: 'Direktur Utama',
+    value: stats.value.direktur_utama,
+    subtitle: 'Pegawai',
+    icon: 'ri-user-star-line',
+    iconBgClass: 'bg-label-success',
+    info: {
+      title: 'Direktur Utama',
+      description: 'Ringkasan metrik "Direktur Utama" pada daftar Jabatan berdasarkan data statistik yang disediakan API/store.',
+    },
+  },
+  {
+    key: 'direktur-keuangan',
+    label: 'Direktur Keuangan',
+    value: stats.value.direktur_keuangan,
+    subtitle: 'Pegawai',
+    icon: 'ri-funds-line',
+    iconBgClass: 'bg-label-info',
+    info: {
+      title: 'Direktur Keuangan',
+      description: 'Ringkasan metrik "Direktur Keuangan" pada daftar Jabatan berdasarkan data statistik yang disediakan API/store.',
+    },
+  },
+  {
+    key: 'direktur-operasional',
+    label: 'Direktur Operasional',
+    value: stats.value.direktur_operasional,
+    subtitle: 'Pegawai',
+    icon: 'ri-settings-3-line',
+    iconBgClass: 'bg-label-warning',
+    info: {
+      title: 'Direktur Operasional',
+      description: 'Ringkasan metrik "Direktur Operasional" pada daftar Jabatan berdasarkan data statistik yang disediakan API/store.',
+    },
+  },
+  {
+    key: 'general-manager',
+    label: 'General Manager',
+    value: stats.value.general_manager,
+    subtitle: 'Pegawai',
+    icon: 'ri-team-line',
+    iconBgClass: 'bg-label-secondary',
+    info: {
+      title: 'General Manager',
+      description: 'Ringkasan metrik "General Manager" pada daftar Jabatan berdasarkan data statistik yang disediakan API/store.',
+    },
+  }
+])
+
 
 const globalFilterValue = ref('')
 const rowsPerPageOptionsArray = ref([10, 25, 50, 100]);

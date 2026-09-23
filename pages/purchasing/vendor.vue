@@ -224,10 +224,10 @@ const globalFilterValue = ref('')
 const rowsPerPageOptionsArray = ref([10, 25, 50, 100])
 
 const statItems = computed(() => [
-  { key: 'total', label: 'Total', value: statistics.value.total, icon: 'ri-store-2-line', iconBgClass: 'bg-label-primary', subtitle: 'Semua vendor' },
-  { key: 'withEmail', label: 'Dengan Email', value: statistics.value.withEmail, icon: 'ri-mail-line', iconBgClass: 'bg-label-info' },
-  { key: 'withNpwp', label: 'NPWP', value: statistics.value.withNpwp, icon: 'ri-file-text-line', iconBgClass: 'bg-label-success', valueClass: 'text-success' },
-  { key: 'withPhone', label: 'Phone', value: statistics.value.withPhone, icon: 'ri-phone-line', iconBgClass: 'bg-label-warning' },
+  { key: 'total', label: 'Total', value: statistics.value.total, icon: 'ri-store-2-line', iconBgClass: 'bg-label-primary', subtitle: 'Semua vendor', info: { title: 'Jumlah Keseluruhan', description: 'Jumlah seluruh vendor yang terdaftar dalam sistem.' } },
+  { key: 'withEmail', label: 'Dengan Email', value: statistics.value.withEmail, icon: 'ri-mail-line', iconBgClass: 'bg-label-info', info: { title: 'Dengan Email', description: 'Jumlah vendor yang sudah memiliki data email terisi.' } },
+  { key: 'withNpwp', label: 'NPWP', value: statistics.value.withNpwp, icon: 'ri-file-text-line', iconBgClass: 'bg-label-success', valueClass: 'text-success', info: { title: 'NPWP', description: 'Jumlah vendor yang sudah memiliki data NPWP terisi.' } },
+  { key: 'withPhone', label: 'Phone', value: statistics.value.withPhone, icon: 'ri-phone-line', iconBgClass: 'bg-label-warning', info: { title: 'Phone', description: 'Jumlah vendor yang sudah memiliki data nomor telepon terisi.' } },
 ])
 
 const modalTitle = computed(() => isEditMode.value ? 'Edit Vendor' : 'Tambah Vendor')

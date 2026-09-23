@@ -1,71 +1,7 @@
 <template>
 <div>
-                        <div class="row g-6 mb-6">
-                <div v-if="stats.total !== undefined" class="col-xl-3 col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Total</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-primary"><i class="ri-exchange-line"></i></span>
-                                </div>
-                            </div>
-                            <div class="account-heading">
-                                <h5 class="mb-1">{{ stats.total }}</h5>
-                                <span class="text-muted">Stock transfer</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div v-if="stats.draft !== undefined" class="col-xl-3 col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Draft</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-secondary"><i class="ri-draft-line"></i></span>
-                                </div>
-                            </div>
-                            <div class="account-heading">
-                                <h5 class="mb-1">{{ stats.draft }}</h5>
-                                <span class="text-muted">Draft</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div v-if="stats.approved !== undefined" class="col-xl-3 col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Approved</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-success"><i class="ri-checkbox-circle-line"></i></span>
-                                </div>
-                            </div>
-                            <div class="account-heading">
-                                <h5 class="mb-1">{{ stats.approved }}</h5>
-                                <span class="text-muted">Approved</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div v-if="stats.rejected !== undefined" class="col-xl-3 col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Rejected</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-danger"><i class="ri-close-circle-line"></i></span>
-                                </div>
-                            </div>
-                            <div class="account-heading">
-                                <h5 class="mb-1">{{ stats.rejected }}</h5>
-                                <span class="text-muted">Rejected</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                        <ListPageStatsCards :items="statItems" />
+
             <div class="row g-6">
                 <div class="col-12">
                                         <div class="card">
@@ -403,6 +339,7 @@ import { usePermissionsStore } from '~/stores/permissions'
 import { usePermissions } from '~/composables/usePermissions'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import { normalizeApiError, toastNormalizedError } from '~/utils/apiError'
+import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
 
 // Composables
 const { setListTitle, setFormTitle } = useDynamicTitle()
@@ -419,6 +356,58 @@ const cabangStore           = useCabangStore()
 const { userHasPermission, userHasRole } = usePermissions();
 const { stockTransfers, totalRecords, stats, params, form, isEditMode, showModal, validationErrors, productsInWarehouse, isLoadingEditData } = storeToRefs(stockTransferStore)
 const { warehouseList: warehouses } = storeToRefs(warehouseStore)
+
+const statItems = computed(() => [
+  {
+    key: 'total',
+    label: 'Total',
+    value: stats.value.total,
+    subtitle: 'Stock transfer',
+    icon: 'ri-exchange-line',
+    iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah keseluruhan data Stock Transfer yang terdaftar dalam sistem berdasarkan statistik API.',
+    },
+  },
+  {
+    key: 'draft',
+    label: 'Draft',
+    value: stats.value.draft,
+    subtitle: 'Draft',
+    icon: 'ri-draft-line',
+    iconBgClass: 'bg-label-secondary',
+    info: {
+      title: 'Draft',
+      description: 'Jumlah dokumen Stock Transfer berstatus Draft yang belum diproses lebih lanjut.',
+    },
+  },
+  {
+    key: 'approved',
+    label: 'Approved',
+    value: stats.value.approved,
+    subtitle: 'Approved',
+    icon: 'ri-checkbox-circle-line',
+    iconBgClass: 'bg-label-success',
+    info: {
+      title: 'Approved',
+      description: 'Jumlah dokumen Stock Transfer yang telah disetujui.',
+    },
+  },
+  {
+    key: 'rejected',
+    label: 'Rejected',
+    value: stats.value.rejected,
+    subtitle: 'Rejected',
+    icon: 'ri-close-circle-line',
+    iconBgClass: 'bg-label-danger',
+    info: {
+      title: 'Rejected',
+      description: 'Jumlah dokumen Stock Transfer yang ditolak.',
+    },
+  }
+])
+
 const { perusahaans }       = storeToRefs(perusahaanStore)
 const { cabangs }           = storeToRefs(cabangStore)
 const selectedStockTransfer = ref(null);

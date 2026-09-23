@@ -181,10 +181,30 @@ const postedRunOptions = computed(() =>
 const statItems = computed<ListPageStatItem[]>(() => {
   const s = store.paymentStats || {}
   return [
-    { label: 'Total', value: s.total ?? 0, icon: 'ri-bank-card-line', iconBgClass: 'bg-label-primary' },
-    { label: 'Ready', value: s.ready ?? 0, icon: 'ri-time-line', iconBgClass: 'bg-label-info' },
-    { label: 'Partial', value: s.partiallyPaid ?? 0, icon: 'ri-error-warning-line', iconBgClass: 'bg-label-warning' },
-    { label: 'Paid', value: s.paid ?? 0, icon: 'ri-checkbox-circle-line', iconBgClass: 'bg-label-success' },
+    { label: 'Total', value: s.total ?? 0, icon: 'ri-bank-card-line', iconBgClass: 'bg-label-primary' ,
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah keseluruhan data Payments yang terdaftar dalam sistem berdasarkan statistik API.',
+    },
+  },
+    { label: 'Ready', value: s.ready ?? 0, icon: 'ri-time-line', iconBgClass: 'bg-label-info' ,
+    info: {
+      title: 'Ready',
+      description: 'Ringkasan metrik "Ready" pada daftar Payments berdasarkan data statistik API/store.',
+    },
+  },
+    { label: 'Partial', value: s.partiallyPaid ?? 0, icon: 'ri-error-warning-line', iconBgClass: 'bg-label-warning' ,
+    info: {
+      title: 'Partial',
+      description: 'Jumlah dokumen Payments berstatus Partial.',
+    },
+  },
+    { label: 'Paid', value: s.paid ?? 0, icon: 'ri-checkbox-circle-line', iconBgClass: 'bg-label-success' ,
+    info: {
+      title: 'Paid',
+      description: 'Jumlah dokumen Payments yang sudah dibayar.',
+    },
+  },
   ]
 })
 

@@ -176,14 +176,14 @@ const hasActiveFilters = computed(
 const kpiCards = computed(() => {
   const s = statistics.value
   return [
-    { key: 'total', label: 'Total', value: s.total, icon: 'ri-file-list-3-line', bg: 'bg-label-primary' },
-    { key: 'draft', label: 'Draft', value: s.draft, icon: 'ri-draft-line', bg: 'bg-label-secondary' },
-    { key: 'submitted', label: 'Waiting Approval', value: s.submitted, icon: 'ri-time-line', bg: 'bg-label-warning' },
-    { key: 'scheduled', label: 'Scheduled', value: s.scheduled, icon: 'ri-calendar-line', bg: 'bg-label-info' },
-    { key: 'in_progress', label: 'In Progress', value: s.in_progress, icon: 'ri-play-circle-line', bg: 'bg-label-primary' },
-    { key: 'blocked', label: 'Blocked', value: s.blocked, icon: 'ri-forbid-line', bg: 'bg-label-danger' },
-    { key: 'completed', label: 'Completed', value: s.completed, icon: 'ri-checkbox-circle-line', bg: 'bg-label-success' },
-    { key: 'recovery', label: 'Equipment Pending Return*', value: '—', icon: 'ri-tools-line', bg: 'bg-label-warning' },
+    { key: 'total', label: 'Total', value: s.total, icon: 'ri-file-list-3-line', bg: 'bg-label-primary', infoTitle: 'Jumlah Keseluruhan', infoDescription: 'Jumlah seluruh Request Dismantle yang terdaftar dalam sistem, mencakup semua status.' },
+    { key: 'draft', label: 'Draft', value: s.draft, icon: 'ri-draft-line', bg: 'bg-label-secondary', infoTitle: 'Draft', infoDescription: 'Jumlah Request Dismantle berstatus Draft yang belum diajukan untuk approval.' },
+    { key: 'submitted', label: 'Waiting Approval', value: s.submitted, icon: 'ri-time-line', bg: 'bg-label-warning', infoTitle: 'Waiting Approval', infoDescription: 'Jumlah Request Dismantle yang masih menunggu persetujuan.' },
+    { key: 'scheduled', label: 'Scheduled', value: s.scheduled, icon: 'ri-calendar-line', bg: 'bg-label-info', infoTitle: 'Scheduled', infoDescription: 'Jumlah Request Dismantle yang sudah disetujui dan dijadwalkan untuk dieksekusi.' },
+    { key: 'in_progress', label: 'In Progress', value: s.in_progress, icon: 'ri-play-circle-line', bg: 'bg-label-primary', infoTitle: 'In Progress', infoDescription: 'Jumlah Request Dismantle yang sedang berjalan proses dismantle-nya.' },
+    { key: 'blocked', label: 'Blocked', value: s.blocked, icon: 'ri-forbid-line', bg: 'bg-label-danger', infoTitle: 'Blocked', infoDescription: 'Jumlah Request Dismantle yang terblokir/tertahan dan belum bisa dilanjutkan.' },
+    { key: 'completed', label: 'Completed', value: s.completed, icon: 'ri-checkbox-circle-line', bg: 'bg-label-success', infoTitle: 'Completed', infoDescription: 'Jumlah Request Dismantle yang telah selesai dieksekusi.' },
+    { key: 'recovery', label: 'Equipment Pending Return*', value: '—', icon: 'ri-tools-line', bg: 'bg-label-warning', infoTitle: 'Equipment Pending Return', infoDescription: 'Perangkat hasil dismantle yang belum dikembalikan/direkonsiliasi ke gudang.' },
   ]
 })
 
@@ -194,6 +194,7 @@ const statItems = computed(() =>
     value: k.value,
     icon: k.icon,
     iconBgClass: k.bg,
+    info: { title: k.infoTitle, description: k.infoDescription },
   }))
 )
 

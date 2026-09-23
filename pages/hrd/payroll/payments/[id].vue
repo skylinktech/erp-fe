@@ -64,10 +64,30 @@ const paidCount = computed(() => items.value.filter((i) => i.status === 'PAID').
 const failedCount = computed(() => items.value.filter((i) => i.status === 'FAILED').length)
 const exportUrl = computed(() => $api.payrollPaymentExport(String(route.params.id)))
 const statItems = computed<ListPageStatItem[]>(() => [
-  { label: 'Items', value: batch.value?.totalItems ?? items.value.length, icon: 'ri-group-line', iconBgClass: 'bg-label-primary' },
-  { label: 'Amount', value: money(batch.value?.totalAmount), icon: 'ri-money-dollar-circle-line', iconBgClass: 'bg-label-info' },
-  { label: 'Paid', value: paidCount.value, icon: 'ri-checkbox-circle-line', iconBgClass: 'bg-label-success' },
-  { label: 'Failed', value: failedCount.value, icon: 'ri-error-warning-line', iconBgClass: 'bg-label-danger', subtitle: formatDate(batch.value?.paymentDate) },
+{ label: 'Items', value: batch.value?.totalItems ?? items.value.length, icon: 'ri-group-line', iconBgClass: 'bg-label-primary' ,
+    info: {
+      title: 'Items',
+      description: 'Ringkasan metrik "Items" pada daftar [Id] berdasarkan data statistik API/store.',
+    },
+  },
+{ label: 'Amount', value: money(batch.value?.totalAmount), icon: 'ri-money-dollar-circle-line', iconBgClass: 'bg-label-info' ,
+    info: {
+      title: 'Amount',
+      description: 'Ringkasan metrik "Amount" pada daftar [Id] berdasarkan data statistik API/store.',
+    },
+  },
+{ label: 'Paid', value: paidCount.value, icon: 'ri-checkbox-circle-line', iconBgClass: 'bg-label-success' ,
+    info: {
+      title: 'Paid',
+      description: 'Ringkasan metrik "Paid" pada daftar [Id] berdasarkan data statistik API/store.',
+    },
+  },
+{ label: 'Failed', value: failedCount.value, icon: 'ri-error-warning-line', iconBgClass: 'bg-label-danger', subtitle: formatDate(batch.value?.paymentDate) ,
+    info: {
+      title: 'Failed',
+      description: 'Ringkasan metrik "Failed" pada daftar [Id] berdasarkan data statistik API/store.',
+    },
+  }
 ])
 
 async function process() {

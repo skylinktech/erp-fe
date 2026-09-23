@@ -34,7 +34,7 @@
                     </ul>
                   </div>
 
-                  <!-- Internal / External mode -->
+                  <!-- PKS Customer / PKS Vendor (mutually exclusive radios) -->
                   <div class="row mb-4">
                     <div class="col">
                       <FormLabel required label-class="form-label text-muted mb-2 px-5">Tipe PKS</FormLabel>
@@ -43,33 +43,37 @@
                         <div class="form-check mb-0 px-12">
                           <input
                             class="form-check-input"
-                            type="checkbox"
-                            id="pks-mode-internal"
-                            :checked="form.isInternal"
-                            @change="onInternalModeChange"
+                            type="radio"
+                            name="pksType"
+                            id="pks-mode-customer"
+                            value="CUSTOMER"
+                            :checked="form.pksType === 'CUSTOMER' || form.isInternal"
+                            @change="onPksTypeChange('CUSTOMER')"
                           />
-                          <label class="form-check-label" for="pks-mode-internal">
-                            Internal
+                          <label class="form-check-label" for="pks-mode-customer">
+                            PKS Customer
                           </label>
                         </div>
 
                         <div class="form-check mb-0 px-12">
                           <input
                             class="form-check-input"
-                            type="checkbox"
-                            id="pks-mode-external"
-                            :checked="form.isExternal"
-                            @change="onExternalModeChange"
+                            type="radio"
+                            name="pksType"
+                            id="pks-mode-vendor"
+                            value="VENDOR"
+                            :checked="form.pksType === 'VENDOR' || form.isExternal"
+                            @change="onPksTypeChange('VENDOR')"
                           />
-                          <label class="form-check-label" for="pks-mode-external">
-                            External
+                          <label class="form-check-label" for="pks-mode-vendor">
+                            PKS Vendor
                           </label>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  <div v-if="form.isInternal">
+                  <div v-if="isCustomerPks">
                     <div class="row">
                     <div class="col">
                       <TabbedFormNav
@@ -271,11 +275,63 @@
                           :options="purchaseOrders || []"
                           :get-option-label="purchaseOrderSelectLabel"
                           :reduce="(po: any) => po?.id"
-                          placeholder="Pilih Purchase Order"
+                          placeholder="Pilih Purchase Order (external)"
                           searchable
                           clearable
                           @select="onPurchaseOrderSelected"
                         />
+                      </div>
+                      <div class="col-12">
+                        <label class="form-label text-muted">Description</label>
+                        <textarea v-model="form.description" class="form-control" rows="3" placeholder="Description"></textarea>
+                      </div>
+                    </div>
+
+                    <hr class="my-4">
+                    <div class="px-5">
+                      <div class="alert alert-info mb-4">
+                        <i class="ri-information-line me-2"></i>
+                        <strong>Info:</strong> Documents bersifat <strong>opsional</strong> untuk PKS Vendor.
+                      </div>
+                      <div v-for="(doc, index) in form.pksDocuments" :key="'vendor-doc-' + index" class="repeater-item mb-4">
+                        <div class="row g-3">
+                          <div class="col-md-4">
+                            <label class="form-label text-muted">Document Type</label>
+                            <CustomSelect2
+                              v-model="doc.docType"
+                              :options="docTypeOptions"
+                              :get-option-label="o => o.label"
+                              :reduce="o => o.value"
+                              placeholder="Pilih Document Type"
+                              searchable
+                              clearable
+                            />
+                          </div>
+                          <div class="col-md-6">
+                            <label class="form-label text-muted">Attachment</label>
+                            <input
+                              type="file"
+                              class="form-control"
+                              accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx,.csv"
+                              @change="onDocumentChange($event, index)"
+                            >
+                          </div>
+                          <div class="col-md-2 d-flex align-items-end">
+                            <button
+                              v-if="form.pksDocuments.length > 1"
+                              type="button"
+                              class="btn btn-outline-danger w-100"
+                              @click.prevent="pksStore.removeDocument(index)"
+                            >
+                              <i class="ri-delete-bin-line me-1"></i> Hapus
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="mt-2">
+                        <button type="button" class="btn btn-primary" @click.prevent="pksStore.addDocument()">
+                          <i class="ri-add-line me-1"></i> Tambah Document
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -333,7 +389,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import { usePksStore } from '~/stores/pks'
+import { usePksStore, type PksType } from '~/stores/pks'
 import { useCustomerStore } from '~/stores/customer'
 import { useVendorStore } from '~/stores/vendor'
 import { usePurchaseOrderStore } from '~/stores/purchaseOrder'
@@ -343,6 +399,7 @@ import TabbedFormActions from '~/components/form/TabbedFormActions.vue'
 import FormLabel from '~/components/form/FormLabel.vue'
 import { useTabbedFormNavigation } from '~/composables/useTabbedFormNavigation'
 import { useImageUrl } from '~/composables/useImageUrl'
+import Swal from 'sweetalert2'
 
 const route = useRoute()
 const pksStore = usePksStore()
@@ -358,8 +415,11 @@ const { isImageFile } = useImageUrl()
 const subscriptionsSigned = ref<any[]>([])
 const loadError = ref<string | null>(null)
 const formRoot = ref<HTMLFormElement | null>(null)
+
+const isCustomerPks = computed(() => (form.value?.pksType || (form.value?.isInternal ? 'CUSTOMER' : 'VENDOR')) === 'CUSTOMER')
+
 const formSteps = computed(() => {
-  if (!form.value?.isInternal) return []
+  if (!isCustomerPks.value) return []
   return [
     { id: 'pks-form-tabs-info', label: 'Informasi', icon: 'ri-information-line' },
     { id: 'pks-form-tabs-subscriptions', label: 'Subscriptions', icon: 'ri-file-list-3-line' },
@@ -451,7 +511,7 @@ function purchaseOrderSelectLabel(po: any) {
 }
 
 async function fetchExternalOptions() {
-  if (!form.value?.isExternal) return
+  if (isCustomerPks.value) return
 
   // Increase page size so the currently selected values are present in combobox.
   vendorStore.params.first = 0
@@ -474,7 +534,7 @@ async function fetchExternalOptions() {
 
 async function onVendorChange(vendorId: any) {
   form.value.vendorId = vendorId ?? null
-  if (!form.value?.isExternal) return
+  if (isCustomerPks.value) return
 
   purchaseOrderStore.params.poType = 'external'
   purchaseOrderStore.params.vendorId = vendorId ? Number(vendorId) : null
@@ -497,27 +557,75 @@ function onPurchaseOrderSelected(po: any) {
   }
 }
 
-function onInternalModeChange() {
-  form.value.isInternal = true
-  form.value.isExternal = false
-  // Clear external-only fields
-  form.value.noSurat = ''
-  form.value.vendorId = null
-  form.value.nominal = null
-  form.value.purchaseOrderId = null
+function hasTypeSpecificData(from: PksType): boolean {
+  if (from === 'CUSTOMER') {
+    return !!(
+      form.value.customerId ||
+      form.value.contractStartDate ||
+      form.value.contractEndDate ||
+      (form.value.pksSubscriptions || []).some((s) => !!s.subscriptionId) ||
+      (form.value.pksDocuments || []).some((d) => !!d.attachment)
+    )
+  }
+  return !!(
+    form.value.noSurat ||
+    form.value.vendorId ||
+    form.value.nominal ||
+    form.value.purchaseOrderId ||
+    (form.value.pksDocuments || []).some((d) => !!d.attachment)
+  )
 }
 
-function onExternalModeChange() {
-  form.value.isInternal = false
-  form.value.isExternal = true
-  // Clear internal-only fields
-  form.value.customerId = null
-  form.value.customerName = ''
-  form.value.contractStartDate = null
-  form.value.contractEndDate = null
-  form.value.pksSubscriptions = []
-  // Preload options for external selects
-  void fetchExternalOptions()
+function clearFieldsForType(target: PksType) {
+  if (target === 'CUSTOMER') {
+    form.value.noSurat = ''
+    form.value.vendorId = null
+    form.value.nominal = null
+    form.value.purchaseOrderId = null
+  } else {
+    form.value.customerId = null
+    form.value.customerName = ''
+    form.value.contractStartDate = null
+    form.value.contractEndDate = null
+    form.value.signingLocation = ''
+    form.value.signingDate = null
+    form.value.custPic = ''
+    form.value.sitePic = ''
+    form.value.custPicNoTlp = ''
+    form.value.sitePicNoTlp = ''
+    form.value.pksSubscriptions = []
+  }
+}
+
+async function onPksTypeChange(next: PksType) {
+  const current: PksType = form.value.pksType || (form.value.isInternal ? 'CUSTOMER' : 'VENDOR')
+  if (current === next) return
+
+  if (hasTypeSpecificData(current)) {
+    const labelFrom = current === 'CUSTOMER' ? 'PKS Customer' : 'PKS Vendor'
+    const labelTo = next === 'CUSTOMER' ? 'PKS Customer' : 'PKS Vendor'
+    const result = await Swal.fire({
+      title: 'Ganti tipe PKS?',
+      html: `Data khusus <strong>${labelFrom}</strong> akan dihapus saat beralih ke <strong>${labelTo}</strong>. Lanjutkan?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#008fec',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Ya, ganti tipe',
+      cancelButtonText: 'Batal',
+    })
+    if (!result.isConfirmed) {
+      // Force radio to stay on current type
+      pksStore.setPksType(current)
+      return
+    }
+  }
+
+  clearFieldsForType(next)
+  pksStore.setPksType(next)
+  if (next === 'VENDOR') {
+    void fetchExternalOptions()
+  }
 }
 
 function toYmd(d: any) {
@@ -530,7 +638,7 @@ function toYmd(d: any) {
 }
 
 async function onCustomerChange(customerId: number | null) {
-  if (!form.value?.isInternal) return
+  if (!isCustomerPks.value) return
   if (!customerId) {
     form.value.customerName = ''
     subscriptionsSigned.value = []
@@ -621,13 +729,11 @@ async function loadForm() {
     pksStore.openModal(null, { noModal: true })
   }
   await nextTick()
-  if (form.value?.isInternal) {
+  if (isCustomerPks.value) {
     await fetchSubscriptionsSigned()
   } else {
     subscriptionsSigned.value = []
-    if (form.value?.isExternal) {
-      await fetchExternalOptions()
-    }
+    await fetchExternalOptions()
   }
 }
 
@@ -654,10 +760,12 @@ onMounted(() => {
 })
 
 watch(
-  () => form.value?.isInternal,
-  async (isInternal) => {
-    if (isInternal && form.value?.customerId) {
+  () => form.value?.pksType ?? (form.value?.isInternal ? 'CUSTOMER' : 'VENDOR'),
+  async (pksType) => {
+    if (pksType === 'CUSTOMER' && form.value?.customerId) {
       await fetchSubscriptionsSigned()
+    } else if (pksType === 'CUSTOMER') {
+      subscriptionsSigned.value = []
     } else {
       subscriptionsSigned.value = []
     }

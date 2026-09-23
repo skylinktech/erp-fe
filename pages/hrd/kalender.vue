@@ -19,71 +19,7 @@
         </button>
       </div>
 
-      <div class="row g-4 mb-4">
-        <div class="col-md-3">
-          <div class="card h-100">
-            <div class="card-body d-flex align-items-center gap-3">
-              <span class="avatar avatar-md">
-                <span class="avatar-initial rounded bg-label-danger">
-                  <i class="ri-flag-line"></i>
-                </span>
-              </span>
-              <div>
-                <h5 class="mb-0">{{ stats.liburNasional }}</h5>
-                <small class="text-muted">Libur nasional (bulan ini)</small>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card h-100">
-            <div class="card-body d-flex align-items-center gap-3">
-              <span class="avatar avatar-md">
-                <span class="avatar-initial rounded bg-label-primary">
-                  <i class="ri-calendar-event-line"></i>
-                </span>
-              </span>
-              <div>
-                <h5 class="mb-0">{{ stats.eventPerusahaan }}</h5>
-                <small class="text-muted">Event perusahaan (bulan ini)</small>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card h-100">
-            <div class="card-body d-flex align-items-center gap-3">
-              <span class="avatar avatar-md">
-                <span class="avatar-initial rounded bg-label-warning">
-                  <i class="ri-team-line"></i>
-                </span>
-              </span>
-              <div>
-                <h5 class="mb-0">{{ stats.cutiBersama }}</h5>
-                <small class="text-muted">Cuti bersama (bulan ini)</small>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card h-100">
-            <div class="card-body">
-              <p class="mb-2 small fw-medium">Legenda</p>
-              <div class="d-flex flex-column gap-2 small">
-                <span class="d-inline-flex align-items-center gap-1">
-                  <span class="legend-dot bg-danger"></span> Libur Nasional
-                </span>
-                <span class="d-inline-flex align-items-center gap-1">
-                  <span class="legend-dot bg-primary"></span> Event Perusahaan
-                </span>
-                <span class="d-inline-flex align-items-center gap-1">
-                  <span class="legend-dot bg-warning"></span> Cuti Bersama
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+            <ListPageStatsCards :items="statItems" columns-class="col-md-4" />
 
       <div class="card">
         <div class="card-body position-relative">
@@ -257,6 +193,7 @@ import HrCalendarView from '~/components/hrd/HrCalendarView.vue'
 import { useHrCalendarStore } from '~/stores/hr-calendar'
 import { usePermissions } from '~/composables/usePermissions'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
+import ListPageStatsCards, { type ListPageStatItem } from '~/components/list/ListPageStatsCards.vue'
 import {
   HR_CALENDAR_TIPE_CUTI_BERSAMA,
   HR_CALENDAR_TIPE_EVENT,
@@ -385,6 +322,45 @@ async function handleDelete() {
   if (!store.form.id || !canDelete.value) return
   await store.deleteEvent(store.form.id)
 }
+
+const statItems = computed<ListPageStatItem[]>(() => [
+  {
+    key: 'libur-nasional',
+    label: 'Libur nasional',
+    value: stats.value?.liburNasional ?? 0,
+    subtitle: 'Libur nasional (bulan ini)',
+    icon: 'ri-flag-line',
+    iconBgClass: 'bg-label-danger',
+    info: {
+      title: 'Libur nasional',
+      description: 'Jumlah hari libur nasional pada bulan yang sedang ditampilkan di kalender.',
+    },
+  },
+  {
+    key: 'event-perusahaan',
+    label: 'Event perusahaan',
+    value: stats.value?.eventPerusahaan ?? 0,
+    subtitle: 'Event perusahaan (bulan ini)',
+    icon: 'ri-calendar-event-line',
+    iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Event perusahaan',
+      description: 'Jumlah event perusahaan pada bulan yang sedang ditampilkan di kalender.',
+    },
+  },
+  {
+    key: 'cuti-bersama',
+    label: 'Cuti bersama',
+    value: stats.value?.cutiBersama ?? 0,
+    subtitle: 'Cuti bersama (bulan ini)',
+    icon: 'ri-team-line',
+    iconBgClass: 'bg-label-warning',
+    info: {
+      title: 'Cuti bersama',
+      description: 'Jumlah hari cuti bersama pada bulan yang sedang ditampilkan di kalender.',
+    },
+  },
+])
 
 onMounted(() => {
   setListTitle('Kalender HR')

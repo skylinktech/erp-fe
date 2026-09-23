@@ -336,10 +336,52 @@ const {
 } = useTabbedFormNavigation({ steps: formSteps, formRoot })
 
 const statItems = computed(() => [
-  { key: 'total', label: 'Total DID', value: statistics.value.total, icon: 'ri-list-check-2', iconBgClass: 'bg-label-primary', subtitle: 'Semua DID' },
-  { key: 'withServices', label: 'Dengan Service', value: statistics.value.withServices, icon: 'ri-service-line', iconBgClass: 'bg-label-info' },
-  { key: 'provinces', label: 'Provinsi', value: statistics.value.provinces, icon: 'ri-map-pin-line', iconBgClass: 'bg-label-success', valueClass: 'text-success' },
-  { key: 'linkedServices', label: 'Linked Services', value: statistics.value.linkedServices, icon: 'ri-links-line', iconBgClass: 'bg-label-warning' },
+  {
+    key: 'total',
+    label: 'Total DID',
+    value: statistics.value.total,
+    icon: 'ri-list-check-2',
+    iconBgClass: 'bg-label-primary',
+    subtitle: 'Semua DID',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah seluruh DID yang terdaftar dalam sistem berdasarkan statistik API.',
+    },
+  },
+  {
+    key: 'withServices',
+    label: 'Dengan Service',
+    value: statistics.value.withServices,
+    icon: 'ri-service-line',
+    iconBgClass: 'bg-label-info',
+    info: {
+      title: 'Dengan Service',
+      description: 'Jumlah DID yang sudah terhubung ke minimal satu service.',
+    },
+  },
+  {
+    key: 'provinces',
+    label: 'Provinsi',
+    value: statistics.value.provinces,
+    icon: 'ri-map-pin-line',
+    iconBgClass: 'bg-label-success',
+    valueClass: 'text-success',
+    info: {
+      title: 'Provinsi',
+      description: 'Jumlah provinsi unik yang tercakup oleh data DID pada statistik API.',
+    },
+  },
+  {
+    key: 'linkedServices',
+    label: 'Linked Services',
+    value: statistics.value.linkedServices,
+    icon: 'ri-links-line',
+    iconBgClass: 'bg-label-warning',
+    info: {
+      title: 'Linked Services',
+      description: 'Jumlah relasi service yang terhubung ke DID pada statistik API.',
+    },
+  },
 ])
 
 const modalTitle = computed(() => (isEditMode.value ? 'Edit DID' : 'Tambah DID'))

@@ -6,88 +6,8 @@
             <p class="mb-6">
             List category yang terdaftar di sistem
             </p>
-            <div class="row g-6 mb-6">
-                <div v-if="stats.total !== undefined" class="col-xl col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Total Kategori</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-primary"><i class="ri-folder-line"></i></span>
-                                </div>
-                            </div>
-                            <div class="account-heading">
-                                <h5 class="mb-1">{{ stats.total }}</h5>
-                                <span class="text-muted">Kategori</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div v-if="stats.sparepart !== undefined" class="col-xl col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Sparepart</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-info"><i class="ri-settings-line"></i></span>
-                                </div>
-                            </div>
-                            <div class="account-heading">
-                                <h5 class="mb-1">{{ stats.sparepart }}</h5>
-                                <span class="text-muted">Produk</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div v-if="stats.oli !== undefined" class="col-xl col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Oli</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-warning"><i class="ri-oil-line"></i></span>
-                                </div>
-                            </div>
-                            <div class="account-heading">
-                                <h5 class="mb-1">{{ stats.oli }}</h5>
-                                <span class="text-muted">Produk</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div v-if="stats.alat_berat !== undefined" class="col-xl col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Alat Berat</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-success"><i class="ri-truck-line"></i></span>
-                                </div>
-                            </div>
-                            <div class="account-heading">
-                                <h5 class="mb-1">{{ stats.alat_berat }}</h5>
-                                <span class="text-muted">Produk</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div v-if="stats.tooling !== undefined" class="col-xl col-lg-6 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <p class="mb-0">Tooling</p>
-                                <div class="avatar">
-                                    <span class="avatar-initial rounded bg-label-secondary"><i class="ri-tools-line"></i></span>
-                                </div>
-                            </div>
-                            <div class="account-heading">
-                                <h5 class="mb-1">{{ stats.tooling }}</h5>
-                                <span class="text-muted">Produk</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <ListPageStatsCards :items="statItems" />
+
             <div class="row g-6">
                 <div class="col-12">
                     <h4 class="mt-6 mb-1">Data Kategori</h4>
@@ -216,6 +136,7 @@ import { usePermissions } from '~/composables/usePermissions'
 import { usePermissionsStore } from '~/stores/permissions'
 import { useUserStore } from '~/stores/user'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
+import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
 
 // Composables
 const { setListTitle, setFormTitle } = useDynamicTitle()
@@ -227,6 +148,70 @@ const kategoriStore   = useKategoriStore()
 const permissionStore = usePermissionsStore()
 const userStore       = useUserStore()
 const { kategori, loading, stats, totalRecords, params, form, isEditMode, showModal, validationErrors } = storeToRefs(kategoriStore)
+
+const statItems = computed(() => [
+  {
+    key: 'total-kategori',
+    label: 'Total Kategori',
+    value: stats.value.total,
+    subtitle: 'Kategori',
+    icon: 'ri-folder-line',
+    iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah keseluruhan data Kategori yang terdaftar dalam sistem berdasarkan statistik API.',
+    },
+  },
+  {
+    key: 'sparepart',
+    label: 'Sparepart',
+    value: stats.value.sparepart,
+    subtitle: 'Produk',
+    icon: 'ri-settings-line',
+    iconBgClass: 'bg-label-info',
+    info: {
+      title: 'Sparepart',
+      description: 'Ringkasan metrik "Sparepart" pada daftar Kategori berdasarkan data statistik yang disediakan API/store.',
+    },
+  },
+  {
+    key: 'oli',
+    label: 'Oli',
+    value: stats.value.oli,
+    subtitle: 'Produk',
+    icon: 'ri-oil-line',
+    iconBgClass: 'bg-label-warning',
+    info: {
+      title: 'Oli',
+      description: 'Ringkasan metrik "Oli" pada daftar Kategori berdasarkan data statistik yang disediakan API/store.',
+    },
+  },
+  {
+    key: 'alat-berat',
+    label: 'Alat Berat',
+    value: stats.value.alat_berat,
+    subtitle: 'Produk',
+    icon: 'ri-truck-line',
+    iconBgClass: 'bg-label-success',
+    info: {
+      title: 'Alat Berat',
+      description: 'Ringkasan metrik "Alat Berat" pada daftar Kategori berdasarkan data statistik yang disediakan API/store.',
+    },
+  },
+  {
+    key: 'tooling',
+    label: 'Tooling',
+    value: stats.value.tooling,
+    subtitle: 'Produk',
+    icon: 'ri-tools-line',
+    iconBgClass: 'bg-label-secondary',
+    info: {
+      title: 'Tooling',
+      description: 'Ringkasan metrik "Tooling" pada daftar Kategori berdasarkan data statistik yang disediakan API/store.',
+    },
+  }
+])
+
 
 const globalFilterValue = ref('')
 const rowsPerPageOptionsArray = ref([10, 25, 50, 100]);

@@ -4,26 +4,7 @@
       
       <p class="mb-6">Ajukan dan kelola lembur pegawai dengan workflow approval (SPKL).</p>
 
-      <div class="row g-6 mb-6">
-        <div v-for="card in statCards" :key="card.label" class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card h-100">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">{{ card.label }}</p>
-                <div class="avatar">
-                  <span :class="['avatar-initial rounded', card.iconClass]">
-                    <i :class="card.icon"></i>
-                  </span>
-                </div>
-              </div>
-              <div class="account-heading">
-                <h5 class="mb-1">{{ card.value }}</h5>
-                <span class="text-muted small">{{ card.subtitle }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <ListPageStatsCards :items="statCards" />
 
       <div v-if="weeklySummary" class="alert alert-info d-flex flex-wrap gap-3 align-items-center mb-4">
         <span><strong>Kuota minggu ini:</strong> {{ formatDurasiJam(weeklySummary.total_jam_minggu) }} terpakai</span>
@@ -197,6 +178,7 @@ import Column from 'primevue/column'
 import Menu from 'primevue/menu'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
+import ListPageStatsCards, { type ListPageStatItem } from '~/components/list/ListPageStatsCards.vue'
 import MultiSignatureDisplay from '~/components/MultiSignatureDisplay.vue'
 import { useLemburStore, type LemburRow } from '~/stores/lembur'
 import { usePermissions } from '~/composables/usePermissions'
@@ -244,34 +226,54 @@ useBootstrapModal(
 
 setListTitle('Pengajuan Lembur', 0)
 
-const statCards = computed(() => [
+const statCards = computed<ListPageStatItem[]>(() => [
   {
+    key: 'total-pengajuan',
     label: 'Total Pengajuan',
-    value: stats.value.total || 0,
+    value: stats.value.total ?? 0,
     subtitle: 'Pengajuan lembur tahun ini',
     icon: 'ri-file-list-3-line',
-    iconClass: 'bg-label-primary',
+    iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Total Pengajuan',
+      description: 'Jumlah keseluruhan pengajuan Lembur (SPKL) tahun ini, mencakup semua status.',
+    },
   },
   {
+    key: 'disetujui',
     label: 'Disetujui',
-    value: stats.value.approved || 0,
+    value: stats.value.approved ?? 0,
     subtitle: 'Lembur disetujui',
     icon: 'ri-checkbox-circle-line',
-    iconClass: 'bg-label-success',
+    iconBgClass: 'bg-label-success',
+    info: {
+      title: 'Disetujui',
+      description: 'Jumlah dokumen Lembur yang telah disetujui melalui approval workflow.',
+    },
   },
   {
+    key: 'menunggu',
     label: 'Menunggu',
-    value: stats.value.menunggu || 0,
+    value: stats.value.menunggu ?? 0,
     subtitle: 'Menunggu approval',
     icon: 'ri-time-line',
-    iconClass: 'bg-label-warning',
+    iconBgClass: 'bg-label-warning',
+    info: {
+      title: 'Menunggu',
+      description: 'Jumlah dokumen Lembur yang masih menunggu proses approval.',
+    },
   },
   {
+    key: 'jam-disetujui',
     label: 'Jam Disetujui',
     value: formatDurasiJam(stats.value.total_jam_disetujui),
     subtitle: 'Total jam lembur disetujui',
     icon: 'ri-timer-flash-line',
-    iconClass: 'bg-label-info',
+    iconBgClass: 'bg-label-info',
+    info: {
+      title: 'Jam Disetujui',
+      description: 'Total jam Lembur yang telah disetujui (nilai jam), bukan jumlah dokumen.',
+    },
   },
 ])
 

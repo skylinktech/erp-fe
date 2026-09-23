@@ -256,9 +256,41 @@ const tableFirst = computed(() => {
 })
 
 const statItems = computed(() => [
-  { key: 'total', label: 'Total', value: statistics.value.total, icon: 'ri-building-2-line', iconBgClass: 'bg-label-primary', subtitle: 'Semua cabang' },
-  { key: 'perusahaan', label: 'Perusahaan', value: statistics.value.perusahaanCount, icon: 'ri-community-line', iconBgClass: 'bg-label-info' },
-  { key: 'withAlamat', label: 'Dengan Alamat', value: statistics.value.withAlamat, icon: 'ri-map-pin-line', iconBgClass: 'bg-label-success', valueClass: 'text-success' },
+  {
+    key: 'total',
+    label: 'Total',
+    value: statistics.value.total,
+    icon: 'ri-building-2-line',
+    iconBgClass: 'bg-label-primary',
+    subtitle: 'Semua cabang',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah seluruh cabang yang terdaftar dalam sistem berdasarkan statistik API.',
+    },
+  },
+  {
+    key: 'perusahaan',
+    label: 'Perusahaan',
+    value: statistics.value.perusahaanCount,
+    icon: 'ri-community-line',
+    iconBgClass: 'bg-label-info',
+    info: {
+      title: 'Perusahaan',
+      description: 'Jumlah perusahaan unik yang memiliki cabang pada statistik API.',
+    },
+  },
+  {
+    key: 'withAlamat',
+    label: 'Dengan Alamat',
+    value: statistics.value.withAlamat,
+    icon: 'ri-map-pin-line',
+    iconBgClass: 'bg-label-success',
+    valueClass: 'text-success',
+    info: {
+      title: 'Dengan Alamat',
+      description: 'Jumlah cabang yang sudah memiliki data alamat pada statistik API.',
+    },
+  },
 ])
 
 const modalTitle = computed(() => isEditMode.value ? 'Edit Cabang' : 'Tambah Cabang')

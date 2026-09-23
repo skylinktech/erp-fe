@@ -298,6 +298,10 @@ const statItems = computed(() => [
     value: summary.value.total ?? totalRecords.value,
     icon: 'ri-refresh-line',
     iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah keseluruhan data Equipmentreplacementtab yang terdaftar dalam sistem berdasarkan statistik API.',
+    },
   },
   {
     key: 'open',
@@ -305,6 +309,10 @@ const statItems = computed(() => [
     value: summaryCount('REQUESTED', 'APPROVED', 'READY'),
     icon: 'ri-time-line',
     iconBgClass: 'bg-label-warning',
+    info: {
+      title: 'Open',
+      description: 'Jumlah dokumen Equipmentreplacementtab berstatus Open.',
+    },
   },
   {
     key: 'done',
@@ -312,6 +320,10 @@ const statItems = computed(() => [
     value: summaryCount('COMPLETED'),
     icon: 'ri-checkbox-circle-line',
     iconBgClass: 'bg-label-success',
+    info: {
+      title: 'Completed',
+      description: 'Jumlah dokumen Equipmentreplacementtab yang sudah selesai.',
+    },
   },
   {
     key: 'cancelled',
@@ -319,6 +331,10 @@ const statItems = computed(() => [
     value: summaryCount('CANCELLED', 'REJECTED'),
     icon: 'ri-close-circle-line',
     iconBgClass: 'bg-label-danger',
+    info: {
+      title: 'Rejected',
+      description: 'Jumlah dokumen Equipmentreplacementtab yang ditolak.',
+    },
   },
 ])
 

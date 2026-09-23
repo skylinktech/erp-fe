@@ -344,10 +344,30 @@ const hasActiveFilters = computed(() =>
 const statItems = computed<ListPageStatItem[]>(() => {
   const list = tableRows.value
   return [
-    { label: 'Total', value: list.length, icon: 'ri-calendar-line', iconBgClass: 'bg-label-primary' },
-    { label: 'Open', value: list.filter((p) => p.status === 'OPEN').length, icon: 'ri-lock-unlock-line', iconBgClass: 'bg-label-info' },
-    { label: 'Dengan Attendance', value: list.filter((p) => p.attendancePeriodId).length, icon: 'ri-calendar-check-line', iconBgClass: 'bg-label-success' },
-    { label: 'Last Period', value: list.filter((p) => p.isLastPeriod || p.is_last_period).length, icon: 'ri-flag-line', iconBgClass: 'bg-label-warning' },
+    { label: 'Total', value: list.length, icon: 'ri-calendar-line', iconBgClass: 'bg-label-primary' ,
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah keseluruhan data Periods yang terdaftar dalam sistem berdasarkan statistik API.',
+    },
+  },
+    { label: 'Open', value: list.filter((p) => p.status === 'OPEN').length, icon: 'ri-lock-unlock-line', iconBgClass: 'bg-label-info' ,
+    info: {
+      title: 'Open',
+      description: 'Jumlah dokumen Periods berstatus Open.',
+    },
+  },
+    { label: 'Dengan Attendance', value: list.filter((p) => p.attendancePeriodId).length, icon: 'ri-calendar-check-line', iconBgClass: 'bg-label-success' ,
+    info: {
+      title: 'Dengan Attendance',
+      description: 'Ringkasan metrik "Dengan Attendance" pada daftar Periods berdasarkan data statistik API/store.',
+    },
+  },
+    { label: 'Last Period', value: list.filter((p) => p.isLastPeriod || p.is_last_period).length, icon: 'ri-flag-line', iconBgClass: 'bg-label-warning' ,
+    info: {
+      title: 'Last Period',
+      description: 'Ringkasan metrik "Last Period" pada daftar Periods berdasarkan data statistik API/store.',
+    },
+  },
   ]
 })
 

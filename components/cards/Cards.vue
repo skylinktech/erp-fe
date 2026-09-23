@@ -1,3 +1,9 @@
+<!--
+  @deprecated Legacy summary/add card.
+  Do not use for list/table statistics. Source of truth:
+  components/list/ListPageStatsCards.vue (+ components/common/InfoPopover.vue for info).
+  This file is retained only for historical reference and is not imported by active pages.
+-->
 <template>
     <div :class="columnClass">
         <div class="card h-100">

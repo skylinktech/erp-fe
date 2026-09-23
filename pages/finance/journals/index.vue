@@ -571,10 +571,30 @@ const statistics = computed(() => journalStore.statistics)
 const hasActiveFilters = computed(() => !!(filterStatus.value || filterStartDate.value || filterEndDate.value))
 
 const statItems = computed(() => [
-  { key: 'total', label: 'Total', value: statistics.value.total, icon: 'ri-file-text-line', iconBgClass: 'bg-label-primary', subtitle: 'Jurnal terdaftar' },
-  { key: 'draft', label: 'Draft', value: statistics.value.draft, icon: 'ri-draft-line', iconBgClass: 'bg-label-warning' },
-  { key: 'posted', label: 'Posted', value: statistics.value.posted, icon: 'ri-check-line', iconBgClass: 'bg-label-success', valueClass: 'text-success' },
-  { key: 'totalDebit', label: 'Total Debit', value: formatRupiah(statistics.value.totalDebit), icon: 'ri-money-dollar-circle-line', iconBgClass: 'bg-label-info' },
+  { key: 'total', label: 'Total', value: statistics.value.total, icon: 'ri-file-text-line', iconBgClass: 'bg-label-primary', subtitle: 'Jurnal terdaftar',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah seluruh dokumen Jurnal Umum yang terdaftar dalam sistem, mencakup semua status.',
+    },
+  },
+  { key: 'draft', label: 'Draft', value: statistics.value.draft, icon: 'ri-draft-line', iconBgClass: 'bg-label-warning' ,
+    info: {
+      title: 'Draft',
+      description: 'Jumlah dokumen Jurnal berstatus Draft yang belum di-submit untuk approval.',
+    },
+  },
+  { key: 'posted', label: 'Posted', value: statistics.value.posted, icon: 'ri-check-line', iconBgClass: 'bg-label-success', valueClass: 'text-success' ,
+    info: {
+      title: 'Posted',
+      description: 'Jumlah dokumen Jurnal yang telah disetujui dan diposting ke buku besar (General Ledger).',
+    },
+  },
+  { key: 'totalDebit', label: 'Total Debit', value: formatRupiah(statistics.value.totalDebit), icon: 'ri-money-dollar-circle-line', iconBgClass: 'bg-label-info' ,
+    info: {
+      title: 'Total Debit',
+      description: 'Total nilai uang (Rupiah) sisi Debit dari seluruh baris Jurnal yang terdaftar.',
+    },
+  },
 ])
 
 const applyFilters = () => {

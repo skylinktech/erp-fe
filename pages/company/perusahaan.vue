@@ -301,10 +301,52 @@ const globalFilterValue = ref('')
 const rowsPerPageOptionsArray = ref([10, 25, 50, 100])
 
 const statItems = computed(() => [
-  { key: 'total', label: 'Total', value: statistics.value.total, icon: 'ri-building-line', iconBgClass: 'bg-label-primary', subtitle: 'Semua perusahaan' },
-  { key: 'withCabang', label: 'Dengan Cabang', value: statistics.value.withCabang, icon: 'ri-git-branch-line', iconBgClass: 'bg-label-info' },
-  { key: 'withBank', label: 'Dengan Bank', value: statistics.value.withBank, icon: 'ri-bank-line', iconBgClass: 'bg-label-success', valueClass: 'text-success' },
-  { key: 'cabangCount', label: 'Total Cabang', value: statistics.value.cabangCount, icon: 'ri-map-pin-line', iconBgClass: 'bg-label-warning' },
+  {
+    key: 'total',
+    label: 'Total',
+    value: statistics.value.total,
+    icon: 'ri-building-line',
+    iconBgClass: 'bg-label-primary',
+    subtitle: 'Semua perusahaan',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah seluruh perusahaan yang terdaftar dalam sistem berdasarkan statistik API.',
+    },
+  },
+  {
+    key: 'withCabang',
+    label: 'Dengan Cabang',
+    value: statistics.value.withCabang,
+    icon: 'ri-git-branch-line',
+    iconBgClass: 'bg-label-info',
+    info: {
+      title: 'Dengan Cabang',
+      description: 'Jumlah perusahaan yang memiliki minimal satu cabang terdaftar.',
+    },
+  },
+  {
+    key: 'withBank',
+    label: 'Dengan Bank',
+    value: statistics.value.withBank,
+    icon: 'ri-bank-line',
+    iconBgClass: 'bg-label-success',
+    valueClass: 'text-success',
+    info: {
+      title: 'Dengan Bank',
+      description: 'Jumlah perusahaan yang sudah memiliki data rekening bank.',
+    },
+  },
+  {
+    key: 'cabangCount',
+    label: 'Total Cabang',
+    value: statistics.value.cabangCount,
+    icon: 'ri-map-pin-line',
+    iconBgClass: 'bg-label-warning',
+    info: {
+      title: 'Total Cabang',
+      description: 'Jumlah seluruh cabang yang terhubung ke perusahaan pada statistik API.',
+    },
+  },
 ])
 
 const modalTitle = computed(() => isEditMode.value ? 'Edit Perusahaan' : 'Tambah Perusahaan')

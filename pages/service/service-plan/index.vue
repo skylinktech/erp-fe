@@ -317,10 +317,52 @@ const filterServiceTypeId = ref('')
 const hasActiveFilters = computed(() => !!filterServiceTypeId.value)
 
 const statItems = computed(() => [
-  { key: 'total', label: 'Total', value: statistics.value.total, icon: 'ri-file-list-3-line', iconBgClass: 'bg-label-primary', subtitle: 'Semua service plan' },
-  { key: 'withType', label: 'Dengan Tipe', value: statistics.value.withType, icon: 'ri-price-tag-3-line', iconBgClass: 'bg-label-info' },
-  { key: 'withSla', label: 'Dengan SLA', value: statistics.value.withSla, icon: 'ri-shield-check-line', iconBgClass: 'bg-label-success', valueClass: 'text-success' },
-  { key: 'withIpPublic', label: 'IP Public', value: statistics.value.withIpPublic, icon: 'ri-global-line', iconBgClass: 'bg-label-warning' },
+  {
+    key: 'total',
+    label: 'Total',
+    value: statistics.value.total,
+    icon: 'ri-file-list-3-line',
+    iconBgClass: 'bg-label-primary',
+    subtitle: 'Semua service plan',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah seluruh service plan yang terdaftar dalam sistem berdasarkan statistik API.',
+    },
+  },
+  {
+    key: 'withType',
+    label: 'Dengan Tipe',
+    value: statistics.value.withType,
+    icon: 'ri-price-tag-3-line',
+    iconBgClass: 'bg-label-info',
+    info: {
+      title: 'Dengan Tipe',
+      description: 'Jumlah service plan yang sudah memiliki tipe layanan pada statistik API.',
+    },
+  },
+  {
+    key: 'withSla',
+    label: 'Dengan SLA',
+    value: statistics.value.withSla,
+    icon: 'ri-shield-check-line',
+    iconBgClass: 'bg-label-success',
+    valueClass: 'text-success',
+    info: {
+      title: 'Dengan SLA',
+      description: 'Jumlah service plan yang sudah memiliki konfigurasi SLA.',
+    },
+  },
+  {
+    key: 'withIpPublic',
+    label: 'IP Public',
+    value: statistics.value.withIpPublic,
+    icon: 'ri-global-line',
+    iconBgClass: 'bg-label-warning',
+    info: {
+      title: 'IP Public',
+      description: 'Jumlah service plan yang menyertakan IP Public pada statistik API.',
+    },
+  },
 ])
 
 const applyServiceTypeFilter = () => {

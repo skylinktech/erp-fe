@@ -214,6 +214,10 @@ const statItems = computed(() => [
     value: summary.value.total ?? totalRecords.value,
     icon: 'ri-file-list-3-line',
     iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah keseluruhan data Warrantyassessmentstab yang terdaftar dalam sistem berdasarkan statistik API.',
+    },
   },
   {
     key: 'eligible',
@@ -221,6 +225,10 @@ const statItems = computed(() => [
     value: summaryCount('ELIGIBLE'),
     icon: 'ri-checkbox-circle-line',
     iconBgClass: 'bg-label-success',
+    info: {
+      title: 'Eligible',
+      description: 'Ringkasan metrik "Eligible" pada daftar Warrantyassessmentstab berdasarkan data statistik API/store.',
+    },
   },
   {
     key: 'not',
@@ -228,6 +236,10 @@ const statItems = computed(() => [
     value: summaryCount('NOT_ELIGIBLE'),
     icon: 'ri-close-circle-line',
     iconBgClass: 'bg-label-danger',
+    info: {
+      title: 'Not Eligible',
+      description: 'Ringkasan metrik "Not Eligible" pada daftar Warrantyassessmentstab berdasarkan data statistik API/store.',
+    },
   },
   {
     key: 'review',
@@ -235,6 +247,10 @@ const statItems = computed(() => [
     value: summaryCount('NEEDS_REVIEW'),
     icon: 'ri-error-warning-line',
     iconBgClass: 'bg-label-warning',
+    info: {
+      title: 'Needs Review',
+      description: 'Ringkasan metrik "Needs Review" pada daftar Warrantyassessmentstab berdasarkan data statistik API/store.',
+    },
   },
 ])
 

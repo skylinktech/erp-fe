@@ -4,109 +4,7 @@
       
       <p class="mb-6">Verifikasi kelayakan pelanggan sebelum kontrak</p>
 
-      <!-- Statistics Cards -->
-      <div class="row g-6 mb-6">
-        <div class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">Total</p>
-                <div class="avatar">
-                  <span class="avatar-initial rounded bg-label-primary">
-                    <i class="ri-file-list-3-line"></i>
-                  </span>
-                </div>
-              </div>
-              <div class="d-flex justify-content-between align-items-center">
-                <div class="account-heading">
-                  <h5 class="mb-1">{{ statistics?.total || 0 }}</h5>
-                  <span class="text-muted">Legal-Tech Review terdaftar</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">Draft</p>
-                <div class="avatar">
-                  <span class="avatar-initial rounded bg-label-secondary">
-                    <i class="ri-draft-line"></i>
-                  </span>
-                </div>
-              </div>
-              <div class="d-flex justify-content-between align-items-center">
-                <div class="account-heading">
-                  <h5 class="mb-1">{{ statistics?.draft || 0 }}</h5>
-                  <span class="text-muted">Draft</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">Pending</p>
-                <div class="avatar">
-                  <span class="avatar-initial rounded bg-label-warning">
-                    <i class="ri-time-line"></i>
-                  </span>
-                </div>
-              </div>
-              <div class="d-flex justify-content-between align-items-center">
-                <div class="account-heading">
-                  <h5 class="mb-1">{{ statistics?.pending || 0 }}</h5>
-                  <span class="text-muted">Pending</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">Approved</p>
-                <div class="avatar">
-                  <span class="avatar-initial rounded bg-label-success">
-                    <i class="ri-checkbox-circle-line"></i>
-                  </span>
-                </div>
-              </div>
-              <div class="d-flex justify-content-between align-items-center">
-                <div class="account-heading">
-                  <h5 class="mb-1">{{ statistics?.approved || 0 }}</h5>
-                  <span class="text-muted">Approved</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-xl-3 col-lg-6 col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <p class="mb-0">Rejected</p>
-                <div class="avatar">
-                  <span class="avatar-initial rounded bg-label-danger">
-                    <i class="ri-close-circle-line"></i>
-                  </span>
-                </div>
-              </div>
-              <div class="d-flex justify-content-between align-items-center">
-                <div class="account-heading">
-                  <h5 class="mb-1">{{ statistics?.rejected || 0 }}</h5>
-                  <span class="text-muted">Rejected</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <ListPageStatsCards :items="statItems" />
 
       <div class="row g-6">
         <div class="col-12">
@@ -345,6 +243,7 @@ import Column from 'primevue/column'
 import { useDebounceFn } from '@vueuse/core'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import { useImageUrl } from '~/composables/useImageUrl'
+import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
 
 const { setListTitle } = useDynamicTitle()
 const ltStore = useLegalTechStore()
@@ -354,6 +253,70 @@ const { getAttachmentUrl } = useImageUrl()
 
 const { reviews, loading, saving, totalRecords, params, form, isEditMode, isViewMode, showModal, validationErrors, statistics } = storeToRefs(ltStore)
 
+
+
+const statItems = computed(() => [
+  {
+    key: 'total',
+    label: 'Total',
+    value: statistics.value?.total ?? 0,
+    subtitle: 'Legal-Tech Review terdaftar',
+    icon: 'ri-file-list-3-line',
+    iconBgClass: 'bg-label-primary',
+    info: {
+      title: 'Jumlah Keseluruhan',
+      description: 'Jumlah seluruh dokumen Legal-Tech Review yang terdaftar dalam sistem, mencakup semua status.',
+    },
+  },
+  {
+    key: 'draft',
+    label: 'Draft',
+    value: statistics.value?.draft ?? 0,
+    subtitle: 'Draft',
+    icon: 'ri-draft-line',
+    iconBgClass: 'bg-label-secondary',
+    info: {
+      title: 'Draft',
+      description: 'Jumlah dokumen Legal-Tech Review berstatus Draft yang belum diproses lebih lanjut.',
+    },
+  },
+  {
+    key: 'pending',
+    label: 'Pending',
+    value: statistics.value?.pending ?? 0,
+    subtitle: 'Pending',
+    icon: 'ri-time-line',
+    iconBgClass: 'bg-label-warning',
+    info: {
+      title: 'Pending',
+      description: 'Jumlah dokumen Legal-Tech Review berstatus Pending yang menunggu proses atau persetujuan.',
+    },
+  },
+  {
+    key: 'approved',
+    label: 'Approved',
+    value: statistics.value?.approved ?? 0,
+    subtitle: 'Approved',
+    icon: 'ri-checkbox-circle-line',
+    iconBgClass: 'bg-label-success',
+    info: {
+      title: 'Approved',
+      description: 'Jumlah dokumen Legal-Tech Review yang telah disetujui.',
+    },
+  },
+  {
+    key: 'rejected',
+    label: 'Rejected',
+    value: statistics.value?.rejected ?? 0,
+    subtitle: 'Rejected',
+    icon: 'ri-close-circle-line',
+    iconBgClass: 'bg-label-danger',
+    info: {
+      title: 'Rejected',
+      description: 'Jumlah dokumen Legal-Tech Review yang ditolak.',
+    },
+  }
+])
 const quotationsForSelect = ref([])
 const quotationsForFilter = ref([])
 const expandedRows = ref({})

@@ -225,10 +225,10 @@ const { fdrs, loading, totalRecords, params, stats } = storeToRefs(fdrStore)
 const { customerSelectOptions } = storeToRefs(customerStore)
 
 const statItems = computed(() => [
-  { key: 'total', label: 'Total FDR', value: stats.value.total || 0, icon: 'ri-file-list-3-line', iconBgClass: 'bg-label-primary', subtitle: 'FDR terdaftar' },
-  { key: 'draft', label: 'Draft', value: stats.value.draft || 0, icon: 'ri-draft-line', iconBgClass: 'bg-label-secondary', subtitle: 'Draft' },
-  { key: 'pending', label: 'Pending', value: stats.value.pending || 0, icon: 'ri-time-line', iconBgClass: 'bg-label-warning', subtitle: 'Pending' },
-  { key: 'approved', label: 'Approved', value: stats.value.approved || 0, icon: 'ri-checkbox-circle-line', iconBgClass: 'bg-label-success', subtitle: 'Approved' },
+  { key: 'total', label: 'Total FDR', value: stats.value.total || 0, icon: 'ri-file-list-3-line', iconBgClass: 'bg-label-primary', subtitle: 'FDR terdaftar', info: { title: 'Jumlah Keseluruhan', description: 'Jumlah seluruh dokumen FDR (Feasibility, Design & Requirement) yang terdaftar dalam sistem, mencakup semua status.' } },
+  { key: 'draft', label: 'Draft', value: stats.value.draft || 0, icon: 'ri-draft-line', iconBgClass: 'bg-label-secondary', subtitle: 'Draft', info: { title: 'Draft', description: 'Jumlah dokumen FDR berstatus Draft yang belum diajukan untuk approval.' } },
+  { key: 'pending', label: 'Pending', value: stats.value.pending || 0, icon: 'ri-time-line', iconBgClass: 'bg-label-warning', subtitle: 'Pending', info: { title: 'Pending', description: 'Jumlah dokumen FDR yang masih menunggu persetujuan.' } },
+  { key: 'approved', label: 'Approved', value: stats.value.approved || 0, icon: 'ri-checkbox-circle-line', iconBgClass: 'bg-label-success', subtitle: 'Approved', info: { title: 'Approved', description: 'Jumlah dokumen FDR yang telah disetujui.' } },
 ])
 
 const priceListLinesProduct = ref([])
