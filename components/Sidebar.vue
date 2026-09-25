@@ -118,6 +118,7 @@ import {
 } from '~/utils/inventory/lifecycleWorkspaces';
 import { useCompanyContextStore } from '~/stores/companyContext';
 import { filterMenuDetailsByCompanyContext } from '~/utils/filterMenusByCompanyContext';
+import { filterActiveMenuDetails } from '~/utils/filterActiveMenuDetails';
 
 const menuGroupsStore = useMenuGroupStore();
 const route = useRoute();
@@ -151,7 +152,10 @@ const filteredAndSortedMenuGroups = computed(() => {
   return filteredGroups
     .map((group) => ({
       ...group,
-      menuDetails: filterMenuDetailsByCompanyContext(group.menuDetails || [], ctx),
+      menuDetails: filterMenuDetailsByCompanyContext(
+        filterActiveMenuDetails(group.menuDetails || []),
+        ctx
+      ),
     }))
     .filter((group) => (group.menuDetails || []).length > 0)
     .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));

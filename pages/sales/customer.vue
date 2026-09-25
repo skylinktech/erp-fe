@@ -78,14 +78,20 @@
                                         {{ getTypeLabel(slotProps.data.type) }}
                                     </template>
                                 </Column>
-                                <Column field="address" header="Alamat Customer" :sortable="true"></Column>
+                                <Column field="address" class="text-nowrap" header="Alamat Customer" :sortable="true">
+                                    <template #body="slotProps">
+                                        <span :title="slotProps.data.address || ''">
+                                            {{ truncateAddress(slotProps.data.address) }}
+                                        </span>
+                                    </template>
+                                </Column>
                                 <Column field="npwp" header="NPWP Customer" :sortable="true"></Column>
-                                <Column field="ktp" header="KTP Customer" :sortable="true">
+                                <Column field="ktp" class="text-nowrap" header="KTP Customer" :sortable="true">
                                     <template #body="slotProps">
                                         {{ slotProps.data.ktp || '-' }}
                                     </template>
                                 </Column>
-                                <Column field="email" header="Email Customer" :sortable="true"></Column>
+                                <Column field="email" class="text-nowrap" header="Email Customer" :sortable="true"></Column>
                                 <Column field="phone" header="Phone Customer" :sortable="true"></Column>
                                 <Column header="Actions" :exportable="false" style="min-width:8rem">
                                     <template #body="slotProps">
@@ -359,6 +365,13 @@ const customerTypeOptions = [
 const getTypeLabel = (type) => {
   const opt = customerTypeOptions.find(o => o.value === type);
   return opt ? opt.label : type || '-';
+};
+
+const truncateAddress = (address) => {
+  if (!address) return '-';
+  const words = String(address).trim().split(/\s+/).filter(Boolean);
+  if (words.length <= 3) return words.join(' ');
+  return `${words.slice(0, 3).join(' ')} ....`;
 };
 
 const customerTypeCounts = computed(() => {
