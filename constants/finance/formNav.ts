@@ -18,7 +18,7 @@ export const FINANCE_MODULE_NAV: FormPageNavItem[] = [
   { label: 'Journals', to: '/finance/journals', icon: 'ri-book-2-line' },
   { label: 'Billing Adjustments', to: '/finance/billing-adjustments', icon: 'ri-swap-line' },
   { label: 'Billing Preparations', to: '/finance/billing-preparations', icon: 'ri-file-list-3-line' },
-  { label: 'Pricing Approval', to: '/finance/pricing-approval', icon: 'ri-price-tag-3-line' },
+  { label: 'Pricing Approval', to: '/finance/pricing-approval?tab=approval', icon: 'ri-price-tag-3-line' },
   { label: 'Tax Master', to: '/finance/tax-masters', icon: 'ri-percent-line' },
   { label: 'Inventory Accounting Events', to: '/finance/inventory-accounting-events', icon: 'ri-calendar-event-line' },
   { label: 'Accounting Processing Monitor', to: '/finance/accounting-processing-monitor', icon: 'ri-radar-line' },

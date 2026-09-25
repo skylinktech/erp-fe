@@ -1,4 +1,5 @@
 // plugins/api.client.ts
+import { getAccessTokenCookieOptions } from '~/utils/authCookie'
 
 export default defineNuxtPlugin(() => {
   const config = useRuntimeConfig();
@@ -17,6 +18,9 @@ export default defineNuxtPlugin(() => {
     me          : () => `${authBase}/me`,
     meProfile   : () => `${authBase}/me/profile`,
     refreshToken: () => `${authBase}/refresh-token`,
+    companyContext: () => `${apiBase}/company-context`,
+    companyContextSwitch: () => `${apiBase}/company-context/switch`,
+    companyContextDefault: () => `${apiBase}/company-context/default`,
     
     // SSO Auth (direct to SSO server)
     ssoToken    : () => {
@@ -946,12 +950,80 @@ export default defineNuxtPlugin(() => {
 
     // Quotation
     quotation: () => `${apiBase}/quotation`,
+    eligibleFlows: () => `${apiBase}/business-cases/eligible-flows`,
+    businessCaseJourneys: () => `${apiBase}/business-cases/journeys`,
     quotationExpiringSoon: () => `${apiBase}/quotation/expiring-soon`,
     quotationPrefillFromSiteInvestment: (id: string) => `${apiBase}/quotation/prefill-from-site-investment/${id}`,
     approveQuotation: (id: number | string) => `${apiBase}/quotation/approveQuotation/${id}`,
     rejectQuotation: (id: number | string) => `${apiBase}/quotation/rejectQuotation/${id}`,
     submitQuotation: (id: number | string) => `${apiBase}/quotation/submitQuotation/${id}`,
     getQuotationDetails: (id: number | string) => `${apiBase}/quotation/getQuotationDetails/${id}`,
+    quotationProductDocument: (id: number | string) => `${apiBase}/quotation/${id}/product-document`,
+    products: () => `${apiBase}/product`,
+    warehouses: () => `${apiBase}/warehouse`,
+    customers: () => `${apiBase}/customer`,
+    units: () => `${apiBase}/unit`,
+    directSaleCheckout: () => `${apiBase}/direct-sale-checkout`,
+    productSellingPrices: () => `${apiBase}/product-selling-prices`,
+    retailSales: () => `${apiBase}/retail-sales`,
+    retailSale: (id: string) => `${apiBase}/retail-sales/${id}`,
+    retailSaleConfirm: (id: string) => `${apiBase}/retail-sales/${id}/confirm`,
+    retailSaleCancel: (id: string) => `${apiBase}/retail-sales/${id}/cancel`,
+    retailSaleRefreshPrices: (id: string) => `${apiBase}/retail-sales/${id}/refresh-prices`,
+    retailSaleFulfill: (id: string) => `${apiBase}/retail-sales/${id}/fulfill`,
+    retailSaleInvoice: (id: string) => `${apiBase}/retail-sales/${id}/invoice`,
+    retailSaleInvoiceSubmit: (id: string) => `${apiBase}/retail-sales/${id}/invoice/submit`,
+    retailSalePay: (id: string) => `${apiBase}/retail-sales/${id}/pay`,
+    commercePlatforms: () => `${apiBase}/commerce/platforms`,
+    commerceOauthTikTokStart: () => `${apiBase}/commerce/oauth/tiktok/start`,
+    commerceConnections: () => `${apiBase}/commerce/connections`,
+    commerceConnectionDisconnect: (id: string) => `${apiBase}/commerce/connections/${id}/disconnect`,
+    commerceConnectionSyncShops: (id: string) => `${apiBase}/commerce/connections/${id}/sync-shops`,
+    commerceConnectionTest: (id: string) => `${apiBase}/commerce/connections/${id}/test`,
+    commerceConnectionSyncProducts: (id: string) => `${apiBase}/commerce/connections/${id}/sync-products`,
+    commerceConnectionSyncOrders: (id: string) => `${apiBase}/commerce/connections/${id}/sync-orders`,
+    commerceConnectionSyncReturns: (id: string) => `${apiBase}/commerce/connections/${id}/sync-returns`,
+    commerceShops: () => `${apiBase}/commerce/shops`,
+    commerceListings: () => `${apiBase}/commerce/listings`,
+    commerceShopWarehouses: (shopId: string) => `${apiBase}/commerce/shops/${shopId}/warehouses`,
+    commerceShopSkuListings: (shopId: string) => `${apiBase}/commerce/shops/${shopId}/sku-listings`,
+    commerceExternalOrders: () => `${apiBase}/commerce/external-orders`,
+    commerceExternalOrderCounts: () => `${apiBase}/commerce/external-orders/counts`,
+    commerceExternalReturns: () => `${apiBase}/commerce/external-returns`,
+    commerceExternalReturnCounts: () => `${apiBase}/commerce/external-returns/counts`,
+    commerceExternalReturnDetail: (id: string) => `${apiBase}/commerce/external-returns/${id}`,
+    commerceExternalOrderImport: () => `${apiBase}/commerce/external-orders/import`,
+    commerceInboxProcess: () => `${apiBase}/commerce/inbox/process`,
+    commerceDashboard: () => `${apiBase}/commerce/dashboard`,
+    commerceDashboardTopShops: () => `${apiBase}/commerce/dashboard/top-shops`,
+    commerceDashboardTopProducts: () => `${apiBase}/commerce/dashboard/top-products`,
+    commerceSyncJobs: () => `${apiBase}/commerce/sync-jobs`,
+    commerceWorkerHealth: () => `${apiBase}/commerce/worker/health`,
+    commerceInventoryView: () => `${apiBase}/commerce/inventory-view`,
+    retailReturns: () => `${apiBase}/retail-returns`,
+    retailReturnApprove: (id: string) => `${apiBase}/retail-returns/${id}/approve`,
+    retailReturnReceive: (id: string) => `${apiBase}/retail-returns/${id}/receive`,
+    retailReturnPost: (id: string) => `${apiBase}/retail-returns/${id}/post`,
+    retailReturnCompensate: (id: string) => `${apiBase}/retail-returns/${id}/compensate`,
+    retailReturnCredit: (id: string) => `${apiBase}/retail-returns/${id}/credit`,
+    retailReturnRefund: (id: string) => `${apiBase}/retail-returns/${id}/refund`,
+    retailReturnRefundApprove: (id: string) => `${apiBase}/retail-returns/${id}/refund/approve`,
+    retailReturnRefundConfirm: (id: string) => `${apiBase}/retail-returns/${id}/refund/confirm`,
+    productSellingPriceResolve: () => `${apiBase}/product-selling-prices/resolve`,
+    companyFlowEligibilities: () => `${apiBase}/company-flow-eligibilities`,
+    businessModelCompanies: () => `${apiBase}/business-model-configurations`,
+    businessModelProfiles: () => `${apiBase}/business-model-configurations/profiles`,
+    businessModelShow: (companyId: number | string) => `${apiBase}/business-model-configurations/${companyId}`,
+    businessModelReadiness: (companyId: number | string) => `${apiBase}/business-model-configurations/${companyId}/readiness`,
+    businessModelWarehouses: (companyId: number | string) => `${apiBase}/business-model-configurations/${companyId}/warehouses`,
+    businessModelOwnerships: (companyId: number | string) => `${apiBase}/business-model-configurations/${companyId}/ownerships`,
+    businessModelHistory: (companyId: number | string) => `${apiBase}/business-model-configurations/${companyId}/history`,
+    businessModelPreview: (companyId: number | string) => `${apiBase}/business-model-configurations/${companyId}/preview`,
+    businessModelChangeset: (companyId: number | string) => `${apiBase}/business-model-configurations/${companyId}/changeset`,
+    documentNumbering: () => `${apiBase}/document-numbering`,
+    documentNumberingTokens: () => `${apiBase}/document-numbering/tokens`,
+    documentNumberingPreview: () => `${apiBase}/document-numbering/preview`,
+    documentNumberingRule: (documentType: string) => `${apiBase}/document-numbering/${encodeURIComponent(documentType)}`,
 
     // Legal-Tech Review
     leTechReview: () => `${apiBase}/le-tech-review`,
@@ -1066,17 +1138,22 @@ export default defineNuxtPlugin(() => {
     activityLogs: () => `${apiBase}/activity-logs`,
   };
 
-  const token = useCookie('access_token')
+  const token = useCookie('access_token', getAccessTokenCookieOptions())
 
   const apiFetch = $fetch.create({
     credentials: 'include',
     onRequest({ options }) {
-      if (token.value) {
-        options.headers = {
-          ...options.headers,
-          Authorization: `Bearer ${token.value}`
-        }
+      const headers: Record<string, string> = {
+        ...(options.headers as Record<string, string> | undefined),
       }
+      if (token.value) {
+        headers.Authorization = `Bearer ${token.value}`
+      }
+      if (import.meta.client) {
+        const persisted = localStorage.getItem('skyflow.activeCompanyId')
+        if (persisted) headers['X-Company-Id'] = persisted
+      }
+      options.headers = headers
     }
   })
 

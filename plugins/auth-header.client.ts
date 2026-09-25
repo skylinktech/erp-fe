@@ -2,6 +2,8 @@
  * Plugin untuk menambahkan Authorization header ke SEMUA request API
  * Memperbaiki 401 di production: fetch() dan $fetch yang tidak pakai apiFetch
  */
+import { readAccessToken } from '~/utils/authCookie'
+
 export default defineNuxtPlugin(() => {
   if (typeof window === 'undefined') return
 
@@ -40,11 +42,16 @@ export default defineNuxtPlugin(() => {
   }
 
   const getAuthHeaders = () => {
-    const token = useCookie('access_token')
-    if (token.value) {
-      return { Authorization: `Bearer ${token.value}` }
+    const token = readAccessToken()
+    const headers: Record<string, string> = {}
+    if (token) headers.Authorization = `Bearer ${token}`
+    try {
+      const persisted = localStorage.getItem('skyflow.activeCompanyId')
+      if (persisted) headers['X-Company-Id'] = persisted
+    } catch {
+      // ignore
     }
-    return {}
+    return headers
   }
 
   const originalFetch = window.fetch.bind(window)
@@ -56,7 +63,9 @@ export default defineNuxtPlugin(() => {
       Object.entries(authHeaders).forEach(([key, value]) => {
         headers.set(key, value)
       })
-      init = { ...init, headers }
+      // ERP sets an HttpOnly access_token on /me. A page on another port
+      // cannot read that cookie, so credentialed fetches must send it.
+      init = { ...init, headers, credentials: init?.credentials ?? 'include' }
     }
     return originalFetch(input, init)
   }

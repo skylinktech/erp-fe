@@ -6,9 +6,9 @@
         </a>
       </div>
   
-      <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
-        <!-- Search Bar - Always Visible -->
-        <div class="navbar-nav align-items-center">
+      <div class="navbar-nav-right d-flex align-items-center w-100 gap-2" id="navbar-collapse">
+        <!-- Search Bar -->
+        <div class="navbar-search-host">
             <div class="nav-item navbar-search-wrapper mb-0">
                 <!-- Search Input -->
                 <div class="search-input-container" v-if="isSearchVisible">
@@ -65,13 +65,15 @@
                     href="javascript:void(0);" 
                     @click="toggleSearch"
                 >
-                    <i class="ri-search-line ri-22px scaleX-n1-rtl me-3"></i>
+                    <i class="ri-search-line ri-22px scaleX-n1-rtl me-2"></i>
                     <span class="d-none d-md-inline-block text-muted">Cari...</span>
                 </a>
             </div>
         </div>
     
-            <ul class="navbar-nav flex-row align-items-center ms-auto">
+            <ul class="navbar-nav flex-row align-items-center ms-auto flex-shrink-0 gap-1">
+
+                <CompanyContextSwitcher />
 
                 <NotificationDropdown />
 
@@ -139,6 +141,7 @@
     import { useVendorStore } from '~/stores/vendor'
     import { useNotificationsStore } from '~/stores/notifications'
     import NotificationDropdown from '~/components/NotificationDropdown.vue'
+    import CompanyContextSwitcher from '~/components/CompanyContextSwitcher.vue'
     import { usePermissions } from '~/composables/usePermissions'
 
     const { $api }    = useNuxtApp()
@@ -791,31 +794,38 @@
   overflow-x: hidden !important;
 }
 
-/* Search bar styling */
+/* Search host: grow within leftover space, never shove company/avatar off-screen */
+.navbar-search-host {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 280px;
+}
+
+.navbar-search-wrapper {
+  width: 100%;
+}
+
 .navbar-search-wrapper .search-toggler {
-  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 100%;
   border-radius: 8px;
-  padding-left: 24px !important;
-  padding-right: 24px;
-  transform: scale(1.0);
-  transition: all 0.3s ease;
-  width: 900px;
+  padding-left: 12px !important;
+  padding-right: 12px;
+  transition: background-color 0.2s ease;
 }
 
 .navbar-search-wrapper .search-toggler:hover {
   background-color: #ebeced;
-  color: #e4e4e7;
-  transform: scale(1.0);
-  transition: all 0.3s ease;
-  padding-left: 24px;
-  padding-right: 24px;
-  width: 1000px;
 }
 
 /* Search input styling */
 .search-input-container {
   position: relative;
-  min-width: 1000px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .search-input-wrapper {
@@ -826,16 +836,16 @@
 
 .search-input-wrapper .search-icon {
   position: absolute;
-  padding-right: 24px;
-  left: 24px;
-  color: #e4e4e7;
+  left: 12px;
+  color: #9ca3af;
   font-size: 16px;
   z-index: 2;
+  pointer-events: none;
 }
 
 .search-input {
   width: 100%;
-  padding: 8px 40px 8px 55px;
+  padding: 8px 36px 8px 36px;
   border: 1px solid #e9ecef;
   border-radius: 8px;
   font-size: 14px;
@@ -846,7 +856,7 @@
 
 .search-input:focus {
   border-color: #e4e4e7;
-  box-shadow: 0 0 0 3px rgba(0, 143, 236, 0.1);
+  box-shadow: 0 0 0 6px rgba(0, 143, 236, 0.1);
 }
 
 .search-close-btn {
@@ -945,28 +955,31 @@
   display: inline-block;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .search-input-container {
-    min-width: 100px;
+@media (min-width: 1200px) {
+  .navbar-search-host {
+    max-width: 320px;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .navbar-search-host {
+    max-width: 200px;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .navbar-search-host {
+    max-width: 120px;
   }
 
   .navbar-search-wrapper .search-toggler {
-  transition: all 0.3s ease;
-  border-radius: 8px;
-  padding-left: 12px !important;
-  padding-right: 12px;
-  transform: scale(1.0);
-  transition: all 0.3s ease;
-  width: 100px;
-}
-
-  .navbar-search-wrapper .search-toggler:hover {
-    width: 100px;
+    padding-left: 8px !important;
+    padding-right: 8px;
   }
-  
+
   .search-results-dropdown {
     max-height: 250px;
+    min-width: 240px;
   }
 }
 </style>

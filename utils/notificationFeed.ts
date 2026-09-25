@@ -217,8 +217,14 @@ export function getNotificationNavigationPath(item: NotificationFeedItem): strin
       return payload.id ? `/sales/fdr/detail/${payload.id}` : '/sales/fdr'
     case 'quotation':
       return payload.id ? `/sales/quotation/detail/${payload.id}` : '/sales/quotation'
-    case 'price_adjustment':
-      return payload.id ? `/sales/price-adjustment-requests` : null
+    case 'price_adjustment': {
+      // SUBMITTED → approver inbox; APPROVED/REJECTED → maker "My Request"
+      const status = String(payload.status || payload.kind || '').toLowerCase()
+      const isApproverInbox =
+        status.includes('submit') || status === 'pending' || status.includes('approval_step')
+      const tab = isApproverInbox ? 'approval' : 'my-requests'
+      return `/finance/pricing-approval?tab=${tab}`
+    }
     case 'arf':
       return payload.id ? `/implementation/arf/detail/${payload.id}` : '/implementation/arf'
     case 'purchase_request':

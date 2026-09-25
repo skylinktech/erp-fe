@@ -38,12 +38,23 @@ export default defineNuxtConfig({
   
   // Optimasi build untuk deployment
   build: {
-    transpile: ['primevue'],
+    transpile: ['primevue', 'qrcode.vue'],
     analyze: false
+  },
+
+  // Nama paket berakhiran .vue. Tanpa alias, plugin Vue menganggapnya SFC
+  // dan dev server meminta cache deps/qrcode__vue.js yang tidak pernah tertulis.
+  alias: {
+    'qrcode.vue': fileURLToPath(
+      new URL('./node_modules/qrcode.vue/dist/qrcode.vue.esm.js', import.meta.url)
+    ),
   },
   
   // Optimasi untuk Node.js 24
   vite: {
+    optimizeDeps: {
+      exclude: ['qrcode.vue'],
+    },
     build: {
       target: 'es2024', // Target ES2024 untuk Node.js 24
       minify: 'terser',
@@ -81,8 +92,12 @@ export default defineNuxtConfig({
         pathPrefix: false,
       },
       {
+        path: '~/components/business-model',
+        pathPrefix: false,
+      },
+      {
         path: '~/components',
-        ignore: ['list/**', 'cetak/**'],
+        ignore: ['list/**', 'cetak/**', 'business-model/**'],
       },
     ],
   },

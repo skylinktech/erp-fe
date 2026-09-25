@@ -190,7 +190,7 @@
                                                     type="text" 
                                                     class="form-control" 
                                                     v-model="form.journalNumber" 
-                                                    placeholder="Akan di-generate otomatis (JRN-0001-ddmmyy)"
+                                                    placeholder="Akan di-generate otomatis saat disimpan"
                                                     :readonly="!isEditMode"
                                                 >
                                                 <label>No. Jurnal</label>

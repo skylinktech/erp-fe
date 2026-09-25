@@ -10,6 +10,7 @@
         <NuxtLink to="/sales/quotation" class="btn btn-outline-secondary btn-sm">
           <i class="ri-arrow-left-line me-1"></i> Kembali
         </NuxtLink>
+        <button v-if="productFlow && !quotationId && !productMode" type="button" class="btn btn-outline-primary btn-sm" @click="useProductQuotation">Product Quotation</button>
       </div>
 
       <div class="row g-4">
@@ -17,6 +18,8 @@
           <div class="card">
             <div class="card-body">
               <form ref="formRoot" @submit.prevent="onFormSubmit" novalidate>
+            <fieldset :disabled="commercialLocked">
+            <div v-if="productMode" class="alert alert-info">Product Quotation tidak memakai Site Investment, Site, service ISP, atau DID. Downstream belum didukung.</div>
             <div v-if="validationErrors?.length" class="alert alert-warning mb-4">
               <ul class="mb-0 ps-3">
                 <li v-for="(err, i) in validationErrors" :key="i">{{ err?.message || err }}</li>
@@ -33,9 +36,9 @@
             <div class="tab-content pt-4">
               <div class="tab-pane fade" id="quotation-tab-info" data-step-id="quotation-tab-info" role="tabpanel" :class="paneClass('quotation-tab-info')">
                 <div class="row g-3">
-                  <div class="col-md-3"><FormLabel required>Site Investment</FormLabel><CustomSelect2 v-model="form.siteInvestId" :options="siteInvests" :get-option-label="s => s ? `${s.siNumber || ''} - ${s.name || ''}` : ''" :reduce="s => s?.id" searchable clearable placeholder="Pilih Site Investment" @update:model-value="onSiteInvestChange" /><div v-if="uiErrors.siteInvestId" class="invalid-feedback d-block">{{ uiErrors.siteInvestId }}</div></div>
+                  <div v-if="!productMode" class="col-md-3"><FormLabel required>Site Investment</FormLabel><CustomSelect2 v-model="form.siteInvestId" :options="siteInvests" :get-option-label="s => s ? `${s.siNumber || ''} - ${s.name || ''}` : ''" :reduce="s => s?.id" searchable :clearable="!quotationId" :disabled="!!quotationId || commercialLocked" placeholder="Pilih Site Investment" @update:model-value="onSiteInvestChange" /><div v-if="uiErrors.siteInvestId" class="invalid-feedback d-block">{{ uiErrors.siteInvestId }}</div></div>
                   <div class="col-md-3"><FormLabel required>Customer</FormLabel><CustomSelect2 v-model="form.customerId" :options="customers || []" :get-option-label="c => c?.name || ''" :reduce="c => c?.id" searchable clearable placeholder="Pilih Customer" /><div v-if="uiErrors.customerId" class="invalid-feedback d-block">{{ uiErrors.customerId }}</div></div>
-                  <div class="col-md-3"><FormLabel required>Site</FormLabel><CustomSelect2 v-model="form.siteId" :options="sites" :get-option-label="s => s ? `${s.code || ''} - ${s.name || ''}` : ''" :reduce="s => s?.id" searchable clearable placeholder="Pilih Site" /><div v-if="uiErrors.siteId" class="invalid-feedback d-block">{{ uiErrors.siteId }}</div><small class="text-muted">Satu Quotation = satu Site. Multi-site: buat Quotation terpisah.</small></div>
+                  <div v-if="!productMode" class="col-md-3"><FormLabel required>Site</FormLabel><CustomSelect2 v-model="form.siteId" :options="sites" :get-option-label="s => s ? `${s.code || ''} - ${s.name || ''}` : ''" :reduce="s => s?.id" searchable :clearable="!quotationId" :disabled="!!quotationId || commercialLocked" placeholder="Pilih Site" /><div v-if="uiErrors.siteId" class="invalid-feedback d-block">{{ uiErrors.siteId }}</div><small class="text-muted">Satu Quotation = satu Site. Multi-site: buat Quotation terpisah.</small></div>
                   <div class="col-md-3"><FormLabel required html-for="quotation-up">UP</FormLabel><input id="quotation-up" v-model="form.up" class="form-control" :class="{ 'is-invalid': uiErrors.up }" type="text" aria-required="true" /><div v-if="uiErrors.up" class="invalid-feedback d-block">{{ uiErrors.up }}</div></div>
                   <div class="col-md-3"><FormLabel required html-for="quotation-date">Tanggal Quotation</FormLabel><input id="quotation-date" v-model="form.date" class="form-control" :class="{ 'is-invalid': uiErrors.date }" type="date" aria-required="true" /><div v-if="uiErrors.date" class="invalid-feedback d-block">{{ uiErrors.date }}</div></div>
                   <div class="col-md-3"><FormLabel required html-for="quotation-valid-until">Valid Until</FormLabel><input id="quotation-valid-until" v-model="form.validUntil" class="form-control" :class="{ 'is-invalid': uiErrors.validUntil }" type="date" aria-required="true" /><div v-if="uiErrors.validUntil" class="invalid-feedback d-block">{{ uiErrors.validUntil }}</div></div>
@@ -56,6 +59,7 @@
 
               <!-- ── TAB PRODUK ── -->
               <div class="tab-pane fade" id="quotation-tab-product" data-step-id="quotation-tab-product" role="tabpanel" :class="paneClass('quotation-tab-product')">
+                <div v-if="productMode && priceNotice" class="alert alert-warning py-2">{{ priceNotice }}</div>
                 <div class="repeater-table">
                   <div class="repeater-table-head d-none d-md-grid repeater-cols-4">
                     <span>Produk (SKU | Nama)</span><span>Qty</span><span>Harga Satuan</span><span>Subtotal</span>
@@ -63,7 +67,7 @@
                   <div v-for="(item, idx) in form.quotationItems" :key="'p-'+idx" class="repeater-table-row">
                     <div class="repeater-cell repeater-cell-main">
                       <span class="repeater-cell-label d-md-none">Produk</span>
-                      <CustomSelect2 v-model="item.productId" :options="productSelectOptions" :get-option-label="p => `${p?.sku || ''} | ${p?.name || ''}`" :reduce="p => p?.id != null ? Number(p.id) : null" searchable clearable placeholder="Pilih Produk" />
+                      <CustomSelect2 v-model="item.productId" :options="productSelectOptions" :get-option-label="p => `${p?.sku || ''} | ${p?.name || ''}`" :reduce="p => p?.id != null ? Number(p.id) : null" searchable clearable placeholder="Pilih Produk" @update:model-value="onProductLinePicked(idx, $event)" />
                     </div>
                     <div class="repeater-cell">
                       <span class="repeater-cell-label d-md-none">Qty</span>
@@ -75,8 +79,8 @@
                         <span v-if="item.isPriceOverridden" class="badge bg-warning text-dark ms-1 py-0 px-1 badge-custom">Custom</span>
                       </span>
                       <div class="price-input-wrapper" :class="{ 'price-override-active': item.isPriceOverridden }">
-                        <input type="text" :value="formatRupiah(item.price)" @input="updateItemPriceFromInput(idx, $event)" class="form-control price-field" :class="{ 'price-overridden': item.isPriceOverridden }" :readonly="!item.isPriceOverridden" :tabindex="item.isPriceOverridden ? 0 : -1" placeholder="Harga" />
-                        <button type="button" class="btn-price-lock" :class="{ 'is-overridden': item.isPriceOverridden }" @click="toggleItemOverride(idx)" :title="item.isPriceOverridden ? 'Kunci: kembalikan ke harga standar' : 'Klik untuk atur custom price'"><i :class="item.isPriceOverridden ? 'ri-lock-unlock-line' : 'ri-lock-line'"></i></button>
+                        <input type="text" :value="formatRupiah(item.price)" @input="updateItemPriceFromInput(idx, $event)" class="form-control price-field" :class="{ 'price-overridden': item.isPriceOverridden }" :readonly="productMode || !item.isPriceOverridden" :tabindex="productMode || !item.isPriceOverridden ? -1 : 0" placeholder="Harga" />
+                        <button v-if="!productMode" type="button" class="btn-price-lock" :class="{ 'is-overridden': item.isPriceOverridden }" @click="toggleItemOverride(idx)" :title="item.isPriceOverridden ? 'Kunci: kembalikan ke harga standar' : 'Klik untuk atur custom price'"><i :class="item.isPriceOverridden ? 'ri-lock-unlock-line' : 'ri-lock-line'"></i></button>
                       </div>
                     </div>
                     <div class="repeater-cell repeater-cell-subtotal">
@@ -192,6 +196,7 @@
                   @next="next"
                   @previous="previous"
                 />
+            </fieldset>
               </form>
             </div>
           </div>
@@ -387,6 +392,7 @@ import { parseRupiahToNumber } from '~/composables/formatRupiah'
 import { lineSubtotal } from '~/utils/lineSubtotal'
 import { serviceContractSubtotal } from '~/utils/commercialPricing'
 import { firstErrorTab } from '~/utils/apiError'
+import { productOffer } from '~/utils/quotationFlowMode'
 
 const route = useRoute()
 const formatRupiah = useFormatRupiah()
@@ -407,18 +413,59 @@ const QUOTATION_FIELD_TABS: Record<string, string> = {
   quotationServices: 'quotation-tab-services',
   quotationDids: 'quotation-tab-did',
 }
-const formSteps = [
+const productMode = ref(false)
+const priceNotice = ref('')
+
+async function onProductLinePicked (idx: number, productId: unknown) {
+  if (!productMode.value || !form.value) return
+  const item = form.value.quotationItems?.[idx]
+  if (!item) return
+  const id = Number(productId)
+  if (!id) {
+    item.price = 0
+    priceNotice.value = ''
+    return
+  }
+  const product = (productSelectOptions.value || []).find((row: any) => Number(row?.id) === id)
+  const unitId = Number(product?.unitId || product?.unit_id || 0)
+  const companyId = Number(form.value.perusahaanId || productFlow.value?.companies?.[0]?.id || 0)
+  if (!unitId || !companyId) {
+    priceNotice.value = 'Harga resmi belum dapat diambil. Perusahaan dan satuan produk wajib ada.'
+    item.price = 0
+    return
+  }
+  const { $api } = useNuxtApp()
+  const token = useCookie('access_token')
+  const url = new URL($api.productSellingPriceResolve())
+  url.searchParams.set('perusahaanId', String(companyId))
+  url.searchParams.set('productId', String(id))
+  url.searchParams.set('unitId', String(unitId))
+  url.searchParams.set('pricingDate', String(form.value.date || '').slice(0, 10))
+  const res = await fetch(url, { headers: token.value ? { Authorization: `Bearer ${token.value}` } : {} })
+  const payload = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    item.price = 0
+    priceNotice.value = payload?.message || 'Harga jual resmi tidak tersedia.'
+    return
+  }
+  item.price = Number(payload?.data?.unitPrice || 0)
+  item.isPriceOverridden = false
+  priceNotice.value = payload?.data?.priceListCode ? `Harga resmi ${payload.data.priceListCode}` : ''
+}
+const productFlow = ref<{ flowVersionId: number; companies: Array<{ id: number; name: string }> } | null>(null)
+const commercialLocked = computed(() => String(form.value?.status || '').toLowerCase() === 'approved')
+const formSteps = computed(() => [
   { id: 'quotation-tab-info', label: 'Informasi', icon: 'ri-information-line' },
   { id: 'quotation-tab-product', label: 'Products', icon: 'ri-box-3-line' },
-  { id: 'quotation-tab-services', label: 'Services', icon: 'ri-service-line' },
-  { id: 'quotation-tab-did', label: 'DID', icon: 'ri-phone-line' },
-]
+  { id: 'quotation-tab-services', label: 'Services', icon: 'ri-service-line', visible: !productMode.value },
+  { id: 'quotation-tab-did', label: 'DID', icon: 'ri-phone-line', visible: !productMode.value },
+])
 function validateQuotationStep(step: { id: string }): boolean {
   uiErrors.value = {}
   if (step.id !== 'quotation-tab-info') return true
-  if (!form.value?.siteInvestId) uiErrors.value.siteInvestId = 'Site Investment wajib dipilih.'
+  if (!productMode.value && !form.value?.siteInvestId) uiErrors.value.siteInvestId = 'Site Investment wajib dipilih.'
   if (!form.value?.customerId) uiErrors.value.customerId = 'Customer wajib dipilih.'
-  if (!form.value?.siteId) uiErrors.value.siteId = 'Site wajib dipilih.'
+  if (!productMode.value && !form.value?.siteId) uiErrors.value.siteId = 'Site wajib dipilih.'
   if (!String(form.value?.up || '').trim()) uiErrors.value.up = 'UP wajib diisi.'
   if (!form.value?.date) uiErrors.value.date = 'Tanggal Quotation wajib diisi.'
   if (!form.value?.validUntil) uiErrors.value.validUntil = 'Valid Until wajib diisi.'
@@ -587,7 +634,7 @@ async function loadMasters() {
 }
 
 async function onSiteInvestChange(siteInvestId: string | null) {
-  if (skipSiteInvestPrefill.value) return
+  if (quotationId.value || skipSiteInvestPrefill.value) return
 
   if (!siteInvestId) return
 
@@ -616,21 +663,70 @@ function mergePrefillMasterOptions(prefill: any) {
 async function loadForm() {
   quotationStore.closeModal()
   skipSiteInvestPrefill.value = true
-  await Promise.all([customerStore.fetchCustomers(), serviceStore.fetchServicesForSelect(), loadMasters()])
+  await Promise.all([customerStore.fetchCustomers(), serviceStore.fetchServicesForSelect(), loadMasters(), loadEligibleFlows()])
   if (quotationId.value) {
     await quotationStore.fetchQuotationForEdit(quotationId.value)
     quotationStore.showModal = false
+    if (form.value && !form.value.siteInvestId) {
+      productMode.value = true
+      form.value.flowCode = 'PRODUCT_QUOTATION'
+    }
   } else {
     quotationStore.openModal(null)
     quotationStore.showModal = false
   }
 
-  // Keep DID tab consistent with Products/Services: always show one row by default.
-  if (!Array.isArray(form.value?.quotationDids) || form.value.quotationDids.length === 0) {
+  if (!productMode.value && (!Array.isArray(form.value?.quotationDids) || form.value.quotationDids.length === 0)) {
     quotationStore.addDidItem(true)
   }
 
   skipSiteInvestPrefill.value = false
+}
+
+async function loadEligibleFlows() {
+  const { $api } = useNuxtApp()
+  try {
+    const res = await fetch($api.eligibleFlows(), { credentials: 'include', headers: { Accept: 'application/json' } })
+    if (!res.ok) return
+    const json = await res.json()
+    productFlow.value = productOffer(json.data)
+  } catch {
+    productFlow.value = null
+  }
+}
+
+function useProductQuotation() {
+  if (!productFlow.value) return
+  productMode.value = true
+  if (form.value) {
+    form.value.flowCode = 'PRODUCT_QUOTATION'
+    form.value.siteInvestId = null
+    form.value.siteId = null
+    form.value.perusahaanId = productFlow.value.companies[0]?.id ?? null
+  }
+}
+
+async function ensureProductJourney() {
+  if (!productMode.value || !form.value || form.value.businessCaseId || !productFlow.value) return
+  const { $api } = useNuxtApp()
+  const res = await fetch($api.businessCaseJourneys(), {
+    method: 'POST',
+    credentials: 'include',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      perusahaanId: form.value.perusahaanId || productFlow.value.companies[0]?.id,
+      flowVersionId: productFlow.value.flowVersionId,
+      idempotencyKey: crypto.randomUUID(),
+      customerId: form.value.customerId,
+    }),
+  })
+  const json = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    uiErrors.value.customerId = json.message || 'Product Quotation journey ditolak.'
+    throw new Error(json.message || 'Product Quotation journey ditolak.')
+  }
+  form.value.businessCaseId = json.data.id
+  form.value.perusahaanId = json.data.companyId
 }
 
 async function onFormSubmit() {
@@ -643,6 +739,8 @@ async function onFormSubmit() {
 }
 
 async function onSubmit() {
+  if (commercialLocked.value) return
+  if (productMode.value) await ensureProductJourney()
   const saved = await quotationStore.saveQuotation({ navigateToList: true })
   if (!saved) {
     const list = Array.isArray(quotationStore.validationErrors) ? quotationStore.validationErrors : []

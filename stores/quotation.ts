@@ -6,6 +6,7 @@ import { useNuxtApp } from '#app'
 import { useUserStore } from '~/stores/user'
 import { useServiceStore } from '~/stores/service'
 import { serviceContractSubtotal } from '~/utils/commercialPricing'
+import { quotationSavePlan } from '~/utils/quotationFlowMode'
 import type { User } from './userManagement'
 import type { Perusahaan } from './perusahaan'
 import type { Cabang } from './cabang'
@@ -308,15 +309,24 @@ export const useQuotationStore = defineStore('quotation', {
                 throw new Error('Minimal harus ada 1 item produk, service, atau DID');
             }
 
-            if (!dataToAppend.siteInvestId) {
-                throw new Error('Site Investment harus dipilih');
+            const plan = quotationSavePlan({
+                flowCode: (this.form as any).flowCode,
+                status: dataToAppend.status,
+                siteInvestId: dataToAppend.siteInvestId,
+                siteId: dataToAppend.siteId,
+                businessCaseId: (dataToAppend as any).businessCaseId,
+                customerId: dataToAppend.customerId,
+                hasProductLine: hasItems,
+            })
+            if (plan.errors.length) {
+                throw new Error(plan.errors[0])
             }
-            if (!dataToAppend.customerId) {
-                throw new Error('Customer harus dipilih');
+            if (plan.mode === 'product') {
+                delete dataToAppend.siteInvestId
+                delete dataToAppend.siteId
+                delete (dataToAppend as any).flowCode
             }
-            if (!dataToAppend.siteId) {
-                throw new Error('Site harus dipilih');
-            }
+
             if (!dataToAppend.up || dataToAppend.up.trim() === '') {
                 throw new Error('Untuk Perhatian harus diisi');
             }
@@ -350,10 +360,10 @@ export const useQuotationStore = defineStore('quotation', {
             const validItems = (this.form.quotationItems || []).filter((item: any) => 
                 item.productId && item.quantity && item.quantity > 0 && item.price != null
             );
-            const validServices = (this.form.quotationServices || []).filter((s: any) => 
+            const validServices = plan.mode === 'product' ? [] : (this.form.quotationServices || []).filter((s: any) => 
                 s.serviceId && s.unitId && s.quantity > 0 && s.price != null
             );
-            const validDids = (this.form.quotationDids || []).filter((d: any) => {
+            const validDids = plan.mode === 'product' ? [] : (this.form.quotationDids || []).filter((d: any) => {
                 const qty = Number(d.quantity) || 0;
                 const price = d.price != null ? Number(d.price) : null;
                 if (d.priceListLineId && qty > 0 && (price != null || d.subtotal != null)) return true;
@@ -361,7 +371,7 @@ export const useQuotationStore = defineStore('quotation', {
                 return false;
             });
 
-            const servicesMissingUnit = (this.form.quotationServices || []).filter((s: any) => s.serviceId && (s.unitId == null || s.unitId === ''));
+            const servicesMissingUnit = plan.mode === 'product' ? [] : (this.form.quotationServices || []).filter((s: any) => s.serviceId && (s.unitId == null || s.unitId === ''));
             if (servicesMissingUnit.length > 0) {
                 throw new Error('Unit harus dipilih untuk setiap item di tab Services.');
             }

@@ -51,8 +51,11 @@
                   <a v-if="(userHasRole('superadmin') || userHasPermission('edit_purchase_order')) && canEditQuotation(quotation)" class="dropdown-item" href="javascript:void(0)" @click="navigateTo('/sales/quotation?edit=' + quotation.id)">
                     <i class="ri-edit-box-line me-2"></i> Edit
                   </a>
-                  <a class="dropdown-item" href="javascript:void(0)" @click="onPrintQuotation">
+                  <a v-if="quotation.siteInvest?.id" class="dropdown-item" href="javascript:void(0)" @click="onPrintQuotation">
                     <i class="ri-printer-line me-2"></i> Print Quotation
+                  </a>
+                  <a v-if="productDocument" class="dropdown-item" href="javascript:void(0)" @click="onProductDocument">
+                    <i class="ri-file-pdf-line me-2"></i> {{ productDocument.label }}
                   </a>
                   <a class="dropdown-item text-danger" href="javascript:void(0)" @click="handleDelete">
                     <i class="ri-delete-bin-7-line me-2"></i> Hapus
@@ -69,20 +72,24 @@
             </div>
             <div class="card-body px-5 pt-0 pb-4">
               <div class="d-flex flex-wrap align-items-center gap-2 process-flow">
-                <NuxtLink v-if="quotation.siteInvest?.id" :to="'/sales/site-investment/detail/' + quotation.siteInvest.id" class="process-pill process-pill-done text-decoration-none">
-                  <i class="ri-check-line me-1"></i> Site Investment{{ quotation.siteInvest?.siNumber ? ' (' + quotation.siteInvest.siNumber + ')' : '' }}
-                </NuxtLink>
-                <span v-else class="process-pill process-pill-done"><i class="ri-check-line me-1"></i> Site Investment</span>
-                <span class="process-arrow text-muted">&gt;</span>
+                <template v-if="quotation.siteInvest?.id">
+                  <NuxtLink :to="'/sales/site-investment/detail/' + quotation.siteInvest.id" class="process-pill process-pill-done text-decoration-none">
+                    <i class="ri-check-line me-1"></i> Site Investment{{ quotation.siteInvest?.siNumber ? ' (' + quotation.siteInvest.siNumber + ')' : '' }}
+                  </NuxtLink>
+                  <span class="process-arrow text-muted">&gt;</span>
+                </template>
                 <span class="process-pill process-pill-active">
                   <i class="ri-file-list-3-line me-1"></i> Quotation
                 </span>
                 <span class="process-arrow text-muted">&gt;</span>
                 <span class="process-pill process-pill-inactive">Customer Approval</span>
+                <template v-if="quotation.siteInvest?.id">
                 <span class="process-arrow text-muted">&gt;</span>
                 <span class="process-pill process-pill-inactive">Purchase Order</span>
                 <span class="process-arrow text-muted">&gt;</span>
                 <span class="process-pill process-pill-inactive">Implementation</span>
+                </template>
+                <span v-else class="text-muted small ms-2">Sales Order, Project, dan Invoice belum didukung untuk quotation ini.</span>
               </div>
             </div>
           </div>
@@ -231,7 +238,7 @@
                           </thead>
                           <tbody>
                             <tr v-for="(m, i) in otcItems" :key="m.id || 'otc-' + i">
-                              <td class="fw-medium">{{ m.product?.name || m.product?.sku || '—' }}</td>
+                              <td class="fw-medium">{{ m.productNameSnapshot || m.product?.name || m.product?.sku || '—' }}</td>
                               <td class="text-muted">{{ m.description || '—' }}</td>
                               <td class="text-center">{{ m.quantity ?? 0 }}</td>
                               <td class="text-end">{{ formatRupiah(otcUnitPrice(m)) }}</td>
@@ -263,7 +270,7 @@
                           <tbody>
                             <tr v-for="(m, i) in mrcItems" :key="m.id || 'mrc-' + i">
                               <td class="fw-medium">
-                                {{ (m.product?.name || m.product?.sku) || (m.service?.name || m.service?.code) || '—' }}
+                                {{ (m.productNameSnapshot || m.product?.name || m.product?.sku) || (m.service?.name || m.service?.code) || '—' }}
                               </td>
                               <td class="text-muted">{{ m.description || m.service?.description || '—' }}</td>
                               <td class="text-center">{{ m.quantity ?? 0 }}</td>
@@ -391,6 +398,7 @@ import { usePermissions } from '~/composables/usePermissions'
 import { useUserStore } from '~/stores/user'
 import Swal from 'sweetalert2'
 import { computeQuotationTotals } from '~/utils/quotationTotals'
+import { productDocumentOffer } from '~/utils/quotationFlowMode'
 
 const route = useRoute()
 const quotationStore = useQuotationStore()
@@ -399,6 +407,10 @@ const { userHasPermission, userHasRole } = usePermissions()
 const formatRupiah = useFormatRupiah()
 
 const { quotation, loading, error } = storeToRefs(quotationStore)
+const productDocument = computed(() => productDocumentOffer({
+  status: quotation.value?.status,
+  lines: quotation.value?.quotationItems,
+}))
 const userStore = useUserStore()
 const submitting = ref(false)
 
@@ -648,6 +660,22 @@ async function onReject () {
 function onPrintQuotation () {
   if (!quotation.value?.id) return
   navigateTo({ path: '/sales/cetak-quotation', query: { id: quotation.value.id, print: 'true' } })
+}
+
+async function onProductDocument () {
+  if (!quotation.value?.id || !productDocument.value) return
+  const { $api } = useNuxtApp()
+  const token = useCookie('access_token')
+  const res = await fetch($api.quotationProductDocument(quotation.value.id), {
+    headers: token.value ? { Authorization: `Bearer ${token.value}` } : {},
+  })
+  if (!res.ok) {
+    await Swal.fire({ icon: 'error', title: 'PDF tidak tersedia', text: 'Dokumen tidak dapat dibuka untuk quotation ini.' })
+    return
+  }
+  const blob = await res.blob()
+  const url = URL.createObjectURL(blob)
+  window.open(url, '_blank')
 }
 
 async function handleDelete () {

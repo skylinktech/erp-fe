@@ -1,10 +1,11 @@
 import { useNuxtApp } from '#app'
+import { getAccessTokenCookieOptions } from '~/utils/authCookie'
 
 // Utilitas fetch terpusat yang secara otomatis menangani otentikasi (Bearer & CSRF).
 export const apiFetch = async <T = any>(url: string, options: any = {}) => {
   const { skip403Redirect, ...fetchOptions } = options
   const { $api } = useNuxtApp()
-  const token = useCookie('access_token')
+  const token = useCookie('access_token', getAccessTokenCookieOptions())
 
   const customHeaders: any = {
     ...fetchOptions.headers,
@@ -14,6 +15,15 @@ export const apiFetch = async <T = any>(url: string, options: any = {}) => {
   // Tambahkan Authorization header jika token tersedia (untuk production cross-origin)
   if (token.value) {
     customHeaders['Authorization'] = `Bearer ${token.value}`
+  }
+
+  if (process.client) {
+    try {
+      const persisted = localStorage.getItem('skyflow.activeCompanyId')
+      if (persisted) customHeaders['X-Company-Id'] = persisted
+    } catch {
+      // ignore
+    }
   }
 
   // Tambahkan lokasi user ke header jika tersedia

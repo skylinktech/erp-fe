@@ -16,7 +16,8 @@
                 <div>
                     
                     <p class="mb-6">
-                        Daftar harga produk, service, dan DID berdasarkan tipe dan periode
+                        Price List ISP — daftar harga produk, service, dan DID untuk FDR / Site Investment.
+                        Bukan Harga Jual Produk (Direct Sale) di menu Sales.
                     </p>
                     <div class="row g-6 mb-6">
                         <!-- Add Price List Card -->

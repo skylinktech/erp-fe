@@ -46,7 +46,7 @@ describe('notification feed mapper', () => {
 describe('notification management page', () => {
   it('requires notification policy permission and talks to admin APIs', () => {
     const page = readFileSync(
-      fileURLToPath(new URL('../../pages/admin/notification-management/index.vue', import.meta.url)),
+      fileURLToPath(new URL('../../pages/settings/notification-management/index.vue', import.meta.url)),
       'utf8'
     )
     expect(page).toContain('check-permission')
@@ -67,5 +67,14 @@ describe('notification management page', () => {
     expect(store).toContain('notificationAdminSettings')
     expect(store).toContain('notificationAdminHealth')
     expect(store).toContain('notificationAdminLog')
+  })
+
+  it('keeps legacy admin URL as redirect to Settings', () => {
+    const legacy = readFileSync(
+      fileURLToPath(new URL('../../pages/admin/notification-management/index.vue', import.meta.url)),
+      'utf8'
+    )
+    expect(legacy).toContain('/settings/notification-management')
+    expect(legacy).toContain('navigateTo')
   })
 })

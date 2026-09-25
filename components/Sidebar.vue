@@ -116,12 +116,15 @@ import {
   isWarrantyMenuParentRoute,
   isWarrantyWorkspacePath,
 } from '~/utils/inventory/lifecycleWorkspaces';
+import { useCompanyContextStore } from '~/stores/companyContext';
+import { filterMenuDetailsByCompanyContext } from '~/utils/filterMenusByCompanyContext';
 
 const menuGroupsStore = useMenuGroupStore();
 const route = useRoute();
 const layoutStore = useLayoutStore();
 const customerStore = useCustomerStore();
 const userStore = useUserStore();
+const companyContextStore = useCompanyContextStore();
 
 const openGroupIds = ref(new Set());
 const openDetailIds = ref(new Set());
@@ -141,7 +144,17 @@ const toggleDashboardMenu = () => {
 const filteredAndSortedMenuGroups = computed(() => {
   const filteredGroups = menuGroupsStore.filteredMenuGroups;
   if (!filteredGroups || filteredGroups.length === 0) return [];
-  return filteredGroups.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  const ctx = {
+    effectiveFlowCodes: companyContextStore.effectiveFlowCodes || [],
+    profileCode: companyContextStore.profileCode,
+  };
+  return filteredGroups
+    .map((group) => ({
+      ...group,
+      menuDetails: filterMenuDetailsByCompanyContext(group.menuDetails || [], ctx),
+    }))
+    .filter((group) => (group.menuDetails || []).length > 0)
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 });
 
 const prefetchMap = {

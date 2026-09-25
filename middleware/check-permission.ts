@@ -70,6 +70,20 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       '/sales/sales-invoice': 'view_sales_invoice',
       '/sales/surat-jalan': 'view_surat_jalan',
       '/sales/quotation': 'view_quotation',
+      '/sales/company-flow-eligibility': 'view_company_flow_eligibility',
+      '/settings/business-model': 'view_business_model_configuration',
+      '/sales/retail-sale': 'view_retail_sale',
+      '/sales/retail-return': 'view_retail_return',
+      '/sales/omnichannel': 'view_commerce_omnichannel',
+      '/sales/omnichannel/produk': 'view_commerce_omnichannel',
+      '/sales/omnichannel/product': 'view_commerce_omnichannel',
+      '/sales/omnichannel/pesanan': 'view_commerce_external_order',
+      '/sales/omnichannel/pengembalian': 'view_commerce_external_return',
+      '/sales/omnichannel/inventory': 'view_commerce_omnichannel',
+      '/sales/omnichannel/wms': 'view_commerce_omnichannel',
+      '/sales/omnichannel/settings': 'view_commerce_omnichannel',
+      '/sales/omnichannel/toko': 'view_commerce_omnichannel',
+      '/sales/omnichannel/sinkronisasi': 'view_commerce_omnichannel',
       '/sales/sales-return': 'view_sales_return',
       '/sales/customer': 'view_customer',
       '/purchasing/purchase-order': 'view_purchase_order',
@@ -154,6 +168,8 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       '/admin/dashboards': 'manage_dashboard',
       '/admin/dashboards/widgets': 'manage_dashboard_widget',
       '/admin/notification-management': 'view_notification_policy',
+      '/settings/notification-management': 'view_notification_policy',
+      '/settings/document-numbering': 'view_document_numbering',
     }
 
     // Cek apakah user adalah superadmin
@@ -299,6 +315,64 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
           permission.name === requiredPermission
         )
       )
+
+      if (!hasPermission && to.path.startsWith('/sales/retail-return')) {
+        const allowed = ['view_retail_return', 'create_retail_return', 'approve_retail_return', 'receive_retail_return', 'post_retail_return', 'approve_retail_compensation', 'create_retail_credit_note', 'request_retail_refund', 'approve_retail_refund', 'confirm_retail_refund']
+        const ok = userStore.user?.roles?.some(role =>
+          role.name === 'admin' ||
+          role.permissions?.some(permission => allowed.includes(permission.name))
+        )
+        if (ok) return
+      }
+
+      if (!hasPermission && to.path.startsWith('/sales/retail-sale')) {
+        const allowed = ['view_retail_sale', 'create_retail_sale', 'confirm_retail_sale', 'cancel_retail_sale', 'fulfill_retail_sale', 'invoice_retail_sale', 'pay_retail_sale']
+        const ok = userStore.user?.roles?.some(role =>
+          role.name === 'admin' ||
+          role.permissions?.some(permission => allowed.includes(permission.name))
+        )
+        if (ok) return
+      }
+
+      if (!hasPermission && to.path.startsWith('/sales/omnichannel')) {
+        const allowed = [
+          'view_commerce_omnichannel',
+          'manage_commerce_connection',
+          'view_commerce_external_order',
+          'view_commerce_external_return',
+          'manage_commerce_sku_mapping',
+        ]
+        const ok = userStore.user?.roles?.some(role =>
+          role.name === 'admin' ||
+          role.permissions?.some(permission => allowed.includes(permission.name))
+        )
+        if (ok) return
+      }
+
+      if (!hasPermission && to.path.startsWith('/settings/business-model')) {
+        const allowed = [
+          'view_business_model_configuration',
+          'manage_business_model_configuration',
+          'manage_company_flow_eligibility',
+          'manage_company_warehouse_allocation',
+          'manage_company_inventory_ownership',
+          'manage_retail_return_policy',
+        ]
+        const ok = userStore.user?.roles?.some(role =>
+          role.name === 'admin' ||
+          role.permissions?.some(permission => allowed.includes(permission.name))
+        )
+        if (ok) return
+      }
+
+      if (!hasPermission && to.path === '/sales/company-flow-eligibility') {
+        const allowed = ['view_company_flow_eligibility', 'manage_company_flow_eligibility']
+        const ok = userStore.user?.roles?.some(role =>
+          role.name === 'admin' ||
+          role.permissions?.some(permission => allowed.includes(permission.name))
+        )
+        if (ok) return
+      }
 
       if (!hasPermission && to.path === '/finance/ar-receipts') {
         const allowed = [

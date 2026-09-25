@@ -1,990 +1,406 @@
 <template>
-  <div class="pos-page">
-    <!-- Main content area -->
-    <section class="pos-content">
-      <header class="pos-header">
-        <div class="pos-search-wrap">
-          <i class="fas fa-search pos-search-icon"></i>
-          <input
-            v-model="productSearchQuery"
-            type="search"
-            class="pos-search"
-            placeholder="Search menu"
-            aria-label="Search"
-          />
-        </div>
-        <div class="pos-header-right">
-          <span class="pos-user-greeting">Hai, {{ userDisplayName }}</span>
-          <span class="pos-date">{{ formattedDate }}</span>
-          <button type="button" class="pos-icon-btn" aria-label="Notifications">
-            <i class="fas fa-bell"></i>
-          </button>
-          <div class="pos-avatar">
-            <img
-              v-if="userAvatarUrl"
-              :src="userAvatarUrl"
-              alt="Avatar"
-              class="pos-avatar-img"
-              @error="onAvatarImgError"
-            />
-            <span v-else class="pos-avatar-initial">{{ userInitials }}</span>
-          </div>
-        </div>
-      </header>
-
-      <div class="pos-main-inner">
-        <div class="pos-categories-wrap">
-          <h3 class="pos-categories-title">Categories</h3>
-          <nav class="pos-category-nav">
-            <button
-              v-for="cat in posCategories"
-              :key="cat.value"
-              type="button"
-              class="pos-category-btn"
-              :class="{ active: activeCategory === cat.value }"
-              @click="activeCategory = cat.value"
-            >
-              {{ cat.label }}
-            </button>
-          </nav>
-        </div>
-
-        <div class="article-row pos-content-aligned" style="width: 100%">
-          <div class="pos-product-list-section">
-            <h3 class="pos-categories-title">Product List</h3>
-            <div class="pos-product-grid">
-                <article
-                    class="pos-product-card-wrap"
-                    v-for="product in products"
-                    :key="product.id"
-                >
-                    <div
-                    class="pos-product-card"
-                    :class="{ 'is-unavailable': getProductStock(product) === 0 }"
-                    >
-                    <!-- Header: image left, name + availability + price right -->
-                    <div class="pos-product-card-header">
-                        <div class="pos-product-card-thumb">
-                            <img
-                                :src="getProductImage(product.image) || '/img/branding/logo.png'"
-                                alt="Product"
-                                @error="(e) => (e.target.src = '/img/branding/logo.png')"
-                            />
-                        </div>
-                        <div class="pos-product-card-info">
-                            <h4 class="pos-product-card-name">{{ product.name }}</h4>
-                            <p class="pos-product-card-availability">
-                                {{ getProductStock(product) }} Available
-                                <template v-if="product.soldCount != null"> • {{ product.soldCount }} Sold</template>
-                            </p>
-                            <p class="pos-product-card-price">{{ formatRupiah(product.priceSell) }}</p>
-                        </div>
-                    </div>
-                    <!-- Customization: Cup Size, Ice Level, Sugar Level -->
-                    <div class="pos-product-card-options">
-                        <div class="pos-option-row">
-                            <span class="pos-option-label">Cup Size</span>
-                            <div class="pos-option-btns">
-                                <button
-                                    v-for="opt in ['S', 'M', 'L']"
-                                    :key="opt"
-                                    type="button"
-                                    class="pos-option-btn"
-                                    :class="{ active: getCardOption(product.id, 'cupSize') === opt }"
-                                    :disabled="getProductStock(product) === 0"
-                                    @click="setCardOption(product.id, 'cupSize', opt)"
-                                >
-                                    {{ opt }}
-                                </button>
-                            </div>
-                        </div>
-                        <div class="pos-option-row">
-                            <span class="pos-option-label">Ice Level</span>
-                            <div class="pos-option-btns">
-                                <button
-                                    v-for="opt in ['30', '60', '100']"
-                                    :key="opt"
-                                    type="button"
-                                    class="pos-option-btn"
-                                    :class="{ active: getCardOption(product.id, 'iceLevel') === opt }"
-                                    :disabled="getProductStock(product) === 0"
-                                    @click="setCardOption(product.id, 'iceLevel', opt)"
-                                >
-                                    {{ opt }}
-                                </button>
-                            </div>
-                        </div>
-                        <div class="pos-option-row">
-                            <span class="pos-option-label">Sugar Level</span>
-                            <div class="pos-option-btns">
-                                <button
-                                    v-for="opt in ['30', '60', '100']"
-                                    :key="opt"
-                                    type="button"
-                                    class="pos-option-btn"
-                                    :class="{ active: getCardOption(product.id, 'sugarLevel') === opt }"
-                                    :disabled="getProductStock(product) === 0"
-                                    @click="setCardOption(product.id, 'sugarLevel', opt)"
-                                >
-                                    {{ opt }}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Amount + Add To Cart -->
-                    <div class="pos-product-card-actions">
-                        <div class="pos-amount-row">
-                            <span class="pos-option-label">Amount</span>
-                            <div class="pos-amount-controls">
-                                <button
-                                    type="button"
-                                    class="pos-amount-btn minus"
-                                    :disabled="getProductStock(product) === 0 || getCardOption(product.id, 'amount') <= 0"
-                                    @click="changeCardAmount(product.id, -1)"
-                                >
-                                    −
-                                </button>
-                                <span class="pos-amount-value">{{ getCardOption(product.id, 'amount') }}</span>
-                                <button
-                                    type="button"
-                                    class="pos-amount-btn plus"
-                                    :disabled="getProductStock(product) === 0 || getCardOption(product.id, 'amount') >= getProductStock(product)"
-                                    @click="changeCardAmount(product.id, 1)"
-                                >
-                                    +
-                                </button>
-                            </div>
-                        </div>
-                        <button
-                            type="button"
-                            class="pos-add-to-cart-btn"
-                            :disabled="getProductStock(product) === 0 || getCardOption(product.id, 'amount') <= 0"
-                            @click="addProductToCart(product)"
-                        >
-                            Add To Cart
-                        </button>
-                    </div>
-                    </div>
-                </article>
-            </div>
-
-            <div
-                v-if="!productLoading && !products.length"
-                class="col-12 text-center mt-5"
-            >
-                <p>Tidak ada produk yang tersedia di gudang ini.</p>
-            </div>
-          </div>
-        </div>
-
-        <div
-          class="d-flex justify-content-center mt-4"
-          v-if="!productLoading && products.length > 0"
-        >
-          <Paginator
-            :rows="productParams.rows"
-            :totalRecords="totalProducts"
-            :rowsPerPageOptions="[6, 12, 18]"
-            @page="onProductPage"
-            :first="productParams.first"
-          ></Paginator>
-        </div>
+  <div class="pos-page container-fluid py-3">
+    <header class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+      <div>
+        <h1 class="h4 mb-1">POS — Direct Product Sale</h1>
+        <p class="text-muted small mb-0">
+          Active Company: <strong>{{ activeCompanyLabel || '—' }}</strong>
+          · Kapabilitas DIRECT_PRODUCT_SALE
+        </p>
       </div>
-    </section>
+      <NuxtLink to="/sales/retail-sale" class="btn btn-outline-secondary btn-sm">Riwayat transaksi</NuxtLink>
+    </header>
 
-    <aside class="pos-bill-aside">
-      <div class="pos-bill-inner">
-        <div class="pos-bill-header">
-          <h4>Bill Details</h4>
-          <div class="d-flex align-items-center gap-2">
-            <span class="pos-bill-number">#{{ billNumber }}</span>
-            <button type="button" class="pos-btn-clear" @click="clearOrder">
-              Clear All
-            </button>
-          </div>
-        </div>
-        <div class="pos-customer-name-wrap">
-          <label class="pos-customer-label">Customer Name</label>
-          <span class="pos-customer-value">{{
-            selectedCustomerName || "—"
-          }}</span>
-        </div>
-        <ul class="order-list mt-4 mb-4">
-          <li
-            class="d-flex justify-content-between align-items-center mb-3 mt-3"
-            v-for="(item, index) in currentOrderItems"
-            :key="item.productId"
-          >
-            <div class="item-info">
-              <img
-                :src="
-                  getProductImage(item.product?.image) ||
-                  '/img/branding/logo.png'
-                "
-                :alt="
-                  item.product && item.product.name ? item.product.name : 'Logo'
-                "
-                @error="
-                  (event) => (event.target.src = '/img/branding/logo.png')
-                "
-                class="img-fluid"
+    <div v-if="gateError" class="alert alert-warning">{{ gateError }}</div>
+    <div v-if="error" class="alert alert-danger text-break">{{ error }}</div>
+    <div v-if="notice" class="alert alert-success text-break">{{ notice }}</div>
+
+    <div class="row g-3">
+      <div class="col-12 col-lg-7">
+        <div class="card card-body">
+          <div class="row g-2 mb-3">
+            <div class="col-12">
+              <ActiveCompanyField input-id="pos-company" />
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label">Gudang</label>
+              <WarehouseSelect
+                v-model="form.warehouseId"
+                :company-id="activeCompanyId"
+                :disabled="!activeCompanyReady"
               />
-              <div class="item-details">
-                <span class="item-name">{{ item.product?.name }}</span
-                ><br />
-                <span class="item-price">{{
-                  formatRupiah(item.quantity * item.price)
-                }}</span>
-              </div>
             </div>
-            <div
-              class="quantity-controls d-flex justify-content-center align-items-center"
-            >
+            <div class="col-12 col-md-6">
+              <label class="form-label">Pelanggan</label>
+              <select v-model="form.customerMode" class="form-select mb-2">
+                <option value="WALK_IN">Walk-in</option>
+                <option value="REGISTERED">Terdaftar</option>
+              </select>
+              <CustomerSelect
+                v-if="form.customerMode === 'REGISTERED'"
+                v-model="form.customerId"
+                :company-id="activeCompanyId"
+                :disabled="!activeCompanyReady"
+              />
+              <input
+                v-else
+                v-model="form.walkInName"
+                class="form-control"
+                placeholder="Nama walk-in (opsional)"
+              />
+            </div>
+          </div>
+
+          <label class="form-label">Tambah produk</label>
+          <div class="row g-2 align-items-end">
+            <div class="col-12 col-md-6">
+              <ProductSelect
+                v-model="line.productId"
+                :company-id="activeCompanyId"
+                :warehouse-id="form.warehouseId"
+                :disabled="!activeCompanyReady || !form.warehouseId"
+                @select="onProductSelect"
+              />
+            </div>
+            <div class="col-6 col-md-2">
+              <UnitSelect v-model="line.unitId" :disabled="!line.productId" />
+            </div>
+            <div class="col-6 col-md-2">
+              <input
+                v-model.number="line.quantity"
+                type="number"
+                min="0.0001"
+                step="0.0001"
+                class="form-control"
+                placeholder="Qty"
+              />
+            </div>
+            <div class="col-12 col-md-2">
               <button
-                @click="decreaseQuantity(index)"
-                aria-label="Decrease quantity"
+                type="button"
+                class="btn btn-primary w-100"
+                :disabled="!canAddLine"
+                @click="addLine"
               >
-                −
-              </button>
-              <span>{{ item.quantity }}</span>
-              <button
-                @click="increaseQuantity(index)"
-                aria-label="Increase quantity"
-              >
-                +
+                Tambah
               </button>
             </div>
-          </li>
-          <li v-if="currentOrderItems.length === 0" class="text-center w-100">
-            <p>No items in order.</p>
-          </li>
-        </ul>
-        <div class="order-summary pos-order-summary">
-          <div>
-            <span>Item ({{ currentOrderItems.length }} Items)</span>
-            <span>{{ formatRupiah(subtotal) }}</span>
           </div>
-          <div>
-            <span>Subtotal</span>
-            <span>{{ formatRupiah(subtotal) }}</span>
-          </div>
-          <div>
-            <span>Discount</span>
-            <span>-{{ formatRupiah(discountAmount) }}</span>
-          </div>
-          <div>
-            <span>Tax ({{ form.taxPercent || 0 }}%)</span>
-            <span>{{ formatRupiah(taxAmount) }}</span>
-          </div>
-          <div class="total">
-            <span>Total</span>
-            <span>{{ formatRupiah(total) }}</span>
-          </div>
+          <p v-if="line.officialPrice != null" class="small text-muted mt-2 mb-0">
+            Harga resmi server: {{ formatMoney(line.officialPrice) }}
+            <span v-if="line.priceListCode"> · {{ line.priceListCode }}</span>
+          </p>
         </div>
-        <div class="pos-select-table-wrap">
-          <label class="pos-select-table-label">Select Table</label>
-          <button type="button" class="pos-select-table-btn">Pilih Meja</button>
-        </div>
-        <div class="payment-methods">
-          <h5>Select Payment</h5>
-          <div class="pos-payment-btns">
-            <button
-              type="button"
-              class="payment-btn"
-              :class="{ active: form.paymentMethod === 'cash' }"
-              @click="form.paymentMethod = 'cash'"
-            >
-              <i class="ri-cash-line"></i>
-              <span>Pay with Cash</span>
-            </button>
-            <button
-              type="button"
-              class="payment-btn"
-              :class="{ active: form.paymentMethod === 'card' }"
-              @click="form.paymentMethod = 'card'"
-            >
-              <i class="ri-bank-card-line"></i>
-              <span>Pay with Card</span>
-            </button>
-            <button
-              type="button"
-              class="payment-btn"
-              :class="{ active: form.paymentMethod === 'transfer' }"
-              @click="form.paymentMethod = 'transfer'"
-            >
-              <i class="ri-exchange-dollar-line"></i>
-              <span>Transfer</span>
-            </button>
-          </div>
-        </div>
-        <button
-          class="btn-print pos-process-btn"
-          type="button"
-          @click="saveBills"
-          :disabled="loading"
-        >
-          <span
-            v-if="loading"
-            class="spinner-border spinner-border-sm"
-            role="status"
-            aria-hidden="true"
-          ></span>
-          {{ loading ? "Menyimpan..." : "Process Transaction" }}
-        </button>
       </div>
-    </aside>
+
+      <div class="col-12 col-lg-5">
+        <div class="card card-body pos-cart">
+          <h2 class="h6">Keranjang</h2>
+          <div v-if="!cart.length" class="text-muted small">Belum ada item.</div>
+          <ul class="list-unstyled mb-3">
+            <li
+              v-for="(item, index) in cart"
+              :key="`${item.productId}-${item.unitId}-${index}`"
+              class="border-bottom py-2 d-flex justify-content-between gap-2"
+            >
+              <div class="text-break">
+                <div class="fw-semibold">{{ item.productName }}</div>
+                <div class="small text-muted">
+                  {{ item.sku }} · {{ item.quantity }} {{ item.unitName }}
+                  × {{ formatMoney(item.officialUnitPrice) }}
+                </div>
+              </div>
+              <button type="button" class="btn btn-sm btn-outline-danger" @click="removeLine(index)">×</button>
+            </li>
+          </ul>
+          <div class="d-flex justify-content-between fw-semibold mb-3">
+            <span>Subtotal (indikatif)</span>
+            <span>{{ formatMoney(cartSubtotal) }}</span>
+          </div>
+          <button
+            type="button"
+            class="btn btn-success w-100"
+            :disabled="saving || !canCheckout"
+            @click="checkout"
+          >
+            {{ saving ? 'Memproses…' : 'Checkout (buat + konfirmasi)' }}
+          </button>
+          <p class="small text-muted mt-2 mb-0">
+            Harga final dihitung server. Checkout membuat Direct Sale lalu konfirmasi reservasi stok.
+            Fulfill / invoice / bayar di Riwayat transaksi.
+          </p>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import { useCompanyContextStore } from '~/stores/companyContext'
+import { useActiveCompany } from '~/composables/useActiveCompany'
+import { isRouteAllowedForContext, businessAwareLanding } from '~/utils/businessFlowRoute'
+import { readAccessToken } from '~/utils/authCookie'
+import ActiveCompanyField from '~/components/company/ActiveCompanyField.vue'
+import ProductSelect from '~/components/reference/ProductSelect.vue'
+import WarehouseSelect from '~/components/reference/WarehouseSelect.vue'
+import CustomerSelect from '~/components/reference/CustomerSelect.vue'
+import UnitSelect from '~/components/reference/UnitSelect.vue'
+
 definePageMeta({
-  layout: "pos",
-  middleware: ["auth"],
-});
+  layout: 'pos',
+  middleware: ['auth', 'check-permission'],
+})
 
-import { ref, computed, onMounted, watch } from "vue";
-import { storeToRefs } from "pinia";
-import { useSalesOrderStore } from "~/stores/sales-order";
-import { useCustomerStore } from "~/stores/customer";
-import { usePerusahaanStore } from "~/stores/perusahaan";
-import { useCabangStore } from "~/stores/cabang";
-import { useProductStore } from "~/stores/product";
-import { useWarehouseStore } from "~/stores/warehouse";
-import { useStocksStore } from "~/stores/stocks";
-import { useUserStore } from "~/stores/user";
-import vSelect from "vue-select";
-import CustomSelect2 from "~/components/CustomSelect2.vue";
-import Dropdown from "primevue/dropdown";
-import Paginator from "primevue/paginator";
-import Column from "primevue/column";
-import InputText from "primevue/inputtext";
-import "vue-select/dist/vue-select.css";
-import { useDebounceFn } from "@vueuse/core";
-import { useRouter } from "vue-router";
-import Swal from "sweetalert2";
+type CartLine = {
+  productId: number
+  unitId: number
+  quantity: number
+  productName: string
+  sku: string
+  unitName: string
+  officialUnitPrice: number
+  priceListCode?: string
+}
 
-const config = useRuntimeConfig();
-const router = useRouter();
-
-// Store
-const myDataTableRef = ref(null);
-const salesOrderStore = useSalesOrderStore();
-const customerStore = useCustomerStore();
-const perusahaanStore = usePerusahaanStore();
-const warehouseStore = useWarehouseStore();
-const cabangStore = useCabangStore();
-const productStore = useProductStore();
-const stockStore = useStocksStore();
-const userStore = useUserStore();
-const formatRupiah = useFormatRupiah();
-
+const router = useRouter()
+const companyContextStore = useCompanyContextStore()
 const {
-  salesOrders,
-  loading,
-  totalRecords,
-  params,
-  form,
-  isEditMode,
-  showModal,
-  validationErrors,
-  customerProducts,
-} = storeToRefs(salesOrderStore);
-const { customers } = storeToRefs(customerStore);
-const { perusahaans } = storeToRefs(perusahaanStore);
-const { cabangs } = storeToRefs(cabangStore);
-const { warehouses } = storeToRefs(warehouseStore);
-const {
-  products,
-  loading: productLoading,
-  totalRecords: totalProducts,
-  params: productParams,
-} = storeToRefs(productStore);
-const { user } = storeToRefs(userStore);
+  ready: activeCompanyReady,
+  label: activeCompanyLabel,
+  requireCompanyId,
+  missingMessage: activeCompanyMissing,
+  ensureBootstrapped,
+  companyId: activeCompanyId,
+} = useActiveCompany()
 
-const avatarImgError = ref(false);
+const gateError = ref('')
+const error = ref('')
+const notice = ref('')
+const saving = ref(false)
+const form = ref({
+  warehouseId: null as number | null,
+  customerMode: 'WALK_IN' as 'WALK_IN' | 'REGISTERED',
+  customerId: null as number | null,
+  walkInName: '',
+})
+const line = ref({
+  productId: null as number | null,
+  unitId: null as number | null,
+  quantity: 1,
+  productName: '',
+  sku: '',
+  unitName: '',
+  officialPrice: null as number | null,
+  priceListCode: '',
+})
+const cart = ref<CartLine[]>([])
+const selectedProduct = ref<any>(null)
 
-const userDisplayName = computed(() => {
-  const u = user.value;
-  if (!u) return "User";
-  return u.fullName ?? u.full_name ?? "User";
-});
+const canAddLine = computed(
+  () =>
+    !!line.value.productId &&
+    !!line.value.unitId &&
+    Number(line.value.quantity) > 0 &&
+    line.value.officialPrice != null
+)
+const cartSubtotal = computed(() =>
+  cart.value.reduce((sum, item) => sum + item.quantity * item.officialUnitPrice, 0)
+)
+const canCheckout = computed(
+  () =>
+    activeCompanyReady.value &&
+    !!form.value.warehouseId &&
+    cart.value.length > 0 &&
+    (form.value.customerMode === 'WALK_IN' || !!form.value.customerId)
+)
 
-const userAvatarUrl = computed(() => {
-  if (avatarImgError.value) return null;
-  const u = user.value;
-  return u?.avatar ?? u?.avatarUrl ?? u?.avatar_url ?? null;
-});
-
-const userInitials = computed(() => {
-  const name = userDisplayName.value;
-  if (!name || name === "User") return "U";
-  const parts = name.trim().split(/\s+/);
-  if (parts.length >= 2) {
-    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-  }
-  return name.slice(0, 2).toUpperCase();
-});
-
-function onAvatarImgError() {
-  avatarImgError.value = true;
+function formatMoney(value: number | null | undefined) {
+  if (value == null || Number.isNaN(Number(value))) return '—'
+  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(
+    Number(value)
+  )
 }
 
-// State
-const productSearchQuery = ref("");
-const globalFilterValue = ref("");
-const attachmentPreview = ref(null);
-const activeCategory = ref("product");
-
-const posCategories = [
-  { label: "Product", value: "product" },
-  { label: "Services", value: "services" },
-  { label: "Delivery, Installation, Dismantle (DID)", value: "did" },
-];
-
-const billNumber = ref(String(Math.floor(100000 + Math.random() * 900000)));
-
-// State per-product card: cupSize, iceLevel, sugarLevel, amount
-const productCardOptions = ref({});
-
-const defaultCardOptions = () => ({
-  cupSize: "S",
-  iceLevel: "100",
-  sugarLevel: "100",
-  amount: 1,
-});
-
-function getCardOption(productId, key) {
-  const opts = productCardOptions.value[productId] || defaultCardOptions();
-  return opts[key] ?? defaultCardOptions()[key];
+function headers() {
+  const token = readAccessToken()
+  return {
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  }
 }
 
-function setCardOption(productId, key, value) {
-  if (!productCardOptions.value[productId]) {
-    productCardOptions.value[productId] = { ...defaultCardOptions() };
+async function resolveOfficialPrice(productId: number, unitId: number) {
+  const { $api } = useNuxtApp()
+  let companyId: number
+  try {
+    companyId = requireCompanyId()
+  } catch {
+    return null
   }
-  productCardOptions.value[productId][key] = value;
+  const res = await fetch($api.productSellingPriceResolve(), {
+    method: 'POST',
+    headers: headers(),
+    credentials: 'include',
+    body: JSON.stringify({
+      perusahaanId: companyId,
+      productId,
+      unitId,
+      channel: 'RETAIL',
+      asOf: new Date().toISOString().slice(0, 10),
+    }),
+  })
+  const payload = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    error.value = payload?.message || 'Harga resmi tidak tersedia.'
+    return null
+  }
+  return payload.data || payload
 }
 
-function changeCardAmount(productId, delta) {
-  if (!productCardOptions.value[productId]) {
-    productCardOptions.value[productId] = { ...defaultCardOptions() };
+function onProductSelect(product: any) {
+  selectedProduct.value = product
+  line.value.productName = product?.name || ''
+  line.value.sku = product?.sku || ''
+  if (product?.unitId && !line.value.unitId) {
+    line.value.unitId = Number(product.unitId)
+    line.value.unitName = product?.unit?.name || product?.unit?.nmUnit || ''
   }
-  const opts = productCardOptions.value[productId];
-  const next = Math.max(0, (opts.amount || 1) + delta);
-  opts.amount = next;
+  void refreshLinePrice()
 }
 
-function addProductToCart(product) {
-  if (!form.value.salesOrderItems) {
-    form.value.salesOrderItems = [];
+watch(
+  () => [line.value.productId, line.value.unitId],
+  () => {
+    void refreshLinePrice()
   }
-  const stockQty = getProductStock(product);
-  const amount = getCardOption(product.id, "amount") || 1;
-  if (stockQty === 0 || amount <= 0) return;
-  const cupSize = getCardOption(product.id, "cupSize");
-  const iceLevel = getCardOption(product.id, "iceLevel");
-  const sugarLevel = getCardOption(product.id, "sugarLevel");
-  const description = `Cup: ${cupSize}, Ice: ${iceLevel}%, Sugar: ${sugarLevel}%`;
-  const existingIndex = form.value.salesOrderItems.findIndex(
-    (item) => item.productId === product.id,
-  );
-  if (existingIndex > -1) {
-    const item = form.value.salesOrderItems[existingIndex];
-    const newQty = item.quantity + amount;
-    if (newQty > stockQty) {
-      toast.fire({
-        icon: "warning",
-        title: "Jumlah melebihi stok yang tersedia.",
-      });
-      return;
-    }
-    item.quantity = newQty;
-    if (item.description) item.description = description;
+)
+
+async function refreshLinePrice() {
+  line.value.officialPrice = null
+  line.value.priceListCode = ''
+  if (!line.value.productId || !line.value.unitId) return
+  const resolved = await resolveOfficialPrice(line.value.productId, line.value.unitId)
+  if (!resolved) return
+  line.value.officialPrice = Number(resolved.unitPrice ?? resolved.officialUnitPrice)
+  line.value.priceListCode = resolved.priceListCode || ''
+  line.value.unitName = resolved.unitName || line.value.unitName
+}
+
+function addLine() {
+  if (!canAddLine.value || line.value.productId == null || line.value.unitId == null) return
+  const existing = cart.value.findIndex(
+    (item) => item.productId === line.value.productId && item.unitId === line.value.unitId
+  )
+  if (existing >= 0) {
+    cart.value[existing].quantity += Number(line.value.quantity)
   } else {
-    form.value.salesOrderItems.push({
-      productId: product.id,
-      quantity: amount,
-      price: product.priceSell || 0,
-      description,
-      subtotal: (product.priceSell || 0) * amount,
-    });
-  }
-  setCardOption(product.id, "amount", 1);
-}
-
-const formattedDate = computed(() => {
-  const d = new Date();
-  const days = [
-    "Sunday",
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-  ];
-  const months = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ];
-  return `${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
-});
-
-const selectedCustomerName = computed(() => {
-  if (!form.value.customerId || !customers.value?.length) return "";
-  const c = customers.value.find((x) => x.id === form.value.customerId);
-  return c?.name || "";
-});
-
-const getProductImage = (imagePath) => {
-  if (!imagePath || typeof imagePath !== "string") {
-    return null;
-  }
-  if (imagePath.startsWith("http")) {
-    return imagePath;
-  }
-  if (!config.public.apiBase) {
-    return imagePath;
-  }
-  const origin = new URL(config.public.apiBase).origin;
-  const imageUrl = `${origin}/${imagePath}`;
-  return imageUrl;
-};
-
-const getProductStock = (product) => {
-  if (!product.stocks || product.stocks.length === 0) {
-    return 0;
-  }
-
-  // Jika ada warehouse yang dipilih, tampilkan stok untuk warehouse tersebut
-  if (form.value.warehouseId) {
-    const warehouseStock = product.stocks.find(
-      (stock) => stock.warehouseId === form.value.warehouseId,
-    );
-    return warehouseStock ? Math.floor(warehouseStock.quantity) : 0;
-  }
-
-  // Jika tidak ada warehouse yang dipilih, tampilkan total stok dari semua warehouse
-  const totalStock = product.stocks.reduce(
-    (total, stock) => total + Number(stock.quantity),
-    0,
-  );
-  return Math.floor(totalStock);
-};
-
-const isProductInOrder = (productId) => {
-  return (
-    form.value.salesOrderItems &&
-    form.value.salesOrderItems.some((item) => item.productId === productId)
-  );
-};
-
-const toggleProductInOrder = (product) => {
-  if (!form.value.salesOrderItems) {
-    form.value.salesOrderItems = [];
-  }
-  const itemIndex = form.value.salesOrderItems.findIndex(
-    (item) => item.productId === product.id,
-  );
-
-  if (itemIndex > -1) {
-    salesOrderStore.removeItem(itemIndex);
-  } else {
-    const stockQty = getProductStock(product);
-    if (stockQty > 0) {
-      form.value.salesOrderItems.push({
-        productId: product.id,
-        quantity: 1,
-        price: product.priceSell || 0,
-        description: "",
-        subtotal: product.priceSell || 0,
-      });
-    } else {
-      toast.fire({
-        icon: "warning",
-        title: "Produk ini kehabisan stok.",
-      });
-    }
-  }
-};
-
-const increaseQuantity = (index) => {
-  const item = form.value.salesOrderItems[index];
-  const product = products.value.find((p) => p.id === item.productId);
-
-  if (product) {
-    const stockQty = getProductStock(product);
-    if (item.quantity < stockQty) {
-      item.quantity++;
-    } else {
-      toast.fire({
-        icon: "warning",
-        title: "Jumlah melebihi stok yang tersedia.",
-      });
-    }
-  } else {
-    item.quantity++; // Fallback if stock info is not available
-  }
-  calculateSubtotal(index);
-};
-
-const decreaseQuantity = (index) => {
-  const item = form.value.salesOrderItems[index];
-  item.quantity--;
-  if (item.quantity <= 0) {
-    salesOrderStore.removeItem(index);
-  } else {
-    calculateSubtotal(index);
-  }
-};
-
-const currentOrderItems = computed(() => {
-  if (!form.value.salesOrderItems) return [];
-  return form.value.salesOrderItems
-    .map((item) => {
-      const product = products.value.find((p) => p.id === item.productId);
-      return {
-        ...item,
-        product: product,
-      };
+    cart.value.push({
+      productId: line.value.productId,
+      unitId: line.value.unitId,
+      quantity: Number(line.value.quantity),
+      productName: line.value.productName || selectedProduct.value?.name || `Produk #${line.value.productId}`,
+      sku: line.value.sku || selectedProduct.value?.sku || '',
+      unitName: line.value.unitName || '',
+      officialUnitPrice: Number(line.value.officialPrice),
+      priceListCode: line.value.priceListCode,
     })
-    .filter((item) => item.product);
-});
-
-const subtotal = computed(() => {
-  return currentOrderItems.value.reduce(
-    (total, item) => total + item.quantity * item.price,
-    0,
-  );
-});
-
-const discountAmount = computed(() => {
-  const discountPercent = Number(form.value.discountPercent) || 0;
-  return subtotal.value * (discountPercent / 100);
-});
-
-const taxAmount = computed(() => {
-  const taxPercent = Number(form.value.taxPercent) || 0;
-  return (subtotal.value - discountAmount.value) * (taxPercent / 100);
-});
-
-const total = computed(() => {
-  return subtotal.value - discountAmount.value + taxAmount.value;
-});
-
-const clearOrder = () => {
-  form.value.salesOrderItems = [];
-};
-
-const saveBills = async () => {
-  if (
-    !form.value.perusahaanId ||
-    !form.value.cabangId ||
-    !form.value.warehouseId ||
-    !form.value.customerId
-  ) {
-    toast.fire({
-      icon: "error",
-      title:
-        "Harap lengkapi pilihan Perusahaan, Cabang, Gudang, dan Pelanggan.",
-    });
-    return;
   }
-
-  if (!form.value.salesOrderItems || form.value.salesOrderItems.length === 0) {
-    toast.fire({
-      icon: "error",
-      title: "Tidak ada item dalam pesanan.",
-    });
-    return;
-  }
-
-  if (!form.value.paymentMethod) {
-    toast.fire({
-      icon: "error",
-      title: "Harap pilih metode pembayaran.",
-    });
-    return;
-  }
-
-  // Add warehouseId to each item before saving
-  const warehouseId = form.value.warehouseId;
-  form.value.salesOrderItems.forEach((item) => {
-    item.warehouseId = warehouseId;
-  });
-
-  await salesOrderStore.saveSalesOrder();
-
-  if (salesOrderStore.validationErrors.length === 0) {
-    clearOrder();
-    form.value.perusahaanId = null;
-    form.value.cabangId = null;
-    form.value.warehouseId = null;
-    form.value.customerId = null;
-    form.value.paymentMethod = "";
-    billNumber.value = String(Math.floor(100000 + Math.random() * 900000));
-    toast.fire({
-      icon: "success",
-      title: "Pesanan berhasil disimpan.",
-    });
-  } else {
-    toast.fire({
-      icon: "error",
-      title: "Terjadi kesalahan saat menyimpan pesanan.",
-    });
-  }
-};
-
-const grandTotal = computed(() => {
-  if (!form.value || !form.value.salesOrderItems) return 0;
-
-  const totalItems = form.value.salesOrderItems.reduce((total, item) => {
-    const quantity = Number(item.quantity) || 0;
-    const unitPrice = Number(item.price) || 0;
-    return total + quantity * unitPrice;
-  }, 0);
-
-  const discountPercent = Number(form.value.discountPercent) || 0;
-  const taxPercent = Number(form.value.taxPercent) || 0;
-
-  const discountAmount = totalItems * (discountPercent / 100);
-  const totalAfterDiscount = totalItems - discountAmount;
-  const taxAmount = totalAfterDiscount * (taxPercent / 100);
-
-  return totalAfterDiscount + taxAmount;
-});
-
-const paymentMethodOptions = [
-  { label: "Cash", value: "cash" },
-  { label: "Transfer", value: "transfer" },
-  { label: "QRIS", value: "qris" },
-  { label: "Card", value: "card" },
-];
-
-onMounted(() => {
-  salesOrderStore.resetForm("pos");
-  const today = new Date().toISOString().split("T")[0];
-  form.value.date = today;
-  form.value.dueDate = today;
-
-  salesOrderStore.fetchSalesOrders();
-  customerStore.fetchCustomers();
-  perusahaanStore.fetchPerusahaans();
-  cabangStore.fetchCabangs();
-  productStore.params.rows = 6;
-  productStore.fetchProducts();
-  warehouseStore.fetchWarehouses();
-  userStore.loadUser();
-});
-
-watch(
-  () => form.value.perusahaanId,
-  (newPerusahaanId) => {
-    if (newPerusahaanId) {
-      const selectedCompany = perusahaans.value.find(
-        (p) => p.id === newPerusahaanId,
-      );
-      if (selectedCompany) {
-        form.value.up = selectedCompany.nmPerusahaan;
-      }
-      if (!isEditMode.value) {
-        form.value.cabangId = null;
-      }
-    } else {
-      form.value.up = "";
-    }
-  },
-);
-
-watch(
-  () => form.value.customerId,
-  (newCustomerId, oldCustomerId) => {
-    if (newCustomerId && oldCustomerId && newCustomerId !== oldCustomerId) {
-      salesOrderStore.fetchProductsForCustomer(newCustomerId);
-
-      form.value.salesOrderItems = [];
-      salesOrderStore.addItem();
-    } else if (newCustomerId && !oldCustomerId) {
-      salesOrderStore.fetchProductsForCustomer(newCustomerId);
-    } else if (!newCustomerId) {
-      salesOrderStore.customerProducts = [];
-      form.value.salesOrderItems = [];
-      salesOrderStore.addItem();
-    }
-  },
-);
-
-watch(
-  () => salesOrderStore.customerProducts,
-  (newProducts) => {
-    if (form.value.salesOrderItems && newProducts) {
-      form.value.salesOrderItems.forEach((item) => {
-        const productExists = newProducts.some((p) => p.id === item.productId);
-        if (!productExists) {
-          item.productId = null;
-          item.price = 0;
-          item.quantity = 1;
-          item.subtotal = 0;
-        }
-      });
-    }
-  },
-  { deep: true },
-);
-
-watch(
-  () => form.value.warehouseId,
-  (newWarehouseId) => {
-    if (newWarehouseId) {
-      productStore.setWarehouseFilter(newWarehouseId);
-    } else {
-      productStore.setWarehouseFilter(null);
-    }
-  },
-);
-
-const filteredCabangs = computed(() => {
-  if (!form.value.perusahaanId || !cabangs.value) return [];
-  return cabangs.value.filter(
-    (c) => c.perusahaanId === form.value.perusahaanId,
-  );
-});
-
-const debouncedProductSearch = useDebounceFn(() => {
-  productStore.setSearch(productSearchQuery.value);
-}, 500);
-watch(productSearchQuery, debouncedProductSearch);
-
-const debouncedSearch = useDebounceFn(() => {
-  salesOrderStore.setSearch(globalFilterValue.value);
-}, 500);
-watch(globalFilterValue, debouncedSearch);
-
-const onPage = (event) => salesOrderStore.setPagination(event);
-const handleRowsChange = () => {
-  params.value.first = 0;
-  salesOrderStore.fetchSalesOrders();
-};
-
-const onProductPage = (event) => {
-  productParams.value.first = event.first;
-  productParams.value.rows = event.rows;
-  productStore.fetchProducts();
-};
-
-const isFirstPage = computed(() => productParams.value.first === 0);
-
-const isLastPage = computed(() => {
-  const total = totalProducts.value;
-  const { first, rows } = productParams.value;
-  return first + rows >= total;
-});
-
-const nextPage = () => {
-  if (!isLastPage.value) {
-    productParams.value.first += productParams.value.rows;
-    productStore.fetchProducts();
-  }
-};
-
-const prevPage = () => {
-  if (!isFirstPage.value) {
-    productParams.value.first -= productParams.value.rows;
-    productStore.fetchProducts();
-  }
-};
-
-const exportData = (format) => {
-  if (format === "csv") myDataTableRef.value.exportCSV();
-};
-
-function onFileChange(e) {
-  const file = e.target.files[0];
-  if (file) {
-    form.value.attachment = file;
-    attachmentPreview.value = URL.createObjectURL(file);
-  } else {
-    form.value.attachment = null;
-    attachmentPreview.value = null;
-  }
+  line.value.productId = null
+  line.value.unitId = null
+  line.value.quantity = 1
+  line.value.officialPrice = null
+  line.value.productName = ''
+  line.value.sku = ''
+  selectedProduct.value = null
 }
 
-const onProductChange = (index) => {
-  const selectedProductId = form.value.salesOrderItems[index].productId;
-  const selectedProduct = customerProducts.value.find(
-    (p) => p.id === selectedProductId,
-  );
+function removeLine(index: number) {
+  cart.value.splice(index, 1)
+}
 
-  if (selectedProduct) {
-    const item = form.value.salesOrderItems[index];
-    item.price = Number(selectedProduct.priceSell) || 0;
-    calculateSubtotal(index);
-    updateStockInfo(index);
+async function checkout() {
+  error.value = ''
+  notice.value = ''
+  let companyId: number
+  try {
+    companyId = requireCompanyId()
+  } catch (err: any) {
+    error.value = err?.message || activeCompanyMissing.value
+    return
   }
-};
-
-const onQuantityChange = (index) => {
-  calculateSubtotal(index);
-};
-
-const calculateSubtotal = (index) => {
-  const item = form.value.salesOrderItems[index];
-  const quantity = Number(item.quantity) || 0;
-  const unitPrice = Number(item.price) || 0;
-  item.subtotal = quantity * unitPrice;
-};
-
-const updateStockInfo = async (index) => {
-  const item = form.value.salesOrderItems[index];
-  if (item.productId && item.warehouseId) {
-    try {
-      stockStore.params.search = ""; // Reset search if any
-      stockStore.params.rows = 1; // We only need one record
-      const response = await stockStore.fetchStocksPaginated({
+  if (!canCheckout.value) {
+    error.value = 'Lengkapi gudang, pelanggan, dan keranjang.'
+    return
+  }
+  saving.value = true
+  const { $api } = useNuxtApp()
+  const res = await fetch($api.directSaleCheckout(), {
+    method: 'POST',
+    headers: headers(),
+    credentials: 'include',
+    body: JSON.stringify({
+      perusahaanId: companyId,
+      idempotencyKey: crypto.randomUUID(),
+      warehouseId: form.value.warehouseId,
+      customerMode: form.value.customerMode,
+      customerId: form.value.customerMode === 'REGISTERED' ? form.value.customerId : null,
+      walkInName: form.value.customerMode === 'WALK_IN' ? form.value.walkInName || null : null,
+      confirm: true,
+      items: cart.value.map((item) => ({
         productId: item.productId,
-        warehouseId: item.warehouseId,
-      });
-      if (response && response.data && response.data.length > 0) {
-        item.stock = response.data[0];
-      } else {
-        item.stock = { quantity: 0 };
-      }
-    } catch (error) {
-      console.error("Failed to fetch stock info:", error);
-      item.stock = { quantity: 0 };
-    }
-  } else {
-    item.stock = { quantity: 0 };
+        unitId: item.unitId,
+        quantity: item.quantity,
+        // Display-only; server re-resolves official price and rejects tampering.
+        expectedUnitPrice: item.officialUnitPrice,
+      })),
+    }),
+  })
+  const payload = await res.json().catch(() => ({}))
+  saving.value = false
+  if (!res.ok) {
+    error.value = payload?.message || 'Checkout Direct Sale ditolak.'
+    return
   }
-};
+  notice.value = `Direct Sale ${payload?.data?.saleNumber || ''} · ${payload?.data?.checkout?.status || 'CONFIRMED'}. Lanjut fulfill di Riwayat.`
+  cart.value = []
+  form.value.walkInName = ''
+  form.value.customerId = null
+}
+
+onMounted(async () => {
+  await ensureBootstrapped()
+  if (!companyContextStore.initialized) {
+    try {
+      await companyContextStore.bootstrap()
+    } catch {
+      /* middleware also bootstraps */
+    }
+  }
+  const ctx = {
+    effectiveFlowCodes: companyContextStore.effectiveFlowCodes,
+    profileCode: companyContextStore.profileCode,
+  }
+  if (companyContextStore.initialized && !isRouteAllowedForContext('/sales/pos', ctx)) {
+    gateError.value = 'Active Company tidak memiliki kapabilitas DIRECT_PRODUCT_SALE.'
+    await router.replace(businessAwareLanding(ctx))
+  }
+})
 </script>
 
 <style scoped>
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .card-body {
-    padding: 16px;
-  }
-
-  .form-label {
-    font-size: 13px;
-    margin-bottom: 6px;
-  }
+.pos-page {
+  max-width: 1200px;
 }
-
-@media (max-width: 576px) {
-  .card-body {
-    padding: 12px;
+.pos-cart {
+  position: sticky;
+  top: 1rem;
+}
+@media (max-width: 991px) {
+  .pos-cart {
+    position: static;
   }
 }
 </style>

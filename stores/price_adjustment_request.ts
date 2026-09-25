@@ -96,6 +96,7 @@ interface PriceAdjustmentRequestState {
     status?: string
     type?: string
     customerId?: number
+    requestedBy?: number
   }
   statistics: {
     pending: number
@@ -119,8 +120,8 @@ export const usePriceAdjustmentRequestStore = defineStore('priceAdjustmentReques
       search: '',
       status: undefined,
       type: undefined,
-    customerId: undefined,
-    requestedBy: undefined,
+      customerId: undefined,
+      requestedBy: undefined,
     },
     statistics: {
       pending: 0,

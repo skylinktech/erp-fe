@@ -22,7 +22,8 @@
 
 <script setup>
 import { useLayoutStore } from '~/stores/layout';
-import { onMounted, ref, watch } from 'vue';
+import { useCompanyContextStore } from '~/stores/companyContext';
+import { onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 
 const route = useRoute();
@@ -30,6 +31,8 @@ const title = route.meta.title;
 const contentWrapperRef = ref(null);
 
 const layoutStore = useLayoutStore();
+const companyContextStore = useCompanyContextStore();
+let stopCompanyContextSync = null;
 
 const resetContentScroll = () => {
   contentWrapperRef.value?.scrollTo({ top: 0, left: 0, behavior: 'auto' });
@@ -51,6 +54,11 @@ onMounted(() => {
     layoutStore.initializeLayout();
     // Pastikan loading di-reset saat layout mounted
     layoutStore.setLoading(false);
+    stopCompanyContextSync = companyContextStore.listenForCrossTab();
+});
+
+onUnmounted(() => {
+    stopCompanyContextSync?.();
 });
 
 const closeSidebar = () => {

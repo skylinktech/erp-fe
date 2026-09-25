@@ -1,3 +1,5 @@
+import { getAccessTokenCookieOptions } from '~/utils/authCookie'
+
 export default defineNuxtPlugin((nuxtApp) => {
   const showSessionExpiredToast = () => {
     const toast = useToast()
@@ -34,7 +36,7 @@ export default defineNuxtPlugin((nuxtApp) => {
   }
 
   // Interceptor untuk $fetch (ofetch) - tambah Authorization header untuk semua request API
-  const token = useCookie('access_token')
+  const token = useCookie('access_token', getAccessTokenCookieOptions())
   const config = useRuntimeConfig()
   const apiBase = (config.public.apiBase || '').replace(/\/$/, '')
   const authBase = (config.public.authBase || '').replace(/\/$/, '')
