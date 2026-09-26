@@ -314,6 +314,7 @@ import Swal from 'sweetalert2'
 import Modal from '~/components/modal/Modal.vue'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
 import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
+import { useCompanyContextStore } from '~/stores/companyContext'
 
 // Composables
 const { setListTitle, setFormTitle } = useDynamicTitle()
@@ -431,6 +432,17 @@ onMounted(async () => {
         warehouseStore.fetchAllWarehouses(),
     ])
 });
+
+const companyStore = useCompanyContextStore()
+watch(
+  () => [companyStore.companyId, companyStore.generation],
+  async ([id], [prevId]) => {
+    if (!id || id === prevId) return
+    stocksStore.closeModal?.()
+    await loadLazyData()
+    await stocksStore.fetchStats()
+  }
+)
 
 const exportData = async (format) => {
     try {

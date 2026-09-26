@@ -5,12 +5,14 @@
 
 import {
   BUSINESS_FLOW_CAPABILITY_REGISTRY,
+  SHARED_FE_PREFIXES,
+  BUSINESS_FE_ROOTS,
   capabilitiesForPath,
   capabilityAllows,
   pathMatchesPrefixes,
 } from '~/utils/businessFlowCapabilityRegistry'
 
-export type BusinessRouteClass = 'SHARED' | 'ISP_ONLY' | 'RETAIL_ONLY' | 'DIRECT_SALE_POS'
+export type BusinessRouteClass = 'SHARED' | 'ISP_ONLY' | 'RETAIL_ONLY' | 'DIRECT_SALE_POS' | 'UNCLASSIFIED_BUSINESS'
 
 export type FlowRouteContext = {
   effectiveFlowCodes: readonly string[]
@@ -78,16 +80,35 @@ export function classifyBusinessRoute(path: string): BusinessRouteClass {
     if (path === '/sales/pos' || path.startsWith('/sales/pos/')) return 'DIRECT_SALE_POS'
     return 'RETAIL_ONLY'
   }
+  if (pathMatchesPrefixes(path, BUSINESS_FLOW_CAPABILITY_REGISTRY.OMNICHANNEL.prefixes)) {
+    return 'RETAIL_ONLY'
+  }
   if (pathMatchesPrefixes(path, BUSINESS_FLOW_CAPABILITY_REGISTRY.ISP_NEW_SUBSCRIPTION.prefixes)) {
     return 'ISP_ONLY'
+  }
+  if (pathMatchesPrefixes(path, BUSINESS_FLOW_CAPABILITY_REGISTRY.PRODUCT_QUOTATION.prefixes)) {
+    return 'ISP_ONLY'
+  }
+  if (pathMatchesPrefixes(path, SHARED_FE_PREFIXES)) return 'SHARED'
+  if (BUSINESS_FE_ROOTS.some((root) => path === root || path.startsWith(root + '/'))) {
+    return 'UNCLASSIFIED_BUSINESS'
   }
   return 'SHARED'
 }
 
-export function isRouteAllowedForContext(path: string, ctx: RouteAllowContext): boolean {
+/**
+ * When context is not ready, gated routes are denied (fail-closed).
+ * Ungated / shared routes remain allowed so shell / auth / dashboard can paint.
+ */
+export function isRouteAllowedForContext(
+  path: string,
+  ctx: RouteAllowContext,
+  options?: { contextReady?: boolean }
+): boolean {
   const normalized = normalizeContext(ctx)
   const caps = capabilitiesForPath(path)
   if (!caps.length) return true
+  if (options?.contextReady === false) return false
   return caps.some((cap) =>
     capabilityAllows(cap, normalized.effectiveFlowCodes, normalized.profileCode)
   )

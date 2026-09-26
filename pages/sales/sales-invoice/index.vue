@@ -797,6 +797,7 @@ import Swal from 'sweetalert2'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import { useImageUrl } from '~/composables/useImageUrl'
 import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
+import { useCompanyContextStore } from '~/stores/companyContext'
 
 // Composables
 const { setListTitle, setFormTitle } = useDynamicTitle()
@@ -1273,6 +1274,16 @@ onMounted(() => {
     tableControls.value.rows = Number(params.value.rows) || 10;
     tableControls.value.search = globalFilterValue.value;
 });
+
+const companyStore = useCompanyContextStore()
+watch(
+  () => [companyStore.companyId, companyStore.generation],
+  async ([id], [prevId]) => {
+    if (!id || id === prevId) return
+    await salesInvoiceStore.fetchSalesInvoices()
+    await salesInvoiceStore.fetchInvoiceStatistics()
+  }
+)
 
 watch(showModal, async (newValue) => {
     if (newValue) {

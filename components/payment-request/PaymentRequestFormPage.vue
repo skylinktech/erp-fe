@@ -789,6 +789,8 @@ import TabbedFormActions from '~/components/form/TabbedFormActions.vue'
 import { useTabbedFormNavigation } from '~/composables/useTabbedFormNavigation'
 import { routeSaveFailure } from '~/utils/apiError'
 import { FINANCE_MODULE_NAV } from '~/constants/finance/formNav'
+import { filterNavByCompanyContext } from '~/utils/filterNavByCompanyContext'
+import { useCompanyContextStore } from '~/stores/companyContext'
 import type { FormPageSummaryRow } from '~/types/form-page'
 import { apiFetch } from '~/utils/apiFetch'
 import { useImageUrl } from '~/composables/useImageUrl'
@@ -824,7 +826,13 @@ const paymentMethodOptions = [
   { label: 'Advance', value: 'advance' },
   { label: 'Reimbursement', value: 'reimbursement' },
 ]
-const moduleNav = FINANCE_MODULE_NAV
+const companyContextStore = useCompanyContextStore()
+const moduleNav = computed(() =>
+  filterNavByCompanyContext(FINANCE_MODULE_NAV, {
+    effectiveFlowCodes: companyContextStore.effectiveFlowCodes || [],
+    profileCode: companyContextStore.profileCode,
+  })
+)
 const itemsSubtotal = computed(() => paymentRequestStore.formItemsSubtotal)
 const otherChargesSubtotal = computed(() => paymentRequestStore.formOtherChargesSubtotal)
 const employeeSalarySubtotal = computed(() => paymentRequestStore.formEmployeeSalarySubtotal)

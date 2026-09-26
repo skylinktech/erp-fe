@@ -93,7 +93,26 @@ export const useCompanyContextStore = defineStore('companyContext', {
       return true
     },
     clearCompanyScopedCaches() {
+      // Bump generation so in-flight responses and watchers drop stale company data.
       this.generation += 1
+      notifyCompanyContextChanged()
+      try {
+        const { $pinia } = useNuxtApp() as any
+        if (!$pinia) return
+        // Reset known transactional stores so selections/forms do not carry company B refs.
+        const names = [
+          'quotation',
+          'pks',
+          'document-numbering',
+          'price_adjustment_request',
+        ]
+        for (const name of names) {
+          const s = $pinia._s?.get?.(name)
+          if (s && typeof s.$reset === 'function') s.$reset()
+        }
+      } catch {
+        // Pinia may be unavailable outside Nuxt — generation bump is enough.
+      }
     },
     async bootstrap() {
       if (this.loading) return

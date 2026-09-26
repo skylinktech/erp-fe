@@ -4,6 +4,7 @@ import { isRouteAllowedForContext, businessAwareLanding } from '~/utils/business
 
 /**
  * Bootstrap company context after auth, then guard business-flow routes.
+ * Fail-closed for gated routes while context is loading / uninitialized.
  */
 export default defineNuxtRouteMiddleware(async (to) => {
   if (import.meta.server) return
@@ -22,12 +23,16 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   if (companyStore.selectionRequired) return
 
+  const contextReady = companyStore.initialized && !companyStore.loading
   const routeCtx = {
     effectiveFlowCodes: companyStore.effectiveFlowCodes,
     profileCode: companyStore.profileCode,
   }
 
-  if (companyStore.initialized && !isRouteAllowedForContext(to.path, routeCtx)) {
-    return navigateTo(businessAwareLanding(routeCtx))
+  if (!isRouteAllowedForContext(to.path, routeCtx, { contextReady })) {
+    // Avoid redirect loop when landing itself is not yet decidable
+    const landing = contextReady ? businessAwareLanding(routeCtx) : '/dashboard'
+    if (to.path === landing || to.path.startsWith(landing + '/')) return
+    return navigateTo(landing)
   }
 })

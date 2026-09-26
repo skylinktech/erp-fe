@@ -546,9 +546,9 @@
                               id="pegawai-fp-kontrak-jenis"
                               v-model="kontrakDraft.jenis_kontrak"
                               :options="jenisKontrakSelectOptions"
-                              :get-option-label="(o: { label: string }) => o.label"
-                              :reduce="(o: { value: number }) => o.value"
-                              :get-option-key="(o: { value: number }) => o.value"
+                              :get-option-label="(o) => o.label"
+                              :reduce="(o) => o.value"
+                              :get-option-key="(o) => o.value"
                               class="select-kontrak-jenis"
                             />
                             <label for="pegawai-fp-kontrak-jenis">Jenis kontrak <span class="text-danger" aria-hidden="true">*</span></label>

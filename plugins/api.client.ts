@@ -610,6 +610,8 @@ export default defineNuxtPlugin(() => {
       `${apiBase}/accounting/reports/trial-balance${params ? `?${params}` : ''}`,
     profitLoss: (params?: string) =>
       `${apiBase}/accounting/reports/profit-loss${params ? `?${params}` : ''}`,
+    financialReportCompleteness: (params?: string) =>
+      `${apiBase}/accounting/reports/completeness${params ? `?${params}` : ''}`,
     balanceSheet: (params?: string) =>
       `${apiBase}/accounting/reports/balance-sheet${params ? `?${params}` : ''}`,
     cashFlowGl: (params?: string) =>

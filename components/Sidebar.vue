@@ -145,6 +145,20 @@ const toggleDashboardMenu = () => {
 const filteredAndSortedMenuGroups = computed(() => {
   const filteredGroups = menuGroupsStore.filteredMenuGroups;
   if (!filteredGroups || filteredGroups.length === 0) return [];
+  // Fail-closed: hide gated menus until Active Company context is ready.
+  if (!companyContextStore.initialized || companyContextStore.loading) {
+    const emptyCtx = { effectiveFlowCodes: [], profileCode: null };
+    return filteredGroups
+      .map((group) => ({
+        ...group,
+        menuDetails: filterMenuDetailsByCompanyContext(
+          filterActiveMenuDetails(group.menuDetails || []),
+          emptyCtx
+        ),
+      }))
+      .filter((group) => (group.menuDetails || []).length > 0)
+      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  }
   const ctx = {
     effectiveFlowCodes: companyContextStore.effectiveFlowCodes || [],
     profileCode: companyContextStore.profileCode,
@@ -285,6 +299,16 @@ watch(() => userStore.user, async (newUser, oldUser) => {
     setActiveGroup();
   }
 });
+
+watch(
+  () => companyContextStore.companyId,
+  async (next, prev) => {
+    if (!userStore.user) return
+    if (next == null || next === prev) return
+    await menuGroupsStore.fetchAllMenuGroups()
+    setActiveGroup()
+  }
+)
 
 watch(() => route.path, () => {
   setActiveGroup();

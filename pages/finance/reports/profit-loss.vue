@@ -20,6 +20,27 @@
       </div>
 
       <div v-if="error" class="alert alert-danger">{{ error }}</div>
+      <div
+        v-if="completeness && completeness.status === 'PARTIAL'"
+        class="alert alert-warning"
+        role="status"
+      >
+        Laporan perusahaan ini berstatus
+        <strong>PARTIAL</strong>
+        untuk periode terpilih.
+        Null company lines:
+        {{ completeness.unresolved?.nullCompanyLinesInPeriod ?? 0 }};
+        jurnal mixed/partial:
+        {{ completeness.unresolved?.mixedOrPartialNullJournalsInPeriod ?? 0 }}.
+        Angka di bawah hanya mencakup lines ber-company Active Company — bukan laporan historis lengkap.
+      </div>
+      <div
+        v-else-if="completeness && completeness.status === 'COMPLETE'"
+        class="alert alert-success"
+        role="status"
+      >
+        Kelengkapan laporan periode ini: COMPLETE (ownership jurnal konsisten untuk company aktif).
+      </div>
 
       <div class="row g-3 mb-4" v-if="report">
         <div class="col-md-4">
@@ -91,6 +112,8 @@ const loading = ref(false)
 const error = ref('')
 const endDate = ref(new Date().toISOString().slice(0, 10))
 const startDate = ref(new Date(new Date().getFullYear(), 0, 1).toISOString().slice(0, 10))
+
+const completeness = computed(() => report.value?.completeness || null)
 
 const rows = computed(() => {
   const data = report.value

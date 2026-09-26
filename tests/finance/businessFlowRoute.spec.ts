@@ -10,7 +10,12 @@ import {
   capabilityAllows,
   pathMatchesPrefixes,
   hasCapabilityCode,
+  SHARED_FE_PREFIXES,
+  BUSINESS_FE_ROOTS,
+  allGatedFePrefixes,
+  FLOW_FEATURE_ALIGNMENT_PREFIXES,
 } from '../../utils/businessFlowCapabilityRegistry'
+import { filterMenuDetailsByCompanyContext } from '../../utils/filterMenusByCompanyContext'
 
 describe('businessFlowRoute', () => {
   it('classifies ISP, Direct Sale POS, and Retail routes', () => {
@@ -18,6 +23,10 @@ describe('businessFlowRoute', () => {
     expect(classifyBusinessRoute('/sales/retail-sale')).toBe('RETAIL_ONLY')
     expect(classifyBusinessRoute('/sales/pos')).toBe('DIRECT_SALE_POS')
     expect(classifyBusinessRoute('/sales/sales-order')).toBe('ISP_ONLY')
+    expect(classifyBusinessRoute('/order-process/subscription')).toBe('ISP_ONLY')
+    expect(classifyBusinessRoute('/operations/request-activation')).toBe('ISP_ONLY')
+    expect(classifyBusinessRoute('/implementation/arf')).toBe('ISP_ONLY')
+    expect(classifyBusinessRoute('/service-management/pending')).toBe('ISP_ONLY')
     expect(classifyBusinessRoute('/dashboard')).toBe('SHARED')
   })
 
@@ -28,6 +37,22 @@ describe('businessFlowRoute', () => {
         isRetailContext: true,
       })
     ).toBe(false)
+    expect(
+      isRouteAllowedForContext('/order-process/subscription', {
+        isIspContext: false,
+        isRetailContext: true,
+      })
+    ).toBe(false)
+  })
+
+  it('Retail murni hides the four reported module groups', () => {
+    const retail = { effectiveFlowCodes: ['RETAIL_DIRECT_SALE'], profileCode: 'RETAIL' }
+    expect(isRouteAllowedForContext('/order-process/pks', retail)).toBe(false)
+    expect(isRouteAllowedForContext('/service/service-plan', retail)).toBe(false)
+    expect(isRouteAllowedForContext('/implementation/progress-tracker', retail)).toBe(false)
+    expect(isRouteAllowedForContext('/operations/berita-acara', retail)).toBe(false)
+    expect(isRouteAllowedForContext('/sales/pos', retail)).toBe(true)
+    expect(isRouteAllowedForContext('/inventory/stock', retail)).toBe(true)
   })
 
   it('allows Retail route under Retail effective flows', () => {
@@ -61,8 +86,10 @@ describe('businessFlowRoute', () => {
     const codes = ['ISP_NEW_SUBSCRIPTION', 'RETAIL_DIRECT_SALE']
     expect(isRouteAllowedForContext('/sales/quotation', { effectiveFlowCodes: codes })).toBe(true)
     expect(isRouteAllowedForContext('/sales/pos', { effectiveFlowCodes: codes })).toBe(true)
+    expect(isRouteAllowedForContext('/order-process/subscription', { effectiveFlowCodes: codes })).toBe(true)
     expect(hasCapabilityCode('DIRECT_PRODUCT_SALE', codes)).toBe(true)
     expect(hasCapabilityCode('ISP_COMMERCIAL', codes)).toBe(true)
+    expect(hasCapabilityCode('ISP_FULFILLMENT', codes)).toBe(true)
   })
 
   it('Omnichannel requires RETAIL profile — not ISP with RETAIL_DIRECT_SALE grant alone', () => {
@@ -83,6 +110,23 @@ describe('businessFlowRoute', () => {
         effectiveFlowCodes: ['RETAIL_DIRECT_SALE'],
         profileCode: 'ISP',
       })
+    ).toBe(true)
+  })
+
+  it('fails closed for gated routes when context is not ready', () => {
+    expect(
+      isRouteAllowedForContext(
+        '/order-process/subscription',
+        { effectiveFlowCodes: [], profileCode: null },
+        { contextReady: false }
+      )
+    ).toBe(false)
+    expect(
+      isRouteAllowedForContext(
+        '/dashboard',
+        { effectiveFlowCodes: [], profileCode: null },
+        { contextReady: false }
+      )
     ).toBe(true)
   })
 
@@ -117,5 +161,74 @@ describe('businessFlowRoute', () => {
     expect(pathMatchesPrefixes('/sales/consulting/1', extended.HYPOTHETICAL_CONSULTING.prefixes)).toBe(true)
     expect((extended as any).isThirdContext).toBeUndefined()
     expect(Object.keys(BUSINESS_FLOW_CAPABILITY_REGISTRY)).not.toContain('HYPOTHETICAL_CONSULTING')
+  })
+
+  it('coverage: reported business samples are classified (not UNCLASSIFIED_BUSINESS)', () => {
+    const samples = [
+      '/order-process/subscription',
+      '/order-process/customer-verif',
+      '/operations/work-order-request/detail/1',
+      '/implementation/arf/form',
+      '/service/service-plan',
+      '/service-management/customer-service',
+      '/sales/fdr/detail/1',
+      '/sales/sales-pipeline',
+      '/sales/pos',
+      '/sales/omnichannel/pesanan',
+      '/inventory/service',
+      '/finance/billing/billing-adjustments',
+      '/finance/billing-preparations',
+    ]
+    for (const path of samples) {
+      expect(classifyBusinessRoute(path)).not.toBe('UNCLASSIFIED_BUSINESS')
+    }
+    expect(SHARED_FE_PREFIXES).toContain('/inventory')
+    expect(BUSINESS_FE_ROOTS).toContain('/order-process')
+    expect(allGatedFePrefixes()).toContain('/order-process')
+  })
+
+  it('FE↔BE alignment contract prefixes are gated and inventory aliases win over shared /inventory', () => {
+    const gated = new Set(allGatedFePrefixes())
+    for (const prefix of FLOW_FEATURE_ALIGNMENT_PREFIXES) {
+      expect(gated.has(prefix)).toBe(true)
+      expect(classifyBusinessRoute(prefix)).not.toBe('UNCLASSIFIED_BUSINESS')
+    }
+    expect(classifyBusinessRoute('/inventory/service-plan')).toBe('ISP_ONLY')
+    expect(classifyBusinessRoute('/inventory/stock')).toBe('SHARED')
+    expect(classifyBusinessRoute('/finance/journals')).toBe('SHARED')
+    expect(classifyBusinessRoute('/finance/billing-adjustments')).toBe('ISP_ONLY')
+    expect(classifyBusinessRoute('/sales/sales-pipeline')).toBe('ISP_ONLY')
+  })
+
+  it('Retail murni hides sales-pipeline and subscription billing finance pages', () => {
+    const retail = { effectiveFlowCodes: ['RETAIL_DIRECT_SALE'], profileCode: 'RETAIL' }
+    expect(isRouteAllowedForContext('/sales/sales-pipeline', retail)).toBe(false)
+    expect(isRouteAllowedForContext('/finance/billing/billing-adjustments', retail)).toBe(false)
+    expect(isRouteAllowedForContext('/finance/billing-preparations', retail)).toBe(false)
+    expect(isRouteAllowedForContext('/finance/journals', retail)).toBe(true)
+  })
+
+  it('prunes empty ISP folders under Retail while keeping shared children', () => {
+    const details = [
+      {
+        id: 1,
+        route: null,
+        children: [
+          { id: 2, route: '/order-process/subscription', children: [] },
+          { id: 3, route: '/order-process/pks', children: [] },
+        ],
+      },
+      {
+        id: 4,
+        route: null,
+        children: [{ id: 5, route: '/inventory/stock', children: [] }],
+      },
+    ]
+    const pruned = filterMenuDetailsByCompanyContext(details, {
+      effectiveFlowCodes: ['RETAIL_DIRECT_SALE'],
+      profileCode: 'RETAIL',
+    })
+    expect(pruned).toHaveLength(1)
+    expect(pruned[0].children?.[0]?.route).toBe('/inventory/stock')
   })
 })
