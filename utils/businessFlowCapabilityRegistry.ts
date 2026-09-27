@@ -48,6 +48,9 @@ export const SHARED_FE_PREFIXES: readonly string[] = [
   '/sales/customer',
   '/sales/company-flow-eligibility',
   '/sales/product-price-list',
+  '/sales/pricing',
+  '/sales/pricing/form',
+  '/sales/pricing/detail',
 ]
 
 /** Business roots that must be classified (gated or shared). */

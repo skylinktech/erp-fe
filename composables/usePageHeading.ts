@@ -73,6 +73,8 @@ const SEGMENT_LABELS: Record<string, string> = {
   finance: 'Finance',
   invoices: 'Invoice Tagihan',
   'price-list': 'Price List',
+  pricing: 'Pricing',
+  'product-price-list': 'Pricing',
   budgets: 'Budgets',
   'cost-center': 'Cost Center',
   expenses: 'Pengeluaran',

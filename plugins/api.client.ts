@@ -966,6 +966,8 @@ export default defineNuxtPlugin(() => {
     customers: () => `${apiBase}/customer`,
     units: () => `${apiBase}/unit`,
     directSaleCheckout: () => `${apiBase}/direct-sale-checkout`,
+    /** POS catalog: products + batch availableQty + batch RETAIL prices (anti N+1). */
+    directSaleCatalog: () => `${apiBase}/direct-sale-checkout/catalog`,
     productSellingPrices: () => `${apiBase}/product-selling-prices`,
     retailSales: () => `${apiBase}/retail-sales`,
     retailSale: (id: string) => `${apiBase}/retail-sales/${id}`,

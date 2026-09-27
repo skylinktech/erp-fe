@@ -14,12 +14,16 @@ export interface Product {
   name: string
   unitId: number
   isDevice: boolean
-  isKit: boolean
+  /** Preferred packaging flag going forward */
+  isBundling: boolean
+  /** @deprecated API/legacy alias for isBundling */
+  isKit?: boolean
   isInternal?: boolean | null
   billingType: 'one_time' | 'recurring'
   condition?: 'baru' | 'bekas' | 'rusak'
   categoryId: number
   productType?: string | null
+  expiredAt?: string | null
   trackingPolicy?: 'NONE' | 'UNIT_SERIAL' | 'KIT_SERIAL' | 'DEFERRED_COMPONENT_SERIAL'
   assignmentRequiresSerialVerification?: boolean
   requiredComponentTypes?: string[] | null
@@ -33,15 +37,21 @@ export interface Product {
   stocks?: Stock[]
   imagePreview?: string
   createdByUser?: { id: number; fullName: string; email: string }
-  productKits?: ProductKit[]
+  /** Preferred packaging components going forward */
+  productBundlingComponents?: ProductBundlingComponent[]
+  /** @deprecated API/legacy alias for productBundlingComponents */
+  productKits?: ProductBundlingComponent[]
 }
 
-export interface ProductKit {
+export interface ProductBundlingComponent {
   id?: number
   name: string
   serialNumber: string
   type: 'router' | 'adaptor' | 'cable'
 }
+
+/** @deprecated Use ProductBundlingComponent */
+export type ProductKit = ProductBundlingComponent
 
 export interface ProductStatistics {
   total: number
@@ -50,6 +60,7 @@ export interface ProductStatistics {
   both: number
   device: number
   kit: number
+  bundling?: number
 }
 
 interface ProductState {
@@ -71,6 +82,8 @@ interface ProductState {
     categoryId?: number | null
     isInternal?: 'true' | 'false' | 'null' | null
     isDevice?: 'true' | 'false' | null
+    isBundling?: 'true' | 'false' | null
+    /** @deprecated API/legacy alias for isBundling filter */
     isKit?: 'true' | 'false' | null
     billingType?: 'one_time' | 'recurring' | null
     condition?: 'baru' | 'bekas' | 'rusak' | null
@@ -108,6 +121,7 @@ export const useProductStore = defineStore('product', {
       categoryId: null,
       isInternal: null,
       isDevice: null,
+      isBundling: null,
       isKit: null,
       billingType: null,
       condition: null,
@@ -117,17 +131,18 @@ export const useProductStore = defineStore('product', {
       sku: '',
       unitId: undefined,
       isDevice: false,
-      isKit: false,
+      isBundling: false,
       isInternal: null as boolean | null,
       billingType: 'one_time' as 'one_time' | 'recurring',
       condition: 'baru' as 'baru' | 'bekas' | 'rusak',
       productType: null as string | null,
+      expiredAt: '' as string,
       trackingPolicy: 'NONE' as const,
       assignmentRequiresSerialVerification: false,
       requiredComponentTypes: null,
       image: '',
       categoryId: undefined,
-      productKits: [] as ProductKit[],
+      productBundlingComponents: [] as ProductBundlingComponent[],
     },
     isEditMode: false,
     showModal: false,
@@ -153,7 +168,30 @@ export const useProductStore = defineStore('product', {
       return Number.isFinite(parsed) ? parsed : undefined;
     },
 
-    normalizeProductKits(input: unknown): ProductKit[] {
+    resolveIsBundling(source: any): boolean {
+      const value = source?.isBundling ?? source?.is_bundling ?? source?.isKit ?? source?.is_kit;
+      return value === true || value === 'true' || value === 1 || value === '1';
+    },
+
+    resolveProductBundlingComponents(source: any): ProductBundlingComponent[] {
+      const raw =
+        source?.productBundlingComponents
+        ?? source?.product_bundling_components
+        ?? source?.productKits
+        ?? source?.product_kits
+        ?? [];
+      if (!Array.isArray(raw)) return [];
+      return raw.map((item: any) => ({
+        id: item.id,
+        name: item.name || '',
+        serialNumber: item.serialNumber || item.serial_number || '',
+        type: ((String(item.type || 'router').toLowerCase() === 'adapter'
+          ? 'adaptor'
+          : String(item.type || 'router').toLowerCase()) || 'router') as ProductBundlingComponent['type'],
+      }));
+    },
+
+    normalizeProductBundlingComponents(input: unknown): ProductBundlingComponent[] {
       if (!Array.isArray(input)) return [];
 
       return input
@@ -177,20 +215,30 @@ export const useProductStore = defineStore('product', {
           return {
             name,
             serialNumber,
-            type: (['router', 'adaptor', 'cable'].includes(type) ? type : 'router') as ProductKit['type'],
+            type: (['router', 'adaptor', 'cable'].includes(type) ? type : 'router') as ProductBundlingComponent['type'],
           };
         })
-        .filter((item): item is ProductKit => item !== null);
+        .filter((item): item is ProductBundlingComponent => item !== null);
     },
 
-    validateProductKitsBeforeSubmit(productKits: ProductKit[]): string | null {
-      for (let i = 0; i < productKits.length; i += 1) {
-        const row = productKits[i];
+    /** @deprecated Use normalizeProductBundlingComponents */
+    normalizeProductKits(input: unknown): ProductBundlingComponent[] {
+      return this.normalizeProductBundlingComponents(input);
+    },
+
+    validateProductBundlingComponentsBeforeSubmit(components: ProductBundlingComponent[]): string | null {
+      for (let i = 0; i < components.length; i += 1) {
+        const row = components[i];
         if (!row.name || !String(row.name).trim()) {
-          return `Nama kit pada baris ${i + 1} wajib diisi`;
+          return `Nama bundling pada baris ${i + 1} wajib diisi`;
         }
       }
       return null;
+    },
+
+    /** @deprecated Use validateProductBundlingComponentsBeforeSubmit */
+    validateProductKitsBeforeSubmit(productKits: ProductBundlingComponent[]): string | null {
+      return this.validateProductBundlingComponentsBeforeSubmit(productKits);
     },
 
     appendProductFilters(params: URLSearchParams) {
@@ -198,6 +246,7 @@ export const useProductStore = defineStore('product', {
         categoryId,
         isInternal,
         isDevice,
+        isBundling,
         isKit,
         billingType,
         condition,
@@ -212,8 +261,11 @@ export const useProductStore = defineStore('product', {
       if (isDevice) {
         params.append('isDevice', isDevice);
       }
-      if (isKit) {
-        params.append('isKit', isKit);
+      // Prefer isBundling; also send isKit with the same value for API compatibility
+      const bundlingFilter = isBundling ?? isKit ?? null;
+      if (bundlingFilter) {
+        params.append('isBundling', bundlingFilter);
+        params.append('isKit', bundlingFilter);
       }
       if (billingType) {
         params.append('billingType', billingType);
@@ -389,21 +441,27 @@ export const useProductStore = defineStore('product', {
             'unitId',
             'categoryId',
             'isDevice',
-            'isKit',
+            'isBundling',
             'isInternal',
             'billingType',
             'condition',
             'productType',
+            'expiredAt',
             'trackingPolicy',
             'assignmentRequiresSerialVerification',
             'requiredComponentTypes',
-            'productKits',
+            'productBundlingComponents',
           ] as const;
 
           allowedKeys.forEach((key) => {
             const value = this.form[key as keyof typeof this.form];
-            if (key === 'isDevice' || key === 'isKit') {
+            if (key === 'isDevice') {
               formData.append(key, value ? 'true' : 'false');
+            } else if (key === 'isBundling') {
+              // Send both isBundling and legacy isKit with identical values
+              const boolStr = value ? 'true' : 'false';
+              formData.append('isBundling', boolStr);
+              formData.append('isKit', boolStr);
             } else if (key === 'assignmentRequiresSerialVerification') {
               formData.append(key, value ? 'true' : 'false');
             } else if (key === 'requiredComponentTypes') {
@@ -416,15 +474,18 @@ export const useProductStore = defineStore('product', {
               } else {
                 formData.append(key, value ? 'true' : 'false');
               }
-            } else if (key === 'productKits') {
-              const productKits = this.normalizeProductKits(value);
-              if (this.form.isKit) {
-                const kitValidationError = this.validateProductKitsBeforeSubmit(productKits);
-                if (kitValidationError) {
-                  throw new Error(kitValidationError);
+            } else if (key === 'productBundlingComponents') {
+              const components = this.normalizeProductBundlingComponents(value);
+              if (this.form.isBundling) {
+                const validationError = this.validateProductBundlingComponentsBeforeSubmit(components);
+                if (validationError) {
+                  throw new Error(validationError);
                 }
               }
-              formData.append(key, JSON.stringify(productKits));
+              const payload = JSON.stringify(components);
+              // Send both new and legacy keys with identical payload
+              formData.append('productBundlingComponents', payload);
+              formData.append('productKits', payload);
             } else if (value !== null && value !== undefined && value !== '') {
               formData.append(key, String(value));
             }
@@ -562,9 +623,10 @@ export const useProductStore = defineStore('product', {
               unitId: this.normalizeId(source.unitId ?? source.unit_id ?? source.unit?.id ?? product.unitId),
               categoryId: this.normalizeId(source.categoryId ?? source.category_id ?? source.category?.id ?? product.categoryId),
               productType: source.productType ?? source.product_type ?? product.productType ?? null,
+              expiredAt: String(source.expiredAt ?? source.expired_at ?? product.expiredAt ?? '').slice(0, 10),
               billingType: source.billingType ?? source.billing_type ?? product.billingType ?? 'one_time',
               isDevice: source.isDevice ?? source.is_device ?? product.isDevice ?? false,
-              isKit: source.isKit ?? source.is_kit ?? false,
+              isBundling: this.resolveIsBundling(source),
               trackingPolicy:
                 source.trackingPolicy ??
                 source.tracking_policy ??
@@ -577,12 +639,7 @@ export const useProductStore = defineStore('product', {
                 source.requiredComponentTypes ?? source.required_component_types ?? null,
               isInternal: this.normalizeNullableBoolean(source.isInternal ?? source.is_internal),
               condition: source.condition ?? 'baru',
-              productKits: (source.productKits || []).map((kit) => ({
-                id: kit.id,
-                name: kit.name || '',
-                serialNumber: kit.serialNumber || kit.serial_number || '',
-                type: ((String(kit.type || 'router').toLowerCase() === 'adapter' ? 'adaptor' : String(kit.type || 'router').toLowerCase()) || 'router') as 'router' | 'adaptor' | 'cable',
-              })),
+              productBundlingComponents: this.resolveProductBundlingComponents(source),
             };
             
             // Set image preview jika ada
@@ -598,18 +655,19 @@ export const useProductStore = defineStore('product', {
                 sku: '',
                 unitId: undefined,
                 isDevice: false,
-                isKit: false,
+                isBundling: false,
                 isInternal: null,
                 billingType: 'one_time',
                 condition: 'baru',
                 productType: null,
+                expiredAt: '',
                 trackingPolicy: 'NONE',
                 assignmentRequiresSerialVerification: false,
                 requiredComponentTypes: null,
                 image: '',
                 imagePreview: '',
                 categoryId: undefined,
-                productKits: [],
+                productBundlingComponents: [],
             };
         }
         this.showModal = true;
@@ -623,18 +681,19 @@ export const useProductStore = defineStore('product', {
             sku: '',
             unitId: undefined,
             isDevice: false,
-            isKit: false,
+            isBundling: false,
             isInternal: null,
             billingType: 'one_time',
             condition: 'baru',
             productType: null,
+            expiredAt: '',
             trackingPolicy: 'NONE',
             assignmentRequiresSerialVerification: false,
             requiredComponentTypes: null,
             image: '',
             imagePreview: '',
             categoryId: undefined,
-            productKits: [],
+            productBundlingComponents: [],
         }
         this.validationErrors = []
     },
@@ -659,22 +718,32 @@ export const useProductStore = defineStore('product', {
       }
     },
 
-    addProductKit() {
-      if (!Array.isArray(this.form.productKits)) {
-        this.form.productKits = [];
+    addProductBundlingComponent() {
+      if (!Array.isArray(this.form.productBundlingComponents)) {
+        this.form.productBundlingComponents = [];
       }
-      this.form.productKits.push({
+      this.form.productBundlingComponents.push({
         name: '',
         serialNumber: '',
         type: 'router',
       });
     },
 
-    removeProductKit(index: number) {
-      if (!Array.isArray(this.form.productKits)) {
+    /** @deprecated Use addProductBundlingComponent */
+    addProductKit() {
+      this.addProductBundlingComponent();
+    },
+
+    removeProductBundlingComponent(index: number) {
+      if (!Array.isArray(this.form.productBundlingComponents)) {
         return;
       }
-      this.form.productKits.splice(index, 1);
+      this.form.productBundlingComponents.splice(index, 1);
+    },
+
+    /** @deprecated Use removeProductBundlingComponent */
+    removeProductKit(index: number) {
+      this.removeProductBundlingComponent(index);
     },
 
     setPagination(event: any) {
@@ -782,7 +851,8 @@ export const useProductStore = defineStore('product', {
               external: Number(data.external) || 0,
               both: Number(data.both) || 0,
               device: Number(data.device) || 0,
-              kit: Number(data.kit) || 0,
+              kit: Number(data.bundling ?? data.kit) || 0,
+              bundling: Number(data.bundling ?? data.kit) || 0,
             };
             this.totalProducts = this.statistics.total;
             return;

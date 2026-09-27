@@ -73,6 +73,9 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       '/sales/company-flow-eligibility': 'view_company_flow_eligibility',
       '/settings/business-model': 'view_business_model_configuration',
       '/sales/retail-sale': 'view_retail_sale',
+      '/sales/pos': 'create_retail_sale',
+      '/sales/pricing': 'view_product_price_list',
+      '/sales/product-price-list': 'view_product_price_list',
       '/sales/retail-return': 'view_retail_return',
       '/sales/omnichannel': 'view_commerce_omnichannel',
       '/sales/omnichannel/produk': 'view_commerce_omnichannel',
@@ -289,6 +292,10 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
         requiredPermission = 'view_purchase_invoice'
       } else if (/^\/sales\/sales-invoice\/form(\/.*)?$/.test(to.path)) {
         requiredPermission = 'create_sales_invoice'
+      } else if (/^\/sales\/pricing\/form(\/.*)?$/.test(to.path)) {
+        requiredPermission = 'view_product_price_list'
+      } else if (/^\/sales\/pricing\/detail\/.+$/.test(to.path)) {
+        requiredPermission = 'show_product_price_list'
       } else if (/^\/finance\/invoices\/detail\/.+$/.test(to.path)) {
         requiredPermission = 'view_invoice'
       } else if (/^\/finance\/cetak-invoice/.test(to.path)) {
@@ -318,6 +325,15 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
 
       if (!hasPermission && to.path.startsWith('/sales/retail-return')) {
         const allowed = ['view_retail_return', 'create_retail_return', 'approve_retail_return', 'receive_retail_return', 'post_retail_return', 'approve_retail_compensation', 'create_retail_credit_note', 'request_retail_refund', 'approve_retail_refund', 'confirm_retail_refund']
+        const ok = userStore.user?.roles?.some(role =>
+          role.name === 'admin' ||
+          role.permissions?.some(permission => allowed.includes(permission.name))
+        )
+        if (ok) return
+      }
+
+      if (!hasPermission && to.path.startsWith('/sales/pos')) {
+        const allowed = ['view_retail_sale', 'create_retail_sale', 'confirm_retail_sale']
         const ok = userStore.user?.roles?.some(role =>
           role.name === 'admin' ||
           role.permissions?.some(permission => allowed.includes(permission.name))

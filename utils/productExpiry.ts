@@ -1,0 +1,37 @@
+/**
+ * Product expired_at visibility / requirement (mirrors BE domain rule).
+ * Visible + required when Active Company is RETAIL, or when isBundling is checked.
+ */
+export function isProductExpiredAtRequired(input: {
+  isRetailCompany: boolean
+  isBundling: boolean
+}): boolean {
+  return Boolean(input.isRetailCompany || input.isBundling)
+}
+
+export function isProductExpiredAtVisible(input: {
+  isRetailCompany: boolean
+  isBundling: boolean
+}): boolean {
+  return isProductExpiredAtRequired(input)
+}
+
+/** Date input value YYYY-MM-DD from API datetime / date. */
+export function toProductExpiredAtInput(value: unknown): string {
+  if (value == null || value === '') return ''
+  return String(value).slice(0, 10)
+}
+
+export function formatProductExpiredAtDisplay(value: unknown): string {
+  const day = toProductExpiredAtInput(value)
+  if (!day) return '—'
+  try {
+    return new Date(`${day}T00:00:00`).toLocaleDateString('id-ID', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    })
+  } catch {
+    return day
+  }
+}

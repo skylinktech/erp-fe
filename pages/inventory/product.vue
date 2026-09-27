@@ -2,7 +2,7 @@
     <div class="content-wrapper">
         <div class="container-xxl flex-grow-1">
             
-            <p class="mb-6">Kelola master data produk dan komponen kit.</p>
+            <p class="mb-6">Kelola master data produk dan komponen bundling.</p>
 
             <ListPageStatsCards :items="statCards" />
 
@@ -52,9 +52,9 @@
                         />
                     </FilterField>
                     <FilterField>
-                        <label class="form-label">Kit</label>
+                        <label class="form-label">Bundling</label>
                         <CustomSelect2
-                            v-model="filters.isKit"
+                            v-model="filters.isBundling"
                             :options="booleanFilterOptions"
                             :get-option-label="option => option.label"
                             :reduce="option => option.value"
@@ -64,7 +64,7 @@
                             placeholder="Semua"
                         />
                     </FilterField>
-                    <FilterField>
+                    <FilterField v-if="!isRetailCompany">
                         <label class="form-label">Tipe Tagihan</label>
                         <CustomSelect2
                             v-model="filters.billingType"
@@ -185,9 +185,9 @@
                                     </div>
                                 </template>
                             </Column>
-                            <Column field="sku" header="No. Product" :sortable="true"></Column>
-                            <Column field="name" header="Nama Product" :sortable="true"></Column>
-                            <Column field="productType" header="Jenis / Type KIT" :sortable="true">
+                            <Column field="sku" class="text-nowrap" header="SKU/Serial Number" :sortable="true"></Column>
+                            <Column field="name" header="Nama" :sortable="true"></Column>
+                            <Column v-if="!isRetailCompany" field="productType" header="Jenis / Type KIT" :sortable="true">
                                 <template #body="slotProps">
                                     {{ slotProps.data.productType || '-' }}
                                 </template>
@@ -199,10 +199,10 @@
                                     </span>
                                 </template>
                             </Column>
-                            <Column field="isKit" header="Kit" :sortable="true">
+                            <Column field="isBundling" header="Bundling" :sortable="true">
                                 <template #body="slotProps">
-                                    <span :class="getStatusBadge(slotProps.data.isKit).class">
-                                        {{ getStatusBadge(slotProps.data.isKit).text }}
+                                    <span :class="getStatusBadge(slotProps.data.isBundling ?? slotProps.data.isKit).class">
+                                        {{ getStatusBadge(slotProps.data.isBundling ?? slotProps.data.isKit).text }}
                                     </span>
                                 </template>
                             </Column>
@@ -213,9 +213,14 @@
                                     </span>
                                 </template>
                             </Column>
-                            <Column field="billingType" header="Tipe Tagihan" :sortable="true">
+                            <Column v-if="!isRetailCompany" field="billingType" header="Tipe Tagihan" :sortable="true">
                                 <template #body="slotProps">
                                     {{ slotProps.data.billingType === 'recurring' ? 'Recurring' : 'One Time' }}
+                                </template>
+                            </Column>
+                            <Column v-if="isRetailCompany" class="text-nowrap" field="expiredAt" header="Expired At" :sortable="true">
+                                <template #body="slotProps">
+                                    {{ formatProductExpiredAtDisplay(slotProps.data.expiredAt ?? slotProps.data.expired_at) }}
                                 </template>
                             </Column>
                             <Column field="condition" header="Kondisi" :sortable="true">
@@ -228,7 +233,7 @@
                                     {{ slotProps.data.category?.name || '-' }}
                                 </template>
                             </Column>
-                            <Column field="createdByUser.fullName" header="Dibuat Oleh" :sortable="true">
+                            <Column field="createdByUser.fullName" class="text-nowrap" header="Dibuat Oleh" :sortable="true">
                                 <template #body="slotProps">
                                     {{ slotProps.data.createdByUser?.fullName || '-' }}
                                 </template>
@@ -256,8 +261,8 @@
                             </Column>
                             <template #expansion="slotProps">
                                 <div class="p-3 bg-light">
-                                    <h6 class="mb-3">Komponen Kit</h6>
-                                    <div v-if="slotProps.data.isKit && slotProps.data.productKits?.length">
+                                    <h6 class="mb-3">Komponen Bundling</h6>
+                                    <div v-if="(slotProps.data.isBundling ?? slotProps.data.isKit) && (slotProps.data.productBundlingComponents || slotProps.data.productKits)?.length">
                                         <div class="table-responsive">
                                             <table class="table table-sm table-bordered mb-0">
                                                 <thead>
@@ -265,22 +270,25 @@
                                                         <th style="width: 60px">#</th>
                                                         <th>Name</th>
                                                         <th>Serial Number</th>
-                                                        <th>Type</th>
+                                                        <th v-if="!isRetailCompany">Type</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    <tr v-for="(kit, index) in slotProps.data.productKits" :key="kit.id || `kit-${index}`">
+                                                    <tr
+                                                        v-for="(item, index) in (slotProps.data.productBundlingComponents || slotProps.data.productKits)"
+                                                        :key="item.id || `bundling-${index}`"
+                                                    >
                                                         <td>{{ index + 1 }}</td>
-                                                        <td>{{ kit.name || '-' }}</td>
-                                                        <td>{{ kit.serialNumber || kit.serial_number || '-' }}</td>
-                                                        <td class="text-capitalize">{{ kit.type || '-' }}</td>
+                                                        <td>{{ item.name || '-' }}</td>
+                                                        <td>{{ item.serialNumber || item.serial_number || '-' }}</td>
+                                                        <td v-if="!isRetailCompany" class="text-capitalize">{{ item.type || '-' }}</td>
                                                     </tr>
                                                 </tbody>
                                             </table>
                                         </div>
                                     </div>
                                     <div v-else class="text-muted">
-                                        Product ini tidak memiliki komponen kit.
+                                        Product ini tidak memiliki komponen bundling.
                                     </div>
                                 </div>
                             </template>
@@ -349,11 +357,29 @@
                                     id="categoryId"
                                 />
                             </div>
-                            <div class="col-md-6">
+                            <div v-if="!isRetailCompany" class="col-md-6">
                                 <label class="form-label">Jenis / Type KIT</label>
                                 <input type="text" class="form-control" v-model="form.productType" placeholder="e.g. Flat Standard-V4, Standard Actuated-V3" id="productType">
                             </div>
-                            <div class="col-md-6">
+                            <div v-if="showExpiredAtField" class="col-md-6">
+                                <label class="form-label">
+                                    Expired At
+                                    <span v-if="expiredAtRequired" class="text-danger" aria-hidden="true">*</span>
+                                </label>
+                                <input
+                                    id="expiredAt"
+                                    v-model="form.expiredAt"
+                                    type="date"
+                                    class="form-control"
+                                    :class="{ 'is-invalid': hasFieldError('expiredAt') }"
+                                    :required="expiredAtRequired"
+                                    :aria-required="expiredAtRequired"
+                                >
+                                <div v-if="hasFieldError('expiredAt')" class="invalid-feedback d-block">
+                                    {{ getFieldError('expiredAt') }}
+                                </div>
+                            </div>
+                            <div v-if="!isRetailCompany" class="col-md-6">
                                 <label class="form-label">Tipe Tagihan</label>
                                 <CustomSelect2 v-model="form.billingType" :options="billingTypeOptions" :get-option-label="option => option.label" :reduce="option => option.value" searchable clearable :get-option-key="option => option.value" placeholder="-- Pilih Tipe Tagihan --" id="billingType" class="select-billing-type" />
                             </div>
@@ -362,26 +388,24 @@
                                 <CustomSelect2 v-model="form.condition" :options="conditionOptions" :get-option-label="option => option.label" :reduce="option => option.value" searchable :clearable="false" placeholder="-- Pilih Kondisi --" id="condition" />
                             </div>
                             <div class="col-md-6">
-                                <div class="form-floating form-floating-outline">
-                                    <input
-                                        type="file"
-                                        class="form-control"
-                                        @change="onImageChange"
-                                        accept="image/*"
-                                        id="image"
-                                    >
-                                    <label for="image">Gambar Produk</label>
-                                    <small class="text-muted d-block mt-1">Maks. 5MB. Format: jpg, jpeg, png, gif, webp</small>
-                                    <div v-if="form.imagePreview" class="mt-2">
-                                        <img
-                                            :src="form.imagePreview"
-                                            alt="Image Preview"
-                                            class="image-preview"
-                                            style="height: 60px; max-width: 120px; object-fit: contain; border: 2px solid #ddd; border-radius: 8px;"
-                                            @error="(e) => handleImageError(e, '/img/default-product-image.png')"
-                                        />
-                                        <a :href="form.imagePreview" target="_blank" rel="noopener noreferrer" class="d-block mt-1">Lihat Gambar</a>
-                                    </div>
+                                <FormLabel required for="image">Gambar Produk</FormLabel>
+                                <input
+                                    type="file"
+                                    class="form-control"
+                                    @change="onImageChange"
+                                    accept="image/*"
+                                    id="image"
+                                >
+                                <small class="text-muted d-block mt-1">Maks. 5MB. Format: jpg, jpeg, png, gif, webp</small>
+                                <div v-if="form.imagePreview" class="mt-2">
+                                    <img
+                                        :src="form.imagePreview"
+                                        alt="Image Preview"
+                                        class="image-preview"
+                                        style="height: 60px; max-width: 120px; object-fit: contain; border: 2px solid #ddd; border-radius: 8px;"
+                                        @error="(e) => handleImageError(e, '/img/default-product-image.png')"
+                                    />
+                                    <a :href="form.imagePreview" target="_blank" rel="noopener noreferrer" class="d-block mt-1">Lihat Gambar</a>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -400,18 +424,6 @@
                                 <small class="text-muted">Kosongkan untuk produk yang bisa dipakai internal maupun eksternal.</small>
                             </div>
                             <div class="col-md-6">
-                                <div class="d-flex align-items-center gap-4 mt-3 flex-wrap">
-                                    <div class="form-check form-switch d-flex align-items-center mb-0">
-                                        <input class="form-check-input me-2" type="checkbox" v-model="form.isDevice" @change="onDeviceToggle" />
-                                        <label class="form-check-label mb-0">Is Device?</label>
-                                    </div>
-                                    <div class="form-check form-switch d-flex align-items-center mb-0">
-                                        <input class="form-check-input me-2" type="checkbox" v-model="form.isKit" @change="onKitToggle" />
-                                        <label class="form-check-label mb-0">Is Kit?</label>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
                                 <label class="form-label">Tracking Policy</label>
                                 <CustomSelect2
                                     v-model="form.trackingPolicy"
@@ -422,10 +434,18 @@
                                     :clearable="false"
                                     placeholder="-- Pilih Policy --"
                                 />
-                                <small class="text-muted">
-                                    NONE = qty only. UNIT_SERIAL = serial per unit. KIT_SERIAL = kit ID.
-                                    DEFERRED_COMPONENT_SERIAL = kit/UTID at receiving; router/antenna/cable at unbox.
-                                </small>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center gap-4 mt-3 flex-wrap">
+                                    <div class="form-check form-switch d-flex align-items-center mb-0">
+                                        <input class="form-check-input me-2" type="checkbox" v-model="form.isDevice" @change="onDeviceToggle" />
+                                        <label class="form-check-label mb-0">Is Device?</label>
+                                    </div>
+                                    <div class="form-check form-switch d-flex align-items-center mb-0">
+                                        <input class="form-check-input me-2" type="checkbox" v-model="form.isBundling" @change="onBundlingToggle" />
+                                        <label class="form-check-label mb-0">Is Bundling?</label>
+                                    </div>
+                                </div>
                             </div>
                             <div class="col-md-6" v-if="form.trackingPolicy === 'DEFERRED_COMPONENT_SERIAL'">
                                 <div class="form-check mt-4">
@@ -439,31 +459,31 @@
                             </div>
                         </div>
 
-                        <div v-if="form.isKit" v-show="isCurrent('product-kit')" class="mt-2" data-step-id="product-kit">
+                        <div v-if="form.isBundling" v-show="isCurrent('product-bundling')" class="mt-2" data-step-id="product-bundling">
                             <div class="alert alert-secondary mb-4">
-                                Tambahkan komponen kit di bawah ini.
+                                Tambahkan komponen bundling di bawah ini.
                             </div>
-                            <div v-for="(item, index) in form.productKits" :key="`kit-${index}`" class="repeater-item mb-4">
+                            <div v-for="(item, index) in form.productBundlingComponents" :key="`bundling-${index}`" class="repeater-item mb-4">
                                 <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <span class="text-muted fw-medium">Kit Item #{{ index + 1 }}</span>
-                                    <button class="btn btn-sm btn-outline-danger" @click.prevent="productStore.removeProductKit(index)" type="button">
+                                    <span class="text-muted fw-medium">Bundling Item #{{ index + 1 }}</span>
+                                    <button class="btn btn-sm btn-outline-danger" @click.prevent="productStore.removeProductBundlingComponent(index)" type="button">
                                         <i class="ri-delete-bin-line me-1"></i> Hapus
                                     </button>
                                 </div>
                                 <div class="row g-3">
-                                    <div class="col-md-4">
-                                        <label class="form-label">Name <span v-if="form.isKit" class="text-danger" aria-hidden="true">*</span></label>
-                                        <input type="text" class="form-control" v-model="item.name" placeholder="Nama komponen kit">
+                                    <div :class="isRetailCompany ? 'col-md-6' : 'col-md-4'">
+                                        <label class="form-label">Name <span v-if="form.isBundling" class="text-danger" aria-hidden="true">*</span></label>
+                                        <input type="text" class="form-control" v-model="item.name" placeholder="Nama komponen bundling">
                                     </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label">Serial Number</label>
-                                        <input type="text" class="form-control" v-model="item.serialNumber" placeholder="Serial number">
+                                    <div :class="isRetailCompany ? 'col-md-6' : 'col-md-4'">
+                                        <label class="form-label">SKU / Serial Number</label>
+                                        <input type="text" class="form-control" v-model="item.serialNumber" placeholder="SKU / Serial Number">
                                     </div>
-                                    <div class="col-md-4">
+                                    <div v-if="!isRetailCompany" class="col-md-4">
                                         <label class="form-label">Type</label>
                                         <CustomSelect2
                                             v-model="item.type"
-                                            :options="productKitTypeOptions"
+                                            :options="productBundlingTypeOptions"
                                             :get-option-label="option => option.label"
                                             :reduce="option => option.value"
                                             :get-option-key="option => option.value"
@@ -474,8 +494,8 @@
                                 </div>
                                 <hr class="my-4">
                             </div>
-                            <button type="button" class="btn btn-outline-primary" @click="productStore.addProductKit()">
-                                Tambah Item Kit
+                            <button type="button" class="btn btn-outline-primary" @click="productStore.addProductBundlingComponent()">
+                                Tambah Item Bundling
                             </button>
                         </div>
                         <TabbedFormActions
@@ -520,10 +540,22 @@ import { usePermissions } from '~/composables/usePermissions'
 import { usePermissionsStore } from '~/stores/permissions'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import { useImageUrl } from '~/composables/useImageUrl'
+import FormLabel from '~/components/form/FormLabel.vue'
+import { useCompanyContextStore } from '~/stores/companyContext'
+import {
+  formatProductExpiredAtDisplay,
+  isProductExpiredAtRequired,
+  isProductExpiredAtVisible,
+} from '~/utils/productExpiry'
 
 const { setListTitle } = useDynamicTitle()
 const { getProductImage, handleImageError, debugImageUrl } = useImageUrl()
 const { userHasPermission, userHasRole } = usePermissions()
+const companyContextStore = useCompanyContextStore()
+const { profileCode } = storeToRefs(companyContextStore)
+
+/** Active Company dengan business profile RETAIL — Type KIT / Tipe Tagihan tidak relevan. */
+const isRetailCompany = computed(() => profileCode.value === 'RETAIL')
 
 const myDataTableRef = ref(null)
 const productStore = useProductStore()
@@ -536,12 +568,26 @@ const { products, loading, totalRecords, params, statistics, form, isEditMode, s
 const { kategori } = storeToRefs(kategoriStore)
 const { units } = storeToRefs(unitStore)
 
+const showExpiredAtField = computed(() =>
+  isProductExpiredAtVisible({
+    isRetailCompany: isRetailCompany.value,
+    isBundling: !!form.value?.isBundling,
+  })
+)
+
+const expiredAtRequired = computed(() =>
+  isProductExpiredAtRequired({
+    isRetailCompany: isRetailCompany.value,
+    isBundling: !!form.value?.isBundling,
+  })
+)
+
 const globalFilterValue = ref('')
 const rowsPerPageOptionsArray = [10, 25, 50, 100]
 const formRoot = ref(null)
 const formSteps = computed(() => [
   { id: 'product-info', label: 'Informasi Produk' },
-  { id: 'product-kit', label: 'Product Kit', visible: !!form.value.isKit },
+  { id: 'product-bundling', label: 'Komponen Bundling', visible: !!form.value.isBundling },
 ])
 function isEmptyProductField(value) {
   return value === null || value === undefined || String(value).trim() === ''
@@ -559,13 +605,22 @@ function validateProductStep(step) {
     if (isEmptyProductField(form.value.name)) return fail('Nama Barang wajib diisi.')
     if (isEmptyProductField(form.value.unitId)) return fail('Satuan wajib dipilih.')
     if (isEmptyProductField(form.value.categoryId)) return fail('Kategori wajib dipilih.')
+    if (
+      isProductExpiredAtRequired({
+        isRetailCompany: isRetailCompany.value,
+        isBundling: !!form.value.isBundling,
+      }) &&
+      isEmptyProductField(form.value.expiredAt)
+    ) {
+      return fail('Tanggal kedaluwarsa wajib diisi untuk produk Retail atau Bundling.')
+    }
     return true
   }
 
-  if (step.id === 'product-kit' && form.value.isKit) {
-    const kits = form.value.productKits || []
-    if (kits.some((item) => isEmptyProductField(item?.name))) {
-      return fail('Nama komponen kit wajib diisi.')
+  if (step.id === 'product-bundling' && form.value.isBundling) {
+    const components = form.value.productBundlingComponents || []
+    if (components.some((item) => isEmptyProductField(item?.name))) {
+      return fail('Nama komponen bundling wajib diisi.')
     }
   }
 
@@ -593,7 +648,7 @@ const filters = ref({
     categoryId: null,
     isInternal: null,
     isDevice: null,
-    isKit: null,
+    isBundling: null,
     billingType: null,
     condition: null,
 })
@@ -660,7 +715,7 @@ const hasActiveFilters = computed(() =>
     filters.value.categoryId != null
     || filters.value.isInternal != null
     || filters.value.isDevice != null
-    || filters.value.isKit != null
+    || filters.value.isBundling != null
     || filters.value.billingType != null
     || filters.value.condition != null
 )
@@ -702,7 +757,7 @@ function conditionLabel(value) {
     return conditionLabels[value] ?? '-'
 }
 
-const productKitTypeOptions = [
+const productBundlingTypeOptions = [
     { label: 'Router', value: 'router' },
     { label: 'Adaptor', value: 'adaptor' },
     { label: 'Cable', value: 'cable' },
@@ -743,7 +798,7 @@ function resetFilters() {
         categoryId: null,
         isInternal: null,
         isDevice: null,
-        isKit: null,
+        isBundling: null,
         billingType: null,
         condition: null,
     }
@@ -789,22 +844,31 @@ watch(
         params.value.categoryId = filters.value.categoryId
         params.value.isInternal = filters.value.isInternal
         params.value.isDevice = filters.value.isDevice
-        params.value.isKit = filters.value.isKit
-        params.value.billingType = filters.value.billingType
+        params.value.isBundling = filters.value.isBundling
+        params.value.isKit = filters.value.isBundling
+        params.value.billingType = isRetailCompany.value ? null : filters.value.billingType
         params.value.condition = filters.value.condition
         reload()
     },
     { deep: true }
 )
 
-const onKitToggle = () => {
-    if (form.value.isKit) {
-        if (!Array.isArray(form.value.productKits) || form.value.productKits.length === 0) {
-            productStore.addProductKit()
+watch(isRetailCompany, (retail) => {
+    if (!retail) return
+    if (filters.value.billingType != null) {
+        filters.value.billingType = null
+    }
+    params.value.billingType = null
+})
+
+const onBundlingToggle = () => {
+    if (form.value.isBundling) {
+        if (!Array.isArray(form.value.productBundlingComponents) || form.value.productBundlingComponents.length === 0) {
+            productStore.addProductBundlingComponent()
         }
-        goToId('product-kit', { skipValidation: true })
+        goToId('product-bundling', { skipValidation: true })
     } else {
-        form.value.productKits = []
+        form.value.productBundlingComponents = []
         goToId('product-info', { skipValidation: true })
     }
 }
