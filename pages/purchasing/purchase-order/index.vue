@@ -14,6 +14,9 @@
             <p class="mb-6">
             List purchase order yang terdaftar di sistem
             </p>
+            <div v-if="!activeCompanyReady" class="alert alert-warning">
+              {{ activeCompanyMissing || 'Active Company wajib dipilih untuk melihat Purchase Order.' }}
+            </div>
             <ListPageStatsCards :items="statItems" />
 
             <div class="row g-6">
@@ -637,7 +640,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { usePurchaseOrderStore } from '~/stores/purchaseOrder'
 import { useVendorStore } from '~/stores/vendor'
@@ -648,6 +651,8 @@ import { useWarehouseStore } from '~/stores/warehouse'
 import { useUserStore } from '~/stores/user'
 import { usePermissionsStore } from '~/stores/permissions'
 import { usePermissions } from '~/composables/usePermissions'
+import { useActiveCompany } from '~/composables/useActiveCompany'
+import { useCompanyScopedReload } from '~/composables/useCompanyScopedReload'
 import 'vue-select/dist/vue-select.css'
 import { useDebounceFn } from '@vueuse/core'
 import { useRouter } from 'vue-router'
@@ -676,7 +681,7 @@ const router = useRouter();
 
 // Store
 const myDataTableRef        = ref(null)
-const isInitialLoading      = ref(true) // ✅ Loading state untuk initial page load
+const isInitialLoading      = ref(true) // Loading state untuk initial page load
 const purchaseOrderStore    = usePurchaseOrderStore()
 const vendorStore           = useVendorStore()
 const perusahaanStore       = usePerusahaanStore()
@@ -687,6 +692,12 @@ const userStore             = useUserStore()
 const formatRupiah          = useFormatRupiah()
 const { userHasPermission, userHasRole } = usePermissions();
 const permissionStore       = usePermissionsStore()
+const {
+  ensureBootstrapped,
+  ready: activeCompanyReady,
+  missingMessage: activeCompanyMissing,
+} = useActiveCompany()
+void ensureBootstrapped()
 
 const { purchaseOrders, loading, totalRecords, params, form, isEditMode, showModal, validationErrors, stats } = storeToRefs(purchaseOrderStore)
 
@@ -825,38 +836,67 @@ const statusOptions = ref([
     { label: 'Cancelled', value: 'cancelled' },
 ]);
 
-// ✅ Gunakan composable untuk data loading yang robust
-const { isLoading: isDataLoading, error: dataError, reload: reloadData } = usePageData({
+// Master data once; PO list+stats reload with Active Company (same scope as cards)
+const { isLoading: isMasterLoading } = usePageData({
     pageName: 'Purchase Order',
     loaders: [
-        // Group 1: Master data
         () => vendorStore.fetchAllVendors(),
         () => perusahaanStore.fetchPerusahaans(),
         () => productStore.fetchAllProducts(),
         () => warehouseStore.fetchWarehouses(),
         () => userStore.loadUser(),
         () => permissionStore.fetchPermissions(),
-        // Group 2: Page specific data
-        () => purchaseOrderStore.fetchPurchaseOrders(),
-        () => purchaseOrderStore.fetchStats(),
     ],
-    onSuccess: () => {
-        // Set title after data is loaded
-        setListTitle('Purchase Order', stats.value.total || 0)
+    waitAll: true,
+})
+
+const poLoading = ref(true)
+const companyScoped = useCompanyScopedReload(async (_companyId, generation) => {
+    poLoading.value = true
+    try {
+        await Promise.all([
+            purchaseOrderStore.fetchPurchaseOrders(),
+            purchaseOrderStore.fetchStats(),
+        ])
+        if (!companyScoped.isCurrent(generation)) return
+        setListTitle('Purchase Order', stats.value?.total || 0)
+    } finally {
+        if (companyScoped.isCurrent(generation)) {
+            poLoading.value = false
+        }
+    }
+})
+
+watch(
+    [isMasterLoading, poLoading],
+    ([master, po]) => {
+        isInitialLoading.value = Boolean(master || po)
     },
-    waitAll: true // Wait untuk semua data sebelum tampilkan halaman
+    { immediate: true }
+)
+
+watch(activeCompanyReady, (ready) => {
+    if (ready) return
+    purchaseOrderStore.purchaseOrders = []
+    purchaseOrderStore.totalRecords = 0
+    purchaseOrderStore.stats = { total: 0, approved: 0, rejected: 0, draft: 0, received: 0 }
+    poLoading.value = false
+    setListTitle('Purchase Order', 0)
 })
 
-// ✅ Sync isDataLoading dengan isInitialLoading untuk backward compatibility
-watch(isDataLoading, (value) => {
-    isInitialLoading.value = value
+onMounted(async () => {
+    tableControls.value.rows = Number(params.value.rows) || 10
+    tableControls.value.search = globalFilterValue.value
+    await ensureBootstrapped()
+    if (!activeCompanyReady.value) {
+        poLoading.value = false
+    }
+    companyScoped.start()
 })
 
-onMounted(() => {
-    // Initialize table controls
-    tableControls.value.rows = Number(params.value.rows) || 10;
-    tableControls.value.search = globalFilterValue.value;
-});
+onUnmounted(() => {
+    companyScoped.stop()
+})
 
 // Watch untuk sinkronisasi table controls
 watch(() => params.value.rows, (newValue) => {
@@ -910,11 +950,17 @@ watch(warehouses, (newWarehouses) => {
     }
 })
 
-watch(filters, (newFilters) => {
-    if (!newFilters) return;
-    const { page, rows, ...restFilters } = newFilters;
-    purchaseOrderStore.setFilters(restFilters);
-}, { deep: true });
+watch(
+    () => [filters.value.vendorId, filters.value.poType, filters.value.status],
+    ([vendorId, poType, status]) => {
+        purchaseOrderStore.setFilters({
+            vendorId,
+            poType,
+            status,
+            search: params.value.search || '',
+        })
+    }
+)
 
 watch(() => form.value?.purchaseOrderItems, (newItems) => {
     if (newItems && newItems.length > 0) {

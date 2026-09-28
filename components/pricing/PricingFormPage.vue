@@ -164,13 +164,12 @@
                     <div class="repeater-cell">
                       <span class="repeater-cell-label d-md-none">Harga Resmi</span>
                       <input
-                        v-model.number="line.officialUnitPrice"
-                        type="number"
-                        min="1"
-                        step="1"
+                        type="text"
                         class="form-control"
-                        placeholder="0"
+                        :value="formatRupiah(line.officialUnitPrice)"
+                        placeholder="Rp 0"
                         :disabled="!isDraftEditable"
+                        @input="updateOfficialUnitPriceFromInput(index, $event)"
                       />
                     </div>
                     <div class="repeater-cell repeater-cell-actions">
@@ -224,6 +223,7 @@ import { usePricingStore } from '~/stores/pricing'
 import { useActiveCompany } from '~/composables/useActiveCompany'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import { useTabbedFormNavigation } from '~/composables/useTabbedFormNavigation'
+import { useFormatRupiah, parseRupiahToNumber } from '~/composables/formatRupiah'
 import TabbedFormNav from '~/components/form/TabbedFormNav.vue'
 import TabbedFormActions from '~/components/form/TabbedFormActions.vue'
 import FormLabel from '~/components/form/FormLabel.vue'
@@ -233,6 +233,7 @@ import ProductSelect from '~/components/reference/ProductSelect.vue'
 import PageBreadcrumb from '~/components/PageBreadcrumb.vue'
 
 const route = useRoute()
+const formatRupiah = useFormatRupiah()
 const pricingStore = usePricingStore()
 const { setFormTitle } = useDynamicTitle()
 const {
@@ -329,6 +330,12 @@ const {
 
 function onProductSelect(index: number, product: any | null) {
   pricingStore.applyProductToLine(index, product)
+}
+
+function updateOfficialUnitPriceFromInput(index: number, e: Event) {
+  const line = form.value?.lines?.[index]
+  if (!line) return
+  line.officialUnitPrice = parseRupiahToNumber((e.target as HTMLInputElement)?.value)
 }
 
 async function onFormSubmit() {

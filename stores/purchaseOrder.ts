@@ -168,63 +168,52 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
       this.error = null
       const { $api } = useNuxtApp()
       try {
-        const url = new URL($api.purchaseOrder())
-        const params = new URLSearchParams({
-            page     : Math.floor((this.params.first / this.params.rows) + 1).toString(),
-            rows     : Math.floor(this.params.rows).toString(),
+        const page = Math.floor((this.params.first / this.params.rows) + 1)
+        const result = await apiFetch<any>($api.purchaseOrder(), {
+          method: 'GET',
+          query: {
+            page,
+            rows: Math.floor(this.params.rows),
             sortField: this.params.sortField || '',
             sortOrder: this.params.sortOrder?.toString() || '',
-            draw     : this.params.draw.toString(),
-            search   : this.params.search || '',
-            includeItems: 'true', // Always include purchaseOrderItems with product relation
-        });
-
-        if (this.params.vendorId) {
-            params.append('vendorId', this.params.vendorId.toString());
-          }
-          if (this.params.poType) {
-            params.append('poType', this.params.poType);
-          }
-          if (this.params.status) {
-            params.append('status', this.params.status);
-          }
-
-        url.search = params.toString();
-
-        const response = await fetch(url, {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
+            draw: this.params.draw,
+            search: this.params.search || '',
+            includeItems: 'true',
+            ...(this.params.vendorId ? { vendorId: this.params.vendorId } : {}),
+            ...(this.params.poType ? { poType: this.params.poType } : {}),
+            ...(this.params.status ? { status: this.params.status } : {}),
           },
-          credentials: 'include' // Cookie-based auth
         })
 
-        if (!response.ok) throw new Error('Gagal mengambil data purchaseOrder')
-
-        const result = await response.json()
-        
-        // Pastikan purchaseOrders selalu berupa array
-        this.purchaseOrders = Array.isArray(result.data) ? result.data : []
-        this.totalRecords = result.meta?.total || 0
+        // Lucid paginate: { data, meta }; tolerate nested wrappers
+        const rows = Array.isArray(result?.data)
+          ? result.data
+          : Array.isArray(result?.data?.data)
+            ? result.data.data
+            : []
+        this.purchaseOrders = rows
+        this.totalRecords = Number(result?.meta?.total ?? result?.data?.meta?.total ?? rows.length) || 0
       } catch (e: any) {
         console.error('Gagal mengambil data purchaseOrder:', e)
         this.error = e
-        // Pastikan tetap array kosong jika error
         this.purchaseOrders = []
-        
-        // Hanya tampilkan notifikasi error jika tidak di-suppress (untuk preload)
+        this.totalRecords = 0
+
         if (!suppressError) {
+          const message =
+            e?.data?.message ||
+            e?.response?._data?.message ||
+            e?.message ||
+            'Gagal memuat Purchase Order'
           toast.error({
             title: 'Error',
-            message: `Tidak dapat memuat data Purchase Order: ${e.message}`,
+            message: `Tidak dapat memuat data Purchase Order: ${message}`,
             color: 'red',
             position: 'bottomRight',
           });
         }
       } finally {
         this.loading = false
-        // Pastikan purchaseOrders selalu berupa array setelah operasi selesai
         if (!Array.isArray(this.purchaseOrders)) {
           this.purchaseOrders = []
         }
@@ -1064,11 +1053,24 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
     },
 
     setFilters(filters: { vendorId?: number | null, poType?: string | null, status?: string | null, search?: string }) {
-        this.params.vendorId = filters.vendorId;
-        this.params.poType = filters.poType;
-        this.params.status = filters.status;
-        this.params.search = filters.search || '';
-        this.params.first = 0; // reset pagination
+        const nextVendorId = filters.vendorId ?? null
+        const nextPoType = filters.poType ?? null
+        const nextStatus = filters.status ?? null
+        const nextSearch = filters.search || ''
+
+        const unchanged =
+            this.params.vendorId === nextVendorId &&
+            this.params.poType === nextPoType &&
+            this.params.status === nextStatus &&
+            (this.params.search || '') === nextSearch
+
+        this.params.vendorId = nextVendorId
+        this.params.poType = nextPoType
+        this.params.status = nextStatus
+        this.params.search = nextSearch
+        this.params.first = 0
+
+        if (unchanged) return
         this.fetchPurchaseOrders();
     },
 
@@ -1142,25 +1144,20 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
     },
 
     async fetchStats() {
-        const toast = useToast();
-        const { $api } = useNuxtApp()
         const defaultStats = { total: 0, approved: 0, rejected: 0, draft: 0, received: 0 };
+        const { $api } = useNuxtApp()
         try {
-            const response = await fetch($api.countPurchaseOrderByStatus(), {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                credentials: 'include' // Cookie-based auth
-            });
-            
-            if (response.ok) {
-                const result = await response.json();
-                this.stats = result;
-            } else {
-                this.stats = defaultStats;
+            const result = await apiFetch<any>($api.countPurchaseOrderByStatus(), {
+                method: 'GET',
+            })
+            this.stats = {
+                total: Number(result?.total) || 0,
+                approved: Number(result?.approved) || 0,
+                rejected: Number(result?.rejected) || 0,
+                draft: Number(result?.draft) || 0,
+                received: Number(result?.received) || 0,
             }
-        } catch (error) {
+        } catch {
             this.stats = defaultStats;
         }
     },
