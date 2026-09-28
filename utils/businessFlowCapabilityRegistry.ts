@@ -66,6 +66,7 @@ export const BUSINESS_FE_ROOTS: readonly string[] = [
 export const BUSINESS_FLOW_CAPABILITY_REGISTRY: Record<string, BusinessFlowCapability> = {
   ISP_NEW_SUBSCRIPTION: {
     flowCodes: ['ISP_NEW_SUBSCRIPTION'],
+    requiresProfileCodes: ['ISP'],
     capabilityCodes: [
       'ISP_COMMERCIAL',
       'FDR',

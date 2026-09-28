@@ -69,9 +69,7 @@ export const useCompanyContextStore = defineStore('companyContext', {
     profileCode: (s) => s.businessProfile?.code ?? null,
     effectiveFlowCodes: (s) => s.effectiveFlows.map((f) => f.code),
     hasFlow: (s) => (code: string) => s.effectiveFlows.some((f) => f.code === code),
-    isIspContext: (s) =>
-      s.businessProfile?.code === 'ISP' ||
-      s.effectiveFlows.some((f) => f.code === 'ISP_NEW_SUBSCRIPTION'),
+    isIspContext: (s) => s.businessProfile?.code === 'ISP',
     isRetailContext: (s) =>
       s.businessProfile?.code === 'RETAIL' ||
       s.effectiveFlows.some((f) => f.code === 'RETAIL_DIRECT_SALE'),
@@ -113,10 +111,17 @@ export const useCompanyContextStore = defineStore('companyContext', {
           'pricing',
           'vendor',
           'site',
+          'menu-group',
         ]
         for (const name of names) {
           const s = $pinia._s?.get?.(name)
-          if (!s || typeof s.$reset !== 'function') continue
+          if (!s) continue
+          if (name === 'menu-group') {
+            // Drop pruned sidebar from previous company so ISP↔Retail switch does not flash wrong modules.
+            s.sidebarMenuGroups = []
+            continue
+          }
+          if (typeof s.$reset !== 'function') continue
           s.$reset()
           if (typeof s.clearCustomersForSelectCache === 'function') {
             s.clearCustomersForSelectCache()

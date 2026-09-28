@@ -73,23 +73,41 @@ describe('businessFlowRoute', () => {
     expect(
       isRouteAllowedForContext('/sales/pos', {
         effectiveFlowCodes: ['ISP_NEW_SUBSCRIPTION'],
+        profileCode: 'ISP',
       })
     ).toBe(false)
     expect(
       isRouteAllowedForContext('/sales/sales-order', {
         effectiveFlowCodes: ['ISP_NEW_SUBSCRIPTION'],
+        profileCode: 'ISP',
       })
     ).toBe(true)
   })
 
-  it('ISP + Direct Sale grant unlocks both commercial and POS', () => {
+  it('ISP + Direct Sale grant unlocks both commercial and POS on ISP profile', () => {
     const codes = ['ISP_NEW_SUBSCRIPTION', 'RETAIL_DIRECT_SALE']
-    expect(isRouteAllowedForContext('/sales/quotation', { effectiveFlowCodes: codes })).toBe(true)
-    expect(isRouteAllowedForContext('/sales/pos', { effectiveFlowCodes: codes })).toBe(true)
-    expect(isRouteAllowedForContext('/order-process/subscription', { effectiveFlowCodes: codes })).toBe(true)
-    expect(hasCapabilityCode('DIRECT_PRODUCT_SALE', codes)).toBe(true)
-    expect(hasCapabilityCode('ISP_COMMERCIAL', codes)).toBe(true)
-    expect(hasCapabilityCode('ISP_FULFILLMENT', codes)).toBe(true)
+    const isp = { effectiveFlowCodes: codes, profileCode: 'ISP' }
+    expect(isRouteAllowedForContext('/sales/quotation', isp)).toBe(true)
+    expect(isRouteAllowedForContext('/sales/pos', isp)).toBe(true)
+    expect(isRouteAllowedForContext('/order-process/subscription', isp)).toBe(true)
+    expect(hasCapabilityCode('DIRECT_PRODUCT_SALE', codes, 'ISP')).toBe(true)
+    expect(hasCapabilityCode('ISP_COMMERCIAL', codes, 'ISP')).toBe(true)
+    expect(hasCapabilityCode('ISP_FULFILLMENT', codes, 'ISP')).toBe(true)
+  })
+
+  it('Retail profile hides ISP shell even when ISP flow eligibility is granted', () => {
+    const dual = {
+      effectiveFlowCodes: ['ISP_NEW_SUBSCRIPTION', 'RETAIL_DIRECT_SALE'],
+      profileCode: 'RETAIL',
+    }
+    expect(isRouteAllowedForContext('/order-process/subscription', dual)).toBe(false)
+    expect(isRouteAllowedForContext('/implementation/arf', dual)).toBe(false)
+    expect(isRouteAllowedForContext('/service-management/pending', dual)).toBe(false)
+    expect(isRouteAllowedForContext('/operations/berita-acara', dual)).toBe(false)
+    expect(isRouteAllowedForContext('/sales/fdr', dual)).toBe(false)
+    expect(isRouteAllowedForContext('/sales/pos', dual)).toBe(true)
+    expect(isRouteAllowedForContext('/sales/omnichannel', dual)).toBe(true)
+    expect(hasCapabilityCode('ISP_COMMERCIAL', dual.effectiveFlowCodes, 'RETAIL')).toBe(false)
   })
 
   it('Omnichannel requires RETAIL profile — not ISP with RETAIL_DIRECT_SALE grant alone', () => {

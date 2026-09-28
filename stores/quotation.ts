@@ -5,6 +5,8 @@ import Swal from 'sweetalert2'
 import { useNuxtApp } from '#app'
 import { useUserStore } from '~/stores/user'
 import { useServiceStore } from '~/stores/service'
+import { useCompanyContextStore } from '~/stores/companyContext'
+import { shouldApplyCompanyPayload } from '~/utils/companyContextSync'
 import { serviceContractSubtotal } from '~/utils/commercialPricing'
 import { quotationSavePlan } from '~/utils/quotationFlowMode'
 import type { User } from './userManagement'
@@ -1511,11 +1513,13 @@ export const useQuotationStore = defineStore('quotation', {
         }
     },
 
-    async fetchStatistics() {
+    async fetchStatistics(expectedGeneration?: number) {
         const toast = useToast();
         this.error = null;
         const { $api } = useNuxtApp();
-        
+        const companyContext = useCompanyContextStore();
+        const generationAtRequest = expectedGeneration ?? companyContext.generation;
+
         try {
             const response = await fetch($api.quotation() + '/statistics', {
                 method: 'GET',
@@ -1531,9 +1535,23 @@ export const useQuotationStore = defineStore('quotation', {
             }
 
             const result = await response.json();
-            this.statistics = result.data;
+            if (!shouldApplyCompanyPayload(companyContext.generation, generationAtRequest)) {
+                return;
+            }
+
+            const data = result?.data || {};
+            this.statistics = {
+                totalQuotations: Number(data.totalQuotations) || 0,
+                approvedQuotations: Number(data.approvedQuotations) || 0,
+                pendingQuotations: Number(data.pendingQuotations) || 0,
+                rejectedQuotations: Number(data.rejectedQuotations) || 0,
+                totalValue: Number(data.totalValue) || 0,
+            };
             
         } catch (error: any) {
+            if (!shouldApplyCompanyPayload(companyContext.generation, generationAtRequest)) {
+                return;
+            }
             console.error('Error fetching quotation statistics:', error);
             this.error = error;
             toast.error({

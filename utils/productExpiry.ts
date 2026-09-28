@@ -1,19 +1,20 @@
 /**
  * Product expired_at visibility / requirement (mirrors BE domain rule).
- * Visible + required when Active Company is RETAIL, or when isBundling is checked.
+ * Visible when Active Company is RETAIL, or when isBundling is checked.
+ * Always optional (nullable).
  */
-export function isProductExpiredAtRequired(input: {
+export function isProductExpiredAtRequired(_input: {
   isRetailCompany: boolean
   isBundling: boolean
 }): boolean {
-  return Boolean(input.isRetailCompany || input.isBundling)
+  return false
 }
 
 export function isProductExpiredAtVisible(input: {
   isRetailCompany: boolean
   isBundling: boolean
 }): boolean {
-  return isProductExpiredAtRequired(input)
+  return Boolean(input.isRetailCompany || input.isBundling)
 }
 
 /** Date input value YYYY-MM-DD from API datetime / date. */

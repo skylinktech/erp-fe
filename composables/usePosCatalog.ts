@@ -37,11 +37,11 @@ export function usePosCatalog(opts: {
     return headers
   }
 
-  async function fetchPage(targetPage: number) {
+  async function fetchPage(targetPage: number): Promise<PosCatalogRow[]> {
     if (!opts.companyId.value) {
       items.value = []
       total.value = 0
-      return
+      return []
     }
     const requestGeneration = opts.generation.value
     const requestSearch = appliedSearch.value
@@ -77,18 +77,19 @@ export function usePosCatalog(opts: {
           opts.companyId.value
         )
       ) {
-        return
+        return []
       }
       if (!res.ok) {
         error.value = payload?.message || 'Gagal memuat katalog POS.'
         items.value = []
-        return
+        return []
       }
       const rows = Array.isArray(payload.data) ? (payload.data as PosCatalogRow[]) : []
       items.value = rows
       page.value = Number(payload.meta?.currentPage || targetPage)
       lastPage.value = Number(payload.meta?.lastPage || 1)
       total.value = Number(payload.meta?.total || rows.length)
+      return rows
     } catch (err: any) {
       if (
         shouldIgnoreStaleCatalog(
@@ -102,18 +103,19 @@ export function usePosCatalog(opts: {
           opts.companyId.value
         )
       ) {
-        return
+        return []
       }
       error.value = err?.message || 'Gagal memuat katalog POS.'
       items.value = []
+      return []
     } finally {
       loading.value = false
     }
   }
 
-  async function reload() {
+  async function reload(): Promise<PosCatalogRow[]> {
     page.value = 1
-    await fetchPage(1)
+    return fetchPage(1)
   }
 
   async function goToPage(nextPage: number) {
@@ -126,9 +128,9 @@ export function usePosCatalog(opts: {
     await fetchPage(safe)
   }
 
-  function applySearch() {
+  async function applySearch(): Promise<PosCatalogRow[]> {
     appliedSearch.value = searchInput.value.trim()
-    void reload()
+    return reload()
   }
 
   const debouncedSearch = useDebounceFn(() => {

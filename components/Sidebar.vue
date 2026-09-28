@@ -301,10 +301,19 @@ watch(() => userStore.user, async (newUser, oldUser) => {
 });
 
 watch(
-  () => companyContextStore.companyId,
+  () => [
+    companyContextStore.companyId,
+    companyContextStore.profileCode,
+    (companyContextStore.effectiveFlowCodes || []).join('|'),
+  ],
   async (next, prev) => {
     if (!userStore.user) return
-    if (next == null || next === prev) return
+    if (!prev) return
+    const [nextId] = next
+    const [prevId] = prev
+    if (nextId == null) return
+    // Refetch sidebar when company or its effective flows/profile change.
+    if (nextId === prevId && next[1] === prev[1] && next[2] === prev[2]) return
     await menuGroupsStore.fetchAllMenuGroups()
     setActiveGroup()
   }

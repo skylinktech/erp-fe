@@ -13,6 +13,7 @@ export type PosCatalogRow = {
   productId: number
   sku: string
   name: string
+  barcode?: string | null
   image: string | null
   unitId: number
   unitName: string | null
@@ -27,6 +28,32 @@ export type PosCatalogRow = {
   officialUnitPrice: number | null
   priceListCode: string | null
   currency: string | null
+}
+
+/** Exact SKU or barcode match for scan-to-add (case-insensitive SKU). */
+export function findExactCatalogScanMatch(
+  rows: PosCatalogRow[],
+  rawQuery: string
+): PosCatalogRow | null {
+  const q = rawQuery.trim()
+  if (!q) return null
+  const lower = q.toLowerCase()
+  const exact = rows.filter((row) => {
+    const sku = String(row.sku || '').trim()
+    const barcode = String(row.barcode || '').trim()
+    return sku.toLowerCase() === lower || (barcode.length > 0 && barcode === q)
+  })
+  if (exact.length === 1) return exact[0]
+  // Single hit from barcode/SKU-oriented search is also safe to auto-add.
+  if (exact.length === 0 && rows.length === 1) {
+    const only = rows[0]
+    const sku = String(only.sku || '').trim().toLowerCase()
+    const barcode = String(only.barcode || '').trim()
+    if (sku === lower || barcode === q || sku.includes(lower) || lower.includes(sku)) {
+      return only
+    }
+  }
+  return null
 }
 
 /** Merge same product+UOM; quantity must stay positive. */

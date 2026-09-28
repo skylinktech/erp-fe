@@ -193,13 +193,14 @@
   </template>
 
   <script setup>
-  import { ref, computed, onMounted, watch } from 'vue'
+  import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
   import { storeToRefs } from 'pinia'
   import { useQuotationStore } from '~/stores/quotation'
   import { useCustomerStore } from '~/stores/customer'
   import { useUserStore } from '~/stores/user'
   import { usePermissionsStore } from '~/stores/permissions'
   import { usePermissions } from '~/composables/usePermissions'
+  import { useCompanyScopedReload } from '~/composables/useCompanyScopedReload'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import QuotationExpandedRow from '~/components/table/QuotationExpandedRow.vue'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
@@ -235,6 +236,7 @@ const statItems = computed(() => [
 // State
 const globalFilterValue = ref('');
 const expandedRows = ref({});
+const skipFilterWatch = ref(false);
 const tableControls = ref({
     rows: 10,
     search: '',
@@ -254,6 +256,22 @@ function resetFilters() {
     filters.value.status = null
 }
 
+async function resetListUiForCompany() {
+    skipFilterWatch.value = true
+    expandedRows.value = {}
+    globalFilterValue.value = ''
+    filters.value = { search: '', customerId: null, status: null }
+    quotationStore.params.search = ''
+    quotationStore.params.customerId = null
+    quotationStore.params.status = null
+    quotationStore.params.first = 0
+    tableControls.value.search = ''
+    tableControls.value.rows = Number(quotationStore.params.rows) || 10
+    // Wait for deep/async watchers so they see the skip flag and do not double-fetch.
+    await nextTick()
+    skipFilterWatch.value = false
+}
+
   const rowsPerPageOptionsArray = ref([10, 25, 50, 100]);
   const statusOptions = ref([
       { label: 'Draft', value: 'draft' },
@@ -264,7 +282,7 @@ function resetFilters() {
   ]);
 
   watch(filters, (newFilters) => {
-      if (!newFilters) return;
+      if (skipFilterWatch.value || !newFilters) return;
       quotationStore.setFilters({
         customerId: newFilters.customerId,
         status: newFilters.status,
@@ -277,6 +295,7 @@ function resetFilters() {
   }, 500)
 
   watch(globalFilterValue, () => {
+      if (skipFilterWatch.value) return;
       debouncedSearch();
   });
 
@@ -305,15 +324,27 @@ function resetFilters() {
       if (event) quotationStore.setSort(event);
   };
 
+  const companyScoped = useCompanyScopedReload(async (_companyId, generation) => {
+      await resetListUiForCompany()
+      await Promise.allSettled([
+          quotationStore.fetchQuotations(),
+          quotationStore.fetchStatistics(generation),
+          customerStore.fetchCustomers(),
+      ])
+      if (!companyScoped.isCurrent(generation)) return
+      setListTitle('Quotation', totalRecords.value)
+  })
+
   onMounted(() => {
-      quotationStore.fetchQuotations();
-      quotationStore.fetchStatistics();
-      customerStore.fetchCustomers();
       userStore.loadUser();
       permissionStore.fetchPermissions();
-      setListTitle('Quotation', quotations.value.length)
       tableControls.value.rows = Number(params.value.rows) || 10;
       tableControls.value.search = globalFilterValue.value;
+      companyScoped.start();
+  });
+
+  onUnmounted(() => {
+      companyScoped.stop();
   });
 
   // Export data function

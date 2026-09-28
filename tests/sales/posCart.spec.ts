@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  findExactCatalogScanMatch,
   formatPosAvailableStock,
   formatPosOfficialPrice,
   posCartIndicativeSubtotal,
@@ -107,5 +108,50 @@ describe('POS cart helpers', () => {
     expect(shouldIgnoreStaleCatalog(1, 1, 'a', 'a', 1, 1)).toBe(false)
     expect(shouldIgnoreStaleCatalog(1, 1, 'a', 'a', 1, 1, 10, 20)).toBe(true)
     expect(shouldIgnoreStaleCatalog(1, 1, 'a', 'a', 1, 1, 10, 10)).toBe(false)
+  })
+
+  it('matches exact SKU/barcode for scan-to-add', () => {
+    const rows = [
+      {
+        productId: 1,
+        sku: 'ABC-01',
+        name: 'Alpha',
+        barcode: '8991001',
+        image: null,
+        unitId: 1,
+        unitName: 'PCS',
+        unitSymbol: 'pcs',
+        categoryId: null,
+        categoryName: null,
+        availableQty: 5,
+        onHandQty: 5,
+        reservedQty: 0,
+        officialUnitPrice: 1000,
+        priceListCode: 'R1',
+        currency: 'IDR',
+      },
+      {
+        productId: 2,
+        sku: 'ABC-02',
+        name: 'Beta',
+        barcode: null,
+        image: null,
+        unitId: 1,
+        unitName: 'PCS',
+        unitSymbol: 'pcs',
+        categoryId: null,
+        categoryName: null,
+        availableQty: 2,
+        onHandQty: 2,
+        reservedQty: 0,
+        officialUnitPrice: 2000,
+        priceListCode: 'R1',
+        currency: 'IDR',
+      },
+    ]
+    expect(findExactCatalogScanMatch(rows, 'abc-01')?.productId).toBe(1)
+    expect(findExactCatalogScanMatch(rows, '8991001')?.productId).toBe(1)
+    expect(findExactCatalogScanMatch(rows, 'ABC') ).toBeNull()
+    expect(findExactCatalogScanMatch([rows[0]], 'ABC-01')?.productId).toBe(1)
   })
 })

@@ -8,7 +8,7 @@
           :value="search"
           type="search"
           class="form-control"
-          placeholder="Cari nama / SKU (Enter)…"
+          placeholder="Cari nama / SKU / barcode (Enter)…"
           :disabled="disabled"
           @input="$emit('update:search', ($event.target as HTMLInputElement).value)"
         />

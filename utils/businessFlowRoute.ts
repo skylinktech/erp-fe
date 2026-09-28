@@ -28,13 +28,11 @@ export type LegacyRouteContext = {
 export type RouteAllowContext = FlowRouteContext | LegacyRouteContext
 
 export function isIspContextFromFlows(
-  effectiveFlowCodes: readonly string[],
+  _effectiveFlowCodes: readonly string[],
   profileCode?: string | null
 ): boolean {
-  return (
-    profileCode === 'ISP' ||
-    effectiveFlowCodes.includes('ISP_NEW_SUBSCRIPTION')
-  )
+  // ISP shell is profile-bound. Extra ISP flow grants on a Retail company do not flip ISP context.
+  return profileCode === 'ISP'
 }
 
 export function isRetailContextFromFlows(
@@ -69,10 +67,17 @@ function normalizeContext(ctx: RouteAllowContext): FlowRouteContext {
       profileCode: ctx.profileCode ?? null,
     }
   }
+  const legacy = ctx as LegacyRouteContext
   const codes: string[] = []
-  if ((ctx as LegacyRouteContext).isIspContext) codes.push('ISP_NEW_SUBSCRIPTION')
-  if ((ctx as LegacyRouteContext).isRetailContext) codes.push('RETAIL_DIRECT_SALE')
-  return { effectiveFlowCodes: codes }
+  if (legacy.isIspContext) codes.push('ISP_NEW_SUBSCRIPTION')
+  if (legacy.isRetailContext) codes.push('RETAIL_DIRECT_SALE')
+  // Legacy boolean context has no profile field — derive the matching profile so
+  // requiresProfileCodes gates (ISP shell / Omnichannel) still evaluate correctly.
+  let profileCode: string | null = null
+  if (legacy.isIspContext && !legacy.isRetailContext) profileCode = 'ISP'
+  else if (legacy.isRetailContext && !legacy.isIspContext) profileCode = 'RETAIL'
+  else if (legacy.isIspContext && legacy.isRetailContext) profileCode = 'ISP'
+  return { effectiveFlowCodes: codes, profileCode }
 }
 
 export function classifyBusinessRoute(path: string): BusinessRouteClass {

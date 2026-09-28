@@ -606,15 +606,6 @@ function validateProductStep(step) {
     if (isEmptyProductField(form.value.name)) return fail('Nama Barang wajib diisi.')
     if (isEmptyProductField(form.value.unitId)) return fail('Satuan wajib dipilih.')
     if (isEmptyProductField(form.value.categoryId)) return fail('Kategori wajib dipilih.')
-    if (
-      isProductExpiredAtRequired({
-        isRetailCompany: isRetailCompany.value,
-        isBundling: !!form.value.isBundling,
-      }) &&
-      isEmptyProductField(form.value.expiredAt)
-    ) {
-      return fail('Tanggal kedaluwarsa wajib diisi untuk produk Retail atau Bundling.')
-    }
     return true
   }
 

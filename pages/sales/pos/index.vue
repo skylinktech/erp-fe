@@ -7,21 +7,25 @@
       :warehouse-id="form.warehouseId"
       :cashier-name="cashierName"
       :is-fullscreen="isFullscreen"
+      :shift-open="!!shift?.id"
+      :shift-label="shiftLabel"
       @update:warehouse-id="onWarehouseChange"
       @toggle-fullscreen="toggleFullscreen"
+      @open-shift="openShift"
+      @close-shift="closeShift"
     />
 
     <div v-if="gateError" class="alert alert-warning">{{ gateError }}</div>
     <div v-if="error" class="alert alert-danger text-break d-flex flex-wrap justify-content-between gap-2">
       <span>{{ error }}</span>
       <button
-        v-if="canRetryCheckout"
+        v-if="canRetryCheckout || pendingSaleId"
         type="button"
         class="btn btn-sm btn-outline-danger"
         :disabled="saving"
-        @click="checkout"
+        @click="pendingSaleId ? resumePendingSale() : openPayment()"
       >
-        Coba checkout lagi
+        {{ pendingSaleId ? 'Lanjutkan pembayaran' : 'Coba lagi' }}
       </button>
     </div>
     <div v-if="notice" class="alert alert-success text-break">{{ notice }}</div>
@@ -43,7 +47,7 @@
             :warehouse-selected="!!form.warehouseId"
             :adding-product-id="addingProductId"
             @update:search="onCatalogSearchInput"
-            @search="catalog.applySearch()"
+            @search="onCatalogSearch"
             @retry="catalog.reload()"
             @page-change="catalog.goToPage($event)"
             @add="addFromCatalog"
@@ -65,7 +69,9 @@
           @clear="clearCart"
           @remove="removeLine"
           @update-qty="setLineQty"
-          @checkout="checkout"
+          @checkout="openPayment"
+          @hold="holdCart"
+          @resume="resumeHoldPicker"
           @update:customer-mode="form.customerMode = $event"
           @update:customer-id="form.customerId = $event"
           @update:walk-in-name="form.walkInName = $event"
@@ -73,7 +79,6 @@
       </div>
     </div>
 
-    <!-- Optional UOM picker when default unit price needs alternate unit -->
     <div
       v-if="uomPicker"
       class="modal fade show d-block"
@@ -108,6 +113,25 @@
         </div>
       </div>
     </div>
+
+    <PosPaymentModal
+      v-if="paymentOpen"
+      :total="paymentTotal"
+      :company-id="activeCompanyId"
+      :company-ready="activeCompanyReady"
+      :busy="saving"
+      :error="paymentError"
+      @cancel="paymentOpen = false"
+      @confirm="completeSale"
+    />
+
+    <PosReceiptModal
+      v-if="receipt"
+      :receipt="receipt"
+      :company-label="activeCompanyLabel"
+      :payment-meta="lastPaymentMeta"
+      @close="receipt = null"
+    />
   </div>
 </template>
 
@@ -122,6 +146,7 @@ import { usePosCatalog } from '~/composables/usePosCatalog'
 import { isRouteAllowedForContext, businessAwareLanding } from '~/utils/businessFlowRoute'
 import { readAccessToken } from '~/utils/authCookie'
 import {
+  findExactCatalogScanMatch,
   posCartIndicativeSubtotal,
   posCheckoutFingerprint,
   removePosCartLine,
@@ -133,6 +158,8 @@ import {
 import PosToolbar from '~/components/pos/PosToolbar.vue'
 import PosProductCatalog from '~/components/pos/PosProductCatalog.vue'
 import PosCartPanel from '~/components/pos/PosCartPanel.vue'
+import PosPaymentModal from '~/components/pos/PosPaymentModal.vue'
+import PosReceiptModal from '~/components/pos/PosReceiptModal.vue'
 import UnitSelect from '~/components/reference/UnitSelect.vue'
 
 definePageMeta({
@@ -157,11 +184,21 @@ const gateError = ref('')
 const error = ref('')
 const notice = ref('')
 const contextNotice = ref('')
+const paymentError = ref('')
 const saving = ref(false)
 const canRetryCheckout = ref(false)
 const addingProductId = ref<number | null>(null)
 const isFullscreen = ref(false)
 const terminalEl = ref<HTMLElement | null>(null)
+const paymentOpen = ref(false)
+const receipt = ref<Record<string, any> | null>(null)
+const lastPaymentMeta = ref<Record<string, any> | null>(null)
+const pendingSaleId = ref<string | null>(null)
+const pendingSaleRevision = ref<number | null>(null)
+const pendingSaleTotal = ref<number | null>(null)
+const pendingResumeVia = ref<'complete' | 'pos-pay' | 'gateway-poll' | 'ownership-fix' | null>(null)
+const pendingGatewayAttemptId = ref<string | null>(null)
+const shift = ref<Record<string, any> | null>(null)
 
 const form = reactive({
   warehouseId: null as number | null,
@@ -197,11 +234,15 @@ const uomPicker = ref<{
   priceListCode: string | null
 } | null>(null)
 
-/** Reuse idempotency key while the same checkout fingerprint is pending/retrying. */
 const checkoutKeyState = ref<{ fingerprint: string; key: string } | null>(null)
 
 const cashierName = computed(() => userStore.user?.fullName || userStore.user?.username || '')
 const cartSubtotal = computed(() => posCartIndicativeSubtotal(cart.value))
+const paymentTotal = computed(() =>
+  pendingSaleId.value && pendingSaleTotal.value != null
+    ? Number(pendingSaleTotal.value)
+    : cartSubtotal.value
+)
 const canCheckout = computed(
   () =>
     activeCompanyReady.value &&
@@ -209,6 +250,10 @@ const canCheckout = computed(
     cart.value.length > 0 &&
     (form.customerMode === 'WALK_IN' || !!form.customerId)
 )
+const shiftLabel = computed(() => {
+  if (!shift.value?.id) return ''
+  return `Shift · saldo awal ${Number(shift.value.openingCash || 0).toLocaleString('id-ID')}`
+})
 
 function headers() {
   const token = readAccessToken()
@@ -225,6 +270,11 @@ function clearCart() {
   cart.value = []
   checkoutKeyState.value = null
   canRetryCheckout.value = false
+  pendingSaleId.value = null
+  pendingSaleRevision.value = null
+  pendingSaleTotal.value = null
+  pendingResumeVia.value = null
+  pendingGatewayAttemptId.value = null
 }
 
 function removeLine(index: number) {
@@ -242,6 +292,22 @@ function onCatalogSearchInput(value: string) {
   catalog.onSearchInput()
 }
 
+async function onCatalogSearch() {
+  const query = catalog.searchInput.value.trim()
+  const rows = await catalog.applySearch()
+  if (!query || !rows.length) return
+  const match = findExactCatalogScanMatch(rows, query)
+  if (!match) return
+  addFromCatalog(match)
+  catalog.searchInput.value = ''
+  catalog.appliedSearch.value = ''
+  notice.value = `Ditambah: ${match.sku || match.name}`
+  // Keep catalog list but clear search box for next scan.
+  const searchEl = document.getElementById('pos-catalog-search') as HTMLInputElement | null
+  searchEl?.focus()
+  searchEl?.select()
+}
+
 function onWarehouseChange(next: number | null) {
   if (form.warehouseId === next) return
   if (cart.value.length) {
@@ -253,11 +319,11 @@ function onWarehouseChange(next: number | null) {
     contextNotice.value = 'Keranjang dikosongkan karena gudang berubah.'
   }
   form.warehouseId = next
+  void loadShift()
 }
 
 function addFromCatalog(item: PosCatalogRow) {
   if (item.officialUnitPrice == null || !item.unitId) {
-    // Offer UOM picker to try another unit if default has no price.
     uomPicker.value = {
       productId: item.productId,
       name: item.name,
@@ -352,22 +418,72 @@ function ensureIdempotencyKey(fingerprint: string): string {
   return key
 }
 
-async function checkout() {
+function openPayment() {
+  error.value = ''
+  paymentError.value = ''
+  if (pendingSaleId.value) {
+    if (!shift.value?.id) {
+      error.value = 'Buka shift kasir sebelum menyelesaikan pembayaran.'
+      return
+    }
+    paymentOpen.value = true
+    return
+  }
+  if (!canCheckout.value) {
+    error.value = 'Lengkapi gudang, pelanggan, dan keranjang.'
+    return
+  }
+  if (!shift.value?.id) {
+    error.value = 'Buka shift kasir sebelum menyelesaikan penjualan.'
+    return
+  }
+  paymentOpen.value = true
+}
+
+function rememberPendingSale(data: Record<string, any> | null | undefined) {
+  if (!data?.id) return
+  pendingSaleId.value = String(data.id)
+  if (data.revision != null) pendingSaleRevision.value = Number(data.revision)
+  if (data.grandTotal != null) pendingSaleTotal.value = Number(data.grandTotal)
+  if (data.resumeVia) pendingResumeVia.value = data.resumeVia
+  if (data.attemptId || data.payment?.attemptId) {
+    pendingGatewayAttemptId.value = String(data.attemptId || data.payment.attemptId)
+  }
+}
+
+async function completeSale(payment: Record<string, unknown>) {
   error.value = ''
   notice.value = ''
+  paymentError.value = ''
   canRetryCheckout.value = false
   let companyId: number
   try {
     companyId = requireCompanyId()
   } catch (err: any) {
-    error.value = err?.message || activeCompanyMissing.value
-    return
-  }
-  if (!canCheckout.value || !form.warehouseId) {
-    error.value = 'Lengkapi gudang, pelanggan, dan keranjang.'
+    paymentError.value = err?.message || activeCompanyMissing.value
     return
   }
   if (saving.value) return
+
+  if (pendingSaleId.value && pendingResumeVia.value === 'pos-pay') {
+    await payPendingSale(payment, companyId)
+    return
+  }
+  if (pendingSaleId.value && pendingResumeVia.value === 'gateway-poll') {
+    await pollGatewayAttempt()
+    return
+  }
+  if (pendingSaleId.value && pendingResumeVia.value === 'ownership-fix') {
+    paymentError.value =
+      'Kepemilikan stok tidak valid. Perbaiki ownership perusahaan+produk+gudang, lalu coba lagi.'
+    return
+  }
+  // resumeVia complete (or unset with pending id): fall through to complete with same idempotency key
+
+  if (!canCheckout.value || !form.warehouseId) {
+    paymentError.value = 'Lengkapi gudang, pelanggan, dan keranjang.'
+    return
+  }
 
   const items = cart.value.map((item) => ({
     productId: item.productId,
@@ -388,7 +504,7 @@ async function checkout() {
   saving.value = true
   const { $api } = useNuxtApp()
   try {
-    const res = await fetch($api.directSaleCheckout(), {
+    const res = await fetch($api.directSaleCheckoutComplete(), {
       method: 'POST',
       headers: headers(),
       credentials: 'include',
@@ -399,30 +515,376 @@ async function checkout() {
         customerMode: form.customerMode,
         customerId: form.customerMode === 'REGISTERED' ? form.customerId : null,
         walkInName: form.customerMode === 'WALK_IN' ? form.walkInName || null : null,
-        confirm: true,
         items,
+        payment: {
+          ...payment,
+          cashierShiftId: shift.value?.id || null,
+        },
       }),
     })
     const payload = await res.json().catch(() => ({}))
     if (!res.ok) {
-      error.value = payload?.message || 'Checkout Direct Sale ditolak.'
+      paymentError.value = payload?.message || 'Pembayaran POS ditolak.'
+      if (payload?.code === 'RETAIL_PRICE_CHANGED') {
+        paymentError.value = `${payload.message} Perbarui harga lalu konfirmasi ulang.`
+      }
       canRetryCheckout.value = true
+      rememberPendingSale(payload?.data)
+      const via = payload?.data?.resumeVia
+      if (via === 'pos-pay') {
+        notice.value =
+          'Transaksi sudah terbentuk dan siap dilanjutkan pembayaran — jangan ulangi penjualan dari keranjang.'
+      } else if (via === 'complete' && payload?.data?.id) {
+        notice.value =
+          'Sebagian tahap berhasil. Tekan Bayar lagi dengan kunci yang sama — tidak menggandakan sale.'
+      } else if (via === 'ownership-fix') {
+        notice.value = 'Perbaiki kepemilikan stok sebelum mencoba lagi.'
+      }
       return
     }
-    notice.value = `Direct Sale ${payload?.data?.saleNumber || ''} · ${
-      payload?.data?.checkout?.status || 'CONFIRMED'
-    }. Lanjut fulfill di Riwayat transaksi.`
-    cart.value = []
-    form.walkInName = ''
-    form.customerId = null
-    checkoutKeyState.value = null
-    canRetryCheckout.value = false
+
+    applyPaymentSuccess(payload, payment)
   } catch (err: any) {
-    error.value = err?.message || 'Checkout gagal (jaringan). Anda dapat mencoba lagi tanpa mengganti kunci idempotency.'
+    paymentError.value =
+      err?.message || 'Checkout gagal (jaringan). Coba lagi — kunci idempotency tetap sama.'
     canRetryCheckout.value = true
   } finally {
     saving.value = false
   }
+}
+
+async function payPendingSale(payment: Record<string, unknown>, companyId: number) {
+  if (!pendingSaleId.value) return
+  if (!shift.value?.id) {
+    paymentError.value = 'Buka shift kasir sebelum menyelesaikan pembayaran.'
+    return
+  }
+  saving.value = true
+  const { $api } = useNuxtApp()
+  const idempotencyKey = crypto.randomUUID()
+  try {
+    const res = await fetch($api.retailSalePosPay(pendingSaleId.value), {
+      method: 'POST',
+      headers: headers(),
+      credentials: 'include',
+      body: JSON.stringify({
+        perusahaanId: companyId,
+        expectedRevision: pendingSaleRevision.value,
+        idempotencyKey,
+        payment: {
+          ...payment,
+          cashierShiftId: shift.value?.id || null,
+        },
+      }),
+    })
+    const payload = await res.json().catch(() => ({}))
+    if (!res.ok) {
+      paymentError.value = payload?.message || 'Pembayaran lanjutan ditolak.'
+      canRetryCheckout.value = true
+      rememberPendingSale(payload?.data)
+      if (payload?.data?.revision != null) pendingSaleRevision.value = Number(payload.data.revision)
+      return
+    }
+    applyPaymentSuccess(payload, payment)
+  } catch (err: any) {
+    paymentError.value = err?.message || 'Pembayaran lanjutan gagal (jaringan).'
+    canRetryCheckout.value = true
+  } finally {
+    saving.value = false
+  }
+}
+
+function applyPaymentSuccess(payload: Record<string, any>, payment: Record<string, unknown>) {
+  const pay = payload?.data?.payment || {}
+  lastPaymentMeta.value = {
+    method: payment.method,
+    tenderedAmount: pay.tenderedAmount,
+    changeAmount: pay.changeAmount,
+    journalPosted: pay.journalPosted,
+    status: pay.status,
+  }
+
+  if (pay.status === 'pending' || pay.status === 'ambiguous') {
+    rememberPendingSale({
+      ...payload?.data,
+      resumeVia: 'gateway-poll',
+      attemptId: pay.attemptId,
+    })
+    if (payload?.data?.revision != null) pendingSaleRevision.value = Number(payload.data.revision)
+    if (payload?.data?.grandTotal != null) pendingSaleTotal.value = Number(payload.data.grandTotal)
+    notice.value = `Pembayaran gateway ${pay.status} · attempt ${pay.attemptId || ''}. Stok sudah dikeluarkan; selesaikan via poll/webhook — jangan buat sale baru.`
+    paymentOpen.value = false
+    if (pay.checkoutUrl) window.open(String(pay.checkoutUrl), '_blank', 'noopener,noreferrer')
+    return
+  }
+
+  receipt.value = {
+    ...payload.data,
+    reprinted: false,
+  }
+  notice.value = `Transaksi ${payload?.data?.saleNumber || ''} selesai.`
+  paymentOpen.value = false
+  cart.value = []
+  form.walkInName = ''
+  form.customerId = null
+  checkoutKeyState.value = null
+  canRetryCheckout.value = false
+  pendingSaleId.value = null
+  pendingSaleRevision.value = null
+  pendingSaleTotal.value = null
+  pendingResumeVia.value = null
+  pendingGatewayAttemptId.value = null
+}
+
+async function pollGatewayAttempt() {
+  if (!pendingGatewayAttemptId.value) {
+    paymentError.value = 'Tidak ada attempt gateway untuk dipoll.'
+    return
+  }
+  saving.value = true
+  const { $api } = useNuxtApp()
+  try {
+    const res = await fetch($api.posPaymentAttempt(pendingGatewayAttemptId.value), {
+      headers: headers(),
+      credentials: 'include',
+    })
+    const payload = await res.json().catch(() => ({}))
+    if (!res.ok) {
+      paymentError.value = payload?.message || 'Gagal poll gateway.'
+      return
+    }
+    const attempt = payload.data || {}
+    if (attempt.status === 'succeeded') {
+      notice.value = 'Gateway sukses — memuat struk.'
+      pendingResumeVia.value = 'pos-pay'
+      // Receipt refresh
+      if (pendingSaleId.value) {
+        const receiptRes = await fetch($api.posReceipt(pendingSaleId.value), {
+          headers: headers(),
+          credentials: 'include',
+        })
+        const receiptPayload = await receiptRes.json().catch(() => ({}))
+        if (receiptRes.ok) {
+          receipt.value = { ...receiptPayload.data, reprinted: false }
+          cart.value = []
+          pendingSaleId.value = null
+          pendingResumeVia.value = null
+          pendingGatewayAttemptId.value = null
+        }
+      }
+      return
+    }
+    notice.value = `Gateway masih ${attempt.status}. Stok tetap ISSUED_AWAITING_GATEWAY.`
+  } catch (err: any) {
+    paymentError.value = err?.message || 'Poll gateway gagal.'
+  } finally {
+    saving.value = false
+  }
+}
+
+async function resumePendingSale() {
+  if (!pendingSaleId.value) return
+  const { $api } = useNuxtApp()
+  const res = await fetch($api.posReceipt(pendingSaleId.value), {
+    headers: headers(),
+    credentials: 'include',
+  })
+  const payload = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    error.value = payload?.message || 'Gagal memuat transaksi tertunda.'
+    return
+  }
+  const data = payload.data || {}
+  if (data.revision != null) pendingSaleRevision.value = Number(data.revision)
+  if (data.grandTotal != null) pendingSaleTotal.value = Number(data.grandTotal)
+
+  const paymentStatus = String(
+    data.paymentStatus || data.finance?.state || data.payment?.status || ''
+  ).toUpperCase()
+  const paid =
+    paymentStatus === 'PAID' ||
+    paymentStatus === 'SUCCEEDED' ||
+    paymentStatus === 'SUCCESS' ||
+    paymentStatus === 'SETTLED' ||
+    data.status === 'PAID' ||
+    data.status === 'CLOSED'
+
+  if (paid) {
+    receipt.value = { ...data, reprinted: true }
+    notice.value = 'Transaksi sudah dibayar — struk dibuka untuk cetak ulang.'
+    pendingSaleId.value = null
+    pendingSaleRevision.value = null
+    pendingSaleTotal.value = null
+    pendingResumeVia.value = null
+    pendingGatewayAttemptId.value = null
+    return
+  }
+
+  const finance = String(data.finance?.state || data.paymentStatus || '').toUpperCase()
+  if (finance === 'PAYMENT_PENDING' || finance === 'INVOICED') {
+    pendingResumeVia.value = 'pos-pay'
+  } else if (data.status === 'CONFIRMED') {
+    pendingResumeVia.value = 'complete'
+  } else if (data.status === 'FULFILLED') {
+    pendingResumeVia.value = 'pos-pay'
+  }
+
+  notice.value = `Lanjutkan (${pendingResumeVia.value || 'complete'}) untuk ${data.saleNumber || pendingSaleId.value}.`
+  error.value = ''
+  openPayment()
+}
+
+async function holdCart() {
+  if (!cart.value.length || !form.warehouseId) return
+  let companyId: number
+  try {
+    companyId = requireCompanyId()
+  } catch (err: any) {
+    error.value = err?.message || activeCompanyMissing.value
+    return
+  }
+  const { $api } = useNuxtApp()
+  const res = await fetch($api.posHolds(), {
+    method: 'POST',
+    headers: headers(),
+    credentials: 'include',
+    body: JSON.stringify({
+      perusahaanId: companyId,
+      warehouseId: form.warehouseId,
+      cashierShiftId: shift.value?.id || null,
+      customerMode: form.customerMode,
+      customerId: form.customerId,
+      walkInName: form.walkInName,
+      cart: cart.value,
+    }),
+  })
+  const payload = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    error.value = payload?.message || 'Gagal hold keranjang.'
+    return
+  }
+  notice.value = `Hold ${payload?.data?.holdCode || ''} tersimpan.`
+  clearCart()
+}
+
+async function resumeHoldPicker() {
+  let companyId: number
+  try {
+    companyId = requireCompanyId()
+  } catch (err: any) {
+    error.value = err?.message || activeCompanyMissing.value
+    return
+  }
+  const { $api } = useNuxtApp()
+  const qs = new URLSearchParams({
+    perusahaanId: String(companyId),
+    ...(form.warehouseId ? { warehouseId: String(form.warehouseId) } : {}),
+  })
+  const listRes = await fetch(`${$api.posHolds()}?${qs}`, {
+    headers: headers(),
+    credentials: 'include',
+  })
+  const listPayload = await listRes.json().catch(() => ({}))
+  const rows = Array.isArray(listPayload.data) ? listPayload.data : []
+  if (!rows.length) {
+    notice.value = 'Tidak ada transaksi hold.'
+    return
+  }
+  const pick = rows[0]
+  const res = await fetch($api.posHoldResume(pick.id), {
+    method: 'POST',
+    headers: headers(),
+    credentials: 'include',
+    body: '{}',
+  })
+  const payload = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    error.value = payload?.message || 'Gagal resume hold.'
+    return
+  }
+  const data = payload.data
+  form.warehouseId = data.warehouseId
+  form.customerMode = data.customerMode
+  form.customerId = data.customerId
+  form.walkInName = data.walkInName || ''
+  cart.value = Array.isArray(data.cartJson) ? data.cartJson : []
+  notice.value = `Hold ${data.holdCode} dilanjutkan.`
+}
+
+async function loadShift() {
+  if (!activeCompanyId.value || !form.warehouseId) {
+    shift.value = null
+    return
+  }
+  const { $api } = useNuxtApp()
+  const qs = new URLSearchParams({
+    perusahaanId: String(activeCompanyId.value),
+    warehouseId: String(form.warehouseId),
+  })
+  const res = await fetch(`${$api.posShiftCurrent()}?${qs}`, {
+    headers: headers(),
+    credentials: 'include',
+  })
+  const payload = await res.json().catch(() => ({}))
+  shift.value = payload?.data || null
+}
+
+async function openShift() {
+  if (!form.warehouseId) {
+    error.value = 'Pilih gudang sebelum buka shift.'
+    return
+  }
+  const opening = window.prompt('Saldo awal kas (angka)', '0')
+  if (opening == null) return
+  let companyId: number
+  try {
+    companyId = requireCompanyId()
+  } catch (err: any) {
+    error.value = err?.message || activeCompanyMissing.value
+    return
+  }
+  const { $api } = useNuxtApp()
+  const res = await fetch($api.posShiftOpen(), {
+    method: 'POST',
+    headers: headers(),
+    credentials: 'include',
+    body: JSON.stringify({
+      perusahaanId: companyId,
+      warehouseId: form.warehouseId,
+      openingCash: Number(opening) || 0,
+    }),
+  })
+  const payload = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    error.value = payload?.message || 'Gagal buka shift.'
+    return
+  }
+  shift.value = payload.data
+  notice.value = 'Shift dibuka.'
+}
+
+async function closeShift() {
+  if (!shift.value?.id) return
+  const counted = window.prompt('Hasil hitung kas di laci', String(shift.value.expectedCash ?? shift.value.openingCash ?? 0))
+  if (counted == null) return
+  const { $api } = useNuxtApp()
+  const res = await fetch($api.posShiftClose(shift.value.id), {
+    method: 'POST',
+    headers: headers(),
+    credentials: 'include',
+    body: JSON.stringify({
+      shiftId: shift.value.id,
+      countedCash: Number(counted) || 0,
+    }),
+  })
+  const payload = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    error.value = payload?.message || 'Gagal tutup shift.'
+    return
+  }
+  const s = payload.data
+  notice.value = `Shift ditutup. Diharapkan ${s.expectedCash}, hitung ${s.countedCash}, selisih ${s.cashVariance}.`
+  shift.value = null
 }
 
 async function toggleFullscreen() {
@@ -451,6 +913,7 @@ watch(activeCompanyId, (next, prev) => {
   }
   form.warehouseId = null
   form.customerId = null
+  shift.value = null
   catalog.clear()
   void catalog.reload()
 })
@@ -458,8 +921,8 @@ watch(activeCompanyId, (next, prev) => {
 watch(
   () => form.warehouseId,
   () => {
-    // Initial load / programmatic set without confirm dialog.
     void catalog.reload()
+    void loadShift()
   }
 )
 
