@@ -195,7 +195,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
@@ -209,6 +209,7 @@ import { usePermissionsStore } from '~/stores/permissions'
 import { useUserStore } from '~/stores/user'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import { useImageUrl } from '~/composables/useImageUrl'
+import { useCompanyScopedReload } from '~/composables/useCompanyScopedReload'
 
 const { setListTitle } = useDynamicTitle()
 const { getVendorLogo, handleImageError } = useImageUrl()
@@ -233,13 +234,23 @@ const statItems = computed(() => [
 const modalTitle = computed(() => isEditMode.value ? 'Edit Vendor' : 'Tambah Vendor')
 const modalDescription = computed(() => isEditMode.value ? 'Ubah detail vendor.' : 'Isi untuk menambah vendor baru.')
 
-onMounted(() => {
-  permissionStore.fetchPermissions()
-  userStore.loadUser()
-  Promise.all([vendorStore.fetchVendors(), vendorStore.fetchStatistics()])
+const companyScoped = useCompanyScopedReload(async (_companyId, generation) => {
+  vendorStore.closeModal?.()
+  params.value.first = 0
+  await Promise.all([vendorStore.fetchVendors(), vendorStore.fetchStatistics()])
+  if (!companyScoped.isCurrent(generation)) return
   setListTitle('Vendor', totalRecords.value)
 })
 
+onMounted(() => {
+  permissionStore.fetchPermissions()
+  userStore.loadUser()
+  companyScoped.start()
+})
+
+onUnmounted(() => {
+  companyScoped.stop()
+})
 const debouncedSearch = useDebounceFn(() => {
   vendorStore.setSearch(globalFilterValue.value)
 }, 500)

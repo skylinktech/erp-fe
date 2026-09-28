@@ -185,6 +185,7 @@ import { usePermissionsStore } from '~/stores/permissions'
 import { useUserStore } from '~/stores/user'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
+import { useCompanyScopedReload } from '~/composables/useCompanyScopedReload'
 
 // Composables
 const { setListTitle, setFormTitle } = useDynamicTitle()
@@ -207,7 +208,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-primary',
     info: {
       title: 'Jumlah Keseluruhan',
-      description: 'Jumlah keseluruhan data Gudang yang terdaftar dalam sistem berdasarkan statistik API.',
+      description: 'Jumlah gudang yang dialokasikan ke Active Company (bukan seluruh master global).',
     },
   }
 ])
@@ -219,13 +220,18 @@ const rowsPerPageOptionsArray = ref([10, 25, 50, 100]);
 const modalTitle = computed(() => isEditMode.value ? 'Edit Gudang' : 'Tambah Gudang');
 const modalDescription = computed(() => isEditMode.value ? 'Silakan ubah data gudang di bawah ini.' : 'Silakan isi form di bawah ini untuk menambahkan gudang baru.');
 
+const companyScoped = useCompanyScopedReload(async (_companyId, generation) => {
+  warehouseStore.closeModal?.()
+  params.value.first = 0
+  await Promise.all([warehouseStore.fetchWarehouses(), warehouseStore.fetchStats()])
+  if (!companyScoped.isCurrent(generation)) return
+  setListTitle('Gudang', totalRecords.value)
+})
+
 onMounted(() => {
-    warehouseStore.fetchWarehouses()
-    warehouseStore.fetchStats()
     permissionStore.fetchPermissions()
     userStore.loadUser()
-
-    setListTitle('Gudang', warehouses.value.length)
+    companyScoped.start()
 });
 
 const debouncedSearch = useDebounceFn(() => {

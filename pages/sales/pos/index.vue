@@ -217,7 +217,7 @@ function headers() {
     Accept: 'application/json',
   }
   if (token) h.Authorization = `Bearer ${token}`
-  if (activeCompanyId.value) h['X-Active-Company-Id'] = String(activeCompanyId.value)
+  if (activeCompanyId.value) h['X-Company-Id'] = String(activeCompanyId.value)
   return h
 }
 

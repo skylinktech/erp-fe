@@ -377,6 +377,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, ref, onMounted, watch } from 'vue'
+import { useCompanyScopedReload } from '~/composables/useCompanyScopedReload'
 import { navigateTo } from '#app'
 import { storeToRefs } from 'pinia'
 import { useDebounceFn } from '@vueuse/core'
@@ -774,6 +775,12 @@ onMounted(async () => {
   if (!cutiTypes.value.length) tasks.push(store.fetchCutiTypes())
   await Promise.all(tasks)
 })
+
+const companyScoped = useCompanyScopedReload(async (_companyId, generation) => {
+  await Promise.all([store.fetchCutis(), store.fetchStats()])
+  if (!companyScoped.isCurrent(generation)) return
+})
+companyScoped.start()
 
 definePageMeta({
   title: "Pengajuan Cuti, Izin, Sakit",

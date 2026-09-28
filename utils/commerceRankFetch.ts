@@ -22,7 +22,7 @@ export async function fetchCommerceRankPage<T>(opts: {
   const headers: Record<string, string> = { Accept: 'application/json' }
   const token = readAccessToken()
   if (token) headers.Authorization = `Bearer ${token}`
-  headers['X-Active-Company-Id'] = String(opts.companyId)
+  headers['X-Company-Id'] = String(opts.companyId)
 
   const res = await fetch(`${opts.endpoint}?${qs}`, {
     headers,

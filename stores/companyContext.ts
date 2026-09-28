@@ -101,14 +101,26 @@ export const useCompanyContextStore = defineStore('companyContext', {
         if (!$pinia) return
         // Reset known transactional stores so selections/forms do not carry company B refs.
         const names = [
+          'customer',
+          'product',
+          'priceList',
+          'fdr',
           'quotation',
           'pks',
           'document-numbering',
           'price_adjustment_request',
+          'priceAdjustmentRequest',
+          'pricing',
+          'vendor',
+          'site',
         ]
         for (const name of names) {
           const s = $pinia._s?.get?.(name)
-          if (s && typeof s.$reset === 'function') s.$reset()
+          if (!s || typeof s.$reset !== 'function') continue
+          s.$reset()
+          if (typeof s.clearCustomersForSelectCache === 'function') {
+            s.clearCustomersForSelectCache()
+          }
         }
       } catch {
         // Pinia may be unavailable outside Nuxt — generation bump is enough.

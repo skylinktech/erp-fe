@@ -33,7 +33,7 @@ export function usePosCatalog(opts: {
     const token = readAccessToken()
     const headers: Record<string, string> = { Accept: 'application/json' }
     if (token) headers.Authorization = `Bearer ${token}`
-    if (opts.companyId.value) headers['X-Active-Company-Id'] = String(opts.companyId.value)
+    if (opts.companyId.value) headers['X-Company-Id'] = String(opts.companyId.value)
     return headers
   }
 
@@ -46,6 +46,7 @@ export function usePosCatalog(opts: {
     const requestGeneration = opts.generation.value
     const requestSearch = appliedSearch.value
     const requestWarehouseId = opts.warehouseId.value
+    const requestCompanyId = opts.companyId.value
     const { $api } = useNuxtApp()
     const qs = new URLSearchParams({
       page: String(targetPage),
@@ -71,7 +72,9 @@ export function usePosCatalog(opts: {
           requestSearch,
           appliedSearch.value,
           requestWarehouseId,
-          opts.warehouseId.value
+          opts.warehouseId.value,
+          requestCompanyId,
+          opts.companyId.value
         )
       ) {
         return
@@ -94,7 +97,9 @@ export function usePosCatalog(opts: {
           requestSearch,
           appliedSearch.value,
           requestWarehouseId,
-          opts.warehouseId.value
+          opts.warehouseId.value,
+          requestCompanyId,
+          opts.companyId.value
         )
       ) {
         return

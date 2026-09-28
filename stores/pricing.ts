@@ -128,7 +128,7 @@ export const usePricingStore = defineStore('pricing', {
         'Content-Type': 'application/json',
       }
       if (token) h.Authorization = `Bearer ${token}`
-      if (companyId) h['X-Active-Company-Id'] = String(companyId)
+      if (companyId) h['X-Company-Id'] = String(companyId)
       return h
     },
 

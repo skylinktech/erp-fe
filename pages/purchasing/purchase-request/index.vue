@@ -117,11 +117,14 @@ import Swal from 'sweetalert2'
 import { usePurchaseRequestApproval } from '~/composables/usePurchaseRequestApproval'
 import { usePurchaseRequestListStockCache } from '~/composables/usePurchaseRequestListStockCache'
 import { stockSummaryLabel } from '~/utils/purchasing/stockAvailability'
+import { useCompanyScopedReload } from '~/composables/useCompanyScopedReload'
+import { useDynamicTitle } from '~/composables/useDynamicTitle'
 
 const purchaseRequestStore = usePurchaseRequestStore()
 const { userHasPermission, userHasRole } = usePermissions()
 const { canApprovePurchaseRequest, canRejectPurchaseRequest } = usePurchaseRequestApproval()
 const formatRupiah = useFormatRupiah()
+const { setListTitle } = useDynamicTitle()
 const { purchaseRequests, loading, totalRecords, params, statistics } = storeToRefs(purchaseRequestStore)
 
 const statItems = computed(() => [
@@ -259,9 +262,19 @@ const debouncedSearch = useDebounceFn(() => purchaseRequestStore.setSearch(globa
 watch(globalFilterValue, debouncedSearch)
 watch(filters, (f) => purchaseRequestStore.setFilters({ status: f.status, priority: f.priority }), { deep: true })
 
+const companyScoped = useCompanyScopedReload(async (_companyId, generation) => {
+  params.value.first = 0
+  purchaseRequestStore.purchaseRequest = null
+  await Promise.all([
+    purchaseRequestStore.fetchPurchaseRequests(),
+    purchaseRequestStore.fetchStatistics(),
+  ])
+  if (!companyScoped.isCurrent(generation)) return
+  setListTitle('Purchase Request', totalRecords.value)
+})
+
 onMounted(() => {
-  purchaseRequestStore.fetchPurchaseRequests()
-  purchaseRequestStore.fetchStatistics()
+  companyScoped.start()
 })
 
 definePageMeta({ layout: 'default', middleware: ['auth', 'check-permission'], title: 'Purchase Request' })

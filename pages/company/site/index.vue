@@ -320,7 +320,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSiteStore } from '~/stores/site'
 import { useCostCenterStore } from '~/stores/cost-center'
@@ -335,6 +335,7 @@ import Dropdown from 'primevue/dropdown'
 import InputText from 'primevue/inputtext'
 import DataTable from 'primevue/datatable'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
+import { useCompanyScopedReload } from '~/composables/useCompanyScopedReload'
 
 const { setListTitle } = useDynamicTitle()
 
@@ -506,15 +507,26 @@ function goToSiteDetail(id) {
 }
 
 // Lifecycle
+const companyScoped = useCompanyScopedReload(async (_companyId, generation) => {
+  siteStore.closeModal?.()
+  siteStore.params.first = 0
+  await siteStore.fetchSites(true)
+  if (!companyScoped.isCurrent(generation)) return
+  setListTitle('Sites', totalSites.value)
+})
+
 onMounted(async () => {
   try {
     await permissionStore.fetchPermissions()
     await userStore.loadUser()
-    await siteStore.fetchSites()
+    companyScoped.start()
   } catch (error) {
     console.error('Error in onMounted:', error)
   }
-  setListTitle('Sites', totalSites.value)
+})
+
+onUnmounted(() => {
+  companyScoped.stop()
 })
 
 const debouncedSearch = useDebounceFn(() => {

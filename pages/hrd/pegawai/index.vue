@@ -155,6 +155,7 @@
 <script setup lang="ts">
 import { navigateTo } from '#app'
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { useCompanyScopedReload } from '~/composables/useCompanyScopedReload'
 import { storeToRefs } from 'pinia'
 import { useDebounceFn } from '@vueuse/core'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
@@ -317,6 +318,16 @@ onMounted(() => {
     userStore.loadUser()
     setListTitle('Pegawai', pegawais.value.length)
 })
+
+const companyScoped = useCompanyScopedReload(async (_companyId, generation) => {
+  // Clear selection/bulk from previous company before reload
+  activeRow.value = null
+  await pegawaiStore.fetchPegawais()
+  await pegawaiStore.fetchStats()
+  if (!companyScoped.isCurrent(generation)) return
+  setListTitle('Pegawai', pegawais.value.length)
+})
+companyScoped.start()
 
 const debouncedSearch = useDebounceFn(() => {
     pegawaiStore.setSearch(globalFilterValue.value)

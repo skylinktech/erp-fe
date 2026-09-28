@@ -196,7 +196,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { useCompanyScopedReload } from '~/composables/useCompanyScopedReload'
 import { storeToRefs } from 'pinia'
 import { useFdrStore } from '~/stores/fdr'
 import { useCustomerStore } from '~/stores/customer'
@@ -512,25 +513,41 @@ function getStatusBadgeClass(d) { return getStatusBadge(d).class }
 function getStatusBadgeText(d) { return getStatusBadge(d).text }
 const onDateChange = () => fdrStore.setFilters(filters.value)
 
-const { isLoading: isDataLoading } = usePageData({
-  pageName: 'FDR',
-  loaders: [
-    () => customerStore.fetchCustomersForSelect(),
-    () => fetchSites(),
-    () => fetchBusinessSchemes(),
-    () => fdrStore.fetchFdrs(),
-    () => fdrStore.fetchStats(),
-  ],
-  onSuccess: () => setListTitle('FDR', stats.value.total || 0),
-  waitAll: true,
+const companyScoped = useCompanyScopedReload(async (_companyId, generation) => {
+  fdrStore.closeModal()
+  resetFilters()
+  globalFilterValue.value = ''
+  filters.value.customerId = null
+  priceListOptions.value = []
+  sites.value = []
+  businessSchemes.value = []
+  isInitialLoading.value = true
+  try {
+    await Promise.allSettled([
+      customerStore.fetchCustomersForSelect(),
+      fetchSites(),
+      fetchBusinessSchemes(),
+      fdrStore.fetchFdrs(),
+      fdrStore.fetchStats(),
+    ])
+    if (!companyScoped.isCurrent(generation)) return
+    setListTitle('FDR', stats.value.total || 0)
+  } finally {
+    if (companyScoped.isCurrent(generation)) {
+      isInitialLoading.value = false
+    }
+  }
 })
-
-watch(isDataLoading, (v) => { isInitialLoading.value = v })
 
 onMounted(() => {
   tableControls.value.rows = Number(params.value.rows) || 10
   const editId = route.query.edit
   if (editId && typeof editId === 'string') nextTick(() => navigateTo(`/sales/fdr/form/${editId}`))
+  companyScoped.start()
+})
+
+onUnmounted(() => {
+  companyScoped.stop()
 })
 
 watch(() => params.value.rows, (v) => { tableControls.value.rows = Number(v) || 10 })

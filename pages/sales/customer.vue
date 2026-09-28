@@ -266,7 +266,8 @@
 
 <script setup>
 
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useCompanyScopedReload } from '~/composables/useCompanyScopedReload'
 import { storeToRefs } from 'pinia';
 import Modal from '~/components/modal/Modal.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
@@ -392,17 +393,27 @@ const tableControls = ref({
 const modalTitle = computed(() => isEditMode.value ? 'Edit Customer' : 'Tambah Customer');
 const modalDescription = computed(() => isEditMode.value ? 'Silakan ubah data customer di bawah ini.' : 'Silakan isi form di bawah ini untuk menambahkan customer baru.');
 
+const companyScoped = useCompanyScopedReload(async (_companyId, generation) => {
+    customerStore.closeModal()
+    customerStore.selectedCustomer = null
+    globalFilterValue.value = ''
+    customerStore.params.search = ''
+    customerStore.params.first = 0
+    await customerStore.fetchCustomers()
+    if (!companyScoped.isCurrent(generation)) return
+    setListTitle('Customer', totalRecords.value)
+})
+
 onMounted(() => {
     permissionStore.fetchPermissions();
     userStore.loadUser();
-    if (customerStore.customers.length === 0) {
-      customerStore.fetchCustomers();
-    }
-    setListTitle('Customer', customers.value.length)
-    
-    // Initialize table controls
     tableControls.value.rows = params.value.rows;
     tableControls.value.search = globalFilterValue.value;
+    companyScoped.start()
+});
+
+onUnmounted(() => {
+    companyScoped.stop()
 });
 
 // Watch untuk sinkronisasi table controls

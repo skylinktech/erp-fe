@@ -100,10 +100,12 @@ describe('POS cart helpers', () => {
     expect(c).not.toBe(a)
   })
 
-  it('ignores stale catalog responses after search/warehouse/generation change', () => {
+  it('ignores stale catalog responses after search/warehouse/generation/company change', () => {
     expect(shouldIgnoreStaleCatalog(1, 2, 'a', 'a', 1, 1)).toBe(true)
     expect(shouldIgnoreStaleCatalog(1, 1, 'a', 'b', 1, 1)).toBe(true)
     expect(shouldIgnoreStaleCatalog(1, 1, 'a', 'a', 1, 2)).toBe(true)
     expect(shouldIgnoreStaleCatalog(1, 1, 'a', 'a', 1, 1)).toBe(false)
+    expect(shouldIgnoreStaleCatalog(1, 1, 'a', 'a', 1, 1, 10, 20)).toBe(true)
+    expect(shouldIgnoreStaleCatalog(1, 1, 'a', 'a', 1, 1, 10, 10)).toBe(false)
   })
 })

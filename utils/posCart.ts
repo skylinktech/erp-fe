@@ -121,8 +121,17 @@ export function shouldIgnoreStaleCatalog(
   requestSearch: string,
   currentSearch: string,
   requestWarehouseId: number | null,
-  currentWarehouseId: number | null
+  currentWarehouseId: number | null,
+  requestCompanyId?: number | null,
+  currentCompanyId?: number | null
 ): boolean {
+  if (
+    requestCompanyId != null &&
+    currentCompanyId != null &&
+    Number(requestCompanyId) !== Number(currentCompanyId)
+  ) {
+    return true
+  }
   return (
     requestGeneration !== currentGeneration ||
     requestSearch !== currentSearch ||

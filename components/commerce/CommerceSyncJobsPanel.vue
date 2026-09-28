@@ -105,7 +105,7 @@ function headers() {
   const h: Record<string, string> = { Accept: 'application/json' }
   const token = readAccessToken()
   if (token) h.Authorization = `Bearer ${token}`
-  if (companyId.value) h['X-Active-Company-Id'] = String(companyId.value)
+  if (companyId.value) h['X-Company-Id'] = String(companyId.value)
   return h
 }
 

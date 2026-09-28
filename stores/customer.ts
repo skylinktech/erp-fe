@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { useNuxtApp } from '#app'
 import Swal from 'sweetalert2'
 import { normalizeFailedResponse, normalizeApiError, toastNormalizedError } from '~/utils/apiError'
+import { useCompanyContextStore } from '~/stores/companyContext'
 
 export interface Customer {
   id?: number
@@ -20,6 +21,7 @@ interface CustomerState {
   customers: Customer[]
   /** Dropdown catalog — isolated from list-page search/pagination. */
   customersForSelect: Customer[]
+  customersForSelectCompanyId: number | null
   customersForSelectLoadedAt: number | null
   selectedCustomer: Customer | null
   loading: boolean
@@ -41,8 +43,13 @@ interface CustomerState {
 const SELECT_DEFAULT_ROWS = 500
 const SELECT_CACHE_TTL_MS = 5 * 60 * 1000
 
-/** In-flight dedupe so FDR/SI/Quotation mounting together share one request. */
-let customersForSelectInFlight: Promise<Customer[]> | null = null
+/** In-flight dedupe per Active Company — ISP A and ISP B never share one promise. */
+const customersForSelectInFlight = new Map<number, Promise<Customer[]>>()
+
+function activeCompanyIdForSelect(): number | null {
+  const id = useCompanyContextStore().companyId
+  return id != null && id > 0 ? id : null
+}
 
 function parseCustomerList(result: any): Customer[] {
   if (Array.isArray(result?.data)) return result.data
@@ -54,6 +61,7 @@ export const useCustomerStore = defineStore('customer', {
   state: (): CustomerState => ({
     customers: [],
     customersForSelect: [],
+    customersForSelectCompanyId: null,
     customersForSelectLoadedAt: null,
     selectedCustomer: null,
     loading: false,
@@ -88,6 +96,13 @@ export const useCustomerStore = defineStore('customer', {
     },
   },
   actions: {
+    clearCustomersForSelectCache() {
+      this.customersForSelect = []
+      this.customersForSelectCompanyId = null
+      this.customersForSelectLoadedAt = null
+      customersForSelectInFlight.clear()
+    },
+
     async fetchCustomers(suppressError = false) {
       this.loading = true
       this.error = null
@@ -146,16 +161,32 @@ export const useCustomerStore = defineStore('customer', {
       const rows = opts?.rows ?? SELECT_DEFAULT_ROWS
       const force = opts?.force === true
       const suppressError = opts?.suppressError === true
+      const requestCompanyId = activeCompanyIdForSelect()
+
+      if (requestCompanyId == null) {
+        this.clearCustomersForSelectCache()
+        return []
+      }
+
+      if (this.customersForSelectCompanyId !== requestCompanyId) {
+        this.customersForSelect = []
+        this.customersForSelectLoadedAt = null
+        this.customersForSelectCompanyId = null
+      }
+
       const fresh =
+        this.customersForSelectCompanyId === requestCompanyId &&
         this.customersForSelect.length > 0 &&
         this.customersForSelectLoadedAt != null &&
         Date.now() - this.customersForSelectLoadedAt < SELECT_CACHE_TTL_MS
 
       if (!force && fresh) return this.customersForSelect
-      if (!force && customersForSelectInFlight) return customersForSelectInFlight
+
+      const existingFlight = customersForSelectInFlight.get(requestCompanyId)
+      if (!force && existingFlight) return existingFlight
 
       const { $api } = useNuxtApp()
-      customersForSelectInFlight = (async () => {
+      const flight = (async () => {
         try {
           const params = new URLSearchParams({
             page: '1',
@@ -174,7 +205,9 @@ export const useCustomerStore = defineStore('customer', {
           }
           const result = await response.json()
           const list = parseCustomerList(result)
+          if (activeCompanyIdForSelect() !== requestCompanyId) return []
           this.customersForSelect = list
+          this.customersForSelectCompanyId = requestCompanyId
           this.customersForSelectLoadedAt = Date.now()
           return list
         } catch (e: any) {
@@ -187,13 +220,17 @@ export const useCustomerStore = defineStore('customer', {
               position: 'bottomRight',
             })
           }
-          return this.customersForSelect
+          if (activeCompanyIdForSelect() !== requestCompanyId) return []
+          return []
         } finally {
-          customersForSelectInFlight = null
+          if (customersForSelectInFlight.get(requestCompanyId) === flight) {
+            customersForSelectInFlight.delete(requestCompanyId)
+          }
         }
       })()
 
-      return customersForSelectInFlight
+      customersForSelectInFlight.set(requestCompanyId, flight)
+      return flight
     },
 
     /** Ensure a single customer appears in the select catalog (edit/prefill). */

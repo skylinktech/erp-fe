@@ -5,7 +5,7 @@
         <h2 class="h6 mb-0">Keranjang</h2>
         <button
           type="button"
-          class="btn btn-link btn-sm text-danger p-0"
+          class="sf-pos-clear-cart"
           :disabled="!cart.length || checkoutBusy"
           @click="$emit('clear')"
         >
@@ -71,7 +71,7 @@
               </button>
             </div>
             <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-2">
-              <div class="input-group input-group-sm" style="max-width: 8.5rem">
+              <div class="input-group input-group-sm sf-pos-qty">
                 <button
                   type="button"
                   class="btn btn-outline-secondary"
@@ -85,7 +85,7 @@
                   type="number"
                   min="0.0001"
                   step="0.0001"
-                  class="form-control text-center"
+                  class="form-control text-center sf-pos-qty__input"
                   :disabled="checkoutBusy"
                   @change="onQtyChange(index, ($event.target as HTMLInputElement).value)"
                 />
@@ -170,6 +170,59 @@ function onQtyChange(index: number, raw: string) {
 .sf-pos-cart-panel {
   position: sticky;
   top: 0.75rem;
+}
+.sf-pos-clear-cart {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: #dc3545;
+  text-decoration: none;
+  cursor: pointer;
+}
+.sf-pos-clear-cart:hover:not(:disabled) {
+  color: #b02a37;
+  text-decoration: underline;
+  background: transparent;
+  box-shadow: none;
+}
+.sf-pos-clear-cart:focus,
+.sf-pos-clear-cart:focus-visible {
+  outline: none;
+  box-shadow: none;
+  background: transparent;
+}
+.sf-pos-clear-cart:disabled {
+  color: #adb5bd;
+  cursor: not-allowed;
+  text-decoration: none;
+  opacity: 1;
+}
+.sf-pos-qty {
+  max-width: 8.5rem;
+}
+.sf-pos-qty__input {
+  color: #212529;
+  font-weight: 700;
+  font-size: 0.95rem;
+  background-color: #fff;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.sf-pos-qty__input:disabled {
+  color: #212529;
+  opacity: 1;
+  background-color: #f8f9fa;
+}
+.sf-pos-qty__input::-webkit-outer-spin-button,
+.sf-pos-qty__input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 @media (max-width: 991.98px) {
   .sf-pos-cart-panel {

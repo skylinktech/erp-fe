@@ -267,7 +267,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { useCompanyScopedReload } from '~/composables/useCompanyScopedReload'
+import { useCompanyContextStore } from '~/stores/companyContext'
 import { useDebounceFn } from '@vueuse/core'
 import Column from 'primevue/column'
 import { usePermissions } from '~/composables/usePermissions'
@@ -449,7 +451,7 @@ function headers() {
     'Content-Type': 'application/json',
   }
   if (token) h.Authorization = `Bearer ${token}`
-  if (companyId.value) h['X-Active-Company-Id'] = String(companyId.value)
+  if (companyId.value) h['X-Company-Id'] = String(companyId.value)
   return h
 }
 
@@ -533,7 +535,12 @@ function resetFilters() {
   void load()
 }
 
-async function load() {
+function isExpectedGeneration(expectedGeneration?: number) {
+  if (expectedGeneration == null) return true
+  return useCompanyContextStore().generation === expectedGeneration
+}
+
+async function load(expectedGeneration?: number) {
   loading.value = true
   error.value = ''
   const { $api } = useNuxtApp()
@@ -553,17 +560,22 @@ async function load() {
     })
     const payload = await res.json().catch(() => ({}))
     if (!res.ok) {
+      if (!isExpectedGeneration(expectedGeneration)) return
       error.value = payload?.message || 'Daftar harga tidak dapat dimuat.'
       rows.value = []
       return
     }
+    if (!isExpectedGeneration(expectedGeneration)) return
     rows.value = payload.data || []
     setListTitle('Pricing', rows.value.length)
   } catch (err: any) {
+    if (!isExpectedGeneration(expectedGeneration)) return
     error.value = err?.message || 'Daftar harga tidak dapat dimuat.'
     rows.value = []
   } finally {
-    loading.value = false
+    if (isExpectedGeneration(expectedGeneration)) {
+      loading.value = false
+    }
   }
 }
 
@@ -583,14 +595,20 @@ async function act(id: number, action: 'submit' | 'approve' | 'activate' | 'deac
   await load()
 }
 
-watch(companyId, () => {
+const companyScoped = useCompanyScopedReload(async (_companyId, generation) => {
   tableFirst.value = 0
-  void load()
+  expandedRows.value = {}
+  rows.value = []
+  await load(generation)
 })
 
 onMounted(() => {
   setListTitle('Pricing', 0)
-  void load()
+  companyScoped.start()
+})
+
+onUnmounted(() => {
+  companyScoped.stop()
 })
 </script>
 

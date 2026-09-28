@@ -517,7 +517,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useCompanyScopedReload } from '~/composables/useCompanyScopedReload'
 import { storeToRefs } from 'pinia'
 import { useProductStore } from '~/stores/product'
 import { useKategoriStore } from '~/stores/kategori'
@@ -809,18 +810,34 @@ function reload() {
     productStore.fetchProducts()
 }
 
+const companyScoped = useCompanyScopedReload(async (_companyId, generation) => {
+    productStore.closeModal()
+    resetFilters()
+    globalFilterValue.value = ''
+    params.value.first = 0
+    params.value.search = ''
+    await Promise.all([
+        productStore.fetchStatistics(),
+        productStore.fetchProducts(),
+    ])
+    if (!companyScoped.isCurrent(generation)) return
+    setListTitle('Product', statistics.value.total)
+})
+
 onMounted(async () => {
     tableControls.value.rows = Number(params.value.rows) || 10
     tableControls.value.search = globalFilterValue.value
 
-    await productStore.fetchStatistics()
-    await productStore.fetchProducts()
     kategoriStore.fetchKategori()
     unitStore.fetchUnit()
     permissionStore.fetchPermissions()
     userStore.loadUser()
 
-    setListTitle('Product', statistics.value.total)
+    companyScoped.start()
+})
+
+onUnmounted(() => {
+    companyScoped.stop()
 })
 
 async function onFormSubmit() {

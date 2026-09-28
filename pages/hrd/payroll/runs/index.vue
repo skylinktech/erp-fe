@@ -172,6 +172,7 @@ import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
 import type { ListPageStatItem } from '~/components/list/ListPageStatsCards.vue'
 import { PAYROLL_CONFIRM, PAYROLL_RUN_STATUS_OPTIONS, PAYROLL_RUN_TYPE_OPTIONS } from '~/constants/payroll'
 import Swal from 'sweetalert2'
+import { useCompanyScopedReload } from '~/composables/useCompanyScopedReload'
 
 definePageMeta({
   title: 'Payroll Runs',
@@ -311,4 +312,16 @@ onMounted(async () => {
     store.fetchListStats('runs', { period_id: filters.value.periodId, run_type: filters.value.runType }),
   ])
 })
+
+const companyScoped = useCompanyScopedReload(async (_companyId, generation) => {
+  filters.value = { periodId: null, runType: null, status: null }
+  search.value = ''
+  await store.fetchPeriods()
+  if (!companyScoped.isCurrent(generation)) return
+  await Promise.all([
+    store.fetchRuns(query()),
+    store.fetchListStats('runs', { period_id: filters.value.periodId, run_type: filters.value.runType }),
+  ])
+})
+companyScoped.start()
 </script>

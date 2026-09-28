@@ -522,7 +522,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { useCompanyScopedReload } from '~/composables/useCompanyScopedReload'
 import { storeToRefs } from 'pinia'
 import { usePriceListStore } from '~/stores/price_list'
 import Modal from '~/components/modal/Modal.vue'
@@ -993,15 +994,24 @@ watch(showModal, async (newValue) => {
     }
 })
 
-// Lifecycle
-onMounted(async () => {
-    setListTitle('Price List')
+const companyScoped = useCompanyScopedReload(async (_companyId, generation) => {
+    priceListStore.closeModal()
     await Promise.all([
         priceListStore.fetchPriceLists(),
         fetchProductOptions(),
         fetchServiceOptions(),
         fetchDidOptions(),
     ])
+    if (!companyScoped.isCurrent(generation)) return
+    setListTitle('Price List')
+})
+
+onMounted(() => {
+    companyScoped.start()
+})
+
+onUnmounted(() => {
+    companyScoped.stop()
 })
 </script>
 
