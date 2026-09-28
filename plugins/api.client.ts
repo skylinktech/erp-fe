@@ -861,6 +861,8 @@ export default defineNuxtPlugin(() => {
     getStockInDetails      : (id: number | string) => `${apiBase}/stock-in/getStockInDetails/${id}`,
     postStockIn            : (id: number | string) => `${apiBase}/stock-in/postStockIn/${id}`,
     postAllStockIn         : () => `${apiBase}/stock-in/postAllStockIn`,
+    stockInReleaseQc       : (id: number | string) => `${apiBase}/stock-in/${id}/release-qc`,
+    stockInQcPending       : () => `${apiBase}/stock-in/qc-pending`,
     countStockIn           : () => `${apiBase}/stock-in/getTotalStockIn`,
     getStockOutDetails     : (id: number | string) => `${apiBase}/stock-out/getStockOutDetails/${id}`,
     postStockOut           : (id: number | string) => `${apiBase}/stock-out/postStockOut/${id}`,
@@ -872,11 +874,16 @@ export default defineNuxtPlugin(() => {
     countStockTransfer     : () => `${apiBase}/stock-transfer/getTotalStockTransfer`,
     getStockTransferDetails: (id: number | string) => `${apiBase}/stock-transfer/getStockTransferDetails/${id}`,
     cetakStockTransfer     : (id: number | string) => `${apiBase}/stock-transfer/getStockTransferDetails/${id}`,
-    // Phase 18A: postStockTransfer route does not exist — approve posts qty atomically
+    // v2: approve = reserve only; dispatch/receive post stock
     approveStockTransfer   : (id: number | string) => `${apiBase}/stock-transfer/approveStockTransfer/${id}`,
-    /** @deprecated Use approveStockTransfer — legacy alias kept for callers that still reference post. */
+    /** @deprecated Use approveStockTransfer — legacy alias. */
     postStockTransfer      : (id: number | string) => `${apiBase}/stock-transfer/approveStockTransfer/${id}`,
     rejectStockTransfer    : (id: number | string) => `${apiBase}/stock-transfer/rejectStockTransfer/${id}`,
+    dispatchStockTransfer  : (id: number | string) => `${apiBase}/stock-transfer/${id}/dispatch`,
+    receiveStockTransfer   : (id: number | string) => `${apiBase}/stock-transfer/${id}/receive`,
+    cancelRemainderStockTransfer: (id: number | string) => `${apiBase}/stock-transfer/${id}/cancel-remainder`,
+    returnToSourceStockTransfer: (id: number | string) => `${apiBase}/stock-transfer/${id}/return-to-source`,
+    resolveLossStockTransfer: (id: number | string) => `${apiBase}/stock-transfer/${id}/resolve-loss`,
 
     // Phase 12C — inventory control
     purchaseReturn         : () => `${apiBase}/purchase-return`,
@@ -977,6 +984,9 @@ export default defineNuxtPlugin(() => {
     posShiftClose: (id: string) => `${apiBase}/pos/shifts/${id}/close`,
     posReceipt: (id: string) => `${apiBase}/pos/receipts/${id}`,
     posPaymentAttempt: (id: string) => `${apiBase}/pos/payment-attempts/${id}`,
+    posPaymentAttemptResolve: (id: string) => `${apiBase}/pos/payment-attempts/${id}/resolve`,
+    posGatewayRecover: () => `${apiBase}/pos/gateway/recover`,
+    posCheckoutByKey: (key: string) => `${apiBase}/pos/checkout-by-key/${key}`,
     productSellingPrices: () => `${apiBase}/product-selling-prices`,
     retailSales: () => `${apiBase}/retail-sales`,
     retailSale: (id: string) => `${apiBase}/retail-sales/${id}`,
@@ -988,6 +998,30 @@ export default defineNuxtPlugin(() => {
     retailSaleInvoiceSubmit: (id: string) => `${apiBase}/retail-sales/${id}/invoice/submit`,
     retailSalePay: (id: string) => `${apiBase}/retail-sales/${id}/pay`,
     retailSalePosPay: (id: string) => `${apiBase}/retail-sales/${id}/pos-pay`,
+    retailWarehouseOpsQueue: () => `${apiBase}/retail-warehouse-ops/queue`,
+    retailWarehouseOps: (id: string) => `${apiBase}/retail-warehouse-ops/${id}`,
+    retailWarehouseOpsEnqueue: (id: string) => `${apiBase}/retail-warehouse-ops/${id}/enqueue`,
+    retailWarehouseOpsPick: (id: string) => `${apiBase}/retail-warehouse-ops/${id}/pick`,
+    retailWarehouseOpsPack: (id: string) => `${apiBase}/retail-warehouse-ops/${id}/pack`,
+    retailWarehouseOpsUnpack: (id: string) => `${apiBase}/retail-warehouse-ops/${id}/unpack`,
+    retailWarehouseOpsUnpick: (id: string) => `${apiBase}/retail-warehouse-ops/${id}/unpick`,
+    retailWarehouseOpsDispatch: (id: string) => `${apiBase}/retail-warehouse-ops/${id}/dispatch`,
+    retailWarehouseOpsCancelRemainder: (id: string) =>
+      `${apiBase}/retail-warehouse-ops/${id}/cancel-remainder`,
+    retailWarehouseOpsDispatchPods: (dispatchId: string) =>
+      `${apiBase}/retail-warehouse-ops/dispatches/${dispatchId}/pods`,
+    retailWarehouseOpsPod: (podId: string) => `${apiBase}/retail-warehouse-ops/pods/${podId}`,
+    retailWarehouseOpsPodConfirm: (podId: string) =>
+      `${apiBase}/retail-warehouse-ops/pods/${podId}/confirm`,
+    retailWarehouseOpsPodVoid: (podId: string) =>
+      `${apiBase}/retail-warehouse-ops/pods/${podId}/void`,
+    retailWarehouseOpsPodCreateReturn: (podId: string) =>
+      `${apiBase}/retail-warehouse-ops/pods/${podId}/create-return`,
+    retailWarehouseOpsPodAttachments: (podId: string) =>
+      `${apiBase}/retail-warehouse-ops/pods/${podId}/attachments`,
+    retailWarehouseOpsPodAttachmentDownload: (podId: string, attachmentId: string) =>
+      `${apiBase}/retail-warehouse-ops/pods/${podId}/attachments/${attachmentId}/download`,
+    purchaseReturnPost: (id: number | string) => `${apiBase}/purchase-return/${id}/post`,
     commercePlatforms: () => `${apiBase}/commerce/platforms`,
     commerceOauthTikTokStart: () => `${apiBase}/commerce/oauth/tiktok/start`,
     commerceConnections: () => `${apiBase}/commerce/connections`,

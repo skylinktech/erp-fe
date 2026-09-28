@@ -30,6 +30,39 @@
     </div>
     <div v-if="notice" class="alert alert-success text-break">{{ notice }}</div>
     <div v-if="contextNotice" class="alert alert-info text-break">{{ contextNotice }}</div>
+    <div
+      v-if="pendingGatewayAttemptId && pendingResumeVia === 'gateway-poll'"
+      class="alert alert-warning d-flex flex-wrap gap-2 align-items-center"
+    >
+      <span class="me-auto">Gateway attempt {{ pendingGatewayAttemptId }} — resolusi operator:</span>
+      <button type="button" class="btn btn-sm btn-outline-primary" :disabled="saving" @click="pollGatewayAttempt">
+        Poll
+      </button>
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-success"
+        :disabled="saving"
+        @click="resolveGateway('accept_late_success')"
+      >
+        Terima late success
+      </button>
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-secondary"
+        :disabled="saving"
+        @click="resolveGateway('retry_finalize')"
+      >
+        Retry finalize
+      </button>
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-danger"
+        :disabled="saving"
+        @click="resolveGateway('abandon_unpaid')"
+      >
+        Abandon unpaid
+      </button>
+    </div>
 
     <div class="row g-3 align-items-start">
       <div class="col-12 col-lg-8">
@@ -121,7 +154,7 @@
       :company-ready="activeCompanyReady"
       :busy="saving"
       :error="paymentError"
-      @cancel="paymentOpen = false"
+      @cancel="onPaymentCancel"
       @confirm="completeSale"
     />
 
@@ -236,6 +269,94 @@ const uomPicker = ref<{
 
 const checkoutKeyState = ref<{ fingerprint: string; key: string } | null>(null)
 
+const POS_SESSION_KEY = 'skylink.pos.checkout.v1'
+
+function posSessionStorageKey() {
+  return `${POS_SESSION_KEY}:${activeCompanyId.value || 0}:${form.warehouseId || 0}`
+}
+
+function persistPosSession() {
+  if (typeof sessionStorage === 'undefined') return
+  try {
+    const payload = {
+      fingerprint: checkoutKeyState.value?.fingerprint || null,
+      key: checkoutKeyState.value?.key || null,
+      pendingSaleId: pendingSaleId.value,
+      pendingSaleRevision: pendingSaleRevision.value,
+      pendingSaleTotal: pendingSaleTotal.value,
+      pendingResumeVia: pendingResumeVia.value,
+      pendingGatewayAttemptId: pendingGatewayAttemptId.value,
+      cart: cart.value,
+      customerMode: form.customerMode,
+      customerId: form.customerId,
+      walkInName: form.walkInName,
+    }
+    sessionStorage.setItem(posSessionStorageKey(), JSON.stringify(payload))
+  } catch {
+    /* ignore quota */
+  }
+}
+
+function clearPosSession() {
+  if (typeof sessionStorage === 'undefined') return
+  try {
+    sessionStorage.removeItem(posSessionStorageKey())
+  } catch {
+    /* ignore */
+  }
+}
+
+async function restorePosSession() {
+  if (typeof sessionStorage === 'undefined') return
+  try {
+    const raw = sessionStorage.getItem(posSessionStorageKey())
+    if (!raw) return
+    const data = JSON.parse(raw)
+    if (Array.isArray(data.cart) && data.cart.length) cart.value = data.cart
+    if (data.customerMode) form.customerMode = data.customerMode
+    if (data.customerId != null) form.customerId = data.customerId
+    if (data.walkInName != null) form.walkInName = data.walkInName
+    if (data.key && data.fingerprint) {
+      checkoutKeyState.value = { key: data.key, fingerprint: data.fingerprint }
+    }
+    if (data.pendingSaleId) {
+      pendingSaleId.value = String(data.pendingSaleId)
+      pendingSaleRevision.value = data.pendingSaleRevision != null ? Number(data.pendingSaleRevision) : null
+      pendingSaleTotal.value = data.pendingSaleTotal != null ? Number(data.pendingSaleTotal) : null
+      pendingResumeVia.value = data.pendingResumeVia || 'complete'
+      pendingGatewayAttemptId.value = data.pendingGatewayAttemptId || null
+      notice.value = `Sesi POS dipulihkan (${pendingSaleId.value}). Lanjutkan pembayaran — jangan buat sale baru.`
+    } else if (data.key && activeCompanyId.value) {
+      await recoverByCheckoutKey(String(data.key))
+    }
+  } catch {
+    /* ignore corrupt */
+  }
+}
+
+async function recoverByCheckoutKey(key: string) {
+  if (!activeCompanyId.value) return
+  const { $api } = useNuxtApp()
+  try {
+    const res = await fetch(`${$api.posCheckoutByKey(key)}?perusahaanId=${activeCompanyId.value}`, {
+      headers: headers(),
+      credentials: 'include',
+    })
+    const payload = await res.json().catch(() => ({}))
+    if (!res.ok || !payload?.data?.saleId) return
+    const d = payload.data
+    pendingSaleId.value = String(d.saleId)
+    pendingSaleRevision.value = d.revision != null ? Number(d.revision) : null
+    pendingSaleTotal.value = d.grandTotal != null ? Number(d.grandTotal) : null
+    pendingResumeVia.value = d.resumeVia || 'complete'
+    pendingGatewayAttemptId.value = d.attemptId || null
+    notice.value = `Checkout key ditemukan → sale ${d.saleNumber || d.saleId}. Lanjutkan tanpa menggandakan.`
+    persistPosSession()
+  } catch {
+    /* network */
+  }
+}
+
 const cashierName = computed(() => userStore.user?.fullName || userStore.user?.username || '')
 const cartSubtotal = computed(() => posCartIndicativeSubtotal(cart.value))
 const paymentTotal = computed(() =>
@@ -275,6 +396,59 @@ function clearCart() {
   pendingSaleTotal.value = null
   pendingResumeVia.value = null
   pendingGatewayAttemptId.value = null
+  clearPosSession()
+}
+
+async function abandonPendingSale() {
+  if (!pendingSaleId.value) {
+    clearCart()
+    return
+  }
+  const saleId = pendingSaleId.value
+  const ok = window.confirm(
+    'Batalkan penjualan tertunda dan lepaskan reservasi stok? Ini tidak membuat dokumen ganda.'
+  )
+  if (!ok) return
+  const { $api } = useNuxtApp()
+  try {
+    const res = await fetch($api.retailSaleCancel(saleId), {
+      method: 'POST',
+      headers: headers(),
+      credentials: 'include',
+      body: JSON.stringify({
+        expectedRevision: pendingSaleRevision.value,
+        idempotencyKey: crypto.randomUUID(),
+      }),
+    })
+    const payload = await res.json().catch(() => ({}))
+    if (!res.ok && payload?.code !== 'RETAIL_SALE_NOT_CANCELLABLE') {
+      // FULFILLED cannot cancel — offer gateway abandon instead.
+      if (pendingGatewayAttemptId.value) {
+        const resolveRes = await fetch($api.posPaymentAttemptResolve(pendingGatewayAttemptId.value), {
+          method: 'POST',
+          headers: headers(),
+          credentials: 'include',
+          body: JSON.stringify({ action: 'abandon_unpaid', note: 'POS operator abandon' }),
+        })
+        const resolvePayload = await resolveRes.json().catch(() => ({}))
+        if (!resolveRes.ok) {
+          error.value = resolvePayload?.message || payload?.message || 'Gagal membatalkan.'
+          return
+        }
+        notice.value = resolvePayload?.data?.nextStep || 'Attempt dibatalkan. Ikuti langkah stok jika sudah ISSUED.'
+      } else {
+        error.value = payload?.message || 'Penjualan tidak bisa dibatalkan (mungkin sudah fulfilled).'
+        return
+      }
+    } else {
+      notice.value = 'Penjualan dibatalkan; reservasi dilepas.'
+    }
+  } catch (err: any) {
+    error.value = err?.message || 'Gagal membatalkan penjualan.'
+    return
+  }
+  clearCart()
+  paymentOpen.value = false
 }
 
 function removeLine(index: number) {
@@ -415,6 +589,7 @@ function ensureIdempotencyKey(fingerprint: string): string {
   }
   const key = crypto.randomUUID()
   checkoutKeyState.value = { fingerprint, key }
+  persistPosSession()
   return key
 }
 
@@ -448,6 +623,45 @@ function rememberPendingSale(data: Record<string, any> | null | undefined) {
   if (data.resumeVia) pendingResumeVia.value = data.resumeVia
   if (data.attemptId || data.payment?.attemptId) {
     pendingGatewayAttemptId.value = String(data.attemptId || data.payment.attemptId)
+  }
+  persistPosSession()
+}
+
+function onPaymentCancel() {
+  paymentOpen.value = false
+  if (pendingSaleId.value) {
+    void abandonPendingSale()
+  }
+}
+
+async function resolveGateway(action: 'accept_late_success' | 'abandon_unpaid' | 'retry_finalize') {
+  if (!pendingGatewayAttemptId.value) return
+  saving.value = true
+  const { $api } = useNuxtApp()
+  try {
+    const res = await fetch($api.posPaymentAttemptResolve(pendingGatewayAttemptId.value), {
+      method: 'POST',
+      headers: headers(),
+      credentials: 'include',
+      body: JSON.stringify({ action, note: `POS UI ${action}` }),
+    })
+    const payload = await res.json().catch(() => ({}))
+    if (!res.ok) {
+      error.value = payload?.message || 'Resolusi gateway gagal.'
+      return
+    }
+    if (action === 'accept_late_success' || action === 'retry_finalize') {
+      if (payload?.data?.payment?.status === 'succeeded' || payload?.data?.status === 'succeeded') {
+        notice.value = 'Late success / finalize berhasil — sale lunas.'
+        clearCart()
+        paymentOpen.value = false
+        return
+      }
+    }
+    notice.value = payload?.data?.nextStep || payload?.message || 'Resolusi diterapkan.'
+    persistPosSession()
+  } finally {
+    saving.value = false
   }
 }
 
@@ -596,15 +810,29 @@ async function payPendingSale(payment: Record<string, unknown>, companyId: numbe
 
 function applyPaymentSuccess(payload: Record<string, any>, payment: Record<string, unknown>) {
   const pay = payload?.data?.payment || {}
+  const status = String(pay.status || '')
   lastPaymentMeta.value = {
     method: payment.method,
     tenderedAmount: pay.tenderedAmount,
     changeAmount: pay.changeAmount,
     journalPosted: pay.journalPosted,
-    status: pay.status,
+    status,
+    settlementComplete: pay.settlementComplete,
   }
 
-  if (pay.status === 'pending' || pay.status === 'ambiguous') {
+  // Failed / expired / cancelled must NEVER look like a paid sale.
+  if (status === 'failed' || status === 'expired' || status === 'cancelled') {
+    paymentError.value = `Pembayaran ${status}. Keranjang tidak dikosongkan sebagai lunas.`
+    rememberPendingSale({
+      ...payload?.data,
+      resumeVia: status === 'failed' || status === 'expired' ? 'gateway-poll' : 'pos-pay',
+      attemptId: pay.attemptId,
+    })
+    paymentOpen.value = false
+    return
+  }
+
+  if (status === 'pending' || status === 'ambiguous') {
     rememberPendingSale({
       ...payload?.data,
       resumeVia: 'gateway-poll',
@@ -612,17 +840,40 @@ function applyPaymentSuccess(payload: Record<string, any>, payment: Record<strin
     })
     if (payload?.data?.revision != null) pendingSaleRevision.value = Number(payload.data.revision)
     if (payload?.data?.grandTotal != null) pendingSaleTotal.value = Number(payload.data.grandTotal)
-    notice.value = `Pembayaran gateway ${pay.status} · attempt ${pay.attemptId || ''}. Stok sudah dikeluarkan; selesaikan via poll/webhook — jangan buat sale baru.`
+    notice.value = `Pembayaran gateway ${status} · attempt ${pay.attemptId || ''}. Provider belum settled — jangan anggap lunas.`
     paymentOpen.value = false
     if (pay.checkoutUrl) window.open(String(pay.checkoutUrl), '_blank', 'noopener,noreferrer')
+    return
+  }
+
+  // Provider/local succeeded but settlement missing → keep pending recovery, no paid receipt.
+  if (status === 'succeeded' && pay.settlementComplete === false) {
+    rememberPendingSale({
+      ...payload?.data,
+      resumeVia: 'gateway-poll',
+      attemptId: pay.attemptId,
+    })
+    notice.value =
+      'Provider sukses, settlement lokal belum selesai. Recovery/poll akan menyelesaikan tanpa charge baru.'
+    paymentOpen.value = false
+    return
+  }
+
+  if (status !== 'succeeded') {
+    paymentError.value = `Status pembayaran tidak dikenal: ${status || '(kosong)'}`
+    canRetryCheckout.value = true
     return
   }
 
   receipt.value = {
     ...payload.data,
     reprinted: false,
+    paymentState: pay.journalPosted === false ? 'settled_journal_pending' : 'settled',
   }
-  notice.value = `Transaksi ${payload?.data?.saleNumber || ''} selesai.`
+  notice.value =
+    pay.journalPosted === false
+      ? `Transaksi ${payload?.data?.saleNumber || ''} settled — jurnal masih pending.`
+      : `Transaksi ${payload?.data?.saleNumber || ''} selesai.`
   paymentOpen.value = false
   cart.value = []
   form.walkInName = ''
@@ -634,6 +885,7 @@ function applyPaymentSuccess(payload: Record<string, any>, payment: Record<strin
   pendingSaleTotal.value = null
   pendingResumeVia.value = null
   pendingGatewayAttemptId.value = null
+  clearPosSession()
 }
 
 async function pollGatewayAttempt() {
@@ -654,10 +906,28 @@ async function pollGatewayAttempt() {
       return
     }
     const attempt = payload.data || {}
-    if (attempt.status === 'succeeded') {
-      notice.value = 'Gateway sukses — memuat struk.'
-      pendingResumeVia.value = 'pos-pay'
-      // Receipt refresh
+    const status = String(attempt.status || '')
+
+    if (status === 'failed' || status === 'expired' || status === 'cancelled') {
+      paymentError.value = `Gateway ${status}. Tidak lunas — gunakan resolusi operator jika perlu.`
+      notice.value = ''
+      return
+    }
+
+    if (status === 'succeeded' && attempt.settlementComplete === false) {
+      await fetch($api.posGatewayRecover(), {
+        method: 'POST',
+        headers: headers(),
+        credentials: 'include',
+        body: JSON.stringify({ limit: 5 }),
+      }).catch(() => null)
+      notice.value =
+        'Provider captured / succeeded tanpa settlement — recovery dijalankan. Poll lagi sebentar.'
+      return
+    }
+
+    if (status === 'succeeded' && attempt.settlementComplete) {
+      notice.value = 'Gateway settled — memuat struk.'
       if (pendingSaleId.value) {
         const receiptRes = await fetch($api.posReceipt(pendingSaleId.value), {
           headers: headers(),
@@ -665,16 +935,28 @@ async function pollGatewayAttempt() {
         })
         const receiptPayload = await receiptRes.json().catch(() => ({}))
         if (receiptRes.ok) {
-          receipt.value = { ...receiptPayload.data, reprinted: false }
+          receipt.value = {
+            ...receiptPayload.data,
+            reprinted: false,
+            paymentState: 'settled',
+          }
+          lastPaymentMeta.value = {
+            ...(lastPaymentMeta.value || {}),
+            status: 'succeeded',
+            settlementComplete: true,
+            journalPosted: receiptPayload.data?.finance?.journalPosted,
+          }
           cart.value = []
           pendingSaleId.value = null
           pendingResumeVia.value = null
           pendingGatewayAttemptId.value = null
+          clearPosSession()
         }
       }
       return
     }
-    notice.value = `Gateway masih ${attempt.status}. Stok tetap ISSUED_AWAITING_GATEWAY.`
+
+    notice.value = `Gateway masih ${status || attempt.paymentStatusLabel || 'pending'}.`
   } catch (err: any) {
     paymentError.value = err?.message || 'Poll gateway gagal.'
   } finally {
@@ -867,23 +1149,38 @@ async function closeShift() {
   if (!shift.value?.id) return
   const counted = window.prompt('Hasil hitung kas di laci', String(shift.value.expectedCash ?? shift.value.openingCash ?? 0))
   if (counted == null) return
+  let acknowledgePendingGateway = false
   const { $api } = useNuxtApp()
-  const res = await fetch($api.posShiftClose(shift.value.id), {
-    method: 'POST',
-    headers: headers(),
-    credentials: 'include',
-    body: JSON.stringify({
-      shiftId: shift.value.id,
-      countedCash: Number(counted) || 0,
-    }),
-  })
-  const payload = await res.json().catch(() => ({}))
+  const attemptClose = async () => {
+    const res = await fetch($api.posShiftClose(shift.value!.id), {
+      method: 'POST',
+      headers: headers(),
+      credentials: 'include',
+      body: JSON.stringify({
+        shiftId: shift.value!.id,
+        countedCash: Number(counted) || 0,
+        acknowledgePendingGateway,
+      }),
+    })
+    return { res, payload: await res.json().catch(() => ({})) }
+  }
+  let { res, payload } = await attemptClose()
+  if (!res.ok && payload?.code === 'POS_SETTLEMENT_INCOMPLETE') {
+    const pending = payload?.data?.summary?.pendingGatewayCount ?? '?'
+    const ok = window.confirm(
+      `Masih ada ${pending} gateway pending. Tutup shift tetap? Late success tetap bisa settle ke shift ini.`
+    )
+    if (!ok) return
+    acknowledgePendingGateway = true
+    ;({ res, payload } = await attemptClose())
+  }
   if (!res.ok) {
     error.value = payload?.message || 'Gagal tutup shift.'
     return
   }
   const s = payload.data
-  notice.value = `Shift ditutup. Diharapkan ${s.expectedCash}, hitung ${s.countedCash}, selisih ${s.cashVariance}.`
+  const summary = s.summary || {}
+  notice.value = `Shift ditutup. Kas netto ${summary.cashNet ?? s.expectedCash}, noncash ${summary.nonCashSucceeded ?? 0}, pending ${summary.pendingGatewayCount ?? 0}, hitung ${s.countedCash}, selisih ${s.cashVariance}.`
   shift.value = null
 }
 
@@ -947,6 +1244,7 @@ onMounted(async () => {
   }
   document.addEventListener('fullscreenchange', onFullscreenChange)
   void catalog.reload()
+  await restorePosSession()
 })
 
 onUnmounted(() => {

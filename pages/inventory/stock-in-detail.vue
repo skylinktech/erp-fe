@@ -1,6 +1,6 @@
 <template>
     <div class="content-wrapper">
-        <div class="container-xxl flex-grow-1 container-p-y">
+        <div class="container-xxl flex-grow-1 container-pt-10">
             <h4 class="mb-1">Detail Stock in</h4>
             <PageBreadcrumb class="mt-1" current-label="Detail Stock in" />
             <p class="mb-6">
@@ -76,9 +76,19 @@
                                 <Column field="product.sku" header="Part Number" :sortable="true"></Column>
                                 <Column field="product.name" header="Produk" :sortable="true"></Column>
                                 <Column field="description" header="Deskripsi" :sortable="true"></Column>
-                                <Column field="quantity" header="Quantity Stock In" :sortable="true">
+                                <Column field="quantity" header="Qty stok (base)" :sortable="true">
                                     <template #body="slotProps">
                                         {{ slotProps.data.quantity || 0 }}
+                                        <span v-if="slotProps.data.orderQty" class="text-muted small d-block">
+                                          Order: {{ slotProps.data.orderQty }}
+                                        </span>
+                                    </template>
+                                </Column>
+                                <Column header="Kondisi">
+                                    <template #body="slotProps">
+                                        <span :class="conditionBadge(slotProps.data.condition).class">
+                                          {{ conditionBadge(slotProps.data.condition).text }}
+                                        </span>
                                     </template>
                                 </Column>
                                 <Column header="Serialized">
@@ -99,6 +109,70 @@
                             </MyDataTable>
                         </div>
                     </div>
+                </div>
+
+                <div v-if="qcHoldDetails.length" id="qc-work" class="col-12">
+                  <div class="card border-warning">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                      <div>
+                        <h5 class="card-title mb-0">Pekerjaan QC</h5>
+                        <small class="text-muted">
+                          Release ke sellable menaikkan available-to-sell tanpa menambah on-hand/valuation.
+                          Bukan putaway lokasi/bin. Retur supplier memakai Purchase Return.
+                        </small>
+                      </div>
+                    </div>
+                    <div class="card-body mt-5">
+                      <div
+                        v-for="detail in qcHoldDetails"
+                        :key="detail.id"
+                        class="border rounded p-3 mb-3"
+                      >
+                        <div class="d-flex flex-wrap justify-content-between gap-2 mb-2">
+                          <div>
+                            <strong>{{ detail.product?.name || detail.productId }}</strong>
+                            <div class="small text-muted">{{ detail.product?.sku }} · hold {{ holdRemaining(detail) }} base unit · kondisi {{ detail.condition }}</div>
+                          </div>
+                          <span :class="conditionBadge(detail.condition).class">{{ conditionBadge(detail.condition).text }}</span>
+                        </div>
+                        <div class="row g-2 align-items-end">
+                          <div class="col-md-3">
+                            <label class="form-label">Keputusan</label>
+                            <select v-model="qcForms[detail.id].decision" class="form-select form-select-sm">
+                              <option value="sellable">Layak jual (lepas hold)</option>
+                              <option value="keep_hold">Tetap karantina/rusak</option>
+                              <option value="return_supplier">Perlu retur supplier</option>
+                            </select>
+                          </div>
+                          <div class="col-md-2">
+                            <label class="form-label">Qty proses</label>
+                            <input
+                              v-model.number="qcForms[detail.id].quantity"
+                              type="number"
+                              min="0.0001"
+                              step="any"
+                              class="form-control form-control-sm"
+                              :max="holdRemaining(detail)"
+                            >
+                          </div>
+                          <div class="col-md-4">
+                            <label class="form-label">Catatan</label>
+                            <input v-model="qcForms[detail.id].notes" type="text" class="form-control form-control-sm" placeholder="Hasil inspeksi">
+                          </div>
+                          <div class="col-md-3">
+                            <button
+                              type="button"
+                              class="btn btn-sm btn-warning"
+                              :disabled="qcBusy === detail.id"
+                              @click="submitQcDecision(detail)"
+                            >
+                              {{ qcBusy === detail.id ? 'Memproses…' : 'Simpan keputusan QC' }}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <div
@@ -213,6 +287,83 @@ const stockInStore = useStockStore()
 const { selectedStockIn: stockIn, loading, error } = storeToRefs(stockInStore)
 const serialDrafts = reactive({})
 const savingDetailId = ref(null)
+const qcBusy = ref(null)
+const qcForms = reactive({})
+
+function conditionBadge(condition) {
+  const c = String(condition || 'good').toLowerCase()
+  if (c === 'damaged') return { text: 'Rusak / hold', class: 'badge bg-label-danger' }
+  if (c === 'quarantine') return { text: 'Quarantine', class: 'badge bg-label-warning' }
+  return { text: 'Baik / sellable', class: 'badge bg-label-success' }
+}
+
+function holdRemaining(detail) {
+  const qty = Number(detail.quantity) || 0
+  const released = Number(detail.qcReleasedQty ?? detail.qc_released_qty ?? 0) || 0
+  return Math.max(0, Math.round((qty - released) * 1e6) / 1e6)
+}
+
+const qcHoldDetails = computed(() =>
+  (stockIn.value?.stockInDetails || stockIn.value?.stock_in_details || []).filter((d) => {
+    const c = String(d.condition || 'good').toLowerCase()
+    return (c === 'damaged' || c === 'quarantine') && holdRemaining(d) > 0
+  })
+)
+
+watch(
+  qcHoldDetails,
+  (rows) => {
+    for (const d of rows) {
+      if (!qcForms[d.id]) {
+        qcForms[d.id] = {
+          decision: 'sellable',
+          quantity: holdRemaining(d),
+          notes: '',
+        }
+      }
+    }
+  },
+  { immediate: true }
+)
+
+async function submitQcDecision(detail) {
+  const form = qcForms[detail.id] || {}
+  qcBusy.value = detail.id
+  try {
+    const response = await fetch($api.stockInReleaseQc(stockIn.value.id), {
+      method: 'POST',
+      credentials: 'include',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        detailId: detail.id,
+        decision: form.decision || 'sellable',
+        quantity: form.quantity,
+        notes: form.notes || null,
+        idempotencyKey: crypto.randomUUID(),
+      }),
+    })
+    const body = await response.json().catch(() => ({}))
+    if (!response.ok) {
+      throw Object.assign(new Error(body?.message || `HTTP ${response.status}`), { data: body })
+    }
+    toast.success({
+      title: 'QC tersimpan',
+      message: body?.message || 'Keputusan QC diproses',
+      color: 'green',
+      position: 'bottomRight',
+    })
+    await stockInStore.fetchStockInById(stockIn.value.id)
+  } catch (e) {
+    toast.error({
+      title: 'Error',
+      message: getApiErrorMessage(e, 'Gagal memproses QC'),
+      color: 'red',
+      position: 'bottomRight',
+    })
+  } finally {
+    qcBusy.value = null
+  }
+}
 
 function isDeviceProduct(product) {
   return !!(product?.isDevice ?? product?.is_device)

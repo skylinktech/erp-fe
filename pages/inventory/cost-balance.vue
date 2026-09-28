@@ -22,8 +22,14 @@
 
       <div v-if="error" class="alert alert-danger">{{ error }}</div>
       <div v-if="summary" class="alert alert-secondary small mb-3">
-        Total inventory value: <strong>{{ formatMoney(summary.totalInventoryValue) }}</strong>
-        · Total qty: <strong>{{ summary.totalQuantity }}</strong>
+        On-hand value: <strong>{{ formatMoney(summary.onHandInventoryValue ?? summary.totalInventoryValue) }}</strong>
+        · On-hand qty: <strong>{{ summary.onHandQuantity ?? summary.totalQuantity }}</strong>
+        <template v-if="summary.inTransitValue != null">
+          · In-transit value: <strong>{{ formatMoney(summary.inTransitValue) }}</strong>
+          · In-transit qty: <strong>{{ summary.inTransitQty }}</strong>
+          · Company position: <strong>{{ formatMoney(summary.companyInventoryValue) }}</strong>
+        </template>
+        <div v-if="summary.inTransit?.note" class="mt-1 text-muted">{{ summary.inTransit.note }}</div>
       </div>
 
       <div class="card">

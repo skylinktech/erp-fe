@@ -64,6 +64,17 @@
       >
         <StockMovementsTab />
       </div>
+
+      <div
+        v-if="isTabActivated('warehouse-ops')"
+        v-show="activeTab === 'warehouse-ops'"
+        id="stock-panel-warehouse-ops"
+        role="tabpanel"
+        aria-labelledby="stock-tab-warehouse-ops"
+        class="pt-1"
+      >
+        <WarehouseOpsTab />
+      </div>
     </div>
   </div>
 </template>
@@ -75,6 +86,7 @@ import StockInTab from '~/components/inventory/stock/StockInTab.vue'
 import StockOutTab from '~/components/inventory/stock/StockOutTab.vue'
 import StockTransferTab from '~/components/inventory/stock/StockTransferTab.vue'
 import StockMovementsTab from '~/components/inventory/stock/StockMovementsTab.vue'
+import WarehouseOpsTab from '~/components/inventory/stock/WarehouseOpsTab.vue'
 import { useFinanceWorkspaceTabs } from '~/composables/useFinanceWorkspaceTabs'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import { STOCK_WORKSPACE_TABS } from '~/utils/inventory/stockWorkspace'

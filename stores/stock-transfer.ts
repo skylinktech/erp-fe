@@ -46,6 +46,8 @@ interface StockTransferState {
     sortOrder: number | null
     draw: number
     search: string
+    status?: string | null
+    fulfillmentStatus?: string | null
   }
   form: any
   isEditMode: boolean
@@ -75,6 +77,8 @@ export const useStockTransferStore = defineStore('stockTransfer', {
         sortOrder: null,
         draw: 1,
         search: '',
+        status: null,
+        fulfillmentStatus: null,
     },
     form: {
       perusahaanId: null,
@@ -106,6 +110,8 @@ export const useStockTransferStore = defineStore('stockTransfer', {
             draw     : (this.params.draw || 1).toString(),
             search   : this.params.search || '',
         });
+        if (this.params.status) params.set('status', this.params.status)
+        if (this.params.fulfillmentStatus) params.set('fulfillmentStatus', this.params.fulfillmentStatus)
 
         const response = await fetch(`${$api.stockTransfer()}?${params.toString()}`, {
             headers: {
@@ -309,6 +315,141 @@ export const useStockTransferStore = defineStore('stockTransfer', {
           this.loading = false;
       }
     },
+
+    async dispatchStockTransfer(
+      stockTransferId: string,
+      payload: { lines: Array<{ detailId: string; quantity: number }>; notes?: string; idempotencyKey?: string }
+    ) {
+      const { $api } = useNuxtApp()
+      const response = await fetch($api.dispatchStockTransfer(stockTransferId), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          ...(payload.idempotencyKey ? { 'Idempotency-Key': payload.idempotencyKey } : {}),
+        },
+        credentials: 'include',
+        body: JSON.stringify(payload),
+      })
+      if (!response.ok) {
+        const err = await normalizeFailedResponse(response, 'Pengiriman gagal.')
+        throw new Error(err.message)
+      }
+      return response.json()
+    },
+
+    async receiveStockTransfer(
+      stockTransferId: string,
+      payload: {
+        shipmentId: string
+        lines: Array<{ shipmentItemId: string; quantity: number; condition?: string }>
+        notes?: string
+        idempotencyKey?: string
+      }
+    ) {
+      const { $api } = useNuxtApp()
+      const response = await fetch($api.receiveStockTransfer(stockTransferId), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          ...(payload.idempotencyKey ? { 'Idempotency-Key': payload.idempotencyKey } : {}),
+        },
+        credentials: 'include',
+        body: JSON.stringify(payload),
+      })
+      if (!response.ok) {
+        const err = await normalizeFailedResponse(response, 'Penerimaan gagal.')
+        throw new Error(err.message)
+      }
+      return response.json()
+    },
+
+    async cancelRemainderStockTransfer(stockTransferId: string, reason?: string, idempotencyKey?: string) {
+      const { $api } = useNuxtApp()
+      const response = await fetch($api.cancelRemainderStockTransfer(stockTransferId), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}),
+        },
+        credentials: 'include',
+        body: JSON.stringify({ reason }),
+      })
+      if (!response.ok) {
+        const err = await normalizeFailedResponse(response, 'Batalkan sisa gagal.')
+        throw new Error(err.message)
+      }
+      return response.json()
+    },
+
+    async returnToSourceStockTransfer(
+      stockTransferId: string,
+      payload: {
+        shipmentItemId: string
+        quantity: number
+        reason: string
+        idempotencyKey?: string
+      }
+    ) {
+      const { $api } = useNuxtApp()
+      const response = await fetch($api.returnToSourceStockTransfer(stockTransferId), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          ...(payload.idempotencyKey ? { 'Idempotency-Key': payload.idempotencyKey } : {}),
+        },
+        credentials: 'include',
+        body: JSON.stringify(payload),
+      })
+      if (!response.ok) {
+        const err = await normalizeFailedResponse(response, 'Return-to-source gagal.')
+        throw new Error(err.message)
+      }
+      return response.json()
+    },
+
+    async resolveLossStockTransfer(
+      stockTransferId: string,
+      payload: {
+        shipmentItemId: string
+        quantity: number
+        reason: string
+        idempotencyKey?: string
+      }
+    ) {
+      const { $api } = useNuxtApp()
+      const response = await fetch($api.resolveLossStockTransfer(stockTransferId), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          ...(payload.idempotencyKey ? { 'Idempotency-Key': payload.idempotencyKey } : {}),
+        },
+        credentials: 'include',
+        body: JSON.stringify(payload),
+      })
+      if (!response.ok) {
+        const err = await normalizeFailedResponse(response, 'Resolve loss gagal.')
+        throw new Error(err.message)
+      }
+      return response.json()
+    },
+
+    setStatusFilter(status: string | null) {
+      this.params.status = status
+      this.params.first = 0
+      this.fetchStockTransfersPaginated()
+    },
+
+    setFulfillmentFilter(fulfillmentStatus: string | null) {
+      this.params.fulfillmentStatus = fulfillmentStatus
+      this.params.first = 0
+      this.fetchStockTransfersPaginated()
+    },
+
     // Fungsi untuk mengambil data statistik stock transfer
     async fetchStats() {
       const defaultStats = {

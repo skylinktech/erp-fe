@@ -44,10 +44,19 @@
               <div v-if="paymentMeta.changeAmount != null">
                 Kembalian: {{ formatPosMoney(Number(paymentMeta.changeAmount)) }}
               </div>
+              <div v-if="paymentMeta.status === 'succeeded' && paymentMeta.settlementComplete !== false" class="text-success">
+                Status: Lunas (settlement tercatat)
+              </div>
+              <div v-else-if="paymentMeta.settlementComplete === false" class="text-warning">
+                Status: Provider sukses — settlement lokal belum selesai
+              </div>
               <div v-if="paymentMeta.journalPosted === false" class="text-warning">
                 Jurnal kas masih pending — penerimaan sudah tercatat.
               </div>
             </div>
+            <p v-if="receipt.paymentState === 'settled_journal_pending'" class="text-warning mt-2 mb-0">
+              Settled tanpa journal posted — bukan struk gagal; jurnal menyusul via outbox.
+            </p>
             <p v-if="receipt.reprinted" class="text-muted mt-2 mb-0">Cetak ulang — bukan transaksi baru.</p>
           </div>
         </div>

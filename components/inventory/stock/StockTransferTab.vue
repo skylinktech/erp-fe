@@ -20,15 +20,41 @@
                             @export="exportData"
                         >
                             <template #add>
-                                <button
-                                    v-if="userHasRole('superadmin') || userHasPermission('create_stock_transfer')"
-                                    type="button"
-                                    class="btn btn-primary"
-                                    @click="stockTransferStore.openModal()"
-                                >
-                                    <i class="ri-add-line me-1"></i>
-                                    Buat Stock Transfer
-                                </button>
+                                <div class="d-flex flex-wrap gap-2 align-items-center">
+                                  <select
+                                    class="form-select form-select-sm"
+                                    style="width:auto"
+                                    :value="params.status || ''"
+                                    @change="stockTransferStore.setStatusFilter(($event.target).value || null)"
+                                  >
+                                    <option value="">Semua approval</option>
+                                    <option value="draft">Draft</option>
+                                    <option value="approved">Approved</option>
+                                    <option value="rejected">Rejected</option>
+                                  </select>
+                                  <select
+                                    class="form-select form-select-sm"
+                                    style="width:auto"
+                                    :value="params.fulfillmentStatus || ''"
+                                    @change="stockTransferStore.setFulfillmentFilter(($event.target).value || null)"
+                                  >
+                                    <option value="">Semua fulfillment</option>
+                                    <option value="READY_TO_SHIP">Ready to ship</option>
+                                    <option value="IN_TRANSIT">In transit</option>
+                                    <option value="PARTIAL">Partial</option>
+                                    <option value="COMPLETE">Complete</option>
+                                    <option value="CANCELLED">Cancelled</option>
+                                  </select>
+                                  <button
+                                      v-if="userHasRole('superadmin') || userHasPermission('create_stock_transfer')"
+                                      type="button"
+                                      class="btn btn-primary"
+                                      @click="stockTransferStore.openModal()"
+                                  >
+                                      <i class="ri-add-line me-1"></i>
+                                      Buat Stock Transfer
+                                  </button>
+                                </div>
                             </template>
                         </ListPageTableHeader>
 <div class="card-datatable table-responsive py-3 px-3">
@@ -67,6 +93,10 @@
                                         <span :class="getStatusBadge(slotProps.data.status).class">
                                             {{ getStatusBadge(slotProps.data.status).text }}
                                         </span>
+                                        <div v-if="slotProps.data.fulfillmentStatus" class="small text-muted mt-1">
+                                          {{ slotProps.data.fulfillmentStatus }}
+                                          <span v-if="Number(slotProps.data.lifecycleVersion) === 1" class="badge bg-label-secondary ms-1">legacy</span>
+                                        </div>
                                     </template>
                                 </Column>
                                 <Column field="date" header="Tanggal" :sortable="true" style="width:10%">
@@ -112,9 +142,9 @@
                                                         <i class="ri-check-line me-2"></i> Approve
                                                     </a>
                                                 </li>
-                                                <li v-if="userHasRole('superadmin') || (userHasPermission('view_stock_transfer') && slotProps.data.status == 'approved')">
+                                                <li v-if="userHasRole('superadmin') || userHasPermission('view_stock_transfer')">
                                                     <a class="dropdown-item" href="javascript:void(0)" @click="viewStockTransferDetails(slotProps.data.id)">
-                                                        <i class="ri-eye-line me-2"></i> Lihat Detail
+                                                        <i class="ri-eye-line me-2"></i> Lihat / Kirim-Terima
                                                     </a>
                                                 </li>
                                                 <li v-if="userHasRole('superadmin') || (userHasPermission('edit_stock_transfer') && slotProps.data.status == 'draft')">
@@ -505,19 +535,27 @@ watch(() => form.value.fromWarehouseId, (newWarehouseId, oldWarehouseId) => {
 }, { immediate: false });
 
 const handleSaveStockTransfer = async () => {
+    const toast = useToast()
     if (!form.value.date) {
-        return toast.fire('Validasi', 'Tanggal wajib diisi.', 'warning');
+        toast.error({
+            title: 'Validasi',
+            message: 'Tanggal wajib diisi.',
+            color: 'red',
+            position: 'bottomRight',
+        })
+        return
     }
 
     try {
         await stockTransferStore.saveStockTransfer();
         await stockTransferStore.fetchStockTransfersPaginated();
         stockTransferStore.closeModal();
-        toast.fire(
-            'Berhasil!',
-            `Stock Transfer berhasil ${isEditMode.value ? 'diperbarui' : 'dibuat'}.`,
-            'success'
-        );
+        toast.success({
+            title: 'Berhasil!',
+            message: `Stock Transfer berhasil ${isEditMode.value ? 'diperbarui' : 'dibuat'}.`,
+            color: 'green',
+            position: 'bottomRight',
+        })
     } catch (error) {
         const err = normalizeApiError(error, 'Stock Transfer gagal disimpan.')
         stockTransferStore.validationErrors = err.fieldErrorList
@@ -540,8 +578,7 @@ const loadLazyData = async () => {
     try {
         await stockTransferStore.fetchStockTransfersPaginated();
     } catch (error) {
-        const error_message = error.message;
-        toast.fire('Error', `Tidak dapat memuat data Stock Transfer: ${error_message}`, 'error');
+        toastNormalizedError(normalizeApiError(error, 'Tidak dapat memuat data Stock Transfer.'))
     }
 };
 
@@ -686,33 +723,36 @@ const deleteStockTransfer = async (id) => {
     });
 
     if (result.isConfirmed) {
+        const toast = useToast()
         try {
             await stockTransferStore.deleteStockTransfer(id);
             loadLazyData(); // Muat ulang data
-            await toast.fire({
+            toast.success({
                 title: 'Berhasil!',
-                text: 'Stock Transfer berhasil dihapus.',
-                icon: 'success'
-            });
-
+                message: 'Stock Transfer berhasil dihapus.',
+                color: 'green',
+                position: 'bottomRight',
+            })
         } catch (error) {
-            await toast.fire({
-                title: 'Error',
-                text: error.message,
-                icon: 'error'
-            });
+            toastNormalizedError(normalizeApiError(error, 'Stock Transfer gagal dihapus.'))
         }
     }
 };
 
 const getStatusBadge = (status) => {
-    switch (status) {
+    switch (String(status || '').toLowerCase()) {
         case 'draft':
-            return { text: 'Draft', class: 'badge rounded-pill bg-label-secondary' };
+            return { text: 'Draft', class: 'badge rounded-pill bg-label-secondary' }
         case 'approved':
-            return { text: 'Approved', class: 'badge rounded-pill bg-label-success' };
+            return { text: 'Approved', class: 'badge rounded-pill bg-label-success' }
+        case 'rejected':
+            return { text: 'Rejected', class: 'badge rounded-pill bg-label-danger' }
+        case 'submitted':
+            return { text: 'Submitted', class: 'badge rounded-pill bg-label-info' }
+        default:
+            return { text: status || '-', class: 'badge rounded-pill bg-label-secondary' }
     }
-};
+}
 
 // Fungsi export PDF khusus untuk Stock Transfer
 const exportStockTransferPDF = (dataToExport) => {

@@ -69,6 +69,7 @@
                 <th class="text-end">Before</th>
                 <th class="text-end">After</th>
                 <th>Source</th>
+                <th>Leg</th>
                 <th>Status</th>
                 <th>Ref</th>
               </tr>
@@ -90,6 +91,7 @@
                 <td class="text-end">{{ m.beforeQuantity }}</td>
                 <td class="text-end">{{ m.afterQuantity }}</td>
                 <td class="text-truncate" style="max-width: 140px">{{ m.sourceDocumentType || '-' }}</td>
+                <td class="small">{{ m.leg || '-' }}</td>
                 <td><span :class="statusBadge(m.status)">{{ getDocumentStatusLabel(m.status) }}</span></td>
                 <td>{{ m.referenceNumber || '-' }}</td>
               </tr>
@@ -136,6 +138,7 @@
                 <dt class="col-5">Source</dt>
                 <dd class="col-7">{{ selected.sourceDocumentType || '-' }} #{{ selected.sourceDocumentId || '-' }}</dd>
                 <dt class="col-5">Source Line</dt><dd class="col-7">{{ selected.sourceDocumentLineId || '-' }}</dd>
+                <dt class="col-5">Leg</dt><dd class="col-7">{{ selected.leg || '-' }}</dd>
                 <dt class="col-5">Actor</dt><dd class="col-7">{{ selected.actorUser?.name || selected.actor || '-' }}</dd>
                 <dt class="col-5">Reason / Notes</dt>
                 <dd class="col-7">{{ selected.reason || '-' }} / {{ selected.notes || '-' }}</dd>
@@ -195,6 +198,11 @@
 
           <div class="d-flex flex-wrap gap-2 mt-3">
             <NuxtLink class="btn btn-sm btn-outline-primary" to="/inventory/stock-card">Open Stock Card</NuxtLink>
+            <NuxtLink
+              v-if="selected.sourceDocumentType === 'stock_transfer' && selected.sourceDocumentId"
+              class="btn btn-sm btn-outline-primary"
+              :to="`/inventory/stock-transfer-detail?id=${selected.sourceDocumentId}`"
+            >Buka Stock Transfer</NuxtLink>
             <NuxtLink
               v-if="selected.id"
               class="btn btn-sm btn-outline-primary"
@@ -270,6 +278,13 @@ function canReverse(m) {
 }
 
 onMounted(() => {
+  const route = useRoute()
+  if (route.query.sourceDocumentType) filters.sourceDocumentType = String(route.query.sourceDocumentType)
+  if (route.query.sourceDocumentId) {
+    // API may filter by sourceDocumentId if supported; keep type filter at minimum
+    filters.sourceDocumentType = filters.sourceDocumentType || 'stock_transfer'
+  }
+  if (route.query.movementType) filters.movementType = String(route.query.movementType)
   load()
 })
 

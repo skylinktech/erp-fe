@@ -583,6 +583,31 @@
                             </table>
                         </div>
 
+                        <div class="row g-2 mt-2">
+                            <div class="col-md-4">
+                                <label class="form-label">Kondisi barang</label>
+                                <select v-model="receiveCondition" class="form-select">
+                                    <option value="good">Baik (ATS)</option>
+                                    <option value="damaged">Rusak (QC hold)</option>
+                                    <option value="quarantine">Quarantine (QC hold)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Surat jalan supplier</label>
+                                <input v-model="receiveDeliveryNote" type="text" class="form-control" maxlength="120" placeholder="No. SJ / DO">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Catatan</label>
+                                <input v-model="receiveNotes" type="text" class="form-control" maxlength="200" placeholder="Opsional">
+                            </div>
+                        </div>
+                        <div class="form-check mt-2">
+                            <input id="autoPostReceive" v-model="receiveAutoPost" class="form-check-input" type="checkbox">
+                            <label class="form-check-label" for="autoPostReceive">
+                                Posting stok segera (valuation + on-hand). Putaway tidak menambah qty lagi.
+                            </label>
+                        </div>
+
                         <div class="alert alert-warning mt-3" v-if="totalModalReceiveQty === 0">
                             <i class="ri-alert-line me-2"></i>
                             Silakan pilih minimal 1 item untuk diterima.
@@ -646,6 +671,10 @@ const poId = route.query.id
 const receivePartialModal = ref(null)
 const modalItems = ref([])
 const isReceiveModalOpen = ref(false)
+const receiveCondition = ref('good')
+const receiveDeliveryNote = ref('')
+const receiveNotes = ref('')
+const receiveAutoPost = ref(true)
 const downloadingPdf = ref(false)
 
 useBootstrapModal(
@@ -1122,7 +1151,14 @@ const confirmReceivePartial = async () => {
         // Process each item sequentially
         for (const item of itemsToReceive) {
             const newReceivedQty = Math.floor(Number(item.receivedQty) || 0) + item.tempReceiveQty
-            await purchaseOrderStore.updateStatusPartial(item.id, false, newReceivedQty)
+            const ok = await purchaseOrderStore.updateStatusPartial(item.id, false, newReceivedQty, {
+                condition: receiveCondition.value,
+                supplierDeliveryNote: receiveDeliveryNote.value || undefined,
+                receiveNotes: receiveNotes.value || undefined,
+                idempotencyKey: crypto.randomUUID(),
+                autoPost: receiveAutoPost.value,
+            })
+            if (ok === false) throw new Error('Gagal menerima salah satu baris')
         }
 
         // Refresh data

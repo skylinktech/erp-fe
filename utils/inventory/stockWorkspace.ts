@@ -4,6 +4,7 @@ export type StockWorkspaceTabId =
   | 'stock-out'
   | 'transfer'
   | 'movements'
+  | 'warehouse-ops'
 
 export interface StockWorkspaceTab {
   id: StockWorkspaceTabId
@@ -20,6 +21,7 @@ export const STOCK_WORKSPACE_TABS: readonly StockWorkspaceTab[] = [
   { id: 'stock-out', label: 'Stock Out', permission: 'view_stock_out' },
   { id: 'transfer', label: 'Stock Transfer', permission: 'view_stock_transfer' },
   { id: 'movements', label: 'Movements', permission: 'view_stock_movements' },
+  { id: 'warehouse-ops', label: 'Outbound', permission: 'fulfill_retail_sale' },
 ] as const
 
 export const STOCK_WORKSPACE_PERMISSIONS = STOCK_WORKSPACE_TABS.map((tab) => tab.permission)

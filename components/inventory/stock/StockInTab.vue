@@ -22,6 +22,14 @@
                         >
                             <template #toolbar-extra>
                                 <button
+                                    class="btn btn-outline-warning btn-sm"
+                                    type="button"
+                                    @click="loadQcQueue"
+                                    title="Antrian QC — bukan putaway lokasi"
+                                >
+                                    <i class="ri-shield-check-line me-1"></i> Antrian QC ({{ qcQueue.length }})
+                                </button>
+                                <button
                                     class="btn btn-dark btn-sm"
                                     type="button"
                                     @click="postAllSelectedStockIn"
@@ -32,6 +40,38 @@
                                 </button>
                             </template>
                         </ListPageTableHeader>
+                        <div v-if="showQcQueue && qcQueue.length" class="px-3 pb-2">
+                          <div class="alert alert-warning mb-0">
+                            <div class="fw-semibold mb-2">Menunggu QC / hold (Active Company)</div>
+                            <div class="table-responsive">
+                              <table class="table table-sm mb-0">
+                                <thead>
+                                  <tr>
+                                    <th>No SI</th>
+                                    <th>Produk</th>
+                                    <th>Kondisi</th>
+                                    <th>Hold qty</th>
+                                    <th></th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  <tr v-for="row in qcQueue" :key="row.reservation_id || row.detail_id">
+                                    <td>{{ row.no_si }}</td>
+                                    <td>{{ row.product_name || row.sku }}</td>
+                                    <td>{{ row.condition }}</td>
+                                    <td>{{ row.hold_qty }}</td>
+                                    <td>
+                                      <button type="button" class="btn btn-sm btn-outline-primary" @click="viewStockInDetails(row.stock_in_id)">
+                                        Buka QC
+                                      </button>
+                                    </td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                            </div>
+                            <div class="small text-muted mt-2">Putaway lokasi/bin belum tersedia — release QC hanya mengubah ATS.</div>
+                          </div>
+                        </div>
 <div class="card-datatable table-responsive py-3 px-3">
                                                 <MyDataTable 
                             ref="myDataTableRef"
@@ -237,6 +277,8 @@ const globalFilterValue         = ref('');
 const router                    = useRouter()
 const selectedStockIns          = ref([])
 const forceUpdate               = ref(0)
+const qcQueue                   = ref([])
+const showQcQueue               = ref(false)
 
 const { userHasPermission, userHasRole } = usePermissions();
 
@@ -244,6 +286,22 @@ const status       = ref([
     { label: 'Draft', value: 'draft' },
     { label: 'Posted', value: 'posted' },
 ]);
+
+async function loadQcQueue() {
+  showQcQueue.value = true
+  try {
+    const response = await fetch($api.stockInQcPending(), {
+      credentials: 'include',
+      headers: { Accept: 'application/json' },
+    })
+    if (!response.ok) throw new Error(`HTTP ${response.status}`)
+    const res = await response.json()
+    qcQueue.value = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : []
+  } catch (e) {
+    toastApiError(e, 'Gagal memuat antrian QC')
+    qcQueue.value = []
+  }
+}
 
 function isDeviceProduct(product) {
     return !!(product?.isDevice ?? product?.is_device)

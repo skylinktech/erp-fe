@@ -29,7 +29,9 @@
       @page="emit('page', $event)"
       @sort="emit('sort', $event)"
       @selection-change="emit('selection-change', $event)"
-      @row-toggle="emit('row-toggle', $event)"
+      @update:expandedRows="onExpandedRowsUpdate"
+      @row-expand="emit('row-expand', $event)"
+      @row-collapse="emit('row-collapse', $event)"
     >
       <slot></slot>
       
@@ -94,7 +96,24 @@ const props = defineProps({
     },
 })
 
-const emit = defineEmits(['page', 'sort', 'selection-change', 'row-toggle'])
+const emit = defineEmits([
+  'page',
+  'sort',
+  'selection-change',
+  'row-toggle',
+  'update:expandedRows',
+  'row-expand',
+  'row-collapse',
+])
+
+/**
+ * PrimeVue 4 DataTable emits update:expandedRows (not row-toggle).
+ * Keep row-toggle `{ data }` for existing callers that sync expandedRows from it.
+ */
+function onExpandedRowsUpdate(value) {
+  emit('update:expandedRows', value)
+  emit('row-toggle', { data: value })
+}
 
 const dt = ref()
 

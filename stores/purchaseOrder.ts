@@ -645,7 +645,18 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
       }
     },
 
-    async updateStatusPartial(itemId: string, status: boolean, receivedQty: number) {
+    async updateStatusPartial(
+      itemId: string,
+      status: boolean,
+      receivedQty: number,
+      opts: {
+        condition?: string
+        supplierDeliveryNote?: string
+        receiveNotes?: string
+        idempotencyKey?: string
+        autoPost?: boolean
+      } = {}
+    ) {
       const toast     = useToast();
         this.loading = true;
         this.error = null;
@@ -658,46 +669,58 @@ export const usePurchaseOrderStore = defineStore('purchaseOrder', {
                     'Content-Type': 'application/json',
                 },
                 body: { 
-                    receivedQty: receivedQty 
+                    receivedQty: receivedQty,
+                    condition: opts.condition || 'good',
+                    supplierDeliveryNote: opts.supplierDeliveryNote || null,
+                    receiveNotes: opts.receiveNotes || null,
+                    idempotencyKey: opts.idempotencyKey || null,
+                    autoPost: opts.autoPost !== false,
                 },
-                credentials: 'include', // Cookie-based auth (apiFetch already handles this)
+                credentials: 'include',
             });
 
-            const updatedPurchaseOrderItem = resData.data.purchaseOrderItem;
-            const updatedPurchaseOrder = resData.data.purchaseOrder;
+            // Support both legacy { data: { purchaseOrderItem } } and new { purchaseOrderItem, data }
+            const updatedPurchaseOrderItem =
+              resData?.data?.purchaseOrderItem ||
+              resData?.purchaseOrderItem ||
+              resData?.data;
+            const updatedPurchaseOrder = resData?.data?.purchaseOrder || resData?.purchaseOrder;
 
-            if (this.purchaseOrder && this.purchaseOrder.purchaseOrderItems) {
+            if (this.purchaseOrder && this.purchaseOrder.purchaseOrderItems && updatedPurchaseOrderItem?.id) {
                 const index = this.purchaseOrder.purchaseOrderItems.findIndex(item => item.id === itemId);
                 if (index !== -1) {
-                    this.purchaseOrder.purchaseOrderItems[index].statusPartial = updatedPurchaseOrderItem.statusPartial;
-                    this.purchaseOrder.purchaseOrderItems[index].receivedQty = updatedPurchaseOrderItem.receivedQty;
+                    if (updatedPurchaseOrderItem.statusPartial != null) {
+                      this.purchaseOrder.purchaseOrderItems[index].statusPartial = updatedPurchaseOrderItem.statusPartial;
+                    }
+                    if (updatedPurchaseOrderItem.receivedQty != null) {
+                      this.purchaseOrder.purchaseOrderItems[index].receivedQty = updatedPurchaseOrderItem.receivedQty;
+                    } else {
+                      this.purchaseOrder.purchaseOrderItems[index].receivedQty = receivedQty;
+                    }
                 }
-                if (this.purchaseOrder.status !== updatedPurchaseOrder.status) {
+                if (updatedPurchaseOrder && this.purchaseOrder.status !== updatedPurchaseOrder.status) {
                     this.purchaseOrder.status = updatedPurchaseOrder.status;
                 }
-                if (updatedPurchaseOrder.receivedBy != null) {
+                if (updatedPurchaseOrder?.receivedBy != null) {
                     this.purchaseOrder.receivedBy = updatedPurchaseOrder.receivedBy;
                 }
-                if (updatedPurchaseOrder.receivedAt != null) {
-                    this.purchaseOrder.receivedAt = updatedPurchaseOrder.receivedAt;
-                }
-                if (updatedPurchaseOrder.receivedByUser) {
-                    this.purchaseOrder.receivedByUser = updatedPurchaseOrder.receivedByUser;
-                }
+            } else if (this.purchaseOrder && this.purchaseOrder.purchaseOrderItems) {
+              const index = this.purchaseOrder.purchaseOrderItems.findIndex(item => item.id === itemId);
+              if (index !== -1) {
+                this.purchaseOrder.purchaseOrderItems[index].receivedQty = receivedQty;
+              }
             }
-            
-            // ✅ Toast dihapus karena sudah ada di component yang memanggilnya
-            
+
+            return resData;
         } catch (error: any) {
-            console.error('Gagal memperbarui status item PO atau PO:', error);
-            this.error = error;
+            this.error = error.message;
             toast.error({
               title: 'Error',
-              message: error.data?.message || error.message || 'Operasi gagal',
+              message: error?.data?.message || error.message || 'Gagal update received qty',
               color: 'red',
               position: 'bottomRight',
             });
-            throw error;
+            return false;
         } finally {
             this.loading = false;
         }
