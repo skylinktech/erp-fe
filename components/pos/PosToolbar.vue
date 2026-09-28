@@ -14,8 +14,26 @@
           />
         </div>
         <span v-if="cashierName" class="small text-muted text-truncate">Kasir: {{ cashierName }}</span>
+        <span v-if="shiftLabel" class="badge bg-label-success">{{ shiftLabel }}</span>
       </div>
       <div class="d-flex flex-wrap align-items-center gap-2">
+        <button
+          v-if="!shiftOpen"
+          type="button"
+          class="btn btn-outline-success btn-sm"
+          :disabled="!companyReady || !warehouseId"
+          @click="$emit('open-shift')"
+        >
+          Buka Shift
+        </button>
+        <button
+          v-else
+          type="button"
+          class="btn btn-outline-warning btn-sm"
+          @click="$emit('close-shift')"
+        >
+          Tutup Shift
+        </button>
         <NuxtLink to="/sales/retail-sale" class="btn btn-outline-secondary btn-sm">
           Riwayat Transaksi
         </NuxtLink>
@@ -42,10 +60,14 @@ defineProps<{
   warehouseId: number | null
   cashierName: string
   isFullscreen: boolean
+  shiftOpen?: boolean
+  shiftLabel?: string
 }>()
 
 defineEmits<{
   'update:warehouseId': [value: number | null]
   'toggle-fullscreen': []
+  'open-shift': []
+  'close-shift': []
 }>()
 </script>

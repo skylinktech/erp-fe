@@ -114,15 +114,33 @@
           <span class="fs-5 fw-bold text-primary">{{ formatPosMoney(subtotal) }}</span>
         </div>
         <p class="small text-muted mb-2">
-          Harga final dihitung server saat checkout. Pembayaran dilakukan di Riwayat transaksi.
+          Harga final dihitung server. Pembayaran tunai/kartu/gateway diselesaikan di POS ini.
         </p>
+        <div class="d-flex gap-2 mb-2">
+          <button
+            type="button"
+            class="btn btn-outline-secondary flex-fill"
+            :disabled="!cart.length || checkoutBusy"
+            @click="$emit('hold')"
+          >
+            Hold
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline-secondary flex-fill"
+            :disabled="checkoutBusy"
+            @click="$emit('resume')"
+          >
+            Resume
+          </button>
+        </div>
         <button
           type="button"
           class="btn btn-success w-100"
           :disabled="!canCheckout || checkoutBusy"
           @click="$emit('checkout')"
         >
-          {{ checkoutBusy ? 'Memproses…' : 'Checkout (buat + konfirmasi)' }}
+          {{ checkoutBusy ? 'Memproses…' : 'Bayar' }}
         </button>
       </div>
     </div>
@@ -150,6 +168,8 @@ const emit = defineEmits<{
   remove: [index: number]
   'update-qty': [index: number, quantity: number]
   checkout: []
+  hold: []
+  resume: []
   'update:customerMode': [value: 'WALK_IN' | 'REGISTERED']
   'update:customerId': [value: number | null]
   'update:walkInName': [value: string]
