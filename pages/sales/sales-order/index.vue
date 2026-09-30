@@ -153,7 +153,7 @@
                                     <Column field="source" header="Source" :sortable="true">
                                         <template #body="slotProps">
                                             <span>
-                                                {{ slotProps.data.source || '-' }}
+                                                {{ humanizeLabel(slotProps.data.source, { fallback: '-' }) }}
                                             </span>
                                         </template>
                                     </Column>
@@ -599,6 +599,7 @@ import { useRouter } from 'vue-router'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import { useCompanyContextStore } from '~/stores/companyContext'
 import { hasCapabilityCode } from '~/utils/businessFlowCapabilityRegistry'
+import { humanizeLabel } from '~/utils/humanizeLabel'
 import { useImageUrl } from '~/composables/useImageUrl'
 import Swal from 'sweetalert2'
 import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
@@ -643,9 +644,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-primary',
     info: {
       title: 'Jumlah Keseluruhan',
-      description: 'Jumlah keseluruhan data Sales Order yang terdaftar dalam sistem berdasarkan statistik API.',
-    },
-  },
+      description: 'Jumlah keseluruhan data Sales Order yang terdaftar dalam sistem berdasarkan statistik API.'}},
   {
     key: 'approved',
     label: 'Approved',
@@ -655,9 +654,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-success',
     info: {
       title: 'Approved',
-      description: 'Jumlah dokumen Sales Order yang telah disetujui.',
-    },
-  },
+      description: 'Jumlah dokumen Sales Order yang telah disetujui.'}},
   {
     key: 'rejected',
     label: 'Rejected',
@@ -667,9 +664,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-danger',
     info: {
       title: 'Rejected',
-      description: 'Jumlah dokumen Sales Order yang ditolak.',
-    },
-  },
+      description: 'Jumlah dokumen Sales Order yang ditolak.'}},
   {
     key: 'partial',
     label: 'Partial',
@@ -679,9 +674,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-warning',
     info: {
       title: 'Partial',
-      description: 'Jumlah dokumen Sales Order berstatus Partial (pemenuhan sebagian).',
-    },
-  },
+      description: 'Jumlah dokumen Sales Order berstatus Partial (pemenuhan sebagian).'}},
   {
     key: 'delivered',
     label: 'Delivered',
@@ -691,9 +684,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-info',
     info: {
       title: 'Delivered',
-      description: 'Jumlah dokumen Sales Order yang sudah delivered.',
-    },
-  }
+      description: 'Jumlah dokumen Sales Order yang sudah delivered.'}}
 ])
 
 const { customers }   = storeToRefs(customerStore)
@@ -711,8 +702,7 @@ const filters = ref({
   status: null,
   startDate: null,
   endDate: null,
-  search: '',
-});
+  search: ''});
 const globalFilterValue = ref('');
 const expandedRows = ref({});
 
@@ -1068,8 +1058,7 @@ const exportData = async (format) => {
                 message: hasFilters
                     ? 'Sedang mempersiapkan data sesuai filter untuk export Excel...'
                     : 'Sedang mempersiapkan semua data untuk export Excel...',
-                color: 'blue',
-            });
+                color: 'blue'});
             const allData = await salesOrderStore.fetchAllSalesOrdersForExport();
             if (allData && allData.length > 0) {
                 await exportSalesOrderExcel(allData);
@@ -1078,16 +1067,14 @@ const exportData = async (format) => {
                     message: `Excel berhasil dibuat dengan ${allData.length} data Sales Order${hasFilters ? ' sesuai filter' : ''}`,
                     color: 'green',
                     position: 'bottomRight',
-                    layout: 2,
-                });
+                    layout: 2});
             } else {
                 toast.warning({
                     title: 'Warning',
                     message: 'Tidak ada data untuk diexport',
                     color: 'orange',
                     position: 'bottomRight',
-                    layout: 2,
-                });
+                    layout: 2});
             }
         } catch (error) {
             console.error('Error exporting Excel:', error);
@@ -1096,8 +1083,7 @@ const exportData = async (format) => {
                 message: 'Gagal membuat Excel',
                 color: 'red',
                 position: 'bottomRight',
-                layout: 2,
-            });
+                layout: 2});
         }
         return;
     }
@@ -1274,8 +1260,7 @@ async function handleApproveSO (id) {
     inputPlaceholder: 'Tulis catatan approval jika diperlukan...',
     showCancelButton: true,
     confirmButtonText: 'Approve',
-    cancelButtonText: 'Batal',
-  })
+    cancelButtonText: 'Batal'})
   if (!result.isConfirmed) return
   await salesOrderStore.approveSalesOrder(id, result.value || '')
 }
@@ -1289,8 +1274,7 @@ async function handleRejectSO (id) {
     inputValidator: (value) => (!value ? 'Alasan reject wajib diisi' : undefined),
     showCancelButton: true,
     confirmButtonText: 'Reject',
-    cancelButtonText: 'Batal',
-  })
+    cancelButtonText: 'Batal'})
   if (!result.isConfirmed) return
   await salesOrderStore.rejectSalesOrder(id, result.value || '')
 }
@@ -1316,8 +1300,7 @@ const getStatusBadge = (row) => _getStatusBadge(row, {
     approved: { text: 'Approved', class: 'badge rounded-pill bg-label-primary' },
     delivered: { text: 'Delivered', class: 'badge rounded-pill bg-label-success' },
     rejected: { text: 'Rejected', class: 'badge rounded-pill bg-label-danger' },
-    partial: { text: 'Partial', class: 'badge rounded-pill bg-label-warning' },
-});
+    partial: { text: 'Partial', class: 'badge rounded-pill bg-label-warning' }});
 
 const getPaymentMethodBadge = (paymentMethod) => {
     switch (paymentMethod) {
@@ -1342,8 +1325,7 @@ const updateStockInfo = async (index) => {
             
             const response = await stockStore.fetchStocksPaginated({
                 productId: item.productId,
-                warehouseId: item.warehouseId,
-            })
+                warehouseId: item.warehouseId})
             
             if (response && response.data && response.data.length > 0) {
                 // Cari stock yang sesuai dengan productId dan warehouseId
@@ -1361,8 +1343,7 @@ const updateStockInfo = async (index) => {
                         // Coba dengan parameter all=true
                         const fallbackResponse = await fetch(`${$api.stock()}?productId=${item.productId}&warehouseId=${item.warehouseId}&all=true`, {
                             headers: {
-                                'Accept': 'application/json',
-                            },
+                                'Accept': 'application/json'},
                             credentials: 'include', // Cookie-based auth
                         });
                         
@@ -1384,8 +1365,7 @@ const updateStockInfo = async (index) => {
                         const allStockResponse = await fetch(`${$api.stock()}?all=true`, {
                             headers: {
                                 'Authorization': `Bearer ${token}`,
-                                'Accept': 'application/json',
-                            }
+                                'Accept': 'application/json'}
                         });
                         
                         if (allStockResponse.ok) {
@@ -1783,17 +1763,14 @@ const exportSalesOrderPDF = async (dataToExport) => {
             fontSize: 7,
             cellPadding: 2,
             overflow: 'linebreak',
-            halign: 'left',
-        },
+            halign: 'left'},
         headStyles: {
             fillColor: [41, 128, 185],
             textColor: 255,
             fontStyle: 'bold',
-            halign: 'center',
-        },
+            halign: 'center'},
         alternateRowStyles: {
-            fillColor: [245, 245, 245],
-        },
+            fillColor: [245, 245, 245]},
         margin: { top: 30, right: 10, bottom: 10, left: 10 },
         tableWidth: 'auto',
         columnStyles: columnStyles,
@@ -1814,8 +1791,7 @@ const exportSalesOrderPDF = async (dataToExport) => {
                     data.cell.styles.fillColor = [200, 255, 200];
                 }
             }
-        },
-    });
+        }});
 
     // Grand total setelah tabel
     const finalY = doc.lastAutoTable.finalY || 200;

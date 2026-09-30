@@ -58,7 +58,7 @@
                 <Column header="#" :sortable="false"><template #body="slotProps">{{ params.first + slotProps.index + 1 }}</template></Column>
                 <Column field="mrfNumber" header="No. MRF" :sortable="true" class="text-nowrap"><template #body="slotProps"><a @click="navigateTo(`/purchasing/material-request/detail/${slotProps.data.id}`)" class="text-primary" style="cursor:pointer;text-decoration:underline">{{ getMaterialRequestNo(slotProps.data) || '—' }}</a></template></Column>
                 <Column field="siteInvestment.si_number" header="Site Investment" :sortable="false"><template #body="slotProps">{{ slotProps.data.siteInvestment?.siNumber || slotProps.data.siteInvestment?.si_number || '—' }}</template></Column>
-                <Column field="priority" header="Prioritas" :sortable="true"><template #body="slotProps"><span class="text-capitalize">{{ slotProps.data.priority || '-' }}</span></template></Column>
+                <Column field="priority" header="Prioritas" :sortable="true"><template #body="slotProps"><span class="text-capitalize">{{ humanizeLabel(slotProps.data.priority, { fallback: '-' }) }}</span></template></Column>
                 <Column field="totalAmount" header="Total" :sortable="true"><template #body="slotProps">{{ formatRupiah(slotProps.data.totalAmount ?? slotProps.data.grandTotal) }}</template></Column>
                 <Column field="requestedByUser.full_name" header="Pemohon" :sortable="true"><template #body="slotProps">{{ slotProps.data.requestedByUser?.fullName || slotProps.data.requestedByUser?.full_name || slotProps.data.createdByUser?.full_name || '-' }}</template></Column>
                 <Column field="status" header="Status" :sortable="true"><template #body="slotProps"><span :class="getStatusBadge(slotProps.data).class">{{ getStatusBadge(slotProps.data).text }}</span></template></Column>
@@ -91,6 +91,8 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { ref, computed, nextTick, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useMaterialRequestStore, getMaterialRequestNo } from '~/stores/material-request'
@@ -149,33 +151,28 @@ const actionMenuItems = computed(() => {
     items.push({
       label: 'Submit',
       icon: 'ri ri-send-plane-line',
-      command: () => materialRequestStore.submitMaterialRequest(row.id),
-    })
+      command: () => materialRequestStore.submitMaterialRequest(row.id)})
     items.push({
       label: 'Edit',
       icon: 'ri ri-edit-box-line',
-      command: () => navigateTo(`/purchasing/material-request/form/${row.id}`),
-    })
+      command: () => navigateTo(`/purchasing/material-request/form/${row.id}`)})
   }
   if (canApproveMaterialRequest(row)) {
     items.push({
       label: 'Approve',
       icon: 'ri ri-check-line',
-      command: () => materialRequestStore.approveMaterialRequest(row.id),
-    })
+      command: () => materialRequestStore.approveMaterialRequest(row.id)})
   }
   if (canRejectMaterialRequest(row)) {
     items.push({
       label: 'Reject',
       icon: 'ri ri-close-line',
-      command: () => rejectRow(row),
-    })
+      command: () => rejectRow(row)})
   }
   items.push({
     label: 'Detail',
     icon: 'ri ri-eye-line',
-    command: () => navigateTo(`/purchasing/material-request/detail/${row.id}`),
-  })
+    command: () => navigateTo(`/purchasing/material-request/detail/${row.id}`)})
   return items
 })
 
@@ -189,8 +186,7 @@ async function rejectRow(row) {
     showCancelButton: true,
     confirmButtonText: 'Tolak',
     cancelButtonText: 'Batal',
-    customClass: { confirmButton: 'btn btn-danger', cancelButton: 'btn btn-label-secondary' },
-  })
+    customClass: { confirmButton: 'btn btn-danger', cancelButton: 'btn btn-label-secondary' }})
   if (isConfirmed && value?.trim()) {
     await materialRequestStore.rejectMaterialRequest(row.id, value.trim())
   }

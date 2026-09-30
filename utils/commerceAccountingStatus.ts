@@ -1,3 +1,5 @@
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 /**
  * FE-only presentation mapping for commerce order accounting state.
  *
@@ -21,8 +23,7 @@ export const COMMERCE_ACCOUNTING_BADGE_LABELS: Record<CommerceAccountingBadge, s
   BLOCKED: 'Terblokir',
   POSTED: 'Posted',
   PENDING_CONFIG: 'Pending config',
-  NOT_APPLICABLE: 'Belum rilis',
-}
+  NOT_APPLICABLE: 'Belum rilis'}
 
 export const COMMERCE_ACCOUNTING_BADGE_CLASS: Record<CommerceAccountingBadge, string> = {
   PENDING_RECOGNITION: 'bg-label-warning',
@@ -30,8 +31,7 @@ export const COMMERCE_ACCOUNTING_BADGE_CLASS: Record<CommerceAccountingBadge, st
   BLOCKED: 'bg-label-danger',
   POSTED: 'bg-label-success',
   PENDING_CONFIG: 'bg-label-secondary',
-  NOT_APPLICABLE: 'bg-label-secondary',
-}
+  NOT_APPLICABLE: 'bg-label-secondary'}
 
 export type CommerceAccountingPolicyMode = 'ON_ELIGIBLE_RELEASE' | 'AFTER_VERIFIED_SETTLEMENT'
 
@@ -86,9 +86,9 @@ export const COMMERCE_RELEASE_BLOCKER_LABELS: Record<string, string> = {
   MONEY_SNAPSHOT_TOTAL_MISMATCH: 'Total snapshot uang tidak konsisten',
   MONEY_SNAPSHOT_CURRENCY_MISSING: 'Mata uang snapshot tidak tersedia',
   MONEY_SNAPSHOT_NOT_LOCKED: 'Snapshot uang belum dikunci dari platform',
-  ACCOUNTING_POLICY_NOT_CONFIGURED: 'Kebijakan accounting omnichannel belum dikonfigurasi',
-}
+  ACCOUNTING_POLICY_NOT_CONFIGURED: 'Kebijakan accounting omnichannel belum dikonfigurasi'}
 
 export function commerceReleaseBlockerLabel(code: string): string {
-  return COMMERCE_RELEASE_BLOCKER_LABELS[code] || code
+  if (!code) return '—'
+  return COMMERCE_RELEASE_BLOCKER_LABELS[code] || humanizeLabel(code, { fallback: code })
 }

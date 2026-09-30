@@ -16,13 +16,13 @@
         <div class="min-w-0">
           <h5 class="mb-1 text-break">
             <span class="badge me-2" :class="statusBadge(r.normalizedStatus)">
-              {{ r.normalizedStatus }}
+              {{ humanizeLabel(r.normalizedStatus, { fallback: '—' }) }}
             </span>
             <span class="font-monospace">{{ r.externalReturnId }}</span>
           </h5>
           <p class="mb-0 card-subtitle text-muted small mt-3">
-            {{ r.shop?.name || r.platformCode }}
-            · {{ r.platformCode || '—' }}
+            {{ r.shop?.name || commercePlatformLabel(r.platformCode) }}
+            · {{ commercePlatformLabel(r.platformCode) }}
             · {{ caseTypeLabel(r) }}
             <template v-if="r.actionDeadlineAt">
               · Tenggat {{ formatTs(r.actionDeadlineAt) }}
@@ -102,7 +102,7 @@
                 </span>
               </dd>
               <dt class="col-5 text-muted">Alasan</dt>
-              <dd class="col-7">{{ r.returnReasonText || r.returnReasonCode || '—' }}</dd>
+              <dd class="col-7">{{ r.returnReasonText || commerceEnumLabel(r.returnReasonCode) }}</dd>
               <dt class="col-5 text-muted">Catatan seller</dt>
               <dd class="col-7">
                 {{ r.sellerNote != null && r.sellerNote !== '' ? r.sellerNote : '—' }}
@@ -158,14 +158,11 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { computed } from 'vue'
-import {
-  aggregateCommerceLineItems,
-  commerceStatusBadge,
-  formatCommerceMoney,
-  formatCommerceQty,
-  formatCommerceTs,
-} from '~/utils/commerceFormat'
+import { aggregateCommerceLineItems, commerceStatusBadge, formatCommerceMoney, formatCommerceQty, formatCommerceTs, commerceEnumLabel } from '~/utils/commerceFormat'
+import { commercePlatformLabel } from '~/utils/commercePlatform'
 
 const props = defineProps<{
   returns: any[]
@@ -198,7 +195,7 @@ function statusBadge(s: string) {
   return commerceStatusBadge(s)
 }
 function caseTypeLabel(r: any) {
-  return r.caseTypeLabel || r.caseType || '—'
+  return r.caseTypeLabel || commerceEnumLabel(r.caseType)
 }
 
 function onImageError(e: Event) {

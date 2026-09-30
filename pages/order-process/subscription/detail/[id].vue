@@ -137,7 +137,7 @@
                     </div>
                     <div class="col-md-6">
                       <label class="form-label text-muted medium">Payment Method</label>
-                      <p class="mb-0">{{ subscription.paymentMethod || '—' }}</p>
+                      <p class="mb-0">{{ humanizeLabel(subscription.paymentMethod, { fallback: '—' }) }}</p>
                     </div>
                     <div class="col-md-6">
                       <label class="form-label text-muted medium">Term of Payment</label>
@@ -434,6 +434,8 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { computed, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import SubscriptionAttachmentModal from '~/components/subscription/SubscriptionAttachmentModal.vue'
@@ -488,7 +490,7 @@ function getStatusBadge (status: string) {
     case 'terminated': return { text: 'Terminated', class: 'badge rounded-pill bg-label-warning' }
     case 'expired': return { text: 'Expired', class: 'badge rounded-pill bg-label-dark' }
     case 'canceled': return { text: 'Canceled', class: 'badge rounded-pill bg-label-danger' }
-    default: return { text: status || '—', class: 'badge rounded-pill bg-label-light' }
+    default: return { text: humanizeLabel(status, { fallback: '—' }), class: 'badge rounded-pill bg-label-light' }
   }
 }
 
@@ -581,8 +583,7 @@ function onPrintSubscription () {
   if (!subscription.value?.id) return
   navigateTo({
     path: '/order-process/cetak-subscription',
-    query: { id: subscription.value.id, print: 'true' },
-  })
+    query: { id: subscription.value.id, print: 'true' }})
 }
 
 async function onSubmit () {
@@ -606,8 +607,7 @@ async function onActivate () {
     confirmButtonColor: '#00ac4f',
     cancelButtonColor: '#6c757d',
     confirmButtonText: 'Ya, Aktifkan',
-    cancelButtonText: 'Batal',
-  })
+    cancelButtonText: 'Batal'})
   if (!confirmed.isConfirmed) return
   submitting.value = true
   try {
@@ -633,8 +633,7 @@ async function onCancel () {
     cancelButtonColor: '#6c757d',
     confirmButtonText: 'Ya, Cancel',
     cancelButtonText: 'Batal',
-    preConfirm: () => (document.getElementById('swal-reason-cancel-detail') as HTMLTextAreaElement)?.value?.trim() || null,
-  })
+    preConfirm: () => (document.getElementById('swal-reason-cancel-detail') as HTMLTextAreaElement)?.value?.trim() || null})
   if (result.isConfirmed) {
     submitting.value = true
     try {
@@ -664,8 +663,7 @@ watch(id, () => load())
 definePageMeta({
   hidePageHeading: true,
   layout: 'default',
-  middleware: ['auth', 'check-permission'],
-})
+  middleware: ['auth', 'check-permission']})
 </script>
 
 <style scoped>

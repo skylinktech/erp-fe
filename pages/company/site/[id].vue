@@ -83,7 +83,7 @@
                         class="badge"
                         :class="row.status === 'INSTALLED' ? 'bg-label-success' : 'bg-label-warning'"
                       >
-                        {{ row.status }}
+                        {{ humanizeLabel(row.status, { fallback: '—' }) }}
                       </span>
                       <div v-if="row.equipmentStatus" class="small text-muted">EQ: {{ row.equipmentStatus }}</div>
                     </td>
@@ -158,8 +158,8 @@
                     </td>
                     <td>{{ formatDate(row.assignedAt) }}</td>
                     <td>{{ formatDate(row.removedAt) }}</td>
-                    <td>{{ row.status }}</td>
-                    <td class="small">{{ row.sourceType || '—' }}{{ row.sourceId ? `:${row.sourceId}` : '' }}</td>
+                    <td>{{ humanizeLabel(row.status, { fallback: '—' }) }}</td>
+                    <td class="small">{{ humanizeLabel(row.sourceType, { fallback: '—' }) }}{{ row.sourceId ? `:${row.sourceId}` : '' }}</td>
                   </tr>
                   <tr v-if="!historyRows.length && !loading">
                     <td colspan="5" class="text-muted">Belum ada history</td>
@@ -206,7 +206,7 @@
               />
               <small v-if="selectedEligible" class="text-muted d-block mt-1">
                 Warehouse: {{ selectedEligible.warehouse?.code || '—' }}
-                · Status: {{ selectedEligible.status }}
+                · Status: {{ humanizeLabel(selectedEligible.status, { fallback: '—' }) }}
               </small>
             </div>
             <div class="mb-3">
@@ -430,14 +430,15 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { computed } from 'vue'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
 import { getApiErrorMessage } from '~/utils/apiError'
 
 definePageMeta({
   middleware: ['auth', 'check-permission'],
-  title: 'Site Equipment',
-})
+  title: 'Site Equipment'})
 
 const route = useRoute()
 const { $api } = useNuxtApp()
@@ -489,29 +490,24 @@ const withdrawalReasons = [
 ]
 const assignForm = reactive({
   equipmentId: null,
-  notes: '',
-})
+  notes: ''})
 const issueForm = reactive({
   reservationId: '',
-  notes: '',
-})
+  notes: ''})
 const returnForm = reactive({
   destinationWarehouseId: '',
   reason: 'NORMAL_RETURN',
-  notes: '',
-})
+  notes: ''})
 const faultForm = reactive({
   incidentType: 'HARDWARE_FAILURE',
   severity: '',
   description: '',
-  symptoms: '',
-})
+  symptoms: ''})
 const withdrawalForm = reactive({
   reason: 'SERVICE_TERMINATION',
   incidentId: '',
   destinationWarehouseId: '',
-  notes: '',
-})
+  notes: ''})
 
 const selectedEligible = computed(() =>
   eligible.value.find((e) => e.id === assignForm.equipmentId) || null
@@ -551,8 +547,7 @@ function showError(e, fallback) {
     title: 'Error',
     message: getApiErrorMessage(e, fallback),
     color: 'red',
-    position: 'bottomRight',
-  })
+    position: 'bottomRight'})
 }
 
 async function loadSite() {
@@ -598,8 +593,7 @@ async function loadEligible() {
   try {
     const res = await $fetch($api.equipmentEligibleForAssignment(), {
       credentials: 'include',
-      query: { search: eligibleSearch.value || undefined, rows: 100 },
-    })
+      query: { search: eligibleSearch.value || undefined, rows: 100 }})
     eligible.value = res?.data || []
   } catch (e) {
     eligible.value = []
@@ -620,8 +614,7 @@ async function submitAssign() {
       title: 'Validasi',
       message: 'Equipment dan notes wajib',
       color: 'red',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
     return
   }
   saving.value = true
@@ -632,15 +625,12 @@ async function submitAssign() {
       body: {
         equipmentId: assignForm.equipmentId,
         sourceType: 'MANUAL',
-        notes: assignForm.notes.trim(),
-      },
-    })
+        notes: assignForm.notes.trim()}})
     toast.success({
       title: 'Berhasil',
       message: 'Equipment di-assign ke site (planning — On Hand tidak berubah)',
       color: 'green',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
     showAssign.value = false
     await reload()
   } catch (e) {
@@ -656,14 +646,12 @@ async function removeAssignment(row) {
     await $fetch($api.equipmentAssignmentRemove(row.id), {
       method: 'POST',
       credentials: 'include',
-      body: { notes: 'Unassign from site detail' },
-    })
+      body: { notes: 'Unassign from site detail' }})
     toast.success({
       title: 'Berhasil',
       message: 'Assignment di-remove',
       color: 'green',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
     await reload()
   } catch (e) {
     showError(e, 'Gagal unassign')
@@ -691,9 +679,7 @@ async function openIssue(row) {
         credentials: 'include',
         query: {
           productId: row.product.id,
-          warehouseId: row.warehouse?.id || row.currentWarehouseId,
-        },
-      })
+          warehouseId: row.warehouse?.id || row.currentWarehouseId}})
       issueAvail.value = res?.data || res
     } catch {
       issueAvail.value = null
@@ -710,15 +696,12 @@ async function submitIssue() {
       credentials: 'include',
       body: {
         reservationId: issueForm.reservationId || undefined,
-        notes: issueForm.notes || undefined,
-      },
-    })
+        notes: issueForm.notes || undefined}})
     toast.success({
       title: 'Berhasil',
       message: 'SITE_ISSUE posted — On Hand −1, status INSTALLED',
       color: 'green',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
     showIssue.value = false
     await reload()
   } catch (e) {
@@ -743,8 +726,7 @@ async function submitReturn() {
       title: 'Validasi',
       message: 'Destination warehouse wajib',
       color: 'red',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
     return
   }
   saving.value = true
@@ -755,15 +737,12 @@ async function submitReturn() {
       body: {
         destinationWarehouseId: Number(returnForm.destinationWarehouseId),
         reason: returnForm.reason,
-        notes: returnForm.notes || undefined,
-      },
-    })
+        notes: returnForm.notes || undefined}})
     toast.success({
       title: 'Berhasil',
       message: 'SITE_RETURN posted — equipment RETURNED (bukan AVAILABLE)',
       color: 'green',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
     showReturn.value = false
     await reload()
   } catch (e) {
@@ -788,8 +767,7 @@ async function submitFault() {
       title: 'Validasi',
       message: 'Description wajib',
       color: 'red',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
     return
   }
   saving.value = true
@@ -802,15 +780,12 @@ async function submitFault() {
         incidentType: faultForm.incidentType,
         severity: faultForm.severity || undefined,
         description: faultForm.description.trim(),
-        symptoms: faultForm.symptoms || undefined,
-      },
-    })
+        symptoms: faultForm.symptoms || undefined}})
     toast.success({
       title: 'Berhasil',
       message: `Fault reported (${res?.data?.id || 'OK'}) — equipment tetap INSTALLED`,
       color: 'green',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
     showFault.value = false
   } catch (e) {
     showError(e, 'Gagal report fault')
@@ -837,8 +812,7 @@ async function submitWithdrawal() {
       title: 'Validasi',
       message: 'FAILURE memerlukan incidentId',
       color: 'red',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
     return
   }
   saving.value = true
@@ -853,16 +827,13 @@ async function submitWithdrawal() {
         destinationWarehouseId: withdrawalForm.destinationWarehouseId
           ? Number(withdrawalForm.destinationWarehouseId)
           : undefined,
-        notes: withdrawalForm.notes || undefined,
-      },
-    })
+        notes: withdrawalForm.notes || undefined}})
     pendingWithdrawalId.value = res?.data?.id || null
     toast.success({
       title: 'Berhasil',
       message: 'Withdrawal requested — stock belum berubah. Complete untuk SITE_RETURN.',
       color: 'green',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
   } catch (e) {
     showError(e, 'Gagal request withdrawal')
   } finally {
@@ -880,15 +851,12 @@ async function completePendingWithdrawal() {
       body: {
         destinationWarehouseId: Number(withdrawalForm.destinationWarehouseId),
         notes: withdrawalForm.notes || undefined,
-        allowFromRequested: true,
-      },
-    })
+        allowFromRequested: true}})
     toast.success({
       title: 'Berhasil',
       message: 'SITE_RETURN posted — equipment UNDER_INSPECTION',
       color: 'green',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
     showWithdrawal.value = false
     pendingWithdrawalId.value = null
     await reload()
@@ -910,15 +878,12 @@ async function startReplacement(row) {
         reason: 'HARDWARE_FAILURE',
         stockSource: 'STANDARD_STOCK',
         siteId: Number(siteId.value),
-        notes: `From site ${site.value?.code}`,
-      },
-    })
+        notes: `From site ${site.value?.code}`}})
     toast.success({
       title: 'Berhasil',
       message: `Replacement ${res?.data?.replacementNo} created`,
       color: 'green',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
     if (res?.data?.id) {
       await navigateTo(`/inventory/equipment-replacement/${res.data.id}`)
     }

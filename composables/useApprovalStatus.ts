@@ -1,5 +1,7 @@
 /** Composable untuk status approval (Approved by X / Rejected by X / Received by X): Jabatan → Role → fullName → username */
 
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 /** Ambil jabatan user dari pegawai.PegawaiHistory (terbaru).nm_jabatan */
 function getUserJabatan(user: any): string {
   if (!user) return ''
@@ -109,7 +111,10 @@ export function useApprovalStatus() {
       expired: { text: 'Expired', class: 'badge rounded-pill bg-label-dark' },
     }
     const map = { ...defaultMap, ...statusMap }
-    const base = map[status] ?? { text: status, class: 'badge rounded-pill bg-label-light' }
+    const base = map[status] ?? {
+      text: humanizeLabel(status, { fallback: String(status) }),
+      class: 'badge rounded-pill bg-label-light',
+    }
     if (status === 'approved') {
       const by = getApprovalStepJabatan(row, 'approved')
       const stepCount = getStepCountForApproved(row)
@@ -186,7 +191,7 @@ export function useApprovalStatus() {
         return status === 'pending' ? `Pending (${prog.count}/${prog.required})` : `Submitted (${prog.count}/${prog.required})`
       }
     }
-    return map[status] ?? status.toUpperCase()
+    return map[status] ?? humanizeLabel(status, { fallback: String(status).toUpperCase() }).toUpperCase()
   }
 
   return { getApprovalStepJabatan, getApprovedStepCount, getStepCountForApproved, getStatusBadge, getStatusText, getUserDisplayName }

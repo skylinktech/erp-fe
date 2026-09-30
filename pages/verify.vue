@@ -118,7 +118,7 @@
                   <div class="col-12" v-if="verificationResult.document.status">
                     <div class="detail-item">
                       <strong>Status:</strong>
-                      <span class="ms-2 badge bg-primary">{{ verificationResult.document.status }}</span>
+                      <span class="ms-2 badge bg-primary">{{ humanizeLabel(verificationResult.document.status, { fallback: '—' }) }}</span>
                     </div>
                   </div>
 
@@ -211,6 +211,8 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 definePageMeta({
   layout: 'auth', // Use auth layout (no sidebar/navbar untuk public page)
   middleware: [], // No auth middleware untuk public page

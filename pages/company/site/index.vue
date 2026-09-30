@@ -320,6 +320,8 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSiteStore } from '~/stores/site'
@@ -369,9 +371,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-primary',
     info: {
       title: 'Total Site',
-      description: 'Jumlah seluruh site (kantor, gudang, tower, project, dll.) yang terdaftar di sistem.',
-    },
-  },
+      description: 'Jumlah seluruh site (kantor, gudang, tower, project, dll.) yang terdaftar di sistem.'}},
 ])
 const params = computed(() => siteStore.params)
 const form = computed(() => siteStore.form)
@@ -436,9 +436,8 @@ const getTypeLabel = (type) => {
     warehouse: 'Warehouse',
     tower: 'Tower',
     project: 'Project',
-    other: 'Other',
-  }
-  return labels[type] || type
+    other: 'Other'}
+  return labels[type] || humanizeLabel(type, { fallback: type || '' })
 }
 
 const getStatusLabel = (status) => {
@@ -446,9 +445,8 @@ const getStatusLabel = (status) => {
     planned: 'Planned',
     active: 'Active',
     inactive: 'Inactive',
-    closed: 'Closed',
-  }
-  return labels[status] || status
+    closed: 'Closed'}
+  return labels[status] || humanizeLabel(status, { fallback: status || '' })
 }
 
 const getStatusBadgeClass = (status) => {
@@ -456,8 +454,7 @@ const getStatusBadgeClass = (status) => {
     planned: 'bg-label-info',
     active: 'bg-label-success',
     inactive: 'bg-label-warning',
-    closed: 'bg-label-danger',
-  }
+    closed: 'bg-label-danger'}
   return classes[status] || 'bg-label-secondary'
 }
 
@@ -467,23 +464,20 @@ const exportData = async (format) => {
     if (format === 'csv' && myDataTableRef.value) {
       myDataTableRef.value.exportCSV({
         title: 'Data Site',
-        border: true,
-      })
+        border: true})
     } else if (format === 'excel') {
       // Ambil data dari API untuk export Excel
       const exportResult = await siteStore.fetchSitesForExport()
       if (myDataTableRef.value && exportResult.data) {
         await myDataTableRef.value.exportExcel({
           title: `Data Site ${exportResult.nmPerusahaan ? `- ${exportResult.nmPerusahaan}` : ''}`,
-          data: exportResult.data,
-        })
+          data: exportResult.data})
         toast.success({
           title: 'Success',
           message: 'Data site berhasil diekspor ke Excel',
           color: 'green',
           position: 'bottomRight',
-          layout: 2,
-        })
+          layout: 2})
       }
     }
   } catch (error) {
@@ -493,8 +487,7 @@ const exportData = async (format) => {
       message: error.message || 'Gagal melakukan export data',
       color: 'red',
       position: 'bottomRight',
-      layout: 2,
-    })
+      layout: 2})
   }
 }
 
@@ -560,8 +553,7 @@ definePageMeta({
   author: 'Sinergi Innovate Pratama',
   robots: 'index, follow',
   viewport:
-    'width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0',
-})
+    'width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0'})
 </script>
 
 <style scoped>

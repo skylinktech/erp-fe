@@ -286,6 +286,8 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useCompanyScopedReload } from '~/composables/useCompanyScopedReload'
 import { useCompanyContextStore } from '~/stores/companyContext'
@@ -297,12 +299,7 @@ import { useActiveCompany } from '~/composables/useActiveCompany'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import { formatActiveCompanyLabel } from '~/utils/activeCompanyBinding'
 import { readAccessToken } from '~/utils/authCookie'
-import {
-  PRICING_CHANNEL_OPTIONS,
-  normalizePricingChannel,
-  pricingChannelLabel,
-  type PricingChannel,
-} from '~/utils/pricingChannel'
+import { PRICING_CHANNEL_OPTIONS, normalizePricingChannel, pricingChannelLabel, type PricingChannel } from '~/utils/pricingChannel'
 import ActiveCompanyField from '~/components/company/ActiveCompanyField.vue'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
@@ -326,8 +323,7 @@ const {
   ensureBootstrapped,
   allowedCompanies,
   company,
-  companyId,
-} = activeCompany
+  companyId} = activeCompany
 void ensureBootstrapped()
 
 const canCreate = computed(
@@ -359,8 +355,7 @@ const expandedRows = ref<Record<string, boolean>>({})
 
 const filters = ref<{ channel: PricingChannel | null; status: string | null }>({
   channel: null,
-  status: null,
-})
+  status: null})
 
 const pricingStore = usePricingStore()
 const activeChannelTab = computed(() => filters.value.channel || 'all')
@@ -464,30 +459,25 @@ const statCards = computed(() => {
       iconBgClass: 'bg-label-primary',
       info: {
         title: 'Total Daftar Harga',
-        description: 'Jumlah daftar harga jual produk pada kanal dan perusahaan yang sedang difilter.',
-      },
-    },
+        description: 'Jumlah daftar harga jual produk pada kanal dan perusahaan yang sedang difilter.'}},
     {
       key: 'draft',
       label: 'Draft',
       value: count('draft'),
       icon: 'ri-draft-line',
-      iconBgClass: 'bg-label-secondary',
-    },
+      iconBgClass: 'bg-label-secondary'},
     {
       key: 'pending',
       label: 'Pending',
       value: count('pending'),
       icon: 'ri-time-line',
-      iconBgClass: 'bg-label-warning',
-    },
+      iconBgClass: 'bg-label-warning'},
     {
       key: 'active',
       label: 'Active',
       value: count('active'),
       icon: 'ri-checkbox-circle-line',
-      iconBgClass: 'bg-label-success',
-    },
+      iconBgClass: 'bg-label-success'},
   ]
 })
 
@@ -505,8 +495,7 @@ function formatMoney(value: number | null | undefined) {
   return new Intl.NumberFormat('id-ID', {
     style: 'currency',
     currency: 'IDR',
-    maximumFractionDigits: 0,
-  }).format(Number(value))
+    maximumFractionDigits: 0}).format(Number(value))
 }
 
 function statusBadge(status: string) {
@@ -515,17 +504,15 @@ function statusBadge(status: string) {
     pending: { class: 'badge bg-label-warning', text: 'Pending' },
     approved: { class: 'badge bg-label-info', text: 'Approved' },
     active: { class: 'badge bg-label-success', text: 'Active' },
-    inactive: { class: 'badge bg-label-danger', text: 'Inactive' },
-  }
-  return map[status] || { class: 'badge bg-label-secondary', text: status || '—' }
+    inactive: { class: 'badge bg-label-danger', text: 'Inactive' }}
+  return map[status] || { class: 'badge bg-label-secondary', text: humanizeLabel(status, { fallback: '—' }) }
 }
 
 function headers() {
   const token = readAccessToken()
   const h: Record<string, string> = {
     Accept: 'application/json',
-    'Content-Type': 'application/json',
-  }
+    'Content-Type': 'application/json'}
   if (token) h.Authorization = `Bearer ${token}`
   if (companyId.value) h['X-Company-Id'] = String(companyId.value)
   return h
@@ -553,16 +540,14 @@ async function confirmDelete(row: { id: number; code?: string }) {
     confirmButtonColor: '#008fec',
     cancelButtonColor: '#f13636',
     confirmButtonText: 'Ya, hapus!',
-    cancelButtonText: 'Batal',
-  })
+    cancelButtonText: 'Batal'})
   if (!result.isConfirmed) return
 
   const { $api } = useNuxtApp()
   const res = await fetch(`${$api.productSellingPrices()}/${row.id}`, {
     method: 'DELETE',
     headers: headers(),
-    credentials: 'include',
-  })
+    credentials: 'include'})
   const payload = await res.json().catch(() => ({}))
   if (!res.ok) {
     error.value = payload?.message || 'Daftar harga gagal dihapus.'
@@ -632,8 +617,7 @@ async function load(expectedGeneration?: number) {
     if (filters.value.channel) qs.set('channel', filters.value.channel)
     const res = await fetch(`${$api.productSellingPrices()}?${qs}`, {
       headers: headers(),
-      credentials: 'include',
-    })
+      credentials: 'include'})
     const payload = await res.json().catch(() => ({}))
     if (!res.ok) {
       if (!isExpectedGeneration(expectedGeneration)) return
@@ -660,8 +644,7 @@ async function act(id: number, action: 'submit' | 'approve' | 'activate' | 'deac
   const res = await fetch(`${$api.productSellingPrices()}/${id}/${action}`, {
     method: 'POST',
     headers: headers(),
-    credentials: 'include',
-  })
+    credentials: 'include'})
   const payload = await res.json().catch(() => ({}))
   if (!res.ok) {
     error.value = payload?.message || 'Aksi daftar harga ditolak.'

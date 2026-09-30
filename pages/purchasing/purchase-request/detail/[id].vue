@@ -26,7 +26,7 @@
                 <small class="text-muted">{{ formatDateTime(purchaseRequest.createdAt) }}</small>
               </div>
               <span :class="getStatusBadge(purchaseRequest).class" class="badge">{{ getStatusBadge(purchaseRequest).text }}</span>
-              <span v-if="purchaseRequest.priority" class="badge bg-label-secondary text-capitalize">{{ purchaseRequest.priority }}</span>
+              <span v-if="purchaseRequest.priority" class="badge bg-label-secondary text-capitalize">{{ humanizeLabel(purchaseRequest.priority, { fallback: '—' }) }}</span>
             </div>
           <div class="d-flex gap-2">
               <div class="btn-group">
@@ -234,6 +234,8 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { computed, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { usePurchaseRequestStore, getPurchaseRequestNo, getPurchaseRequestTotal, getPurchaseRequestItemsList } from '~/stores/purchase-request'
@@ -292,8 +294,7 @@ const showStockCheck = computed(() => {
 
 const { result: stockResult, loading: stockLoading, error: stockError, refresh: refreshStock } =
   usePurchaseRequestStockAvailability(id, {
-    enabled: showStockCheck,
-  })
+    enabled: showStockCheck})
 
 const showCreatePoButton = computed(() => {
   const status = String(purchaseRequest.value?.status ?? '').toLowerCase()
@@ -330,8 +331,7 @@ function itemStockDisplay(item: (typeof itemList.value)[number]) {
       label: stockLineBadgeLabel(status),
       fallback: '',
       badgeClass: stockLineBadgeClass(status),
-      title: line.message || undefined,
-    }
+      title: line.message || undefined}
   }
   return { label: '', fallback: '—', badgeClass: '', title: undefined }
 }

@@ -104,10 +104,10 @@
               <h6 class="mb-3">Timeline Events</h6>
               <ul class="list-unstyled mb-0">
                 <li v-for="ev in events" :key="ev.id" class="mb-3 border-bottom pb-2">
-                  <div class="fw-medium">{{ ev.eventType || ev.event_type }}</div>
+                  <div class="fw-medium">{{ humanizeLabel(ev.eventType || ev.event_type, { fallback: '—' }) }}</div>
                   <small class="text-muted">
                     {{ ev.fromStatus || ev.from_status || '—' }} → {{ ev.toStatus || ev.to_status || '—' }}
-                    · {{ ev.source }}
+                    · {{ humanizeLabel(ev.source, { fallback: '—' }) }}
                   </small>
                   <div v-if="ev.reason" class="small">{{ ev.reason }}</div>
                 </li>
@@ -122,6 +122,8 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { useServiceInstanceStore } from '~/stores/service-instances'
 import { usePermissions } from '~/composables/usePermissions'
 
@@ -129,8 +131,7 @@ definePageMeta({
   hidePageHeading: true,
   layout: 'default',
   middleware: ['auth', 'check-permission'],
-  title: 'Service Instance Detail',
-})
+  title: 'Service Instance Detail'})
 
 const route = useRoute()
 const store = useServiceInstanceStore()

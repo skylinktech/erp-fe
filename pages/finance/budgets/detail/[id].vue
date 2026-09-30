@@ -90,6 +90,8 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import DetailPageHeader from '~/components/DetailPageHeader.vue'
@@ -101,8 +103,7 @@ import { useFormatRupiah } from '~/composables/formatRupiah'
 definePageMeta({
   layout: 'default',
   middleware: ['auth', 'check-permission'],
-  title: 'Detail Budget',
-})
+  title: 'Detail Budget'})
 
 const route = useRoute()
 const budgetStore = useBudgetStore()
@@ -138,9 +139,8 @@ function getStatusLabel(status) {
     draft: 'Draft',
     approved: 'Approved',
     rejected: 'Rejected',
-    received: 'Received',
-  }
-  return labels[status] || status || '—'
+    received: 'Received'}
+  return labels[status] || humanizeLabel(status, { fallback: status || '' }) || '—'
 }
 
 function getStatusBadgeClass(status) {
@@ -148,8 +148,7 @@ function getStatusBadgeClass(status) {
     draft: 'bg-label-secondary',
     approved: 'bg-label-success',
     rejected: 'bg-label-danger',
-    received: 'bg-label-info',
-  }
+    received: 'bg-label-info'}
   return classes[status] || 'bg-label-secondary'
 }
 

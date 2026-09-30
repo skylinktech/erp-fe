@@ -88,7 +88,7 @@
             <Column field="type" header="Tipe" :sortable="true" style="min-width:120px">
               <template #body="{ data }">
                 <span :class="data.type === 'OUTPUT' ? 'badge bg-label-info' : 'badge bg-label-warning'">
-                  {{ data.type }}
+                  {{ humanizeLabel(data.type, { fallback: '—' }) }}
                 </span>
               </template>
             </Column>
@@ -304,6 +304,8 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { ref, computed, onMounted, watch } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
 import { useTaxMasterStore } from '~/stores/tax-masters'
@@ -335,9 +337,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-primary',
     info: {
       title: 'Jumlah Keseluruhan',
-      description: 'Jumlah seluruh Tax Master yang terdaftar dalam sistem, mencakup semua tipe dan status.',
-    },
-  },
+      description: 'Jumlah seluruh Tax Master yang terdaftar dalam sistem, mencakup semua tipe dan status.'}},
   {
     key: 'active',
     label: 'Aktif',
@@ -347,9 +347,7 @@ const statItems = computed(() => [
     valueClass: 'text-success',
     info: {
       title: 'Aktif',
-      description: 'Jumlah Tax Master yang saat ini berstatus aktif.',
-    },
-  },
+      description: 'Jumlah Tax Master yang saat ini berstatus aktif.'}},
   {
     key: 'output',
     label: 'Output',
@@ -358,9 +356,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-info',
     info: {
       title: 'Output',
-      description: 'Jumlah Tax Master bertipe OUTPUT (pajak keluaran).',
-    },
-  },
+      description: 'Jumlah Tax Master bertipe OUTPUT (pajak keluaran).'}},
   {
     key: 'withholding',
     label: 'Withholding',
@@ -370,9 +366,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-warning',
     info: {
       title: 'Withholding',
-      description: 'Jumlah Tax Master bertipe WITHHOLDING (pajak dipotong). Subtitle menampilkan jumlah histori tarif terkait.',
-    },
-  },
+      description: 'Jumlah Tax Master bertipe WITHHOLDING (pajak dipotong). Subtitle menampilkan jumlah histori tarif terkait.'}},
 ])
 
 
@@ -391,8 +385,7 @@ const blankRate = () => ({
   rate: 0,
   effectiveFrom: today(),
   effectiveUntil: '',
-  isDefault: true,
-})
+  isDefault: true})
 
 const blankForm = () => ({
   code: '',
@@ -403,8 +396,7 @@ const blankForm = () => ({
   accountCode: '',
   description: '',
   isActive: true,
-  taxRates: [blankRate()],
-})
+  taxRates: [blankRate()]})
 
 const formatRate = (rate, calcType) => {
   const n = Number(rate ?? 0)
@@ -412,8 +404,7 @@ const formatRate = (rate, calcType) => {
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
       currency: 'IDR',
-      maximumFractionDigits: 0,
-    }).format(n)
+      maximumFractionDigits: 0}).format(n)
   }
   return `${n}%`
 }
@@ -442,9 +433,7 @@ const openEdit = (row) => {
       rate: Number(r.rate ?? 0),
       effectiveFrom: r.effectiveFrom || today(),
       effectiveUntil: r.effectiveUntil || '',
-      isDefault: !!r.isDefault,
-    })),
-  }
+      isDefault: !!r.isDefault}))}
   if (!form.value.taxRates.some((r) => r.isDefault)) {
     form.value.taxRates[0].isDefault = true
   }
@@ -456,8 +445,7 @@ const addRateRow = () => {
     rate: Number(form.value.defaultRate || 0),
     effectiveFrom: today(),
     effectiveUntil: '',
-    isDefault: false,
-  })
+    isDefault: false})
 }
 
 const removeRateRow = (idx) => {
@@ -534,9 +522,7 @@ const submitForm = async () => {
       rate: Number(r.rate),
       effectiveFrom: r.effectiveFrom,
       effectiveUntil: r.effectiveUntil || null,
-      isDefault: !!r.isDefault,
-    })),
-  }
+      isDefault: !!r.isDefault}))}
 
   try {
     if (isEdit.value && editingId.value) {
@@ -572,6 +558,5 @@ definePageMeta({
   layout: 'default',
   middleware: ['auth', 'check-permission'],
   title: 'Tax Master',
-  description: 'Konfigurasi master pajak dan histori tarif',
-})
+  description: 'Konfigurasi master pajak dan histori tarif'})
 </script>

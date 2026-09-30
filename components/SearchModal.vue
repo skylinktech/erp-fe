@@ -42,7 +42,7 @@
             <div class="result-content">
               <div class="result-title">{{ result.name }}</div>
               <div class="result-subtitle">
-                <span class="result-category">{{ result.category }}</span>
+                <span class="result-category">{{ humanizeLabel(result.category, { fallback: '—' }) }}</span>
                 <span class="result-path">{{ result.path }}</span>
               </div>
             </div>
@@ -104,6 +104,8 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '~/stores/user'

@@ -288,6 +288,8 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useExpenseStore } from '~/stores/expenses'
@@ -374,7 +376,7 @@ const getPaymentMethodLabel = (method) => {
         check: 'Cek',
         credit_card: 'Kartu Kredit'
     }
-    return labels[method] || method
+    return labels[method] || humanizeLabel(method, { fallback: method || '' })
 }
 
 const getPaymentMethodBadgeClass = (method) => {
@@ -411,9 +413,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-primary',
     info: {
       title: 'Total Nilai Pengeluaran',
-      description: 'Total nilai uang (Rupiah) dari seluruh pengeluaran yang tercatat pada halaman ini.',
-    },
-  },
+      description: 'Total nilai uang (Rupiah) dari seluruh pengeluaran yang tercatat pada halaman ini.'}},
   {
     key: 'draft',
     label: 'Draft',
@@ -423,9 +423,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-warning',
     info: {
       title: 'Draft',
-      description: 'Jumlah (dokumen) pengeluaran berstatus Draft. Metrik ini belum tersedia pada skema data saat ini sehingga selalu bernilai 0.',
-    },
-  },
+      description: 'Jumlah (dokumen) pengeluaran berstatus Draft. Metrik ini belum tersedia pada skema data saat ini sehingga selalu bernilai 0.'}},
   {
     key: 'disetujui',
     label: 'Disetujui',
@@ -435,9 +433,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-success',
     info: {
       title: 'Disetujui',
-      description: 'Jumlah (dokumen) pengeluaran yang telah disetujui. Metrik ini belum tersedia pada skema data saat ini sehingga selalu bernilai 0.',
-    },
-  },
+      description: 'Jumlah (dokumen) pengeluaran yang telah disetujui. Metrik ini belum tersedia pada skema data saat ini sehingga selalu bernilai 0.'}},
   {
     key: 'dibayar',
     label: 'Dibayar',
@@ -447,9 +443,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-info',
     info: {
       title: 'Dibayar',
-      description: 'Jumlah (dokumen) pengeluaran yang telah dibayar. Metrik ini belum tersedia pada skema data saat ini sehingga selalu bernilai 0.',
-    },
-  }
+      description: 'Jumlah (dokumen) pengeluaran yang telah dibayar. Metrik ini belum tersedia pada skema data saat ini sehingga selalu bernilai 0.'}}
 ])
 
 

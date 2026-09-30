@@ -123,7 +123,7 @@
             </Column>
             <Column field="status" header="Status" :sortable="true" :show-filter-menu="false">
               <template #body="{ data }">
-                <span class="badge me-1" :class="statusBadgeClass(data.status)">{{ data.status }}</span>
+                <span class="badge me-1" :class="statusBadgeClass(data.status)">{{ humanizeLabel(data.status, { fallback: '—' }) }}</span>
                 <span v-if="data.sealStatus === 'SEALED'" class="badge bg-label-warning me-1">SEALED</span>
                 <span
                   v-if="data.serialCaptureStatus && data.serialCaptureStatus !== 'COMPLETE' && data.serialCaptureStatus !== 'VERIFIED'"
@@ -171,6 +171,8 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
 import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
@@ -206,9 +208,7 @@ const list = useServerPaginatedList({
   buildFilters: () => ({
     status: filters.status || undefined,
     assigned: filters.assigned ?? undefined,
-    warehouseId: filters.warehouseId || undefined,
-  }),
-})
+    warehouseId: filters.warehouseId || undefined})})
 
 const {
   rows,
@@ -227,8 +227,7 @@ const {
   onPage,
   onToolbarRows,
   onSearchUpdate,
-  exportData,
-} = list
+  exportData} = list
 
 const myDataTableRef = ref(null)
 
@@ -245,9 +244,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-primary',
     info: {
       title: 'Jumlah Keseluruhan',
-      description: 'Jumlah keseluruhan data Equipmentregistertab yang terdaftar dalam sistem berdasarkan statistik API.',
-    },
-  },
+      description: 'Jumlah keseluruhan data Equipmentregistertab yang terdaftar dalam sistem berdasarkan statistik API.'}},
   {
     key: 'available',
     label: 'Available',
@@ -256,9 +253,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-success',
     info: {
       title: 'Available',
-      description: 'Ringkasan metrik "Available" pada daftar Equipmentregistertab berdasarkan data statistik API/store.',
-    },
-  },
+      description: 'Ringkasan metrik "Available" pada daftar Equipmentregistertab berdasarkan data statistik API/store.'}},
   {
     key: 'installed',
     label: 'Installed',
@@ -267,9 +262,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-info',
     info: {
       title: 'Installed',
-      description: 'Ringkasan metrik "Installed" pada daftar Equipmentregistertab berdasarkan data statistik API/store.',
-    },
-  },
+      description: 'Ringkasan metrik "Installed" pada daftar Equipmentregistertab berdasarkan data statistik API/store.'}},
   {
     key: 'recovery',
     label: 'Inspection / RMA',
@@ -278,9 +271,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-warning',
     info: {
       title: 'Inspection / RMA',
-      description: 'Ringkasan metrik "Inspection / RMA" pada daftar Equipmentregistertab berdasarkan data statistik API/store.',
-    },
-  },
+      description: 'Ringkasan metrik "Inspection / RMA" pada daftar Equipmentregistertab berdasarkan data statistik API/store.'}},
 ])
 
 function resetFilters() {

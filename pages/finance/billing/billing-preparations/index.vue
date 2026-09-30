@@ -228,7 +228,7 @@
                 <div>
                   <div class="fw-semibold">{{ tax.code }} — {{ tax.name }}</div>
                   <small class="text-muted">
-                    {{ tax.type }} · {{ tax.calculationType }}
+                    {{ humanizeLabel(tax.type, { fallback: '—' }) }} · {{ tax.calculationType }}
                   </small>
                 </div>
                 <div class="text-end">
@@ -348,6 +348,8 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { computed, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
@@ -371,8 +373,7 @@ import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
 definePageMeta({
   layout: 'default',
   middleware: ['auth', 'check-permission'],
-  title: 'Billing Preparation',
-})
+  title: 'Billing Preparation'})
 
 const router = useRouter()
 const store = useBillingPreparationStore()
@@ -389,9 +390,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-primary',
     info: {
       title: 'Jumlah Keseluruhan',
-      description: 'Jumlah seluruh Billing Preparation yang terdaftar dalam sistem, mencakup semua status.',
-    },
-  },
+      description: 'Jumlah seluruh Billing Preparation yang terdaftar dalam sistem, mencakup semua status.'}},
   {
     key: 'draft',
     label: 'Draft',
@@ -401,9 +400,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-secondary',
     info: {
       title: 'Draft',
-      description: 'Jumlah Billing Preparation berstatus Draft yang belum diproses lebih lanjut.',
-    },
-  },
+      description: 'Jumlah Billing Preparation berstatus Draft yang belum diproses lebih lanjut.'}},
   {
     key: 'ready',
     label: 'Ready',
@@ -414,9 +411,7 @@ const statItems = computed(() => [
     valueClass: 'text-warning',
     info: {
       title: 'Ready',
-      description: 'Jumlah Billing Preparation berstatus Ready beserta total nominal ready dari statistik API.',
-    },
-  },
+      description: 'Jumlah Billing Preparation berstatus Ready beserta total nominal ready dari statistik API.'}},
   {
     key: 'invoiced',
     label: 'Invoiced',
@@ -427,9 +422,7 @@ const statItems = computed(() => [
     valueClass: 'text-success',
     info: {
       title: 'Invoiced',
-      description: 'Jumlah Billing Preparation yang sudah menjadi invoice.',
-    },
-  },
+      description: 'Jumlah Billing Preparation yang sudah menjadi invoice.'}},
 ])
 
 const { userHasRole, userHasPermission } = usePermissions()
@@ -447,8 +440,7 @@ const sourceOptions = ref({
   subscriptions: [],
   adjustments: [],
   chargeLines: [],
-  chargeSkips: [],
-})
+  chargeSkips: []})
 const taxMasterOptions = ref([])
 const form = ref({
   customerId: null,
@@ -457,8 +449,7 @@ const form = ref({
   subscriptionIds: [],
   adjustmentIds: [],
   applyTax: false,
-  taxMasterIds: [],
-})
+  taxMasterIds: []})
 const customers = computed(() => customerStore.customers || [])
 const subscriptionOptions = computed(() => sourceOptions.value.subscriptions || [])
 const adjustmentOptions = computed(() => sourceOptions.value.adjustments || [])
@@ -491,14 +482,12 @@ const hasActiveFilters = computed(() =>
 const statusBadge = (s) => ({
   draft: 'badge bg-label-secondary',
   ready: 'badge bg-label-warning',
-  invoiced: 'badge bg-label-success',
-}[s] || 'badge bg-label-secondary')
+  invoiced: 'badge bg-label-success'}[s] || 'badge bg-label-secondary')
 
 const getDocumentStatusLabel = (s) => ({
   draft: 'Draft',
   ready: 'Ready',
-  invoiced: 'Invoiced',
-}[s] || s)
+  invoiced: 'Invoiced'}[s] || s)
 
 const subscriptionLabel = (o) => {
   if (!o) return ''
@@ -590,8 +579,7 @@ const openCreate = async () => {
     subscriptionIds: [],
     adjustmentIds: [],
     applyTax: false,
-    taxMasterIds: [],
-  }
+    taxMasterIds: []}
   fileRef.value = null
   sourceOptions.value = { subscriptions: [], adjustments: [], chargeLines: [], chargeSkips: [] }
   dialogVisible.value = true
@@ -624,8 +612,7 @@ const submitCreate = async () => {
       title: 'Error',
       message: 'Pilih minimal 1 Form Berlangganan atau Billing Adjustment',
       color: 'red',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
     return
   }
   if (form.value.applyTax && !form.value.taxMasterIds.length) {
@@ -633,8 +620,7 @@ const submitCreate = async () => {
       title: 'Error',
       message: 'Pilih minimal 1 pajak jika Tambah Pajak diaktifkan',
       color: 'red',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
     return
   }
   const id = await store.create(
@@ -645,8 +631,7 @@ const submitCreate = async () => {
       subscriptionIds: form.value.subscriptionIds,
       adjustmentIds: form.value.adjustmentIds,
       applyTax: !!form.value.applyTax,
-      taxMasterIds: form.value.applyTax ? form.value.taxMasterIds : [],
-    },
+      taxMasterIds: form.value.applyTax ? form.value.taxMasterIds : []},
     fileRef.value
   )
   if (id) {

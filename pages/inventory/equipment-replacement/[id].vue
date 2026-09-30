@@ -18,7 +18,7 @@
               <div class="card-body">
                 <ul class="list-unstyled mb-0">
                   <li class="mb-2"><strong>No:</strong> {{ row.replacementNo }}</li>
-                  <li class="mb-2"><strong>Status:</strong> {{ row.status }}</li>
+                  <li class="mb-2"><strong>Status:</strong> {{ humanizeLabel(row.status, { fallback: '—' }) }}</li>
                   <li class="mb-2"><strong>Reason:</strong> {{ row.reason }}</li>
                   <li class="mb-2"><strong>Stock Source:</strong> {{ row.stockSource }}</li>
                   <li class="mb-2"><strong>Site:</strong> {{ row.site?.code }} — {{ row.site?.name }}</li>
@@ -48,7 +48,7 @@
                   {{ row.originalEquipment?.equipmentNo }}
                 </NuxtLink>
                 <div class="small text-muted">
-                  {{ row.originalEquipment?.serialNumber }} · {{ row.originalEquipment?.status }}
+                  {{ row.originalEquipment?.serialNumber }} · {{ humanizeLabel(row.originalEquipment?.status, { fallback: '—' }) }}
                 </div>
                 <div class="small">{{ row.originalEquipment?.product?.sku }}</div>
                 <div v-if="origWarranty.claims?.length" class="mt-2 small border-top pt-2">
@@ -58,10 +58,10 @@
                     <NuxtLink :to="`/inventory/warranty-claim/${c.id}`">
                       <code>{{ c.claimNo }}</code>
                     </NuxtLink>
-                    · Status: {{ c.status }}
+                    · Status: {{ humanizeLabel(c.status, { fallback: '—' }) }}
                   </div>
                   <div v-for="r in (origWarranty.rmas || []).slice(0, 2)" :key="r.id" class="text-muted">
-                    RMA: {{ r.rmaNo }} · {{ r.status }}
+                    RMA: {{ r.rmaNo }} · {{ humanizeLabel(r.status, { fallback: '—' }) }}
                   </div>
                   <p class="text-muted mb-0 mt-1">Informational only — replacement state is independent.</p>
                 </div>
@@ -75,7 +75,7 @@
                     {{ row.replacementEquipment.equipmentNo }}
                   </NuxtLink>
                   <div class="small text-muted">
-                    {{ row.replacementEquipment.serialNumber }} · {{ row.replacementEquipment.status }}
+                    {{ row.replacementEquipment.serialNumber }} · {{ humanizeLabel(row.replacementEquipment.status, { fallback: '—' }) }}
                   </div>
                 </template>
                 <span v-else class="text-muted">Not selected</span>
@@ -155,6 +155,8 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { getApiErrorMessage } from '~/utils/apiError'
 
 definePageMeta({ middleware: ['auth', 'check-permission'] })
@@ -188,8 +190,7 @@ function showError(e, fallback) {
     title: 'Error',
     message: getApiErrorMessage(e, fallback),
     color: 'red',
-    position: 'bottomRight',
-  })
+    position: 'bottomRight'})
 }
 
 async function load() {
@@ -200,8 +201,7 @@ async function load() {
     origWarranty.value = { claims: [], rmas: [] }
     if (row.value?.originalEquipmentId) {
       const war = await $fetch($api.equipmentWarranty(row.value.originalEquipmentId), {
-        credentials: 'include',
-      }).catch(() => null)
+        credentials: 'include'}).catch(() => null)
       origWarranty.value = war?.data || { claims: [], rmas: [] }
     }
   } catch (e) {
@@ -216,8 +216,7 @@ async function loadTargets() {
   try {
     const res = await $fetch($api.equipmentReplacementEligible(route.params.id), {
       credentials: 'include',
-      query: { search: targetSearch.value || undefined },
-    })
+      query: { search: targetSearch.value || undefined }})
     targets.value = res?.data || []
   } catch (e) {
     targets.value = []
@@ -253,9 +252,7 @@ async function selectTarget() {
       body: {
         replacementEquipmentId: selectedTargetId.value,
         bufferReservationId: bufferReservationId.value || undefined,
-        allowFromRequested: true,
-      },
-    })
+        allowFromRequested: true}})
     toast.success({ title: 'Berhasil', message: 'Target committed (READY)', color: 'green', position: 'bottomRight' })
     await load()
   } catch (e) {
@@ -271,14 +268,12 @@ async function complete() {
   try {
     await $fetch($api.equipmentReplacementComplete(route.params.id), {
       method: 'POST',
-      credentials: 'include',
-    })
+      credentials: 'include'})
     toast.success({
       title: 'Completed',
       message: 'Replacement INSTALLED — original equipment state unchanged',
       color: 'green',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
     await load()
   } catch (e) {
     showError(e, 'Gagal complete replacement')
@@ -292,8 +287,7 @@ async function cancel() {
   try {
     await $fetch($api.equipmentReplacementCancel(route.params.id), {
       method: 'POST',
-      credentials: 'include',
-    })
+      credentials: 'include'})
     toast.success({ title: 'Cancelled', message: 'Replacement cancelled', color: 'green', position: 'bottomRight' })
     await load()
   } catch (e) {

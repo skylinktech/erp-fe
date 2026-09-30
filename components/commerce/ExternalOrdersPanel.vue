@@ -47,16 +47,16 @@
               <td class="small text-break">{{ shopLabel(o) }}</td>
               <td>
                 <span class="badge" :class="commerceStatusBadge(o.normalizedStatus)">
-                  {{ o.normalizedStatus }}
+                  {{ commerceEnumLabel(o.normalizedStatus) }}
                 </span>
                 <div v-if="o.rawStatus && o.rawStatus !== o.normalizedStatus" class="small text-muted">
-                  {{ o.rawStatus }}
+                  {{ commerceEnumLabel(o.rawStatus) }}
                 </div>
               </td>
-              <td class="small">{{ o.fulfillmentType || '—' }}</td>
+              <td class="small">{{ commerceEnumLabel(o.fulfillmentType, '—') }}</td>
               <td>
                 <span class="badge" :class="commerceStatusBadge(o.processingState)">
-                  {{ o.processingState }}
+                  {{ commerceEnumLabel(o.processingState) }}
                 </span>
               </td>
               <td class="text-end">{{ o.itemCount ?? o.items?.length ?? 0 }}</td>
@@ -134,11 +134,11 @@
         <div class="d-flex justify-content-between gap-2">
           <div class="font-monospace small text-break">{{ o.externalOrderId }}</div>
           <span class="badge align-self-start" :class="commerceStatusBadge(o.normalizedStatus)">
-            {{ o.normalizedStatus }}
+            {{ commerceEnumLabel(o.normalizedStatus) }}
           </span>
         </div>
         <div class="small text-muted">{{ shopLabel(o) }}</div>
-        <div class="small">{{ o.fulfillmentType }} · {{ o.processingState }}</div>
+        <div class="small">{{ commerceEnumLabel(o.fulfillmentType) }} · {{ commerceEnumLabel(o.processingState) }}</div>
         <div class="fw-semibold mt-1">{{ formatCommerceMoney(o.totalAmount, o.currency) }}</div>
         <div class="small text-muted">{{ formatCommerceTs(o.paidAt) }}</div>
         <button
@@ -164,11 +164,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import {
-  commerceStatusBadge,
-  formatCommerceMoney,
-  formatCommerceTs,
-} from '~/utils/commerceFormat'
+import { commerceStatusBadge, formatCommerceMoney, formatCommerceTs, commerceEnumLabel } from '~/utils/commerceFormat'
 
 export type CommerceExternalOrderLine = {
   id: string
@@ -212,8 +208,7 @@ const props = withDefaults(
   }>(),
   {
     title: 'External Orders',
-    subtitle: 'Data dari TikTok (cache import) · stok/GL tidak berubah',
-  }
+    subtitle: 'Data dari TikTok (cache import) · stok/GL tidak berubah'}
 )
 
 const empty = computed(() => !props.orders?.length)

@@ -123,11 +123,11 @@
                   <div class="small text-muted">product #{{ d.productId }}</div>
                 </td>
                 <td>
-                  <span class="badge" :class="commerceStatusBadge(d.draftStatus)">{{ d.draftStatus }}</span>
+                  <span class="badge" :class="commerceStatusBadge(d.draftStatus)">{{ commerceStatusLabel(d.draftStatus) }}</span>
                 </td>
                 <td>
                   <span class="badge" :class="commerceStatusBadge(d.platformStatus)">
-                    {{ d.platformStatus || '—' }}
+                    {{ commerceStatusLabel(d.platformStatus) }}
                   </span>
                 </td>
                 <td class="small">
@@ -290,8 +290,8 @@
               <div class="col-md-2">
                 <label class="form-label">Unit berat</label>
                 <select v-model="editorForm.packageWeightUnit" class="form-select">
-                  <option value="KILOGRAM">KILOGRAM</option>
-                  <option value="GRAM">GRAM</option>
+                  <option value="KILOGRAM">Kilogram</option>
+                  <option value="GRAM">Gram</option>
                 </select>
               </div>
             </div>
@@ -339,8 +339,8 @@
             <div v-if="previewData" class="border rounded p-3 small bg-light">
               <div class="fw-semibold mb-2">Preview publish</div>
               <div>
-                Mode: <strong>{{ previewData.mode }}</strong>
-                <span v-if="previewData.updateScope" class="ms-1">· scope {{ previewData.updateScope }}</span>
+                Mode: <strong>{{ commerceEnumLabel(previewData.mode) }}</strong>
+                <span v-if="previewData.updateScope" class="ms-1">· scope {{ commerceEnumLabel(previewData.updateScope) }}</span>
               </div>
               <div v-if="previewData.eligibleForConfirm" class="text-success">
                 Eligible confirm (tanpa blocker data/implementasi)
@@ -352,7 +352,7 @@
                 </ul>
               </div>
               <div v-if="previewData.liveHold" class="text-warning mt-1">
-                LIVE_HOLD (izin): {{ previewData.liveHoldReason }}
+                Live Hold (izin): {{ previewData.liveHoldReason }}
               </div>
               <div v-if="previewData.contentDiff" class="mt-3">
                 <div class="fw-semibold">Diff konten</div>
@@ -453,6 +453,8 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { ref, watch, onMounted, onBeforeUnmount, computed } from 'vue'
 import { useNuxtApp, useRoute, useRouter } from '#app'
 import { useActiveCompany } from '~/composables/useActiveCompany'
@@ -469,13 +471,8 @@ import TikTokCategoryAttributesForm from '~/components/commerce/TikTokCategoryAt
 import ProductSelect from '~/components/reference/ProductSelect.vue'
 import WorkspaceTabs from '~/components/common/WorkspaceTabs.vue'
 import { readAccessToken } from '~/utils/authCookie'
-import { commerceStatusBadge } from '~/utils/commerceFormat'
-import {
-  clampCommercePerPage,
-  COMMERCE_DEFAULT_PER_PAGE,
-  normalizeCommerceMeta,
-  type CommerceListMeta,
-} from '~/utils/commercePagination'
+import { commerceStatusBadge, commerceStatusLabel, commerceEnumLabel } from '~/utils/commerceFormat'
+import { clampCommercePerPage, COMMERCE_DEFAULT_PER_PAGE, normalizeCommerceMeta, type CommerceListMeta } from '~/utils/commercePagination'
 import type { WorkspaceTab } from '~/types/workspaceTab'
 
 /** TikTok market (ID/all-region) product title range — mirror BE tiktok_listing_constraints. */
@@ -566,15 +563,13 @@ function draftRowActions(d: any): CommerceRowAction[] {
       label: 'Validasi',
       icon: 'ri-shield-check-line',
       busy: active === 'validate',
-      disabled: Boolean(active && active !== 'validate'),
-    },
+      disabled: Boolean(active && active !== 'validate')},
     {
       key: 'preview',
       label: 'Preview',
       icon: 'ri-eye-line',
       busy: active === 'preview',
-      disabled: Boolean(active && active !== 'preview'),
-    },
+      disabled: Boolean(active && active !== 'preview')},
   ]
   if (d.draftStatus === 'AMBIGUOUS') {
     items.push({
@@ -582,8 +577,7 @@ function draftRowActions(d: any): CommerceRowAction[] {
       label: 'Rekonsiliasi',
       icon: 'ri-refresh-line',
       busy: active === 'reconcile',
-      disabled: Boolean(active && active !== 'reconcile'),
-    })
+      disabled: Boolean(active && active !== 'reconcile')})
   }
   if (d.externalProductId) {
     items.push({
@@ -591,8 +585,7 @@ function draftRowActions(d: any): CommerceRowAction[] {
       label: 'Refresh status',
       icon: 'ri-refresh-line',
       busy: active === 'refresh-status',
-      disabled: Boolean(active && active !== 'refresh-status'),
-    })
+      disabled: Boolean(active && active !== 'refresh-status')})
   }
   if (canDeleteListingDraft.value && d.draftStatus !== 'PUBLISHING') {
     items.push({
@@ -601,8 +594,7 @@ function draftRowActions(d: any): CommerceRowAction[] {
       icon: 'ri-delete-bin-line',
       danger: true,
       busy: active === 'delete',
-      disabled: Boolean(active && active !== 'delete'),
-    })
+      disabled: Boolean(active && active !== 'delete')})
   }
   return items
 }
@@ -666,16 +658,14 @@ async function loadListings(gen: number) {
   const qs = new URLSearchParams({
     perusahaanId: String(companyId.value),
     page: String(page.value),
-    perPage: String(perPage.value),
-  })
+    perPage: String(perPage.value)})
   if (selectedShopId.value) qs.set('shopId', selectedShopId.value)
   if (mappedFilter.value) qs.set('mapped', mappedFilter.value)
   if (q.value.trim()) qs.set('q', q.value.trim())
   const res = await fetch(`${$api.commerceListings()}?${qs}`, {
     headers: headers(),
     credentials: 'include',
-    signal: listingsAbort.signal,
-  })
+    signal: listingsAbort.signal})
   if (gen !== requestGen) return
   const json = await res.json()
   if (!res.ok || json.success === false) {
@@ -693,15 +683,13 @@ async function loadDrafts(gen: number) {
   const qs = new URLSearchParams({
     perusahaanId: String(companyId.value),
     page: String(draftPage.value),
-    perPage: String(draftPerPage.value),
-  })
+    perPage: String(draftPerPage.value)})
   if (selectedShopId.value) qs.set('shopId', selectedShopId.value)
   if (q.value.trim()) qs.set('q', q.value.trim())
   const res = await fetch(`${$api.commerceListingDrafts()}?${qs}`, {
     headers: headers(),
     credentials: 'include',
-    signal: draftsAbort.signal,
-  })
+    signal: draftsAbort.signal})
   if (gen !== requestGen) return
   const json = await res.json()
   if (!res.ok || json.success === false) {
@@ -794,8 +782,7 @@ async function createDraft() {
       method: 'POST',
       headers: { ...headers(), 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ shopId: openShopId.value, productId: openProductId.value }),
-    })
+      body: JSON.stringify({ shopId: openShopId.value, productId: openProductId.value })})
     const json = await res.json()
     if (!res.ok || json.success === false) {
       openError.value = json.message || 'Gagal membuka draft'
@@ -835,8 +822,7 @@ async function openEditorFresh(d: any) {
   try {
     const res = await fetch($api.commerceListingDraft(d.id), {
       headers: headers(),
-      credentials: 'include',
-    })
+      credentials: 'include'})
     const json = await res.json()
     if (res.ok && json.success !== false && json.data) {
       editorDraft.value = json.data
@@ -862,13 +848,10 @@ function bindEditorForm(d: any) {
           values: Array.isArray(a.values)
             ? a.values.map((v: any) => ({
                 id: v.id != null ? String(v.id) : undefined,
-                name: String(v.name || ''),
-              }))
-            : [],
-        }))
+                name: String(v.name || '')}))
+            : []}))
       : [],
-    skus: (d.skus || []).map((s: any) => ({ ...s })),
-  }
+    skus: (d.skus || []).map((s: any) => ({ ...s }))}
 }
 
 function closeEditor() {
@@ -893,11 +876,8 @@ async function saveEditor() {
         productAttributes: editorForm.value.productAttributes || [],
         packageWeight: {
           value: editorForm.value.packageWeightValue,
-          unit: editorForm.value.packageWeightUnit,
-        },
-        skus: editorForm.value.skus,
-      }),
-    })
+          unit: editorForm.value.packageWeightUnit},
+        skus: editorForm.value.skus})})
     const json = await res.json()
     if (!res.ok || json.success === false) {
       error.value = json.message || 'Gagal simpan draft'
@@ -919,8 +899,7 @@ async function runValidate(d: any) {
       method: 'POST',
       headers: { ...headers(), 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: '{}',
-    })
+      body: '{}'})
     const json = await res.json()
     if (!res.ok || json.success === false) {
       error.value = json.message || 'Validasi gagal'
@@ -955,11 +934,8 @@ async function runPreview(d: any) {
           productAttributes: editorForm.value.productAttributes || [],
           packageWeight: {
             value: editorForm.value.packageWeightValue,
-            unit: editorForm.value.packageWeightUnit,
-          },
-          skus: editorForm.value.skus,
-        }),
-      })
+            unit: editorForm.value.packageWeightUnit},
+          skus: editorForm.value.skus})})
       const jsonSave = await resSave.json()
       if (!resSave.ok || jsonSave.success === false) {
         error.value = jsonSave.message || 'Gagal simpan sebelum preview'
@@ -971,8 +947,7 @@ async function runPreview(d: any) {
       method: 'POST',
       headers: { ...headers(), 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: '{}',
-    })
+      body: '{}'})
     const json = await res.json()
     if (!res.ok || json.success === false) {
       error.value = json.message || 'Preview gagal'
@@ -1000,9 +975,7 @@ async function confirmPublish() {
       credentials: 'include',
       body: JSON.stringify({
         idempotencyKey,
-        linkExternalProductId: linkExternalProductId.value || null,
-      }),
-    })
+        linkExternalProductId: linkExternalProductId.value || null})})
     const json = await res.json()
     if (!res.ok || json.success === false) {
       error.value = json.message || 'Publish gagal diantrekan'
@@ -1011,12 +984,12 @@ async function confirmPublish() {
     editorDraft.value = json.data?.draft || editorDraft.value
     if (json.data?.jobId) {
       actionMsg.value = json.data?.liveHold
-        ? `Dalam antrean (LIVE_HOLD, job ${json.data.jobId}) — ${json.data.draft?.lastError || 'tidak memanggil TikTok sampai allowlist aktif.'}`
-        : `Dalam antrean (job ${json.data.jobId}, mode ${json.data?.mode}). Status lokal ≠ status review platform. Cek Sinkronisasi untuk hasil akhir.`
+        ? `Dalam antrean (Live Hold, job ${json.data.jobId}) — ${json.data.draft?.lastError || 'tidak memanggil TikTok sampai allowlist aktif.'}`
+        : `Dalam antrean (job ${json.data.jobId}, mode ${commerceEnumLabel(json.data?.mode)}). Status lokal ≠ status review platform. Cek Sinkronisasi untuk hasil akhir.`
     } else {
       actionMsg.value = json.data?.liveHold
-        ? `Job diantrekan (LIVE_HOLD) — ${json.data.draft?.lastError || 'tidak memanggil TikTok sampai allowlist aktif.'}`
-        : `Job ${json.data?.mode} diantrekan. Status lokal ≠ status review platform.`
+        ? `Job diantrekan (Live Hold) — ${json.data.draft?.lastError || 'tidak memanggil TikTok sampai allowlist aktif.'}`
+        : `Job ${commerceEnumLabel(json.data?.mode)} diantrekan. Status lokal ≠ status review platform.`
     }
     await loadDrafts(requestGen)
   }).catch(() => {})
@@ -1038,8 +1011,7 @@ async function runDeleteDraft(d: any) {
     cancelButtonColor: '#6c757d',
     confirmButtonText: 'Ya, hapus',
     cancelButtonText: 'Batal',
-    focusCancel: true,
-  })
+    focusCancel: true})
   if (!result.isConfirmed) return
 
   actionMsg.value = ''
@@ -1047,8 +1019,7 @@ async function runDeleteDraft(d: any) {
     const res = await fetch($api.commerceListingDraft(d.id), {
       method: 'DELETE',
       headers: headers(),
-      credentials: 'include',
-    })
+      credentials: 'include'})
     const json = await res.json()
     if (!res.ok || json.success === false) {
       error.value = json.message || 'Gagal menghapus draft'
@@ -1071,8 +1042,7 @@ async function runReconcile(d: any) {
       method: 'POST',
       headers: { ...headers(), 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: '{}',
-    })
+      body: '{}'})
     const json = await res.json()
     if (!res.ok || json.success === false) {
       error.value = json.message || 'Rekonsiliasi gagal'
@@ -1090,8 +1060,7 @@ async function runRefreshStatus(d: any) {
       method: 'POST',
       headers: { ...headers(), 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: '{}',
-    })
+      body: '{}'})
     const json = await res.json()
     if (!res.ok || json.success === false) {
       error.value = json.message || 'Refresh status gagal'

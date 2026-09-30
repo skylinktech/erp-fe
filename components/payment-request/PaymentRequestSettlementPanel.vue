@@ -71,7 +71,7 @@
         <div class="d-flex justify-content-between align-items-start mb-2">
           <div>
             <div class="fw-semibold">{{ s.settlementNumber || s.settlement_number }}</div>
-            <span class="badge bg-label-secondary text-capitalize">{{ s.status }}</span>
+            <span class="badge bg-label-secondary text-capitalize">{{ humanizeLabel(s.status, { fallback: '—' }) }}</span>
           </div>
           <div class="d-flex gap-1">
             <button
@@ -125,6 +125,8 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { computed, reactive, ref, watch } from 'vue'
 import { usePaymentRequestStore } from '~/stores/payment-request'
 import { usePermissions } from '~/composables/usePermissions'
@@ -147,8 +149,7 @@ const showForm = ref(false)
 
 const form = reactive({
   notes: '',
-  items: [{ category: '', description: '', amount: 0 }],
-})
+  items: [{ category: '', description: '', amount: 0 }]})
 
 const settlements = computed(() => props.settlements || [])
 const settlementStatusLabel = computed(() => props.settlementStatus || '—')
@@ -188,9 +189,7 @@ async function onCreate() {
       items: items.map((i) => ({
         category: i.category || null,
         description: i.description.trim(),
-        amount: Number(i.amount) || 0,
-      })),
-    })
+        amount: Number(i.amount) || 0}))})
     showForm.value = false
     form.notes = ''
     form.items = [{ category: '', description: '', amount: 0 }]
@@ -225,8 +224,7 @@ async function onReject(id: string) {
     title: 'Alasan penolakan',
     input: 'text',
     showCancelButton: true,
-    inputValidator: (v) => (!v ? 'Wajib diisi' : null),
-  })
+    inputValidator: (v) => (!v ? 'Wajib diisi' : null)})
   if (!value) return
   try {
     await store.rejectSettlement(props.paymentRequestId, id, value)
@@ -248,8 +246,7 @@ async function onSettle(s: any) {
       inputValidator: (v) => {
         if (v == null || Number(v) < balance) return `Minimal mengembalikan ${balance}`
         return null
-      },
-    })
+      }})
     if (value == null) return
     returnedAmount = Number(value)
   }

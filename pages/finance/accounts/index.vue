@@ -100,7 +100,7 @@
                                 </Column>
                                 <Column field="normalBalance" header="Normal Balance" :sortable="true" style="min-width:120px">
                                     <template #body="slotProps">
-                                        <span class="badge bg-label-secondary">{{ slotProps.data.normalBalance }}</span>
+                                        <span class="badge bg-label-secondary">{{ humanizeLabel(slotProps.data.normalBalance, { fallback: '—' }) }}</span>
                                     </template>
                                 </Column>
                                 <Column field="parent" header="Parent Account" :sortable="true" style="min-width:150px">
@@ -265,6 +265,8 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAccountStore } from '~/stores/accounts'
@@ -439,7 +441,7 @@ const getTypeLabel = (type) => {
         revenue: 'Revenue',
         expense: 'Expense'
     }
-    return labels[type] || type
+    return labels[type] || humanizeLabel(type, { fallback: type || '' })
 }
 
 // Row expansion methods yang diperbaiki
@@ -499,9 +501,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-primary',
     info: {
       title: 'Jumlah Keseluruhan',
-      description: 'Jumlah seluruh akun (Chart of Accounts) yang terdaftar dalam sistem, mencakup semua kategori akun.',
-    },
-  },
+      description: 'Jumlah seluruh akun (Chart of Accounts) yang terdaftar dalam sistem, mencakup semua kategori akun.'}},
   {
     key: 'asset',
     label: 'Asset',
@@ -511,9 +511,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-success',
     info: {
       title: 'Akun Asset',
-      description: 'Jumlah akun dengan kategori Asset (aktiva) pada Chart of Accounts.',
-    },
-  },
+      description: 'Jumlah akun dengan kategori Asset (aktiva) pada Chart of Accounts.'}},
   {
     key: 'liability',
     label: 'Liability',
@@ -523,9 +521,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-warning',
     info: {
       title: 'Akun Liability',
-      description: 'Jumlah akun dengan kategori Liability (kewajiban) pada Chart of Accounts.',
-    },
-  },
+      description: 'Jumlah akun dengan kategori Liability (kewajiban) pada Chart of Accounts.'}},
   {
     key: 'equity',
     label: 'Equity',
@@ -535,9 +531,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-info',
     info: {
       title: 'Akun Equity',
-      description: 'Jumlah akun dengan kategori Equity (ekuitas) pada Chart of Accounts.',
-    },
-  }
+      description: 'Jumlah akun dengan kategori Equity (ekuitas) pada Chart of Accounts.'}}
 ])
 
 

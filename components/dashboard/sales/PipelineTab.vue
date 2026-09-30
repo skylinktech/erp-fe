@@ -329,7 +329,7 @@
                       </span>
                     </td>
                     <td class="text-nowrap text-capitalize">
-                      {{ item.status || '-' }}
+                      {{ humanizeLabel(item.status, { fallback: '-' }) }}
                     </td>
                   </tr>
                 </tbody>
@@ -390,8 +390,7 @@
                     <div
                       class="kanban-card-icon"
                       :style="{
-                        backgroundColor: getIconColor(opportunity.customer?.name || 'Unknown'),
-                      }"
+                        backgroundColor: getIconColor(opportunity.customer?.name || 'Unknown')}"
                     >
                       {{ getInitials(opportunity.customer?.name || 'Unknown') }}
                     </div>
@@ -537,8 +536,7 @@
                 :style="{
                   backgroundColor: getProbabilityColor(
                     getProbability(selectedOpportunity)
-                  ),
-                }"
+                  )}"
               >
                 {{ getProbability(selectedOpportunity) }}%
               </span>
@@ -592,6 +590,8 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { ref, computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useSalesPipelineStore } from '~/stores/sales-pipeline'
@@ -679,11 +679,9 @@ const reminderQuotations = computed(() => {
         validUntilFormatted: validDate.toLocaleDateString('id-ID', {
           day: '2-digit',
           month: 'short',
-          year: 'numeric',
-        }),
+          year: 'numeric'}),
         daysLeft: diffDays,
-        status: q.status,
-      }
+        status: q.status}
     })
     .filter((x) => x !== null)
 
@@ -773,8 +771,7 @@ async function onDrop(stage) {
         inputValidator: (value) => {
           if (!value || value.trim().length < 3) return 'Alasan minimal 3 karakter'
           return null
-        },
-      })
+        }})
       if (!result.isConfirmed) {
         if (opp && prevStage != null) opp.pipelineStageId = Number(prevStage)
         return
@@ -869,8 +866,7 @@ function formatDate(dateStr) {
   return new Date(dateStr).toLocaleDateString('id-ID', {
     day: '2-digit',
     month: 'short',
-    year: 'numeric',
-  })
+    year: 'numeric'})
 }
 
 function formatRelativeTime(dateStr) {

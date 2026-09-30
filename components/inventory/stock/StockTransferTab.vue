@@ -349,6 +349,8 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { ref, computed, onMounted, watch, onBeforeUnmount } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useUserStore } from '~/stores/user'
@@ -397,9 +399,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-primary',
     info: {
       title: 'Jumlah Keseluruhan',
-      description: 'Jumlah keseluruhan data Stock Transfer yang terdaftar dalam sistem berdasarkan statistik API.',
-    },
-  },
+      description: 'Jumlah keseluruhan data Stock Transfer yang terdaftar dalam sistem berdasarkan statistik API.'}},
   {
     key: 'draft',
     label: 'Draft',
@@ -409,9 +409,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-secondary',
     info: {
       title: 'Draft',
-      description: 'Jumlah dokumen Stock Transfer berstatus Draft yang belum diproses lebih lanjut.',
-    },
-  },
+      description: 'Jumlah dokumen Stock Transfer berstatus Draft yang belum diproses lebih lanjut.'}},
   {
     key: 'approved',
     label: 'Approved',
@@ -421,9 +419,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-success',
     info: {
       title: 'Approved',
-      description: 'Jumlah dokumen Stock Transfer yang telah disetujui.',
-    },
-  },
+      description: 'Jumlah dokumen Stock Transfer yang telah disetujui.'}},
   {
     key: 'rejected',
     label: 'Rejected',
@@ -433,9 +429,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-danger',
     info: {
       title: 'Rejected',
-      description: 'Jumlah dokumen Stock Transfer yang ditolak.',
-    },
-  }
+      description: 'Jumlah dokumen Stock Transfer yang ditolak.'}}
 ])
 
 const { perusahaans }       = storeToRefs(perusahaanStore)
@@ -454,8 +448,7 @@ const rowsPerPageOptionsArray = ref([10, 25, 50, 100]);
 
 const tableControls = ref({
     rows: 10,
-    search: '',
-});
+    search: ''});
 
 const handleRowsChange = (value) => {
     const rowsValue = Number(value) || 10;
@@ -541,8 +534,7 @@ const handleSaveStockTransfer = async () => {
             title: 'Validasi',
             message: 'Tanggal wajib diisi.',
             color: 'red',
-            position: 'bottomRight',
-        })
+            position: 'bottomRight'})
         return
     }
 
@@ -554,8 +546,7 @@ const handleSaveStockTransfer = async () => {
             title: 'Berhasil!',
             message: `Stock Transfer berhasil ${isEditMode.value ? 'diperbarui' : 'dibuat'}.`,
             color: 'green',
-            position: 'bottomRight',
-        })
+            position: 'bottomRight'})
     } catch (error) {
         const err = normalizeApiError(error, 'Stock Transfer gagal disimpan.')
         stockTransferStore.validationErrors = err.fieldErrorList
@@ -731,8 +722,7 @@ const deleteStockTransfer = async (id) => {
                 title: 'Berhasil!',
                 message: 'Stock Transfer berhasil dihapus.',
                 color: 'green',
-                position: 'bottomRight',
-            })
+                position: 'bottomRight'})
         } catch (error) {
             toastNormalizedError(normalizeApiError(error, 'Stock Transfer gagal dihapus.'))
         }
@@ -750,7 +740,7 @@ const getStatusBadge = (status) => {
         case 'submitted':
             return { text: 'Submitted', class: 'badge rounded-pill bg-label-info' }
         default:
-            return { text: status || '-', class: 'badge rounded-pill bg-label-secondary' }
+            return { text: humanizeLabel(status, { fallback: '-' }), class: 'badge rounded-pill bg-label-secondary' }
     }
 }
 
@@ -908,17 +898,14 @@ const exportStockTransferPDF = (dataToExport) => {
             fontSize: 7,
             cellPadding: 2,
             overflow: 'linebreak',
-            halign: 'left',
-        },
+            halign: 'left'},
         headStyles: {
             fillColor: [41, 128, 185],
             textColor: 255,
             fontStyle: 'bold',
-            halign: 'center',
-        },
+            halign: 'center'},
         alternateRowStyles: {
-            fillColor: [245, 245, 245],
-        },
+            fillColor: [245, 245, 245]},
         margin: { top: 30, right: 10, bottom: 10, left: 10 },
         tableWidth: 'auto',
         columnStyles: columnStyles,
@@ -928,8 +915,7 @@ const exportStockTransferPDF = (dataToExport) => {
             doc.setFontSize(8);
             doc.setFont(fontFamily, 'normal');
             doc.text(`Halaman ${pageCount}`, data.settings.margin.left, doc.internal.pageSize.height - 10);
-        },
-    });
+        }});
 
     // Info ringkasan setelah tabel
     const finalY = doc.lastAutoTable.finalY || 200;

@@ -378,7 +378,7 @@
                         >
                           <div class="d-flex flex-wrap justify-content-between gap-2">
                             <span>
-                              <strong>{{ p.status }}</strong>
+                              <strong>{{ humanizeLabel(p.status, { fallback: '—' }) }}</strong>
                               <span v-if="p.recipientName"> · {{ p.recipientName }}</span>
                             </span>
                             <div class="d-flex gap-1">
@@ -431,6 +431,7 @@ import InputText from 'primevue/inputtext'
 import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import { toastApiError } from '~/utils/apiError'
+import { humanizeLabel } from '~/utils/humanizeLabel'
 
 const { $api, $apiFetch } = useNuxtApp()
 const toast = useToast()
@@ -493,8 +494,7 @@ const displayRows = computed(() => {
 })
 
 function formatStatusLabel(value) {
-  if (value == null || value === '') return '—'
-  return String(value).replaceAll('_', ' ')
+  return humanizeLabel(value, { fallback: '—' })
 }
 
 function formatDate(v) {
@@ -505,8 +505,7 @@ function formatDate(v) {
       month: 'short',
       year: 'numeric',
       hour: '2-digit',
-      minute: '2-digit',
-    })
+      minute: '2-digit'})
   } catch {
     return String(v)
   }
@@ -566,8 +565,7 @@ async function loadQueue() {
     const page = Math.floor(params.value.first / params.value.rows) + 1
     const query = {
       page,
-      rows: params.value.rows,
-    }
+      rows: params.value.rows}
     if (statusFilter.value) query.status = statusFilter.value
     if (deliveryFilter.value) query.deliveryStatus = deliveryFilter.value
 
@@ -699,8 +697,7 @@ function selectedLines(detail) {
   return (detail?.items || [])
     .map((line) => ({
       retailSaleItemId: line.id,
-      quantity: Number(qtyDraft[line.id] || 0),
-    }))
+      quantity: Number(qtyDraft[line.id] || 0)}))
     .filter((l) => l.quantity > 0)
 }
 
@@ -713,8 +710,7 @@ async function runAction(saleId, kind) {
       title: 'Validasi',
       message: 'Isi qty aksi > 0 pada baris yang diproses',
       color: 'red',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
     return
   }
   busy.value = true
@@ -727,15 +723,13 @@ async function runAction(saleId, kind) {
           : $api.retailWarehouseOpsDispatch(detail.sale.id)
     await $apiFetch(endpoint, {
       method: 'POST',
-      body: { lines, idempotencyKey: crypto.randomUUID() },
-    })
+      body: { lines, idempotencyKey: crypto.randomUUID() }})
     toast.success({
       title: 'Berhasil',
       message:
         kind === 'pick' ? 'Pick tersimpan' : kind === 'pack' ? 'Pack tersimpan' : 'Dispatch berhasil',
       color: 'green',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
     await loadQueue()
     await refreshDetail(saleId)
   } catch (e) {
@@ -754,15 +748,12 @@ async function cancelRemainder(saleId) {
       method: 'POST',
       body: {
         idempotencyKey: crypto.randomUUID(),
-        reason: 'cancel remainder from UI',
-      },
-    })
+        reason: 'cancel remainder from UI'}})
     toast.success({
       title: 'Berhasil',
       message: 'Sisa dibatalkan',
       color: 'green',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
     await loadQueue()
     await refreshDetail(saleId)
   } catch (e) {
@@ -780,8 +771,7 @@ function hydratePodForm(panel) {
       acceptedQty: open,
       rejectedQty: 0,
       shortageQty: 0,
-      rejectReason: '',
-    }
+      rejectReason: ''}
   }
   podNotes.value = ''
   podRecipientName.value = panel.dispatch?.recipientName || ''
@@ -817,8 +807,7 @@ async function submitPodConfirm() {
       acceptedQty: Number(podForm[l.id]?.acceptedQty ?? 0),
       rejectedQty: Number(podForm[l.id]?.rejectedQty ?? 0),
       shortageQty: Number(podForm[l.id]?.shortageQty ?? 0),
-      rejectReason: podForm[l.id]?.rejectReason || undefined,
-    }))
+      rejectReason: podForm[l.id]?.rejectReason || undefined}))
     .filter((l) => l.acceptedQty + l.rejectedQty + l.shortageQty > 0)
 
   if (!lines.length) {
@@ -826,8 +815,7 @@ async function submitPodConfirm() {
       title: 'Validasi',
       message: 'Isi accepted / rejected / shortage',
       color: 'red',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
     return
   }
 
@@ -839,23 +827,19 @@ async function submitPodConfirm() {
         recipientName: podRecipientName.value || undefined,
         notes: podNotes.value || undefined,
         deliveredAt: new Date().toISOString(),
-        lines,
-      },
-    })
+        lines}})
     const podId = draftRes?.data?.id || draftRes?.data?.pod?.id
     if (!podId) throw new Error('POD draft tidak mengembalikan id')
 
     await $apiFetch($api.retailWarehouseOpsPodConfirm(podId), {
       method: 'POST',
-      body: { idempotencyKey: crypto.randomUUID() },
-    })
+      body: { idempotencyKey: crypto.randomUUID() }})
     lastConfirmedPodId.value = podId
     toast.success({
       title: 'Berhasil',
       message: 'POD dikonfirmasi',
       color: 'green',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
 
     await loadQueue()
     const saleId = Object.keys(detailsCache).find((id) =>
@@ -875,14 +859,12 @@ async function createReturnFromPod(podId) {
   try {
     await $apiFetch($api.retailWarehouseOpsPodCreateReturn(podId), {
       method: 'POST',
-      body: { idempotencyKey: crypto.randomUUID() },
-    })
+      body: { idempotencyKey: crypto.randomUUID() }})
     toast.success({
       title: 'Berhasil',
       message: 'Draft retur dibuat — stok belum bertambah sampai retur diposting',
       color: 'green',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
     if (podPanelId.value) await loadPodPanel(podPanelId.value)
   } catch (e) {
     toastApiError(e, 'Gagal buat retur dari POD')
@@ -901,8 +883,7 @@ async function onPodAttachment(event) {
       title: 'Validasi',
       message: 'Konfirmasi POD dulu sebelum upload lampiran',
       color: 'red',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
     if (event?.target) event.target.value = ''
     return
   }
@@ -912,14 +893,12 @@ async function onPodAttachment(event) {
     form.append('file', file)
     await $apiFetch($api.retailWarehouseOpsPodAttachments(podId), {
       method: 'POST',
-      body: form,
-    })
+      body: form})
     toast.success({
       title: 'Berhasil',
       message: 'Lampiran diunggah',
       color: 'green',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
     if (podPanelId.value) await loadPodPanel(podPanelId.value)
   } catch (e) {
     toastApiError(e, 'Gagal upload lampiran POD')

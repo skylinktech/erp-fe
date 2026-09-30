@@ -31,7 +31,7 @@
         <h2 class="h6 mb-2">Order menunggu pemenuhan (read-only)</h2>
         <ExternalOrdersPanel :orders="orders">
           <template #empty>
-            Belum ada order AWAITING_FULFILLMENT / IN_FULFILLMENT di cache SkyFlow.
+            Belum ada order menunggu / dalam fulfillment di cache SkyFlow.
           </template>
         </ExternalOrdersPanel>
       </div>
@@ -46,6 +46,7 @@ import { useActiveCompany } from '~/composables/useActiveCompany'
 import OmnichannelShell from '~/components/commerce/OmnichannelShell.vue'
 import ExternalOrdersPanel from '~/components/commerce/ExternalOrdersPanel.vue'
 import { readAccessToken } from '~/utils/authCookie'
+import { commerceEnumLabel } from '~/utils/commerceFormat'
 
 definePageMeta({ middleware: ['auth', 'check-permission'] })
 
@@ -58,10 +59,10 @@ const error = ref('')
 const loading = ref(false)
 
 const cards = computed(() => [
-  { key: 'await', label: 'AWAITING_FULFILLMENT', value: summary.value.AWAITING_FULFILLMENT || 0 },
-  { key: 'inf', label: 'IN_FULFILLMENT', value: summary.value.IN_FULFILLMENT || 0 },
-  { key: 'ship', label: 'SHIPPED', value: summary.value.SHIPPED || 0 },
-  { key: 'exc', label: 'EXCEPTION', value: summary.value.EXCEPTION || 0 },
+  { key: 'await', label: commerceEnumLabel('AWAITING_FULFILLMENT'), value: summary.value.AWAITING_FULFILLMENT || 0 },
+  { key: 'inf', label: commerceEnumLabel('IN_FULFILLMENT'), value: summary.value.IN_FULFILLMENT || 0 },
+  { key: 'ship', label: commerceEnumLabel('SHIPPED'), value: summary.value.SHIPPED || 0 },
+  { key: 'exc', label: commerceEnumLabel('EXCEPTION'), value: summary.value.EXCEPTION || 0 },
 ])
 
 function headers() {
@@ -81,12 +82,10 @@ async function load() {
       perusahaanId: String(companyId.value),
       page: '1',
       perPage: '50',
-      fulfillmentQueue: '1',
-    })
+      fulfillmentQueue: '1'})
     const res = await fetch(`${$api.commerceExternalOrders()}?${qs}`, {
       headers: headers(),
-      credentials: 'include',
-    })
+      credentials: 'include'})
     const json = await res.json().catch(() => ({}))
     if (!res.ok || json.success === false) {
       error.value = json.message || 'Gagal memuat antrian fulfillment'

@@ -28,7 +28,7 @@
                 <small class="text-muted">{{ formatDateTime(arf.createdAt) }}</small>
               </div>
               <span :class="getStatusBadge(arf).class" class="badge">{{ getStatusBadge(arf).text }}</span>
-              <span class="badge bg-label-info text-capitalize">{{ arf.type }}</span>
+              <span class="badge bg-label-info text-capitalize">{{ humanizeLabel(arf.type, { fallback: '—' }) }}</span>
             </div>
             <div class="d-flex flex-wrap gap-2 align-items-center">
               <button
@@ -70,7 +70,7 @@
                     </div>
                     <div class="col-md-6">
                       <label class="form-label text-muted">Tipe</label>
-                      <p class="mb-0 text-capitalize">{{ arf.type || '—' }}</p>
+                      <p class="mb-0 text-capitalize">{{ humanizeLabel(arf.type, { fallback: '—' }) }}</p>
                     </div>
                     <div class="col-md-6">
                       <label class="form-label text-muted">Site Investment</label>
@@ -259,18 +259,12 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
-import {
-  useArfStore,
-  getArfRequestNo,
-  getArfItemsList,
-  getArfEmployeesList,
-  getArfItemsTotal,
-  getArfEmployeesTotal,
-  getArfTotal,
-} from '~/stores/arf'
+import { useArfStore, getArfRequestNo, getArfItemsList, getArfEmployeesList, getArfItemsTotal, getArfEmployeesTotal, getArfTotal } from '~/stores/arf'
 import { useArfApproval } from '~/composables/useArfApproval'
 import { useApprovalStatus } from '~/composables/useApprovalStatus'
 import { usePermissions } from '~/composables/usePermissions'
@@ -281,8 +275,7 @@ definePageMeta({
   hidePageHeading: true,
   layout: 'default',
   middleware: ['auth', 'check-permission'],
-  title: 'ARF Detail',
-})
+  title: 'ARF Detail'})
 
 const route = useRoute()
 const router = useRouter()
@@ -336,8 +329,7 @@ const headerActionItems = computed(() => {
       icon: 'ri ri-check-line',
       command: () => {
         showApproveModal.value = true
-      },
-    })
+      }})
   }
   if (canReject.value) {
     items.push({
@@ -345,28 +337,24 @@ const headerActionItems = computed(() => {
       icon: 'ri ri-close-line',
       command: () => {
         showRejectModal.value = true
-      },
-    })
+      }})
   }
   if (row.status === 'draft' || row.status === 'rejected') {
     items.push({
       label: 'Edit',
       icon: 'ri ri-edit-box-line',
-      command: () => navigateTo(`/implementation/arf/form/${row.id}`),
-    })
+      command: () => navigateTo(`/implementation/arf/form/${row.id}`)})
   }
   items.push({
     label: 'Cetak',
     icon: 'ri ri-printer-line',
-    command: () => goToCetak(),
-  })
+    command: () => goToCetak()})
   if (row.status === 'draft') {
     items.push({
       label: 'Hapus',
       icon: 'ri ri-delete-bin-7-line',
       class: 'arf-menu-danger',
-      command: () => onDelete(),
-    })
+      command: () => onDelete()})
   }
 
   return items
@@ -388,8 +376,7 @@ function formatDateTime(v: string | null | undefined) {
     month: 'short',
     year: 'numeric',
     hour: '2-digit',
-    minute: '2-digit',
-  })
+    minute: '2-digit'})
 }
 
 async function onSubmit() {

@@ -269,6 +269,7 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import { useDebounceFn } from '@vueuse/core'
 import { mapPegawaiShowResponseToListRow } from '~/utils/pegawaiApiMapper'
+import { humanizeLabel } from '~/utils/humanizeLabel'
 
 const { $api } = useNuxtApp()
 const { userHasRole } = usePermissions()
@@ -299,9 +300,7 @@ const statItems = computed(() => {
       iconBgClass: 'bg-label-secondary',
       info: {
         title: 'Draft',
-        description: 'Jumlah permintaan akses yang masih berstatus Draft dan belum diajukan ke approval.',
-      },
-    })
+        description: 'Jumlah permintaan akses yang masih berstatus Draft dan belum diajukan ke approval.'}})
   }
   if (stats.value.pending !== undefined) {
     items.push({
@@ -313,9 +312,7 @@ const statItems = computed(() => {
       iconBgClass: 'bg-label-warning',
       info: {
         title: 'Pending',
-        description: 'Jumlah permintaan akses yang sedang menunggu persetujuan approval workflow.',
-      },
-    })
+        description: 'Jumlah permintaan akses yang sedang menunggu persetujuan approval workflow.'}})
   }
   if (stats.value.approved !== undefined) {
     items.push({
@@ -327,9 +324,7 @@ const statItems = computed(() => {
       iconBgClass: 'bg-label-success',
       info: {
         title: 'Approved',
-        description: 'Jumlah permintaan akses yang sudah disetujui dan aksesnya aktif.',
-      },
-    })
+        description: 'Jumlah permintaan akses yang sudah disetujui dan aksesnya aktif.'}})
   }
   if (stats.value.rejected !== undefined) {
     items.push({
@@ -341,9 +336,7 @@ const statItems = computed(() => {
       iconBgClass: 'bg-label-danger',
       info: {
         title: 'Rejected',
-        description: 'Jumlah permintaan akses yang ditolak pada proses approval.',
-      },
-    })
+        description: 'Jumlah permintaan akses yang ditolak pada proses approval.'}})
   }
   return items
 })
@@ -389,8 +382,7 @@ async function resolveSelectedPegawai(pegawaiId) {
   try {
     const r = await fetch($api.pegawaiShow(pegawaiId), {
       headers: { Accept: 'application/json' },
-      credentials: 'include',
-    })
+      credentials: 'include'})
     if (r.ok) {
       const raw = await r.json()
       const mapped = mapPegawaiShowResponseToListRow(raw)
@@ -440,10 +432,9 @@ const menuDetailsWithPermissions = computed(() => {
     if (!result[menuKey]) {
       result[menuKey] = {
         id: menuKey,
-        name: menuKey.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
+        name: humanizeLabel(menuKey),
         order: Object.keys(result).length,
-        permissions: [],
-      }
+        permissions: []}
     }
     if (!result[menuKey].permissions.some((x) => x.id === permissionObject.id)) {
       result[menuKey].permissions.push(permissionObject)
@@ -474,8 +465,7 @@ const selectAllPerm = computed({
     } else {
       store.form.permissionIds = []
     }
-  },
-})
+  }})
 
 function getPermission(menu, permName) {
   return menu.permissions.find((p) => p.name === permName)
@@ -494,8 +484,7 @@ async function fetchPegawai() {
   try {
     const r = await fetch(`${$api.pegawai()}?start=0&length=500`, {
       headers: { Accept: 'application/json' },
-      credentials: 'include',
-    })
+      credentials: 'include'})
     if (r.ok) {
       const data = await r.json()
       pegawaiOptions.value = data.data || data || []
@@ -509,8 +498,7 @@ async function fetchWorkflows() {
   try {
     const r = await fetch($api.approvalWorkflows(), {
       headers: { Accept: 'application/json' },
-      credentials: 'include',
-    })
+      credentials: 'include'})
     if (r.ok) {
       const data = await r.json()
       workflowOptions.value = (data.data || data || []).filter(
@@ -526,8 +514,7 @@ async function fetchPermissions() {
   try {
     const r = await fetch($api.getPermissions(), {
       headers: { Accept: 'application/json' },
-      credentials: 'include',
-    })
+      credentials: 'include'})
     if (r.ok) {
       const data = await r.json()
       permissions.value = data.data || data || []
@@ -582,8 +569,7 @@ definePageMeta({
   layout: 'default',
   middleware: ['auth', 'check-permission'],
   title: 'Permintaan Akses',
-  description: 'Kelola permintaan akses modul/menu',
-})
+  description: 'Kelola permintaan akses modul/menu'})
 </script>
 
 <style scoped>

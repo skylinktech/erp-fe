@@ -24,9 +24,9 @@
         </tr></thead><tbody>
           <tr v-for="(row,i) in rows" :key="row.id||i" style="cursor:pointer" @click="selected=row">
             <td>{{ row.createdAt }}</td>
-            <td>{{ row.eventType }}</td>
-            <td>{{ row.sourceType }}:{{ row.sourceId }}</td>
-            <td>{{ row.status }}</td>
+            <td>{{ humanizeLabel(row.eventType, { fallback: '-' }) }}</td>
+            <td>{{ humanizeLabel(row.sourceType, { fallback: '-' }) }}:{{ row.sourceId }}</td>
+            <td>{{ humanizeLabel(row.status, { fallback: '-' }) }}</td>
             <td>{{ row.attemptCount }}</td>
             <td>{{ row.errorMessage||'-' }}</td>
             <td>{{ row.journalId||'-' }}</td>
@@ -50,6 +50,8 @@
   </div>
 </template>
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 definePageMeta({
   title: "Accounting Processing Monitor", middleware: ['auth', 'check-permission'] })
 const { $api, $apiFetch } = useNuxtApp()

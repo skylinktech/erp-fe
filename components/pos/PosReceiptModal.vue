@@ -15,7 +15,7 @@
         <div class="modal-body">
           <div ref="printArea" class="sf-pos-receipt small">
             <div class="fw-semibold mb-1">{{ companyLabel || 'SkyFlow POS' }}</div>
-            <div class="text-muted mb-2">{{ receipt.saleNumber }} · {{ receipt.status }}</div>
+            <div class="text-muted mb-2">{{ receipt.saleNumber }} · {{ humanizeLabel(receipt.status, { fallback: '—' }) }}</div>
             <div class="mb-2">
               {{ receipt.customerMode === 'WALK_IN' ? 'Walk-in' : 'Pelanggan' }}
               <span v-if="receipt.walkInName"> · {{ receipt.walkInName }}</span>
@@ -70,6 +70,8 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { ref } from 'vue'
 import { formatPosMoney } from '~/utils/posCart'
 

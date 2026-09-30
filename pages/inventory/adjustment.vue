@@ -72,7 +72,7 @@
                     <td>{{ row.noAdj }}</td>
                     <td>{{ row.warehouse?.name || row.warehouseId }}</td>
                     <td>{{ row.reason }}</td>
-                    <td><span class="badge bg-label-secondary">{{ row.status }}</span></td>
+                    <td><span class="badge bg-label-secondary">{{ humanizeLabel(row.status, { fallback: '—' }) }}</span></td>
                     <td class="text-nowrap">
                       <button
                         v-if="row.status === 'draft' || row.status === 'rejected'"
@@ -115,6 +115,8 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { useMakerChecker } from '~/composables/useMakerChecker'
 import { useWorkflowApproval } from '~/composables/useWorkflowApproval'
 import { getApiErrorMessage } from '~/utils/apiError'
@@ -126,8 +128,7 @@ const toast = useToast()
 const { blocksSelfAction, selfBlockMessage } = useMakerChecker()
 const { canApprove, canReject } = useWorkflowApproval({
   approvePermission: 'approve_inventory_adjustment',
-  rejectPermission: 'reject_inventory_adjustment',
-})
+  rejectPermission: 'reject_inventory_adjustment'})
 const warehouses = ref([])
 const reasons = ref([])
 const rows = ref([])
@@ -138,8 +139,7 @@ const form = reactive({
   notes: '',
   productId: null,
   quantity: 1,
-  direction: 'IN',
-})
+  direction: 'IN'})
 
 function showApiError(e, fallback = 'Terjadi kesalahan') {
   const message = getApiErrorMessage(e, fallback)
@@ -148,8 +148,7 @@ function showApiError(e, fallback = 'Terjadi kesalahan') {
     title: isValidation ? 'Validasi' : 'Error',
     message,
     color: 'red',
-    position: 'bottomRight',
-  })
+    position: 'bottomRight'})
 }
 
 const loadWarehouses = async () => {
@@ -194,10 +193,7 @@ const createAdjustment = async () => {
         items: [{
           productId: Number(form.productId),
           quantity: Number(form.quantity),
-          direction: form.direction,
-        }],
-      },
-    })
+          direction: form.direction}]}})
     toast.success({ title: 'Berhasil', message: 'Adjustment draft dibuat', color: 'green', position: 'bottomRight' })
     await loadList()
   } catch (e) {
@@ -232,8 +228,7 @@ const reject = async (row) => {
     await $fetch($api.rejectInventoryAdjustment(row.id), {
       method: 'PATCH',
       credentials: 'include',
-      body: { remarks: 'Rejected' },
-    })
+      body: { remarks: 'Rejected' }})
     toast.success({ title: 'Berhasil', message: 'Rejected', color: 'green', position: 'bottomRight' })
     await loadList()
   } catch (e) {
@@ -247,8 +242,7 @@ const post = async (row) => {
       title: 'Validasi',
       message: selfBlockMessage('post inventory adjustment'),
       color: 'red',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
     return
   }
   try {
@@ -267,8 +261,7 @@ const reverse = async (id) => {
     await $fetch($api.reverseInventoryAdjustment(id), {
       method: 'POST',
       credentials: 'include',
-      body: { reason },
-    })
+      body: { reason }})
     toast.success({ title: 'Berhasil', message: 'Reversed', color: 'green', position: 'bottomRight' })
     await loadList()
   } catch (e) {

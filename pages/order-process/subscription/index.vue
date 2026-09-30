@@ -142,6 +142,8 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { ref, computed, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import SubscriptionAttachmentModal from '~/components/subscription/SubscriptionAttachmentModal.vue'
@@ -176,9 +178,7 @@ const statItems = computed(() => [
     info: {
       title: 'Jumlah Keseluruhan',
       description:
-        'Jumlah seluruh dokumen Subscription yang terdaftar dalam sistem, mencakup semua status.',
-    },
-  },
+        'Jumlah seluruh dokumen Subscription yang terdaftar dalam sistem, mencakup semua status.'}},
   {
     key: 'draft',
     label: 'Draft',
@@ -189,9 +189,7 @@ const statItems = computed(() => [
     info: {
       title: 'Draft',
       description:
-        'Jumlah dokumen Subscription berstatus Draft yang belum diproses lebih lanjut.',
-    },
-  },
+        'Jumlah dokumen Subscription berstatus Draft yang belum diproses lebih lanjut.'}},
   {
     key: 'signed',
     label: 'Signed',
@@ -202,9 +200,7 @@ const statItems = computed(() => [
     info: {
       title: 'Signed',
       description:
-        'Jumlah dokumen Subscription yang telah ditandatangani dan menunggu atau menjalani proses aktivasi.',
-    },
-  },
+        'Jumlah dokumen Subscription yang telah ditandatangani dan menunggu atau menjalani proses aktivasi.'}},
   {
     key: 'active',
     label: 'Active',
@@ -214,9 +210,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-success',
     info: {
       title: 'Active',
-      description: 'Jumlah Subscription yang saat ini berstatus aktif.',
-    },
-  },
+      description: 'Jumlah Subscription yang saat ini berstatus aktif.'}},
   {
     key: 'canceled',
     label: 'Canceled',
@@ -226,9 +220,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-danger',
     info: {
       title: 'Canceled',
-      description: 'Jumlah dokumen Subscription yang telah dibatalkan.',
-    },
-  },
+      description: 'Jumlah dokumen Subscription yang telah dibatalkan.'}},
 ])
 
 const tableControls = ref({ rows: 10, search: '' })
@@ -265,7 +257,7 @@ function getStatusBadge(status) {
     case 'terminated': return { text: 'Terminated', class: 'badge rounded-pill bg-label-warning' }
     case 'expired': return { text: 'Expired', class: 'badge rounded-pill bg-label-dark' }
     case 'canceled': return { text: 'Canceled', class: 'badge rounded-pill bg-label-danger' }
-    default: return { text: status, class: 'badge rounded-pill bg-label-light' }
+    default: return { text: humanizeLabel(status, { fallback: String(status) }), class: 'badge rounded-pill bg-label-light' }
   }
 }
 
@@ -281,8 +273,7 @@ function goToCetak(row) {
   if (!row?.id) return
   navigateTo({
     path: '/order-process/cetak-subscription',
-    query: { id: String(row.id), print: 'true' },
-  })
+    query: { id: String(row.id), print: 'true' }})
 }
 
 async function handleActivate(row) {
@@ -294,8 +285,7 @@ async function handleActivate(row) {
     confirmButtonColor: '#00ac4f',
     cancelButtonColor: '#6c757d',
     confirmButtonText: 'Ya, Aktifkan',
-    cancelButtonText: 'Batal',
-  })
+    cancelButtonText: 'Batal'})
   if (confirmed.isConfirmed) {
     const ok = await subscriptionStore.activateSubscription(row.id)
     if (ok) {
@@ -319,8 +309,7 @@ async function openCancelModal(row) {
     cancelButtonColor: '#6c757d',
     confirmButtonText: 'Ya, Cancel',
     cancelButtonText: 'Batal',
-    preConfirm: () => document.getElementById('swal-reason-cancel')?.value?.trim() || null,
-  })
+    preConfirm: () => document.getElementById('swal-reason-cancel')?.value?.trim() || null})
   if (result.isConfirmed) {
     const ok = await subscriptionStore.cancelSubscription(row.id, result.value ?? null)
     if (ok) subscriptionStore.fetchSubscriptions()
@@ -403,8 +392,7 @@ async function exportData(format) {
         head: [['No. Subscription', 'Customer', 'Status', 'Tanggal']],
         body,
         startY: 22,
-        styles: { fontSize: 8 },
-      })
+        styles: { fontSize: 8 }})
       doc.save('subscriptions.pdf')
       toast.success({ title: 'Success', message: `PDF berisi ${all.length} baris`, color: 'green', position: 'bottomRight', layout: 2 })
     } catch (e) {
@@ -438,8 +426,7 @@ onMounted(() => {
 definePageMeta({
   layout: 'default',
   middleware: ['auth', 'check-permission'],
-  title: 'Subscription',
-})
+  title: 'Subscription'})
 </script>
 
 <style scoped>

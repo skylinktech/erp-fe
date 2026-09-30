@@ -91,7 +91,7 @@
                 </Column>
                 <Column field="type" header="Tipe" :sortable="true">
                   <template #body="slotProps">
-                    <span class="text-capitalize">{{ slotProps.data.type || '—' }}</span>
+                    <span class="text-capitalize">{{ humanizeLabel(slotProps.data.type, { fallback: '—' }) }}</span>
                   </template>
                 </Column>
                 <Column field="siteInvestment.si_number" header="Site Investment" :sortable="false">
@@ -135,6 +135,8 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useArfStore, ARF_STATUS_OPTIONS, ARF_TYPE_OPTIONS, type Arf } from '~/stores/arf'
@@ -153,8 +155,7 @@ import Swal from 'sweetalert2'
 definePageMeta({
   layout: 'default',
   middleware: ['auth', 'check-permission'],
-  title: 'ARF',
-})
+  title: 'ARF'})
 
 const arfStore = useArfStore()
 const formatRupiah = useFormatRupiah()
@@ -197,38 +198,32 @@ const actionMenuItems = computed(() => {
     items.push({
       label: row.status === 'rejected' ? 'Submit Revisi' : 'Submit untuk Approval',
       icon: 'ri-send-plane-line',
-      command: () => onSubmitArf(row),
-    })
+      command: () => onSubmitArf(row)})
     items.push({
       label: 'Edit',
       icon: 'ri-edit-box-line',
-      command: () => navigateTo(`/implementation/arf/form/${row.id}`),
-    })
+      command: () => navigateTo(`/implementation/arf/form/${row.id}`)})
   }
   if (canApproveArf(row)) {
     items.push({
       label: 'Approve',
       icon: 'ri-check-line',
-      command: () => onApproveArf(row),
-    })
+      command: () => onApproveArf(row)})
   }
   if (canRejectArf(row)) {
     items.push({
       label: 'Reject',
       icon: 'ri-close-line',
-      command: () => onRejectArf(row),
-    })
+      command: () => onRejectArf(row)})
   }
   items.push({
     label: 'Detail',
     icon: 'ri-eye-line',
-    command: () => navigateTo(`/implementation/arf/detail/${row.id}`),
-  })
+    command: () => navigateTo(`/implementation/arf/detail/${row.id}`)})
   items.push({
     label: 'Cetak',
     icon: 'ri-printer-line',
-    command: () => goToCetak(row),
-  })
+    command: () => goToCetak(row)})
 
   return items
 })
@@ -261,9 +256,7 @@ async function onApproveArf(row: Arf) {
     cancelButtonText: 'Batal',
     customClass: {
       confirmButton: 'btn btn-success',
-      cancelButton: 'btn btn-label-secondary',
-    },
-  })
+      cancelButton: 'btn btn-label-secondary'}})
   if (!isConfirmed) return
   const ok = await arfStore.approveArf(row.id, remarks?.trim() || undefined)
   if (ok) {
@@ -284,9 +277,7 @@ async function onRejectArf(row: Arf) {
     cancelButtonText: 'Batal',
     customClass: {
       confirmButton: 'btn btn-danger',
-      cancelButton: 'btn btn-label-secondary',
-    },
-  })
+      cancelButton: 'btn btn-label-secondary'}})
   if (!isConfirmed || !value?.trim()) return
   const ok = await arfStore.rejectArf(row.id, value.trim())
   if (ok) {

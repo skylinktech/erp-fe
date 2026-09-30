@@ -45,19 +45,19 @@
             <td class="text-break">{{ row.returnNumber }}</td>
             <td class="text-break">{{ row.saleNumber }}</td>
             <td>{{ row.customerMode === 'WALK_IN' ? 'Walk-in' : 'Terdaftar' }}</td>
-            <td>{{ row.status }}</td>
+            <td>{{ humanizeLabel(row.status, { fallback: '—' }) }}</td>
           </tr>
         </tbody>
       </table>
     </div>
     <div v-if="selected" class="card card-body mt-3">
-      <h5 class="h6 text-break">{{ selected.returnNumber }} · {{ selected.status }}</h5>
+      <h5 class="h6 text-break">{{ selected.returnNumber }} · {{ humanizeLabel(selected.status, { fallback: '—' }) }}</h5>
       <p class="small text-muted mb-2">Penjualan {{ selected.saleNumber }} tetap {{ selected.saleStatus }}.</p>
       <div class="row g-2 mb-3">
         <div class="col-12 col-md-6">
           <div class="border rounded p-2 h-100">
             <div class="small text-muted">Barang</div>
-            <div>{{ selected.status }}</div>
+            <div>{{ humanizeLabel(selected.status, { fallback: '—' }) }}</div>
           </div>
         </div>
         <div class="col-12 col-md-6">
@@ -132,6 +132,8 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { computed, onMounted, ref } from 'vue'
 import { usePermissions } from '~/composables/usePermissions'
 import { readAccessToken } from '~/utils/authCookie'
@@ -156,8 +158,7 @@ const actions = computed(() => retailReturnActions({
   creditStatus: selected.value?.finance?.creditStatus,
   refundStatus: selected.value?.finance?.refundStatus,
   refundMethod: selected.value?.finance?.refundMethod,
-  refundableCash: selected.value?.finance?.refundableCash,
-}))
+  refundableCash: selected.value?.finance?.refundableCash}))
 const rows = ref<any[]>([])
 const selected = ref<any>(null)
 const error = ref('')
@@ -200,9 +201,7 @@ async function createReturn() {
       expectedRevision: 1,
       idempotencyKey: crypto.randomUUID(),
       reason: form.value.reason,
-      lines: [{ retailSaleItemId: form.value.retailSaleItemId, quantity: form.value.quantity }],
-    }),
-  })
+      lines: [{ retailSaleItemId: form.value.retailSaleItemId, quantity: form.value.quantity }]})})
   const payload = await res.json().catch(() => ({}))
   saving.value = false
   if (!res.ok) {
@@ -223,8 +222,7 @@ async function act(name: 'approve' | 'post') {
   const res = await fetch(url, {
     method: 'POST',
     headers: headers(),
-    body: JSON.stringify({ expectedRevision: selected.value.revision, idempotencyKey: crypto.randomUUID() }),
-  })
+    body: JSON.stringify({ expectedRevision: selected.value.revision, idempotencyKey: crypto.randomUUID() })})
   const payload = await res.json().catch(() => ({}))
   saving.value = false
   if (!res.ok) {
@@ -244,9 +242,7 @@ async function compensate() {
     reasonCode: 'CUSTOMER_RETURN',
     lines: (selected.value.items || []).map((item: any) => ({
       retailReturnItemId: item.id,
-      quantity: item.receivedQuantity,
-    })),
-  }, 'Kompensasi disetujui. Uang belum keluar.')
+      quantity: item.receivedQuantity}))}, 'Kompensasi disetujui. Uang belum keluar.')
 }
 
 function $apiOf() {
@@ -260,8 +256,7 @@ async function requestRefund() {
     expectedRevision: selected.value.revision,
     idempotencyKey: crypto.randomUUID(),
     bankAccountId: bankAccountId.value,
-    method: refundMethod.value,
-  }, refundMethod.value === 'cash' ? 'Refund tunai diminta.' : 'Transfer bank dicatat sebagai permintaan. Belum selesai.')
+    method: refundMethod.value}, refundMethod.value === 'cash' ? 'Refund tunai diminta.' : 'Transfer bank dicatat sebagai permintaan. Belum selesai.')
 }
 
 async function financeAct(name: 'credit' | 'refundApprove' | 'refundConfirm') {
@@ -274,8 +269,7 @@ async function financeAct(name: 'credit' | 'refundApprove' | 'refundConfirm') {
       : api.retailReturnRefundConfirm(selected.value.id)
   await postFinance(url, {
     expectedRevision: selected.value.revision,
-    idempotencyKey: crypto.randomUUID(),
-  }, 'Status keuangan diperbarui.')
+    idempotencyKey: crypto.randomUUID()}, 'Status keuangan diperbarui.')
 }
 
 async function postFinance(url: string, body: Record<string, unknown>, success: string) {
@@ -307,10 +301,7 @@ async function receive() {
       lines: (selected.value.items || []).map((item: any) => ({
         retailReturnItemId: item.id,
         quantity: item.authorizedQuantity,
-        condition: condition.value,
-      })),
-    }),
-  })
+        condition: condition.value}))})})
   const payload = await res.json().catch(() => ({}))
   saving.value = false
   if (!res.ok) {

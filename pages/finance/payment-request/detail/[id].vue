@@ -28,7 +28,7 @@
                 <small class="text-muted">{{ formatDateTime(paymentRequest.createdAt) }}</small>
               </div>
               <span :class="getStatusBadge(paymentRequest).class" class="badge">{{ getStatusBadge(paymentRequest).text }}</span>
-              <span v-if="paymentRequest.priority" class="badge bg-label-secondary text-capitalize">{{ paymentRequest.priority }}</span>
+              <span v-if="paymentRequest.priority" class="badge bg-label-secondary text-capitalize">{{ humanizeLabel(paymentRequest.priority, { fallback: '—' }) }}</span>
             </div>
             <div class="d-flex gap-2">
               <div class="btn-group">
@@ -569,25 +569,11 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { computed, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import {
-  usePaymentRequestStore,
-  getPaymentRequestNo,
-  getPaymentRequestTotal,
-  getPaymentRequestSourceSubtotal,
-  getPaymentRequestOtherSubtotal,
-  getPaymentRequestEmployeeSalarySubtotal,
-  getPaymentRequestDiscountAmount,
-  getPaymentRequestTaxAmount,
-  getPaymentRequestTaxes,
-  getPaymentRequestSourceItems,
-  getPaymentRequestOtherCharges,
-  getSourceTypeLabel,
-  getRequestTypeLabel,
-  getPaymentMethodLabel,
-  formatDurationDaysLabel,
-} from '~/stores/payment-request'
+import { usePaymentRequestStore, getPaymentRequestNo, getPaymentRequestTotal, getPaymentRequestSourceSubtotal, getPaymentRequestOtherSubtotal, getPaymentRequestEmployeeSalarySubtotal, getPaymentRequestDiscountAmount, getPaymentRequestTaxAmount, getPaymentRequestTaxes, getPaymentRequestSourceItems, getPaymentRequestOtherCharges, getSourceTypeLabel, getRequestTypeLabel, getPaymentMethodLabel, formatDurationDaysLabel } from '~/stores/payment-request'
 import { useApprovalStatus } from '~/composables/useApprovalStatus'
 import { usePaymentRequestApproval } from '~/composables/usePaymentRequestApproval'
 import { usePermissions } from '~/composables/usePermissions'
@@ -647,8 +633,7 @@ const employeeDisplayRows = computed(() => {
         return {
           name: name || (id != null ? `Pegawai #${id}` : null),
           salaryLabel: salary > 0 ? `${formatRupiah(salary)} /hari` : null,
-          notes: e.notes || null,
-        }
+          notes: e.notes || null}
       })
       .filter((e: { name: string | null }) => !!e.name) as Array<{
         name: string
@@ -729,8 +714,7 @@ function formatDateTime(v: string | null | undefined) {
     month: 'short',
     year: 'numeric',
     hour: '2-digit',
-    minute: '2-digit',
-  })
+    minute: '2-digit'})
 }
 
 async function load() {
@@ -778,8 +762,7 @@ function goCreateApPayment() {
   if (!paymentRequest.value) return
   navigateTo({
     path: '/finance/ap-payments',
-    query: { fromPrq: paymentRequest.value.id },
-  })
+    query: { fromPrq: paymentRequest.value.id }})
 }
 
 onMounted(() => load())

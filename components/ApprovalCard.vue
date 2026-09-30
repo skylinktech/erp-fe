@@ -17,7 +17,7 @@
         <ul class="mb-0 ps-3">
           <li v-for="ap in currentApprovers" :key="ap.userId">
             {{ ap.fullName || ap.email || ap.userId }}
-            <small v-if="ap.source" class="text-muted">({{ ap.source }})</small>
+            <small v-if="ap.source" class="text-muted">({{ humanizeLabel(ap.source, { fallback: '—' }) }})</small>
           </li>
         </ul>
       </div>
@@ -36,6 +36,8 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { computed } from 'vue'
 
 interface ApproverInfo {

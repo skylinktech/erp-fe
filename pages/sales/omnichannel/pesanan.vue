@@ -101,12 +101,11 @@
                       'bg-success': r.status === 'SUCCESS',
                       'bg-warning text-dark': r.status === 'AMBIGUOUS',
                       'bg-danger': r.status === 'FAILED',
-                      'bg-secondary': r.status === 'SKIPPED',
-                    }"
-                  >{{ r.status }}</span>
+                      'bg-secondary': r.status === 'SKIPPED'}"
+                  >{{ commerceEnumLabel(r.status) }}</span>
                 </td>
-                <td class="small text-break">{{ r.error || r.nextAction || '—' }}</td>
-                <td class="small text-break">{{ r.nextAction || '—' }}</td>
+                <td class="small text-break">{{ r.error || commerceEnumLabel(r.nextAction, '—') }}</td>
+                <td class="small text-break">{{ commerceEnumLabel(r.nextAction, '—') }}</td>
               </tr>
             </tbody>
           </table>
@@ -169,15 +168,15 @@
             <div class="row g-2 mb-3">
               <div class="col-md-4">
                 <div class="text-muted">Status</div>
-                <div>{{ detail.statusLabel }} ({{ detail.rawStatus }})</div>
+                <div>{{ detail.statusLabel || commerceEnumLabel(detail.normalizedStatus) }} ({{ commerceEnumLabel(detail.rawStatus) }})</div>
               </div>
               <div class="col-md-4">
                 <div class="text-muted">Fulfillment</div>
-                <div>{{ detail.fulfillmentType }}</div>
+                <div>{{ commerceEnumLabel(detail.fulfillmentType) }}</div>
               </div>
               <div class="col-md-4">
                 <div class="text-muted">Processing</div>
-                <div>{{ detail.processingState }}</div>
+                <div>{{ commerceEnumLabel(detail.processingState) }}</div>
               </div>
             </div>
 
@@ -343,11 +342,8 @@ import CommerceListPagination from '~/components/commerce/CommerceListPagination
 import CommerceActionButton from '~/components/commerce/CommerceActionButton.vue'
 import type { WorkspaceTab } from '~/types/workspaceTab'
 import { readAccessToken } from '~/utils/authCookie'
-import { aggregateCommerceLineItems, formatCommerceMoney, formatCommerceQty } from '~/utils/commerceFormat'
-import {
-  COMMERCE_DEFAULT_PER_PAGE,
-  clampCommercePerPage,
-} from '~/utils/commercePagination'
+import { aggregateCommerceLineItems, formatCommerceMoney, formatCommerceQty, commerceEnumLabel } from '~/utils/commerceFormat'
+import { COMMERCE_DEFAULT_PER_PAGE, clampCommercePerPage } from '~/utils/commercePagination'
 import { COMMERCE_BULK_ARRANGE_MAX } from '~/utils/commerceBulkSelect'
 import { reconcileCommerceOrderMoney } from '~/utils/commerceMoneyReconciliation'
 import { commerceAccountingBadgeMeta, commerceReleaseBlockerLabel } from '~/utils/commerceAccountingStatus'
@@ -409,8 +405,7 @@ const statusTabs = computed<WorkspaceTab[]>(() => [
   ...(counts.value.buckets || []).map((b: any) => ({
     id: String(b.key),
     label: String(b.label),
-    count: Number(b.count ?? 0),
-  })),
+    count: Number(b.count ?? 0)})),
   { id: 'returns', label: 'Pengembalian' },
 ])
 
@@ -506,9 +501,7 @@ function syncQuery() {
       ...(dateTo.value ? { dateTo: dateTo.value } : {}),
       ...(sort.value !== 'platform_created_at_desc' ? { sort: sort.value } : {}),
       ...(page.value > 1 ? { page: String(page.value) } : {}),
-      ...(perPage.value !== COMMERCE_DEFAULT_PER_PAGE ? { perPage: String(perPage.value) } : {}),
-    },
-  })
+      ...(perPage.value !== COMMERCE_DEFAULT_PER_PAGE ? { perPage: String(perPage.value) } : {})}})
 }
 
 async function loadShops() {
@@ -530,8 +523,7 @@ async function loadCounts() {
   if (dateTo.value) qs.set('dateTo', dateTo.value)
   const res = await fetch(`${$api.commerceExternalOrderCounts()}?${qs}`, {
     headers: headers(),
-    credentials: 'include',
-  })
+    credentials: 'include'})
   const json = await res.json()
   if (res.ok && json.success !== false) counts.value = json.data || {}
 }
@@ -549,8 +541,7 @@ async function reload() {
       perusahaanId: String(companyId.value),
       page: String(page.value),
       perPage: String(perPage.value),
-      sort: sort.value,
-    })
+      sort: sort.value})
     if (statusBucket.value) qs.set('statusBucket', statusBucket.value)
     if (selectedShopId.value) qs.set('shopId', selectedShopId.value)
     if (processingState.value) qs.set('processingState', processingState.value)
@@ -559,8 +550,7 @@ async function reload() {
     if (dateTo.value) qs.set('dateTo', dateTo.value)
     const res = await fetch(`${$api.commerceExternalOrders()}?${qs}`, {
       headers: headers(),
-      credentials: 'include',
-    })
+      credentials: 'include'})
     const json = await res.json()
     if (!actions.isCurrentGen(gen)) return
     if (!res.ok || json.success === false) {
@@ -589,8 +579,7 @@ const accountingBadge = computed(() =>
     ? commerceAccountingBadgeMeta({
         stockIssuedAt: detail.value.stockIssuedAt,
         accountingStatus: detail.value.accountingStatus,
-        releaseBlockerCodes: releasePreview.value?.blockerCodes || null,
-      })
+        releaseBlockerCodes: releasePreview.value?.blockerCodes || null})
     : { key: 'NOT_APPLICABLE', label: '—', badgeClass: 'bg-label-secondary' }
 )
 
@@ -616,8 +605,7 @@ async function previewRelease(order: any) {
       releasePreview.value = {
         allowed: Boolean(json.data?.allowed ?? gate.allowed),
         blockerCodes: gate.blockerCodes || json.data?.blockerCodes || [],
-        reasons: gate.reasons || json.data?.reasons || [],
-      }
+        reasons: gate.reasons || json.data?.reasons || []}
     })
     .catch((e: any) => {
       releaseError.value = e?.message || 'Pratinjau rilis gagal.'
@@ -636,8 +624,7 @@ async function confirmRelease(order: any) {
           : `${Date.now()}-0000-4000-8000-${String(Math.floor(Math.random() * 1e12)).padStart(12, '0')}`
       const json = await postJson($api.commerceExternalOrderRelease(order.id), {
         execute: true,
-        idempotencyKey,
-      })
+        idempotencyKey})
       const accountingComplete = Boolean(json?.data?.accountingComplete)
       const revenueStatus = json?.data?.revenue?.status
       actionMsg.value = accountingComplete
@@ -659,8 +646,7 @@ async function postJson(url: string, body?: Record<string, unknown>) {
     method: 'POST',
     headers: { ...headers(), 'Content-Type': 'application/json', 'Idempotency-Key': `${Date.now()}` },
     credentials: 'include',
-    body: body ? JSON.stringify(body) : undefined,
-  })
+    body: body ? JSON.stringify(body) : undefined})
   const json = await res.json().catch(() => ({}))
   if (!res.ok || json.success === false) {
     const code = json?.data?.code || json?.code
@@ -684,8 +670,7 @@ async function runBulkArrange(ids?: string[]) {
     try {
       const json = await postJson($api.commerceExternalOrderArrangeShipmentBulk(), {
         orderIds,
-        handoverMethod: 'PICKUP',
-      })
+        handoverMethod: 'PICKUP'})
       bulkResults.value = json.data
       const d = json.data || {}
       if (d.allSucceeded) {
@@ -767,8 +752,7 @@ async function onOrderAction(payload: { key: string; order: any }) {
         }
         await postJson($api.commerceExternalOrderReleaseReservation(order.id), {
           reason: 'cancel_before_handover_ui',
-          confirmLocalOnly: mpActive,
-        })
+          confirmLocalOnly: mpActive})
         actionMsg.value = `Ops lokal dibatalkan / reservasi dilepas: ${order.externalOrderId}`
       } else if (key === 'cancelOrder') {
         const reason =
@@ -786,8 +770,7 @@ async function onOrderAction(payload: { key: string; order: any }) {
         if (!ok) return
         const res = await postJson($api.commerceExternalOrderSellerCancel(order.id), {
           cancelReason: reason.trim(),
-          idempotencyKey: `ui-cancel-${order.id}-${Date.now()}`,
-        })
+          idempotencyKey: `ui-cancel-${order.id}-${Date.now()}`})
         actionMsg.value =
           res?.data?.note ||
           res?.message ||
@@ -795,8 +778,7 @@ async function onOrderAction(payload: { key: string; order: any }) {
       } else if (key === 'printShippingLabel') {
         const res = await fetch($api.commerceExternalOrderShippingLabel(order.id), {
           headers: headers(),
-          credentials: 'include',
-        })
+          credentials: 'include'})
         const json = await res.json()
         if (!res.ok || json.success === false) throw new Error(json.message || 'Gagal ambil label')
         const docUrl = json.data?.docUrl
@@ -809,8 +791,7 @@ async function onOrderAction(payload: { key: string; order: any }) {
         try {
           const slotRes = await fetch($api.commerceExternalOrderHandoverSlots(order.id), {
             headers: headers(),
-            credentials: 'include',
-          })
+            credentials: 'include'})
           const slotJson = await slotRes.json()
           if (slotRes.ok && slotJson.success !== false) {
             const slots = slotJson.data?.pickupSlots || []
@@ -828,8 +809,7 @@ async function onOrderAction(payload: { key: string; order: any }) {
         await postJson($api.commerceExternalOrderArrangeShipment(order.id), {
           handoverMethod,
           ...(pickupSlot ? { pickupSlot } : {}),
-          packageId: order.packageIds?.[0] || order.fulfillOpsMeta?.lastShipPackageId || null,
-        })
+          packageId: order.packageIds?.[0] || order.fulfillOpsMeta?.lastShipPackageId || null})
         actionMsg.value = `Atur pengiriman OK (stok belum keluar): ${order.externalOrderId}`
       } else {
         actionMsg.value = `Aksi ${key} belum dihubungkan di UI.`

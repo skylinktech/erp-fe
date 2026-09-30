@@ -5,7 +5,7 @@
         <h5 class="mb-0">Sinkronisasi</h5>
         <p class="mb-0 card-subtitle text-muted small mt-1">
           <template v-if="worker">
-            Mode {{ worker.mode }} — {{ worker.note }} ·
+            Mode {{ commerceEnumLabel(worker.mode) }} — {{ worker.note }} ·
             backlog outbox {{ worker.backlog?.outboxPending ?? 0 }} ·
             last success {{ formatCommerceTs(worker.lastSuccess?.processedAt) }}
           </template>
@@ -42,11 +42,11 @@
           <tbody>
             <tr v-for="j in jobs" :key="j.id">
               <td class="small">
-                <div class="fw-semibold">{{ j.commandType }}</div>
-                <div class="text-muted">{{ j.platformCode }}</div>
+                <div class="fw-semibold">{{ commerceEnumLabel(j.commandType) }}</div>
+                <div class="text-muted">{{ commercePlatformLabel(j.platformCode) }}</div>
               </td>
               <td>
-                <span class="badge" :class="commerceStatusBadge(j.status)">{{ j.status }}</span>
+                <span class="badge" :class="commerceStatusBadge(j.status)">{{ commerceEnumLabel(j.status) }}</span>
               </td>
               <td>{{ j.recordCount ?? '—' }}</td>
               <td>{{ j.durationMs != null ? `${j.durationMs} ms` : '—' }}</td>
@@ -65,11 +65,14 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { computed, onMounted, ref, watch } from 'vue'
 import { useNuxtApp } from '#app'
 import { useActiveCompany } from '~/composables/useActiveCompany'
 import CommerceActionButton from '~/components/commerce/CommerceActionButton.vue'
-import { commerceStatusBadge, formatCommerceTs } from '~/utils/commerceFormat'
+import { commerceStatusBadge, commerceEnumLabel, formatCommerceTs } from '~/utils/commerceFormat'
+import { commercePlatformLabel } from '~/utils/commercePlatform'
 import { readAccessToken } from '~/utils/authCookie'
 
 export type CommerceSyncJobRow = {
@@ -132,8 +135,7 @@ async function reload() {
     const qs = new URLSearchParams({
       perusahaanId: String(companyId.value),
       page: '1',
-      perPage: '20',
-    })
+      perPage: '20'})
     const [jobsJson, healthJson] = await Promise.all([
       fetchJson(`${$api.commerceSyncJobs()}?${qs}`),
       fetchJson(`${$api.commerceWorkerHealth()}?${qs}`),

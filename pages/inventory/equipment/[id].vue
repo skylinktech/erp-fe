@@ -6,7 +6,7 @@
           <h4 class="mb-1">Equipment Detail</h4>
           <p class="mb-0 text-muted">Kit identity is immutable after receipt. Component serials are captured at unbox.</p>
           <div v-if="row" class="mt-2">
-            <span class="badge me-1" :class="statusBadgeClass(row.status)">{{ row.status }}</span>
+            <span class="badge me-1" :class="statusBadgeClass(row.status)">{{ humanizeLabel(row.status, { fallback: '—' }) }}</span>
             <span v-if="row.sealStatus === 'SEALED'" class="badge bg-label-warning me-1">SEALED</span>
             <span v-if="row.sealStatus === 'UNSEALED'" class="badge bg-label-secondary me-1">UNSEALED</span>
             <span
@@ -45,7 +45,7 @@
                 <li class="mb-2"><strong>Tracking:</strong> {{ row.product?.trackingPolicy || row.product?.tracking_policy || '—' }}</li>
                 <li class="mb-2"><strong>Seal:</strong> {{ row.sealStatus || '—' }}</li>
                 <li class="mb-2"><strong>Serial Capture:</strong> {{ row.serialCaptureStatus || '—' }}</li>
-                <li class="mb-2"><strong>Status:</strong> {{ row.status }}</li>
+                <li class="mb-2"><strong>Status:</strong> {{ humanizeLabel(row.status, { fallback: '—' }) }}</li>
                 <li class="mb-2"><strong>Warehouse:</strong> {{ row.warehouse?.name || row.currentWarehouseId || '—' }}</li>
                 <li class="mb-2">
                   <strong>Current Site:</strong>
@@ -55,7 +55,7 @@
                   <span v-else>—</span>
                 </li>
                 <li class="mb-2"><strong>Acquired:</strong> {{ formatDate(row.acquiredAt) }}</li>
-                <li class="mb-2"><strong>Source:</strong> {{ row.sourceType }} / {{ row.sourceId }}</li>
+                <li class="mb-2"><strong>Source:</strong> {{ humanizeLabel(row.sourceType, { fallback: '—' }) }} / {{ row.sourceId }}</li>
               </ul>
             </div>
           </div>
@@ -78,7 +78,7 @@
                 </thead>
                 <tbody>
                   <tr v-for="c in row.componentIdentities || []" :key="c.id">
-                    <td><code>{{ c.componentType }}</code></td>
+                    <td><code>{{ humanizeLabel(c.componentType, { fallback: '—' }) }}</code></td>
                     <td>{{ c.serialNumber }}</td>
                     <td>{{ formatDate(c.capturedAt) }}</td>
                     <td>{{ formatDate(c.verifiedAt) }}</td>
@@ -113,7 +113,7 @@
                     </td>
                     <td>{{ formatDate(a.assignedAt) }}</td>
                     <td>{{ formatDate(a.removedAt) }}</td>
-                    <td>{{ a.status }}</td>
+                    <td>{{ humanizeLabel(a.status, { fallback: '—' }) }}</td>
                   </tr>
                   <tr v-if="!(row.assignments || []).length">
                     <td colspan="4" class="text-muted">No assignments</td>
@@ -137,9 +137,9 @@
                 <tbody>
                   <tr v-for="ev in row.events || []" :key="ev.id">
                     <td>{{ formatDate(ev.createdAt) }}</td>
-                    <td>{{ ev.eventType }}</td>
+                    <td>{{ humanizeLabel(ev.eventType, { fallback: '—' }) }}</td>
                     <td>{{ ev.fromStatus || '—' }} → {{ ev.toStatus || '—' }}</td>
-                    <td>{{ ev.sourceType }}:{{ ev.sourceId }}</td>
+                    <td>{{ humanizeLabel(ev.sourceType, { fallback: '—' }) }}:{{ ev.sourceId }}</td>
                   </tr>
                   <tr v-if="!(row.events || []).length">
                     <td colspan="4" class="text-muted">No events</td>
@@ -164,7 +164,7 @@
                   <h6>Incidents</h6>
                   <ul class="list-unstyled small mb-0">
                     <li v-for="i in timeline.incidents || []" :key="i.id" class="mb-2 border-bottom pb-2">
-                      <div><code>{{ i.incidentType }}</code> · {{ i.status }}</div>
+                      <div><code>{{ humanizeLabel(i.incidentType, { fallback: '—' }) }}</code> · {{ humanizeLabel(i.status, { fallback: '—' }) }}</div>
                       <div class="text-muted">{{ formatDate(i.reportedAt) }}</div>
                       <div>{{ i.description }}</div>
                       <div v-for="a in i.assessments || []" :key="a.id" class="ms-2 text-muted">
@@ -178,7 +178,7 @@
                   <h6>Withdrawals</h6>
                   <ul class="list-unstyled small mb-0">
                     <li v-for="w in timeline.withdrawals || []" :key="w.id" class="mb-2 border-bottom pb-2">
-                      <div><code>{{ w.reason }}</code> · {{ w.status }}</div>
+                      <div><code>{{ w.reason }}</code> · {{ humanizeLabel(w.status, { fallback: '—' }) }}</div>
                       <div class="text-muted">{{ formatDate(w.requestedAt) }}</div>
                       <div v-if="w.returnedAt">Returned: {{ formatDate(w.returnedAt) }}</div>
                     </li>
@@ -189,7 +189,7 @@
                   <h6>Inspections</h6>
                   <ul class="list-unstyled small mb-0">
                     <li v-for="insp in timeline.inspections || []" :key="insp.id" class="mb-2 border-bottom pb-2">
-                      <div>{{ insp.status }} · {{ insp.condition || '—' }}</div>
+                      <div>{{ humanizeLabel(insp.status, { fallback: '—' }) }} · {{ insp.condition || '—' }}</div>
                       <div class="text-muted">{{ formatDate(insp.startedAt) }}</div>
                       <div v-if="insp.inspectionResult"><code>{{ insp.inspectionResult }}</code></div>
                     </li>
@@ -206,7 +206,7 @@
                       <NuxtLink :to="`/inventory/equipment-replacement/${r.id}`">
                         <code>{{ r.replacementNo }}</code>
                       </NuxtLink>
-                      · {{ r.status }}
+                      · {{ humanizeLabel(r.status, { fallback: '—' }) }}
                       <div v-if="r.replacementEquipment">
                         → {{ r.replacementEquipment.equipmentNo }}
                       </div>
@@ -222,7 +222,7 @@
                       <NuxtLink :to="`/inventory/equipment-replacement/${r.id}`">
                         <code>{{ r.replacementNo }}</code>
                       </NuxtLink>
-                      · {{ r.status }}
+                      · {{ humanizeLabel(r.status, { fallback: '—' }) }}
                       <div v-if="r.originalEquipment">
                         ← {{ r.originalEquipment.equipmentNo }}
                       </div>
@@ -252,7 +252,7 @@
                   </div>
                   <div class="small">
                     Coverage: {{ formatDateOnly(w.warrantyStartDate) }} – {{ formatDateOnly(w.warrantyEndDate) }}
-                    · <span class="badge bg-label-info">{{ w.status }}</span>
+                    · <span class="badge bg-label-info">{{ humanizeLabel(w.status, { fallback: '—' }) }}</span>
                   </div>
                 </div>
               </div>
@@ -278,7 +278,7 @@
                       <NuxtLink :to="`/inventory/warranty-claim/${c.id}`">
                         <code>{{ c.claimNo }}</code>
                       </NuxtLink>
-                      · {{ c.status }}
+                      · {{ humanizeLabel(c.status, { fallback: '—' }) }}
                       <div class="text-muted">{{ c.provider?.code }} · {{ c.providerReference || '—' }}</div>
                     </li>
                     <li v-if="!(warranty.claims || []).length" class="text-muted">None</li>
@@ -291,7 +291,7 @@
                       <NuxtLink :to="`/inventory/warranty-rma/${r.id}`">
                         <code>{{ r.rmaNo }}</code>
                       </NuxtLink>
-                      · {{ r.status }}
+                      · {{ humanizeLabel(r.status, { fallback: '—' }) }}
                       <div v-if="r.resolutionType" class="text-muted">{{ r.resolutionType }}</div>
                     </li>
                     <li v-if="!(warranty.rmas || []).length" class="text-muted">None</li>
@@ -317,7 +317,7 @@
             Serial komponen adalah identitas teknis. Tidak menambah stock quantity atau nilai inventory.
           </p>
           <div v-for="line in unboxForm.components" :key="line.componentType" class="mb-3">
-            <label class="form-label">{{ line.componentType }}</label>
+            <label class="form-label">{{ humanizeLabel(line.componentType, { fallback: '—' }) }}</label>
             <input v-model="line.serialNumber" class="form-control" :placeholder="`${line.componentType} serial`" />
           </div>
           <div class="form-check">
@@ -337,6 +337,8 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { getApiErrorMessage } from '~/utils/apiError'
 
 definePageMeta({ middleware: ['auth', 'check-permission'] })
@@ -358,8 +360,7 @@ const unboxForm = reactive({
     { componentType: 'ROUTER', serialNumber: '' },
     { componentType: 'ANTENNA', serialNumber: '' },
     { componentType: 'CABLE', serialNumber: '' },
-  ],
-})
+  ]})
 
 const canUnbox = computed(() => {
   if (!row.value) return false
@@ -401,8 +402,7 @@ function hydrateUnboxForm() {
   const byType = Object.fromEntries(existing.map((c) => [c.componentType, c.serialNumber]))
   unboxForm.components = ['ROUTER', 'ANTENNA', 'CABLE'].map((componentType) => ({
     componentType,
-    serialNumber: byType[componentType] || '',
-  }))
+    serialNumber: byType[componentType] || ''}))
   unboxForm.verify = row.value?.serialCaptureStatus !== 'VERIFIED'
 }
 
@@ -425,15 +425,12 @@ async function submitUnbox() {
       credentials: 'include',
       body: {
         components,
-        verify: unboxForm.verify,
-      },
-    })
+        verify: unboxForm.verify}})
     toast.success({
       title: 'Berhasil',
       message: unboxForm.verify ? 'Serial komponen tersimpan dan verified' : 'Serial komponen tersimpan',
       color: 'green',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
     showUnbox.value = false
     await reloadEquipment()
   } catch (e) {
@@ -441,8 +438,7 @@ async function submitUnbox() {
       title: 'Error',
       message: getApiErrorMessage(e, 'Gagal unbox / capture serial'),
       color: 'red',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
   } finally {
     savingUnbox.value = false
   }
@@ -465,8 +461,7 @@ onMounted(async () => {
       title: 'Error',
       message: getApiErrorMessage(e, 'Gagal load equipment'),
       color: 'red',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
   } finally {
     loading.value = false
   }

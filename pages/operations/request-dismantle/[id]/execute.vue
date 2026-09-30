@@ -66,7 +66,7 @@
                   :key="att.id"
                   :value="att.id"
                 >
-                  {{ att.originalFileName }} ({{ att.status }})
+                  {{ att.originalFileName }} ({{ humanizeLabel(att.status, { fallback: '—' }) }})
                 </option>
               </select>
               <input v-model="handoverForms[eq.id].receivedBy" class="form-control form-control-sm mb-2" placeholder="PIC penerima" />
@@ -89,6 +89,8 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { reactive, computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useOnline } from '@vueuse/core'
@@ -149,8 +151,7 @@ async function submitRemoval(eq: DismantleRequestEquipment) {
     foundStatus: f.foundStatus as DismantleRequestEquipment['foundStatus'],
     actualSerial: f.actualSerial || undefined,
     physicalCondition: f.physicalCondition || undefined,
-    notes: f.notes || undefined,
-  })
+    notes: f.notes || undefined})
 }
 
 async function submitHandover(eq: DismantleRequestEquipment) {
@@ -161,16 +162,14 @@ async function submitHandover(eq: DismantleRequestEquipment) {
       message: 'Pilih bukti CUSTOMER_HANDOVER terlebih dahulu',
       color: 'red',
       position: 'bottomRight',
-      layout: 2,
-    })
+      layout: 2})
     return
   }
   await store.customerHandover(requestId.value, eq.id, {
     attachmentId: f.attachmentId,
     receivedBy: f.receivedBy || undefined,
     documentRef: f.documentRef || undefined,
-    notes: f.notes || undefined,
-  })
+    notes: f.notes || undefined})
 }
 
 onMounted(async () => {

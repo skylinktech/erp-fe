@@ -34,7 +34,7 @@
                 <small class="text-muted">{{ formatDateTime(request.createdAt) }}</small>
               </div>
               <span :class="getStatusBadge(request).class" class="badge">{{ getStatusBadge(request).text }}</span>
-              <span :class="getPriorityBadgeClass(request.priority)" class="badge">{{ request.priority }}</span>
+              <span :class="getPriorityBadgeClass(request.priority)" class="badge">{{ humanizeLabel(request.priority, { fallback: '—' }) }}</span>
             </div>
             <div class="d-flex flex-wrap gap-2">
               <div class="btn-group" role="group">
@@ -113,7 +113,7 @@
                     </div>
                     <div class="col-md-6">
                       <label class="form-label text-muted">Prioritas</label>
-                      <p class="mb-0">{{ request.priority || '—' }}</p>
+                      <p class="mb-0">{{ humanizeLabel(request.priority, { fallback: '—' }) }}</p>
                     </div>
                     <div class="col-md-6">
                       <label class="form-label text-muted">Periode Akses</label>
@@ -220,6 +220,8 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { ref, computed, onMounted } from 'vue'
 import { useAccessRequestStore } from '~/stores/access-request'
 import { useUserStore } from '~/stores/user'
@@ -258,8 +260,7 @@ function getPriorityBadgeClass(priority) {
   const map = {
     low: 'badge rounded-pill bg-label-info',
     medium: 'badge rounded-pill bg-label-warning',
-    high: 'badge rounded-pill bg-label-danger',
-  }
+    high: 'badge rounded-pill bg-label-danger'}
   return map[priority] || 'badge rounded-pill bg-label-light'
 }
 
@@ -340,6 +341,5 @@ definePageMeta({
   hidePageHeading: true,
   layout: 'default',
   middleware: ['auth', 'check-permission'],
-  title: 'Detail Permintaan Akses',
-})
+  title: 'Detail Permintaan Akses'})
 </script>

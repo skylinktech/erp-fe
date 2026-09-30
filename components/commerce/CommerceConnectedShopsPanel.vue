@@ -39,13 +39,13 @@
           <tbody>
             <tr v-for="c in connections" :key="c.id">
               <td class="text-break">{{ c.displayName }}</td>
-              <td>{{ c.platformCode }}</td>
+              <td>{{ commercePlatformLabel(c.platformCode) }}</td>
               <td>
-                <span class="badge" :class="commerceStatusBadge(c.status)">{{ c.status }}</span>
+                <span class="badge" :class="commerceStatusBadge(c.status)">{{ commerceEnumLabel(c.status) }}</span>
               </td>
               <td>
                 <span class="badge" :class="commerceStatusBadge(c.lastProbeStatus)">
-                  {{ c.lastProbeStatus || 'NEVER_PROBED' }}
+                  {{ commerceEnumLabel(c.lastProbeStatus, 'Belum dicek') }}
                 </span>
               </td>
               <td class="small text-nowrap">{{ formatCommerceTs(c.lastProbeAt) }}</td>
@@ -86,11 +86,11 @@
           <tbody>
             <tr v-for="s in shops" :key="s.id">
               <td class="text-break">{{ s.name }}</td>
-              <td>{{ s.platformCode }}</td>
+              <td>{{ commercePlatformLabel(s.platformCode) }}</td>
               <td class="font-monospace small">{{ s.externalShopId }}</td>
               <td>{{ s.hasShopCipher ? 'ya' : 'tidak' }}</td>
               <td>
-                <span class="badge" :class="commerceStatusBadge(s.status)">{{ s.status }}</span>
+                <span class="badge" :class="commerceStatusBadge(s.status)">{{ commerceEnumLabel(s.status) }}</span>
               </td>
               <td class="small">
                 P {{ formatCommerceTs(s.lastProductSyncAt) }}<br />
@@ -115,6 +115,8 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { computed, onMounted, ref, watch } from 'vue'
 import { useNuxtApp } from '#app'
 import { useActiveCompany } from '~/composables/useActiveCompany'
@@ -123,7 +125,8 @@ import { useCommerceJobWatch } from '~/composables/useCommerceJobWatch'
 import CommerceRowActionsMenu from '~/components/commerce/CommerceRowActionsMenu.vue'
 import type { CommerceRowAction } from '~/components/commerce/CommerceRowActionsMenu.vue'
 import CommerceActionButton from '~/components/commerce/CommerceActionButton.vue'
-import { commerceStatusBadge, formatCommerceTs } from '~/utils/commerceFormat'
+import { commerceStatusBadge, commerceEnumLabel, formatCommerceTs } from '~/utils/commerceFormat'
+import { commercePlatformLabel } from '~/utils/commercePlatform'
 import { commerceActionRunningLabel, isTerminalJobStatus } from '~/utils/commerceActionBusy'
 import { readAccessToken } from '~/utils/authCookie'
 
@@ -186,8 +189,7 @@ const jobWatch = useCommerceJobWatch({
       perusahaanId: String(companyId.value),
       page: '1',
       perPage: String(Math.max(20, jobIds.length)),
-      ids: jobIds.join(','),
-    })
+      ids: jobIds.join(',')})
     const json = await fetchJson(`${$api.commerceSyncJobs()}?${qs}`)
     const rows = (json.data || []) as Array<{
       id: string
@@ -206,8 +208,7 @@ const jobWatch = useCommerceJobWatch({
     )
     // Allow UI to recover; job remains visible in Sync Jobs panel
     actions.clear(actions.key(action, targetId))
-  },
-})
+  }})
 
 function headers() {
   const h: Record<string, string> = { Accept: 'application/json' }
@@ -221,8 +222,7 @@ async function fetchJson(url: string, init?: RequestInit) {
   const res = await fetch(url, {
     credentials: 'include',
     ...init,
-    headers: { ...headers(), ...(init?.headers || {}) },
-  })
+    headers: { ...headers(), ...(init?.headers || {}) }})
   const json = await res.json().catch(() => ({}))
   if (!res.ok || json.success === false) {
     throw new Error(json.message || `Permintaan gagal (${res.status})`)
@@ -235,8 +235,7 @@ function connectionMenuActions(id: string): CommerceRowAction[] {
   return CONNECTION_ACTIONS.map((a) => ({
     ...a,
     busy: active === a.key,
-    disabled: Boolean(active && active !== a.key),
-  }))
+    disabled: Boolean(active && active !== a.key)}))
 }
 
 function shopMenuActions(id: string): CommerceRowAction[] {
@@ -244,8 +243,7 @@ function shopMenuActions(id: string): CommerceRowAction[] {
   return SHOP_ACTIONS.map((a) => ({
     ...a,
     busy: active === a.key,
-    disabled: Boolean(active && active !== a.key),
-  }))
+    disabled: Boolean(active && active !== a.key)}))
 }
 
 function connectionBusyLabel(id: string) {
@@ -284,8 +282,7 @@ function watchQueuedJob(opts: {
         }
         void reload()
       }
-    },
-  })
+    }})
 }
 
 /**
@@ -306,8 +303,7 @@ async function reload() {
     const qs = new URLSearchParams({
       perusahaanId: String(companyId.value),
       page: '1',
-      perPage: '50',
-    })
+      perPage: '50'})
     const [connJson, shopJson] = await Promise.all([
       fetchJson(`${$api.commerceConnections()}?${qs}`),
       fetchJson(`${$api.commerceShops()}?${qs}`),
@@ -321,8 +317,7 @@ async function reload() {
         c.id,
         {
           lastProductSyncAt: c.lastProductSyncAt ?? null,
-          lastOrderSyncAt: c.lastOrderSyncAt ?? null,
-        },
+          lastOrderSyncAt: c.lastOrderSyncAt ?? null},
       ])
     )
 
@@ -333,8 +328,7 @@ async function reload() {
         return {
           ...s,
           lastProductSyncAt: sync?.lastProductSyncAt ?? null,
-          lastOrderSyncAt: sync?.lastOrderSyncAt ?? null,
-        }
+          lastOrderSyncAt: sync?.lastOrderSyncAt ?? null}
       })
   } catch (e: any) {
     if (!actions.isCurrentGen(gen)) return
@@ -367,16 +361,14 @@ async function onConnectionAction(key: string, id: string) {
           const json = await fetchJson($api.commerceConnectionSyncShops(id), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({}),
-          })
+            body: JSON.stringify({})})
           if (json.data?.queued && json.data?.jobId) {
             enqueued = true
             watchQueuedJob({
               jobId: String(json.data.jobId),
               action: key,
               targetId: id,
-              successLabel: 'Sync shop selesai',
-            })
+              successLabel: 'Sync shop selesai'})
             return
           }
           emit('notice', 'Shop disinkronkan.')
@@ -405,16 +397,14 @@ async function onShopAction(key: string, shop: CommerceShopRow) {
           json = await fetchJson($api.commerceConnectionSyncProducts(shop.connectionId!), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ shopId: shop.id }),
-          })
+            body: JSON.stringify({ shopId: shop.id })})
           if (json.data?.queued && json.data?.jobId) {
             enqueued = true
             watchQueuedJob({
               jobId: String(json.data.jobId),
               action: key,
               targetId: shop.id,
-              successLabel: 'Sync produk selesai',
-            })
+              successLabel: 'Sync produk selesai'})
             return
           }
           emit('notice', `Produk: ${json.data?.imported ?? 0} baris`)
@@ -422,16 +412,14 @@ async function onShopAction(key: string, shop: CommerceShopRow) {
           json = await fetchJson($api.commerceConnectionSyncOrders(shop.connectionId!), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ shopId: shop.id, days: 7 }),
-          })
+            body: JSON.stringify({ shopId: shop.id, days: 7 })})
           if (json.data?.queued && json.data?.jobId) {
             enqueued = true
             watchQueuedJob({
               jobId: String(json.data.jobId),
               action: key,
               targetId: shop.id,
-              successLabel: 'Sync order selesai',
-            })
+              successLabel: 'Sync order selesai'})
             return
           }
           emit('notice', `Order: ${json.data?.imported ?? 0} diimpor`)
@@ -439,16 +427,14 @@ async function onShopAction(key: string, shop: CommerceShopRow) {
           json = await fetchJson($api.commerceConnectionSyncReturns(shop.connectionId!), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ shopId: shop.id, days: 7 }),
-          })
+            body: JSON.stringify({ shopId: shop.id, days: 7 })})
           if (json.data?.queued && json.data?.jobId) {
             enqueued = true
             watchQueuedJob({
               jobId: String(json.data.jobId),
               action: key,
               targetId: shop.id,
-              successLabel: 'Sync aftersales selesai',
-            })
+              successLabel: 'Sync aftersales selesai'})
             return
           }
           emit('notice', `Aftersales: ${json.data?.imported ?? 0} diimpor (tanpa restock)`)

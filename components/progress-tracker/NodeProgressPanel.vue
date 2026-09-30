@@ -26,7 +26,7 @@
         >
           {{ node.arf.requestNo || node.arf.request_no }}
         </NuxtLink>
-        <span class="ms-2 badge bg-label-secondary text-capitalize">{{ node.arf.status }}</span>
+        <span class="ms-2 badge bg-label-secondary text-capitalize">{{ humanizeLabel(node.arf.status, { fallback: '—' }) }}</span>
       </div>
     </CollapsibleSectionCard>
 
@@ -121,22 +121,13 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import Swal from 'sweetalert2'
 import CollapsibleSectionCard from '~/components/ui/CollapsibleSectionCard.vue'
 import ProgressStatusStepper from '~/components/progress-tracker/ProgressStatusStepper.vue'
-import {
-  getProgressStatusBadge,
-  normalizeProgressTrackerStatus,
-  PROGRESS_TRACKER_STATUS_LABELS,
-  type ProgressTrackerStatus,
-} from '~/constants/implementation/progressTrackerStatuses'
-import {
-  useProgressTrackerStore,
-  getNodeStatus,
-  getNodeStatusLogs,
-  getNodeAttachments,
-  type ProgressTrackerNode,
-} from '~/stores/progress-tracker'
+import { getProgressStatusBadge, normalizeProgressTrackerStatus, PROGRESS_TRACKER_STATUS_LABELS, type ProgressTrackerStatus } from '~/constants/implementation/progressTrackerStatuses'
+import { useProgressTrackerStore, getNodeStatus, getNodeStatusLogs, getNodeAttachments, type ProgressTrackerNode } from '~/stores/progress-tracker'
 import { usePermissions } from '~/composables/usePermissions'
 import { useImageUrl } from '~/composables/useImageUrl'
 
@@ -231,8 +222,7 @@ async function submitStatus() {
     await Swal.fire({
       icon: 'error',
       title: 'Gagal',
-      text: e?.data?.message || e?.message || 'Gagal memperbarui status',
-    })
+      text: e?.data?.message || e?.message || 'Gagal memperbarui status'})
   } finally {
     saving.value = false
   }
@@ -243,8 +233,7 @@ async function removeAttachment(id: string) {
     title: 'Hapus lampiran?',
     icon: 'warning',
     showCancelButton: true,
-    confirmButtonText: 'Hapus',
-  })
+    confirmButtonText: 'Hapus'})
   if (!ok.isConfirmed) return
   await store.deleteAttachment(id)
   emit('updated')

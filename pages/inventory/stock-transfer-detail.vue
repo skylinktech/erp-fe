@@ -23,7 +23,7 @@
                                 <li class="mb-2"><strong>Tanggal:</strong> {{ stockTransfer.date ? new Date(stockTransfer.date).toLocaleDateString() : '-' }}</li>
                                 <li class="mb-2"><strong>Asal:</strong> {{ stockTransfer.fromWarehouse?.name }}</li>
                                 <li class="mb-2"><strong>Tujuan:</strong> {{ stockTransfer.toWarehouse?.name }}</li>
-                                <li class="mb-2"><strong>Approval:</strong> {{ stockTransfer.status }}</li>
+                                <li class="mb-2"><strong>Approval:</strong> {{ humanizeLabel(stockTransfer.status, { fallback: '—' }) }}</li>
                                 <li class="mb-2">
                                   <strong>Fulfillment:</strong>
                                   <span class="badge bg-label-info ms-1">{{ stockTransfer.fulfillmentStatus || progress?.fulfillmentStatus || '-' }}</span>
@@ -81,8 +81,8 @@
                         </div>
                         <p class="small text-muted mb-0">{{ progress.value.note }}</p>
                         <p v-if="progress.glAccounting" class="small text-muted mt-2 mb-0">
-                          GL: {{ progress.glAccounting.mode }} — revenue/COGS/gain-loss tidak dibuat
-                          ({{ progress.glAccounting.status }}).
+                          GL: {{ humanizeLabel(progress.glAccounting.mode, { fallback: '—' }) }} — revenue/COGS/gain-loss tidak dibuat
+                          ({{ humanizeLabel(progress.glAccounting.status, { fallback: '—' }) }}).
                         </p>
                       </div>
                     </div>
@@ -287,7 +287,7 @@
                               <td>{{ rc.receiptNumber }}</td>
                               <td class="small">{{ rc.shipmentId }}</td>
                               <td>{{ rc.receivedAt ? new Date(rc.receivedAt).toLocaleString() : '-' }}</td>
-                              <td>{{ rc.status }}</td>
+                              <td>{{ humanizeLabel(rc.status, { fallback: '—' }) }}</td>
                             </tr>
                           </tbody>
                         </table>
@@ -310,7 +310,7 @@
                           </thead>
                           <tbody>
                             <tr v-for="dc in progress.discrepancies" :key="dc.id">
-                              <td>{{ dc.type }}</td>
+                              <td>{{ humanizeLabel(dc.type, { fallback: '—' }) }}</td>
                               <td class="text-end">{{ dc.quantity }}</td>
                               <td class="text-end">{{ dc.movementValue != null ? formatMoney(dc.movementValue) : '-' }}</td>
                               <td>{{ dc.reason }}</td>
@@ -331,9 +331,10 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 definePageMeta({
-  hidePageHeading: true,
-})
+  hidePageHeading: true})
 
 import { onMounted, onBeforeUnmount, ref, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
@@ -363,8 +364,7 @@ function notifySuccess(title, message) {
     title,
     message,
     color: 'green',
-    position: 'bottomRight',
-  })
+    position: 'bottomRight'})
 }
 
 function notifyError(raw, fallback) {
@@ -461,8 +461,7 @@ async function doDispatch() {
     if (!lines.length) throw new Error('Isi quantity kirim > 0')
     await stockTransferStore.dispatchStockTransfer(stockTransfer.value.id, {
       lines,
-      idempotencyKey: `ui-dispatch-${stockTransfer.value.id}-${Date.now()}`,
-    })
+      idempotencyKey: `ui-dispatch-${stockTransfer.value.id}-${Date.now()}`})
     notifySuccess('Berhasil', 'Pengiriman tercatat')
     await reload()
   } catch (e) {
@@ -482,8 +481,7 @@ async function doReceive() {
       title: 'Validasi',
       message: actionError.value,
       color: 'red',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
     return
   }
   await doReceiveShipment(sh.id)
@@ -498,15 +496,13 @@ async function doReceiveShipment(shipmentId) {
       .map((it) => ({
         shipmentItemId: it.id,
         quantity: Number(receiveQty.value[it.id] || 0),
-        condition: receiveCondition.value[it.id] || 'good',
-      }))
+        condition: receiveCondition.value[it.id] || 'good'}))
       .filter((l) => l.quantity > 0)
     if (!lines.length) throw new Error('Isi quantity terima > 0')
     await stockTransferStore.receiveStockTransfer(stockTransfer.value.id, {
       shipmentId,
       lines,
-      idempotencyKey: `ui-receive-${shipmentId}-${Date.now()}`,
-    })
+      idempotencyKey: `ui-receive-${shipmentId}-${Date.now()}`})
     notifySuccess('Berhasil', 'Penerimaan tercatat')
     await reload()
   } catch (e) {
@@ -541,8 +537,7 @@ async function promptReason(title) {
     inputPlaceholder: 'Alasan wajib',
     showCancelButton: true,
     confirmButtonText: 'Lanjut',
-    inputValidator: (v) => (!v || !String(v).trim() ? 'Alasan wajib' : undefined),
-  })
+    inputValidator: (v) => (!v || !String(v).trim() ? 'Alasan wajib' : undefined)})
   return value ? String(value).trim() : null
 }
 
@@ -567,8 +562,7 @@ async function doReturn(it) {
       shipmentItemId: it.id,
       quantity: qty,
       reason,
-      idempotencyKey: `ui-return-${it.id}-${Date.now()}`,
-    })
+      idempotencyKey: `ui-return-${it.id}-${Date.now()}`})
     notifySuccess('Berhasil', 'Barang dikonfirmasi kembali ke sumber')
     await reload()
   } catch (e) {
@@ -599,8 +593,7 @@ async function doLoss(it) {
       shipmentItemId: it.id,
       quantity: qty,
       reason,
-      idempotencyKey: `ui-loss-${it.id}-${Date.now()}`,
-    })
+      idempotencyKey: `ui-loss-${it.id}-${Date.now()}`})
     notifySuccess('Berhasil', 'Kehilangan tercatat')
     await reload()
   } catch (e) {

@@ -82,15 +82,15 @@
                 @click="openDetail(m.id)"
               >
                 <td>{{ formatDate(m.postedAt) }}</td>
-                <td>{{ m.movementType }}</td>
+                <td>{{ humanizeLabel(m.movementType, { fallback: '—' }) }}</td>
                 <td>{{ productLabel(m) }}</td>
                 <td>{{ m.product?.sku || m.product?.code || '-' }}</td>
                 <td>{{ m.warehouse?.name || m.warehouseId }}</td>
-                <td>{{ m.direction }}</td>
+                <td>{{ humanizeLabel(m.direction, { fallback: '—' }) }}</td>
                 <td class="text-end">{{ m.quantity }}</td>
                 <td class="text-end">{{ m.beforeQuantity }}</td>
                 <td class="text-end">{{ m.afterQuantity }}</td>
-                <td class="text-truncate" style="max-width: 140px">{{ m.sourceDocumentType || '-' }}</td>
+                <td class="text-truncate" style="max-width: 140px">{{ humanizeLabel(m.sourceDocumentType, { fallback: '-' }) }}</td>
                 <td class="small">{{ m.leg || '-' }}</td>
                 <td><span :class="statusBadge(m.status)">{{ getDocumentStatusLabel(m.status) }}</span></td>
                 <td>{{ m.referenceNumber || '-' }}</td>
@@ -122,8 +122,8 @@
               <dl class="row mb-0 small">
                 <dt class="col-5">Movement ID</dt><dd class="col-7 text-break">{{ selected.id }}</dd>
                 <dt class="col-5">Posted At</dt><dd class="col-7">{{ formatDate(selected.postedAt) }}</dd>
-                <dt class="col-5">Type</dt><dd class="col-7">{{ selected.movementType }}</dd>
-                <dt class="col-5">Direction</dt><dd class="col-7">{{ selected.direction }}</dd>
+                <dt class="col-5">Type</dt><dd class="col-7">{{ humanizeLabel(selected.movementType, { fallback: '—' }) }}</dd>
+                <dt class="col-5">Direction</dt><dd class="col-7">{{ humanizeLabel(selected.direction, { fallback: '—' }) }}</dd>
                 <dt class="col-5">Status</dt><dd class="col-7"><span :class="statusBadge(selected.status)">{{ getDocumentStatusLabel(selected.status) }}</span></dd>
                 <dt class="col-5">Reference</dt><dd class="col-7">{{ selected.referenceNumber || '-' }}</dd>
               </dl>
@@ -136,7 +136,7 @@
                 <dt class="col-5">Qty / Before / After</dt>
                 <dd class="col-7">{{ selected.quantity }} / {{ selected.beforeQuantity }} / {{ selected.afterQuantity }}</dd>
                 <dt class="col-5">Source</dt>
-                <dd class="col-7">{{ selected.sourceDocumentType || '-' }} #{{ selected.sourceDocumentId || '-' }}</dd>
+                <dd class="col-7">{{ humanizeLabel(selected.sourceDocumentType, { fallback: '-' }) }} #{{ selected.sourceDocumentId || '-' }}</dd>
                 <dt class="col-5">Source Line</dt><dd class="col-7">{{ selected.sourceDocumentLineId || '-' }}</dd>
                 <dt class="col-5">Leg</dt><dd class="col-7">{{ selected.leg || '-' }}</dd>
                 <dt class="col-5">Actor</dt><dd class="col-7">{{ selected.actorUser?.name || selected.actor || '-' }}</dd>
@@ -223,6 +223,8 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 const { $api, $apiFetch, $toast } = useNuxtApp()
 const loading = ref(false)
 const reversing = ref(false)
@@ -238,8 +240,7 @@ const filters = reactive({
   sourceDocumentType: '',
   status: '',
   dateFrom: '',
-  dateTo: '',
-})
+  dateTo: ''})
 
 function formatDate(v) {
   if (!v) return '-'
@@ -255,13 +256,11 @@ function formatMoney(v) {
 
 const statusBadge = (s) => ({
   posted: 'badge bg-label-info',
-  reversed: 'badge bg-label-dark',
-}[s] || 'badge bg-label-secondary')
+  reversed: 'badge bg-label-dark'}[s] || 'badge bg-label-secondary')
 
 const getDocumentStatusLabel = (s) => ({
   posted: 'Posted',
-  reversed: 'Reversed',
-}[s] || s)
+  reversed: 'Reversed'}[s] || s)
 
 function shortId(id) {
   if (!id) return '-'
@@ -328,8 +327,7 @@ async function reverseSelected() {
   try {
     await $apiFetch($api.reverseStockMovement(selected.value.id), {
       method: 'POST',
-      body: { reason: reason.trim() },
-    })
+      body: { reason: reason.trim() }})
     $toast?.success?.('Reversed') || alert('Reversed')
     selected.value = null
     await load()

@@ -97,7 +97,7 @@
                   <p class="mb-0 text-muted notification-item-meta">
                     {{ formatTimeAgo(item.createdAt) }} • {{ item.categoryLabel }}
                     <span v-if="item.priority === 'HIGH' || item.priority === 'CRITICAL'" class="badge bg-label-warning ms-1">
-                      {{ item.priority }}
+                      {{ humanizeLabel(item.priority, { fallback: '—' }) }}
                     </span>
                   </p>
                 </div>
@@ -131,16 +131,13 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useNotificationFeedStore } from '~/stores/notificationFeed'
-import {
-  formatNotificationTimeAgo,
-  getNotificationNavigationPath,
-  type NotificationFeedItem,
-  type NotificationTab,
-} from '~/utils/notificationFeed'
+import { formatNotificationTimeAgo, getNotificationNavigationPath, type NotificationFeedItem, type NotificationTab } from '~/utils/notificationFeed'
 
 const feedStore = useNotificationFeedStore()
 const { counts } = storeToRefs(feedStore)
@@ -174,8 +171,7 @@ function getIcon(type: string) {
     purchase_request: 'ri-shopping-cart-line',
     payment_request: 'ri-hand-coin-line',
     pks: 'ri-file-paper-2-line',
-    subscription: 'ri-repeat-line',
-  }
+    subscription: 'ri-repeat-line'}
   return map[type] || 'ri-notification-3-line'
 }
 
@@ -213,8 +209,7 @@ function setupInfiniteScrollObserver() {
     {
       root: scrollRef.value,
       rootMargin: '48px',
-      threshold: 0,
-    }
+      threshold: 0}
   )
 
   observer.observe(sentinelRef.value)
@@ -232,16 +227,14 @@ async function markAllAsRead() {
       title: 'Berhasil',
       message: 'Semua notifikasi ditandai dibaca',
       color: 'green',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
   } catch {
     const toast = useToast()
     toast?.error?.({
       title: 'Error',
       message: 'Gagal menandai semua notifikasi',
       color: 'red',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
   }
 }
 

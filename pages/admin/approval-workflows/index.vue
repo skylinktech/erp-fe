@@ -86,9 +86,9 @@
                     <td>{{ w.id }}</td>
                     <td class="fw-medium">{{ w.name }}</td>
                     <td>
-                      <span class="fw-medium">{{ w.entity?.name || w.entityType }}</span>
+                      <span class="fw-medium">{{ humanizeLabel(w.entity?.name || w.entityType, { fallback: '—' }) }}</span>
                       <br>
-                      <code class="small">{{ w.entity?.code || w.entityType }}</code>
+                      <code class="small">{{ humanizeLabel(w.entity?.code || w.entityType, { fallback: '—' }) }}</code>
                     </td>
                     <td>{{ (w.steps || []).length }} step</td>
                     <td>
@@ -202,7 +202,7 @@
                         <span class="fw-medium">{{ option.name }}</span>
                         <small class="text-muted">
                           <code>{{ option.code }}</code>
-                          <template v-if="option.module"> · {{ option.module }}</template>
+                          <template v-if="option.module"> · {{ humanizeLabel(option.module, { fallback: '—' }) }}</template>
                         </small>
                       </div>
                     </template>
@@ -239,6 +239,8 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { useDebounceFn } from '@vueuse/core'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
 import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
@@ -248,8 +250,7 @@ import type { ApprovalWorkflowEntity } from '~/stores/approval-workflows'
 definePageMeta({
   title: "Approval Workflows",
   layout: 'default',
-  middleware: ['auth', 'check-permission'],
-})
+  middleware: ['auth', 'check-permission']})
 
 const wfStore = useApprovalWorkflowsStore()
 const { stats } = storeToRefs(wfStore)
@@ -313,9 +314,7 @@ const statItems = computed<ListPageStatItem[]>(() => [
     iconBgClass: 'bg-label-primary',
     info: {
       title: 'Total Workflow',
-      description: 'Jumlah seluruh workflow approval yang terdaftar, baik aktif maupun nonaktif.',
-    },
-  },
+      description: 'Jumlah seluruh workflow approval yang terdaftar, baik aktif maupun nonaktif.'}},
   {
     key: 'aktif',
     label: 'Aktif',
@@ -325,9 +324,7 @@ const statItems = computed<ListPageStatItem[]>(() => [
     iconBgClass: 'bg-label-success',
     info: {
       title: 'Aktif',
-      description: 'Jumlah workflow approval yang sedang aktif dan digunakan untuk memproses dokumen.',
-    },
-  },
+      description: 'Jumlah workflow approval yang sedang aktif dan digunakan untuk memproses dokumen.'}},
   {
     key: 'nonaktif',
     label: 'Nonaktif',
@@ -337,9 +334,7 @@ const statItems = computed<ListPageStatItem[]>(() => [
     iconBgClass: 'bg-label-secondary',
     info: {
       title: 'Nonaktif',
-      description: 'Jumlah workflow approval yang dinonaktifkan dan tidak digunakan saat ini.',
-    },
-  },
+      description: 'Jumlah workflow approval yang dinonaktifkan dan tidak digunakan saat ini.'}},
   {
     key: 'entities',
     label: 'Entity Types',
@@ -349,9 +344,7 @@ const statItems = computed<ListPageStatItem[]>(() => [
     iconBgClass: 'bg-label-info',
     info: {
       title: 'Entity Types',
-      description: 'Jumlah entity type unik yang sudah memiliki workflow, beserta total step approval di seluruh workflow.',
-    },
-  },
+      description: 'Jumlah entity type unik yang sudah memiliki workflow, beserta total step approval di seluruh workflow.'}},
 ])
 
 async function load() {

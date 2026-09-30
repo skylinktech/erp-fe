@@ -131,7 +131,7 @@
               <div class="card-body">
                 <ul class="list-unstyled mb-0">
                   <li v-for="log in approvalRows" :key="log.id" class="mb-3 pb-3 border-bottom">
-                    <div class="fw-medium text-capitalize">{{ log.action }} — Step {{ log.stepOrder ?? log.step_order }}</div>
+                    <div class="fw-medium text-capitalize">{{ humanizeLabel(log.action, { fallback: '—' }) }} — Step {{ log.stepOrder ?? log.step_order }}</div>
                     <div class="small text-muted">
                       {{ log.user?.fullName ?? log.user?.full_name ?? '-' }}
                       · {{ formatDateTime(log.createdAt ?? log.created_at) }}
@@ -189,6 +189,8 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { computed, onMounted, ref } from 'vue'
 import { navigateTo, useRoute } from '#app'
 import { storeToRefs } from 'pinia'
@@ -197,17 +199,7 @@ import MultiSignatureDisplay from '~/components/MultiSignatureDisplay.vue'
 import { usePerjalananDinasStore } from '~/stores/perjalanan-dinas'
 import { usePermissions } from '~/composables/usePermissions'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
-import {
-  canCancelPendingPerjalananDinas,
-  canDeletePerjalananDinas,
-  canEditPerjalananDinas,
-  canSubmitPerjalananDinas,
-  formatRupiah,
-  getJenisPerjalananLabel,
-  getKendaraanLabel,
-  getStatusPdBadge,
-  STATUS_PD_APPROVED,
-} from '~/constants/hrd/perjalananDinasForm'
+import { canCancelPendingPerjalananDinas, canDeletePerjalananDinas, canEditPerjalananDinas, canSubmitPerjalananDinas, formatRupiah, getJenisPerjalananLabel, getKendaraanLabel, getStatusPdBadge, STATUS_PD_APPROVED } from '~/constants/hrd/perjalananDinasForm'
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
@@ -216,8 +208,7 @@ definePageMeta({
   hidePageHeading: true,
   layout: 'default',
   middleware: ['auth', 'check-permission'],
-  requiredPermission: ['view_perjalanan_dinas', 'show_perjalanan_dinas'],
-})
+  requiredPermission: ['view_perjalanan_dinas', 'show_perjalanan_dinas']})
 
 const route = useRoute()
 const store = usePerjalananDinasStore()
@@ -294,8 +285,7 @@ async function approve() {
     title: 'Setujui SPPD?',
     input: 'textarea',
     inputLabel: 'Catatan (opsional)',
-    showCancelButton: true,
-  })
+    showCancelButton: true})
   if (r.isConfirmed) {
     const ok = await store.approve(detail.value.id, r.value || undefined)
     if (ok) await store.fetchOne(detail.value.id)
@@ -309,8 +299,7 @@ async function reject() {
     input: 'textarea',
     inputLabel: 'Alasan penolakan',
     showCancelButton: true,
-    inputValidator: (v) => (!v?.trim() ? 'Wajib diisi' : undefined),
-  })
+    inputValidator: (v) => (!v?.trim() ? 'Wajib diisi' : undefined)})
   if (r.isConfirmed && r.value) {
     const ok = await store.reject(detail.value.id, r.value)
     if (ok) await store.fetchOne(detail.value.id)

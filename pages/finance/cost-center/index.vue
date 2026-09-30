@@ -239,6 +239,8 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCostCenterStore } from '~/stores/cost-center'
@@ -297,8 +299,7 @@ const parentOptions = computed(() => {
     company: ['department', 'site', 'project'],
     department: ['site', 'project'],
     site: ['project'],
-    project: [],
-  }
+    project: []}
 
   const allowedParentTypes = currentForm.type
     ? typeHierarchy[currentForm.type] || []
@@ -345,9 +346,8 @@ const getTypeLabel = (type) => {
     company: 'Company',
     department: 'Department',
     site: 'Site',
-    project: 'Project',
-  }
-  return labels[type] || type
+    project: 'Project'}
+  return labels[type] || humanizeLabel(type, { fallback: type || '' })
 }
 
 const getParentTypeHint = (type) => {
@@ -355,8 +355,7 @@ const getParentTypeHint = (type) => {
     company: 'tidak ada (root level)',
     department: 'Company',
     site: 'Company atau Department',
-    project: 'Company, Department, atau Site',
-  }
+    project: 'Company, Department, atau Site'}
   return hints[type] || 'tidak ada'
 }
 
@@ -366,23 +365,20 @@ const exportData = async (format) => {
     if (format === 'csv' && myDataTableRef.value) {
       myDataTableRef.value.exportCSV({
         title: 'Data Cost Center',
-        border: true,
-      })
+        border: true})
     } else if (format === 'excel') {
       // Ambil data dari API untuk export Excel
       const exportResult = await costCenterStore.fetchCostCentersForExport()
       if (myDataTableRef.value && exportResult.data) {
         await myDataTableRef.value.exportExcel({
           title: `Data Cost Center ${exportResult.nmPerusahaan ? `- ${exportResult.nmPerusahaan}` : ''}`,
-          data: exportResult.data,
-        })
+          data: exportResult.data})
         toast.success({
           title: 'Success',
           message: 'Data cost center berhasil diekspor ke Excel',
           color: 'green',
           position: 'bottomRight',
-          layout: 2,
-        })
+          layout: 2})
       }
     }
   } catch (error) {
@@ -392,8 +388,7 @@ const exportData = async (format) => {
       message: error.message || 'Gagal melakukan export data',
       color: 'red',
       position: 'bottomRight',
-      layout: 2,
-    })
+      layout: 2})
   }
 }
 
@@ -411,9 +406,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-primary',
     info: {
       title: 'Jumlah Keseluruhan',
-      description: 'Jumlah seluruh Cost Center (Company, Department, Site, Project) yang terdaftar dalam sistem.',
-    },
-  }
+      description: 'Jumlah seluruh Cost Center (Company, Department, Site, Project) yang terdaftar dalam sistem.'}}
 ])
 
 
@@ -459,8 +452,7 @@ definePageMeta({
   author: 'Sinergi Innovate Pratama',
   robots: 'index, follow',
   viewport:
-    'width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0',
-})
+    'width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0'})
 </script>
 
 <style scoped>

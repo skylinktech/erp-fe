@@ -48,7 +48,7 @@
                   <td>
                     {{ row.subscription?.noSubscription || row.subscription?.no_subscription || '—' }}
                   </td>
-                  <td><span class="badge bg-label-secondary">{{ row.status }}</span></td>
+                  <td><span class="badge bg-label-secondary">{{ humanizeLabel(row.status, { fallback: '—' }) }}</span></td>
                   <td>{{ row.billable ? 'Yes' : 'No' }}</td>
                   <td>
                     <NuxtLink
@@ -72,6 +72,8 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { useServiceInstanceStore } from '~/stores/service-instances'
 
 const props = defineProps<{

@@ -196,7 +196,7 @@
           <div v-show="activeTab === 'accounting'" class="card">
             <div class="card-body">
               <div class="row g-3">
-                <div class="col-md-4"><label class="form-label text-muted">Posting Status</label><p class="mb-0">{{ run.accountingStatus || '—' }}</p></div>
+                <div class="col-md-4"><label class="form-label text-muted">Posting Status</label><p class="mb-0">{{ humanizeLabel(run.accountingStatus, { fallback: '—' }) }}</p></div>
                 <div class="col-md-4"><label class="form-label text-muted">Journal</label><p class="mb-0"><NuxtLink v-if="run.journalId" :to="`/finance/journals/detail/${run.journalId}`">#{{ run.journalId }}</NuxtLink><span v-else>—</span></p></div>
                 <div class="col-md-4"><label class="form-label text-muted">Posted At</label><p class="mb-0">{{ formatDateTime(run.postedAt) }}</p></div>
               </div>
@@ -219,6 +219,8 @@
   </div>
 </template>
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { FilterMatchMode } from '@primevue/core/api'
 import { useDebounceFn } from '@vueuse/core'
 import MyDataTable from '~/components/table/MyDataTable.vue'
@@ -230,8 +232,7 @@ definePageMeta({
   title: 'Payroll Run Detail',
   middleware: ['auth', 'check-permission'],
   alias: '/payroll/runs/:id',
-  hidePageHeading: true,
-})
+  hidePageHeading: true})
 
 const route = useRoute()
 const store = usePayrollStore()
@@ -247,8 +248,7 @@ const employeesLoaded = ref(false)
 const empColumnFilters = ref({
   employeeName: { value: null as string | null, matchMode: FilterMatchMode.CONTAINS },
   exception: { value: null as string | null, matchMode: FilterMatchMode.EQUALS },
-  payment: { value: null as string | null, matchMode: FilterMatchMode.EQUALS },
-})
+  payment: { value: null as string | null, matchMode: FilterMatchMode.EQUALS }})
 
 const run = computed(() => store.currentRun)
 const tabs = computed(() => [
@@ -271,8 +271,7 @@ const exceptionRows = computed(() => {
         code: issue.code,
         severity: issue.severity,
         message: issue.message,
-        recommended: issue.recommendedAction,
-      })
+        recommended: issue.recommendedAction})
     }
   }
   return rows
@@ -285,8 +284,7 @@ async function loadEmployees() {
     per_page: empRows,
     search: empSearch.value,
     exception: empException.value,
-    payment_status: empPayment.value,
-  })
+    payment_status: empPayment.value})
   employeesLoaded.value = true
 }
 
@@ -331,8 +329,7 @@ async function onAction(key: PayrollRunActionKey) {
       inputLabel: 'Catatan',
       showCancelButton: true,
       confirmButtonText: 'Tolak',
-      customClass: { confirmButton: 'btn btn-danger', cancelButton: 'btn btn-label-secondary' },
-    })
+      customClass: { confirmButton: 'btn btn-danger', cancelButton: 'btn btn-label-secondary' }})
     if (!isConfirmed) return
     await store.runAction(run.value.id, 'reject', { remarks: value })
   } else if (key === 'calculate' || key === 'recalculate' || key === 'submit' || key === 'approve' || key === 'post') {

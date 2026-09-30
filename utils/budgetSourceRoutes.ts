@@ -5,6 +5,8 @@
  * `purchase_invoice` points at the PI *form* page, while budget history should
  * point at the read-only PI *detail* page — same reference_type, different target.
  */
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 export type BudgetSourceType = 'purchase_order' | 'purchase_invoice' | 'purchase_request' | string
 
 export type BudgetSourceDocument = {
@@ -16,18 +18,18 @@ export type BudgetSourceDocument = {
 const BUDGET_SOURCE_LABELS: Record<string, string> = {
   purchase_order: 'Purchase Order',
   purchase_invoice: 'Purchase Invoice',
-  purchase_request: 'Purchase Request',
-}
+  purchase_request: 'Purchase Request'}
 
 const BUDGET_SOURCE_PATHS: Record<string, (id: string) => string> = {
   purchase_order: (id) => `/purchasing/purchase-order-detail?id=${id}`,
   purchase_invoice: (id) => `/purchasing/purchase-invoice-detail?id=${id}`,
-  purchase_request: (id) => `/purchasing/purchase-request/detail/${id}`,
-}
+  purchase_request: (id) => `/purchasing/purchase-request/detail/${id}`}
 
 export function budgetSourceLabel(referenceType?: string | null): string {
   if (!referenceType) return 'Manual / lainnya'
-  return BUDGET_SOURCE_LABELS[referenceType] || referenceType
+  return humanizeLabel(referenceType, {
+    labels: BUDGET_SOURCE_LABELS,
+    fallback: 'Manual / lainnya'})
 }
 
 export function budgetSourcePath(
@@ -55,6 +57,5 @@ export function budgetSourceDisplay(source?: BudgetSourceDocument | null): {
   return {
     label: budgetSourceLabel(source.type),
     number: source.number || '—',
-    link: source.link ?? budgetSourcePath(source.type, null),
-  }
+    link: source.link ?? budgetSourcePath(source.type, null)}
 }

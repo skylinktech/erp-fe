@@ -84,7 +84,7 @@
             <tbody>
               <tr v-for="(row, idx) in report.details || []" :key="idx">
                 <td>{{ row.date || '—' }}</td>
-                <td>{{ row.source || '—' }}</td>
+                <td>{{ humanizeLabel(row.source, { fallback: '—' }) }}</td>
                 <td>
                   <NuxtLink
                     v-if="row.journalId"
@@ -95,14 +95,14 @@
                   </NuxtLink>
                   <span v-else>{{ row.documentNumber || '—' }}</span>
                 </td>
-                <td>{{ row.category }}</td>
+                <td>{{ humanizeLabel(row.category, { fallback: '—' }) }}</td>
                 <td>{{ row.costCategory || '—' }}</td>
                 <td>{{ row.account || '—' }}</td>
                 <td class="text-end">{{ formatMoney(row.estimate) }}</td>
                 <td class="text-end">{{ formatMoney(row.recognized) }}</td>
                 <td class="text-end">{{ formatMoney(row.cash) }}</td>
                 <td>
-                  <span class="badge" :class="badgeClass(row.status)">{{ row.status }}</span>
+                  <span class="badge" :class="badgeClass(row.status)">{{ humanizeLabel(row.status, { fallback: '—' }) }}</span>
                 </td>
               </tr>
               <tr v-if="!(report.details || []).length">
@@ -117,6 +117,8 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { buildProjectOptionsQuery } from '~/utils/projectOptionsContext'
 
 definePageMeta({ layout: 'default' })
@@ -145,8 +147,7 @@ async function fetchProjectOptions(search = '') {
   const qs = buildProjectOptionsQuery({ context: 'historical', search, perPage: 40 })
   const res = await fetch($api.generalLedgerFormOptions(qs.toString()), {
     headers: { Accept: 'application/json' },
-    credentials: 'include',
-  })
+    credentials: 'include'})
   if (!res.ok) {
     projectOptions.value = []
     return
@@ -166,8 +167,7 @@ async function load() {
   try {
     const res = await fetch($api.projectProfitability(String(projectId.value)), {
       headers: { Accept: 'application/json' },
-      credentials: 'include',
-    })
+      credentials: 'include'})
     const json = await res.json().catch(() => ({}))
     if (!res.ok) {
       error.value =

@@ -1,3 +1,5 @@
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 export const ATTENDANCE_STATE_OPTIONS = [
   { value: 'PRESENT', label: 'Hadir' },
   { value: 'ABSENT', label: 'Absen' },
@@ -48,7 +50,7 @@ export function getPeriodStatusBadge(status: string | null | undefined) {
     case 'FINALIZED':
       return { text: 'Final', class: 'badge rounded-pill bg-label-success' }
     default:
-      return { text: status || '-', class: 'badge rounded-pill bg-label-secondary' }
+      return { text: humanizeLabel(status, { fallback: '-' }), class: 'badge rounded-pill bg-label-secondary' }
   }
 }
 

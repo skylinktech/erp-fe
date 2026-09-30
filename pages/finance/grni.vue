@@ -57,7 +57,7 @@
                 <td>{{ shortId(row.receiptMovementId) }}</td>
                 <td>{{ row.purchaseInvoiceId || '-' }}</td>
                 <td class="text-end">{{ formatMoney(row.clearedAmount ?? row.amount) }}</td>
-                <td><span class="badge bg-label-secondary">{{ row.status }}</span></td>
+                <td><span class="badge bg-label-secondary">{{ humanizeLabel(row.status, { fallback: '-' }) }}</span></td>
               </tr>
               <tr v-if="!rows.length && !loading">
                 <td colspan="6" class="text-muted">No clearing history</td>
@@ -102,7 +102,7 @@
               <span v-else>-</span>
             </dd>
             <dt class="col-4">Status / Amount</dt>
-            <dd class="col-8">{{ selected.status }} / {{ formatMoney(selected.clearedAmount ?? selected.amount) }}</dd>
+            <dd class="col-8">{{ humanizeLabel(selected.status, { fallback: '—' }) }} / {{ formatMoney(selected.clearedAmount ?? selected.amount) }}</dd>
           </dl>
         </div>
       </div>
@@ -111,6 +111,7 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
 definePageMeta({
   title: "GRNI", middleware: ['auth', 'check-permission'] })
 

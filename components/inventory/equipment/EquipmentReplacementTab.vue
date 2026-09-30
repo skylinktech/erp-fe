@@ -156,7 +156,7 @@
             </Column>
             <Column field="status" header="Status" :sortable="true" :show-filter-menu="false">
               <template #body="{ data }">
-                <span class="badge bg-label-primary">{{ data.status }}</span>
+                <span class="badge bg-label-primary">{{ humanizeLabel(data.status, { fallback: '—' }) }}</span>
               </template>
               <template #filter="slotProps">
                 <ListColumnFilter v-bind="slotProps" placeholder="Status" :options="statuses" />
@@ -217,6 +217,8 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { getApiErrorMessage } from '~/utils/apiError'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
@@ -254,17 +256,14 @@ const createForm = reactive({
   originalEquipmentId: '',
   reason: 'HARDWARE_FAILURE',
   stockSource: 'STANDARD_STOCK',
-  notes: '',
-})
+  notes: ''})
 
 const list = useServerPaginatedList({
   endpoint: () => $api.equipmentReplacements(),
   buildFilters: () => ({
     status: filters.status || undefined,
     stockSource: filters.stockSource || undefined,
-    reason: filters.reason || undefined,
-  }),
-})
+    reason: filters.reason || undefined})})
 
 const {
   rows,
@@ -283,8 +282,7 @@ const {
   onPage,
   onToolbarRows,
   onSearchUpdate,
-  exportData,
-} = list
+  exportData} = list
 
 const myDataTableRef = ref(null)
 const hasActiveFilters = computed(
@@ -300,9 +298,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-primary',
     info: {
       title: 'Jumlah Keseluruhan',
-      description: 'Jumlah keseluruhan data Equipmentreplacementtab yang terdaftar dalam sistem berdasarkan statistik API.',
-    },
-  },
+      description: 'Jumlah keseluruhan data Equipmentreplacementtab yang terdaftar dalam sistem berdasarkan statistik API.'}},
   {
     key: 'open',
     label: 'Open',
@@ -311,9 +307,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-warning',
     info: {
       title: 'Open',
-      description: 'Jumlah dokumen Equipmentreplacementtab berstatus Open.',
-    },
-  },
+      description: 'Jumlah dokumen Equipmentreplacementtab berstatus Open.'}},
   {
     key: 'done',
     label: 'Completed',
@@ -322,9 +316,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-success',
     info: {
       title: 'Completed',
-      description: 'Jumlah dokumen Equipmentreplacementtab yang sudah selesai.',
-    },
-  },
+      description: 'Jumlah dokumen Equipmentreplacementtab yang sudah selesai.'}},
   {
     key: 'cancelled',
     label: 'Cancelled / Rejected',
@@ -333,9 +325,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-danger',
     info: {
       title: 'Rejected',
-      description: 'Jumlah dokumen Equipmentreplacementtab yang ditolak.',
-    },
-  },
+      description: 'Jumlah dokumen Equipmentreplacementtab yang ditolak.'}},
 ])
 
 function formatDate(v) {
@@ -360,8 +350,7 @@ async function submitCreate() {
       title: 'Validasi',
       message: 'Original equipment ID wajib',
       color: 'red',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
     return
   }
   saving.value = true
@@ -369,14 +358,12 @@ async function submitCreate() {
     const res = await $fetch($api.equipmentReplacements(), {
       method: 'POST',
       credentials: 'include',
-      body: { ...createForm },
-    })
+      body: { ...createForm }})
     toast.success({
       title: 'Berhasil',
       message: res?.data?.replacementNo || 'Created',
       color: 'green',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
     showCreate.value = false
     if (res?.data?.id) await router.push(`/inventory/equipment-replacement/${res.data.id}`)
     else await reload()
@@ -385,8 +372,7 @@ async function submitCreate() {
       title: 'Error',
       message: getApiErrorMessage(e, 'Gagal create replacement'),
       color: 'red',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
   } finally {
     saving.value = false
   }

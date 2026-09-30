@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 const props = defineProps<{
   entityType: string
   entityId: string | number
@@ -27,8 +29,7 @@ async function load() {
     const url = $api.documentTimeline(props.entityType, props.entityId)
     const res = await fetch(url, {
       headers: { Accept: 'application/json' },
-      credentials: 'include',
-    })
+      credentials: 'include'})
     const json = await res.json().catch(() => ({}))
     if (!res.ok) throw new Error(json.message || 'Gagal memuat timeline')
     nodes.value = json.data?.nodes || []
@@ -50,8 +51,7 @@ const relationClass: Record<string, string> = {
   self: 'border-primary',
   parent: 'border-success',
   child: 'border-info',
-  related: 'border-secondary',
-}
+  related: 'border-secondary'}
 </script>
 
 <template>
@@ -75,7 +75,7 @@ const relationClass: Record<string, string> = {
           <div class="small text-muted text-uppercase">{{ n.relation }} · {{ n.label }}</div>
           <div class="fw-medium">{{ n.number || n.entityId }}</div>
           <div class="small text-muted">
-            <span v-if="n.status">{{ n.status }}</span>
+            <span v-if="n.status">{{ humanizeLabel(n.status, { fallback: '—' }) }}</span>
             <span v-if="n.date"> · {{ n.date }}</span>
           </div>
         </li>

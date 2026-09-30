@@ -106,11 +106,11 @@
             <div class="row g-2 mb-3">
               <div class="col-md-6">
                 <div class="text-muted">Status SkyFlow</div>
-                <div>{{ detail.normalizedStatus }} · raw {{ detail.rawStatus }}</div>
+                <div>{{ humanizeLabel(detail.normalizedStatus, { fallback: '—' }) }} · raw {{ humanizeLabel(detail.rawStatus, { fallback: '—' }) }}</div>
               </div>
               <div class="col-md-6">
                 <div class="text-muted">Jenis</div>
-                <div>{{ detail.caseType }} ({{ detail.rawType }})</div>
+                <div>{{ commerceEnumLabel(detail.caseType) }} ({{ commerceEnumLabel(detail.rawType) }})</div>
               </div>
               <div class="col-md-6">
                 <div class="text-muted">External Order</div>
@@ -118,7 +118,7 @@
                   <NuxtLink :to="`/sales/omnichannel/pesanan?q=${detail.linkedExternalOrder.externalOrderId}`">
                     {{ detail.linkedExternalOrder.externalOrderId }}
                   </NuxtLink>
-                  · {{ detail.linkedExternalOrder.normalizedStatus }}
+                  · {{ humanizeLabel(detail.linkedExternalOrder.normalizedStatus, { fallback: '—' }) }}
                 </div>
                 <div v-else class="text-muted">{{ detail.externalOrderId || 'Tidak tertaut' }}</div>
               </div>
@@ -157,7 +157,7 @@
             <h3 class="h6">Histori</h3>
             <ul v-if="(detail.events || []).length" class="list-unstyled mb-3">
               <li v-for="ev in detail.events" :key="ev.id" class="border-bottom py-1">
-                <span class="fw-semibold">{{ ev.eventKind }}</span>
+                <span class="fw-semibold">{{ commerceEnumLabel(ev.eventKind) }}</span>
                 {{ ev.fromNormalizedStatus || '—' }} → {{ ev.toNormalizedStatus || '—' }}
                 <span class="text-muted">({{ formatTs(ev.occurredAt || ev.createdAt) }})</span>
               </li>
@@ -211,6 +211,8 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { computed, ref, watch, onMounted } from 'vue'
 import { useNuxtApp, useRoute, useRouter } from '#app'
 import { useActiveCompany } from '~/composables/useActiveCompany'
@@ -223,16 +225,9 @@ import CommerceActionButton from '~/components/commerce/CommerceActionButton.vue
 import WorkspaceTabs from '~/components/common/WorkspaceTabs.vue'
 import type { WorkspaceTab } from '~/types/workspaceTab'
 import { readAccessToken } from '~/utils/authCookie'
-import { aggregateCommerceLineItems, formatCommerceMoney, formatCommerceQty, formatCommerceTs } from '~/utils/commerceFormat'
-import {
-  COMMERCE_DEFAULT_PER_PAGE,
-  clampCommercePerPage,
-} from '~/utils/commercePagination'
-import {
-  PENGEMBALIAN_ARCHIVED_ACTION,
-  PENGEMBALIAN_DOWNLOAD_ACTIONS,
-  PENGEMBALIAN_EMAIL_ACTION,
-} from '~/utils/commercePesananToolbar'
+import { aggregateCommerceLineItems, formatCommerceMoney, formatCommerceQty, formatCommerceTs, commerceEnumLabel } from '~/utils/commerceFormat'
+import { COMMERCE_DEFAULT_PER_PAGE, clampCommercePerPage } from '~/utils/commercePagination'
+import { PENGEMBALIAN_ARCHIVED_ACTION, PENGEMBALIAN_DOWNLOAD_ACTIONS, PENGEMBALIAN_EMAIL_ACTION } from '~/utils/commercePesananToolbar'
 
 const { $api } = useNuxtApp() as any
 const route = useRoute()
@@ -267,20 +262,18 @@ const workspaceTypeTabs = computed<WorkspaceTab[]>(() => [
   { id: 'all', label: 'Semua' },
   ...typeCounts.value.map((t: any) => ({
     id: String(t.caseType),
-    label: String(t.label),
+    label: String(t.label || commerceEnumLabel(t.caseType)),
     count: String(t.countSemantics || '').startsWith('ZERO_MAY')
       ? null
-      : Number(t.count ?? 0),
-  })),
+      : Number(t.count ?? 0)})),
 ])
 
 const workspaceStatusTabs = computed<WorkspaceTab[]>(() => [
   { id: 'all', label: 'Semua status' },
   ...statusCounts.value.map((s: any) => ({
     id: String(s.normalizedStatus),
-    label: String(s.label),
-    count: Number(s.count ?? 0),
-  })),
+    label: String(s.label || commerceEnumLabel(s.normalizedStatus)),
+    count: Number(s.count ?? 0)})),
 ])
 
 const returnSortOptions = [
@@ -341,9 +334,7 @@ function syncQuery() {
       ...(dateTo.value ? { dateTo: dateTo.value } : {}),
       ...(sort.value !== 'platform_updated_at_desc' ? { sort: sort.value } : {}),
       ...(page.value > 1 ? { page: String(page.value) } : {}),
-      ...(perPage.value !== COMMERCE_DEFAULT_PER_PAGE ? { perPage: String(perPage.value) } : {}),
-    },
-  })
+      ...(perPage.value !== COMMERCE_DEFAULT_PER_PAGE ? { perPage: String(perPage.value) } : {})}})
 }
 
 function onTypeTab(id: string) {
@@ -409,8 +400,7 @@ async function loadCounts() {
   if (q.value) qs.set('q', q.value)
   const res = await fetch(`${$api.commerceExternalReturnCounts()}?${qs}`, {
     headers: headers(),
-    credentials: 'include',
-  })
+    credentials: 'include'})
   const json = await res.json()
   if (!res.ok || json.success === false) return
   typeCounts.value = (json.data?.byType || []).filter(
@@ -435,8 +425,7 @@ async function reload() {
       perusahaanId: String(companyId.value),
       page: String(page.value),
       perPage: String(perPage.value),
-      sort: sort.value,
-    })
+      sort: sort.value})
     if (caseType.value) qs.set('caseType', caseType.value)
     if (normalizedStatus.value) qs.set('normalizedStatus', normalizedStatus.value)
     if (shopId.value) qs.set('shopId', shopId.value)
@@ -445,8 +434,7 @@ async function reload() {
     if (dateTo.value) qs.set('dateTo', dateTo.value)
     const res = await fetch(`${$api.commerceExternalReturns()}?${qs}`, {
       headers: headers(),
-      credentials: 'include',
-    })
+      credentials: 'include'})
     const json = await res.json()
     if (!actions.isCurrentGen(gen)) return
     if (!res.ok || json.success === false) {
@@ -469,8 +457,7 @@ async function openDetail(id: string) {
   const qs = new URLSearchParams({ perusahaanId: String(companyId.value) })
   const res = await fetch(`${$api.commerceExternalReturnDetail(id)}?${qs}`, {
     headers: headers(),
-    credentials: 'include',
-  })
+    credentials: 'include'})
   const json = await res.json()
   if (!res.ok || json.success === false) {
     error.value = json.message || 'Gagal memuat detail'
@@ -495,9 +482,7 @@ async function approveReturn() {
         credentials: 'include',
         body: JSON.stringify({
           phase: 'REQUEST',
-          idempotencyKey: `ui-ret-approve-${id}-${Date.now()}`,
-        }),
-      })
+          idempotencyKey: `ui-ret-approve-${id}-${Date.now()}`})})
       const json = await res.json()
       if (!res.ok || json.success === false) throw new Error(json.message || 'Approve gagal')
       returnActionMsg.value = json.data?.note || json.message || 'Approve dikirim.'
@@ -531,9 +516,7 @@ async function rejectReturn() {
         credentials: 'include',
         body: JSON.stringify({
           rejectReason: reason.trim(),
-          idempotencyKey: `ui-ret-reject-${id}-${Date.now()}`,
-        }),
-      })
+          idempotencyKey: `ui-ret-reject-${id}-${Date.now()}`})})
       const json = await res.json()
       if (!res.ok || json.success === false) throw new Error(json.message || 'Reject gagal')
       returnActionMsg.value = json.message || 'Reject dikirim.'

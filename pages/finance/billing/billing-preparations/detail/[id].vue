@@ -16,7 +16,7 @@
               <PageBreadcrumb class="mt-1" :current-label="`${prep.customer?.name || '—'} · ${prep.billingPeriod}`" />
               <small class="text-muted">Billing Preparation</small>
             </div>
-            <span :class="statusBadge(prep.status)">{{ prep.status }}</span>
+            <span :class="statusBadge(prep.status)">{{ humanizeLabel(prep.status, { fallback: '—' }) }}</span>
           </div>
           <div class="d-flex flex-wrap gap-2">
             <button
@@ -214,7 +214,7 @@
                         class="d-flex justify-content-between align-items-center border-bottom py-2 gap-2"
                       >
                         <div>
-                          <span class="badge bg-label-secondary me-1">{{ a.type }}</span>
+                          <span class="badge bg-label-secondary me-1">{{ humanizeLabel(a.type, { fallback: '—' }) }}</span>
                           <span class="small">{{ a.description || 'Adjustment' }}</span>
                         </div>
                         <span class="small text-nowrap" :class="a.amount < 0 ? 'text-danger' : ''">
@@ -387,6 +387,8 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
@@ -404,8 +406,7 @@ definePageMeta({
   hidePageHeading: true,
   layout: 'default',
   middleware: ['auth', 'check-permission'],
-  title: 'Detail Billing Preparation',
-})
+  title: 'Detail Billing Preparation'})
 
 const route = useRoute()
 const router = useRouter()
@@ -477,8 +478,7 @@ const formatTaxRate = (tax) => {
 const statusBadge = (s) => ({
   draft: 'badge bg-label-secondary',
   ready: 'badge bg-label-warning',
-  invoiced: 'badge bg-label-success',
-}[s] || 'badge bg-label-secondary')
+  invoiced: 'badge bg-label-success'}[s] || 'badge bg-label-secondary')
 
 const chargeTypeLabel = (chargeType, sourceType) => {
   const ct = String(chargeType || '').toUpperCase()
@@ -496,8 +496,7 @@ const chargeTypeBadge = (chargeType, sourceType) => {
       OTC: 'badge bg-label-primary',
       MRC: 'badge bg-label-info',
       ADJUSTMENT: 'badge bg-label-warning',
-      TAX: 'badge bg-label-secondary',
-    }[label] || 'badge bg-label-secondary'
+      TAX: 'badge bg-label-secondary'}[label] || 'badge bg-label-secondary'
   )
 }
 
@@ -543,8 +542,7 @@ const openAddAdjustmentModal = async () => {
   try {
     const rows = await adjStore.fetchApprovedOptions({
       customerId: prep.value.customerId,
-      billingPeriod: prep.value.billingPeriod,
-    })
+      billingPeriod: prep.value.billingPeriod})
     const attached = attachedAdjIds.value
     approvedAdjOptions.value = rows.filter((r) => !attached.has(String(r.id)))
   } finally {
@@ -625,8 +623,7 @@ const saveItems = async () => {
       title: 'Validasi',
       message: 'Pilih minimal 1 pajak jika Tambah Pajak diaktifkan',
       color: 'red',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
     return false
   }
   const ok = await store.update(
@@ -642,9 +639,7 @@ const saveItems = async () => {
         price: i.price,
         amount: i.amount,
         description: i.description,
-        sortOrder: i.sortOrder,
-      })),
-    },
+        sortOrder: i.sortOrder}))},
     fileRef.value
   )
   if (ok) fileRef.value = null
@@ -658,8 +653,7 @@ const onSetReady = async () => {
       title: 'Tidak bisa Set Ready',
       message: readyDisabledReason.value,
       color: 'red',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
     return
   }
   // Pastikan pilihan item tersimpan sebelum mark ready

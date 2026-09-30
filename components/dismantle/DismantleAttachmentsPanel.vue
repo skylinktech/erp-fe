@@ -54,7 +54,7 @@
                   class="badge"
                   :class="item.status === 'ACTIVE' ? 'bg-label-success' : 'bg-label-secondary'"
                 >
-                  {{ item.status }}
+                  {{ humanizeLabel(item.status, { fallback: '—' }) }}
                 </span>
                 <span v-if="item.voidReason" class="small text-muted ms-2">Void: {{ item.voidReason }}</span>
               </div>
@@ -114,16 +114,14 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { computed, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import Swal from 'sweetalert2'
 import { useRequestDismantleStore } from '~/stores/request-dismantle'
 import type { DismantleAttachmentItem, DismantleAttachmentUploadPayload, DismantleRequestService } from '~/types/operations/dismantle'
-import {
-  dismantleAttachmentTypeLabel,
-  formatAttachmentSize,
-  formatAttachmentTimestamp,
-} from '~/utils/dismantleAttachmentLabels'
+import { dismantleAttachmentTypeLabel, formatAttachmentSize, formatAttachmentTimestamp } from '~/utils/dismantleAttachmentLabels'
 
 const props = defineProps<{
   requestId: string
@@ -139,8 +137,7 @@ const {
   uploadingAttachment: uploading,
   downloadById,
   deletingAttachmentById,
-  voidingAttachmentById,
-} = storeToRefs(store)
+  voidingAttachmentById} = storeToRefs(store)
 
 const showUploader = ref(false)
 
@@ -149,8 +146,7 @@ const equipmentLines = computed(() =>
     (s.equipments ?? []).map((e) => ({
       id: e.id,
       label: `${e.equipmentNo || e.id} (${e.ownershipType})`,
-      serviceLineId: s.id,
-    }))
+      serviceLineId: s.id}))
   )
 )
 
@@ -168,8 +164,7 @@ const grouped = computed(() => {
   return [...map.entries()].map(([type, items]) => ({
     type,
     label: dismantleAttachmentTypeLabel(type),
-    items,
-  }))
+    items}))
 })
 
 async function refresh() {
@@ -205,8 +200,7 @@ async function onDelete(id: string) {
     title: 'Hapus attachment draft?',
     icon: 'warning',
     showCancelButton: true,
-    confirmButtonText: 'Hapus',
-  })
+    confirmButtonText: 'Hapus'})
   if (!confirm.isConfirmed) return
   await store.deleteDraftAttachment(props.requestId, id)
 }
@@ -218,8 +212,7 @@ async function onVoid(id: string) {
     inputLabel: 'Alasan void (wajib)',
     inputValidator: (v) => (!v?.trim() ? 'Alasan wajib diisi' : undefined),
     showCancelButton: true,
-    confirmButtonText: 'Void',
-  })
+    confirmButtonText: 'Void'})
   if (!value?.trim()) return
   await store.voidAttachment(props.requestId, id, value.trim())
 }

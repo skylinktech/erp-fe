@@ -173,6 +173,8 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { ref, computed, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { usePksStore, resolvePksType } from '~/stores/pks'
@@ -208,9 +210,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-primary',
     info: {
       title: 'Jumlah Keseluruhan',
-      description: 'Jumlah seluruh dokumen PKS Customer dan PKS Vendor yang terdaftar.',
-    },
-  },
+      description: 'Jumlah seluruh dokumen PKS Customer dan PKS Vendor yang terdaftar.'}},
   {
     key: 'customer-pks',
     label: 'PKS Customer',
@@ -220,9 +220,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-info',
     info: {
       title: 'PKS Customer',
-      description: 'PKS yang terhubung ke Customer dan Subscription (sebelumnya disebut Internal).',
-    },
-  },
+      description: 'PKS yang terhubung ke Customer dan Subscription (sebelumnya disebut Internal).'}},
   {
     key: 'vendor-pks',
     label: 'PKS Vendor',
@@ -232,9 +230,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-warning',
     info: {
       title: 'PKS Vendor',
-      description: 'PKS yang terhubung ke Vendor dan Purchase Order (sebelumnya disebut External).',
-    },
-  },
+      description: 'PKS yang terhubung ke Vendor dan Purchase Order (sebelumnya disebut External).'}},
   {
     key: 'draft',
     label: 'Draft',
@@ -244,9 +240,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-secondary',
     info: {
       title: 'Draft',
-      description: 'Jumlah dokumen PKS berstatus Draft yang belum di-signed.',
-    },
-  },
+      description: 'Jumlah dokumen PKS berstatus Draft yang belum di-signed.'}},
   {
     key: 'signed',
     label: 'Signed',
@@ -256,9 +250,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-success',
     info: {
       title: 'Signed',
-      description: 'Jumlah dokumen PKS yang telah ditandatangani.',
-    },
-  },
+      description: 'Jumlah dokumen PKS yang telah ditandatangani.'}},
 ])
 
 const tableControls = ref({ rows: 10, search: '' })
@@ -327,7 +319,7 @@ function getStatusBadge(status) {
     case 'active': return { text: 'Active', class: 'badge rounded-pill bg-label-success' }
     case 'expired': return { text: 'Expired', class: 'badge rounded-pill bg-label-dark' }
     case 'terminated': return { text: 'Terminated', class: 'badge rounded-pill bg-label-warning' }
-    default: return { text: status, class: 'badge rounded-pill bg-label-light' }
+    default: return { text: humanizeLabel(status, { fallback: String(status) }), class: 'badge rounded-pill bg-label-light' }
   }
 }
 
@@ -350,8 +342,7 @@ watch(filters, (f) => {
     vendorId: f.vendorId,
     pksType: f.pksType,
     status: f.status,
-    search: f.search,
-  })
+    search: f.search})
 }, { deep: true })
 
 onMounted(() => {
@@ -367,6 +358,5 @@ onMounted(() => {
 definePageMeta({
   layout: 'default',
   middleware: ['auth', 'check-permission'],
-  title: 'PKS',
-})
+  title: 'PKS'})
 </script>

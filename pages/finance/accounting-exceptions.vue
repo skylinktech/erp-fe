@@ -42,12 +42,12 @@
             <tbody>
               <tr v-for="(row, i) in rows" :key="row.id || i" style="cursor:pointer" @click="selected = row">
                 <td>{{ formatDate(row.updatedAt || row.createdAt || row.date) }}</td>
-                <td>{{ row.source || row.sourceType || '-' }}</td>
+                <td>{{ humanizeLabel(row.source || row.sourceType, { fallback: '-' }) }}</td>
                 <td class="text-truncate" style="max-width:160px">{{ row.movementId || row.sourceId || row.eventId || row.id || '-' }}</td>
                 <td>{{ row.errorCode || '-' }}</td>
-                <td><span class="badge bg-label-warning">{{ row.retryClass || row.classification || '-' }}</span></td>
+                <td><span class="badge bg-label-warning">{{ humanizeLabel(row.retryClass || row.classification, { fallback: '-' }) }}</span></td>
                 <td>{{ row.attemptCount ?? row.attempts ?? (row.retryable ? 'retryable' : '-') }}</td>
-                <td><span class="badge bg-label-secondary">{{ row.status || '-' }}</span></td>
+                <td><span class="badge bg-label-secondary">{{ humanizeLabel(row.status, { fallback: '-' }) }}</span></td>
                 <td class="text-truncate" style="max-width:220px">{{ row.errorMessage || row.lastError || '-' }}</td>
               </tr>
               <tr v-if="!rows.length && !loading">
@@ -66,7 +66,7 @@
         <div class="card-body small">
           <dl class="row mb-0">
             <dt class="col-md-3">Classification</dt>
-            <dd class="col-md-9">{{ selected.classification || selected.retryClass || '-' }}</dd>
+            <dd class="col-md-9">{{ humanizeLabel(selected.classification || selected.retryClass || '-', { fallback: '—' }) }}</dd>
             <dt class="col-md-3">Required Action</dt>
             <dd class="col-md-9">{{ selected.requiredAction || selected.guidance || selected.message || '-' }}</dd>
             <dt class="col-md-3">Error</dt>
@@ -83,6 +83,8 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 definePageMeta({
   title: "Accounting Exceptions", middleware: ['auth', 'check-permission'] })
 

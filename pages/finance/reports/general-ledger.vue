@@ -183,7 +183,7 @@
               <div class="card-body">
                 <div class="text-muted small">Akun</div>
                 <div class="fw-semibold">{{ report.account.code }} — {{ report.account.name }}</div>
-                <div class="small text-muted">Normal: {{ report.account.normalBalance }}</div>
+                <div class="small text-muted">Normal: {{ humanizeLabel(report.account.normalBalance, { fallback: '—' }) }}</div>
               </div>
             </div>
           </div>
@@ -295,6 +295,8 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useDebounceFn } from '@vueuse/core'
@@ -308,8 +310,7 @@ import { journalSourceLabel } from '~/utils/journalSourceRoutes'
 definePageMeta({
   layout: 'default',
   middleware: ['auth', 'check-permission'],
-  title: 'General Ledger',
-})
+  title: 'General Ledger'})
 
 const { setListTitle } = useDynamicTitle()
 const { userHasPermission, userHasRole } = usePermissions()
@@ -414,8 +415,7 @@ async function fetchOptions(kind, searchTerm = '') {
   const qs = new URLSearchParams({ kind, search: searchTerm || '', page: '1', perPage: '20' })
   const res = await fetch($api.generalLedgerFormOptions(qs.toString()), {
     headers: { Accept: 'application/json' },
-    credentials: 'include',
-  })
+    credentials: 'include'})
   if (!res.ok) return
   const json = await res.json()
   const rows = json.data || []
@@ -440,12 +440,10 @@ async function fetchProjectOptions(searchTerm = '') {
       context: 'historical',
       search: searchTerm || '',
       page: '1',
-      perPage: '30',
-    })
+      perPage: '30'})
     const res = await fetch($api.generalLedgerFormOptions(qs.toString()), {
       headers: { Accept: 'application/json' },
-      credentials: 'include',
-    })
+      credentials: 'include'})
     if (!res.ok) {
       projectOptions.value = []
       return
@@ -469,8 +467,7 @@ async function load() {
     syncUrl()
     const res = await fetch($api.generalLedger(queryString().toString()), {
       headers: { Accept: 'application/json' },
-      credentials: 'include',
-    })
+      credentials: 'include'})
     if (!res.ok) {
       const normalized = await normalizeFailedResponse(res, 'Gagal memuat General Ledger')
       throw new Error(normalized.message)
@@ -511,8 +508,7 @@ async function exportCsv() {
   if (!accountId.value) return
   const { $api } = useNuxtApp()
   const res = await fetch($api.generalLedgerExport(queryString().toString()), {
-    credentials: 'include',
-  })
+    credentials: 'include'})
   if (!res.ok) {
     const normalized = await normalizeFailedResponse(res, 'Gagal mengekspor General Ledger')
     error.value = normalized.message

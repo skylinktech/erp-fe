@@ -50,7 +50,7 @@
       
       <Column field="normalBalance" class="text-nowrap" header="Normal Balance" sortable style="width: 130px">
         <template #body="slotProps">
-          <span class="badge bg-label-secondary">{{ slotProps.data.normalBalance }}</span>
+          <span class="badge bg-label-secondary">{{ humanizeLabel(slotProps.data.normalBalance, { fallback: '—' }) }}</span>
         </template>
       </Column>
       
@@ -108,6 +108,8 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { usePermissions } from '~/composables/usePermissions'
 import { useAccountStore } from '~/stores/accounts'
 import { useRouter } from 'vue-router'
@@ -181,7 +183,7 @@ const getTypeLabel = (category) => {
     income: 'Income',
     expense: 'Expense'
   }
-  return labels[category] || category
+  return labels[category] || humanizeLabel(category, { fallback: category || '' })
 }
 </script>
 

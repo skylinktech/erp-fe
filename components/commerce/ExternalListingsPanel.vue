@@ -56,7 +56,7 @@
             <td class="font-monospace small">{{ l.externalProductId }}</td>
             <td>
               <span class="badge" :class="commerceStatusBadge(l.status)">
-                {{ l.status || '—' }}
+                {{ commerceEnumLabel(l.status) }}
               </span>
             </td>
             <td>
@@ -98,7 +98,7 @@
           <div class="fw-semibold text-break">{{ l.title || l.sellerSku || l.externalProductId }}</div>
           <div class="small font-monospace text-break">{{ l.sellerSku || '—' }}</div>
           <div class="d-flex flex-wrap gap-1 mt-1">
-            <span class="badge" :class="commerceStatusBadge(l.status)">{{ l.status || '—' }}</span>
+            <span class="badge" :class="commerceStatusBadge(l.status)">{{ commerceEnumLabel(l.status) }}</span>
             <span class="badge" :class="l.mapped ? 'bg-label-success' : 'bg-label-secondary'">
               {{ l.mapped ? 'mapped' : 'belum' }}
             </span>
@@ -111,8 +111,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { commerceStatusBadge, formatCommerceTs } from '~/utils/commerceFormat'
+import { commerceStatusBadge, commerceEnumLabel, formatCommerceTs } from '~/utils/commerceFormat'
 
 export type CommerceExternalListingRow = {
   id: string
@@ -133,8 +132,7 @@ const props = withDefaults(
   }>(),
   {
     title: 'Listing eksternal (cache)',
-    subtitle: 'Tidak menimpa Product / Price List RETAIL',
-  }
+    subtitle: 'Tidak menimpa Product / Price List RETAIL'}
 )
 
 const empty = computed(() => !props.listings?.length)

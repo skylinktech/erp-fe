@@ -45,7 +45,7 @@
                                     </div>
                                     <div class="result-content">
                                         <div class="result-title" v-html="highlightMatch(result.name, searchQuery)"></div>
-                                        <div class="result-category">{{ result.category }}</div>
+                                        <div class="result-category">{{ humanizeLabel(result.category, { fallback: '—' }) }}</div>
                                     </div>
                                 </div>
                             </template>
@@ -125,6 +125,8 @@
   </template>
   
   <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
     import { useUserStore } from '~/stores/user'
     import { ref, onMounted, onUnmounted, nextTick } from 'vue'
     import { useRouter } from 'vue-router'
@@ -222,8 +224,7 @@
             const requests = endpoints.map(async (e) => {
                 try {
                     const data = await apiFetch(buildUrl(e.list), {
-                        credentials: 'include',
-                    })
+                        credentials: 'include'})
                     const items = Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : [])
                     
 

@@ -40,10 +40,10 @@
             <td class="d-none d-lg-table-cell">{{ row.code }}</td>
             <td>
               <div>{{ row.name }}</div>
-              <div class="text-muted small d-lg-none">{{ row.code }} · {{ row.calculationMethod }}</div>
+              <div class="text-muted small d-lg-none">{{ row.code }} · {{ humanizeLabel(row.calculationMethod, { fallback: '—' }) }}</div>
             </td>
-            <td class="d-none d-md-table-cell">{{ row.componentType }}</td>
-            <td class="d-none d-lg-table-cell">{{ row.calculationMethod }}</td>
+            <td class="d-none d-md-table-cell">{{ humanizeLabel(row.componentType, { fallback: '—' }) }}</td>
+            <td class="d-none d-lg-table-cell">{{ humanizeLabel(row.calculationMethod, { fallback: '—' }) }}</td>
             <td class="d-none d-xl-table-cell text-end">
               {{ row.defaultAmount != null ? money(row.defaultAmount) : '—' }}
             </td>
@@ -74,11 +74,9 @@
   </div>
 </template>
 <script setup lang="ts">
-import {
-  autoCalculationLabel,
-  isManualAmountMethod,
-  type CompensationComponentRow,
-} from '~/composables/useCompensationComponents'
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
+import { autoCalculationLabel, isManualAmountMethod, type CompensationComponentRow } from '~/composables/useCompensationComponents'
 import { formatRupiahInput, parseRupiahInputNullable } from '~/composables/formatRupiah'
 
 const props = defineProps<{

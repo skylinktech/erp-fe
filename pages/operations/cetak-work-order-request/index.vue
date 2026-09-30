@@ -88,19 +88,15 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 definePageMeta({
   layout: 'cetak',
   middleware: ['auth', 'check-permission'],
-  title: 'Cetak Work Order Request',
-})
+  title: 'Cetak Work Order Request'})
 
 import { onMounted, computed } from 'vue'
-import {
-  useWorkOrderRequestStore,
-  getWorkOrderRequestNo,
-  JOB_TYPE_LABELS,
-  URGENCY_LABELS,
-} from '~/stores/work-order-request'
+import { useWorkOrderRequestStore, getWorkOrderRequestNo, JOB_TYPE_LABELS, URGENCY_LABELS } from '~/stores/work-order-request'
 import { storeToRefs } from 'pinia'
 import { useRoute } from 'vue-router'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
@@ -154,9 +150,8 @@ function statusLabel(status, wor) {
     pending: 'Pending Approval',
     approved: 'Approved',
     rejected: 'Rejected',
-    completed: 'Completed',
-  }
-  return status ? (map[status] || status) : '—'
+    completed: 'Completed'}
+  return status ? (map[status] || humanizeLabel(status, { fallback: status || '' })) : '—'
 }
 
 onMounted(async () => {

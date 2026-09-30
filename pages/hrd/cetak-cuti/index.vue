@@ -87,7 +87,7 @@
         <tbody>
           <tr v-for="log in approvalRows" :key="log.id">
             <td class="text-center">{{ log.stepOrder ?? log.step_order }}</td>
-            <td class="text-start text-capitalize">{{ log.action }}</td>
+            <td class="text-start text-capitalize">{{ humanizeLabel(log.action, { fallback: '—' }) }}</td>
             <td class="text-start">{{ log.user?.fullName ?? log.user?.full_name ?? '-' }}</td>
             <td class="text-start">{{ formatDateTime(log.createdAt ?? log.created_at) }}</td>
             <td class="text-start" style="white-space: pre-wrap">{{ log.remarks || '-' }}</td>
@@ -165,23 +165,19 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useNuxtApp, useRuntimeConfig } from '#app'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import { apiFetch } from '~/utils/apiFetch'
 import QRCodeGenerator from '~/components/QRCodeGenerator.vue'
-import {
-  formatDurasiCuti,
-  formatRangeTanggal,
-  getStatusCutiBadge,
-  STATUS_CUTI_APPROVED,
-} from '~/constants/hrd/cutiForm'
+import { formatDurasiCuti, formatRangeTanggal, getStatusCutiBadge, STATUS_CUTI_APPROVED } from '~/constants/hrd/cutiForm'
 
 definePageMeta({
   layout: 'cetak',
-  middleware: ['auth', 'check-permission'],
-})
+  middleware: ['auth', 'check-permission']})
 
 const { setDetailTitle } = useDynamicTitle()
 const { getAttachmentUrl } = useImageUrl()
@@ -333,8 +329,7 @@ const printedAt = computed(() =>
     month: 'short',
     year: 'numeric',
     hour: '2-digit',
-    minute: '2-digit',
-  })
+    minute: '2-digit'})
 )
 
 function formatDate(val: string | null | undefined) {
@@ -353,8 +348,7 @@ function formatDateTime(val: string | null | undefined) {
     month: 'short',
     year: 'numeric',
     hour: '2-digit',
-    minute: '2-digit',
-  })
+    minute: '2-digit'})
 }
 
 onMounted(async () => {

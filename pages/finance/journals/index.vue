@@ -106,7 +106,7 @@
                                 <Column field="referenceType" header="Tipe Referensi" :sortable="true" style="min-width:120px">
                                     <template #body="slotProps">
                                         <span v-if="slotProps.data.referenceType" class="badge bg-label-info">
-                                            {{ slotProps.data.referenceType }}
+                                            {{ journalSourceLabel(slotProps.data.referenceType) }}
                                         </span>
                                         <span v-else class="text-muted">-</span>
                                     </template>
@@ -266,7 +266,7 @@
                                                         <div class="d-flex justify-content-between align-items-center w-100">
                                                             <div>
                                                                 <div class="fw-bold">{{ option.code }} - {{ option.name }}</div>
-                                                                <small class="text-muted">{{ option.category || '—' }} · {{ option.normalBalance || '—' }}</small>
+                                                                <small class="text-muted">{{ humanizeLabel(option.category, { fallback: '—' }) }} · {{ humanizeLabel(option.normalBalance, { fallback: '—' }) }}</small>
                                                             </div>
                                                         </div>
                                                     </template>
@@ -468,6 +468,8 @@ import CollapsibleFilterCard from '~/components/list/CollapsibleFilterCard.vue'
 import FilterFieldsRow from '~/components/list/FilterFieldsRow.vue'
 import FilterField from '~/components/list/FilterField.vue'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
+import { journalSourceLabel } from '~/utils/journalSourceRoutes'
+import { humanizeLabel } from '~/utils/humanizeLabel'
 
 const { setListTitle } = useDynamicTitle()
 
@@ -533,8 +535,7 @@ const {
   goTo,
   paneClass,
   reset,
-  validateAll,
-} = useTabbedFormNavigation({ steps: formSteps, formRoot })
+  validateAll} = useTabbedFormNavigation({ steps: formSteps, formRoot })
 const globalFilterValue = ref('')
 const rowsPerPageOptionsArray = ref([10, 25, 50, 100])
 const filterStatus = ref('')
@@ -574,27 +575,19 @@ const statItems = computed(() => [
   { key: 'total', label: 'Total', value: statistics.value.total, icon: 'ri-file-text-line', iconBgClass: 'bg-label-primary', subtitle: 'Jurnal terdaftar',
     info: {
       title: 'Jumlah Keseluruhan',
-      description: 'Jumlah seluruh dokumen Jurnal Umum yang terdaftar dalam sistem, mencakup semua status.',
-    },
-  },
+      description: 'Jumlah seluruh dokumen Jurnal Umum yang terdaftar dalam sistem, mencakup semua status.'}},
   { key: 'draft', label: 'Draft', value: statistics.value.draft, icon: 'ri-draft-line', iconBgClass: 'bg-label-warning' ,
     info: {
       title: 'Draft',
-      description: 'Jumlah dokumen Jurnal berstatus Draft yang belum di-submit untuk approval.',
-    },
-  },
+      description: 'Jumlah dokumen Jurnal berstatus Draft yang belum di-submit untuk approval.'}},
   { key: 'posted', label: 'Posted', value: statistics.value.posted, icon: 'ri-check-line', iconBgClass: 'bg-label-success', valueClass: 'text-success' ,
     info: {
       title: 'Posted',
-      description: 'Jumlah dokumen Jurnal yang telah disetujui dan diposting ke buku besar (General Ledger).',
-    },
-  },
+      description: 'Jumlah dokumen Jurnal yang telah disetujui dan diposting ke buku besar (General Ledger).'}},
   { key: 'totalDebit', label: 'Total Debit', value: formatRupiah(statistics.value.totalDebit), icon: 'ri-money-dollar-circle-line', iconBgClass: 'bg-label-info' ,
     info: {
       title: 'Total Debit',
-      description: 'Total nilai uang (Rupiah) sisi Debit dari seluruh baris Jurnal yang terdaftar.',
-    },
-  },
+      description: 'Total nilai uang (Rupiah) sisi Debit dari seluruh baris Jurnal yang terdaftar.'}},
 ])
 
 const applyFilters = () => {
@@ -619,7 +612,7 @@ const formatDate = (date) => new Date(date).toLocaleDateString('id-ID')
 
 const getStatusLabel = (status) => {
   const labels = { draft: 'Draft', posted: 'Posted', reversed: 'Reversed', cancelled: 'Dibatalkan' }
-  return labels[status] || status
+  return labels[status] || humanizeLabel(status, { fallback: status || '' })
 }
 
 const statusBadgeClass = (status) => {

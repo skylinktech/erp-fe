@@ -1,5 +1,7 @@
 /** Shared formatters / status badges for commerce Omnichannel UI (pure, reusable). */
 
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 export function formatCommerceMoney(
   amount: string | number | null | undefined,
   currency = 'IDR'
@@ -11,8 +13,7 @@ export function formatCommerceMoney(
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
       currency: currency || 'IDR',
-      maximumFractionDigits: 0,
-    }).format(n)
+      maximumFractionDigits: 0}).format(n)
   } catch {
     return `${currency} ${n}`
   }
@@ -158,4 +159,71 @@ export function commerceStatusBadge(status?: string | null): string {
   if (DANGER.has(s)) return 'bg-label-danger'
   if (SECONDARY.has(s)) return 'bg-label-secondary'
   return 'bg-label-warning'
+}
+
+/**
+ * Known commerce enum → readable label (KISS overrides).
+ * Unknown codes fall through to humanizeLabel (AR Receipt-style Title Case).
+ */
+const COMMERCE_ENUM_LABELS: Record<string, string> = {
+  // processing / ops
+  IMPORTED: 'Imported',
+  MAPPED: 'Mapped',
+  EXCEPTION: 'Exception',
+  RELEASE_BLOCKED: 'Release Blocked',
+  AWAITING_FULFILLMENT: 'Menunggu Fulfillment',
+  IN_FULFILLMENT: 'Dalam Fulfillment',
+  SHIPPED: 'Shipped',
+  STOCK_ISSUED: 'Stock Issued',
+  CANCELLED_OPS: 'Cancelled Ops',
+  SHIP_ARRANGED: 'Ship Arranged',
+  LABEL_READY: 'Label Ready',
+  HANDED_OVER: 'Handed Over',
+  RESERVED: 'Reserved',
+  PICKED: 'Picked',
+  PACKED: 'Packed',
+  NONE: 'None',
+  // fulfillment types
+  FULFILLMENT_BY_SELLER: 'Fulfillment by Seller',
+  FULFILLMENT_BY_PLATFORM: 'Fulfillment by Platform',
+  SEND_BY_SELLER: 'Send by Seller',
+  // returns / cases
+  REFUND: 'Refund',
+  RETURN: 'Return',
+  REPLACEMENT: 'Replacement',
+  CANCEL: 'Cancel',
+  // sync / publish
+  LIVE_HOLD: 'Live Hold',
+  CREATE: 'Create',
+  UPDATE: 'Update',
+  FULL: 'Full',
+  PARTIAL: 'Partial',
+  CONTENT: 'Content',
+  PRICE: 'Price',
+  INVENTORY: 'Inventory',
+  // reconciliation / batch
+  SUCCESS: 'Success',
+  FAILED: 'Failed',
+  AMBIGUOUS: 'Ambiguous',
+  SKIPPED: 'Skipped',
+  MATCH: 'Match',
+  MISMATCH: 'Mismatch',
+  // weight
+  KILOGRAM: 'Kilogram',
+  GRAM: 'Gram',
+  // worker
+  POLL: 'Poll',
+  PUSH: 'Push',
+  IDLE: 'Idle',
+  NEVER_PROBED: 'Belum dicek',
+}
+
+/** Human-readable commerce status / enum for any UI text (badge, cell, filter, hint). */
+export function commerceStatusLabel(status?: string | null, fallback = '—'): string {
+  return humanizeLabel(status, { labels: COMMERCE_ENUM_LABELS, fallback })
+}
+
+/** Alias — prefer for non-status enums (fulfillmentType, caseType, commandType, …). */
+export function commerceEnumLabel(value?: string | null, fallback = '—'): string {
+  return commerceStatusLabel(value, fallback)
 }

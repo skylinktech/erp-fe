@@ -293,7 +293,7 @@
                                   <div>
                                     <div class="fw-semibold">{{ tax.code }} — {{ tax.name }}</div>
                                     <small class="text-muted">
-                                      {{ tax.type }} · {{ formatTaxRate(tax) }}
+                                      {{ humanizeLabel(tax.type, { fallback: '—' }) }} · {{ formatTaxRate(tax) }}
                                     </small>
                                   </div>
                                   <div class="text-end fw-medium">
@@ -766,19 +766,11 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { computed, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import {
-  usePaymentRequestStore,
-  getSourceTypeLabel,
-  getRequestTypeLabel,
-  formatDurationDaysLabel,
-  calcEstimatedDurationDays,
-  type PaymentRequestSourceType,
-  type PaymentRequestSourceOption,
-  type PaymentRequestRequestType,
-  type ActiveServiceInstanceOption,
-} from '~/stores/payment-request'
+import { usePaymentRequestStore, getSourceTypeLabel, getRequestTypeLabel, formatDurationDaysLabel, calcEstimatedDurationDays, type PaymentRequestSourceType, type PaymentRequestSourceOption, type PaymentRequestRequestType, type ActiveServiceInstanceOption } from '~/stores/payment-request'
 import { usePaymentRequestTabPermissions } from '~/composables/usePaymentRequestTabPermissions'
 import { useTaxMasterStore } from '~/stores/tax-masters'
 import { parseRupiahToNumber } from '~/composables/formatRupiah'
@@ -830,8 +822,7 @@ const companyContextStore = useCompanyContextStore()
 const moduleNav = computed(() =>
   filterNavByCompanyContext(FINANCE_MODULE_NAV, {
     effectiveFlowCodes: companyContextStore.effectiveFlowCodes || [],
-    profileCode: companyContextStore.profileCode,
-  })
+    profileCode: companyContextStore.profileCode})
 )
 const itemsSubtotal = computed(() => paymentRequestStore.formItemsSubtotal)
 const otherChargesSubtotal = computed(() => paymentRequestStore.formOtherChargesSubtotal)
@@ -862,8 +853,7 @@ const {
   goTo,
   goToId,
   isCurrent,
-  validateAll,
-} = useTabbedFormNavigation({ steps: formSteps, formRoot })
+  validateAll} = useTabbedFormNavigation({ steps: formSteps, formRoot })
 const PAYMENT_REQUEST_FIELD_TABS: Record<string, string> = {
   sourceType: 'info',
   sourceId: 'info',
@@ -878,8 +868,7 @@ const PAYMENT_REQUEST_FIELD_TABS: Record<string, string> = {
   paymentRequestItems: 'items',
   employees: 'employees',
   employeeId: 'employees',
-  otherCharges: 'other',
-}
+  otherCharges: 'other'}
 const attachmentPreviewUrl = computed(() => {
   const preview = form.value.attachmentPreview
   if (!preview) return null
@@ -1019,8 +1008,7 @@ const summaryRows = computed<FormPageSummaryRow[]>(() => {
     rows.push(
       {
         label: 'Layanan',
-        value: selectedServiceInstanceMeta.value?.serviceNumber || f.serviceInstanceId || '—',
-      },
+        value: selectedServiceInstanceMeta.value?.serviceNumber || f.serviceInstanceId || '—'},
       { label: 'Estimasi', value: durationLabel.value },
       { label: 'Pegawai', value: employeeCount.value ? String(employeeCount.value) : '—' }
     )
@@ -1039,19 +1027,16 @@ const summaryRows = computed<FormPageSummaryRow[]>(() => {
     { label: 'Subtotal sumber', value: formatRupiah(itemsSubtotal.value) },
     {
       label: 'Biaya lainnya (Rp)',
-      value: otherChargesSubtotal.value > 0 ? formatRupiah(otherChargesSubtotal.value) : '—',
-    },
+      value: otherChargesSubtotal.value > 0 ? formatRupiah(otherChargesSubtotal.value) : '—'},
     {
       label: 'Gaji pegawai',
-      value: employeeSalarySubtotal.value > 0 ? formatRupiah(employeeSalarySubtotal.value) : '—',
-    },
+      value: employeeSalarySubtotal.value > 0 ? formatRupiah(employeeSalarySubtotal.value) : '—'},
     {
       label: 'Diskon',
       value:
         Number(f.discountPercent) > 0
           ? `${f.discountPercent}% (−${formatRupiah(discountAmount.value)})`
-          : '—',
-    },
+          : '—'},
     {
       label: 'Pajak',
       value: form.value.applyTax
@@ -1060,8 +1045,7 @@ const summaryRows = computed<FormPageSummaryRow[]>(() => {
           : 'Tax Master (belum dipilih)'
         : Number(f.taxPercent) > 0
           ? `${f.taxPercent}% (${formatRupiah(taxAmount.value)})`
-          : '—',
-    },
+          : '—'},
     { label: 'Total', value: formatRupiah(grandTotal.value) }
   )
   return rows
@@ -1088,8 +1072,7 @@ function mapServiceInstanceOption(raw: any): ActiveServiceInstanceOption {
     customerId: Number(raw.customerId ?? raw.customer_id ?? customer.id) || null,
     customerName,
     locationName,
-    status: raw.status,
-  }
+    status: raw.status}
 }
 
 async function loadServiceInstances(search = '') {
@@ -1099,13 +1082,11 @@ async function loadServiceInstances(search = '') {
     const params = new URLSearchParams({
       status: 'active',
       limit: '30',
-      page: '1',
-    })
+      page: '1'})
     if (search?.trim()) params.set('search', search.trim())
     const res = await fetch(`${$api.serviceInstances()}?${params.toString()}`, {
       headers: { Accept: 'application/json' },
-      credentials: 'include',
-    })
+      credentials: 'include'})
     const json = await res.json()
     const rows = Array.isArray(json?.data) ? json.data : Array.isArray(json) ? json : []
     serviceInstanceOptions.value = rows.map(mapServiceInstanceOption)
@@ -1144,8 +1125,7 @@ async function loadPegawaiOptions() {
     pegawaiOptions.value = rows
       .map((p: any) => ({
         id_pegawai: Number(p.id_pegawai ?? p.idPegawai ?? p.id) || null,
-        nm_pegawai: p.nm_pegawai ?? p.nmPegawai ?? p.name ?? '',
-      }))
+        nm_pegawai: p.nm_pegawai ?? p.nmPegawai ?? p.name ?? ''}))
       .filter((p: any) => p.id_pegawai)
   } catch {
     pegawaiOptions.value = []
@@ -1294,8 +1274,7 @@ async function loadCostCenters() {
   try {
     const res = await fetch(`${$api.costCenters()}?rows=1000&sortField=code&sortOrder=1`, {
       headers: { Accept: 'application/json' },
-      credentials: 'include',
-    })
+      credentials: 'include'})
     if (!res.ok) return
     const json = await res.json()
     const rows = Array.isArray(json) ? json : (json.data ?? [])
@@ -1310,8 +1289,7 @@ async function loadProjects() {
   try {
     const res = await fetch(`${$api.progressTracker()}?rows=1000&sortField=name&sortOrder=asc`, {
       headers: { Accept: 'application/json' },
-      credentials: 'include',
-    })
+      credentials: 'include'})
     if (!res.ok) return
     const json = await res.json()
     projects.value = Array.isArray(json) ? json : (json.data ?? [])
@@ -1325,8 +1303,7 @@ async function loadMasterData() {
   try {
     const res = await fetch($api.dataDepartemen(), {
       headers: { Accept: 'application/json' },
-      credentials: 'include',
-    })
+      credentials: 'include'})
     const json = await res.json()
     departemens.value = Array.isArray(json?.data) ? json.data : Array.isArray(json) ? json : []
   } catch {
@@ -1393,8 +1370,7 @@ onMounted(async () => {
         serviceInstanceOptions.value.unshift(
           mapServiceInstanceOption({
             ...si,
-            customer: si.customer || paymentRequestStore.paymentRequest?.customer,
-          })
+            customer: si.customer || paymentRequestStore.paymentRequest?.customer})
         )
       }
       paymentRequestStore.syncEstimatedDuration()

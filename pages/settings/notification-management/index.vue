@@ -127,7 +127,7 @@
                   <td>
                     <code class="small">{{ row.eventName }}</code>
                   </td>
-                  <td class="small">{{ row.module }}</td>
+                  <td class="small">{{ humanizeLabel(row.module, { fallback: '—' }) }}</td>
                   <td class="small">{{ row.description }}</td>
                   <td>
                     <span
@@ -148,8 +148,8 @@
                       {{ row.publisherStatus === 'WIRED' ? 'Active' : 'Not detected' }}
                     </span>
                   </td>
-                  <td>{{ row.category }}</td>
-                  <td>{{ row.priority }}</td>
+                  <td>{{ humanizeLabel(row.category, { fallback: '—' }) }}</td>
+                  <td>{{ humanizeLabel(row.priority, { fallback: '—' }) }}</td>
                   <td class="small">{{ row.recipientSummary || '—' }}</td>
                   <td>{{ row.unread ? 'Ya' : 'Tidak' }}</td>
                   <td>{{ row.superadmin ? 'Ya' : 'Tidak' }}</td>
@@ -283,8 +283,8 @@
                 <tr v-else v-for="row in store.logs" :key="String(row.id)">
                   <td>{{ row.id }}</td>
                   <td><code class="small">{{ row.eventName }}</code></td>
-                  <td class="small">{{ row.entityType }} / {{ row.entityId }}</td>
-                  <td><span :class="outboxStatusBadge(String(row.status))">{{ row.status }}</span></td>
+                  <td class="small">{{ humanizeLabel(row.entityType, { fallback: '—' }) }} / {{ row.entityId }}</td>
+                  <td><span :class="outboxStatusBadge(String(row.status))">{{ humanizeLabel(row.status, { fallback: '—' }) }}</span></td>
                   <td>{{ row.attemptCount }}</td>
                   <td class="small">{{ formatEmitted(row.processedAt as string) }}</td>
                   <td class="small text-danger">{{ row.errorMessage }}</td>
@@ -442,7 +442,7 @@
             <div class="card-header"><h5 class="mb-0">System Health</h5></div>
             <div class="card-body py-3">
               <div class="row g-3">
-                <div class="col-md-3"><strong>Worker:</strong> {{ store.health.worker.status }}</div>
+                <div class="col-md-3"><strong>Worker:</strong> {{ humanizeLabel(store.health.worker.status, { fallback: '—' }) }}</div>
                 <div class="col-md-3"><strong>Pending outbox:</strong> {{ store.health.outbox.pending }}</div>
                 <div class="col-md-3"><strong>Failed outbox:</strong> {{ store.health.outbox.failed }}</div>
                 <div class="col-md-3"><strong>Active policies:</strong> {{ store.health.registry.activePolicyCount }}</div>
@@ -492,7 +492,7 @@
                 </div>
                 <div class="col-md-6">
                   <label class="form-label text-muted small">Module</label>
-                  <div>{{ editingRow?.module || '—' }}</div>
+                  <div>{{ humanizeLabel(editingRow?.module, { fallback: '—' }) }}</div>
                 </div>
                 <div class="col-12">
                   <label class="form-label text-muted small">Description</label>
@@ -696,7 +696,7 @@
                 <div class="d-flex flex-column">
                   <code class="small">{{ option.eventName }}</code>
                   <small class="text-muted">
-                    {{ option.module }}
+                    {{ humanizeLabel(option.module, { fallback: '—' }) }}
                     <template v-if="option.description"> · {{ option.description }}</template>
                   </small>
                 </div>
@@ -727,8 +727,7 @@
               version: contractRow.version,
               allowedRecipientTypes: contractRow.allowedRecipientTypes,
               payloadSchema: contractRow.payloadSchema,
-              publisherStatus: contractRow.publisherStatus,
-            }, null, 2) }}</pre>
+              publisherStatus: contractRow.publisherStatus}, null, 2) }}</pre>
           </div>
         </div>
       </div>
@@ -754,7 +753,7 @@
               <div v-if="!(store.logDetail.recipientDeliveries as unknown[])?.length" class="text-muted small mb-0">Belum ada recipient delivery untuk outbox ini.</div>
               <div v-for="delivery in (store.logDetail.recipientDeliveries as Array<Record<string, unknown>>)" :key="String(delivery.id)" class="border rounded p-3 mb-2 small">
                 <div><strong>{{ delivery.userName || delivery.userId }}</strong> · {{ delivery.recipientType }} · {{ delivery.channel }}</div>
-                <div>Status: {{ delivery.deliveryStatus }} · Read: {{ delivery.isRead ? 'yes' : 'no' }}</div>
+                <div>Status: {{ humanizeLabel(delivery.deliveryStatus, { fallback: '—' }) }} · Read: {{ delivery.isRead ? 'yes' : 'no' }}</div>
                 <div v-if="delivery.title"><strong>{{ delivery.title }}</strong></div>
                 <div v-if="delivery.message">{{ delivery.message }}</div>
                 <div v-if="delivery.failureReason" class="text-danger">{{ delivery.failureReason }}</div>
@@ -783,6 +782,8 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { useDebounceFn } from '@vueuse/core'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
 import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
@@ -800,20 +801,17 @@ type EditorSection = 'overview' | 'recipients' | 'templates' | 'delivery'
 const TAB_QUERY_MAP: Record<string, string> = {
   policies: 'event-policies',
   logs: 'delivery-logs',
-  settings: 'global-settings',
-}
+  settings: 'global-settings'}
 
 const QUERY_TAB_MAP: Record<string, string> = {
   'event-policies': 'policies',
   'delivery-logs': 'logs',
-  'global-settings': 'settings',
-}
+  'global-settings': 'settings'}
 
 definePageMeta({
   title: 'Notification Management',
   layout: 'default',
-  middleware: ['auth', 'check-permission'],
-})
+  middleware: ['auth', 'check-permission']})
 
 const route = useRoute()
 const router = useRouter()
@@ -850,14 +848,11 @@ const settingsForm = ref({
     includeCritical: true,
     informationalContributesUnread: false,
     aggregationBehavior: 'INDIVIDUAL',
-    excludedModules: [] as string[],
-  },
+    excludedModules: [] as string[]},
   deliveryDefaults: {
     defaultMaxAttempts: 8,
-    retentionDays: 90,
-  },
-  version: 1,
-})
+    retentionDays: 90},
+  version: 1})
 const form = ref({
   enabled: true,
   category: 'ACTIONABLE',
@@ -870,8 +865,7 @@ const form = ref({
   deepLinkTemplate: '',
   version: 1,
   recipients: [] as Array<{ recipientType: string; permissionName?: string; excludeActor?: boolean }>,
-  templates: {} as Record<string, { title: string; body: string }>,
-})
+  templates: {} as Record<string, { title: string; body: string }>})
 
 const tabs = [
   { key: 'policies', label: 'Event Policies' },
@@ -903,8 +897,7 @@ const RECIPIENT_HINTS: Record<string, string> = {
   PERMISSION: 'Semua user dengan permission tertentu.',
   DOCUMENT_WATCHERS: 'User yang memantau dokumen ini.',
   SPECIFIC_USERS: 'User spesifik yang dipilih.',
-  SUPERADMIN: 'Superadmin yang memenuhi aturan feed global.',
-}
+  SUPERADMIN: 'Superadmin yang memenuhi aturan feed global.'}
 
 const hasFilters = computed(
   () =>
@@ -932,8 +925,7 @@ const createEventOptions = computed<CreateEventOption[]>(() =>
     return {
       eventName: event.eventName,
       module: String(full?.module || ''),
-      description: String(full?.description || ''),
-    }
+      description: String(full?.description || '')}
   })
 )
 
@@ -962,9 +954,7 @@ const statItems = computed<ListPageStatItem[]>(() => [
     iconBgClass: 'bg-label-primary',
     info: {
       title: 'Registered Events',
-      description: 'Jumlah event notifikasi yang terdaftar di centralized event registry backend.',
-    },
-  },
+      description: 'Jumlah event notifikasi yang terdaftar di centralized event registry backend.'}},
   {
     key: 'configured',
     label: 'Configured',
@@ -973,9 +963,7 @@ const statItems = computed<ListPageStatItem[]>(() => [
     iconBgClass: 'bg-label-success',
     info: {
       title: 'Configured',
-      description: 'Jumlah event yang sudah memiliki notification policy terkonfigurasi.',
-    },
-  },
+      description: 'Jumlah event yang sudah memiliki notification policy terkonfigurasi.'}},
   {
     key: 'not-configured',
     label: 'Not configured',
@@ -984,9 +972,7 @@ const statItems = computed<ListPageStatItem[]>(() => [
     iconBgClass: 'bg-label-info',
     info: {
       title: 'Not Configured',
-      description: 'Jumlah event terdaftar yang belum memiliki notification policy.',
-    },
-  },
+      description: 'Jumlah event terdaftar yang belum memiliki notification policy.'}},
   {
     key: 'failed-outbox',
     label: 'Failed outbox',
@@ -995,9 +981,7 @@ const statItems = computed<ListPageStatItem[]>(() => [
     iconBgClass: 'bg-label-danger',
     info: {
       title: 'Failed Outbox',
-      description: 'Jumlah delivery log dengan status failed atau dead yang gagal dikirim ke penerima.',
-    },
-  },
+      description: 'Jumlah delivery log dengan status failed atau dead yang gagal dikirim ke penerima.'}},
 ])
 
 const templateTypes = computed(() => {
@@ -1027,9 +1011,7 @@ function setTab(tabKey: string) {
     query: {
       ...route.query,
       tab: TAB_QUERY_MAP[tabKey] || 'event-policies',
-      ...(tabKey === 'policies' ? {} : { event: undefined }),
-    },
-  })
+      ...(tabKey === 'policies' ? {} : { event: undefined })}})
 }
 
 function recipientTypeHint(type: string) {
@@ -1142,10 +1124,8 @@ async function loadSettings() {
       superadminFeed: { ...data.superadminFeed },
       deliveryDefaults: {
         defaultMaxAttempts: data.deliveryDefaults.defaultMaxAttempts,
-        retentionDays: data.deliveryDefaults.retentionDays,
-      },
-      version: data.version,
-    }
+        retentionDays: data.deliveryDefaults.retentionDays},
+      version: data.version}
   }
   await store.fetchHealth()
 }
@@ -1157,8 +1137,7 @@ async function saveSettings() {
     const res = await store.updateSettings({
       superadminFeed: settingsForm.value.superadminFeed,
       deliveryDefaults: settingsForm.value.deliveryDefaults,
-      version: settingsForm.value.version,
-    })
+      version: settingsForm.value.version})
     if (res.data) {
       settingsForm.value.version = res.data.version
       store.settings = res.data
@@ -1269,10 +1248,8 @@ function openEdit(row: NotificationCatalogRow) {
     recipients: (policy.recipients || []).map((r) => ({
       recipientType: r.recipientType,
       permissionName: r.permissionName || '',
-      excludeActor: !!r.excludeActor,
-    })),
-    templates,
-  }
+      excludeActor: !!r.excludeActor})),
+    templates}
 }
 
 function addRecipient() {
@@ -1288,8 +1265,7 @@ async function preview(type: string) {
       eventName: editing.value.eventName,
       recipientType: type,
       title: form.value.templates[type]?.title || '',
-      body: form.value.templates[type]?.body || '',
-    })
+      body: form.value.templates[type]?.body || ''})
     previewResults.value = { ...previewResults.value, [type]: data }
   } catch (e: any) {
     formError.value = e?.message || 'Preview gagal'
@@ -1305,8 +1281,7 @@ async function save() {
   try {
     await store.updatePolicy(editing.value.id, {
       ...form.value,
-      version: form.value.version,
-    })
+      version: form.value.version})
     closeEdit()
     await loadPolicies()
   } catch (e: any) {

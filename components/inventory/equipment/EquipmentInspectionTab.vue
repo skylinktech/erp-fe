@@ -121,7 +121,7 @@
             <Column field="incidentType" header="Incident" :sortable="true" :show-filter-menu="false">
               <template #body="{ data }">
                 <div>{{ data.withdrawalReason || '—' }}</div>
-                <small v-if="data.incidentType" class="text-muted">{{ data.incidentType }}</small>
+                <small v-if="data.incidentType" class="text-muted">{{ humanizeLabel(data.incidentType, { fallback: '—' }) }}</small>
               </template>
               <template #filter="slotProps">
                 <ListColumnFilter v-bind="slotProps" placeholder="Incident" />
@@ -135,7 +135,7 @@
             </Column>
             <Column field="status" header="EQ Status" :sortable="true" :show-filter-menu="false">
               <template #body="{ data }">
-                <span class="badge bg-label-warning">{{ data.status }}</span>
+                <span class="badge bg-label-warning">{{ humanizeLabel(data.status, { fallback: '—' }) }}</span>
               </template>
               <template #filter="slotProps">
                 <ListColumnFilter
@@ -245,7 +245,7 @@
               <div class="col-md-6">
                 <strong>Product:</strong> {{ assessRow?.product?.sku }} — {{ assessRow?.product?.name }}
               </div>
-              <div class="col-md-6"><strong>Incident:</strong> {{ assessRow?.incidentType || '—' }}</div>
+              <div class="col-md-6"><strong>Incident:</strong> {{ humanizeLabel(assessRow?.incidentType, { fallback: '—' }) }}</div>
               <div class="col-md-6"><strong>Inspection:</strong> {{ assessRow?.inspectionResult }}</div>
             </div>
             <div v-if="assessComponents.length" class="mb-3">
@@ -253,7 +253,7 @@
               <select v-model="assessForm.componentIdentityId" class="form-select">
                 <option value="">— parent kit (carrying value tetap di equipment) —</option>
                 <option v-for="c in assessComponents" :key="c.id" :value="c.id">
-                  {{ c.componentType }} — {{ c.serialNumber }}
+                  {{ humanizeLabel(c.componentType, { fallback: '—' }) }} — {{ c.serialNumber }}
                 </option>
               </select>
               <small class="text-muted">Warranty/RMA tetap terikat ke parent Equipment Kit.</small>
@@ -304,6 +304,8 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { getApiErrorMessage } from '~/utils/apiError'
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
@@ -339,8 +341,7 @@ const completeForm = reactive({
   condition: 'GOOD',
   inspectionResult: 'RETURN_TO_AVAILABLE',
   findings: '',
-  notes: '',
-})
+  notes: ''})
 const showAssess = ref(false)
 const assessRow = ref(null)
 const policies = ref([])
@@ -351,8 +352,7 @@ const assessForm = reactive({
   warrantyStartDate: '',
   warrantyEndDate: '',
   notes: '',
-  componentIdentityId: '',
-})
+  componentIdentityId: ''})
 const assessComponents = ref([])
 
 const list = useServerPaginatedList({
@@ -360,9 +360,7 @@ const list = useServerPaginatedList({
   buildFilters: () => ({
     status: 'queue',
     warehouseId: filters.warehouseId || undefined,
-    inspectionResult: filters.inspectionResult || undefined,
-  }),
-})
+    inspectionResult: filters.inspectionResult || undefined})})
 
 const {
   rows,
@@ -381,8 +379,7 @@ const {
   onPage,
   onToolbarRows,
   onSearchUpdate,
-  exportData,
-} = list
+  exportData} = list
 
 const myDataTableRef = ref(null)
 
@@ -404,9 +401,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-primary',
     info: {
       title: 'Queue Total',
-      description: 'Ringkasan metrik "Queue Total" pada daftar Equipmentinspectiontab berdasarkan data statistik API/store.',
-    },
-  },
+      description: 'Ringkasan metrik "Queue Total" pada daftar Equipmentinspectiontab berdasarkan data statistik API/store.'}},
   {
     key: 'returned',
     label: 'Returned',
@@ -415,9 +410,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-secondary',
     info: {
       title: 'Returned',
-      description: 'Ringkasan metrik "Returned" pada daftar Equipmentinspectiontab berdasarkan data statistik API/store.',
-    },
-  },
+      description: 'Ringkasan metrik "Returned" pada daftar Equipmentinspectiontab berdasarkan data statistik API/store.'}},
   {
     key: 'insp',
     label: 'Under Inspection',
@@ -426,9 +419,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-warning',
     info: {
       title: 'Under Inspection',
-      description: 'Ringkasan metrik "Under Inspection" pada daftar Equipmentinspectiontab berdasarkan data statistik API/store.',
-    },
-  },
+      description: 'Ringkasan metrik "Under Inspection" pada daftar Equipmentinspectiontab berdasarkan data statistik API/store.'}},
   {
     key: 'page',
     label: 'This Page',
@@ -437,9 +428,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-info',
     info: {
       title: 'This Page',
-      description: 'Ringkasan metrik "This Page" pada daftar Equipmentinspectiontab berdasarkan data statistik API/store.',
-    },
-  },
+      description: 'Ringkasan metrik "This Page" pada daftar Equipmentinspectiontab berdasarkan data statistik API/store.'}},
 ])
 
 function showError(e, fallback) {
@@ -447,8 +436,7 @@ function showError(e, fallback) {
     title: 'Error',
     message: getApiErrorMessage(e, fallback),
     color: 'red',
-    position: 'bottomRight',
-  })
+    position: 'bottomRight'})
 }
 
 function resetFilters() {
@@ -466,15 +454,12 @@ async function startInspection(row) {
       body: {
         equipmentId: row.equipmentId,
         withdrawalId: row.withdrawalId || undefined,
-        incidentId: row.incidentId || undefined,
-      },
-    })
+        incidentId: row.incidentId || undefined}})
     toast.success({
       title: 'Berhasil',
       message: 'Inspection started',
       color: 'green',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
     await reload()
   } catch (e) {
     showError(e, 'Gagal start inspection')
@@ -501,15 +486,12 @@ async function submitComplete() {
         condition: completeForm.condition,
         inspectionResult: completeForm.inspectionResult,
         findings: completeForm.findings || undefined,
-        notes: completeForm.notes || undefined,
-      },
-    })
+        notes: completeForm.notes || undefined}})
     toast.success({
       title: 'Berhasil',
       message: 'Disposition recorded — stock unchanged',
       color: 'green',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
     showComplete.value = false
     await reload()
   } catch (e) {
@@ -555,8 +537,7 @@ async function onPolicyChange() {
   try {
     const res = await $fetch($api.warrantyExclusions(), {
       credentials: 'include',
-      query: { policyId: assessForm.policyId },
-    })
+      query: { policyId: assessForm.policyId }})
     exclusions.value = res?.data || []
   } catch {
     exclusions.value = []
@@ -581,9 +562,7 @@ async function submitAssess() {
         warrantyStartDate: assessForm.warrantyStartDate || undefined,
         warrantyEndDate: assessForm.warrantyEndDate || undefined,
         notes: assessForm.notes || undefined,
-        componentIdentityId: assessForm.componentIdentityId || undefined,
-      },
-    })
+        componentIdentityId: assessForm.componentIdentityId || undefined}})
     const a = res?.data
     toast.success({
       title: a?.coverageResult || 'Assessed',
@@ -591,8 +570,7 @@ async function submitAssess() {
         ? `${a.assessmentNo}: ${a.coverageResult} — stock unchanged`
         : 'Assessment saved',
       color: 'green',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
     showAssess.value = false
     await reload()
   } catch (e) {

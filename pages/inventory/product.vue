@@ -281,7 +281,7 @@
                                                         <td>{{ index + 1 }}</td>
                                                         <td>{{ item.name || '-' }}</td>
                                                         <td>{{ item.serialNumber || item.serial_number || '-' }}</td>
-                                                        <td v-if="!isRetailCompany" class="text-capitalize">{{ item.type || '-' }}</td>
+                                                        <td v-if="!isRetailCompany" class="text-capitalize">{{ humanizeLabel(item.type, { fallback: '-' }) }}</td>
                                                     </tr>
                                                 </tbody>
                                             </table>
@@ -517,6 +517,8 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useCompanyScopedReload } from '~/composables/useCompanyScopedReload'
 import { storeToRefs } from 'pinia'
@@ -543,11 +545,7 @@ import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import { useImageUrl } from '~/composables/useImageUrl'
 import FormLabel from '~/components/form/FormLabel.vue'
 import { useCompanyContextStore } from '~/stores/companyContext'
-import {
-  formatProductExpiredAtDisplay,
-  isProductExpiredAtRequired,
-  isProductExpiredAtVisible,
-} from '~/utils/productExpiry'
+import { formatProductExpiredAtDisplay, isProductExpiredAtRequired, isProductExpiredAtVisible } from '~/utils/productExpiry'
 
 const { setListTitle } = useDynamicTitle()
 const { getProductImage, handleImageError, debugImageUrl } = useImageUrl()
@@ -572,15 +570,13 @@ const { units } = storeToRefs(unitStore)
 const showExpiredAtField = computed(() =>
   isProductExpiredAtVisible({
     isRetailCompany: isRetailCompany.value,
-    isBundling: !!form.value?.isBundling,
-  })
+    isBundling: !!form.value?.isBundling})
 )
 
 const expiredAtRequired = computed(() =>
   isProductExpiredAtRequired({
     isRetailCompany: isRetailCompany.value,
-    isBundling: !!form.value?.isBundling,
-  })
+    isBundling: !!form.value?.isBundling})
 )
 
 const globalFilterValue = ref('')
@@ -631,8 +627,7 @@ const {
   goToId,
   isCurrent,
   reset,
-  validateAll,
-} = useTabbedFormNavigation({ steps: formSteps, formRoot, validateStep: validateProductStep })
+  validateAll} = useTabbedFormNavigation({ steps: formSteps, formRoot, validateStep: validateProductStep })
 const expandedRows = ref({})
 const tableControls = ref({ rows: 10, search: '' })
 
@@ -642,8 +637,7 @@ const filters = ref({
     isDevice: null,
     isBundling: null,
     billingType: null,
-    condition: null,
-})
+    condition: null})
 
 const modalTitle = computed(() => (isEditMode.value ? 'Edit Product' : 'Tambah Product'))
 const modalDescription = computed(() =>
@@ -662,9 +656,7 @@ const statCards = computed(() => [
     iconBgClass: 'bg-label-primary',
     info: {
       title: 'Jumlah Keseluruhan',
-      description: 'Jumlah keseluruhan data Product yang terdaftar berdasarkan statistik API.',
-    },
-  },
+      description: 'Jumlah keseluruhan data Product yang terdaftar berdasarkan statistik API.'}},
   {
     key: 'internal',
     label: 'Internal',
@@ -674,9 +666,7 @@ const statCards = computed(() => [
     iconBgClass: 'bg-label-info',
     info: {
       title: 'Internal',
-      description: 'Jumlah product dengan scope penggunaan internal.',
-    },
-  },
+      description: 'Jumlah product dengan scope penggunaan internal.'}},
   {
     key: 'eksternal',
     label: 'Eksternal',
@@ -686,9 +676,7 @@ const statCards = computed(() => [
     iconBgClass: 'bg-label-warning',
     info: {
       title: 'Eksternal',
-      description: 'Jumlah product dengan scope penggunaan eksternal/client.',
-    },
-  },
+      description: 'Jumlah product dengan scope penggunaan eksternal/client.'}},
   {
     key: 'keduanya',
     label: 'Keduanya',
@@ -698,9 +686,7 @@ const statCards = computed(() => [
     iconBgClass: 'bg-label-secondary',
     info: {
       title: 'Keduanya',
-      description: 'Jumlah product yang dapat dipakai internal dan eksternal.',
-    },
-  },
+      description: 'Jumlah product yang dapat dipakai internal dan eksternal.'}},
 ])
 
 const hasActiveFilters = computed(() =>
@@ -741,8 +727,7 @@ const conditionLabels = {
     good: 'Baru',
     bad: 'Bekas',
     reject: 'Bekas',
-    damaged: 'Rusak',
-}
+    damaged: 'Rusak'}
 
 function conditionLabel(value) {
     if (!value) return '-'
@@ -782,8 +767,7 @@ const isInternalSelect = computed({
         } else {
             form.value.isInternal = null
         }
-    },
-})
+    }})
 
 function resetFilters() {
     filters.value = {
@@ -792,8 +776,7 @@ function resetFilters() {
         isDevice: null,
         isBundling: null,
         billingType: null,
-        condition: null,
-    }
+        condition: null}
 }
 
 function reload() {
@@ -938,14 +921,12 @@ const exportData = async (format) => {
         if (format === 'csv') {
             myDataTableRef.value.exportCSV({
                 title: 'Data Produk',
-                border: true,
-            })
+                border: true})
         } else if (format === 'excel') {
             const exportResult = await productStore.fetchProductsForExport()
             myDataTableRef.value.exportExcel({
                 title: `Data Produk ${exportResult.nmPerusahaan}`,
-                data: exportResult.data,
-            })
+                data: exportResult.data})
         }
     } catch (error) {
         console.error('Export error:', error)
@@ -953,8 +934,7 @@ const exportData = async (format) => {
             title: 'Error',
             message: 'Gagal melakukan export data',
             color: 'red',
-            position: 'bottomRight',
-        })
+            position: 'bottomRight'})
     }
 }
 
@@ -1012,8 +992,7 @@ definePageMeta({
     author: 'Sinergi Innovate Pratama',
     robots: 'index, follow',
     viewport: 'width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0',
-    alias: ['/inventory/barang'],
-})
+    alias: ['/inventory/barang']})
 </script>
 
 <style scoped>

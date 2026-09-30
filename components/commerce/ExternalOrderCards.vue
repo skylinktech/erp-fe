@@ -63,14 +63,14 @@
           <div class="min-w-0">
             <h5 class="mb-1 text-break">
               <span class="badge me-2" :class="commerceStatusBadge(o.normalizedStatus)">
-                {{ o.statusLabel || o.normalizedStatus }}
+                {{ commerceEnumLabel(o.statusLabel || o.normalizedStatus) }}
               </span>
               <span class="font-monospace">{{ o.externalOrderId }}</span>
             </h5>
             <p class="mb-0 card-subtitle text-muted small mt-3">
-              {{ o.shop?.name || o.platformCode }}
-              · {{ o.platformCode }}
-              · {{ o.fulfillmentType || '—' }}
+              {{ o.shop?.name || commercePlatformLabel(o.platformCode) }}
+              · {{ commercePlatformLabel(o.platformCode) }}
+              · {{ commerceEnumLabel(o.fulfillmentType, '—') }}
               <template v-if="o.logistics?.actionDeadlineAt">
                 · SLA {{ formatTs(o.logistics.actionDeadlineAt) }}
               </template>
@@ -80,7 +80,7 @@
         <div class="small text-muted text-md-end">
           <div>{{ formatTs(o.platformCreatedAt) }}</div>
           <span class="badge mt-3" :class="commerceStatusBadge(o.processingState)">
-            {{ o.processingState }}
+            {{ commerceEnumLabel(o.processingState) }}
           </span>
         </div>
       </div>
@@ -138,7 +138,7 @@
               <dt class="col-5 text-muted">Total harga</dt>
               <dd class="col-7 fw-semibold">{{ formatMoney(o.totalAmount, o.currency) }}</dd>
               <dt class="col-5 text-muted">Pembayaran</dt>
-              <dd class="col-7">{{ o.logistics?.paymentMethod || '—' }}</dd>
+              <dd class="col-7">{{ commerceEnumLabel(o.logistics?.paymentMethod) }}</dd>
               <dt class="col-5 text-muted">Catatan pembeli</dt>
               <dd class="col-7">
                 {{ emptyField(o.logistics?.buyerNote, o.logistics?.fieldAvailability?.buyerNote) }}
@@ -182,7 +182,7 @@
               </dd>
               <dt class="col-5 text-muted">Ops fulfill</dt>
               <dd class="col-7">
-                <span class="badge" :class="opsBadge(o)">{{ o.fulfillOpsStatus || 'NONE' }}</span>
+                <span class="badge" :class="opsBadge(o)">{{ commerceEnumLabel(o.fulfillOpsStatus, 'NONE') }}</span>
               </dd>
               <dt class="col-5 text-muted">Accounting</dt>
               <dd class="col-7">
@@ -220,21 +220,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import ExternalOrderCardFooter from '~/components/commerce/ExternalOrderCardFooter.vue'
-import {
-  COMMERCE_BULK_ARRANGE_MAX,
-  commerceBulkSelectReason,
-  isCommerceOrderBulkSelectable,
-  resolvePageBulkSelectState,
-  toggleOrderSelection,
-  toggleSelectAllOnPage,
-} from '~/utils/commerceBulkSelect'
-import {
-  aggregateCommerceLineItems,
-  commerceStatusBadge,
-  formatCommerceMoney,
-  formatCommerceQty,
-  formatCommerceTs,
-} from '~/utils/commerceFormat'
+import { COMMERCE_BULK_ARRANGE_MAX, commerceBulkSelectReason, isCommerceOrderBulkSelectable, resolvePageBulkSelectState, toggleOrderSelection, toggleSelectAllOnPage } from '~/utils/commerceBulkSelect'
+import { aggregateCommerceLineItems, commerceStatusBadge, formatCommerceMoney, formatCommerceQty, formatCommerceTs, commerceEnumLabel } from '~/utils/commerceFormat'
+import { commercePlatformLabel } from '~/utils/commercePlatform'
 import { commerceAccountingBadgeMeta } from '~/utils/commerceAccountingStatus'
 
 const emit = defineEmits<{
@@ -261,8 +249,7 @@ const props = withDefaults(
     busyAction: null,
     selectable: false,
     selectedIds: () => [],
-    bulkMax: COMMERCE_BULK_ARRANGE_MAX,
-  }
+    bulkMax: COMMERCE_BULK_ARRANGE_MAX}
 )
 
 const busy = computed(() => Boolean(props.busy))
@@ -277,8 +264,7 @@ const pageSelect = computed(() =>
   resolvePageBulkSelectState({
     orders: props.orders,
     selectedIds: props.selectedIds,
-    max: bulkMax.value,
-  })
+    max: bulkMax.value})
 )
 
 const selectAllTitle = computed(() => {
@@ -312,8 +298,7 @@ function onToggleSelectAll(checked: boolean) {
   emit('update:selected-ids', toggleSelectAllOnPage({
     orders: props.orders,
     selectAll: checked,
-    max: bulkMax.value,
-  }))
+    max: bulkMax.value}))
 }
 
 function toggleSelect(o: any, checked: boolean) {
@@ -324,8 +309,7 @@ function toggleSelect(o: any, checked: boolean) {
       selectedIds: props.selectedIds,
       orderId: String(o.id),
       selected: checked,
-      max: bulkMax.value,
-    })
+      max: bulkMax.value})
   )
 }
 
@@ -362,8 +346,7 @@ function accountingBadge(o: any) {
   return commerceAccountingBadgeMeta({
     stockIssuedAt: o?.stockIssuedAt,
     accountingStatus: o?.accountingStatus,
-    releaseBlockerCodes: o?.releaseBlockerCodes || null,
-  })
+    releaseBlockerCodes: o?.releaseBlockerCodes || null})
 }
 
 function onImageError(e: Event) {

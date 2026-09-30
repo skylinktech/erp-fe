@@ -1,4 +1,5 @@
 import type { DismantleRequestStatus, DismantleSummaryPhase } from '~/types/operations/dismantle'
+import { humanizeLabel } from '~/utils/humanizeLabel'
 
 export interface StatusBadgeMeta {
   text: string
@@ -14,8 +15,7 @@ const STATUS_MAP: Record<DismantleRequestStatus, StatusBadgeMeta> = {
   in_progress: { text: 'Berjalan', class: 'badge bg-label-primary' },
   blocked: { text: 'Terblokir', class: 'badge bg-label-danger' },
   cancelled: { text: 'Dibatalkan', class: 'badge bg-label-dark' },
-  completed: { text: 'Selesai', class: 'badge bg-label-success' },
-}
+  completed: { text: 'Selesai', class: 'badge bg-label-success' }}
 
 const PHASE_MAP: Record<DismantleSummaryPhase, StatusBadgeMeta> = {
   AWAITING_PHYSICAL: { text: 'Menunggu Physical Removal', class: 'badge bg-label-warning' },
@@ -24,8 +24,7 @@ const PHASE_MAP: Record<DismantleSummaryPhase, StatusBadgeMeta> = {
   AWAITING_BILLING: { text: 'Menunggu Billing/Finance', class: 'badge bg-label-warning' },
   READY_TO_COMPLETE: { text: 'Siap Complete', class: 'badge bg-label-success' },
   PARTIAL: { text: 'Progress Parsial', class: 'badge bg-label-primary' },
-  BLOCKED: { text: 'Terblokir', class: 'badge bg-label-danger' },
-}
+  BLOCKED: { text: 'Terblokir', class: 'badge bg-label-danger' }}
 
 const ERROR_LABELS: Record<string, string> = {
   FEATURE_DISABLED: 'Fitur Request Dismantle belum diaktifkan',
@@ -46,8 +45,7 @@ const ERROR_LABELS: Record<string, string> = {
   RESERVED_CHARGE_CONFLICT: 'Charge sudah di-reserve',
   FINAL_CHARGE_ALREADY_INVOICED: 'Charge sudah di-invoice',
   DISMANTLE_COMPLETION_BLOCKED: 'Completion diblokir',
-  DISMANTLE_REQUEST_NOT_EDITABLE: 'Request tidak dapat diedit pada status ini',
-}
+  DISMANTLE_REQUEST_NOT_EDITABLE: 'Request tidak dapat diedit pada status ini'}
 
 const BLOCKER_CATEGORIES: Record<string, string> = {
   OWNERSHIP_UNKNOWN: 'Ownership',
@@ -61,17 +59,24 @@ const BLOCKER_CATEGORIES: Record<string, string> = {
   CUSTOMER_OWNED_COMPANY_RECEIPT_FORBIDDEN: 'Warehouse',
   SERVICE_TERMINATION_NOT_DUE: 'Service',
   DISMANTLE_FINANCE_REVIEWER_NOT_ELIGIBLE: 'Permission',
-  STALE_DISMANTLE_VERSION: 'Concurrency',
-}
+  STALE_DISMANTLE_VERSION: 'Concurrency'}
 
 export function getDismantleStatusBadge(status: string | null | undefined): StatusBadgeMeta {
   if (!status) return { text: '—', class: 'badge bg-label-secondary' }
-  return STATUS_MAP[status as DismantleRequestStatus] ?? { text: status, class: 'badge bg-label-secondary' }
+  return (
+    STATUS_MAP[status as DismantleRequestStatus] ?? {
+      text: humanizeLabel(status, { fallback: status }),
+      class: 'badge bg-label-secondary'}
+  )
 }
 
 export function getDismantlePhaseBadge(phase: string | null | undefined): StatusBadgeMeta {
   if (!phase) return { text: '—', class: 'badge bg-label-secondary' }
-  return PHASE_MAP[phase as DismantleSummaryPhase] ?? { text: phase, class: 'badge bg-label-secondary' }
+  return (
+    PHASE_MAP[phase as DismantleSummaryPhase] ?? {
+      text: humanizeLabel(phase, { fallback: phase }),
+      class: 'badge bg-label-secondary'}
+  )
 }
 
 export function getDismantleErrorLabel(code: string | null | undefined, fallback?: string): string {

@@ -363,6 +363,8 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { ref, computed, onMounted, watch } from 'vue'
 import { useBudgetStore } from '~/stores/budget'
 import { useCostCenterStore } from '~/stores/cost-center'
@@ -399,9 +401,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-primary',
     info: {
       title: 'Jumlah Keseluruhan',
-      description: 'Jumlah seluruh dokumen Budget yang terdaftar dalam sistem, mencakup semua status.',
-    },
-  },
+      description: 'Jumlah seluruh dokumen Budget yang terdaftar dalam sistem, mencakup semua status.'}},
   {
     key: 'draft',
     label: 'Draft',
@@ -411,9 +411,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-secondary',
     info: {
       title: 'Draft',
-      description: 'Jumlah dokumen Budget berstatus Draft yang belum diproses lebih lanjut.',
-    },
-  },
+      description: 'Jumlah dokumen Budget berstatus Draft yang belum diproses lebih lanjut.'}},
   {
     key: 'approved',
     label: 'Approved',
@@ -423,9 +421,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-success',
     info: {
       title: 'Approved',
-      description: 'Jumlah dokumen Budget yang telah disetujui.',
-    },
-  },
+      description: 'Jumlah dokumen Budget yang telah disetujui.'}},
   {
     key: 'rejected',
     label: 'Rejected',
@@ -435,9 +431,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-danger',
     info: {
       title: 'Rejected',
-      description: 'Jumlah dokumen Budget yang ditolak.',
-    },
-  }
+      description: 'Jumlah dokumen Budget yang ditolak.'}}
 ])
 
 const costCenterStore = useCostCenterStore()
@@ -463,8 +457,7 @@ const {
   goTo,
   paneClass,
   reset,
-  validateAll,
-} = useTabbedFormNavigation({ steps: formSteps, formRoot })
+  validateAll} = useTabbedFormNavigation({ steps: formSteps, formRoot })
 const globalFilterValue = ref('')
 const rowsPerPageOptionsArray = ref([10, 25, 50, 100])
 
@@ -508,9 +501,8 @@ const getStatusLabel = (status) => {
     draft: 'Draft',
     approved: 'Approved',
     rejected: 'Rejected',
-    received: 'Received',
-  }
-  return labels[status] || status
+    received: 'Received'}
+  return labels[status] || humanizeLabel(status, { fallback: status || '' })
 }
 
 const getStatusBadgeClass = (status) => {
@@ -518,8 +510,7 @@ const getStatusBadgeClass = (status) => {
     draft: 'bg-label-secondary',
     approved: 'bg-label-success',
     rejected: 'bg-label-danger',
-    received: 'bg-label-info',
-  }
+    received: 'bg-label-info'}
   return classes[status] || 'bg-label-secondary'
 }
 
@@ -552,15 +543,13 @@ const exportData = async (format) => {
       if (myDataTableRef.value && exportResult.data) {
         await myDataTableRef.value.exportExcel({
           title: `Data Budget`,
-          data: exportResult.data,
-        })
+          data: exportResult.data})
         toast.success({
           title: 'Success',
           message: 'Data budget berhasil diekspor ke Excel',
           color: 'green',
           position: 'bottomRight',
-          layout: 2,
-        })
+          layout: 2})
       }
     }
   } catch (error) {
@@ -570,8 +559,7 @@ const exportData = async (format) => {
       message: error.message || 'Gagal melakukan export data',
       color: 'red',
       position: 'bottomRight',
-      layout: 2,
-    })
+      layout: 2})
   }
 }
 
@@ -657,8 +645,7 @@ definePageMeta({
   author: 'Sinergi Innovate Pratama',
   robots: 'index, follow',
   viewport:
-    'width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0',
-})
+    'width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0'})
 </script>
 
 <style scoped>

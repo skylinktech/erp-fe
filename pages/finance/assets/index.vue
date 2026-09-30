@@ -356,6 +356,8 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAssetStore } from '~/stores/assets'
@@ -476,7 +478,7 @@ const getCategoryLabel = (category) => {
         intangible: 'Aset Tidak Berwujud',
         other: 'Lainnya'
     }
-    return labels[category] || category
+    return labels[category] || humanizeLabel(category, { fallback: category || '' })
 }
 
 const getStatusLabel = (status) => {
@@ -484,9 +486,8 @@ const getStatusLabel = (status) => {
         'active': 'Aktif',
         'inactive': 'Tidak Aktif',
         'sold': 'Terjual',
-        'trashed': 'Dibuang',
-    }
-    return labels[status] || status
+        'trashed': 'Dibuang'}
+    return labels[status] || humanizeLabel(status, { fallback: status || '' })
 }
 
 const getStatusBadgeClass = (status) => {
@@ -494,8 +495,7 @@ const getStatusBadgeClass = (status) => {
         'active': 'badge bg-label-success',
         'inactive': 'badge bg-label-warning',
         'sold': 'badge bg-label-info',
-        'trashed': 'badge bg-label-danger',
-    }
+        'trashed': 'badge bg-label-danger'}
     return classes[status] || 'badge bg-label-secondary'
 }
 
@@ -514,8 +514,7 @@ const fetchAssetsSummary = async () => {
     const { $api } = useNuxtApp()
     const response = await fetch($api.assetsSummary(), {
       headers: {
-        'Accept': 'application/json',
-      },
+        'Accept': 'application/json'},
       credentials: 'include', // Cookie-based auth
     })
 
@@ -539,9 +538,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-primary',
     info: {
       title: 'Jumlah Keseluruhan',
-      description: 'Jumlah (unit) seluruh aset tetap yang terdaftar dalam sistem, mencakup semua status.',
-    },
-  },
+      description: 'Jumlah (unit) seluruh aset tetap yang terdaftar dalam sistem, mencakup semua status.'}},
   {
     key: 'total-nilai',
     label: 'Total Nilai',
@@ -551,9 +548,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-success',
     info: {
       title: 'Total Nilai Aset',
-      description: 'Total nilai uang (Rupiah) perolehan (acquisition cost) dari seluruh aset tetap.',
-    },
-  },
+      description: 'Total nilai uang (Rupiah) perolehan (acquisition cost) dari seluruh aset tetap.'}},
   {
     key: 'aset-aktif',
     label: 'Aset Aktif',
@@ -563,9 +558,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-warning',
     info: {
       title: 'Aset Aktif',
-      description: 'Jumlah (unit) aset tetap yang berstatus Aktif dan masih digunakan.',
-    },
-  },
+      description: 'Jumlah (unit) aset tetap yang berstatus Aktif dan masih digunakan.'}},
   {
     key: 'total-penyusutan',
     label: 'Total Penyusutan',
@@ -575,9 +568,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-info',
     info: {
       title: 'Total Penyusutan',
-      description: 'Total nilai uang (Rupiah) akumulasi penyusutan, dihitung dari selisih nilai perolehan dan nilai sisa seluruh aset.',
-    },
-  }
+      description: 'Total nilai uang (Rupiah) akumulasi penyusutan, dihitung dari selisih nilai perolehan dan nilai sisa seluruh aset.'}}
 ])
 
 

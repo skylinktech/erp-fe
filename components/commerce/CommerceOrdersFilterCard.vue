@@ -240,10 +240,10 @@ const props = withDefaults(
     showToolbar: true,
     processingOptions: () => [
       { value: '', label: 'Semua' },
-      { value: 'IMPORTED', label: 'IMPORTED' },
-      { value: 'MAPPED', label: 'MAPPED' },
-      { value: 'EXCEPTION', label: 'EXCEPTION' },
-      { value: 'RELEASE_BLOCKED', label: 'RELEASE_BLOCKED' },
+      { value: 'IMPORTED', label: 'Imported' },
+      { value: 'MAPPED', label: 'Mapped' },
+      { value: 'EXCEPTION', label: 'Exception' },
+      { value: 'RELEASE_BLOCKED', label: 'Release Blocked' },
     ],
     sortOptions: () => [
       { value: 'platform_created_at_desc', label: 'Terbaru dibuat' },

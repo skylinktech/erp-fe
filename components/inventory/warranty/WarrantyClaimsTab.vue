@@ -111,7 +111,7 @@
             </Column>
             <Column field="status" header="Status" :sortable="true" :show-filter-menu="false">
               <template #body="{ data }">
-                <span class="badge bg-label-primary">{{ data.status }}</span>
+                <span class="badge bg-label-primary">{{ humanizeLabel(data.status, { fallback: '—' }) }}</span>
               </template>
               <template #filter="slotProps">
                 <ListColumnFilter v-bind="slotProps" placeholder="Status" :options="statuses" />
@@ -133,6 +133,8 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
 import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
@@ -152,9 +154,7 @@ const list = useServerPaginatedList({
   endpoint: () => $api.warrantyClaims(),
   buildFilters: () => ({
     status: filters.status || undefined,
-    providerId: filters.providerId || undefined,
-  }),
-})
+    providerId: filters.providerId || undefined})})
 
 const {
   rows,
@@ -173,8 +173,7 @@ const {
   onPage,
   onToolbarRows,
   onSearchUpdate,
-  exportData,
-} = list
+  exportData} = list
 
 const myDataTableRef = ref(null)
 const hasActiveFilters = computed(() => !!(filters.status || filters.providerId))
@@ -188,9 +187,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-primary',
     info: {
       title: 'Jumlah Keseluruhan',
-      description: 'Jumlah keseluruhan data Warrantyclaimstab yang terdaftar dalam sistem berdasarkan statistik API.',
-    },
-  },
+      description: 'Jumlah keseluruhan data Warrantyclaimstab yang terdaftar dalam sistem berdasarkan statistik API.'}},
   {
     key: 'open',
     label: 'In Progress',
@@ -199,9 +196,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-warning',
     info: {
       title: 'In Progress',
-      description: 'Ringkasan metrik "In Progress" pada daftar Warrantyclaimstab berdasarkan data statistik API/store.',
-    },
-  },
+      description: 'Ringkasan metrik "In Progress" pada daftar Warrantyclaimstab berdasarkan data statistik API/store.'}},
   {
     key: 'approved',
     label: 'Approved',
@@ -210,9 +205,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-success',
     info: {
       title: 'Approved',
-      description: 'Jumlah dokumen Warrantyclaimstab yang telah disetujui.',
-    },
-  },
+      description: 'Jumlah dokumen Warrantyclaimstab yang telah disetujui.'}},
   {
     key: 'rejected',
     label: 'Rejected',
@@ -221,9 +214,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-danger',
     info: {
       title: 'Rejected',
-      description: 'Jumlah dokumen Warrantyclaimstab yang ditolak.',
-    },
-  },
+      description: 'Jumlah dokumen Warrantyclaimstab yang ditolak.'}},
 ])
 
 function formatDate(v) {

@@ -111,7 +111,7 @@
             </Column>
             <Column field="status" header="Status" :sortable="true" :show-filter-menu="false">
               <template #body="{ data }">
-                <span class="badge bg-label-primary">{{ data.status }}</span>
+                <span class="badge bg-label-primary">{{ humanizeLabel(data.status, { fallback: '—' }) }}</span>
               </template>
               <template #filter="slotProps">
                 <ListColumnFilter v-bind="slotProps" placeholder="Status" :options="statuses" />
@@ -127,6 +127,8 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import MyDataTable from '~/components/table/MyDataTable.vue'
 import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
 import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
@@ -153,9 +155,7 @@ const list = useServerPaginatedList({
   endpoint: () => $api.warrantyRmas(),
   buildFilters: () => ({
     status: filters.status || undefined,
-    providerId: filters.providerId || undefined,
-  }),
-})
+    providerId: filters.providerId || undefined})})
 
 const {
   rows,
@@ -174,8 +174,7 @@ const {
   onPage,
   onToolbarRows,
   onSearchUpdate,
-  exportData,
-} = list
+  exportData} = list
 
 const myDataTableRef = ref(null)
 const hasActiveFilters = computed(() => !!(filters.status || filters.providerId))
@@ -189,9 +188,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-primary',
     info: {
       title: 'Jumlah Keseluruhan',
-      description: 'Jumlah keseluruhan data Warrantyrmatab yang terdaftar dalam sistem berdasarkan statistik API.',
-    },
-  },
+      description: 'Jumlah keseluruhan data Warrantyrmatab yang terdaftar dalam sistem berdasarkan statistik API.'}},
   {
     key: 'ready',
     label: 'Ready / Authorized',
@@ -200,9 +197,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-warning',
     info: {
       title: 'Ready / Authorized',
-      description: 'Ringkasan metrik "Ready / Authorized" pada daftar Warrantyrmatab berdasarkan data statistik API/store.',
-    },
-  },
+      description: 'Ringkasan metrik "Ready / Authorized" pada daftar Warrantyrmatab berdasarkan data statistik API/store.'}},
   {
     key: 'shipped',
     label: 'Shipped',
@@ -211,9 +206,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-success',
     info: {
       title: 'Shipped',
-      description: 'Ringkasan metrik "Shipped" pada daftar Warrantyrmatab berdasarkan data statistik API/store.',
-    },
-  },
+      description: 'Ringkasan metrik "Shipped" pada daftar Warrantyrmatab berdasarkan data statistik API/store.'}},
   {
     key: 'cancelled',
     label: 'Cancelled',
@@ -222,9 +215,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-secondary',
     info: {
       title: 'Cancelled',
-      description: 'Jumlah dokumen Warrantyrmatab yang telah dibatalkan.',
-    },
-  },
+      description: 'Jumlah dokumen Warrantyrmatab yang telah dibatalkan.'}},
 ])
 
 function formatDate(v) {

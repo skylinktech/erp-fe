@@ -422,6 +422,8 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useARReceiptStore } from '~/stores/ar-receipts'
@@ -460,8 +462,7 @@ const workspaceTabs = [
 
 const { activeTab, visibleTabs, setTab, isTabActivated } = useFinanceWorkspaceTabs({
   tabs: workspaceTabs,
-  defaultTabId: 'receipts',
-})
+  defaultTabId: 'receipts'})
 
 function onRecordPaymentFromOpenInvoice(row) {
   setTab('receipts')
@@ -469,8 +470,7 @@ function onRecordPaymentFromOpenInvoice(row) {
     customerId: row.partyId,
     invoiceId: row.id,
     amount: row.remainingAmount,
-    notes: `Pembayaran invoice ${row.number}`,
-  })
+    notes: `Pembayaran invoice ${row.number}`})
 }
 
 // Refs
@@ -557,7 +557,7 @@ const getStatusLabel = (status) => {
         confirmed: 'Dikonfirmasi',
         cancelled: 'Dibatalkan'
     }
-    return labels[status] || status
+    return labels[status] || humanizeLabel(status, { fallback: status || '' })
 }
 
 const getPaymentMethodLabel = (method) => {
@@ -576,13 +576,11 @@ const formatCurrency = (amount, currency = 'IDR') => {
     try {
       return new Intl.NumberFormat('id-ID', {
           style: 'currency',
-          currency: currency || 'IDR',
-      }).format(n)
+          currency: currency || 'IDR'}).format(n)
     } catch {
       return new Intl.NumberFormat('id-ID', {
           style: 'currency',
-          currency: 'IDR',
-      }).format(n)
+          currency: 'IDR'}).format(n)
     }
 }
 
@@ -621,9 +619,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-primary',
     info: {
       title: 'Jumlah Keseluruhan',
-      description: 'Jumlah (dokumen) seluruh penerimaan piutang (AR Receipt) pada halaman ini, mencakup semua status.',
-    },
-  },
+      description: 'Jumlah (dokumen) seluruh penerimaan piutang (AR Receipt) pada halaman ini, mencakup semua status.'}},
   {
     key: 'draft',
     label: 'Draft',
@@ -633,9 +629,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-warning',
     info: {
       title: 'Draft',
-      description: 'Jumlah (dokumen) AR Receipt berstatus Draft yang belum dikonfirmasi.',
-    },
-  },
+      description: 'Jumlah (dokumen) AR Receipt berstatus Draft yang belum dikonfirmasi.'}},
   {
     key: 'dikonfirmasi',
     label: 'Dikonfirmasi',
@@ -645,9 +639,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-success',
     info: {
       title: 'Dikonfirmasi',
-      description: 'Jumlah (dokumen) AR Receipt yang telah dikonfirmasi dan tercatat sebagai penerimaan piutang.',
-    },
-  },
+      description: 'Jumlah (dokumen) AR Receipt yang telah dikonfirmasi dan tercatat sebagai penerimaan piutang.'}},
   {
     key: 'total-nilai',
     label: 'Total Nilai',
@@ -657,9 +649,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-info',
     info: {
       title: 'Total Nilai Penerimaan',
-      description: 'Total nilai uang (Rupiah) dari seluruh penerimaan piutang pada halaman ini.',
-    },
-  }
+      description: 'Total nilai uang (Rupiah) dari seluruh penerimaan piutang pada halaman ini.'}}
 ])
 
 
@@ -679,8 +669,7 @@ onMounted(async () => {
             commerceShopId: q.commerceShopId ? String(q.commerceShopId) : null,
             receiptMode: String(q.receiptMode || '').toUpperCase() === 'MARKETPLACE'
               ? 'MARKETPLACE'
-              : undefined,
-          })
+              : undefined})
         } else if (q.highlight) {
           setTab('receipts')
           globalFilterValue.value = String(q.highlight)

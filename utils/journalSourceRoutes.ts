@@ -1,3 +1,5 @@
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 export type JournalSourceLink = {
   journal: string | null
   source: string | null
@@ -21,8 +23,7 @@ const SOURCE_LABELS: Record<string, string> = {
   bank_adjustment: 'Bank Adjustment',
   bank_transfer: 'Bank Transfer',
   employee_advance: 'Employee Advance',
-  journal: 'Manual Journal',
-}
+  journal: 'Manual Journal'}
 
 const SOURCE_PATHS: Record<string, (id: string) => string> = {
   sales_invoice: (id) => `/finance/invoices/detail/${id}`,
@@ -40,12 +41,13 @@ const SOURCE_PATHS: Record<string, (id: string) => string> = {
   bank_adjustment: () => `/finance/journals`,
   bank_transfer: () => `/finance/bank-account`,
   employee_advance: (id) => `/finance/ap-payments?highlight=${id}`,
-  journal: (id) => `/finance/journals/detail/${id}`,
-}
+  journal: (id) => `/finance/journals/detail/${id}`}
 
 export function journalSourceLabel(referenceType?: string | null): string {
   if (!referenceType) return '—'
-  return SOURCE_LABELS[referenceType] || referenceType
+  return humanizeLabel(referenceType, {
+    labels: SOURCE_LABELS,
+    fallback: '—'})
 }
 
 export function journalSourcePath(
@@ -70,6 +72,5 @@ export function resolveJournalSourceLinks(params: {
   return {
     journal: journalDetailPath(params.journalId),
     source: journalSourcePath(params.referenceType, params.referenceId),
-    label: journalSourceLabel(params.referenceType),
-  }
+    label: journalSourceLabel(params.referenceType)}
 }

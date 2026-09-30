@@ -139,7 +139,7 @@
                 <Column field="type" header="Tipe" :sortable="true">
                   <template #body="slotProps">
                     <span :class="getTypeBadgeClass(slotProps.data.type)">
-                      {{ slotProps.data.type || '-' }}
+                      {{ humanizeLabel(slotProps.data.type, { fallback: '-' }) }}
                     </span>
                   </template>
                 </Column>
@@ -326,6 +326,8 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { ref, computed, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import Modal from '~/components/modal/Modal.vue'
@@ -429,8 +431,7 @@ function getProcessPillClass(type: string | null | undefined): string {
     info: 'process-pill-info',
     release: 'process-pill-primary',
     meeting: 'process-pill-success',
-    update: 'process-pill-warning',
-  }
+    update: 'process-pill-warning'}
   return m[type.toLowerCase()] || 'process-pill-default'
 }
 
@@ -441,8 +442,7 @@ function getTypeLabel(type: string | null | undefined): string {
     info: 'Info',
     release: 'Release',
     meeting: 'Meeting',
-    update: 'Update',
-  }
+    update: 'Update'}
   return m[type.toLowerCase()] || type
 }
 
@@ -453,8 +453,7 @@ function getTypeBadgeClass(type: string | null | undefined): string {
     info: 'badge bg-label-info',
     release: 'badge bg-label-primary',
     meeting: 'badge bg-label-success',
-    update: 'badge bg-label-warning',
-  }
+    update: 'badge bg-label-warning'}
   return m[type.toLowerCase()] || 'badge bg-label-secondary'
 }
 
@@ -464,8 +463,7 @@ function getTimelineMarkerClass(type: string | null | undefined): string {
     info: 'timeline-marker-info',
     release: 'timeline-marker-primary',
     meeting: 'timeline-marker-success',
-    update: 'timeline-marker-warning',
-  }
+    update: 'timeline-marker-warning'}
   return m[type.toLowerCase()] || 'timeline-marker-primary'
 }
 
@@ -504,8 +502,7 @@ function switchToTimeline() {
 definePageMeta({
   layout: 'default',
   middleware: ['auth'],
-  title: 'Dokumentasi',
-})
+  title: 'Dokumentasi'})
 </script>
 
 <style scoped>

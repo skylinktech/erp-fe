@@ -35,12 +35,12 @@
           <tbody>
             <tr v-for="ev in events" :key="ev.id">
               <td>{{ ev.createdAt || ev.created_at }}</td>
-              <td>{{ ev.eventType || ev.event_type }}</td>
+              <td>{{ humanizeLabel(ev.eventType || ev.event_type, { fallback: '—' }) }}</td>
               <td>
                 {{ ev.fromStatus || ev.from_status || '—' }} →
                 {{ ev.toStatus || ev.to_status || '—' }}
               </td>
-              <td>{{ ev.source }}</td>
+              <td>{{ humanizeLabel(ev.source, { fallback: '—' }) }}</td>
               <td>{{ ev.reason || '—' }}</td>
               <td>
                 <NuxtLink
@@ -91,6 +91,8 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { useServiceInstanceStore } from '~/stores/service-instances'
 
 const props = defineProps<{
@@ -126,8 +128,7 @@ async function load(nextPage = 1) {
     const result = await store.fetchEvents({
       page: nextPage,
       limit,
-      serviceInstanceId: props.serviceId || undefined,
-    })
+      serviceInstanceId: props.serviceId || undefined})
     page.value = nextPage
     totalRecords.value = Number(store.eventsTotal || result?.length || 0)
     lastKey.value = `${props.serviceId || ''}:${nextPage}`

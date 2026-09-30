@@ -27,7 +27,7 @@
         </template>
       </div>
       <div class="text-end">
-        <p class="mb-1"><strong>Prioritas :</strong> {{ (paymentRequest.priority || '-').toUpperCase() }}</p>
+        <p class="mb-1"><strong>Prioritas :</strong> {{ humanizeLabel((paymentRequest.priority || '-').toUpperCase(), { fallback: '—' }) }}</p>
         <template v-if="!isProjectType">
           <p class="mb-1"><strong>Customer :</strong> {{ customerName }}</p>
           <p class="mb-1"><strong>Estimasi Durasi :</strong> {{ estimatedDurationLabel }}</p>
@@ -239,27 +239,13 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 definePageMeta({
   layout: 'cetak',
-  middleware: ['auth', 'check-permission'],
-})
+  middleware: ['auth', 'check-permission']})
 import { onMounted, computed } from 'vue'
-import {
-  usePaymentRequestStore,
-  getPaymentRequestNo,
-  getPaymentRequestTotal,
-  getPaymentRequestSourceSubtotal,
-  getPaymentRequestOtherSubtotal,
-  getPaymentRequestEmployeeSalarySubtotal,
-  getPaymentRequestDiscountAmount,
-  getPaymentRequestTaxAmount,
-  getPaymentRequestTaxes,
-  getPaymentRequestSourceItems,
-  getPaymentRequestOtherCharges,
-  getSourceTypeLabel,
-  getRequestTypeLabel,
-  formatDurationDaysLabel,
-} from '~/stores/payment-request'
+import { usePaymentRequestStore, getPaymentRequestNo, getPaymentRequestTotal, getPaymentRequestSourceSubtotal, getPaymentRequestOtherSubtotal, getPaymentRequestEmployeeSalarySubtotal, getPaymentRequestDiscountAmount, getPaymentRequestTaxAmount, getPaymentRequestTaxes, getPaymentRequestSourceItems, getPaymentRequestOtherCharges, getSourceTypeLabel, getRequestTypeLabel, formatDurationDaysLabel } from '~/stores/payment-request'
 import { storeToRefs } from 'pinia'
 import { useRoute } from 'vue-router'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
@@ -369,8 +355,7 @@ const employeeRows = computed(() => {
             ? `Pegawai #${e.employeeId || e.employee_id}`
             : '—'),
         salaryLabel: salary > 0 ? `${formatRupiahNum(salary)} /hari` : '—',
-        notes: e.notes || null,
-      }
+        notes: e.notes || null}
     })
   }
   const legacy = paymentRequest.value?.employee

@@ -57,7 +57,7 @@
                 <td>{{ row.periodEnd || row.period_end }}</td>
                 <td>
                   <span :class="row.status === 'closed' ? 'badge bg-danger' : 'badge bg-success'">
-                    {{ row.status }}
+                    {{ humanizeLabel(row.status, { fallback: '—' }) }}
                   </span>
                 </td>
                 <td>{{ row.notes || '—' }}</td>
@@ -74,11 +74,12 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 definePageMeta({
   layout: 'default',
   middleware: ['auth', 'check-permission'],
-  title: 'Fiscal Periods',
-})
+  title: 'Fiscal Periods'})
 
 const periods = ref<any[]>([])
 const loading = ref(false)
@@ -87,8 +88,7 @@ const now = new Date()
 const form = reactive({
   year: now.getFullYear(),
   month: now.getMonth() + 1,
-  notes: '',
-})
+  notes: ''})
 
 async function load() {
   loading.value = true
@@ -97,8 +97,7 @@ async function load() {
   try {
     const res = await fetch($api.fiscalPeriods(), {
       headers: { Accept: 'application/json' },
-      credentials: 'include',
-    })
+      credentials: 'include'})
     const json = await res.json()
     if (!res.ok) throw new Error(json.message || 'Gagal memuat periode')
     periods.value = Array.isArray(json.data) ? json.data : []
@@ -115,8 +114,7 @@ async function ensureCurrent() {
   try {
     const res = await fetch($api.fiscalPeriodsCurrent(), {
       headers: { Accept: 'application/json' },
-      credentials: 'include',
-    })
+      credentials: 'include'})
     const json = await res.json()
     if (!res.ok) throw new Error(json.message)
     toast.success({ title: 'OK', message: `Periode ${json.data?.year}-${json.data?.month}`, color: 'green', position: 'bottomRight', layout: 2 })
@@ -134,8 +132,7 @@ async function closePeriod() {
       method: 'POST',
       headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify(form),
-    })
+      body: JSON.stringify(form)})
     const json = await res.json()
     if (!res.ok) throw new Error(json.message)
     toast.success({ title: 'Closed', message: json.message, color: 'green', position: 'bottomRight', layout: 2 })
@@ -153,8 +150,7 @@ async function reopenPeriod() {
       method: 'POST',
       headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ year: form.year, month: form.month }),
-    })
+      body: JSON.stringify({ year: form.year, month: form.month })})
     const json = await res.json()
     if (!res.ok) throw new Error(json.message)
     toast.success({ title: 'Reopened', message: json.message, color: 'green', position: 'bottomRight', layout: 2 })

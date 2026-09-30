@@ -1,3 +1,5 @@
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 export type ActivityFeedItem = {
   id: number
   userId: number | null
@@ -28,39 +30,32 @@ const ACTION_MAP = {
     variant: 'success' as const,
     verbLabel: 'membuat',
     badgeLabel: 'Create',
-    icon: 'ri-add-circle-line',
-  },
+    icon: 'ri-add-circle-line'},
   update: {
     variant: 'warning' as const,
     verbLabel: 'memperbarui',
     badgeLabel: 'Update',
-    icon: 'ri-edit-line',
-  },
+    icon: 'ri-edit-line'},
   delete: {
     variant: 'danger' as const,
     verbLabel: 'menghapus',
     badgeLabel: 'Delete',
-    icon: 'ri-delete-bin-line',
-  },
+    icon: 'ri-delete-bin-line'},
   submit: {
     variant: 'info' as const,
     verbLabel: 'mengajukan',
     badgeLabel: 'Submit',
-    icon: 'ri-send-plane-line',
-  },
+    icon: 'ri-send-plane-line'},
   approve: {
     variant: 'success' as const,
     verbLabel: 'menyetujui',
     badgeLabel: 'Approve',
-    icon: 'ri-checkbox-circle-line',
-  },
+    icon: 'ri-checkbox-circle-line'},
   reject: {
     variant: 'danger' as const,
     verbLabel: 'menolak',
     badgeLabel: 'Reject',
-    icon: 'ri-close-circle-line',
-  },
-}
+    icon: 'ri-close-circle-line'}}
 
 export function parseActivityAction(action: string): ParsedActivityAction {
   const match = action.match(/^(create|update|delete|submit|approve|reject)_(.+)$/i)
@@ -68,30 +63,25 @@ export function parseActivityAction(action: string): ParsedActivityAction {
   if (!match) {
     return {
       verb: 'other',
-      entity: action.replace(/_/g, ' '),
+      entity: humanizeLabel(action),
       variant: 'secondary',
       verbLabel: 'melakukan',
       badgeLabel: 'Aktivitas',
-      icon: 'ri-history-line',
-    }
+      icon: 'ri-history-line'}
   }
 
   const verb = match[1].toLowerCase() as keyof typeof ACTION_MAP
-  const entity = match[2].replace(/_/g, ' ')
+  const entity = humanizeLabel(match[2])
 
   return {
     verb,
     entity,
-    ...ACTION_MAP[verb],
-  }
+    ...ACTION_MAP[verb]}
 }
 
 export function formatActivityEntity(entity: string): string {
   if (!entity) return 'Data'
-  return entity
-    .split(' ')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ')
+  return humanizeLabel(entity, { fallback: 'Data' }) || 'Data'
 }
 
 export function formatActivityTimeAgo(dateString: string): string {

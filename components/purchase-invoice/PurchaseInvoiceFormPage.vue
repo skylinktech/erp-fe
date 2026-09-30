@@ -235,6 +235,8 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { computed, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
@@ -285,8 +287,7 @@ const {
   goTo,
   goToId,
   paneClass,
-  validateAll,
-} = useTabbedFormNavigation({ steps: formSteps, formRoot, validateStep: validatePurchaseInvoiceStep })
+  validateAll} = useTabbedFormNavigation({ steps: formSteps, formRoot, validateStep: validatePurchaseInvoiceStep })
 const PI_FIELD_TABS = {
   vendorId: 'pi-tabs-info',
   paymentDate: 'pi-tabs-info',
@@ -294,8 +295,7 @@ const PI_FIELD_TABS = {
   perusahaanId: 'pi-tabs-info',
   purchaseInvoiceItems: 'pi-tabs-items',
   productId: 'pi-tabs-items',
-  quantity: 'pi-tabs-items',
-}
+  quantity: 'pi-tabs-items'}
 const { vendors } = storeToRefs(vendorStore)
 const { perusahaans } = storeToRefs(perusahaanStore)
 const { cabangs } = storeToRefs(cabangStore)
@@ -312,7 +312,7 @@ const paymentMethodOptions = ref([
 const paymentStatusLabel = computed(() => {
   const s = form.value.status || 'unpaid'
   const map = { unpaid: 'Unpaid', partial: 'Partial', paid: 'Paid' }
-  return map[s] || s
+  return map[s] || humanizeLabel(s, { fallback: s || '' })
 })
 
 const documentStatusLabel = computed(() => {
@@ -322,9 +322,8 @@ const documentStatusLabel = computed(() => {
     submitted: 'Submitted',
     approved: 'Approved',
     posted: 'Posted',
-    cancelled: 'Cancelled',
-  }
-  return map[s] || s
+    cancelled: 'Cancelled'}
+  return map[s] || humanizeLabel(s, { fallback: s || '' })
 })
 
 async function runLifecycle(action) {
@@ -344,8 +343,7 @@ async function runLifecycle(action) {
       showCancelButton: true,
       confirmButtonText: 'Cancel Invoice',
       cancelButtonText: 'Batal',
-      icon: 'warning',
-    })
+      icon: 'warning'})
     if (!result.isConfirmed) return
     ok = await purchaseInvoiceStore.cancelPurchaseInvoice(id, result.value || '')
   }
@@ -422,8 +420,7 @@ function addPurchaseInvoiceItem() {
     price: 0,
     subtotal: 0,
     description: '',
-    isReturned: false,
-  })
+    isReturned: false})
 }
 
 function removePurchaseInvoiceItem(index) {
@@ -481,8 +478,7 @@ watch(() => form.value.purchaseOrderId, async (newPurchaseOrderId, oldPurchaseOr
       isReturned: false,
       product: poItem.product || null,
       warehouse: poItem.warehouse || null,
-      purchaseOrderItemId: poItem.id,
-    }))
+      purchaseOrderItemId: poItem.id}))
   }
 })
 

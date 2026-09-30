@@ -15,8 +15,8 @@
             <h4 class="mb-1 mt-5">{{ workflow.name }}</h4>
             <PageBreadcrumb class="mt-1" :current-label="workflow.name" />
             <p class="text-muted mb-0">
-              <span class="fw-medium">{{ workflow.entity?.name || workflow.entityType }}</span>
-              <code class="ms-2">{{ workflow.entity?.code || workflow.entityType }}</code>
+              <span class="fw-medium">{{ humanizeLabel(workflow.entity?.name || workflow.entityType, { fallback: '—' }) }}</span>
+              <code class="ms-2">{{ humanizeLabel(workflow.entity?.code || workflow.entityType, { fallback: '—' }) }}</code>
               <span :class="workflow.isActive ? 'badge bg-success ms-2' : 'badge bg-secondary ms-2'">
                 {{ workflow.isActive ? 'Aktif' : 'Nonaktif' }}
               </span>
@@ -190,6 +190,8 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import Swal from 'sweetalert2'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
 import type { ApprovalWorkflowStepItem } from '~/stores/approval-workflows'
@@ -197,8 +199,7 @@ import type { ApprovalWorkflowStepItem } from '~/stores/approval-workflows'
 definePageMeta({
   hidePageHeading: true,
   layout: 'default',
-  middleware: ['auth', 'check-permission'],
-})
+  middleware: ['auth', 'check-permission']})
 
 const route = useRoute()
 const wfStore = useApprovalWorkflowsStore()
@@ -232,8 +233,7 @@ const usersForSelect = computed(() => {
         id: Number(id),
         full_name: u.fullName ?? u.full_name ?? '',
         fullName: u.fullName ?? u.full_name ?? '',
-        email: u.email ?? '',
-      })
+        email: u.email ?? ''})
     }
   }
   return list
@@ -247,8 +247,7 @@ const stepForm = reactive({
   userId: null as number | null,
   minAmount: null as number | null,
   maxAmount: null as number | null,
-  description: '',
-})
+  description: ''})
 
 function formatAmount(val: number | null | undefined) {
   if (val == null) return '∞'
@@ -306,8 +305,7 @@ async function saveStep() {
       userId: stepForm.userId,
       minAmount: stepForm.minAmount,
       maxAmount: stepForm.maxAmount,
-      description: stepForm.description || null,
-    }
+      description: stepForm.description || null}
     if (editingStep.value) {
       await wfStore.updateStep(editingStep.value.id, payload)
       toast.success({ title: 'Berhasil', message: 'Step berhasil diupdate', color: 'green', position: 'bottomRight' })
@@ -333,8 +331,7 @@ async function deleteStep(stepId: number) {
     showCancelButton: true,
     confirmButtonColor: '#f13636',
     cancelButtonColor: '#6c757d',
-    confirmButtonText: 'Ya, Hapus',
-  })
+    confirmButtonText: 'Ya, Hapus'})
   if (!ok.isConfirmed) return
   try {
     await wfStore.deleteStep(stepId)
@@ -363,8 +360,7 @@ async function loadRefs() {
         id_jabatan: item.id_jabatan ?? item.idJabatan ?? item.id,
         nm_jabatan: item.nm_jabatan ?? item.nmJabatan ?? item.name ?? '',
         id: item.id ?? item.idJabatan ?? item.id_jabatan,
-        nmJabatan: item.nmJabatan ?? item.nm_jabatan ?? item.name ?? '',
-      }))
+        nmJabatan: item.nmJabatan ?? item.nm_jabatan ?? item.name ?? ''}))
     }
     if (usersRes.ok) {
       const u = await usersRes.json()
@@ -374,8 +370,7 @@ async function loadRefs() {
         id: x.id,
         full_name: x.fullName ?? x.full_name ?? '',
         fullName: x.fullName ?? x.full_name ?? '',
-        email: x.email ?? '',
-      }))
+        email: x.email ?? ''}))
     }
   } catch (e) {
     console.error('Error loading refs for approval workflow:', e)

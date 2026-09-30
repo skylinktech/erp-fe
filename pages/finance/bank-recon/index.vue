@@ -90,7 +90,7 @@
               <tr v-for="row in statements" :key="row.id">
                 <td>{{ row.statementDate || row.statement_date }}</td>
                 <td>{{ row.reference || '—' }}</td>
-                <td><span class="badge bg-label-secondary">{{ row.status }}</span></td>
+                <td><span class="badge bg-label-secondary">{{ humanizeLabel(row.status, { fallback: '—' }) }}</span></td>
                 <td>{{ (row.lines || []).length }}</td>
                 <td class="text-end">
                   <button class="btn btn-sm btn-outline-primary me-1" @click="openDetail(row.id)">Open</button>
@@ -129,7 +129,7 @@
             <tbody>
               <tr v-for="line in detail.lines || []" :key="line.id">
                 <td>{{ line.lineDate || line.line_date }}</td>
-                <td>{{ line.direction }}</td>
+                <td>{{ humanizeLabel(line.direction, { fallback: '—' }) }}</td>
                 <td>{{ formatMoney(line.amount) }}</td>
                 <td>{{ line.reference || '—' }}</td>
                 <td>{{ line.matchStatus || line.match_status }}</td>
@@ -160,11 +160,12 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 definePageMeta({
   layout: 'default',
   middleware: ['auth', 'check-permission'],
-  title: 'Bank Reconciliation',
-})
+  title: 'Bank Reconciliation'})
 
 const loading = ref(false)
 const error = ref('')
@@ -182,10 +183,8 @@ const form = reactive({
       amount: 0,
       direction: 'credit' as 'credit' | 'debit',
       reference: '',
-      description: '',
-    },
-  ],
-})
+      description: ''},
+  ]})
 
 function addLine() {
   form.lines.push({
@@ -193,16 +192,14 @@ function addLine() {
     amount: 0,
     direction: 'credit',
     reference: '',
-    description: '',
-  })
+    description: ''})
 }
 
 function formatMoney(n: number) {
   return new Intl.NumberFormat('id-ID', {
     style: 'currency',
     currency: 'IDR',
-    maximumFractionDigits: 0,
-  }).format(Number(n || 0))
+    maximumFractionDigits: 0}).format(Number(n || 0))
 }
 
 function bestSuggestion(lineId: string) {
@@ -214,8 +211,7 @@ async function loadBankAccounts() {
   const { $api } = useNuxtApp()
   const res = await fetch(`${$api.bankAccounts()}?limit=200`, {
     headers: { Accept: 'application/json' },
-    credentials: 'include',
-  })
+    credentials: 'include'})
   const json = await res.json().catch(() => ({}))
   const data = json.data
   bankAccounts.value = Array.isArray(data) ? data : data?.data || []
@@ -228,8 +224,7 @@ async function load() {
   try {
     const res = await fetch($api.bankStatements(), {
       headers: { Accept: 'application/json' },
-      credentials: 'include',
-    })
+      credentials: 'include'})
     const json = await res.json()
     if (!res.ok) throw new Error(json.message || 'Gagal memuat statements')
     statements.value = Array.isArray(json.data) ? json.data : []
@@ -257,9 +252,7 @@ async function createStatement() {
         bankAccountId: form.bankAccountId,
         statementDate: form.statementDate,
         reference: form.reference,
-        lines,
-      }),
-    })
+        lines})})
     const json = await res.json()
     if (!res.ok) throw new Error(json.message || 'Gagal create statement')
     toast.success('Statement dibuat')
@@ -277,8 +270,7 @@ async function openDetail(id: string) {
   const { $api } = useNuxtApp()
   const res = await fetch($api.bankStatementShow(id), {
     headers: { Accept: 'application/json' },
-    credentials: 'include',
-  })
+    credentials: 'include'})
   const json = await res.json()
   if (!res.ok) {
     error.value = json.message || 'Gagal memuat detail'
@@ -294,8 +286,7 @@ async function suggest(id: string) {
   const res = await fetch($api.bankStatementSuggest(id), {
     method: 'POST',
     headers: { Accept: 'application/json' },
-    credentials: 'include',
-  })
+    credentials: 'include'})
   const json = await res.json()
   if (!res.ok) {
     toast.error(json.message || 'Suggest gagal')
@@ -317,9 +308,7 @@ async function confirmBest(lineId: string) {
     credentials: 'include',
     body: JSON.stringify({
       matchedType: top.candidate.type,
-      matchedId: top.candidate.id,
-    }),
-  })
+      matchedId: top.candidate.id})})
   const json = await res.json()
   if (!res.ok) {
     toast.error(json.message || 'Match gagal')
@@ -334,8 +323,7 @@ async function ignore(lineId: string) {
   await fetch($api.bankStatementLineIgnore(lineId), {
     method: 'POST',
     headers: { Accept: 'application/json' },
-    credentials: 'include',
-  })
+    credentials: 'include'})
   if (detail.value?.id) await openDetail(detail.value.id)
 }
 
@@ -344,8 +332,7 @@ async function unmatch(lineId: string) {
   await fetch($api.bankStatementLineUnmatch(lineId), {
     method: 'POST',
     headers: { Accept: 'application/json' },
-    credentials: 'include',
-  })
+    credentials: 'include'})
   if (detail.value?.id) await openDetail(detail.value.id)
 }
 

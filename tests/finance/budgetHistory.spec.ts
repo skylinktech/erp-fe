@@ -44,7 +44,7 @@ describe('budgetSourceRoutes', () => {
     expect(budgetSourceLabel('purchase_invoice')).toBe('Purchase Invoice')
     expect(budgetSourceLabel('purchase_request')).toBe('Purchase Request')
     expect(budgetSourceLabel(null)).toBe('Manual / lainnya')
-    expect(budgetSourceLabel('some_future_type')).toBe('some_future_type')
+    expect(budgetSourceLabel('some_future_type')).toBe('Some Future Type')
   })
 
   it('never falls back to a raw UUID as the document number', () => {

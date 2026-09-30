@@ -70,7 +70,7 @@
               <Column field="label" header="Dokumen" style="min-width: 12rem">
                 <template #body="{ data }">
                   <div class="fw-medium">{{ data.label }}</div>
-                  <div class="small text-muted">{{ data.documentType }}</div>
+                  <div class="small text-muted">{{ humanizeLabel(data.documentType, { fallback: '—' }) }}</div>
                 </template>
               </Column>
               <Column header="Contoh format" style="min-width: 12rem">
@@ -87,12 +87,12 @@
               </Column>
               <Column field="resetPeriod" header="Reset" style="width: 7rem">
                 <template #body="{ data }">
-                  <span class="text-capitalize">{{ data.resetPeriod }}</span>
+                  <span class="text-capitalize">{{ humanizeLabel(data.resetPeriod, { fallback: '—' }) }}</span>
                 </template>
               </Column>
               <Column field="scopeType" header="Scope" style="width: 7rem">
                 <template #body="{ data }">
-                  <span class="text-capitalize">{{ data.scopeType }}</span>
+                  <span class="text-capitalize">{{ humanizeLabel(data.scopeType, { fallback: '—' }) }}</span>
                 </template>
               </Column>
               <Column header="Status" style="width: 8rem">
@@ -183,6 +183,8 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { storeToRefs } from 'pinia'
 import Column from 'primevue/column'
 import MyDataTable from '~/components/table/MyDataTable.vue'
@@ -191,8 +193,7 @@ import { useDocumentNumberingStore, type DocumentNumberingRule } from '~/stores/
 definePageMeta({
   title: 'Document Numbering',
   layout: 'default',
-  middleware: ['auth', 'check-permission'],
-})
+  middleware: ['auth', 'check-permission']})
 
 const store = useDocumentNumberingStore()
 const { rules, meta, loading, error, saving } = storeToRefs(store)
@@ -220,8 +221,7 @@ const form = reactive({
   formatTemplate: '',
   resetPeriod: 'monthly' as DocumentNumberingRule['resetPeriod'],
   scopeType: 'global' as DocumentNumberingRule['scopeType'],
-  isActive: true,
-})
+  isActive: true})
 const formError = ref<string | null>(null)
 const previewNumber = ref<string | null>(null)
 const previewDisclaimer = ref<string | null>(null)
@@ -245,9 +245,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-primary',
     info: {
       title: 'Total aturan',
-      description: 'Jumlah jenis dokumen yang terdaftar di Document Numbering (seluruh halaman).',
-    },
-  },
+      description: 'Jumlah jenis dokumen yang terdaftar di Document Numbering (seluruh halaman).'}},
   {
     key: 'migrated',
     label: 'Counter (halaman ini)',
@@ -257,9 +255,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-success',
     info: {
       title: 'Counter service',
-      description: 'Jenis dokumen pada halaman ini yang memakai DocumentNumberAllocator dan dapat diedit.',
-    },
-  },
+      description: 'Jenis dokumen pada halaman ini yang memakai DocumentNumberAllocator dan dapat diedit.'}},
   {
     key: 'legacy',
     label: 'Non-sequence (halaman ini)',
@@ -269,9 +265,7 @@ const statItems = computed(() => [
     iconBgClass: 'bg-label-warning',
     info: {
       title: 'Legacy / non-sequence',
-      description: 'Identifier non-sequence (UUID/timestamp) — tidak dapat diedit di Document Numbering.',
-    },
-  },
+      description: 'Identifier non-sequence (UUID/timestamp) — tidak dapat diedit di Document Numbering.'}},
 ])
 
 function statusBadge(row: DocumentNumberingRule) {
@@ -286,8 +280,7 @@ async function fetchCurrentPage(p = page.value) {
     page: p,
     perPage: meta.value.perPage,
     search: search.value,
-    status: statusFilter.value,
-  })
+    status: statusFilter.value})
 }
 
 async function reload() {
@@ -353,8 +346,7 @@ async function runPreview() {
       documentType: editing.value.documentType,
       formatTemplate: form.formatTemplate,
       resetPeriod: form.resetPeriod,
-      scopeType: form.scopeType,
-    })
+      scopeType: form.scopeType})
     previewNumber.value = data.exampleNumber || data.nextNumber
     previewDisclaimer.value = data.disclaimer || null
     formError.value = null
@@ -376,8 +368,7 @@ async function save() {
       resetPeriod: form.resetPeriod,
       scopeType: form.scopeType,
       isActive: form.isActive,
-      expectedVersion: editing.value.version,
-    })
+      expectedVersion: editing.value.version})
     closeEdit()
     await fetchCurrentPage(page.value)
   } catch (e: any) {

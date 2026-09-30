@@ -78,17 +78,15 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 definePageMeta({
   layout: 'cetak',
   middleware: ['auth', 'check-permission'],
-  title: 'Cetak Berita Acara',
-})
+  title: 'Cetak Berita Acara'})
 
 import { onMounted, computed } from 'vue'
-import {
-  useBeritaAcaraStore,
-  getBeritaAcaraNo,
-} from '~/stores/berita-acara'
+import { useBeritaAcaraStore, getBeritaAcaraNo } from '~/stores/berita-acara'
 import { storeToRefs } from 'pinia'
 import { useRoute } from 'vue-router'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
@@ -192,9 +190,8 @@ function statusLabel(status, row) {
     pending: 'Pending Approval',
     approved: 'Approved',
     rejected: 'Rejected',
-    completed: 'Completed',
-  }
-  return status ? (map[status] || status) : '—'
+    completed: 'Completed'}
+  return status ? (map[status] || humanizeLabel(status, { fallback: status || '' })) : '—'
 }
 
 onMounted(async () => {

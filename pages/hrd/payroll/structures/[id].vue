@@ -39,7 +39,7 @@
                 <tr v-for="c in components" :key="c.id">
                   <td>{{ c.displayOrder ?? c.display_order ?? '—' }}</td>
                   <td>{{ c.component?.code || c.salaryComponentId || c.salary_component_id }} — {{ c.component?.name || '' }}</td>
-                  <td class="d-none d-md-table-cell">{{ c.calculationMethodOverride || c.component?.calculationMethod || '—' }}</td>
+                  <td class="d-none d-md-table-cell">{{ humanizeLabel(c.calculationMethodOverride || c.component?.calculationMethod || '—', { fallback: '—' }) }}</td>
                   <td class="text-end">{{ money(c.defaultAmount ?? c.default_amount) }}</td>
                   <td>{{ (c.isRequired ?? c.is_required) ? 'Ya' : 'Tidak' }}</td>
                   <td class="d-none d-lg-table-cell">{{ (c.allowEmployeeOverride ?? c.allow_employee_override) !== false ? 'Ya' : 'Tidak' }}</td>
@@ -88,6 +88,8 @@
   </div>
 </template>
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import CustomSelect2 from '~/components/CustomSelect2.vue'
 import Modal from '~/components/modal/Modal.vue'
 import type { ListPageStatItem } from '~/components/list/ListPageStatsCards.vue'
@@ -97,8 +99,7 @@ definePageMeta({
   title: 'Salary Structure Detail',
   middleware: ['auth', 'check-permission'],
   alias: '/payroll/structures/:id',
-  hidePageHeading: true,
-})
+  hidePageHeading: true})
 
 const route = useRoute()
 const store = usePayrollStore()
@@ -113,8 +114,7 @@ const form = reactive({
   default_amount: null as number | null,
   display_order: 10,
   is_required: false,
-  allow_employee_override: true,
-})
+  allow_employee_override: true})
 const components = computed(() => (row.value?.components as Record<string, any>[]) || [])
 const attachedIds = computed(() => new Set(components.value.map((c) => String(c.salaryComponentId ?? c.salary_component_id))))
 const componentOptions = computed(() =>
@@ -130,15 +130,11 @@ const statItems = computed<ListPageStatItem[]>(() => [
   { label: 'Components', value: components.value.length, icon: 'ri-list-check-2', iconBgClass: 'bg-label-primary' ,
     info: {
       title: 'Components',
-      description: 'Ringkasan metrik "Components" pada daftar [Id] berdasarkan data statistik API/store.',
-    },
-  },
+      description: 'Ringkasan metrik "Components" pada daftar [Id] berdasarkan data statistik API/store.'}},
   { label: 'Required', value: components.value.filter((c) => c.isRequired ?? c.is_required).length, icon: 'ri-asterisk', iconBgClass: 'bg-label-warning' ,
     info: {
       title: 'Required',
-      description: 'Ringkasan metrik "Required" pada daftar [Id] berdasarkan data statistik API/store.',
-    },
-  },
+      description: 'Ringkasan metrik "Required" pada daftar [Id] berdasarkan data statistik API/store.'}},
 ])
 
 async function load() {
@@ -155,8 +151,7 @@ async function attach() {
     default_amount: selectedIsManual.value ? form.default_amount : null,
     display_order: form.display_order,
     is_required: form.is_required,
-    allow_employee_override: form.allow_employee_override,
-  })
+    allow_employee_override: form.allow_employee_override})
   saving.value = false
   if (data) {
     row.value = data

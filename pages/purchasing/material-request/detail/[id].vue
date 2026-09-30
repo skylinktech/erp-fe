@@ -26,7 +26,7 @@
                 <small class="text-muted">{{ formatDateTime(materialRequest.createdAt) }}</small>
               </div>
               <span :class="getStatusBadge(materialRequest).class" class="badge">{{ getStatusBadge(materialRequest).text }}</span>
-              <span v-if="materialRequest.priority" class="badge bg-label-secondary text-capitalize">{{ materialRequest.priority }}</span>
+              <span v-if="materialRequest.priority" class="badge bg-label-secondary text-capitalize">{{ humanizeLabel(materialRequest.priority, { fallback: '—' }) }}</span>
             </div>
             <div class="d-flex gap-2">
               <div class="btn-group">
@@ -228,6 +228,8 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { computed, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useMaterialRequestStore, getMaterialRequestNo, getMaterialRequestTotal, getMaterialRequestItemsList } from '~/stores/material-request'

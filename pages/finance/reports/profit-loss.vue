@@ -83,7 +83,7 @@
               </thead>
               <tbody>
                 <tr v-for="(row, idx) in rows" :key="row.id || row.code || idx">
-                  <td>{{ row.section || row.type || '—' }}</td>
+                  <td>{{ humanizeLabel(row.section || row.type || '—', { fallback: '—' }) }}</td>
                   <td>{{ row.code || '—' }}</td>
                   <td>{{ row.name || row.accountName || '—' }}</td>
                   <td class="text-end">{{ formatMoney(row.amount ?? row.balance ?? 0) }}</td>
@@ -101,11 +101,12 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 definePageMeta({
   layout: 'default',
   middleware: ['auth', 'check-permission'],
-  title: 'Profit & Loss',
-})
+  title: 'Profit & Loss'})
 
 const report = ref<any>(null)
 const loading = ref(false)
@@ -127,8 +128,7 @@ const summary = computed(() => {
   return {
     revenue: Number(data.totalRevenue ?? data.revenue ?? 0),
     expense: Number(data.totalExpense ?? data.expense ?? 0),
-    netIncome: Number(data.netIncome ?? data.netProfit ?? (Number(data.totalRevenue ?? data.revenue ?? 0) - Number(data.totalExpense ?? data.expense ?? 0))),
-  }
+    netIncome: Number(data.netIncome ?? data.netProfit ?? (Number(data.totalRevenue ?? data.revenue ?? 0) - Number(data.totalExpense ?? data.expense ?? 0)))}
 })
 
 function formatMoney(n: number) {
@@ -147,8 +147,7 @@ async function load() {
     if (endDate.value) qs.set('endDate', endDate.value)
     const res = await fetch($api.profitLoss(qs.toString()), {
       headers: { Accept: 'application/json' },
-      credentials: 'include',
-    })
+      credentials: 'include'})
     const json = await res.json()
     if (!res.ok) throw new Error(json.message || 'Gagal memuat profit & loss')
     report.value = json.data

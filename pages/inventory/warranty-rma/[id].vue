@@ -13,11 +13,11 @@
       <div v-else-if="row" class="card">
         <div class="card-body">
           <ul class="list-unstyled mb-4">
-            <li class="mb-2"><strong>Status:</strong> {{ row.status }}</li>
+            <li class="mb-2"><strong>Status:</strong> {{ humanizeLabel(row.status, { fallback: '—' }) }}</li>
             <li class="mb-2">
               <strong>Equipment:</strong>
               {{ row.equipment?.equipmentNo }} / {{ row.equipment?.serialNumber }}
-              <span v-if="row.equipment?.status" class="text-muted">({{ row.equipment.status }})</span>
+              <span v-if="row.equipment?.status" class="text-muted">({{ humanizeLabel(row.equipment.status, { fallback: '—' }) }})</span>
             </li>
             <li class="mb-2"><strong>Provider:</strong> {{ row.provider?.name }}</li>
             <li class="mb-2"><strong>Source WH:</strong> {{ row.sourceWarehouse?.code }}</li>
@@ -150,6 +150,8 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { getApiErrorMessage } from '~/utils/apiError'
 
 definePageMeta({ middleware: ['auth', 'check-permission'] })
@@ -222,8 +224,7 @@ async function load() {
       title: 'Error',
       message: getApiErrorMessage(e, 'Gagal load RMA'),
       color: 'red',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
   } finally {
     loading.value = false
   }
@@ -238,22 +239,19 @@ async function ship() {
     await $fetch($api.warrantyRmaShip(route.params.id), {
       method: 'POST',
       credentials: 'include',
-      body: { carrier, trackingNumber },
-    })
+      body: { carrier, trackingNumber }})
     toast.success({
       title: 'Shipped',
       message: 'RMA_SHIP posted — equipment UNDER_RMA',
       color: 'green',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
     await load()
   } catch (e) {
     toast.error({
       title: 'Error',
       message: getApiErrorMessage(e, 'Gagal ship RMA'),
       color: 'red',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
   } finally {
     saving.value = false
   }
@@ -265,22 +263,19 @@ async function recordResolution() {
     await $fetch($api.warrantyRmaResolution(route.params.id), {
       method: 'POST',
       credentials: 'include',
-      body: { resolutionType: resolutionType.value },
-    })
+      body: { resolutionType: resolutionType.value }})
     toast.success({
       title: 'Resolution recorded',
       message: resolutionType.value,
       color: 'green',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
     await load()
   } catch (e) {
     toast.error({
       title: 'Error',
       message: getApiErrorMessage(e, 'Gagal record resolution'),
       color: 'red',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
   } finally {
     saving.value = false
   }
@@ -293,22 +288,19 @@ async function receiveOriginal() {
     await $fetch($api.warrantyRmaReceiveOriginal(route.params.id), {
       method: 'POST',
       credentials: 'include',
-      body: { destinationWarehouseId: destinationWarehouseId.value },
-    })
+      body: { destinationWarehouseId: destinationWarehouseId.value }})
     toast.success({
       title: 'Received',
       message: 'RMA_RETURN posted',
       color: 'green',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
     await load()
   } catch (e) {
     toast.error({
       title: 'Error',
       message: getApiErrorMessage(e, 'Gagal receive original'),
       color: 'red',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
   } finally {
     saving.value = false
   }
@@ -326,23 +318,19 @@ async function receiveReplacement() {
         utid: repl.utid || undefined,
         kitNumber: repl.kitNumber || undefined,
         destinationWarehouseId: destinationWarehouseId.value,
-        productId: row.value?.equipment?.productId,
-      },
-    })
+        productId: row.value?.equipment?.productId}})
     toast.success({
       title: 'Replacement received',
       message: 'New equipment UNDER_INSPECTION — warranty needs review',
       color: 'green',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
     await load()
   } catch (e) {
     toast.error({
       title: 'Error',
       message: getApiErrorMessage(e, 'Gagal receive replacement'),
       color: 'red',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
   } finally {
     saving.value = false
   }

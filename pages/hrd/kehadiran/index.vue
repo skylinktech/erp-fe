@@ -262,7 +262,7 @@
                 <td>{{ formatDate(a.attendanceDate) }}</td>
                 <td>{{ a.pegawai?.nmPegawai || a.pegawai?.nm_pegawai || a.pegawaiId }}</td>
                 <td>{{ a.adjustmentType }}</td>
-                <td>{{ a.status }}</td>
+                <td>{{ humanizeLabel(a.status, { fallback: '—' }) }}</td>
                 <td>{{ a.reason }}</td>
               </tr>
             </tbody>
@@ -356,6 +356,8 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { computed, onMounted, ref } from 'vue'
 import Swal from 'sweetalert2'
 import Column from 'primevue/column'
@@ -368,20 +370,13 @@ import MyDataTable from '~/components/table/MyDataTable.vue'
 import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
 import ListPageStatsCards, { type ListPageStatItem } from '~/components/list/ListPageStatsCards.vue'
 import { normalizeApiError, toastNormalizedError } from '~/utils/apiError'
-import {
-  ATTENDANCE_STATE_OPTIONS,
-  ISO_WEEKDAYS,
-  formatMinutesAsHours,
-  getAttendanceStateBadge,
-  getPeriodStatusBadge,
-} from '~/constants/hrd/kehadiranForm'
+import { ATTENDANCE_STATE_OPTIONS, ISO_WEEKDAYS, formatMinutesAsHours, getAttendanceStateBadge, getPeriodStatusBadge } from '~/constants/hrd/kehadiranForm'
 
 definePageMeta({
   title: 'Kehadiran',
   layout: 'default',
   middleware: ['auth', 'check-permission'],
-  requiredPermission: ['view_kehadiran', 'access_kehadiran', 'view_own_kehadiran'],
-})
+  requiredPermission: ['view_kehadiran', 'access_kehadiran', 'view_own_kehadiran']})
 
 const store = useKehadiranStore()
 const { userHasPermission, userHasRole } = usePermissions()
@@ -398,8 +393,7 @@ const periodForm = ref({
   name: '',
   start_date: '',
   end_date: '',
-  perusahaan_id: null as number | null,
-})
+  perusahaan_id: null as number | null})
 const tabs = [
   { id: 'ringkasan', label: 'Ringkasan' },
   { id: 'harian', label: 'Kehadiran Harian' },
@@ -437,8 +431,7 @@ const hasSecondaryFilter = computed(
 const periodFilterOptions = computed(() =>
   (store.periods || []).map((p: any) => ({
     value: p.id,
-    label: `${p.code} — ${p.name} (${p.status})`,
-  }))
+    label: `${p.code} — ${p.name} (${p.status})`}))
 )
 
 const exceptionFilterOptions = [
@@ -450,8 +443,7 @@ const exceptionFilterOptions = [
 
 const dailyStateFilterOptions = ATTENDANCE_STATE_OPTIONS.map((s) => ({
   value: s.value,
-  label: s.label,
-}))
+  label: s.label}))
 
 const statCards = computed<ListPageStatItem[]>(() => [
   {
@@ -463,9 +455,7 @@ const statCards = computed<ListPageStatItem[]>(() => [
     iconBgClass: 'bg-label-primary',
     info: {
       title: 'Pegawai',
-      description: 'Jumlah pegawai yang masuk dalam perhitungan statistik Kehadiran pada periode terpilih.',
-    },
-  },
+      description: 'Jumlah pegawai yang masuk dalam perhitungan statistik Kehadiran pada periode terpilih.'}},
   {
     key: 'hadir',
     label: 'Hadir',
@@ -475,9 +465,7 @@ const statCards = computed<ListPageStatItem[]>(() => [
     iconBgClass: 'bg-label-success',
     info: {
       title: 'Hadir',
-      description: 'Jumlah hari hadir (agregat seluruh pegawai) pada periode kehadiran terpilih.',
-    },
-  },
+      description: 'Jumlah hari hadir (agregat seluruh pegawai) pada periode kehadiran terpilih.'}},
   {
     key: 'absen',
     label: 'Absen',
@@ -487,9 +475,7 @@ const statCards = computed<ListPageStatItem[]>(() => [
     iconBgClass: 'bg-label-danger',
     info: {
       title: 'Absen',
-      description: 'Jumlah hari absen (tanpa kehadiran) pada periode kehadiran terpilih.',
-    },
-  },
+      description: 'Jumlah hari absen (tanpa kehadiran) pada periode kehadiran terpilih.'}},
   {
     key: 'terlambat',
     label: 'Terlambat',
@@ -499,9 +485,7 @@ const statCards = computed<ListPageStatItem[]>(() => [
     iconBgClass: 'bg-label-warning',
     info: {
       title: 'Terlambat',
-      description: 'Jumlah kejadian keterlambatan check-in pada periode kehadiran terpilih.',
-    },
-  },
+      description: 'Jumlah kejadian keterlambatan check-in pada periode kehadiran terpilih.'}},
   {
     key: 'cuti-dibayar',
     label: 'Cuti dibayar',
@@ -511,9 +495,7 @@ const statCards = computed<ListPageStatItem[]>(() => [
     iconBgClass: 'bg-label-info',
     info: {
       title: 'Cuti Dibayar',
-      description: 'Jumlah hari cuti yang tetap dibayar (paid leave) pada periode kehadiran terpilih.',
-    },
-  },
+      description: 'Jumlah hari cuti yang tetap dibayar (paid leave) pada periode kehadiran terpilih.'}},
   {
     key: 'cuti-tidak-dibayar',
     label: 'Cuti tidak dibayar',
@@ -523,9 +505,7 @@ const statCards = computed<ListPageStatItem[]>(() => [
     iconBgClass: 'bg-label-secondary',
     info: {
       title: 'Cuti Tidak Dibayar',
-      description: 'Jumlah hari cuti tanpa upah (unpaid leave) pada periode kehadiran terpilih.',
-    },
-  },
+      description: 'Jumlah hari cuti tanpa upah (unpaid leave) pada periode kehadiran terpilih.'}},
   {
     key: 'lembur',
     label: 'Lembur',
@@ -535,9 +515,7 @@ const statCards = computed<ListPageStatItem[]>(() => [
     iconBgClass: 'bg-label-primary',
     info: {
       title: 'Lembur',
-      description: 'Total jam lembur yang telah disetujui (approved) pada periode kehadiran terpilih.',
-    },
-  },
+      description: 'Total jam lembur yang telah disetujui (approved) pada periode kehadiran terpilih.'}},
   {
     key: 'incomplete',
     label: 'Incomplete',
@@ -547,9 +525,7 @@ const statCards = computed<ListPageStatItem[]>(() => [
     iconBgClass: 'bg-label-warning',
     info: {
       title: 'Incomplete',
-      description: 'Jumlah hari dengan punch (check-in/check-out) tidak lengkap pada periode terpilih.',
-    },
-  },
+      description: 'Jumlah hari dengan punch (check-in/check-out) tidak lengkap pada periode terpilih.'}},
 ])
 
 function formatDate(v: any) {
@@ -609,8 +585,7 @@ function emptyPeriodForm() {
     name: '',
     start_date: '',
     end_date: '',
-    perusahaan_id: null as number | null,
-  }
+    perusahaan_id: null as number | null}
 }
 
 function syncEndIfBeforeStart() {
@@ -674,9 +649,7 @@ async function submitPeriod() {
         name: name.trim(),
         start_date,
         end_date,
-        perusahaan_id,
-      },
-    })
+        perusahaan_id}})
     toast.success({ title: 'Berhasil', message: 'Attendance period dibuat', color: 'green' })
     closePeriodModal()
     await store.fetchPeriods()
@@ -696,8 +669,7 @@ async function reopen(id: number) {
     input: 'textarea',
     inputPlaceholder: 'Alasan wajib',
     showCancelButton: true,
-    inputValidator: (v) => (!v || v.trim().length < 3 ? 'Alasan wajib diisi' : null),
-  })
+    inputValidator: (v) => (!v || v.trim().length < 3 ? 'Alasan wajib diisi' : null)})
   if (reason) await store.reopenPeriod(id, reason)
 }
 

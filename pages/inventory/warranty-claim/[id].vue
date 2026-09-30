@@ -16,7 +16,7 @@
             <div class="card-header"><strong>Claim</strong></div>
             <div class="card-body">
               <ul class="list-unstyled mb-0">
-                <li class="mb-2"><strong>Status:</strong> {{ row.status }}</li>
+                <li class="mb-2"><strong>Status:</strong> {{ humanizeLabel(row.status, { fallback: '—' }) }}</li>
                 <li class="mb-2"><strong>Provider:</strong> {{ row.provider?.name }}</li>
                 <li class="mb-2"><strong>Provider Ref:</strong> {{ row.providerReference || '—' }}</li>
                 <li class="mb-2"><strong>Decision:</strong> {{ formatDate(row.providerDecisionAt) }}</li>
@@ -40,7 +40,7 @@
               <NuxtLink :to="`/inventory/equipment/${row.equipmentId}`">
                 {{ row.equipment?.equipmentNo }}
               </NuxtLink>
-              <div class="small">{{ row.equipment?.serialNumber }} · {{ row.equipment?.status }}</div>
+              <div class="small">{{ row.equipment?.serialNumber }} · {{ humanizeLabel(row.equipment?.status, { fallback: '—' }) }}</div>
             </div>
           </div>
 
@@ -84,6 +84,8 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { getApiErrorMessage } from '~/utils/apiError'
 
 definePageMeta({ middleware: ['auth', 'check-permission'] })
@@ -117,8 +119,7 @@ async function load() {
       title: 'Error',
       message: getApiErrorMessage(e, 'Gagal load claim'),
       color: 'red',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
   } finally {
     loading.value = false
   }
@@ -145,14 +146,12 @@ async function decide(decision) {
     await $fetch($api.warrantyClaimDecision(route.params.id), {
       method: 'POST',
       credentials: 'include',
-      body: { decision, providerDecisionReason: reason, providerReference },
-    })
+      body: { decision, providerDecisionReason: reason, providerReference }})
     toast.success({
       title: 'Recorded',
       message: `Provider ${decision} — assessment unchanged, stock unchanged`,
       color: 'green',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
     await load()
   } catch (e) {
     toast.error({ title: 'Error', message: getApiErrorMessage(e, 'Gagal record decision'), color: 'red', position: 'bottomRight' })
@@ -164,8 +163,7 @@ async function createRma() {
     const res = await $fetch($api.warrantyRmas(), {
       method: 'POST',
       credentials: 'include',
-      body: { claimId: row.value.id },
-    })
+      body: { claimId: row.value.id }})
     toast.success({ title: 'RMA created', message: res?.data?.rmaNo, color: 'green', position: 'bottomRight' })
     if (res?.data?.id) await router.push(`/inventory/warranty-rma/${res.data.id}`)
   } catch (e) {

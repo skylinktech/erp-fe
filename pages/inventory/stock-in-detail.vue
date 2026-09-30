@@ -33,7 +33,7 @@
                                         <li class="mb-2"><strong>Tanggal:</strong> {{ new Date(stockIn.date).toLocaleDateString() }}</li>
                                         <li class="mb-2"><strong>Gudang:</strong> {{ stockIn.warehouse?.name }}</li>
                                         <li class="mb-2"><strong>No. Purchase Order:</strong> {{ stockIn.purchaseOrder?.noPo || '-' }}</li>
-                                        <li class="mb-2"><strong>Status:</strong> <span >{{ stockIn.status }}</span></li>
+                                        <li class="mb-2"><strong>Status:</strong> <span >{{ humanizeLabel(stockIn.status, { fallback: '—' }) }}</span></li>
                                     </ul>
                                 </div>
                             </div>
@@ -264,9 +264,10 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 definePageMeta({
-  hidePageHeading: true,
-})
+  hidePageHeading: true})
 
 import { onMounted, onBeforeUnmount, computed, reactive, ref, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
@@ -318,8 +319,7 @@ watch(
         qcForms[d.id] = {
           decision: 'sellable',
           quantity: holdRemaining(d),
-          notes: '',
-        }
+          notes: ''}
       }
     }
   },
@@ -339,9 +339,7 @@ async function submitQcDecision(detail) {
         decision: form.decision || 'sellable',
         quantity: form.quantity,
         notes: form.notes || null,
-        idempotencyKey: crypto.randomUUID(),
-      }),
-    })
+        idempotencyKey: crypto.randomUUID()})})
     const body = await response.json().catch(() => ({}))
     if (!response.ok) {
       throw Object.assign(new Error(body?.message || `HTTP ${response.status}`), { data: body })
@@ -350,16 +348,14 @@ async function submitQcDecision(detail) {
       title: 'QC tersimpan',
       message: body?.message || 'Keputusan QC diproses',
       color: 'green',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
     await stockInStore.fetchStockInById(stockIn.value.id)
   } catch (e) {
     toast.error({
       title: 'Error',
       message: getApiErrorMessage(e, 'Gagal memproses QC'),
       color: 'red',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
   } finally {
     qcBusy.value = null
   }
@@ -418,8 +414,7 @@ function syncDraftsFromStockIn() {
       rows.push({
         serialNumber: src.serialNumber || src.serial_number || '',
         utid: src.utid || '',
-        kitNumber: src.kitNumber || src.kit_number || '',
-      })
+        kitNumber: src.kitNumber || src.kit_number || ''})
     }
     serialDrafts[detail.id] = rows
   }
@@ -433,22 +428,19 @@ async function saveSerials(detail) {
     await $fetch($api.stockInSerials(stockIn.value.id, detail.id), {
       method: 'PUT',
       credentials: 'include',
-      body: { serials: serialDrafts[detail.id] || [] },
-    })
+      body: { serials: serialDrafts[detail.id] || [] }})
     toast.success({
       title: 'Berhasil',
       message: 'Serial tersimpan (draft)',
       color: 'green',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
     await stockInStore.fetchStockInById(stockIn.value.id)
   } catch (e) {
     toast.error({
       title: 'Error',
       message: getApiErrorMessage(e, 'Gagal simpan serial'),
       color: 'red',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
   } finally {
     savingDetailId.value = null
   }
@@ -473,16 +465,14 @@ onMounted(async () => {
         title: 'Error',
         message: getApiErrorMessage(e, 'Gagal memuat detail stock in.'),
         color: 'red',
-        position: 'bottomRight',
-      })
+        position: 'bottomRight'})
     }
   } else {
     toast.error({
       title: 'Error',
       message: 'ID Stock In tidak ditemukan di URL.',
       color: 'red',
-      position: 'bottomRight',
-    })
+      position: 'bottomRight'})
   }
 });
 

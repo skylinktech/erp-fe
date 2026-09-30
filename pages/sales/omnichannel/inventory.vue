@@ -63,7 +63,7 @@
                 <td class="font-monospace small">{{ r.sellerSku }}</td>
                 <td>{{ r.productId }}</td>
                 <td>{{ r.unitId }}</td>
-                <td><span class="badge bg-label-secondary">{{ r.status }}</span></td>
+                <td><span class="badge bg-label-secondary">{{ humanizeLabel(r.status, { fallback: '—' }) }}</span></td>
               </tr>
             </tbody>
           </table>
@@ -74,6 +74,10 @@
 </template>
 
 <script setup lang="ts">
+import { commerceEnumLabel } from '~/utils/commerceFormat'
+
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { ref, watch, onMounted } from 'vue'
 import { useNuxtApp } from '#app'
 import { useActiveCompany } from '~/composables/useActiveCompany'
@@ -106,12 +110,10 @@ async function load() {
     const qs = new URLSearchParams({
       perusahaanId: String(companyId.value),
       page: '1',
-      perPage: '50',
-    })
+      perPage: '50'})
     const res = await fetch(`${$api.commerceInventoryView()}?${qs}`, {
       headers: headers(),
-      credentials: 'include',
-    })
+      credentials: 'include'})
     const json = await res.json().catch(() => ({}))
     if (!res.ok || json.success === false) {
       error.value = json.message || 'Gagal memuat inventory view'

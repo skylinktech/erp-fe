@@ -20,7 +20,7 @@
       :key="se.section"
       class="alert alert-warning small text-break mb-2"
     >
-      Bagian <strong>{{ se.section }}</strong> gagal: {{ se.message }}
+      Bagian <strong>{{ humanizeLabel(se.section, { fallback: '—' }) }}</strong> gagal: {{ se.message }}
       <button type="button" class="btn btn-link btn-sm p-0 ms-1" @click="load">Retry</button>
     </div>
 
@@ -107,6 +107,8 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { ref, computed, watch, onMounted } from 'vue'
 import { useNuxtApp } from '#app'
 import { useActiveCompany } from '~/composables/useActiveCompany'
@@ -139,37 +141,32 @@ const kpiStatItems = computed<ListPageStatItem[]>(() => {
       label: 'Order baru',
       value: k.newOrders ?? 0,
       icon: 'ri-shopping-bag-3-line',
-      iconBgClass: 'bg-label-primary',
-    },
+      iconBgClass: 'bg-label-primary'},
     {
       key: 'await',
       label: 'Siap proses',
       value: k.awaitingFulfillment ?? 0,
       icon: 'ri-truck-line',
-      iconBgClass: 'bg-label-info',
-    },
+      iconBgClass: 'bg-label-info'},
     {
       key: 'proc',
       label: 'Dalam proses',
       value: k.inProcess ?? 0,
       icon: 'ri-loader-4-line',
-      iconBgClass: 'bg-label-warning',
-    },
+      iconBgClass: 'bg-label-warning'},
     {
       key: 'map',
       label: 'Masalah mapping',
       value: k.mappingProblems ?? 0,
       icon: 'ri-link-unlink',
-      iconBgClass: 'bg-label-secondary',
-    },
+      iconBgClass: 'bg-label-secondary'},
     {
       key: 'exc',
       label: 'Exception',
       value: k.exceptions ?? 0,
       icon: 'ri-error-warning-line',
       iconBgClass: 'bg-label-danger',
-      valueClass: (k.exceptions ?? 0) > 0 ? 'text-danger' : undefined,
-    },
+      valueClass: (k.exceptions ?? 0) > 0 ? 'text-danger' : undefined},
   ]
 })
 
@@ -192,8 +189,7 @@ function classifyHttpError(status: number, message: string) {
   if (status === 403) {
     return {
       title: '403 — Izin atau company tidak eligible',
-      detail: message || 'Perlu permission commerce dan Active Company RETAIL.',
-    }
+      detail: message || 'Perlu permission commerce dan Active Company RETAIL.'}
   }
   if (status === 401) {
     return { title: '401 — Sesi tidak valid', detail: message || 'Login ulang.' }
@@ -209,8 +205,7 @@ async function load() {
     dash.value = null
     fatalError.value = {
       title: 'Active Company belum dipilih',
-      detail: 'Pilih company RETAIL di field di atas.',
-    }
+      detail: 'Pilih company RETAIL di field di atas.'}
     return
   }
   loading.value = true
@@ -218,12 +213,10 @@ async function load() {
   try {
     const qs = new URLSearchParams({
       perusahaanId: String(companyId.value),
-      days: '14',
-    })
+      days: '14'})
     const res = await fetch(`${$api.commerceDashboard()}?${qs}`, {
       headers: headers(),
-      credentials: 'include',
-    })
+      credentials: 'include'})
     const json = await res.json().catch(() => ({}))
     if (!res.ok || json.success === false) {
       dash.value = null
@@ -235,8 +228,7 @@ async function load() {
     dash.value = null
     fatalError.value = {
       title: 'Tidak dapat menghubungi API',
-      detail: e?.message || 'Network error',
-    }
+      detail: e?.message || 'Network error'}
   } finally {
     loading.value = false
   }

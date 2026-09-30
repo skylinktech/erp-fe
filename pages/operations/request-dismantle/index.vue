@@ -92,7 +92,7 @@
                   <template #body="slotProps">{{ slotProps.data.site?.name || '—' }}</template>
                 </Column>
                 <Column header="Tipe">
-                  <template #body="slotProps">{{ slotProps.data.terminationType || '—' }}</template>
+                  <template #body="slotProps">{{ humanizeLabel(slotProps.data.terminationType, { fallback: '—' }) }}</template>
                 </Column>
                 <Column header="Svc / Eq">
                   <template #body="slotProps">
@@ -126,6 +126,8 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { ref, computed, watch, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import Column from 'primevue/column'
@@ -194,8 +196,7 @@ const statItems = computed(() =>
     value: k.value,
     icon: k.icon,
     iconBgClass: k.bg,
-    info: { title: k.infoTitle, description: k.infoDescription },
-  }))
+    info: { title: k.infoTitle, description: k.infoDescription }}))
 )
 
 function formatDate(val?: string | null) {

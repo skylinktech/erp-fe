@@ -35,8 +35,8 @@
             </td>
             <td>{{ row.code }}</td>
             <td>{{ row.name }}</td>
-            <td class="d-none d-md-table-cell">{{ row.componentType }}</td>
-            <td class="d-none d-lg-table-cell">{{ row.calculationMethod }}</td>
+            <td class="d-none d-md-table-cell">{{ humanizeLabel(row.componentType, { fallback: '—' }) }}</td>
+            <td class="d-none d-lg-table-cell">{{ humanizeLabel(row.calculationMethod, { fallback: '—' }) }}</td>
             <td>
               <input v-model="row.isRequired" class="form-check-input" type="checkbox" :disabled="!row.selected">
             </td>
@@ -64,6 +64,8 @@
   </div>
 </template>
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { isManualAmountMethod, type StructureMembershipRow } from '~/composables/useCompensationComponents'
 
 const props = defineProps<{

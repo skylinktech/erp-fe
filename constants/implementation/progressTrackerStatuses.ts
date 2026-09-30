@@ -1,3 +1,5 @@
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 export const PROGRESS_TRACKER_STATUSES = [
   'material_readiness',
   'material_on_delivery',
@@ -107,7 +109,7 @@ export function getProgressStatusBadge(status: string | undefined) {
   return (
     map[normalized] || {
       class: 'badge bg-label-secondary',
-      text: PROGRESS_TRACKER_STATUS_LABELS[normalized] || status || '—',
+      text: PROGRESS_TRACKER_STATUS_LABELS[normalized] || humanizeLabel(status, { fallback: '—' }),
     }
   )
 }
@@ -119,5 +121,5 @@ export function getProjectStatusBadge(status: string | undefined) {
     on_hold: { class: 'badge bg-label-warning', text: 'On Hold' },
     cancelled: { class: 'badge bg-label-danger', text: 'Cancelled' },
   }
-  return map[status || ''] || { class: 'badge bg-label-secondary', text: status || '—' }
+  return map[status || ''] || { class: 'badge bg-label-secondary', text: humanizeLabel(status, { fallback: '—' }) }
 }

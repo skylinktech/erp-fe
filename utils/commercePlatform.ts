@@ -1,3 +1,5 @@
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 /** Platform icon class for commerce badges (Remix Icon). */
 export function commercePlatformIcon(platformCode?: string | null): string {
   const code = String(platformCode || '').toUpperCase()
@@ -16,5 +18,5 @@ export function commercePlatformLabel(platformCode?: string | null): string {
   if (code.includes('LAZADA')) return 'Lazada'
   if (code.includes('TOKOPEDIA')) return 'Tokopedia'
   if (code.includes('BLIBLI')) return 'Blibli'
-  return platformCode || 'Marketplace'
+  return humanizeLabel(platformCode, { fallback: 'Marketplace' })
 }

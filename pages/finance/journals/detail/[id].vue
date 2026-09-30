@@ -23,7 +23,7 @@
                   <dt class="col-4">Journal No</dt><dd class="col-8">{{ journal.journalNumber }}</dd>
                   <dt class="col-4">Date</dt><dd class="col-8">{{ formatDate(journal.date) }}</dd>
                   <dt class="col-4">Status</dt>
-                  <dd class="col-8"><span class="badge bg-label-secondary">{{ journal.status }}</span></dd>
+                  <dd class="col-8"><span class="badge bg-label-secondary">{{ humanizeLabel(journal.status, { fallback: '-' }) }}</span></dd>
                   <dt class="col-4">Description</dt><dd class="col-8">{{ journal.description || '-' }}</dd>
                   <dt class="col-4">Company / Period</dt>
                   <dd class="col-8">{{ journal.fiscalPeriod?.name || journal.fiscalPeriodId || '-' }}</dd>
@@ -33,7 +33,12 @@
                 <h6 class="text-muted">Source / Audit</h6>
                 <dl class="row mb-0 small">
                   <dt class="col-4">Reference</dt>
-                  <dd class="col-8">{{ journal.referenceType || '-' }} / {{ journal.referenceId || '-' }}</dd>
+                  <dd class="col-8">
+                    <template v-if="journal.referenceType">
+                      {{ journalSourceLabel(journal.referenceType) }} / {{ journal.referenceId || '-' }}
+                    </template>
+                    <template v-else>-</template>
+                  </dd>
                   <dt class="col-4">Created By</dt>
                   <dd class="col-8">{{ journal.createdByUser?.name || journal.createdBy || '-' }}</dd>
                   <dt class="col-4">Posted By / At</dt>
@@ -107,10 +112,10 @@
                     >{{ shortId(e.stockMovementId) }}</NuxtLink>
                     <span v-else>-</span>
                   </td>
-                  <td>{{ e.movementType }}</td>
+                  <td>{{ humanizeLabel(e.movementType, { fallback: '-' }) }}</td>
                   <td>{{ formatMoney(e.amount) }}</td>
-                  <td>{{ e.status }}</td>
-                  <td>{{ e.sourceDocumentType || '-' }}</td>
+                  <td>{{ humanizeLabel(e.status, { fallback: '-' }) }}</td>
+                  <td>{{ humanizeLabel(e.sourceDocumentType, { fallback: '-' }) }}</td>
                 </tr>
               </tbody>
             </table>
@@ -136,7 +141,7 @@
                   <td>{{ v.quantity }}</td>
                   <td>{{ formatMoney(v.unitCost) }}</td>
                   <td>{{ formatMoney(v.movementValue) }}</td>
-                  <td>{{ v.status }}</td>
+                  <td>{{ humanizeLabel(v.status, { fallback: '-' }) }}</td>
                 </tr>
               </tbody>
             </table>
@@ -149,8 +154,7 @@
             id: journal.id,
             idempotencyKey: journal.idempotencyKey,
             accountingStatus: journal.accountingStatus,
-            isSystem: journal.isSystem,
-          } }}</pre>
+            isSystem: journal.isSystem} }}</pre>
         </details>
       </template>
     </div>
@@ -158,11 +162,13 @@
 </template>
 
 <script setup>
+import { journalSourceLabel } from '~/utils/journalSourceRoutes'
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 definePageMeta({
   hidePageHeading: true,
   middleware: ['auth', 'check-permission'],
-  title: 'Journal Detail',
-})
+  title: 'Journal Detail'})
 
 const route = useRoute()
 const { $api, $apiFetch } = useNuxtApp()

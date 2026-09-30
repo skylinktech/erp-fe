@@ -33,7 +33,7 @@
         <div class="card-body">
           <div v-if="error" class="alert alert-danger text-break">{{ error }}</div>
           <div v-if="!isDraftEditable" class="alert alert-warning">
-            Daftar harga berstatus <strong>{{ form.status }}</strong> bersifat hanya lihat. Edit hanya tersedia untuk
+            Daftar harga berstatus <strong>{{ humanizeLabel(form.status, { fallback: '—' }) }}</strong> bersifat hanya lihat. Edit hanya tersedia untuk
             status draft.
           </div>
 
@@ -157,7 +157,7 @@
                                   {{ loadingShops ? 'Memuat shop…' : 'Pilih shop' }}
                                 </option>
                                 <option v-for="s in connectedShops" :key="s.id" :value="s.id">
-                                  {{ s.name }} ({{ s.platformCode }})
+                                  {{ s.name }} ({{ commercePlatformLabel(s.platformCode) }})
                                 </option>
                               </select>
                             </div>
@@ -307,6 +307,9 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+import { commercePlatformLabel } from '~/utils/commercePlatform'
+
 import { computed, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { usePricingStore } from '~/stores/pricing'
@@ -333,8 +336,7 @@ const {
   companyId,
   requireCompanyId,
   missingMessage: activeCompanyMissing,
-  ensureBootstrapped,
-} = useActiveCompany()
+  ensureBootstrapped} = useActiveCompany()
 void ensureBootstrapped()
 
 const { form, loading, saving, error, isEditMode, isDraftEditable } = storeToRefs(pricingStore)
@@ -433,14 +435,12 @@ const formSteps = computed(() => [
   {
     id: 'pricing-tab-info',
     label: 'Informasi Pricing',
-    icon: 'ri-price-tag-3-line',
-  },
+    icon: 'ri-price-tag-3-line'},
   {
     id: 'pricing-tab-lines',
     label: 'Detail Produk',
     icon: 'ri-shopping-bag-3-line',
-    badge: pricingStore.filledLines.length || null,
-  },
+    badge: pricingStore.filledLines.length || null},
 ])
 
 function validatePricingStep(step: { id: string }) {
@@ -494,12 +494,10 @@ const {
   goTo,
   paneClass,
   validateAll,
-  reset,
-} = useTabbedFormNavigation({
+  reset} = useTabbedFormNavigation({
   steps: formSteps,
   formRoot,
-  validateStep: validatePricingStep,
-})
+  validateStep: validatePricingStep})
 
 function onProductSelect(index: number, product: any | null) {
   pricingStore.applyProductToLine(index, product)
@@ -548,8 +546,7 @@ onMounted(async () => {
     setFormTitle('Pricing', false)
     pricingStore.resetForm({
       channel: 'POS',
-      perusahaanId: companyId.value,
-    })
+      perusahaanId: companyId.value})
   }
 })
 

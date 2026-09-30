@@ -57,7 +57,7 @@
               <MyDataTable ref="myDataTableRef" :data="purchaseRequests" :rows="Number(params.rows)" :loading="loading" :totalRecords="totalRecords" :first="params.first" :lazy="true" @page="onPage($event)" @sort="onSort($event)" responsiveLayout="scroll" paginatorPosition="bottom" paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink" currentPageReportTemplate="Menampilkan {first} sampai {last} dari {totalRecords} data">
                 <Column header="#" :sortable="false"><template #body="slotProps">{{ params.first + slotProps.index + 1 }}</template></Column>
                 <Column field="prNumber" header="No. PR" :sortable="true" class="text-nowrap"><template #body="slotProps"><a @click="navigateTo(`/purchasing/purchase-request/detail/${slotProps.data.id}`)" class="text-primary" style="cursor:pointer;text-decoration:underline">{{ slotProps.data.prNumber || slotProps.data.pr_number || slotProps.data.noPurchaseRequest }}</a></template></Column>
-                <Column field="priority" header="Prioritas" :sortable="true"><template #body="slotProps"><span class="text-capitalize">{{ slotProps.data.priority || '-' }}</span></template></Column>
+                <Column field="priority" header="Prioritas" :sortable="true"><template #body="slotProps"><span class="text-capitalize">{{ humanizeLabel(slotProps.data.priority, { fallback: '-' }) }}</span></template></Column>
                 <Column field="totalAmount" header="Total" :sortable="true"><template #body="slotProps">{{ formatRupiah(slotProps.data.totalAmount ?? slotProps.data.grandTotal) }}</template></Column>
                 <Column field="requestedByUser.full_name" header="Pemohon" :sortable="true"><template #body="slotProps">{{ slotProps.data.requestedByUser?.fullName || slotProps.data.requestedByUser?.full_name || slotProps.data.createdByUser?.full_name || '-' }}</template></Column>
                 <Column field="status" header="Status" :sortable="true"><template #body="slotProps"><span :class="getStatusBadge(slotProps.data).class">{{ getStatusBadge(slotProps.data).text }}</span></template></Column>
@@ -102,6 +102,8 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { ref, computed, nextTick, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { usePurchaseRequestStore } from '~/stores/purchase-request'
@@ -165,8 +167,7 @@ function prStockDisplay(row: { id: number; status?: string }) {
   }
   return stockSummaryLabel(entry.result, {
     loading: entry.loading,
-    error: entry.error,
-  })
+    error: entry.error})
 }
 
 const actionsMenuRef = ref(null)
@@ -183,33 +184,28 @@ const actionMenuItems = computed(() => {
     items.push({
       label: 'Submit',
       icon: 'ri ri-send-plane-line',
-      command: () => purchaseRequestStore.submitPurchaseRequest(row.id),
-    })
+      command: () => purchaseRequestStore.submitPurchaseRequest(row.id)})
     items.push({
       label: 'Edit',
       icon: 'ri ri-edit-box-line',
-      command: () => navigateTo(`/purchasing/purchase-request/form/${row.id}`),
-    })
+      command: () => navigateTo(`/purchasing/purchase-request/form/${row.id}`)})
   }
   if (canApprovePurchaseRequest(row)) {
     items.push({
       label: 'Approve',
       icon: 'ri ri-check-line',
-      command: () => purchaseRequestStore.approvePurchaseRequest(row.id),
-    })
+      command: () => purchaseRequestStore.approvePurchaseRequest(row.id)})
   }
   if (canRejectPurchaseRequest(row)) {
     items.push({
       label: 'Reject',
       icon: 'ri ri-close-line',
-      command: () => rejectRow(row),
-    })
+      command: () => rejectRow(row)})
   }
   items.push({
     label: 'Detail',
     icon: 'ri ri-eye-line',
-    command: () => navigateTo(`/purchasing/purchase-request/detail/${row.id}`),
-  })
+    command: () => navigateTo(`/purchasing/purchase-request/detail/${row.id}`)})
   if (
     row.status === 'approved' &&
     (userHasRole('superadmin') || userHasPermission('create_purchase_order'))
@@ -220,9 +216,7 @@ const actionMenuItems = computed(() => {
       command: () =>
         navigateTo({
           path: '/purchasing/purchase-order/form',
-          query: { fromPurchaseRequestId: String(row.id) },
-        }),
-    })
+          query: { fromPurchaseRequestId: String(row.id) }})})
   }
   return items
 })
@@ -237,8 +231,7 @@ async function rejectRow(row) {
     showCancelButton: true,
     confirmButtonText: 'Tolak',
     cancelButtonText: 'Batal',
-    customClass: { confirmButton: 'btn btn-danger', cancelButton: 'btn btn-label-secondary' },
-  })
+    customClass: { confirmButton: 'btn btn-danger', cancelButton: 'btn btn-label-secondary' }})
   if (isConfirmed && value?.trim()) {
     await purchaseRequestStore.rejectPurchaseRequest(row.id, value.trim())
   }

@@ -65,9 +65,8 @@
                     :class="{
                       'bg-success': r.status === 'MATCHED',
                       'bg-warning text-dark': r.status === 'VARIANCE',
-                      'bg-danger': r.status === 'INVESTIGATION_REQUIRED',
-                    }"
-                  >{{ r.status }}</span>
+                      'bg-danger': r.status === 'INVESTIGATION_REQUIRED'}"
+                  >{{ humanizeLabel(r.status, { fallback: '—' }) }}</span>
                 </td>
               </tr>
               <tr v-if="!rows.length">
@@ -82,6 +81,8 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 definePageMeta({
   title: "Inventory Reconciliation", middleware: ['auth', 'check-permission'] })
 
@@ -90,8 +91,7 @@ const rows = ref([])
 const filters = reactive({
   productId: null,
   warehouseId: null,
-  status: '',
-})
+  status: ''})
 
 const load = async () => {
   try {
@@ -101,9 +101,7 @@ const load = async () => {
         productId: filters.productId || undefined,
         warehouseId: filters.warehouseId || undefined,
         status: filters.status || undefined,
-        limit: 100,
-      },
-    })
+        limit: 100}})
     const data = res?.data
     rows.value = Array.isArray(data) ? data : data ? [data] : []
   } catch (e) {

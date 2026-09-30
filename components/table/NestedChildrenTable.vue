@@ -67,6 +67,8 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { ref } from 'vue'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
@@ -119,7 +121,7 @@ const getTypeLabel = (category) => {
     income: 'Income',
     expense: 'Expense'
   }
-  return labels[category] || category
+  return labels[category] || humanizeLabel(category, { fallback: category || '' })
 }
 </script>
 

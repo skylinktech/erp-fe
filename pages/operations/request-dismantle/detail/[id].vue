@@ -168,7 +168,7 @@
                 <small>{{ eq.serialNumber }} · {{ eq.ownershipType }}</small>
               </div>
               <div class="text-end small">
-                <div>Found: {{ eq.foundStatus }}</div>
+                <div>Found: {{ humanizeLabel(eq.foundStatus, { fallback: '—' }) }}</div>
                 <div>Disposition: {{ eq.dispositionStatus || '—' }}</div>
               </div>
             </div>
@@ -192,7 +192,7 @@
                   <code>{{ c.chargeKey }}</code>
                   <div class="small text-muted">{{ c.chargeType }}</div>
                 </div>
-                <span class="badge bg-label-secondary">{{ c.status }}</span>
+                <span class="badge bg-label-secondary">{{ humanizeLabel(c.status, { fallback: '—' }) }}</span>
               </div>
             </div></div>
             <DismantleFinanceReviewPanel
@@ -223,7 +223,7 @@
             <h6>Events</h6>
             <ul class="mb-0">
               <li v-for="ev in selected.events ?? []" :key="String(ev.id)">
-                {{ ev.eventType || ev.event_type }} — {{ ev.createdAt || ev.created_at }}
+                {{ humanizeLabel(ev.eventType || ev.event_type, { fallback: '—' }) }} — {{ ev.createdAt || ev.created_at }}
               </li>
             </ul>
           </div></div>
@@ -239,6 +239,8 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { ref, computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import Swal from 'sweetalert2'
@@ -262,12 +264,10 @@ const { userHasPermission } = usePermissions()
 const {
   canApprove: workflowCanApprove,
   canEmergencyOverrideApprove: workflowCanEmergencyOverrideApprove,
-  canReject: workflowCanReject,
-} = useWorkflowApproval({
+  canReject: workflowCanReject} = useWorkflowApproval({
   approvePermission: 'approve_dismantle_request',
   rejectPermission: 'reject_dismantle_request',
-  pendingStatuses: ['submitted'],
-})
+  pendingStatuses: ['submitted']})
 const showOverrideModal = ref(false)
 const {
   selected,
@@ -284,8 +284,7 @@ const {
   terminatingServices,
   syncingCharges,
   completing,
-  reviewingFinance,
-} = storeToRefs(store)
+  reviewingFinance} = storeToRefs(store)
 
 const activeTab = ref('overview')
 const tabs = [
@@ -353,9 +352,7 @@ async function onEmergencyOverrideConfirm(payload: { reason: string; ticketRef?:
     override: {
       mode: 'SUPERADMIN_EMERGENCY_OVERRIDE',
       reason: payload.reason,
-      ticketRef: payload.ticketRef,
-    },
-  })
+      ticketRef: payload.ticketRef}})
   if (ok) await reload()
 }
 
@@ -365,8 +362,7 @@ async function onReject() {
     input: 'textarea',
     inputLabel: 'Alasan wajib',
     inputValidator: (v) => (!v || v.length < 3 ? 'Minimal 3 karakter' : undefined),
-    showCancelButton: true,
-  })
+    showCancelButton: true})
   if (!isConfirmed || !reason) return
   await store.rejectRequest(selected.value!.id, reason)
   await reload()
@@ -376,8 +372,7 @@ async function onFinanceReview(serviceLineId: string, payload: { decision: strin
   await store.financeReview(selected.value!.id, serviceLineId, {
     decision: payload.decision as 'APPROVE' | 'REJECT' | 'REQUEST_REVISION',
     notes: payload.notes,
-    version: selected.value!.version,
-  })
+    version: selected.value!.version})
 }
 
 async function reload() {

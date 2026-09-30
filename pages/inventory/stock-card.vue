@@ -58,13 +58,13 @@
                 @click="selected = m"
               >
                 <td>{{ formatDate(m.postedAt) }}</td>
-                <td>{{ m.movementType }}</td>
+                <td>{{ humanizeLabel(m.movementType, { fallback: '—' }) }}</td>
                 <td>{{ m.referenceNumber || '-' }}</td>
                 <td class="text-end">{{ m.qtyIn }}</td>
                 <td class="text-end">{{ m.qtyOut }}</td>
                 <td class="text-end">{{ m.balance }}</td>
-                <td>{{ m.status }}</td>
-                <td class="text-truncate" style="max-width:160px">{{ m.sourceDocumentType }}:{{ m.sourceDocumentId }}</td>
+                <td>{{ humanizeLabel(m.status, { fallback: '—' }) }}</td>
+                <td class="text-truncate" style="max-width:160px">{{ humanizeLabel(m.sourceDocumentType, { fallback: '—' }) }}:{{ m.sourceDocumentId }}</td>
               </tr>
               <tr v-if="!movements.length">
                 <td colspan="8" class="text-muted">Tidak ada movement / filter belum diisi</td>
@@ -95,6 +95,8 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 definePageMeta({
   title: "Stock Card", middleware: ['auth', 'check-permission'] })
 
@@ -106,8 +108,7 @@ const filters = reactive({
   warehouseId: null,
   movementType: '',
   dateFrom: '',
-  dateTo: '',
-})
+  dateTo: ''})
 
 const formatDate = (v) => {
   if (!v) return '-'
@@ -131,9 +132,7 @@ const loadCard = async () => {
         warehouseId: filters.warehouseId,
         movementType: filters.movementType || undefined,
         dateFrom: filters.dateFrom || undefined,
-        dateTo: filters.dateTo || undefined,
-      },
-    })
+        dateTo: filters.dateTo || undefined}})
     movements.value = res?.data?.movements || []
   } catch (e) {
     $toast?.error?.(e?.data?.message || 'Gagal load stock card')
@@ -147,8 +146,7 @@ const reverseSelected = async () => {
     await $fetch($api.reverseStockMovement(selected.value.id), {
       method: 'POST',
       credentials: 'include',
-      body: { reason },
-    })
+      body: { reason }})
     $toast?.success?.('Movement reversed')
     selected.value = null
     await loadCard()

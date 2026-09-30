@@ -26,10 +26,10 @@
           <div class="fw-semibold">SkyFlow Omnichannel</div>
           <div class="h5 mb-1">{{ kindLabel }}</div>
           <div class="small text-muted">
-            Order {{ doc.order?.externalOrderId }} · {{ doc.order?.platformCode }} ·
+            Order {{ doc.order?.externalOrderId }} · {{ commercePlatformLabel(doc.order?.platformCode) }} ·
             {{ doc.order?.shopName || '—' }} · WH {{ doc.order?.warehouseId || '—' }}
           </div>
-          <div class="small text-muted">Dibuat {{ doc.generatedAt }} · sumber {{ doc.source }}</div>
+          <div class="small text-muted">Dibuat {{ doc.generatedAt }} · sumber {{ humanizeLabel(doc.source, { fallback: '—' }) }}</div>
         </header>
 
         <p class="small text-muted">{{ doc.note }}</p>
@@ -66,6 +66,9 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+import { commercePlatformLabel } from '~/utils/commercePlatform'
+
 import { computed, onMounted, ref, watch } from 'vue'
 import { readAccessToken } from '~/utils/authCookie'
 
@@ -102,8 +105,7 @@ async function load() {
   try {
     const res = await fetch($api.commerceExternalOrderDoc(orderId.value, kind.value), {
       headers: headers(),
-      credentials: 'include',
-    })
+      credentials: 'include'})
     const json = await res.json()
     if (!res.ok || json.success === false) {
       error.value = json.message || 'Gagal memuat dokumen'

@@ -1,15 +1,24 @@
 import { PAYROLL_STATUS_BADGE, PAYROLL_RUN_TYPE_OPTIONS } from '~/constants/payroll'
+import { humanizeLabel } from '~/utils/humanizeLabel'
 
 export function usePayrollStatus() {
   const formatRupiah = useFormatRupiah()
 
   function statusBadge(status?: string | null) {
     if (!status) return { text: '—', class: 'badge rounded-pill bg-label-secondary' }
-    return PAYROLL_STATUS_BADGE[status] || { text: status, class: 'badge rounded-pill bg-label-secondary' }
+    return (
+      PAYROLL_STATUS_BADGE[status] || {
+        text: humanizeLabel(status, { fallback: status }),
+        class: 'badge rounded-pill bg-label-secondary',
+      }
+    )
   }
 
   function runTypeLabel(type?: string | null) {
-    return PAYROLL_RUN_TYPE_OPTIONS.find((o) => o.value === type)?.label || type || '—'
+    return (
+      PAYROLL_RUN_TYPE_OPTIONS.find((o) => o.value === type)?.label ||
+      humanizeLabel(type, { fallback: '—' })
+    )
   }
 
   function money(value: unknown) {

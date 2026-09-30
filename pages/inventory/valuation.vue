@@ -49,12 +49,12 @@
                 <td>{{ formatDate(row.valuationDate || row.createdAt) }}</td>
                 <td>{{ row.productId }}</td>
                 <td>{{ row.warehouseId }}</td>
-                <td>{{ row.movementType }}</td>
-                <td>{{ row.direction }}</td>
+                <td>{{ humanizeLabel(row.movementType, { fallback: '-' }) }}</td>
+                <td>{{ humanizeLabel(row.direction, { fallback: '-' }) }}</td>
                 <td class="text-end">{{ row.quantity }}</td>
                 <td class="text-end">{{ formatMoney(row.unitCost) }}</td>
                 <td class="text-end">{{ formatMoney(row.movementValue) }}</td>
-                <td><span class="badge bg-label-secondary">{{ row.status }}</span></td>
+                <td><span class="badge bg-label-secondary">{{ humanizeLabel(row.status, { fallback: '-' }) }}</span></td>
                 <td>{{ shortId(row.stockMovementId) }}</td>
               </tr>
               <tr v-if="!rows.length && !loading">
@@ -94,13 +94,13 @@
                 <dt class="col-5">WAC Before / After</dt>
                 <dd class="col-7">{{ formatMoney(selected.averageCostBefore) }} / {{ formatMoney(selected.averageCostAfter) }}</dd>
                 <dt class="col-5">Cost Source</dt>
-                <dd class="col-7">{{ selected.costSourceType }} / {{ selected.costSourceId || '-' }}</dd>
+                <dd class="col-7">{{ humanizeLabel(selected.costSourceType, { fallback: '-' }) }} / {{ selected.costSourceId || '-' }}</dd>
                 <dt class="col-5">Source Movement</dt>
                 <dd class="col-7">
                   <NuxtLink to="/inventory/stock?tab=movements">{{ shortId(selected.stockMovementId) }}</NuxtLink>
                 </dd>
                 <dt class="col-5">Company / Status</dt>
-                <dd class="col-7">{{ selected.companyId }} / {{ selected.status }}</dd>
+                <dd class="col-7">{{ selected.companyId }} / {{ humanizeLabel(selected.status, { fallback: '-' }) }}</dd>
               </dl>
             </div>
           </div>
@@ -115,6 +115,8 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 definePageMeta({
   title: "Inventory Valuation", middleware: ['auth', 'check-permission'] })
 

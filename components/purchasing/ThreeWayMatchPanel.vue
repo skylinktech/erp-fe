@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 const props = defineProps<{
   purchaseOrderId: string | number
 }>()
@@ -33,8 +35,7 @@ const result = ref<MatchResult | null>(null)
 const statusClass: Record<string, string> = {
   pass: 'bg-success',
   warn: 'bg-warning text-dark',
-  fail: 'bg-danger',
-}
+  fail: 'bg-danger'}
 
 async function load() {
   if (!props.purchaseOrderId) return
@@ -44,8 +45,7 @@ async function load() {
   try {
     const res = await fetch($api.purchaseOrderThreeWayMatch(props.purchaseOrderId), {
       headers: { Accept: 'application/json' },
-      credentials: 'include',
-    })
+      credentials: 'include'})
     const json = await res.json().catch(() => ({}))
     if (!res.ok) throw new Error(json.message || 'Gagal memuat 3-way match')
     result.value = json.data
@@ -77,8 +77,8 @@ watch(
       <div v-else-if="error" class="text-danger small">{{ error }}</div>
       <template v-else-if="result">
         <div class="d-flex align-items-center gap-2 mb-2">
-          <span class="badge" :class="statusClass[result.status] || 'bg-secondary'">{{ result.status }}</span>
-          <span class="small text-muted">mode={{ result.mode }} · qty±{{ result.qtyTolerancePct }}% · price±{{ result.priceTolerancePct }}%</span>
+          <span class="badge" :class="statusClass[result.status] || 'bg-secondary'">{{ humanizeLabel(result.status, { fallback: '—' }) }}</span>
+          <span class="small text-muted">mode={{ humanizeLabel(result.mode, { fallback: '—' }) }} · qty±{{ result.qtyTolerancePct }}% · price±{{ result.priceTolerancePct }}%</span>
         </div>
         <p class="small mb-3">{{ result.summary }}</p>
         <div class="table-responsive" v-if="result.lines?.length">
@@ -99,7 +99,7 @@ watch(
                 <td>{{ line.receivedQty }}</td>
                 <td>{{ line.invoiceQty }} @ {{ line.invoicePrice }}</td>
                 <td>
-                  <span class="badge" :class="statusClass[line.status] || 'bg-secondary'">{{ line.status }}</span>
+                  <span class="badge" :class="statusClass[line.status] || 'bg-secondary'">{{ humanizeLabel(line.status, { fallback: '—' }) }}</span>
                   <div v-for="(m, i) in line.messages" :key="i" class="small text-muted">{{ m }}</div>
                 </td>
               </tr>

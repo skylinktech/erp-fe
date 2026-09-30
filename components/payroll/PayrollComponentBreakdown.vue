@@ -14,7 +14,7 @@
       <tbody>
         <tr v-for="(line, idx) in lines" :key="line.id || idx">
           <td>{{ line.componentNameSnapshot || line.component_name_snapshot || '—' }}</td>
-          <td class="d-none d-md-table-cell">{{ line.componentType || line.component_type }}</td>
+          <td class="d-none d-md-table-cell">{{ humanizeLabel(line.componentType || line.component_type, { fallback: '—' }) }}</td>
           <td class="d-none d-lg-table-cell">{{ line.calculationSource || line.calculation_source || '—' }}</td>
           <td class="d-none d-xl-table-cell text-end">{{ line.quantity ?? '—' }}</td>
           <td class="d-none d-xl-table-cell text-end">{{ line.rate != null ? money(line.rate) : '—' }}</td>
@@ -28,6 +28,8 @@
   </div>
 </template>
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import type { PayrollLine } from '~/types/payroll'
 const props = defineProps<{ lines?: Array<Record<string, unknown> | PayrollLine> }>()
 const { money } = usePayrollStatus()

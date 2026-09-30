@@ -13,7 +13,7 @@
           <small class="text-muted">
             <span class="badge bg-label-secondary me-1">{{ getBlockerCategory(b.code) }}</span>
             <code>{{ b.code }}</code>
-            <span v-if="b.referenceId"> · {{ b.referenceType ?? 'ref' }}: {{ b.referenceId }}</span>
+            <span v-if="b.referenceId"> · {{ humanizeLabel(b.referenceType, { fallback: 'ref' }) }}: {{ b.referenceId }}</span>
           </small>
         </div>
       </li>
@@ -22,6 +22,8 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import type { DismantleBlocker } from '~/types/operations/dismantle'
 import { getBlockerCategory } from '~/utils/dismantleLabels'
 

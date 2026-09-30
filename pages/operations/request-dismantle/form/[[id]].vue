@@ -131,7 +131,7 @@
                     </td>
                     <td>{{ si.serviceNumber || si.service_number }}</td>
                     <td>{{ si.serviceName || si.service_name }}</td>
-                    <td>{{ si.status }}</td>
+                    <td>{{ humanizeLabel(si.status, { fallback: '—' }) }}</td>
                     <td>{{ si.siteId || si.site_id }}</td>
                   </tr>
                 </tbody>
@@ -217,7 +217,7 @@
               <div class="card-body">
                 <div><strong>Customer/Site:</strong> {{ form.customerId }} / {{ form.siteId }}</div>
                 <div><strong>Layanan:</strong> {{ form.serviceLines.length }}</div>
-                <div><strong>Tipe:</strong> {{ form.terminationType }}</div>
+                <div><strong>Tipe:</strong> {{ humanizeLabel(form.terminationType, { fallback: '—' }) }}</div>
               </div>
             </div>
             <div class="alert alert-warning mt-3 mb-0">
@@ -249,6 +249,8 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { ref, computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import Swal from 'sweetalert2'
@@ -267,8 +269,7 @@ import type { DismantleServiceLineInput } from '~/types/operations/dismantle'
 definePageMeta({
   hidePageHeading: true,
   layout: 'default',
-  middleware: ['auth', 'check-permission'],
-})
+  middleware: ['auth', 'check-permission']})
 
 const route = useRoute()
 const { $api } = useNuxtApp()
@@ -306,8 +307,7 @@ const steps = [
 
 const { currentIndex, currentStep, isFirstStep, isLastStep, next: nextStep, previous: prevStep, goTo: goToStep } = useTabbedFormNavigation({
   steps,
-  formRoot,
-})
+  formRoot})
 
 const terminationOptions = TERMINATION_TYPE_OPTIONS
 const billingOptions = BILLING_CUTOFF_OPTIONS
@@ -325,8 +325,7 @@ function toggleService(si: Record<string, unknown>) {
       billingCutoffPolicy: 'EFFECTIVE_DATE',
       prorateEnabled: false,
       earlyTermination: false,
-      effectiveTerminationAt: form.value.requestedEffectiveTerminationAt,
-    }
+      effectiveTerminationAt: form.value.requestedEffectiveTerminationAt}
     form.value.serviceLines.push(line)
   }
 }
@@ -357,8 +356,7 @@ async function searchSites(term: string) {
       .filter((s) => matchesSearch(s.name ?? '', term))
       .map((s) => ({
         label: s.name,
-        value: s.id,
-      }))
+        value: s.id}))
   } catch (e) {
     console.warn('Gagal memuat site:', e)
     siteOptions.value = []
@@ -372,8 +370,7 @@ async function searchPerusahaan(term: string) {
       .filter((p) => matchesSearch(p.nmPerusahaan ?? p.nm_perusahaan ?? '', term))
       .map((p) => ({
         label: p.nmPerusahaan ?? p.nm_perusahaan ?? String(p.id),
-        value: p.id,
-      }))
+        value: p.id}))
   } catch (e) {
     console.warn('Gagal memuat perusahaan:', e)
     perusahaanOptions.value = []
@@ -416,8 +413,7 @@ function ensureSelectedLookupOptions() {
     if (!exists) {
       perusahaanOptions.value.push({
         label: `Perusahaan #${req.perusahaanId}`,
-        value: req.perusahaanId,
-      })
+        value: req.perusahaanId})
     }
   }
 }

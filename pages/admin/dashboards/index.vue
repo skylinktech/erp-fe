@@ -66,7 +66,7 @@
                   </div>
                 </td>
                 <td><code>{{ row.code }}</code></td>
-                <td>{{ row.category || '-' }}</td>
+                <td>{{ humanizeLabel(row.category, { fallback: '-' }) }}</td>
                 <td>
                   <span v-if="row.defaultLayoutId" class="badge bg-label-success">Ada</span>
                   <span v-else class="badge bg-label-warning">Belum ada</span>
@@ -196,6 +196,8 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { computed, onMounted, ref } from 'vue'
 import Modal from '~/components/modal/Modal.vue'
 import { useDashboardAdmin } from '~/composables/useDashboardAdmin'
@@ -205,8 +207,7 @@ definePageMeta({
   layout: 'default',
   middleware: ['auth', 'check-permission'],
   title: 'Dashboard Framework',
-  description: 'Admin Dashboard Framework',
-})
+  description: 'Admin Dashboard Framework'})
 
 const { dashboards, loading, fetchDashboards, createDashboard, updateDashboard, deleteDashboard } =
   useDashboardAdmin()
@@ -233,8 +234,7 @@ function emptyForm() {
     icon: '',
     category: '',
     isActive: true,
-    sortOrder: 0,
-  }
+    sortOrder: 0}
 }
 
 const form = ref(emptyForm())
@@ -262,8 +262,7 @@ function openEditModal(row: AdminDashboardRow) {
     icon: row.icon || '',
     category: row.category || '',
     isActive: row.isActive,
-    sortOrder: row.sortOrder,
-  }
+    sortOrder: row.sortOrder}
   validationErrors.value = []
   isModalOpen.value = true
 }

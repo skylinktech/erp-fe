@@ -27,7 +27,7 @@
             <td>{{ shortId(row.stockMovementId) }}</td>
             <td>{{ row.companyId }}</td>
             <td>{{ formatMoney(row.amount) }}</td>
-            <td><span class="badge bg-label-secondary">{{ row.status }}</span></td>
+            <td><span class="badge bg-label-secondary">{{ humanizeLabel(row.status, { fallback: '-' }) }}</span></td>
             <td>
               <NuxtLink v-if="row.journalId" :to="`/finance/journals/detail/${row.journalId}`">
                 {{ shortId(row.journalId) }}
@@ -56,12 +56,12 @@
             <dt class="col-4">Product / WH</dt>
             <dd class="col-8">{{ selected.productId }} / {{ selected.warehouseId }}</dd>
             <dt class="col-4">Source Doc</dt>
-            <dd class="col-8">{{ selected.sourceDocumentType }} #{{ selected.sourceDocumentId }}</dd>
+            <dd class="col-8">{{ humanizeLabel(selected.sourceDocumentType, { fallback: '—' }) }} #{{ selected.sourceDocumentId }}</dd>
             <dt class="col-4">Accounting Date</dt>
             <dd class="col-8">{{ selected.accountingDate || '-' }}</dd>
             <dt class="col-4">Status / Journal</dt>
             <dd class="col-8">
-              {{ selected.status }} /
+              {{ humanizeLabel(selected.status, { fallback: '—' }) }} /
               <NuxtLink v-if="selected.journalId" :to="`/finance/journals/detail/${selected.journalId}`">
                 {{ selected.journalId }}
               </NuxtLink>
@@ -79,6 +79,7 @@
   </div>
 </template>
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
 definePageMeta({
   title: "Inventory Accounting Events", middleware: ['auth', 'check-permission'] })
 const { $api, $apiFetch } = useNuxtApp()

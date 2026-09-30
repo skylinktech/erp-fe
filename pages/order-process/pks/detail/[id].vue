@@ -427,6 +427,8 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { computed, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { usePksStore, resolvePksType } from '~/stores/pks'
@@ -484,7 +486,7 @@ function getStatusBadge (status: string) {
     case 'active': return { text: 'Active', class: 'badge rounded-pill bg-label-success' }
     case 'terminated': return { text: 'Terminated', class: 'badge rounded-pill bg-label-warning' }
     case 'expired': return { text: 'Expired', class: 'badge rounded-pill bg-label-dark' }
-    default: return { text: status || '—', class: 'badge rounded-pill bg-label-light' }
+    default: return { text: humanizeLabel(status, { fallback: '—' }), class: 'badge rounded-pill bg-label-light' }
   }
 }
 
@@ -500,8 +502,7 @@ const pksSubscriptions = computed(() => {
       subscriptionNo: sub?.noSubscription || sub?.no_subscription || null,
       subscriptionStatus: sub?.status || null,
       subscriptionContractStart: sub?.contractStartDate || sub?.contract_start_date || sub?.targetActiveDate || sub?.target_active_date || null,
-      subscriptionContractEnd: sub?.contractEndDate || sub?.contract_end_date || null,
-    }
+      subscriptionContractEnd: sub?.contractEndDate || sub?.contract_end_date || null}
   })
 })
 
@@ -520,8 +521,7 @@ const pksDocuments = computed(() => {
       docType,
       docTypeLabel: String(docType || '').toUpperCase(),
       attachment,
-      fileName,
-    }
+      fileName}
   })
 })
 
@@ -561,8 +561,7 @@ watch(id, () => load())
 definePageMeta({
   hidePageHeading: true,
   layout: 'default',
-  middleware: ['auth', 'check-permission'],
-})
+  middleware: ['auth', 'check-permission']})
 </script>
 
 <style scoped>

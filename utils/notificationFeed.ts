@@ -1,3 +1,5 @@
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 export type NotificationTab = 'inbox' | 'general' | 'archived'
 
 export interface NotificationFeedItem {
@@ -22,14 +24,7 @@ export interface NotificationFeedItem {
 
 /** Ubah snake_case / kebab-case menjadi Title Case, mis. payment_request → Payment Request */
 export function humanizeNotificationLabel(value: string): string {
-  const raw = String(value || '').trim()
-  if (!raw) return ''
-  if (!/[_-]/.test(raw) && !/^[a-z0-9]+$/i.test(raw)) return raw
-  return raw
-    .replace(/[_-]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .replace(/\b\w/g, (c) => c.toUpperCase())
+  return humanizeLabel(value)
 }
 
 export function getNotificationTypeLabel(type: string): string {
@@ -52,8 +47,7 @@ export function getNotificationTypeLabel(type: string): string {
     lembur: 'Lembur',
     cuti: 'Cuti',
     perjalanan_dinas: 'Perjalanan Dinas',
-    work_order_request: 'Work Order',
-  }
+    work_order_request: 'Work Order'}
   if (map[type]) return map[type]
   return humanizeNotificationLabel(type) || 'Notifikasi'
 }
@@ -67,8 +61,7 @@ export function getNotificationEventLabel(event: string): string {
     updated: 'memperbarui',
     approval_step: 'mengirim approval',
     cancelled: 'membatalkan',
-    revised: 'mengajukan ulang',
-  }
+    revised: 'mengajukan ulang'}
   return map[event] || humanizeNotificationLabel(event).toLowerCase() || 'memperbarui'
 }
 
@@ -198,8 +191,7 @@ export function mapRecipientToFeedItem(recipient: Record<string, any>): Notifica
     category: String(recipient.category || ''),
     priority: String(recipient.priority || ''),
     contributesToUnreadCount: recipient.contributes_to_unread_count ?? recipient.contributesToUnreadCount ?? true,
-    deepLink: String(recipient.deep_link || recipient.deepLink || payload.deepLink || ''),
-  }
+    deepLink: String(recipient.deep_link || recipient.deepLink || payload.deepLink || '')}
 }
 
 export function getNotificationNavigationPath(item: NotificationFeedItem): string | null {

@@ -191,6 +191,7 @@ import InputText from 'primevue/inputtext'
 import DataTable from 'primevue/datatable'
 import { useDebounceFn } from '@vueuse/core'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
+import { humanizeLabel } from '~/utils/humanizeLabel'
 
 const { setListTitle } = useDynamicTitle()
 
@@ -205,8 +206,7 @@ const {
   form,
   isEditMode,
   showModal,
-  validationErrors,
-} = storeToRefs(rolesStore)
+  validationErrors} = storeToRefs(rolesStore)
 
 const globalFilterValue = ref('')
 const rowsPerPageOptionsArray = ref([10, 25, 50, 100])
@@ -227,8 +227,7 @@ const selectAll = computed({
     } else {
       form.value.permissionIds = []
     }
-  },
-})
+  }})
 
 const getPermission = (menu, permName) => {
   return menu.permissions.find((p) => p.name === permName)
@@ -268,16 +267,14 @@ const menuDetailsWithPermissions = computed(() => {
     const permissionObject = {
       id: p.id,
       name: displayPermissionName,
-      dbName: p.name,
-    }
+      dbName: p.name}
 
     if (!result[menuKey]) {
       result[menuKey] = {
         id: menuKey,
-        name: menuKey.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
+        name: humanizeLabel(menuKey),
         order: Object.keys(result).length,
-        permissions: [],
-      }
+        permissions: []}
     }
 
     if (!result[menuKey].permissions.some((x) => x.id === permissionObject.id)) {
@@ -324,9 +321,7 @@ const statItems = computed(() => [
     subtitle: 'Role terdaftar',
     info: {
       title: 'Jumlah Keseluruhan',
-      description: 'Jumlah keseluruhan data Roles yang terdaftar berdasarkan statistik API.',
-    },
-  },
+      description: 'Jumlah keseluruhan data Roles yang terdaftar berdasarkan statistik API.'}},
 {
     key: 'permissions',
     label: 'Permission',
@@ -336,9 +331,7 @@ const statItems = computed(() => [
     subtitle: 'Hak akses tersedia',
     info: {
       title: 'Permission',
-      description: 'Ringkasan metrik "Permission" pada daftar Roles berdasarkan data statistik API/store.',
-    },
-  },
+      description: 'Ringkasan metrik "Permission" pada daftar Roles berdasarkan data statistik API/store.'}},
 {
     key: 'menus',
     label: 'Menu Akses',
@@ -348,9 +341,7 @@ const statItems = computed(() => [
     subtitle: 'Grup menu',
     info: {
       title: 'Menu Akses',
-      description: 'Ringkasan metrik "Menu Akses" pada daftar Roles berdasarkan data statistik API/store.',
-    },
-  },
+      description: 'Ringkasan metrik "Menu Akses" pada daftar Roles berdasarkan data statistik API/store.'}},
 {
     key: 'page',
     label: 'Ditampilkan',
@@ -360,9 +351,7 @@ const statItems = computed(() => [
     subtitle: 'Baris halaman ini',
     info: {
       title: 'Ditampilkan',
-      description: 'Ringkasan metrik "Ditampilkan" pada daftar Roles berdasarkan data statistik API/store.',
-    },
-  }
+      description: 'Ringkasan metrik "Ditampilkan" pada daftar Roles berdasarkan data statistik API/store.'}}
 ])
 
 onMounted(() => {
@@ -401,8 +390,7 @@ const exportData = (format) => {
       message: 'Export PDF akan tersedia pada rilis berikutnya.',
       color: 'blue',
       position: 'bottomRight',
-      layout: 2,
-    })
+      layout: 2})
   }
 }
 
@@ -415,8 +403,7 @@ definePageMeta({
   author: 'Sinergi Innovate Pratama',
   robots: 'index, follow',
   viewport:
-    'width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0',
-})
+    'width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0'})
 </script>
 
 <style scoped>

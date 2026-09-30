@@ -100,7 +100,7 @@
                     <td><code>{{ e.code }}</code></td>
                     <td class="fw-medium">{{ e.name }}</td>
                     <td>
-                      <span v-if="e.module" class="badge bg-label-primary text-capitalize">{{ e.module }}</span>
+                      <span v-if="e.module" class="badge bg-label-primary text-capitalize">{{ humanizeLabel(e.module, { fallback: '—' }) }}</span>
                       <span v-else class="text-muted">—</span>
                     </td>
                     <td>
@@ -256,6 +256,8 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { useDebounceFn } from '@vueuse/core'
 import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
 import ListPageStatsCards, { type ListPageStatItem } from '~/components/list/ListPageStatsCards.vue'
@@ -263,8 +265,7 @@ import ListPageStatsCards, { type ListPageStatItem } from '~/components/list/Lis
 definePageMeta({
   title: "Approval Workflow Entities",
   layout: 'default',
-  middleware: ['auth', 'check-permission'],
-})
+  middleware: ['auth', 'check-permission']})
 
 const entityStore = useApprovalWorkflowEntitiesStore()
 const { stats } = storeToRefs(entityStore)
@@ -295,9 +296,7 @@ const statItems = computed<ListPageStatItem[]>(() => [
     iconBgClass: 'bg-label-primary',
     info: {
       title: 'Total Entity',
-      description: 'Jumlah seluruh entity type yang terdaftar untuk approval workflow, baik aktif maupun nonaktif.',
-    },
-  },
+      description: 'Jumlah seluruh entity type yang terdaftar untuk approval workflow, baik aktif maupun nonaktif.'}},
   {
     key: 'aktif',
     label: 'Aktif',
@@ -307,9 +306,7 @@ const statItems = computed<ListPageStatItem[]>(() => [
     iconBgClass: 'bg-label-success',
     info: {
       title: 'Aktif',
-      description: 'Jumlah entity type yang aktif dan dapat dikaitkan dengan workflow approval.',
-    },
-  },
+      description: 'Jumlah entity type yang aktif dan dapat dikaitkan dengan workflow approval.'}},
   {
     key: 'nonaktif',
     label: 'Nonaktif',
@@ -319,9 +316,7 @@ const statItems = computed<ListPageStatItem[]>(() => [
     iconBgClass: 'bg-label-secondary',
     info: {
       title: 'Nonaktif',
-      description: 'Jumlah entity type yang dinonaktifkan sehingga tidak dapat dipilih pada workflow baru.',
-    },
-  },
+      description: 'Jumlah entity type yang dinonaktifkan sehingga tidak dapat dipilih pada workflow baru.'}},
   {
     key: 'modules',
     label: 'Modul',
@@ -331,9 +326,7 @@ const statItems = computed<ListPageStatItem[]>(() => [
     iconBgClass: 'bg-label-info',
     info: {
       title: 'Modul',
-      description: 'Jumlah grup modul unik (misalnya procurement, sales, hr) yang menaungi entity type ini.',
-    },
-  },
+      description: 'Jumlah grup modul unik (misalnya procurement, sales, hr) yang menaungi entity type ini.'}},
 ])
 
 function reload() {

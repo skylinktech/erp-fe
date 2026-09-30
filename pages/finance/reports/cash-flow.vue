@@ -82,7 +82,7 @@
               </thead>
               <tbody>
                 <tr v-for="(row, idx) in rows" :key="row.id || idx">
-                  <td>{{ row.section || row.category || '—' }}</td>
+                  <td>{{ humanizeLabel(row.section || row.category || '—', { fallback: '—' }) }}</td>
                   <td>{{ row.description || row.name || row.accountName || '—' }}</td>
                   <td class="text-end">{{ formatMoney(row.amount ?? row.balance ?? 0) }}</td>
                 </tr>
@@ -99,11 +99,12 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 definePageMeta({
   layout: 'default',
   middleware: ['auth', 'check-permission'],
-  title: 'Cash Flow',
-})
+  title: 'Cash Flow'})
 
 const report = ref<any>(null)
 const completeness = computed(() => report.value?.completeness || null)
@@ -128,8 +129,7 @@ const summary = computed(() => {
   return {
     inflow,
     outflow,
-    netChange: Number(data.netCashFlow ?? inflow - outflow),
-  }
+    netChange: Number(data.netCashFlow ?? inflow - outflow)}
 })
 
 function formatMoney(n: number) {
@@ -148,8 +148,7 @@ async function load() {
     if (endDate.value) qs.set('endDate', endDate.value)
     const res = await fetch(`${$api.financeCashFlow()}?${qs.toString()}`, {
       headers: { Accept: 'application/json' },
-      credentials: 'include',
-    })
+      credentials: 'include'})
     const json = await res.json()
     if (!res.ok) throw new Error(json.message || 'Gagal memuat cash flow')
     report.value = json.data

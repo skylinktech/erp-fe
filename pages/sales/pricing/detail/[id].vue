@@ -192,6 +192,8 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 import { computed, onMounted, ref } from 'vue'
 import { usePermissions } from '~/composables/usePermissions'
 import { useActiveCompany } from '~/composables/useActiveCompany'
@@ -199,11 +201,7 @@ import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import { usePricingStore } from '~/stores/pricing'
 import { formatActiveCompanyLabel } from '~/utils/activeCompanyBinding'
 import { readAccessToken } from '~/utils/authCookie'
-import {
-  normalizePricingChannel,
-  pricingChannelLabel,
-  type PricingChannel,
-} from '~/utils/pricingChannel'
+import { normalizePricingChannel, pricingChannelLabel, type PricingChannel } from '~/utils/pricingChannel'
 import PageBreadcrumb from '~/components/PageBreadcrumb.vue'
 import PricingDuplicateModal from '~/components/pricing/PricingDuplicateModal.vue'
 
@@ -211,8 +209,7 @@ definePageMeta({
   hidePageHeading: true,
   layout: 'default',
   middleware: ['auth', 'check-permission'],
-  title: 'Detail Pricing',
-})
+  title: 'Detail Pricing'})
 
 const route = useRoute()
 const { setDetailTitle } = useDynamicTitle()
@@ -277,8 +274,7 @@ function formatMoney(value: number | null | undefined) {
   return new Intl.NumberFormat('id-ID', {
     style: 'currency',
     currency: 'IDR',
-    maximumFractionDigits: 0,
-  }).format(Number(value))
+    maximumFractionDigits: 0}).format(Number(value))
 }
 
 function statusBadge(status: string) {
@@ -287,9 +283,8 @@ function statusBadge(status: string) {
     pending: { class: 'badge bg-label-warning', text: 'Pending' },
     approved: { class: 'badge bg-label-info', text: 'Approved' },
     active: { class: 'badge bg-label-success', text: 'Active' },
-    inactive: { class: 'badge bg-label-danger', text: 'Inactive' },
-  }
-  return map[status] || { class: 'badge bg-label-secondary', text: status || '—' }
+    inactive: { class: 'badge bg-label-danger', text: 'Inactive' }}
+  return map[status] || { class: 'badge bg-label-secondary', text: humanizeLabel(status, { fallback: '—' }) }
 }
 
 function headers() {
@@ -313,8 +308,7 @@ async function load() {
   try {
     const res = await fetch(`${$api.productSellingPrices()}/${id}`, {
       headers: headers(),
-      credentials: 'include',
-    })
+      credentials: 'include'})
     const payload = await res.json().catch(() => ({}))
     if (!res.ok) {
       error.value = payload?.message || 'Detail pricing tidak dapat dimuat.'
@@ -342,16 +336,14 @@ async function confirmDelete() {
     confirmButtonColor: '#008fec',
     cancelButtonColor: '#f13636',
     confirmButtonText: 'Ya, hapus!',
-    cancelButtonText: 'Batal',
-  })
+    cancelButtonText: 'Batal'})
   if (!result.isConfirmed) return
 
   const { $api } = useNuxtApp()
   const res = await fetch(`${$api.productSellingPrices()}/${row.value.id}`, {
     method: 'DELETE',
     headers: { ...headers(), 'Content-Type': 'application/json' },
-    credentials: 'include',
-  })
+    credentials: 'include'})
   const payload = await res.json().catch(() => ({}))
   if (!res.ok) {
     error.value = payload?.message || 'Daftar harga gagal dihapus.'

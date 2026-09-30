@@ -59,7 +59,7 @@
                 <tr v-for="row in rows" :key="row.id || row.code">
                   <td>{{ row.code }}</td>
                   <td>{{ row.name }}</td>
-                  <td>{{ row.category || '—' }}</td>
+                  <td>{{ humanizeLabel(row.category, { fallback: '—' }) }}</td>
                   <td class="text-end">{{ formatMoney(row.total_debit ?? row.totalDebit ?? row.debit ?? 0) }}</td>
                   <td class="text-end">{{ formatMoney(row.total_credit ?? row.totalCredit ?? row.credit ?? 0) }}</td>
                 </tr>
@@ -83,11 +83,12 @@
 </template>
 
 <script setup lang="ts">
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 definePageMeta({
   layout: 'default',
   middleware: ['auth', 'check-permission'],
-  title: 'Trial Balance',
-})
+  title: 'Trial Balance'})
 
 const report = ref<any>(null)
 const completeness = computed(() => report.value?.completeness || null)
@@ -126,14 +127,12 @@ async function load() {
     if (endDate.value) qs.set('endDate', endDate.value)
     let res = await fetch($api.trialBalance(qs.toString()), {
       headers: { Accept: 'application/json' },
-      credentials: 'include',
-    })
+      credentials: 'include'})
     let json = await res.json().catch(() => ({}))
     if (!res.ok && $api.journalsTrialBalance) {
       res = await fetch($api.journalsTrialBalance(qs.toString()), {
         headers: { Accept: 'application/json' },
-        credentials: 'include',
-      })
+        credentials: 'include'})
       json = await res.json().catch(() => ({}))
     }
     if (!res.ok) throw new Error(json.message || 'Gagal memuat trial balance')

@@ -459,11 +459,12 @@
 </template>
 
 <script setup>
+import { humanizeLabel } from '~/utils/humanizeLabel'
+
 definePageMeta({
   layout: 'cetak',
   middleware: ['auth', 'check-permission'],
-  title: 'Cetak Formulir Berlangganan',
-})
+  title: 'Cetak Formulir Berlangganan'})
 
 import { computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
@@ -701,8 +702,7 @@ function formatRupiahNum(val) {
   if (Number.isNaN(n)) return '—'
   return new Intl.NumberFormat('id-ID', {
     maximumFractionDigits: 0,
-    minimumFractionDigits: 0,
-  }).format(Math.round(n))
+    minimumFractionDigits: 0}).format(Math.round(n))
 }
 
 function formatDate(val) {
@@ -719,9 +719,8 @@ function statusLabel(status) {
     active: 'Active',
     terminated: 'Terminated',
     expired: 'Expired',
-    canceled: 'Canceled',
-  }
-  return status ? map[status] || status : '—'
+    canceled: 'Canceled'}
+  return status ? map[status] || humanizeLabel(status, { fallback: status || '' }) : '—'
 }
 
 function serviceName(svc) {
