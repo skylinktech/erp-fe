@@ -67,6 +67,8 @@ const props = withDefaults(
     perPage?: number
     /** Extra deps that force reload (e.g. companyId, warehouseId). */
     reloadKey?: string | number | null
+    /** Pre-seed selected option so edit forms show a label before async fetch returns. */
+    initialOption?: any | null
   }>(),
   {
     placeholder: 'Cari…',
@@ -79,6 +81,7 @@ const props = withDefaults(
     debounceMs: 300,
     perPage: 20,
     reloadKey: null,
+    initialOption: null,
   }
 )
 
@@ -172,6 +175,27 @@ watch(
     selectedCache.value = null
     void load(true)
   }
+)
+
+watch(
+  () => [props.modelValue, props.initialOption] as const,
+  ([value, initial]) => {
+    if (value == null || value === '') {
+      selectedCache.value = null
+      return
+    }
+    const initialId = initial != null ? reduceFn(initial) : null
+    if (initial && String(initialId) === String(value)) {
+      selectedCache.value = initial
+      if (!options.value.some((row) => String(reduceFn(row)) === String(value))) {
+        options.value = [initial, ...options.value]
+      }
+      return
+    }
+    const found = options.value.find((row) => String(reduceFn(row)) === String(value))
+    if (found) selectedCache.value = found
+  },
+  { immediate: true, deep: true }
 )
 
 onMounted(() => {

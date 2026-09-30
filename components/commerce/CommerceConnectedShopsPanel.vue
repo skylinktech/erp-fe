@@ -7,14 +7,12 @@
           Status koneksi &amp; probe live (cache SkyFlow)
         </p>
       </div>
-      <button
-        type="button"
-        class="btn btn-outline-secondary btn-sm"
-        :disabled="loading"
+      <CommerceActionButton
+        action="reload"
+        btn-class="btn btn-outline-secondary btn-sm"
+        :busy="loading"
         @click="reload"
-      >
-        Muat ulang
-      </button>
+      />
     </div>
     <div class="card-body mt-3">
       <div v-if="error" class="alert alert-warning small text-break mb-3">
@@ -26,6 +24,7 @@
       <div v-if="loading && !connections.length" class="text-muted small mb-3">Memuat…</div>
       <div v-else-if="!connections.length" class="text-muted small mb-3">Belum ada koneksi.</div>
       <div v-else class="table-responsive mb-4">
+        <div v-if="loading" class="text-muted small mb-2" aria-live="polite">Memperbarui…</div>
         <table class="table table-sm align-middle mb-0">
           <thead>
             <tr>
@@ -52,8 +51,10 @@
               <td class="small text-nowrap">{{ formatCommerceTs(c.lastProbeAt) }}</td>
               <td>
                 <CommerceRowActionsMenu
-                  :disabled="c.status !== 'ACTIVE' || busyConnectionId === c.id"
-                  :actions="connectionActions"
+                  :disabled="c.status !== 'ACTIVE'"
+                  :busy="actions.isTargetBusy(c.id)"
+                  :busy-label="connectionBusyLabel(c.id)"
+                  :actions="connectionMenuActions(c.id)"
                   aria-label="Aksi koneksi"
                   @select="(key) => onConnectionAction(key, c.id)"
                 />
@@ -69,6 +70,7 @@
         Belum ada shop — jalankan Test / Sync shop.
       </div>
       <div v-else class="table-responsive">
+        <div v-if="loading" class="text-muted small mb-2" aria-live="polite">Memperbarui…</div>
         <table class="table table-sm align-middle mb-0">
           <thead>
             <tr>
@@ -96,8 +98,10 @@
               </td>
               <td>
                 <CommerceRowActionsMenu
-                  :disabled="!s.connectionId || busyShopId === s.id"
-                  :actions="shopActions"
+                  :disabled="!s.connectionId"
+                  :busy="actions.isTargetBusy(s.id)"
+                  :busy-label="shopBusyLabel(s.id)"
+                  :actions="shopMenuActions(s.id)"
                   aria-label="Aksi shop"
                   @select="(key) => onShopAction(key, s)"
                 />
@@ -114,9 +118,13 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useNuxtApp } from '#app'
 import { useActiveCompany } from '~/composables/useActiveCompany'
+import { useCommerceActionBusy } from '~/composables/useCommerceActionBusy'
+import { useCommerceJobWatch } from '~/composables/useCommerceJobWatch'
 import CommerceRowActionsMenu from '~/components/commerce/CommerceRowActionsMenu.vue'
 import type { CommerceRowAction } from '~/components/commerce/CommerceRowActionsMenu.vue'
+import CommerceActionButton from '~/components/commerce/CommerceActionButton.vue'
 import { commerceStatusBadge, formatCommerceTs } from '~/utils/commerceFormat'
+import { commerceActionRunningLabel, isTerminalJobStatus } from '~/utils/commerceActionBusy'
 import { readAccessToken } from '~/utils/authCookie'
 
 export type CommerceConnectionRow = {
@@ -149,26 +157,57 @@ const emit = defineEmits<{
 
 const { $api } = useNuxtApp() as any
 const { companyId } = useActiveCompany()
+const actions = useCommerceActionBusy({ companyId })
 
 const loading = ref(false)
 const error = ref('')
 const connections = ref<CommerceConnectionRow[]>([])
 const shops = ref<CommerceShopRow[]>([])
-const busyConnectionId = ref<string | null>(null)
-const busyShopId = ref<string | null>(null)
 
-const connectionActions: CommerceRowAction[] = [
+const CONNECTION_ACTIONS: CommerceRowAction[] = [
   { key: 'test', label: 'Test Connection', icon: 'ri-pulse-line' },
   { key: 'sync-shops', label: 'Sync Shop', icon: 'ri-store-2-line' },
 ]
 
-const shopActions: CommerceRowAction[] = [
+const SHOP_ACTIONS: CommerceRowAction[] = [
   { key: 'sync-products', label: 'Sync Produk', icon: 'ri-box-3-line' },
   { key: 'sync-orders', label: 'Sync Order', icon: 'ri-file-list-3-line' },
   { key: 'sync-returns', label: 'Sync Aftersales', icon: 'ri-arrow-go-back-line' },
 ]
 
 const enabled = computed(() => Boolean(companyId.value))
+
+const jobWatch = useCommerceJobWatch({
+  intervalMs: 4000,
+  timeoutMs: 120_000,
+  fetchJobs: async (jobIds) => {
+    if (!companyId.value || !jobIds.length) return []
+    const qs = new URLSearchParams({
+      perusahaanId: String(companyId.value),
+      page: '1',
+      perPage: String(Math.max(20, jobIds.length)),
+      ids: jobIds.join(','),
+    })
+    const json = await fetchJson(`${$api.commerceSyncJobs()}?${qs}`)
+    const rows = (json.data || []) as Array<{
+      id: string
+      status: string
+      lastError?: string | null
+      commandType?: string | null
+    }>
+    const want = new Set(jobIds.map(String))
+    return rows.filter((r) => want.has(String(r.id)))
+  },
+  onUnconfirmed: ({ jobId, action, targetId }) => {
+    actions.markPhase(action, targetId, 'unconfirmed')
+    emit(
+      'notice',
+      `Status job ${jobId} belum terkonfirmasi — cek tab Sinkronisasi (request dipantau dihentikan, job backend tetap berjalan).`
+    )
+    // Allow UI to recover; job remains visible in Sync Jobs panel
+    actions.clear(actions.key(action, targetId))
+  },
+})
 
 function headers() {
   const h: Record<string, string> = { Accept: 'application/json' }
@@ -179,12 +218,74 @@ function headers() {
 }
 
 async function fetchJson(url: string, init?: RequestInit) {
-  const res = await fetch(url, { credentials: 'include', ...init, headers: { ...headers(), ...(init?.headers || {}) } })
+  const res = await fetch(url, {
+    credentials: 'include',
+    ...init,
+    headers: { ...headers(), ...(init?.headers || {}) },
+  })
   const json = await res.json().catch(() => ({}))
   if (!res.ok || json.success === false) {
     throw new Error(json.message || `Permintaan gagal (${res.status})`)
   }
   return json
+}
+
+function connectionMenuActions(id: string): CommerceRowAction[] {
+  const active = actions.busyActionForTarget(id)
+  return CONNECTION_ACTIONS.map((a) => ({
+    ...a,
+    busy: active === a.key,
+    disabled: Boolean(active && active !== a.key),
+  }))
+}
+
+function shopMenuActions(id: string): CommerceRowAction[] {
+  const active = actions.busyActionForTarget(id)
+  return SHOP_ACTIONS.map((a) => ({
+    ...a,
+    busy: active === a.key,
+    disabled: Boolean(active && active !== a.key),
+  }))
+}
+
+function connectionBusyLabel(id: string) {
+  const a = actions.busyActionForTarget(id)
+  return a ? actions.labelOf(a, id) : commerceActionRunningLabel('sync')
+}
+
+function shopBusyLabel(id: string) {
+  const a = actions.busyActionForTarget(id)
+  return a ? actions.labelOf(a, id) : commerceActionRunningLabel('sync')
+}
+
+function watchQueuedJob(opts: {
+  jobId: string
+  action: string
+  targetId: string
+  successLabel: string
+}) {
+  actions.markQueued(opts.action, opts.targetId, opts.jobId)
+  emit('notice', `Dalam antrean (job ${opts.jobId}).`)
+  jobWatch.watch({
+    jobId: opts.jobId,
+    action: opts.action,
+    targetId: opts.targetId,
+    onUpdate: (row) => {
+      const phase = actions.applyJobStatus(opts.action, opts.targetId, row.status)
+      if (phase === 'processing') {
+        emit('notice', `Sedang diproses (job ${opts.jobId}).`)
+      } else if (phase === 'done' || isTerminalJobStatus(row.status)) {
+        if (String(row.status).toUpperCase() === 'DONE' || String(row.status).toUpperCase() === 'SUCCEEDED') {
+          emit('notice', `${opts.successLabel} (job ${opts.jobId}).`)
+        } else if (String(row.status).toUpperCase() === 'DEAD' || String(row.status).toUpperCase() === 'FAILED') {
+          emit('error', row.lastError || `Job ${opts.jobId} gagal`)
+        } else if (String(row.status).toUpperCase() === 'AMBIGUOUS') {
+          emit('error', `Job ${opts.jobId} ambigu — cek status di Sinkronisasi`)
+        }
+        void reload()
+      }
+    },
+  })
 }
 
 /**
@@ -198,6 +299,7 @@ async function reload() {
     error.value = 'Active Company belum dipilih'
     return
   }
+  const gen = actions.bumpRequestGen()
   loading.value = true
   error.value = ''
   try {
@@ -210,6 +312,7 @@ async function reload() {
       fetchJson(`${$api.commerceConnections()}?${qs}`),
       fetchJson(`${$api.commerceShops()}?${qs}`),
     ])
+    if (!actions.isCurrentGen(gen)) return
     const connRows = (connJson.data || []) as CommerceConnectionRow[]
     connections.value = connRows
 
@@ -234,98 +337,140 @@ async function reload() {
         }
       })
   } catch (e: any) {
+    if (!actions.isCurrentGen(gen)) return
     error.value = e?.message || 'Gagal memuat toko terhubung'
     connections.value = []
     shops.value = []
   } finally {
-    loading.value = false
+    if (actions.isCurrentGen(gen)) loading.value = false
   }
 }
 
 async function onConnectionAction(key: string, id: string) {
-  busyConnectionId.value = id
-  try {
-    if (key === 'test') {
-      const json = await fetchJson($api.commerceConnectionTest(id), { method: 'POST' })
-      emit(
-        'notice',
-        `Probe ${json.data?.probeStatus} · shops=${json.data?.shopCount ?? 0}`
-      )
-    } else if (key === 'sync-shops') {
-      const json = await fetchJson($api.commerceConnectionSyncShops(id), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
-      })
-      emit(
-        'notice',
-        json.data?.queued
-          ? `Sync shop diantrekan (job ${json.data.jobId}).`
-          : 'Shop disinkronkan.'
-      )
-    }
-    await reload()
-  } catch (e: any) {
-    emit('error', e?.message || 'Aksi koneksi gagal')
-  } finally {
-    busyConnectionId.value = null
-  }
+  if (actions.isTargetBusy(id)) return
+  let enqueued = false
+  await actions
+    .run(
+      key,
+      id,
+      async () => {
+        if (key === 'test') {
+          const json = await fetchJson($api.commerceConnectionTest(id), { method: 'POST' })
+          emit(
+            'notice',
+            `Probe ${json.data?.probeStatus} · shops=${json.data?.shopCount ?? 0}`
+          )
+          await reload()
+          return
+        }
+        if (key === 'sync-shops') {
+          const json = await fetchJson($api.commerceConnectionSyncShops(id), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({}),
+          })
+          if (json.data?.queued && json.data?.jobId) {
+            enqueued = true
+            watchQueuedJob({
+              jobId: String(json.data.jobId),
+              action: key,
+              targetId: id,
+              successLabel: 'Sync shop selesai',
+            })
+            return
+          }
+          emit('notice', 'Shop disinkronkan.')
+          await reload()
+        }
+      },
+      { keepBusyUntilClear: true }
+    )
+    .catch((e: any) => {
+      emit('error', e?.message || 'Aksi koneksi gagal')
+    })
+  if (!enqueued) actions.clear(actions.key(key, id))
 }
 
 async function onShopAction(key: string, shop: CommerceShopRow) {
   if (!shop.connectionId) return
-  busyShopId.value = shop.id
-  try {
-    if (key === 'sync-products') {
-      const json = await fetchJson($api.commerceConnectionSyncProducts(shop.connectionId), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ shopId: shop.id }),
-      })
-      emit(
-        'notice',
-        json.data?.queued
-          ? `Sync produk diantrekan (job ${json.data.jobId}).`
-          : `Produk: ${json.data?.imported ?? 0} baris`
-      )
-    } else if (key === 'sync-orders') {
-      const json = await fetchJson($api.commerceConnectionSyncOrders(shop.connectionId), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ shopId: shop.id, days: 7 }),
-      })
-      emit(
-        'notice',
-        json.data?.queued
-          ? `Sync order diantrekan (job ${json.data.jobId}).`
-          : `Order: ${json.data?.imported ?? 0} diimpor`
-      )
-    } else if (key === 'sync-returns') {
-      const json = await fetchJson($api.commerceConnectionSyncReturns(shop.connectionId), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ shopId: shop.id, days: 7 }),
-      })
-      emit(
-        'notice',
-        json.data?.queued
-          ? `Sync aftersales diantrekan (job ${json.data.jobId}).`
-          : `Aftersales: ${json.data?.imported ?? 0} diimpor (tanpa restock)`
-      )
-    }
-    await reload()
-  } catch (e: any) {
-    emit('error', e?.message || 'Aksi shop gagal')
-  } finally {
-    busyShopId.value = null
-  }
+  if (actions.isTargetBusy(shop.id)) return
+  let enqueued = false
+  await actions
+    .run(
+      key,
+      shop.id,
+      async () => {
+        let json: any
+        if (key === 'sync-products') {
+          json = await fetchJson($api.commerceConnectionSyncProducts(shop.connectionId!), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ shopId: shop.id }),
+          })
+          if (json.data?.queued && json.data?.jobId) {
+            enqueued = true
+            watchQueuedJob({
+              jobId: String(json.data.jobId),
+              action: key,
+              targetId: shop.id,
+              successLabel: 'Sync produk selesai',
+            })
+            return
+          }
+          emit('notice', `Produk: ${json.data?.imported ?? 0} baris`)
+        } else if (key === 'sync-orders') {
+          json = await fetchJson($api.commerceConnectionSyncOrders(shop.connectionId!), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ shopId: shop.id, days: 7 }),
+          })
+          if (json.data?.queued && json.data?.jobId) {
+            enqueued = true
+            watchQueuedJob({
+              jobId: String(json.data.jobId),
+              action: key,
+              targetId: shop.id,
+              successLabel: 'Sync order selesai',
+            })
+            return
+          }
+          emit('notice', `Order: ${json.data?.imported ?? 0} diimpor`)
+        } else if (key === 'sync-returns') {
+          json = await fetchJson($api.commerceConnectionSyncReturns(shop.connectionId!), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ shopId: shop.id, days: 7 }),
+          })
+          if (json.data?.queued && json.data?.jobId) {
+            enqueued = true
+            watchQueuedJob({
+              jobId: String(json.data.jobId),
+              action: key,
+              targetId: shop.id,
+              successLabel: 'Sync aftersales selesai',
+            })
+            return
+          }
+          emit('notice', `Aftersales: ${json.data?.imported ?? 0} diimpor (tanpa restock)`)
+        }
+        await reload()
+      },
+      { keepBusyUntilClear: true }
+    )
+    .catch((e: any) => {
+      emit('error', e?.message || 'Aksi shop gagal')
+    })
+  if (!enqueued) actions.clear(actions.key(key, shop.id))
 }
 
 watch(companyId, () => {
-  if (enabled.value) reload()
+  actions.clearAll()
+  jobWatch.clear()
+  actions.bumpRequestGen()
+  if (enabled.value) void reload()
 })
 onMounted(() => {
-  if (enabled.value) reload()
+  if (enabled.value) void reload()
 })
 
 defineExpose({ reload })

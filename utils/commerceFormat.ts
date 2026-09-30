@@ -113,6 +113,9 @@ const SUCCESS = new Set([
   'MAPPED',
   'SUCCESS',
   'DONE',
+  'PUBLISHED',
+  'VALIDATED',
+  'READY',
 ])
 const DANGER = new Set([
   'DISCONNECTED',
@@ -129,6 +132,7 @@ const DANGER = new Set([
   'API_ERROR',
   'CONFIG_MISSING',
   'DEAD',
+  'AMBIGUOUS',
 ])
 const SECONDARY = new Set([
   'DRAFT',
@@ -141,6 +145,9 @@ const SECONDARY = new Set([
   'ON_HOLD',
   'INACTIVE',
   'PROCESSING',
+  'PUBLISHING',
+  'UPDATE_PENDING',
+  'REVIEWING',
 ])
 
 /** Unified badge class for shop / product / probe / order statuses (Vuexy bg-label-*). */

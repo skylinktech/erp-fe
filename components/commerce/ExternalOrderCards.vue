@@ -207,7 +207,8 @@
 
         <ExternalOrderCardFooter
           :actions="o.actions"
-          :busy="busy"
+          :busy="Boolean(busy) || busyOrderId === o.id"
+          :busy-action="busyOrderId === o.id ? busyAction : null"
           @open-detail="emit('open-detail', o)"
           @action="(key) => emit('action', { key, order: o })"
         />
@@ -245,13 +246,19 @@ const emit = defineEmits<{
 const props = withDefaults(
   defineProps<{
     orders: any[]
+    /** Global busy (e.g. bulk) — disables selection across cards */
     busy?: boolean
+    /** Per-order action loading */
+    busyOrderId?: string | null
+    busyAction?: string | null
     selectable?: boolean
     selectedIds?: string[]
     bulkMax?: number
   }>(),
   {
     busy: false,
+    busyOrderId: null,
+    busyAction: null,
     selectable: false,
     selectedIds: () => [],
     bulkMax: COMMERCE_BULK_ARRANGE_MAX,
@@ -259,6 +266,8 @@ const props = withDefaults(
 )
 
 const busy = computed(() => Boolean(props.busy))
+const busyOrderId = computed(() => props.busyOrderId || null)
+const busyAction = computed(() => props.busyAction || null)
 const empty = computed(() => !props.orders?.length)
 const bulkMax = computed(() =>
   Math.max(1, Math.min(COMMERCE_BULK_ARRANGE_MAX, Number(props.bulkMax) || COMMERCE_BULK_ARRANGE_MAX))

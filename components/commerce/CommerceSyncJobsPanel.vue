@@ -12,14 +12,12 @@
           <template v-else>Antrian worker commerce (cache SkyFlow)</template>
         </p>
       </div>
-      <button
-        type="button"
-        class="btn btn-outline-secondary btn-sm"
-        :disabled="loading"
+      <CommerceActionButton
+        action="reload"
+        btn-class="btn btn-outline-secondary btn-sm"
+        :busy="loading"
         @click="reload"
-      >
-        Muat ulang
-      </button>
+      />
     </div>
     <div class="card-body mt-3">
       <div v-if="error" class="alert alert-warning small text-break mb-3">
@@ -29,6 +27,7 @@
       <div v-if="loading && !jobs.length" class="text-muted small">Memuat…</div>
       <div v-else-if="!jobs.length" class="text-muted small">Belum ada job sync.</div>
       <div v-else class="table-responsive">
+        <div v-if="loading" class="text-muted small mb-2" aria-live="polite">Memperbarui…</div>
         <table class="table table-sm mb-0">
           <thead>
             <tr>
@@ -69,6 +68,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useNuxtApp } from '#app'
 import { useActiveCompany } from '~/composables/useActiveCompany'
+import CommerceActionButton from '~/components/commerce/CommerceActionButton.vue'
 import { commerceStatusBadge, formatCommerceTs } from '~/utils/commerceFormat'
 import { readAccessToken } from '~/utils/authCookie'
 

@@ -5,15 +5,15 @@
     company-input-id="omni-settings-company"
   >
     <template #actions>
-      <button
+      <CommerceActionButton
         v-if="activeTab === 'toko'"
-        type="button"
-        class="btn btn-primary btn-sm"
-        :disabled="!tiktokReady || connecting || !companyId"
+        action="connect"
+        label="Connect TikTok Shop"
+        btn-class="btn btn-primary btn-sm"
+        :busy="connecting"
+        :disabled="!tiktokReady || !companyId"
         @click="connectTikTok"
-      >
-        {{ connecting ? 'Menyiapkan OAuth…' : 'Connect TikTok Shop' }}
-      </button>
+      />
     </template>
 
     <div v-if="notice" class="alert alert-success text-break mb-3">{{ notice }}</div>
@@ -79,6 +79,7 @@ import OmnichannelShell from '~/components/commerce/OmnichannelShell.vue'
 import CommerceConnectedShopsPanel from '~/components/commerce/CommerceConnectedShopsPanel.vue'
 import CommerceSyncJobsPanel from '~/components/commerce/CommerceSyncJobsPanel.vue'
 import CommerceAccountingPolicyPanel from '~/components/commerce/CommerceAccountingPolicyPanel.vue'
+import CommerceActionButton from '~/components/commerce/CommerceActionButton.vue'
 import WorkspaceTabs from '~/components/common/WorkspaceTabs.vue'
 import type { WorkspaceTab } from '~/types/workspaceTab'
 import { readAccessToken } from '~/utils/authCookie'

@@ -1,14 +1,12 @@
 <template>
   <OmnichannelShell title="Dashboard" subtitle="Dashboard Omnichannel SkyFlow">
     <template #actions>
-      <button
-        type="button"
-        class="btn btn-outline-secondary btn-sm"
-        :disabled="loading"
+      <CommerceActionButton
+        action="reload"
+        btn-class="btn btn-outline-secondary btn-sm"
+        :busy="loading"
         @click="load"
-      >
-        Muat ulang
-      </button>
+      />
     </template>
 
     <div v-if="fatalError" class="alert alert-danger text-break mb-3">
@@ -113,6 +111,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useNuxtApp } from '#app'
 import { useActiveCompany } from '~/composables/useActiveCompany'
 import OmnichannelShell from '~/components/commerce/OmnichannelShell.vue'
+import CommerceActionButton from '~/components/commerce/CommerceActionButton.vue'
 import CommerceSalesTrendCard from '~/components/commerce/CommerceSalesTrendCard.vue'
 import CommerceTopShopsCard from '~/components/commerce/CommerceTopShopsCard.vue'
 import CommerceTopProductsCard from '~/components/commerce/CommerceTopProductsCard.vue'

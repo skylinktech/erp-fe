@@ -176,24 +176,28 @@
               {{ detail.actions?.sellerCenterHint }}
             </p>
             <div class="d-flex flex-wrap gap-2">
-              <button
-                type="button"
-                class="btn btn-sm btn-primary"
-                :disabled="!detail.actions?.approveReject?.enabled || returnActionBusy"
+              <CommerceActionButton
+                action="approveReturn"
+                btn-class="btn btn-sm btn-primary"
+                :busy="actions.isBusy('approveReturn', detail.id)"
+                :disabled="
+                  !detail.actions?.approveReject?.enabled ||
+                  (actions.isTargetBusy(detail.id) && !actions.isBusy('approveReturn', detail.id))
+                "
                 :title="detail.actions?.approveReject?.reason || ''"
                 @click="approveReturn()"
-              >
-                Approve Return/Refund
-              </button>
-              <button
-                type="button"
-                class="btn btn-sm btn-outline-danger"
-                :disabled="!detail.actions?.approveReject?.enabled || returnActionBusy"
+              />
+              <CommerceActionButton
+                action="rejectReturn"
+                btn-class="btn btn-sm btn-outline-danger"
+                :busy="actions.isBusy('rejectReturn', detail.id)"
+                :disabled="
+                  !detail.actions?.approveReject?.enabled ||
+                  (actions.isTargetBusy(detail.id) && !actions.isBusy('rejectReturn', detail.id))
+                "
                 :title="detail.actions?.approveReject?.reason || ''"
                 @click="rejectReturn()"
-              >
-                Reject Return/Refund
-              </button>
+              />
             </div>
             <div v-if="returnActionMsg" class="small mt-2 text-break">{{ returnActionMsg }}</div>
             <div v-if="!detail.actions?.approveReject?.enabled" class="small text-muted mt-1">
@@ -210,10 +214,12 @@
 import { computed, ref, watch, onMounted } from 'vue'
 import { useNuxtApp, useRoute, useRouter } from '#app'
 import { useActiveCompany } from '~/composables/useActiveCompany'
+import { useCommerceActionBusy } from '~/composables/useCommerceActionBusy'
 import OmnichannelShell from '~/components/commerce/OmnichannelShell.vue'
 import ExternalReturnsPanel from '~/components/commerce/ExternalReturnsPanel.vue'
 import CommerceOrdersFilterCard from '~/components/commerce/CommerceOrdersFilterCard.vue'
 import CommerceListPagination from '~/components/commerce/CommerceListPagination.vue'
+import CommerceActionButton from '~/components/commerce/CommerceActionButton.vue'
 import WorkspaceTabs from '~/components/common/WorkspaceTabs.vue'
 import type { WorkspaceTab } from '~/types/workspaceTab'
 import { readAccessToken } from '~/utils/authCookie'
@@ -232,6 +238,7 @@ const { $api } = useNuxtApp() as any
 const route = useRoute()
 const router = useRouter()
 const { companyId } = useActiveCompany()
+const actions = useCommerceActionBusy({ companyId })
 
 const shops = ref<any[]>([])
 const rows = ref<any[]>([])
@@ -251,7 +258,6 @@ const meta = ref<any>(null)
 const loading = ref(false)
 const error = ref('')
 const detail = ref<any>(null)
-const returnActionBusy = ref(false)
 const returnActionMsg = ref('')
 
 const activeTypeTab = computed(() => caseType.value || 'all')
@@ -418,11 +424,13 @@ async function loadCounts() {
 
 async function reload() {
   if (!companyId.value) return
+  const gen = actions.bumpRequestGen()
   loading.value = true
   error.value = ''
   syncQuery()
   try {
     await loadCounts()
+    if (!actions.isCurrentGen(gen)) return
     const qs = new URLSearchParams({
       perusahaanId: String(companyId.value),
       page: String(page.value),
@@ -440,6 +448,7 @@ async function reload() {
       credentials: 'include',
     })
     const json = await res.json()
+    if (!actions.isCurrentGen(gen)) return
     if (!res.ok || json.success === false) {
       error.value = json.message || 'Gagal memuat pengembalian'
       return
@@ -447,9 +456,10 @@ async function reload() {
     rows.value = json.data || []
     meta.value = json.meta || null
   } catch (e: any) {
+    if (!actions.isCurrentGen(gen)) return
     error.value = e?.message || 'Gagal memuat pengembalian'
   } finally {
-    loading.value = false
+    if (actions.isCurrentGen(gen)) loading.value = false
   }
 }
 
@@ -475,27 +485,27 @@ async function approveReturn() {
     `Approve return/refund ${detail.value.externalReturnId} di TikTok?\nTidak ada restock otomatis di SkyFlow.`
   )
   if (!ok) return
-  returnActionBusy.value = true
   returnActionMsg.value = ''
-  try {
-    const res = await fetch($api.commerceExternalReturnApprove(detail.value.id), {
-      method: 'POST',
-      headers: { ...headers(), 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({
-        phase: 'REQUEST',
-        idempotencyKey: `ui-ret-approve-${detail.value.id}-${Date.now()}`,
-      }),
+  const id = detail.value.id
+  await actions
+    .run('approveReturn', id, async () => {
+      const res = await fetch($api.commerceExternalReturnApprove(id), {
+        method: 'POST',
+        headers: { ...headers(), 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          phase: 'REQUEST',
+          idempotencyKey: `ui-ret-approve-${id}-${Date.now()}`,
+        }),
+      })
+      const json = await res.json()
+      if (!res.ok || json.success === false) throw new Error(json.message || 'Approve gagal')
+      returnActionMsg.value = json.data?.note || json.message || 'Approve dikirim.'
+      await openDetail(id)
     })
-    const json = await res.json()
-    if (!res.ok || json.success === false) throw new Error(json.message || 'Approve gagal')
-    returnActionMsg.value = json.data?.note || json.message || 'Approve dikirim.'
-    await openDetail(detail.value.id)
-  } catch (e: any) {
-    returnActionMsg.value = e?.message || 'Approve gagal'
-  } finally {
-    returnActionBusy.value = false
-  }
+    .catch((e: any) => {
+      returnActionMsg.value = e?.message || 'Approve gagal'
+    })
 }
 
 async function rejectReturn() {
@@ -511,30 +521,32 @@ async function rejectReturn() {
   }
   const ok = window.confirm(`Reject ${detail.value.externalReturnId} di TikTok?`)
   if (!ok) return
-  returnActionBusy.value = true
   returnActionMsg.value = ''
-  try {
-    const res = await fetch($api.commerceExternalReturnReject(detail.value.id), {
-      method: 'POST',
-      headers: { ...headers(), 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({
-        rejectReason: reason.trim(),
-        idempotencyKey: `ui-ret-reject-${detail.value.id}-${Date.now()}`,
-      }),
+  const id = detail.value.id
+  await actions
+    .run('rejectReturn', id, async () => {
+      const res = await fetch($api.commerceExternalReturnReject(id), {
+        method: 'POST',
+        headers: { ...headers(), 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          rejectReason: reason.trim(),
+          idempotencyKey: `ui-ret-reject-${id}-${Date.now()}`,
+        }),
+      })
+      const json = await res.json()
+      if (!res.ok || json.success === false) throw new Error(json.message || 'Reject gagal')
+      returnActionMsg.value = json.message || 'Reject dikirim.'
+      await openDetail(id)
     })
-    const json = await res.json()
-    if (!res.ok || json.success === false) throw new Error(json.message || 'Reject gagal')
-    returnActionMsg.value = json.message || 'Reject dikirim.'
-    await openDetail(detail.value.id)
-  } catch (e: any) {
-    returnActionMsg.value = e?.message || 'Reject gagal'
-  } finally {
-    returnActionBusy.value = false
-  }
+    .catch((e: any) => {
+      returnActionMsg.value = e?.message || 'Reject gagal'
+    })
 }
 
 watch(companyId, async () => {
+  actions.clearAll()
+  actions.bumpRequestGen()
   page.value = 1
   await loadShops()
   await reload()

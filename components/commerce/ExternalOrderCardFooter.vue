@@ -1,26 +1,26 @@
 <template>
   <div class="external-order-card-footer d-flex flex-wrap align-items-center gap-2 mt-3 pt-3 border-top">
-    <!-- Secondary actions -->
     <div class="d-flex flex-wrap align-items-center gap-2">
       <button
         type="button"
         class="btn btn-sm btn-outline-secondary"
+        :disabled="cardBusy"
         @click="emit('open-detail')"
       >
         <i class="ri-file-list-3-line me-1" aria-hidden="true" />
         Detail Pesanan
       </button>
 
-      <button
-        type="button"
-        class="btn btn-sm btn-outline-secondary"
-        :disabled="busy || !chat.enabled"
-        :title="busy ? 'Menunggu hasil aksi…' : chat.reason"
+      <CommerceActionButton
+        action="chatBuyer"
+        label="Chat Pembeli"
+        icon="ri-chat-3-line"
+        btn-class="btn btn-sm btn-outline-secondary"
+        :busy="isActionBusy('chatBuyer')"
+        :disabled="cardBusy || !chat.enabled"
+        :title="busyTitle(chat.reason)"
         @click="onAction('chatBuyer')"
-      >
-        <i class="ri-chat-3-line me-1 text-success" aria-hidden="true" />
-        Chat Pembeli
-      </button>
+      />
 
       <div class="dropdown">
         <button
@@ -29,29 +29,41 @@
           data-bs-toggle="dropdown"
           data-bs-popper-config='{"strategy":"fixed"}'
           title="Cetak dokumen"
+          :disabled="cardBusy"
           aria-expanded="false"
         >
-          <i class="ri-printer-line me-1" aria-hidden="true" />
-          Cetak
+          <span
+            v-if="printBusy"
+            class="spinner-border spinner-border-sm me-1"
+            role="status"
+            aria-hidden="true"
+          />
+          <i v-else class="ri-printer-line me-1" aria-hidden="true" />
+          {{ printBusy ? 'Memuat…' : 'Cetak' }}
         </button>
         <ul class="dropdown-menu">
           <li v-for="item in printMenu" :key="item.key">
             <button
               type="button"
               class="dropdown-item"
-              :disabled="busy || item.disabled"
-              :title="busy ? 'Menunggu hasil aksi…' : item.reason"
+              :disabled="cardBusy || item.disabled"
+              :title="busyTitle(item.reason)"
               @click="onAction(item.key)"
             >
-              <i v-if="item.icon" :class="item.icon" class="me-2" aria-hidden="true" />
-              {{ item.label }}
+              <span
+                v-if="isActionBusy(item.key)"
+                class="spinner-border spinner-border-sm me-2"
+                role="status"
+                aria-hidden="true"
+              />
+              <i v-else-if="item.icon" :class="item.icon" class="me-2" aria-hidden="true" />
+              {{ isActionBusy(item.key) ? 'Memuat…' : item.label }}
             </button>
           </li>
         </ul>
       </div>
     </div>
 
-    <!-- Document workflow trail (Desty-style) -->
     <nav
       class="order-doc-trail d-none d-md-flex flex-wrap align-items-center gap-1 flex-grow-1 justify-content-md-center"
       aria-label="Dokumen fulfillment"
@@ -60,11 +72,18 @@
         <button
           type="button"
           class="btn btn-sm btn-label-secondary rounded-pill px-3"
-          :disabled="busy || !step.enabled"
-          :title="busy ? 'Menunggu hasil aksi…' : step.reason"
+          :disabled="cardBusy || !step.enabled"
+          :aria-busy="isActionBusy(step.key) ? 'true' : 'false'"
+          :title="busyTitle(step.reason)"
           @click="onAction(step.key)"
         >
-          {{ step.label }}
+          <span
+            v-if="isActionBusy(step.key)"
+            class="spinner-border spinner-border-sm me-1"
+            role="status"
+            aria-hidden="true"
+          />
+          {{ isActionBusy(step.key) ? 'Memproses…' : step.label }}
         </button>
         <span
           v-if="idx < docSteps.length - 1"
@@ -74,7 +93,6 @@
       </template>
     </nav>
 
-    <!-- Primary + more -->
     <div class="d-flex flex-wrap align-items-center gap-2 ms-md-auto">
       <div class="dropdown">
         <button
@@ -83,9 +101,16 @@
           data-bs-toggle="dropdown"
           data-bs-popper-config='{"strategy":"fixed"}'
           aria-label="Aksi lainnya"
+          :disabled="cardBusy"
           aria-expanded="false"
         >
-          <i class="ri-more-fill" aria-hidden="true" />
+          <span
+            v-if="moreBusy"
+            class="spinner-border spinner-border-sm"
+            role="status"
+            aria-hidden="true"
+          />
+          <i v-else class="ri-more-fill" aria-hidden="true" />
         </button>
         <ul class="dropdown-menu dropdown-menu-end">
           <li v-for="item in moreMenu" :key="item.key">
@@ -93,41 +118,48 @@
               type="button"
               class="dropdown-item"
               :class="{ 'text-danger': item.danger }"
-              :disabled="busy || item.disabled"
-              :title="busy ? 'Menunggu hasil aksi…' : item.reason"
+              :disabled="cardBusy || item.disabled"
+              :title="busyTitle(item.reason)"
               @click="onAction(item.key)"
             >
-              {{ item.label }}
+              <span
+                v-if="isActionBusy(item.key)"
+                class="spinner-border spinner-border-sm me-2"
+                role="status"
+                aria-hidden="true"
+              />
+              {{ isActionBusy(item.key) ? 'Memproses…' : item.label }}
             </button>
           </li>
         </ul>
       </div>
 
-      <button
+      <CommerceActionButton
         v-if="confirm.enabled"
-        type="button"
-        class="btn btn-sm btn-success"
-        :disabled="busy || !confirm.enabled"
-        :title="busy ? 'Menunggu hasil aksi…' : confirm.reason"
+        action="confirmHandover"
+        label="Serah Kurir"
+        btn-class="btn btn-sm btn-success"
+        :busy="isActionBusy('confirmHandover')"
+        :disabled="cardBusy && !isActionBusy('confirmHandover') || !confirm.enabled"
+        :title="busyTitle(confirm.reason)"
         @click="onAction('confirmHandover')"
-      >
-        Serah Kurir
-      </button>
-      <button
-        type="button"
-        class="btn btn-sm btn-primary"
-        :disabled="busy || !arrange.enabled"
-        :title="busy ? 'Menunggu hasil aksi…' : arrange.reason"
+      />
+      <CommerceActionButton
+        action="arrangeShipment"
+        label="Atur Pengiriman"
+        btn-class="btn btn-sm btn-primary"
+        :busy="isActionBusy('arrangeShipment')"
+        :disabled="cardBusy && !isActionBusy('arrangeShipment') || !arrange.enabled"
+        :title="busyTitle(arrange.reason)"
         @click="onAction('arrangeShipment')"
-      >
-        Atur Pengiriman
-      </button>
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import CommerceActionButton from '~/components/commerce/CommerceActionButton.vue'
 import {
   resolveArrangeShipment,
   resolveChatBuyer,
@@ -140,7 +172,10 @@ import {
 
 const props = defineProps<{
   actions?: CommerceOrderActionsMap | null
+  /** True when any action on this order is in-flight */
   busy?: boolean
+  /** Specific action key currently loading on this card */
+  busyAction?: string | null
 }>()
 
 const emit = defineEmits<{
@@ -148,7 +183,8 @@ const emit = defineEmits<{
   action: [key: string]
 }>()
 
-const busy = computed(() => Boolean(props.busy))
+const cardBusy = computed(() => Boolean(props.busy))
+const busyAction = computed(() => props.busyAction || null)
 const chat = computed(() => resolveChatBuyer(props.actions))
 const arrange = computed(() => resolveArrangeShipment(props.actions))
 const confirm = computed(() => resolveConfirmHandover(props.actions))
@@ -156,8 +192,27 @@ const docSteps = computed(() => resolveOrderDocumentSteps(props.actions))
 const printMenu = computed(() => resolveOrderPrintMenu(props.actions))
 const moreMenu = computed(() => resolveOrderMoreMenu(props.actions))
 
+const PRINT_KEYS = new Set([
+  'printShippingLabel',
+  'printPickingList',
+  'printPackingList',
+])
+
+const printBusy = computed(() => Boolean(busyAction.value && PRINT_KEYS.has(busyAction.value)))
+const moreBusy = computed(() =>
+  Boolean(busyAction.value && moreMenu.value.some((m) => m.key === busyAction.value))
+)
+
+function isActionBusy(action: string) {
+  return busyAction.value === action
+}
+
+function busyTitle(reason?: string) {
+  return cardBusy.value ? 'Menunggu hasil aksi…' : reason
+}
+
 function onAction(key: string) {
-  if (busy.value) return
+  if (cardBusy.value) return
   emit('action', key)
 }
 </script>

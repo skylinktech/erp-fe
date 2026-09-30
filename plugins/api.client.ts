@@ -1042,6 +1042,17 @@ export default defineNuxtPlugin(() => {
     commerceConnectionSyncReturns: (id: string) => `${apiBase}/commerce/connections/${id}/sync-returns`,
     commerceShops: () => `${apiBase}/commerce/shops`,
     commerceListings: () => `${apiBase}/commerce/listings`,
+    commerceListingDrafts: () => `${apiBase}/commerce/listing-drafts`,
+    commerceListingDraft: (id: string) => `${apiBase}/commerce/listing-drafts/${id}`,
+    commerceListingDraftValidate: (id: string) => `${apiBase}/commerce/listing-drafts/${id}/validate`,
+    commerceListingDraftPreview: (id: string) => `${apiBase}/commerce/listing-drafts/${id}/preview`,
+    commerceListingDraftPublish: (id: string) => `${apiBase}/commerce/listing-drafts/${id}/publish`,
+    commerceListingDraftReconcile: (id: string) => `${apiBase}/commerce/listing-drafts/${id}/reconcile`,
+    commerceListingDraftRefreshStatus: (id: string) =>
+      `${apiBase}/commerce/listing-drafts/${id}/refresh-status`,
+    commerceListingCategories: () => `${apiBase}/commerce/listing-categories`,
+    commerceListingCategoryRules: (categoryId: string) =>
+      `${apiBase}/commerce/listing-categories/${categoryId}/rules`,
     commerceShopWarehouses: (shopId: string) => `${apiBase}/commerce/shops/${shopId}/warehouses`,
     commerceShopSkuListings: (shopId: string) => `${apiBase}/commerce/shops/${shopId}/sku-listings`,
     commerceExternalOrders: () => `${apiBase}/commerce/external-orders`,

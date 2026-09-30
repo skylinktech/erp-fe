@@ -28,7 +28,8 @@
 
     <div v-if="actionMsg" class="alert alert-info small text-break mb-3">{{ actionMsg }}</div>
     <div v-if="error" class="alert alert-danger text-break mb-3">{{ error }}</div>
-    <div v-if="loading" class="text-muted small mb-2">Memuat…</div>
+    <div v-if="loading && orders.length" class="text-muted small mb-2" aria-live="polite">Memperbarui…</div>
+    <div v-else-if="loading" class="text-muted small mb-2">Memuat…</div>
 
     <div
       v-if="selectedIds.length || bulkResults"
@@ -45,30 +46,30 @@
             <button
               type="button"
               class="btn btn-sm btn-outline-secondary"
-              :disabled="!selectedIds.length || actionBusy"
+              :disabled="!selectedIds.length || actions.anyBusy.value"
               @click="selectedIds = []"
             >
               Bersihkan
             </button>
-            <button
-              type="button"
-              class="btn btn-sm btn-primary"
-              :disabled="!selectedIds.length || actionBusy"
+            <CommerceActionButton
+              action="bulkArrange"
+              label="Bulk Atur Pengiriman"
+              btn-class="btn btn-sm btn-primary"
+              :busy="actions.isBusy('bulkArrange', 'bulk')"
+              :disabled="!selectedIds.length || actions.anyBusy.value"
               :title="selectedIds.length ? 'Atur pengiriman untuk pilihan' : 'Pilih pesanan dulu'"
               @click="() => runBulkArrange()"
-            >
-              {{ actionBusy ? 'Memproses…' : 'Bulk Atur Pengiriman' }}
-            </button>
-            <button
+            />
+            <CommerceActionButton
               v-if="retryableBulkIds.length"
-              type="button"
-              class="btn btn-sm btn-warning"
-              :disabled="actionBusy"
-              title="Retry hanya item gagal/ambigu — sukses tidak diulang"
+              action="bulkArrange"
+              :label="`Retry gagal/ambigu (${retryableBulkIds.length})`"
+              btn-class="btn btn-sm btn-warning"
+              :busy="actions.isBusy('bulkArrange', 'bulk')"
+              :disabled="actions.anyBusy.value"
+              title="Retry hanya item gagal — AMBIGUOUS harus reconcile dulu"
               @click="retryFailedBulk"
-            >
-              Retry gagal/ambigu ({{ retryableBulkIds.length }})
-            </button>
+            />
           </div>
         </div>
 
@@ -120,14 +121,16 @@
       :page="page"
       :per-page="perPage"
       :meta="meta"
-      :disabled="loading || actionBusy"
+      :disabled="loading || actions.anyBusy.value"
       @update:page="onPageChange"
       @update:per-page="onPerPageChange"
     />
 
     <ExternalOrderCards
       :orders="orders"
-      :busy="actionBusy"
+      :busy="actions.isBusy('bulkArrange', 'bulk')"
+      :busy-order-id="busyOrderId"
+      :busy-action="busyOrderAction"
       selectable
       :selected-ids="selectedIds"
       @update:selected-ids="selectedIds = $event"
@@ -256,23 +259,24 @@
             </div>
 
             <div class="d-flex flex-wrap gap-2 mb-3">
-              <button
-                type="button"
-                class="btn btn-sm btn-outline-secondary"
-                :disabled="releaseBusy"
+              <CommerceActionButton
+                action="preview"
+                label="Cek Kelayakan Rilis"
+                busy-label="Memeriksa…"
+                btn-class="btn btn-sm btn-outline-secondary"
+                :busy="actions.isBusy('preview', detail.id)"
+                :disabled="actions.isTargetBusy(detail.id) && !actions.isBusy('preview', detail.id)"
                 @click="previewRelease(detail)"
-              >
-                {{ releaseBusy && releaseStep === 'preview' ? 'Memeriksa…' : 'Cek Kelayakan Rilis' }}
-              </button>
-              <button
+              />
+              <CommerceActionButton
                 v-if="releasePreview && !releasePreview.blockerCodes?.length"
-                type="button"
-                class="btn btn-sm btn-primary"
-                :disabled="releaseBusy"
+                action="release"
+                label="Konfirmasi Rilis"
+                btn-class="btn btn-sm btn-primary"
+                :busy="actions.isBusy('release', detail.id)"
+                :disabled="actions.isTargetBusy(detail.id) && !actions.isBusy('release', detail.id)"
                 @click="confirmRelease(detail)"
-              >
-                {{ releaseBusy && releaseStep === 'confirm' ? 'Memproses…' : 'Konfirmasi Rilis' }}
-              </button>
+              />
             </div>
 
             <h3 class="h6">Item</h3>
@@ -331,10 +335,12 @@
 import { computed, ref, watch, onMounted } from 'vue'
 import { useNuxtApp, useRoute, useRouter } from '#app'
 import { useActiveCompany } from '~/composables/useActiveCompany'
+import { useCommerceActionBusy } from '~/composables/useCommerceActionBusy'
 import OmnichannelShell from '~/components/commerce/OmnichannelShell.vue'
 import ExternalOrderCards from '~/components/commerce/ExternalOrderCards.vue'
 import CommerceOrdersFilterCard from '~/components/commerce/CommerceOrdersFilterCard.vue'
 import CommerceListPagination from '~/components/commerce/CommerceListPagination.vue'
+import CommerceActionButton from '~/components/commerce/CommerceActionButton.vue'
 import type { WorkspaceTab } from '~/types/workspaceTab'
 import { readAccessToken } from '~/utils/authCookie'
 import { aggregateCommerceLineItems, formatCommerceMoney, formatCommerceQty } from '~/utils/commerceFormat'
@@ -350,6 +356,7 @@ const { $api } = useNuxtApp() as any
 const route = useRoute()
 const router = useRouter()
 const { companyId } = useActiveCompany()
+const actions = useCommerceActionBusy({ companyId })
 
 const shops = ref<any[]>([])
 const orders = ref<any[]>([])
@@ -367,10 +374,22 @@ const meta = ref<any>(null)
 const loading = ref(false)
 const error = ref('')
 const actionMsg = ref('')
-const actionBusy = ref(false)
 const detail = ref<any>(null)
 const selectedIds = ref<string[]>([])
 const bulkResults = ref<any>(null)
+
+const busyOrderId = computed(() => {
+  const keys = Object.keys(actions.busyMap.value)
+  for (const k of keys) {
+    if (k.startsWith('bulkArrange:')) continue
+    const parts = k.split(':')
+    if (parts[1] && parts[1] !== '_') return parts[1]
+  }
+  return null
+})
+const busyOrderAction = computed(() =>
+  busyOrderId.value ? actions.busyActionForTarget(busyOrderId.value) : null
+)
 
 const retryableBulkIds = computed(() =>
   (bulkResults.value?.results || [])
@@ -519,11 +538,13 @@ async function loadCounts() {
 
 async function reload() {
   if (!companyId.value) return
+  const gen = actions.bumpRequestGen()
   loading.value = true
   error.value = ''
   syncQuery()
   try {
     await loadCounts()
+    if (!actions.isCurrentGen(gen)) return
     const qs = new URLSearchParams({
       perusahaanId: String(companyId.value),
       page: String(page.value),
@@ -541,6 +562,7 @@ async function reload() {
       credentials: 'include',
     })
     const json = await res.json()
+    if (!actions.isCurrentGen(gen)) return
     if (!res.ok || json.success === false) {
       error.value = json.message || 'Gagal memuat order'
       return
@@ -548,9 +570,10 @@ async function reload() {
     orders.value = json.data || []
     meta.value = json.meta || null
   } catch (e: any) {
+    if (!actions.isCurrentGen(gen)) return
     error.value = e?.message || 'Gagal memuat order'
   } finally {
-    loading.value = false
+    if (actions.isCurrentGen(gen)) loading.value = false
   }
 }
 
@@ -575,8 +598,6 @@ function blockerLabel(code: string) {
   return commerceReleaseBlockerLabel(code)
 }
 
-const releaseBusy = ref(false)
-const releaseStep = ref<'preview' | 'confirm' | null>(null)
 const releasePreview = ref<{ allowed: boolean; blockerCodes: string[]; reasons: string[] } | null>(null)
 const releaseError = ref('')
 
@@ -585,57 +606,52 @@ const releaseError = ref('')
  * Body: { execute?: boolean, idempotencyKey?: uuid }
  */
 async function previewRelease(order: any) {
-  if (releaseBusy.value) return
-  releaseBusy.value = true
-  releaseStep.value = 'preview'
+  if (!order?.id || actions.isTargetBusy(order.id)) return
   releaseError.value = ''
   releasePreview.value = null
-  try {
-    const json = await postJson($api.commerceExternalOrderRelease(order.id), { execute: false })
-    const gate = json.data?.gate || {}
-    releasePreview.value = {
-      allowed: Boolean(json.data?.allowed ?? gate.allowed),
-      blockerCodes: gate.blockerCodes || json.data?.blockerCodes || [],
-      reasons: gate.reasons || json.data?.reasons || [],
-    }
-  } catch (e: any) {
-    releaseError.value = e?.message || 'Pratinjau rilis gagal.'
-  } finally {
-    releaseBusy.value = false
-    releaseStep.value = null
-  }
+  await actions
+    .run('preview', order.id, async () => {
+      const json = await postJson($api.commerceExternalOrderRelease(order.id), { execute: false })
+      const gate = json.data?.gate || {}
+      releasePreview.value = {
+        allowed: Boolean(json.data?.allowed ?? gate.allowed),
+        blockerCodes: gate.blockerCodes || json.data?.blockerCodes || [],
+        reasons: gate.reasons || json.data?.reasons || [],
+      }
+    })
+    .catch((e: any) => {
+      releaseError.value = e?.message || 'Pratinjau rilis gagal.'
+    })
 }
 
 async function confirmRelease(order: any) {
-  if (releaseBusy.value || !releasePreview.value || releasePreview.value.blockerCodes.length) return
-  releaseBusy.value = true
-  releaseStep.value = 'confirm'
+  if (!order?.id || !releasePreview.value || releasePreview.value.blockerCodes.length) return
+  if (actions.isTargetBusy(order.id)) return
   releaseError.value = ''
-  try {
-    const idempotencyKey =
-      typeof crypto !== 'undefined' && crypto.randomUUID
-        ? crypto.randomUUID()
-        : `${Date.now()}-0000-4000-8000-${String(Math.floor(Math.random() * 1e12)).padStart(12, '0')}`
-    const json = await postJson($api.commerceExternalOrderRelease(order.id), {
-      execute: true,
-      idempotencyKey,
+  await actions
+    .run('release', order.id, async () => {
+      const idempotencyKey =
+        typeof crypto !== 'undefined' && crypto.randomUUID
+          ? crypto.randomUUID()
+          : `${Date.now()}-0000-4000-8000-${String(Math.floor(Math.random() * 1e12)).padStart(12, '0')}`
+      const json = await postJson($api.commerceExternalOrderRelease(order.id), {
+        execute: true,
+        idempotencyKey,
+      })
+      const accountingComplete = Boolean(json?.data?.accountingComplete)
+      const revenueStatus = json?.data?.revenue?.status
+      actionMsg.value = accountingComplete
+        ? `Rilis + accounting posted: ${order.externalOrderId}`
+        : `Rilis OK (RetailSale ${json?.data?.retailSaleId || 'terbentuk'}); accounting ${
+            revenueStatus || 'pending'
+          } — jangan anggap selesai penuh: ${order.externalOrderId}`
+      releasePreview.value = null
+      await reload()
+      if (detail.value?.id === order.id) detail.value = null
     })
-    const accountingComplete = Boolean(json?.data?.accountingComplete)
-    const revenueStatus = json?.data?.revenue?.status
-    actionMsg.value = accountingComplete
-      ? `Rilis + accounting posted: ${order.externalOrderId}`
-      : `Rilis OK (RetailSale ${json?.data?.retailSaleId || 'terbentuk'}); accounting ${
-          revenueStatus || 'pending'
-        } — jangan anggap selesai penuh: ${order.externalOrderId}`
-    releasePreview.value = null
-    await reload()
-    if (detail.value?.id === order.id) detail.value = null
-  } catch (e: any) {
-    releaseError.value = e?.message || 'Konfirmasi rilis gagal.'
-  } finally {
-    releaseBusy.value = false
-    releaseStep.value = null
-  }
+    .catch((e: any) => {
+      releaseError.value = e?.message || 'Konfirmasi rilis gagal.'
+    })
 }
 
 async function postJson(url: string, body?: Record<string, unknown>) {
@@ -661,38 +677,36 @@ async function postJson(url: string, body?: Record<string, unknown>) {
 
 async function runBulkArrange(ids?: string[]) {
   const orderIds = (ids || selectedIds.value).slice(0, COMMERCE_BULK_ARRANGE_MAX)
-  if (!orderIds.length || actionBusy.value) return
-  actionBusy.value = true
-  actionMsg.value = ''
-  error.value = ''
-  try {
-    const json = await postJson($api.commerceExternalOrderArrangeShipmentBulk(), {
-      orderIds,
-      handoverMethod: 'PICKUP',
-    })
-    bulkResults.value = json.data
-    const d = json.data || {}
-    if (d.allSucceeded) {
-      actionMsg.value = `Bulk arrange: ${d.success}/${d.total} sukses.`
-      selectedIds.value = []
-    } else {
-      error.value = `Bulk arrange selesai sebagian: ${d.success} sukses, ${d.ambiguous || 0} ambigu, ${d.failed} gagal. Cek tabel hasil — jangan anggap seluruh batch berhasil.`
-      // Keep only non-success selected for clarity
-      selectedIds.value = (d.results || [])
-        .filter((r: any) => r.status !== 'SUCCESS')
-        .map((r: any) => String(r.orderId))
+  if (!orderIds.length) return
+  await actions.run('bulkArrange', 'bulk', async () => {
+    actionMsg.value = ''
+    error.value = ''
+    try {
+      const json = await postJson($api.commerceExternalOrderArrangeShipmentBulk(), {
+        orderIds,
+        handoverMethod: 'PICKUP',
+      })
+      bulkResults.value = json.data
+      const d = json.data || {}
+      if (d.allSucceeded) {
+        actionMsg.value = `Bulk arrange: ${d.success}/${d.total} sukses.`
+        selectedIds.value = []
+      } else {
+        error.value = `Bulk arrange selesai sebagian: ${d.success} sukses, ${d.ambiguous || 0} ambigu, ${d.failed} gagal. Cek tabel hasil — jangan anggap seluruh batch berhasil.`
+        selectedIds.value = (d.results || [])
+          .filter((r: any) => r.status !== 'SUCCESS')
+          .map((r: any) => String(r.orderId))
+      }
+      await reload()
+    } catch (e: any) {
+      error.value = e?.message || 'Bulk arrange gagal'
+      throw e
     }
-    await reload()
-  } catch (e: any) {
-    error.value = e?.message || 'Bulk arrange gagal'
-  } finally {
-    actionBusy.value = false
-  }
+  })
 }
 
 async function retryFailedBulk() {
   if (!retryableBulkIds.value.length) return
-  // AMBIGUOUS should reconcile first — only auto-retry FAILED here; AMBIGUOUS stays listed with nextAction
   const failedOnly = (bulkResults.value?.results || [])
     .filter((r: any) => r.status === 'FAILED')
     .map((r: any) => String(r.orderId))
@@ -705,130 +719,132 @@ async function retryFailedBulk() {
 }
 
 async function onOrderAction(payload: { key: string; order: any }) {
-  if (actionBusy.value) return
   const { key, order } = payload
   if (!order?.id) return
-  actionBusy.value = true
-  actionMsg.value = ''
-  error.value = ''
-  try {
-    if (key === 'reserveStock') {
-      await postJson($api.commerceExternalOrderReserve(order.id))
-      actionMsg.value = `Reservasi stok OK untuk ${order.externalOrderId}`
-    } else if (key === 'markPicked') {
-      await postJson($api.commerceExternalOrderMarkPicked(order.id))
-      actionMsg.value = `Picking dicatat: ${order.externalOrderId}`
-    } else if (key === 'markPacked') {
-      await postJson($api.commerceExternalOrderMarkPacked(order.id))
-      actionMsg.value = `Packing dicatat: ${order.externalOrderId}`
-    } else if (key === 'printPickingList' || key === 'printPackingList') {
-      const kind = key === 'printPickingList' ? 'picking' : 'packing'
-      const url = $api.commerceFulfillmentPrintDoc(order.id, kind)
-      window.open(url, '_blank', 'noopener')
-      actionMsg.value = `${kind} list dibuka di tab cetak.`
-      return
-    } else if (key === 'confirmHandover') {
-      const res = await postJson($api.commerceExternalOrderConfirmHandover(order.id))
-      const acct = res?.data?.accounting || res?.accounting
-      actionMsg.value = acct?.allPosted
-        ? `Serah kurir + stok + accounting OK: ${order.externalOrderId}`
-        : `Serah kurir + stok OK; accounting pending — gunakan Retry Accounting bila perlu: ${order.externalOrderId}`
-    } else if (key === 'retryAccounting') {
-      const res = await postJson($api.commerceExternalOrderRetryAccounting(order.id))
-      const allPosted = res?.data?.allPosted ?? res?.allPosted
-      actionMsg.value = allPosted
-        ? `Retry accounting posted: ${order.externalOrderId}`
-        : `Retry accounting dijalankan (cek status pending): ${order.externalOrderId}`
-    } else if (key === 'cancelFulfillOps') {
-      const mpActive = String(order.normalizedStatus || '') !== 'CANCELLED'
-      if (mpActive) {
-        const ok = window.confirm(
-          `Lepas reservation lokal untuk ${order.externalOrderId}?\n\nIni BUKAN pembatalan TikTok. Order marketplace masih aktif. Lanjutkan hanya jika Anda sengaja melepas stok lokal (confirmLocalOnly).`
-        )
-        if (!ok) {
-          actionMsg.value = 'Dibatalkan — reservation tidak diubah.'
+  if (actions.isTargetBusy(order.id) || actions.isBusy('bulkArrange', 'bulk')) return
+
+  await actions.run(key, order.id, async () => {
+    actionMsg.value = ''
+    error.value = ''
+    try {
+      if (key === 'reserveStock') {
+        await postJson($api.commerceExternalOrderReserve(order.id))
+        actionMsg.value = `Reservasi stok OK untuk ${order.externalOrderId}`
+      } else if (key === 'markPicked') {
+        await postJson($api.commerceExternalOrderMarkPicked(order.id))
+        actionMsg.value = `Picking dicatat: ${order.externalOrderId}`
+      } else if (key === 'markPacked') {
+        await postJson($api.commerceExternalOrderMarkPacked(order.id))
+        actionMsg.value = `Packing dicatat: ${order.externalOrderId}`
+      } else if (key === 'printPickingList' || key === 'printPackingList') {
+        const kind = key === 'printPickingList' ? 'picking' : 'packing'
+        const url = $api.commerceFulfillmentPrintDoc(order.id, kind)
+        window.open(url, '_blank', 'noopener')
+        actionMsg.value = `${kind} list dibuka di tab cetak.`
+        return
+      } else if (key === 'confirmHandover') {
+        const res = await postJson($api.commerceExternalOrderConfirmHandover(order.id))
+        const acct = res?.data?.accounting || res?.accounting
+        actionMsg.value = acct?.allPosted
+          ? `Serah kurir + stok + accounting OK: ${order.externalOrderId}`
+          : `Serah kurir + stok OK; accounting pending — gunakan Retry Accounting bila perlu: ${order.externalOrderId}`
+      } else if (key === 'retryAccounting') {
+        const res = await postJson($api.commerceExternalOrderRetryAccounting(order.id))
+        const allPosted = res?.data?.allPosted ?? res?.allPosted
+        actionMsg.value = allPosted
+          ? `Retry accounting posted: ${order.externalOrderId}`
+          : `Retry accounting dijalankan (cek status pending): ${order.externalOrderId}`
+      } else if (key === 'cancelFulfillOps') {
+        const mpActive = String(order.normalizedStatus || '') !== 'CANCELLED'
+        if (mpActive) {
+          const ok = window.confirm(
+            `Lepas reservation lokal untuk ${order.externalOrderId}?\n\nIni BUKAN pembatalan TikTok. Order marketplace masih aktif. Lanjutkan hanya jika Anda sengaja melepas stok lokal (confirmLocalOnly).`
+          )
+          if (!ok) {
+            actionMsg.value = 'Dibatalkan — reservation tidak diubah.'
+            return
+          }
+        }
+        await postJson($api.commerceExternalOrderReleaseReservation(order.id), {
+          reason: 'cancel_before_handover_ui',
+          confirmLocalOnly: mpActive,
+        })
+        actionMsg.value = `Ops lokal dibatalkan / reservasi dilepas: ${order.externalOrderId}`
+      } else if (key === 'cancelOrder') {
+        const reason =
+          window.prompt(
+            'Alasan seller cancel TikTok (kunci resmi).\nContoh: seller_cancel_reason_out_of_stock',
+            'seller_cancel_reason_out_of_stock'
+          ) || ''
+        if (!reason.trim()) {
+          actionMsg.value = 'Seller cancel dibatalkan — alasan wajib.'
           return
         }
-      }
-      await postJson($api.commerceExternalOrderReleaseReservation(order.id), {
-        reason: 'cancel_before_handover_ui',
-        confirmLocalOnly: mpActive,
-      })
-      actionMsg.value = `Ops lokal dibatalkan / reservasi dilepas: ${order.externalOrderId}`
-    } else if (key === 'cancelOrder') {
-      const reason =
-        window.prompt(
-          'Alasan seller cancel TikTok (kunci resmi).\nContoh: seller_cancel_reason_out_of_stock',
-          'seller_cancel_reason_out_of_stock'
-        ) || ''
-      if (!reason.trim()) {
-        actionMsg.value = 'Seller cancel dibatalkan — alasan wajib.'
-        return
-      }
-      const ok = window.confirm(
-        `Kirim seller cancel ke TikTok untuk ${order.externalOrderId}?\nAlasan: ${reason}\nReservation lokal hanya dilepas setelah status CANCELLED terverifikasi.`
-      )
-      if (!ok) return
-      const res = await postJson($api.commerceExternalOrderSellerCancel(order.id), {
-        cancelReason: reason.trim(),
-        idempotencyKey: `ui-cancel-${order.id}-${Date.now()}`,
-      })
-      actionMsg.value =
-        res?.data?.note ||
-        res?.message ||
-        `Seller cancel dikirim: ${order.externalOrderId} (${res?.data?.normalizedStatus || ''})`
-    } else if (key === 'printShippingLabel') {
-      const res = await fetch($api.commerceExternalOrderShippingLabel(order.id), {
-        headers: headers(),
-        credentials: 'include',
-      })
-      const json = await res.json()
-      if (!res.ok || json.success === false) throw new Error(json.message || 'Gagal ambil label')
-      const docUrl = json.data?.docUrl
-      if (docUrl) window.open(docUrl, '_blank', 'noopener')
-      else actionMsg.value = 'Label berhasil dipanggil tetapi docUrl kosong dari platform.'
-      if (docUrl) actionMsg.value = `Label dibuka untuk ${order.externalOrderId}`
-    } else if (key === 'arrangeShipment') {
-      // Prefer first available pickup slot when present
-      let pickupSlot: { startTime: number; endTime: number } | null = null
-      let handoverMethod: string = 'PICKUP'
-      try {
-        const slotRes = await fetch($api.commerceExternalOrderHandoverSlots(order.id), {
+        const ok = window.confirm(
+          `Kirim seller cancel ke TikTok untuk ${order.externalOrderId}?\nAlasan: ${reason}\nReservation lokal hanya dilepas setelah status CANCELLED terverifikasi.`
+        )
+        if (!ok) return
+        const res = await postJson($api.commerceExternalOrderSellerCancel(order.id), {
+          cancelReason: reason.trim(),
+          idempotencyKey: `ui-cancel-${order.id}-${Date.now()}`,
+        })
+        actionMsg.value =
+          res?.data?.note ||
+          res?.message ||
+          `Seller cancel dikirim: ${order.externalOrderId} (${res?.data?.normalizedStatus || ''})`
+      } else if (key === 'printShippingLabel') {
+        const res = await fetch($api.commerceExternalOrderShippingLabel(order.id), {
           headers: headers(),
           credentials: 'include',
         })
-        const slotJson = await slotRes.json()
-        if (slotRes.ok && slotJson.success !== false) {
-          const slots = slotJson.data?.pickupSlots || []
-          const available = slots.find((s: any) => s.available !== false) || slots[0]
-          if (available) {
-            pickupSlot = { startTime: Number(available.startTime), endTime: Number(available.endTime) }
+        const json = await res.json()
+        if (!res.ok || json.success === false) throw new Error(json.message || 'Gagal ambil label')
+        const docUrl = json.data?.docUrl
+        if (docUrl) window.open(docUrl, '_blank', 'noopener')
+        else actionMsg.value = 'Label berhasil dipanggil tetapi docUrl kosong dari platform.'
+        if (docUrl) actionMsg.value = `Label dibuka untuk ${order.externalOrderId}`
+      } else if (key === 'arrangeShipment') {
+        let pickupSlot: { startTime: number; endTime: number } | null = null
+        let handoverMethod: string = 'PICKUP'
+        try {
+          const slotRes = await fetch($api.commerceExternalOrderHandoverSlots(order.id), {
+            headers: headers(),
+            credentials: 'include',
+          })
+          const slotJson = await slotRes.json()
+          if (slotRes.ok && slotJson.success !== false) {
+            const slots = slotJson.data?.pickupSlots || []
+            const available = slots.find((s: any) => s.available !== false) || slots[0]
+            if (available) {
+              pickupSlot = { startTime: Number(available.startTime), endTime: Number(available.endTime) }
+            }
+            const methods = slotJson.data?.handoverMethods || []
+            if (methods.includes('PICKUP')) handoverMethod = 'PICKUP'
+            else if (methods[0]) handoverMethod = methods[0]
           }
-          const methods = slotJson.data?.handoverMethods || []
-          if (methods.includes('PICKUP')) handoverMethod = 'PICKUP'
-          else if (methods[0]) handoverMethod = methods[0]
+        } catch {
+          /* continue with PICKUP default */
         }
-      } catch {
-        /* continue with PICKUP default — platform may not require slots */
+        await postJson($api.commerceExternalOrderArrangeShipment(order.id), {
+          handoverMethod,
+          ...(pickupSlot ? { pickupSlot } : {}),
+          packageId: order.packageIds?.[0] || order.fulfillOpsMeta?.lastShipPackageId || null,
+        })
+        actionMsg.value = `Atur pengiriman OK (stok belum keluar): ${order.externalOrderId}`
+      } else {
+        actionMsg.value = `Aksi ${key} belum dihubungkan di UI.`
       }
-      await postJson($api.commerceExternalOrderArrangeShipment(order.id), {
-        handoverMethod,
-        ...(pickupSlot ? { pickupSlot } : {}),
-        packageId: order.packageIds?.[0] || order.fulfillOpsMeta?.lastShipPackageId || null,
-      })
-      actionMsg.value = `Atur pengiriman OK (stok belum keluar): ${order.externalOrderId}`
-    } else {
-      actionMsg.value = `Aksi ${key} belum dihubungkan di UI.`
+      await reload()
+    } catch (e: any) {
+      error.value = e?.message || 'Aksi gagal'
+      throw e
     }
-    await reload()
-  } catch (e: any) {
-    error.value = e?.message || 'Aksi gagal'
-  } finally {
-    actionBusy.value = false
-  }
+  })
 }
 
 watch(companyId, async () => {
+  actions.clearAll()
+  actions.bumpRequestGen()
   page.value = 1
   clearBulkSelection()
   bulkResults.value = null

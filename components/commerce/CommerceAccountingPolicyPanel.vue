@@ -13,7 +13,13 @@
           <span v-if="!configured" class="badge bg-label-warning">Belum dikonfigurasi</span>
           <span v-else class="badge bg-label-success">Aktif v{{ policyVersion }}</span>
           <button type="button" class="btn btn-outline-secondary btn-sm" :disabled="loading" @click="reload">
-            Muat ulang
+            <span
+              v-if="loading"
+              class="spinner-border spinner-border-sm me-1"
+              role="status"
+              aria-hidden="true"
+            />
+            {{ loading ? 'Memuat…' : 'Muat ulang' }}
           </button>
         </div>
       </div>
@@ -119,20 +125,14 @@
           </div>
 
           <div class="d-flex justify-content-end">
-            <button
-              type="button"
-              class="btn btn-primary"
-              :disabled="!canManage || saving || loading || !companyMode"
+            <CommerceActionButton
+              action="savePolicy"
+              :label="editShopId ? 'Simpan override toko' : 'Simpan default perusahaan'"
+              btn-class="btn btn-primary"
+              :busy="saving"
+              :disabled="!canManage || loading || !companyMode"
               @click="onSave"
-            >
-              <span
-                v-if="saving"
-                class="spinner-border spinner-border-sm me-1"
-                role="status"
-                aria-hidden="true"
-              />
-              {{ saving ? 'Menyimpan…' : editShopId ? 'Simpan override toko' : 'Simpan default perusahaan' }}
-            </button>
+            />
           </div>
         </template>
       </div>
@@ -146,6 +146,7 @@ import { useNuxtApp } from '#app'
 import { useActiveCompany } from '~/composables/useActiveCompany'
 import { usePermissions } from '~/composables/usePermissions'
 import { readAccessToken } from '~/utils/authCookie'
+import CommerceActionButton from '~/components/commerce/CommerceActionButton.vue'
 import type { CommerceAccountingPolicyMode } from '~/utils/commerceAccountingStatus'
 
 type ShopRow = { id: string; name: string; platformCode?: string; status?: string }

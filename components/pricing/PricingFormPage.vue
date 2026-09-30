@@ -139,7 +139,8 @@
                         </div>
                         <template v-else>
                           <div v-if="form.shopId" class="alert alert-success small mb-3">
-                            Shop saat ini: <strong>{{ form.shopName || `#${form.shopId}` }}</strong>
+                            Shop saat ini:
+                            <strong>{{ form.shopName || assignedShopFallbackName || `#${form.shopId}` }}</strong>
                           </div>
                           <div class="row g-2 align-items-end">
                             <div class="col-md-8">
@@ -215,6 +216,12 @@
                       <ProductSelect
                         v-model="line.productId"
                         :company-id="companyId"
+                        :per-page="100"
+                        :initial-option="
+                          line.productId
+                            ? { id: line.productId, name: line.productName, sku: line.productSku }
+                            : null
+                        "
                         :disabled="!isDraftEditable || !companyId"
                         @select="(product) => onProductSelect(index, product)"
                       />
@@ -342,6 +349,12 @@ const connectedShops = ref<Array<{ id: string; name: string; platformCode: strin
 const loadingShops = ref(false)
 const selectedShopId = ref('')
 
+const assignedShopFallbackName = computed(() => {
+  const id = form.value.shopId ? String(form.value.shopId) : ''
+  if (!id) return ''
+  return connectedShops.value.find((s) => String(s.id) === id)?.name || ''
+})
+
 async function loadConnectedShops() {
   if (!companyId.value) return
   loadingShops.value = true
@@ -357,6 +370,7 @@ async function loadConnectedShops() {
     connectedShops.value = res.ok
       ? (json.data || []).filter((s: any) => String(s.status || '').toUpperCase() === 'ACTIVE')
       : []
+    syncSelectedShopFromForm()
   } catch {
     connectedShops.value = []
   } finally {
@@ -364,10 +378,24 @@ async function loadConnectedShops() {
   }
 }
 
+function syncSelectedShopFromForm() {
+  const id = form.value.shopId ? String(form.value.shopId) : ''
+  selectedShopId.value = id
+  if (id && !form.value.shopName) {
+    const hit = connectedShops.value.find((s) => String(s.id) === id)
+    if (hit?.name) form.value.shopName = hit.name
+  }
+}
+
 async function onAssignShop() {
   if (!selectedShopId.value) return
-  const ok = await pricingStore.assignShop(selectedShopId.value, companyId.value)
-  if (ok) selectedShopId.value = ''
+  const shopId = selectedShopId.value
+  const localName = connectedShops.value.find((s) => String(s.id) === shopId)?.name || null
+  const ok = await pricingStore.assignShop(shopId, companyId.value)
+  if (!ok) return
+  // Keep dropdown on assigned shop (do not clear). Resolve name if API omitted it.
+  selectedShopId.value = String(form.value.shopId || shopId)
+  if (!form.value.shopName && localName) form.value.shopName = localName
 }
 
 const showDuplicateModal = ref(false)
@@ -525,6 +553,12 @@ onMounted(async () => {
   }
 })
 
+watch(
+  () => form.value.shopId,
+  () => {
+    syncSelectedShopFromForm()
+  }
+)
 watch(companyId, (nextId) => {
   if (!isEditMode.value) {
     form.value.perusahaanId = nextId

@@ -152,24 +152,20 @@
                 {{ opt.label }}
               </option>
             </select>
-            <button
-              type="button"
-              class="btn btn-sm btn-outline-secondary filter-action-btn"
-              :disabled="busy"
+            <CommerceActionButton
+              action="reset"
+              icon="ri-refresh-line"
+              btn-class="btn btn-sm btn-outline-secondary filter-action-btn"
+              :busy="busy"
               @click="emit('reset')"
-            >
-              <i class="ri-refresh-line" aria-hidden="true"></i>
-              <span>Reset</span>
-            </button>
-            <button
-              type="button"
-              class="btn btn-sm btn-outline-secondary filter-action-btn"
-              :disabled="busy"
+            />
+            <CommerceActionButton
+              action="filter"
+              icon="ri-filter-3-line"
+              btn-class="btn btn-sm btn-outline-secondary filter-action-btn"
+              :busy="busy"
               @click="emit('apply')"
-            >
-              <i class="ri-filter-3-line" aria-hidden="true"></i>
-              <span>Filter</span>
-            </button>
+            />
           </div>
         </div>
       </div>
@@ -182,6 +178,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import WorkspaceTabs from '~/components/common/WorkspaceTabs.vue'
+import CommerceActionButton from '~/components/commerce/CommerceActionButton.vue'
 import type { WorkspaceTab } from '~/types/workspaceTab'
 import {
   PESANAN_ARCHIVED_ACTION,

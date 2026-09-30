@@ -189,7 +189,7 @@ export const usePricingStore = defineStore('pricing', {
           status: data.status || null,
           lines,
           shopId: data.shopId ?? data.shop?.id ?? null,
-          shopName: data.shop?.name ?? null,
+          shopName: data.shop?.name ?? data.shopName ?? null,
         }
         this.isEditMode = true
         return true
