@@ -115,7 +115,7 @@ const reduceFn = (option: any) => {
 const passthroughFilter = () => true
 
 async function load(reset = false) {
-  if (props.disabled) return
+  // Disabled fields still need a fetch so edit forms can show the current label.
   if (reset) {
     page.value = 1
     options.value = []
@@ -131,13 +131,15 @@ async function load(reset = false) {
     if (reset) options.value = rows
     else options.value = [...options.value, ...rows]
     if (selectedCache.value) {
-      const id = reduceFn(selectedCache.value)
-      if (!options.value.some((row) => reduceFn(row) === id)) {
+      const id = String(reduceFn(selectedCache.value) ?? '')
+      if (id && !options.value.some((row) => String(reduceFn(row) ?? '') === id)) {
         options.value = [selectedCache.value, ...options.value]
       }
     }
   } catch {
-    if (reset) options.value = []
+    if (reset) {
+      options.value = selectedCache.value ? [selectedCache.value] : []
+    }
   } finally {
     loading.value = false
   }
@@ -172,7 +174,7 @@ function onClear() {
 watch(
   () => props.reloadKey,
   () => {
-    selectedCache.value = null
+    if (!props.disabled) selectedCache.value = null
     void load(true)
   }
 )

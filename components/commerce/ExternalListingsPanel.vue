@@ -18,11 +18,13 @@
           <tr>
             <th style="width: 3.5rem">Gambar</th>
             <th>Judul</th>
+            <th>Toko</th>
             <th>Seller SKU</th>
-            <th>Product ID</th>
+            <th>Produk SkyFlow</th>
             <th>Status</th>
-            <th>Mapped</th>
+            <th>Mapping</th>
             <th>Synced</th>
+            <th v-if="canMap" class="text-end">Aksi</th>
           </tr>
         </thead>
         <tbody>
@@ -51,20 +53,42 @@
                 </span>
               </div>
             </td>
-            <td class="text-break">{{ l.title || '—' }}</td>
-            <td class="font-monospace small">{{ l.sellerSku || '—' }}</td>
-            <td class="font-monospace small">{{ l.externalProductId }}</td>
+            <td class="text-break">
+              <div>{{ l.title || '—' }}</div>
+              <div class="small font-monospace text-muted text-break">{{ l.externalProductId }}</div>
+            </td>
+            <td class="text-break small">
+              <div>{{ l.shopName || '—' }}</div>
+              <div class="text-muted">{{ commercePlatformLabel(l.platformCode) }}</div>
+            </td>
+            <td class="font-monospace small text-break">{{ l.sellerSku || '—' }}</td>
+            <td class="text-break small">
+              <div v-if="l.mappedProductName">
+                {{ l.mappedProductName }}
+                <span v-if="l.mappedUnitName" class="text-muted"> · {{ l.mappedUnitName }}</span>
+              </div>
+              <div v-else class="text-muted">Belum terhubung</div>
+            </td>
             <td>
               <span class="badge" :class="commerceStatusBadge(l.status)">
                 {{ commerceEnumLabel(l.status) }}
               </span>
             </td>
             <td>
-              <span class="badge" :class="l.mapped ? 'bg-label-success' : 'bg-label-secondary'">
-                {{ l.mapped ? 'ya' : 'belum' }}
+              <span class="badge" :class="mappingBadge(l)">
+                {{ mappingLabel(l) }}
               </span>
             </td>
             <td class="small text-nowrap">{{ formatCommerceTs(l.lastSyncedAt) }}</td>
+            <td v-if="canMap" class="text-end">
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-primary"
+                @click="emit('map', l)"
+              >
+                {{ l.mappedListingId ? 'Ubah' : 'Hubungkan' }}
+              </button>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -97,13 +121,24 @@
         <div class="min-w-0 flex-grow-1">
           <div class="fw-semibold text-break">{{ l.title || l.sellerSku || l.externalProductId }}</div>
           <div class="small font-monospace text-break">{{ l.sellerSku || '—' }}</div>
+          <div class="small text-muted text-break">{{ l.shopName || commercePlatformLabel(l.platformCode) }}</div>
+          <div class="small text-break">
+            <span v-if="l.mappedProductName">{{ l.mappedProductName }} · {{ l.mappedUnitName || '—' }}</span>
+            <span v-else>Belum terhubung ke Product Master</span>
+          </div>
           <div class="d-flex flex-wrap gap-1 mt-1">
             <span class="badge" :class="commerceStatusBadge(l.status)">{{ commerceEnumLabel(l.status) }}</span>
-            <span class="badge" :class="l.mapped ? 'bg-label-success' : 'bg-label-secondary'">
-              {{ l.mapped ? 'mapped' : 'belum' }}
-            </span>
+            <span class="badge" :class="mappingBadge(l)">{{ mappingLabel(l) }}</span>
           </div>
           <div class="small text-muted mt-1">{{ formatCommerceTs(l.lastSyncedAt) }}</div>
+          <button
+            v-if="canMap"
+            type="button"
+            class="btn btn-sm btn-outline-primary mt-2"
+            @click="emit('map', l)"
+          >
+            {{ l.mappedListingId ? 'Ubah mapping' : 'Hubungkan' }}
+          </button>
         </div>
       </article>
     </div>
@@ -111,16 +146,29 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { commerceStatusBadge, commerceEnumLabel, formatCommerceTs } from '~/utils/commerceFormat'
+import { commercePlatformLabel } from '~/utils/commercePlatform'
 
 export type CommerceExternalListingRow = {
   id: string
   title?: string | null
   sellerSku?: string | null
   externalProductId: string
+  externalSkuId?: string | null
+  shopId?: string
+  shopName?: string | null
+  platformCode?: string | null
   status?: string | null
   imageUrl?: string | null
   mapped?: boolean
+  mappedListingId?: string | null
+  mappedProductId?: number | null
+  mappedProductName?: string | null
+  mappedProductSku?: string | null
+  mappedUnitId?: number | null
+  mappedUnitName?: string | null
+  mappingStatus?: string | null
   lastSyncedAt?: string | null
 }
 
@@ -129,13 +177,32 @@ const props = withDefaults(
     listings: CommerceExternalListingRow[]
     title?: string
     subtitle?: string
+    canMap?: boolean
   }>(),
   {
     title: 'Listing eksternal (cache)',
-    subtitle: 'Tidak menimpa Product / Price List RETAIL'}
+    subtitle: 'Tidak menimpa Product / Price List RETAIL',
+    canMap: false,
+  }
 )
 
+const emit = defineEmits<{
+  map: [listing: CommerceExternalListingRow]
+}>()
+
 const empty = computed(() => !props.listings?.length)
+
+function mappingStatus(l: CommerceExternalListingRow) {
+  return String(l.mappingStatus || (l.mapped ? 'MAPPED' : 'UNMAPPED')).toUpperCase()
+}
+
+function mappingLabel(l: CommerceExternalListingRow) {
+  return commerceEnumLabel(mappingStatus(l))
+}
+
+function mappingBadge(l: CommerceExternalListingRow) {
+  return commerceStatusBadge(mappingStatus(l))
+}
 
 function onImgError(e: Event) {
   const el = e.target as HTMLImageElement | null

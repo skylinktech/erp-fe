@@ -43,11 +43,11 @@
             </select>
           </div>
           <div class="col-6 col-md-4 col-lg-2">
-            <label class="form-label" for="produk-mapped">Mapped</label>
+            <label class="form-label" for="produk-mapped">Mapping SKU</label>
             <select id="produk-mapped" v-model="mappedFilter" class="form-select form-select-sm">
               <option value="">Semua</option>
-              <option value="mapped">Mapped</option>
-              <option value="unmapped">Belum mapped</option>
+              <option value="mapped">Terhubung</option>
+              <option value="unmapped">Belum terhubung</option>
             </select>
           </div>
           <div class="col-12 col-md-4 col-lg-3">
@@ -165,7 +165,12 @@
     <!-- Cache listings -->
     <div v-show="activeTab === 'cache'" class="card">
       <div class="card-body">
-        <ExternalListingsPanel :listings="listings" title="Listing marketplace (cache)">
+        <ExternalListingsPanel
+          :listings="listings"
+          title="Listing marketplace (cache)"
+          :can-map="canMapSku"
+          @map="openSkuMap"
+        >
           <template #empty>Belum ada listing — sync produk dari Settings → Toko Terhubung.</template>
         </ExternalListingsPanel>
         <CommerceListPagination
@@ -449,6 +454,66 @@
       </div>
     </div>
     <div v-if="editorDraft" class="modal-backdrop fade show" />
+
+    <div
+      v-if="skuMapTarget"
+      class="modal fade show d-block"
+      tabindex="-1"
+      role="dialog"
+      aria-modal="true"
+      @click.self="closeSkuMap"
+    >
+      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Hubungkan Seller SKU ke Product Master</h5>
+            <button type="button" class="btn-close" aria-label="Tutup" @click="closeSkuMap" />
+          </div>
+          <div class="modal-body">
+            <p class="small text-muted">
+              Mapping ini tidak mempublikasikan produk, mengubah harga, atau mendorong stok ke marketplace.
+            </p>
+            <div class="mb-2 small">
+              <div class="fw-semibold text-break">{{ skuMapTarget.title || skuMapTarget.sellerSku }}</div>
+              <div class="text-muted">{{ skuMapTarget.shopName || 'Toko' }}</div>
+              <div class="font-monospace text-break">Seller SKU: {{ skuMapTarget.sellerSku || '—' }}</div>
+            </div>
+            <div v-if="skuMapError" class="alert alert-danger small text-break">{{ skuMapError }}</div>
+            <div class="mb-3">
+              <label class="form-label">Produk SkyFlow</label>
+              <ProductSelect
+                v-model="skuMapProductId"
+                :company-id="productPickerCompanyId"
+                :initial-option="skuMapProductOption"
+                placeholder="Cari produk / SKU master…"
+                @select="onSkuMapProduct"
+              />
+            </div>
+            <div class="mb-0">
+              <label class="form-label">Satuan</label>
+              <input
+                class="form-control"
+                :value="skuMapUnitLabel"
+                disabled
+                placeholder="Mengikuti produk yang dipilih"
+              />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" @click="closeSkuMap">Batal</button>
+            <CommerceActionButton
+              action="save"
+              label="Simpan"
+              btn-class="btn btn-primary"
+              :busy="skuMapSaving"
+              :disabled="skuMapSaving"
+              @click="saveSkuMap"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+    <div v-if="skuMapTarget" class="modal-backdrop fade show" />
   </OmnichannelShell>
 </template>
 
@@ -490,6 +555,9 @@ const { userHasPermission, userHasRole } = usePermissions()
 /** Hapus draft: superadmin OR delete_commerce_omnichannel (BE assertPerm mirrors this). */
 const canDeleteListingDraft = computed(
   () => userHasRole('superadmin') || userHasPermission('delete_commerce_omnichannel')
+)
+const canMapSku = computed(
+  () => userHasRole('superadmin') || userHasPermission('manage_commerce_sku_mapping')
 )
 
 /** ProductSelect expects number | null — coerce Active Company id once. */
@@ -543,6 +611,14 @@ const editorForm = ref<any>({})
 const validationIssues = ref<any[]>([])
 const previewData = ref<any | null>(null)
 const linkExternalProductId = ref('')
+
+const skuMapTarget = ref<any | null>(null)
+const skuMapProductId = ref<number | null>(null)
+const skuMapUnitId = ref<number | null>(null)
+const skuMapUnitLabel = ref('')
+const skuMapProductOption = ref<{ id: number; name?: string; sku?: string } | null>(null)
+const skuMapError = ref('')
+const skuMapSaving = ref(false)
 
 const titleLengthInvalid = computed(() => {
   const len = String(editorForm.value?.title || '').trim().length
@@ -1071,6 +1147,91 @@ async function runRefreshStatus(d: any) {
   }).catch(() => {})
 }
 
+function openSkuMap(listing: any) {
+  skuMapTarget.value = listing
+  skuMapError.value = ''
+  skuMapProductId.value = listing.mappedProductId ? Number(listing.mappedProductId) : null
+  skuMapUnitId.value = listing.mappedUnitId ? Number(listing.mappedUnitId) : null
+  skuMapUnitLabel.value = listing.mappedUnitName || ''
+  skuMapProductOption.value = listing.mappedProductId
+    ? {
+        id: Number(listing.mappedProductId),
+        name: listing.mappedProductName || undefined,
+        sku: listing.mappedProductSku || undefined,
+      }
+    : null
+}
+
+function onSkuMapProduct(product: any | null) {
+  if (!product) {
+    skuMapUnitId.value = null
+    skuMapUnitLabel.value = ''
+    skuMapProductOption.value = null
+    return
+  }
+  skuMapUnitId.value = product.unitId != null ? Number(product.unitId) : null
+  skuMapUnitLabel.value = product.unit?.name || product.unitName || product.nmUnit || ''
+  skuMapProductOption.value = {
+    id: Number(product.id),
+    name: product.name || product.nmProduct,
+    sku: product.sku,
+  }
+}
+
+function closeSkuMap() {
+  if (skuMapSaving.value) return
+  skuMapTarget.value = null
+  skuMapError.value = ''
+  skuMapProductId.value = null
+  skuMapUnitId.value = null
+  skuMapUnitLabel.value = ''
+  skuMapProductOption.value = null
+}
+
+async function saveSkuMap() {
+  const listing = skuMapTarget.value
+  if (!listing?.shopId || !listing?.sellerSku) {
+    skuMapError.value = 'Listing tidak memiliki toko atau Seller SKU.'
+    return
+  }
+  if (!skuMapProductId.value || !skuMapUnitId.value) {
+    skuMapError.value = 'Pilih produk SkyFlow (satuan mengikuti produk).'
+    return
+  }
+  skuMapSaving.value = true
+  skuMapError.value = ''
+  const companySnapshot = companyId.value
+  try {
+    const saved = await actions.run('save', listing.id, async () => {
+      const res = await fetch($api.commerceShopSkuListings(listing.shopId), {
+        method: 'POST',
+        headers: { ...headers(), 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          productId: skuMapProductId.value,
+          unitId: skuMapUnitId.value,
+          sellerSku: listing.sellerSku,
+          externalProductId: listing.externalProductId || null,
+          externalSkuId: listing.externalSkuId || null,
+        }),
+      })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok || json.success === false) {
+        throw new Error(json.message || 'Gagal menghubungkan SKU')
+      }
+      return true as const
+    })
+    if (!saved || companyId.value !== companySnapshot) return
+    actionMsg.value = 'SKU terhubung ke Product Master.'
+    skuMapTarget.value = null
+    await loadListings(requestGen)
+  } catch (e: any) {
+    skuMapError.value = e?.message || 'Gagal menghubungkan SKU'
+  } finally {
+    skuMapSaving.value = false
+  }
+}
+
 watch(companyId, () => {
   actions.clearAll()
   actions.bumpRequestGen()
@@ -1082,6 +1243,8 @@ watch(companyId, () => {
   draftPage.value = 1
   listings.value = []
   drafts.value = []
+  skuMapSaving.value = false
+  closeSkuMap()
   closeEditor()
   syncQuery()
   reloadAll()

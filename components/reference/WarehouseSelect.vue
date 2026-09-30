@@ -6,6 +6,7 @@
     :disabled="disabled || !companyId"
     :clearable="clearable"
     :reload-key="reloadKey"
+    :initial-option="initialOption"
     :get-option-label="label"
     :get-secondary-label="(w) => w?.kodeWarehouse || w?.kode_warehouse || w?.code || ''"
     :reduce="(w) => w?.id ?? null"
@@ -30,12 +31,21 @@ const props = withDefaults(
     placeholder?: string
     disabled?: boolean
     clearable?: boolean
+    /** Seed selected label when editing (id already known from parent). */
+    initialOption?: {
+      id: number | string
+      nmWarehouse?: string | null
+      name?: string | null
+      kodeWarehouse?: string | null
+      code?: string | null
+    } | null
   }>(),
   {
     allocatedOnly: true,
     placeholder: 'Cari gudang…',
     disabled: false,
     clearable: true,
+    initialOption: null,
   }
 )
 

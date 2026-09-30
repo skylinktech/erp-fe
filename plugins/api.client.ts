@@ -1054,6 +1054,9 @@ export default defineNuxtPlugin(() => {
     commerceListingCategoryRules: (categoryId: string) =>
       `${apiBase}/commerce/listing-categories/${categoryId}/rules`,
     commerceShopWarehouses: (shopId: string) => `${apiBase}/commerce/shops/${shopId}/warehouses`,
+    commerceShopExternalWarehouses: (shopId: string) =>
+      `${apiBase}/commerce/shops/${shopId}/external-warehouses`,
+    commerceShopWarehouseMaps: () => `${apiBase}/commerce/shop-warehouses`,
     commerceShopSkuListings: (shopId: string) => `${apiBase}/commerce/shops/${shopId}/sku-listings`,
     commerceExternalOrders: () => `${apiBase}/commerce/external-orders`,
     commerceExternalOrderCounts: () => `${apiBase}/commerce/external-orders/counts`,
@@ -1109,7 +1112,6 @@ export default defineNuxtPlugin(() => {
     commerceDashboardTopProducts: () => `${apiBase}/commerce/dashboard/top-products`,
     commerceSyncJobs: () => `${apiBase}/commerce/sync-jobs`,
     commerceWorkerHealth: () => `${apiBase}/commerce/worker/health`,
-    commerceInventoryView: () => `${apiBase}/commerce/inventory-view`,
     /**
      * Omnichannel accounting policy (company default + optional per-shop override).
      * GET ?shopId= ; PUT body: { postingTrigger, effectiveFrom?, shopId?, recognitionEvent? }

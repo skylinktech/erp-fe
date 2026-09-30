@@ -57,6 +57,15 @@
     </div>
 
     <div
+      v-show="activeTab === 'warehouse'"
+      :id="'omni-settings-panel-warehouse'"
+      role="tabpanel"
+      aria-labelledby="omni-settings-tab-warehouse"
+    >
+      <CommerceWarehouseMappingPanel @notice="onNotice" @error="onPanelError" />
+    </div>
+
+    <div
       v-show="activeTab === 'addon'"
       :id="'omni-settings-panel-addon'"
       role="tabpanel"
@@ -79,6 +88,7 @@ import OmnichannelShell from '~/components/commerce/OmnichannelShell.vue'
 import CommerceConnectedShopsPanel from '~/components/commerce/CommerceConnectedShopsPanel.vue'
 import CommerceSyncJobsPanel from '~/components/commerce/CommerceSyncJobsPanel.vue'
 import CommerceAccountingPolicyPanel from '~/components/commerce/CommerceAccountingPolicyPanel.vue'
+import CommerceWarehouseMappingPanel from '~/components/commerce/CommerceWarehouseMappingPanel.vue'
 import CommerceActionButton from '~/components/commerce/CommerceActionButton.vue'
 import WorkspaceTabs from '~/components/common/WorkspaceTabs.vue'
 import type { WorkspaceTab } from '~/types/workspaceTab'
@@ -86,12 +96,13 @@ import { readAccessToken } from '~/utils/authCookie'
 
 definePageMeta({ middleware: ['auth', 'check-permission'] })
 
-const TAB_IDS = ['toko', 'sinkronisasi', 'pesanan', 'addon'] as const
+const TAB_IDS = ['toko', 'sinkronisasi', 'pesanan', 'warehouse', 'addon'] as const
 type SettingsTabId = (typeof TAB_IDS)[number]
 
 const tabs: WorkspaceTab[] = [
   { id: 'toko', label: 'Toko Terhubung' },
   { id: 'sinkronisasi', label: 'Sinkronisasi' },
+  { id: 'warehouse', label: 'Warehouse' },
   { id: 'pesanan', label: 'Kebijakan Accounting' },
   { id: 'addon', label: 'Add on' },
 ]
