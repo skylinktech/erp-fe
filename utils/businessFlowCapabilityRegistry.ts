@@ -5,8 +5,9 @@
  * Keep FE prefixes aligned with BE `flow_package_catalog` + `flow_feature_policy`.
  * Coverage tests assert business roots are not silently SHARED.
  *
- * S7: POS is DIRECT_PRODUCT_SALE (via RETAIL_DIRECT_SALE flow), not Sales Order.
- * Sales Order remains ISP_NEW_SUBSCRIPTION only.
+ * S7: POS is DIRECT_PRODUCT_SALE (via RETAIL_DIRECT_SALE flow).
+ * Sales Order is dual-gated: ISP_NEW_SUBSCRIPTION and RETAIL_B2B_SALES.
+ * POS/direct sale does not grant Sales Order. Retail profile alone does not grant SO.
  * S8: PRODUCT_QUOTATION registered as third-flow proof — not production-activated here.
  */
 
@@ -144,6 +145,16 @@ export const BUSINESS_FLOW_CAPABILITY_REGISTRY: Record<string, BusinessFlowCapab
     prefixes: ['/sales/retail-sale', '/sales/retail-return'],
     landingRoute: '/sales/retail-sale',
     menuKeys: ['retail-sale', 'retail-return'],
+  },
+  /**
+   * Retail B2B Sales Order — no Quotation. Grant RETAIL_B2B_SALES separately from POS.
+   */
+  RETAIL_B2B_SALES: {
+    flowCodes: ['RETAIL_B2B_SALES'],
+    capabilityCodes: ['RETAIL_B2B_SALES'],
+    prefixes: ['/sales/sales-order'],
+    landingRoute: '/sales/sales-order',
+    menuKeys: ['sales-order'],
   },
   /**
    * Marketplace Omnichannel — RETAIL profile only (matches CommerceEligibilityService).

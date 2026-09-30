@@ -9,6 +9,10 @@ export type ArReceiptInvoiceOption = {
   status: string
   currency: string
   documentSource?: string | null
+  customerId?: number | null
+  customerName?: string | null
+  commerceShopId?: string | null
+  commerceExternalOrderId?: string | null
 }
 
 export type BankAccountOption = {
@@ -39,6 +43,15 @@ export function normalizeArReceiptInvoiceOption(raw: Record<string, unknown>): A
     status: String(raw.status ?? 'unpaid'),
     currency: String(raw.currency ?? 'IDR'),
     documentSource: (raw.documentSource ?? raw.document_source ?? null) as string | null,
+    customerId:
+      raw.customerId != null || raw.customer_id != null
+        ? Number(raw.customerId ?? raw.customer_id)
+        : null,
+    customerName: (raw.customerName ?? raw.customer_name ?? null) as string | null,
+    commerceShopId: (raw.commerceShopId ?? raw.commerce_shop_id ?? null) as string | null,
+    commerceExternalOrderId: (raw.commerceExternalOrderId ??
+      raw.commerce_external_order_id ??
+      null) as string | null,
   }
 }
 
@@ -86,7 +99,8 @@ export function formatArInvoiceOptionLabel(
       new Intl.NumberFormat('id-ID', { style: 'currency', currency }).format(amount))
   const outstanding = invoice.remainingAmount > 0 ? invoice.remainingAmount : invoice.total
   const label = invoice.noInvoice || invoice.id
-  return `${label} — sisa ${fmt(outstanding, invoice.currency)}`
+  const party = invoice.customerName ? ` · ${invoice.customerName}` : ''
+  return `${label}${party} — sisa ${fmt(outstanding, invoice.currency)}`
 }
 
 export function formatBankAccountOptionLabel(account: BankAccountOption): string {

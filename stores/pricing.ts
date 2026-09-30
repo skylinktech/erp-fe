@@ -1,7 +1,13 @@
 import { defineStore } from 'pinia'
 import { readAccessToken } from '~/utils/authCookie'
+import {
+  PRICING_CHANNELS,
+  normalizePricingChannel,
+  type PricingChannel,
+  type PricingChannelInput,
+} from '~/utils/pricingChannel'
 
-export type PricingChannel = 'RETAIL' | 'PRODUCT_QUOTATION'
+export type { PricingChannel, PricingChannelInput }
 export type PricingStatus = 'draft' | 'pending' | 'approved' | 'active' | 'inactive'
 
 export interface PricingLineForm {
@@ -25,6 +31,9 @@ export interface PricingFormState {
   perusahaanId: number | null
   status: PricingStatus | null
   lines: PricingLineForm[]
+  /** MARKETPLACE only — shop currently assigned to this price list, if any. */
+  shopId: string | null
+  shopName?: string | null
 }
 
 function emptyLine(): PricingLineForm {
@@ -44,13 +53,15 @@ function emptyForm(): PricingFormState {
   return {
     id: null,
     code: '',
-    channel: 'RETAIL',
+    channel: PRICING_CHANNELS.POS,
     currency: 'IDR',
     validFrom: '',
     validTo: '',
     perusahaanId: null,
     status: null,
     lines: [emptyLine()],
+    shopId: null,
+    shopName: null,
   }
 }
 
@@ -63,6 +74,8 @@ export const usePricingStore = defineStore('pricing', {
     form: emptyForm() as PricingFormState,
     loading: false,
     saving: false,
+    assigningShop: false,
+    duplicating: false,
     error: '' as string,
     isEditMode: false,
   }),
@@ -168,13 +181,15 @@ export const usePricingStore = defineStore('pricing', {
         this.form = {
           id: Number(data.id) || null,
           code: data.code || '',
-          channel: (data.channel as PricingChannel) || 'RETAIL',
+          channel: normalizePricingChannel(data.channel) || PRICING_CHANNELS.POS,
           currency: data.currency || 'IDR',
           validFrom: dateOf(data.validFrom ?? data.valid_from),
           validTo: dateOf(data.validTo ?? data.valid_to),
           perusahaanId: data.perusahaanId ?? data.perusahaan_id ?? companyId ?? null,
           status: data.status || null,
           lines,
+          shopId: data.shopId ?? data.shop?.id ?? null,
+          shopName: data.shop?.name ?? null,
         }
         this.isEditMode = true
         return true
@@ -230,6 +245,81 @@ export const usePricingStore = defineStore('pricing', {
         return false
       } finally {
         this.saving = false
+      }
+    },
+
+    /**
+     * MARKETPLACE only — assign a connected shop to this (saved) price list.
+     * POST /product-selling-prices/:id/assign-shop — @assumed BE alignment, see
+     * plugins/api.client.ts#productSellingPriceAssignShop.
+     */
+    async assignShop(shopId: string, companyId?: number | null) {
+      if (!this.form.id) {
+        this.error = 'Simpan draft terlebih dahulu sebelum menugaskan shop.'
+        return false
+      }
+      if (this.assigningShop) return false
+      this.assigningShop = true
+      this.error = ''
+      const { $api } = useNuxtApp()
+      try {
+        const res = await fetch($api.productSellingPriceAssignShop(this.form.id), {
+          method: 'POST',
+          headers: this.headers(companyId),
+          credentials: 'include',
+          body: JSON.stringify({ shopId }),
+        })
+        const payload = await res.json().catch(() => ({}))
+        if (!res.ok) {
+          this.error = payload?.message || 'Penugasan shop gagal.'
+          return false
+        }
+        const data = payload.data || {}
+        this.form.shopId = data.shopId ?? data.shop?.id ?? shopId
+        this.form.shopName = data.shop?.name ?? this.form.shopName ?? null
+        return true
+      } catch (err: any) {
+        this.error = err?.message || 'Penugasan shop gagal.'
+        return false
+      } finally {
+        this.assigningShop = false
+      }
+    },
+
+    /**
+     * Duplicate an existing price list as a new draft, optionally on a different channel.
+     * POST /product-selling-prices/:id/duplicate — @assumed BE alignment, see
+     * plugins/api.client.ts#productSellingPriceDuplicate.
+     * Returns the new draft's id on success, or null on failure (this.error is set).
+     */
+    async duplicateDraft(
+      sourceId: number,
+      targetChannel: PricingChannel,
+      companyId?: number | null
+    ): Promise<number | null> {
+      if (this.duplicating) return null
+      this.duplicating = true
+      this.error = ''
+      const { $api } = useNuxtApp()
+      try {
+        const res = await fetch($api.productSellingPriceDuplicate(sourceId), {
+          method: 'POST',
+          headers: this.headers(companyId),
+          credentials: 'include',
+          body: JSON.stringify({ targetChannel }),
+        })
+        const payload = await res.json().catch(() => ({}))
+        if (!res.ok) {
+          this.error = payload?.message || 'Duplikasi draft gagal.'
+          return null
+        }
+        const newId = Number(payload.data?.id)
+        return Number.isFinite(newId) && newId > 0 ? newId : null
+      } catch (err: any) {
+        this.error = err?.message || 'Duplikasi draft gagal.'
+        return null
+      } finally {
+        this.duplicating = false
       }
     },
   },

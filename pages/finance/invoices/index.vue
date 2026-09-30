@@ -1,4 +1,5 @@
 <template>
+    <div class="finance-invoices-page">
     <div class="content-wrapper">
         <div class="container-xxl flex-grow-1">
             
@@ -703,6 +704,7 @@
             </button>
         </template>
     </Dialog>
+    </div>
 </template>
 
 <script setup>
@@ -1098,7 +1100,13 @@ const goToArReceipt = (invoice) => {
         path : '/finance/ar-receipts',
         query: {
             invoiceId : invoice.id,
-            customerId: invoice.customerId,
+            ...(invoice.customerId != null && invoice.customerId !== ''
+              ? { customerId: invoice.customerId }
+              : {}),
+            ...(invoice.commerceShopId
+              ? { commerceShopId: invoice.commerceShopId, receiptMode: 'MARKETPLACE' }
+              : {}),
+            amount: invoice.remainingAmount ?? invoice.total,
         },
     })
 }

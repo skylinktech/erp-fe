@@ -95,7 +95,19 @@ export interface SalesOrder {
 }
 
 export interface SalesOrderCustomerProduct extends Product {
-  priceSell: number;
+  priceSell: number
+  officialUnitPrice?: number
+  priceListCode?: string
+  availableQty?: number
+}
+
+export interface RetailPriceListOption {
+  id: number
+  code: string
+  currency: string
+  channel: string
+  validFrom: string
+  validTo: string | null
 }
 
 interface SalesOrderState {
@@ -104,6 +116,9 @@ interface SalesOrderState {
   salesOrder        : SalesOrder | null
   originalSalesOrder: SalesOrder | null
   customerProducts  : SalesOrderCustomerProduct[]
+  /** Cache sellable products keyed by `${priceListId}:${warehouseId}`. Retail B2B. */
+  sellableProductsByWarehouse: Record<string, SalesOrderCustomerProduct[]>
+  retailPriceLists  : RetailPriceListOption[]
   loading           : boolean
   saving            : boolean
   error             : any
@@ -135,6 +150,8 @@ export const useSalesOrderStore = defineStore('salesOrder', {
     salesOrder        : null,
     originalSalesOrder: null,
     customerProducts  : [],
+    sellableProductsByWarehouse: {},
+    retailPriceLists  : [],
     loading           : true,
     saving            : false,
     error             : null,
@@ -167,6 +184,7 @@ export const useSalesOrderStore = defineStore('salesOrder', {
         customerId     : null,
         perusahaanId   : null,
         quotationId    : null,
+        priceListId    : null,
         cabangId       : null,
         termOfPayment  : '',
         date           : new Date().toISOString().split('T')[0],
@@ -372,8 +390,6 @@ export const useSalesOrderStore = defineStore('salesOrder', {
           : []
       } catch (error) {
         console.error('Error fetching products for customer:', error)
-        // Jangan hapus produk yang ada jika fetch gagal
-        // this.customerProducts = [] 
         const toast = useToast();
         toast.error({
           title: 'Error',
@@ -383,6 +399,175 @@ export const useSalesOrderStore = defineStore('salesOrder', {
       } finally {
         this.loading = false
       }
+    },
+
+    /**
+     * Active B2B price lists covering pricingDate — one request, no line preload.
+     * (Method name kept as fetchRetailPriceListOptions for compat with existing callers;
+     * channel is B2B — the Sales Order commercial channel, not the legacy RETAIL alias.)
+     */
+    async fetchRetailPriceListOptions(options?: { pricingDate?: string; force?: boolean }) {
+      const { $api } = useNuxtApp()
+      const pricingDate = options?.pricingDate || new Date().toISOString().slice(0, 10)
+      try {
+        const qs = new URLSearchParams({
+          channel: 'B2B',
+          pricingDate,
+        })
+        const response = await fetch(`${$api.productSellingPriceActiveOptions()}?${qs}`, {
+          headers: { Accept: 'application/json' },
+          credentials: 'include',
+        })
+        if (!response.ok) throw new Error('Gagal memuat daftar Pricing.')
+        const result = await response.json()
+        this.retailPriceLists = Array.isArray(result?.data) ? result.data : []
+        return this.retailPriceLists
+      } catch (error) {
+        console.error('Error fetching retail price lists:', error)
+        this.retailPriceLists = []
+        const toast = useToast()
+        toast.error({
+          title: 'Error',
+          message: 'Gagal memuat daftar Pricing aktif.',
+          color: 'red',
+        })
+        return []
+      }
+    },
+
+    /**
+     * Sellable products = Pricing lines ∩ warehouse stock (single BE query).
+     * Cache key includes priceListId + warehouseId to avoid N+1 and stale mixes.
+     */
+    async fetchSellableProducts(options?: {
+      warehouseId?: number | null
+      priceListId?: number | null
+      pricingDate?: string
+      force?: boolean
+    }) {
+      this.loading = true
+      this.error = null
+      const { $api } = useNuxtApp()
+      const warehouseId = options?.warehouseId != null ? Number(options.warehouseId) : 0
+      const priceListId = options?.priceListId != null ? Number(options.priceListId) : 0
+      const pricingDate = options?.pricingDate || new Date().toISOString().slice(0, 10)
+      const cacheKey = `${priceListId}:${warehouseId > 0 ? warehouseId : 0}`
+      if (!options?.force && this.sellableProductsByWarehouse[cacheKey]) {
+        this.customerProducts = this.sellableProductsByWarehouse[cacheKey]
+        this.loading = false
+        return this.customerProducts
+      }
+      try {
+        if (!(priceListId > 0) || !(warehouseId > 0)) {
+          this.customerProducts = []
+          return []
+        }
+        const qs = new URLSearchParams({
+          warehouseId: String(warehouseId),
+          pricingDate,
+        })
+        const response = await fetch(
+          `${$api.productSellingPriceSellableForWarehouse(priceListId)}?${qs}`,
+          {
+            headers: { Accept: 'application/json' },
+            credentials: 'include',
+          }
+        )
+        if (!response.ok) throw new Error('Gagal mengambil produk dari Pricing + stok gudang.')
+        const result = await response.json()
+        const rows = Array.isArray(result?.data) ? result.data : []
+        const mapped: SalesOrderCustomerProduct[] = rows.map((row: any) => ({
+          id: Number(row.id),
+          name: row.name,
+          sku: row.sku,
+          unitId: Number(row.unitId),
+          unit: row.unitName ? { id: Number(row.unitId), name: row.unitName } : null,
+          priceSell: Number(row.officialUnitPrice) || 0,
+          officialUnitPrice: Number(row.officialUnitPrice) || 0,
+          priceListCode: row.priceListCode || '',
+          availableQty: Number(row.availableQty) || 0,
+          isInternal: false,
+        }))
+        this.sellableProductsByWarehouse[cacheKey] = mapped
+        this.customerProducts = mapped
+        return mapped
+      } catch (error) {
+        console.error('Error fetching sellable products:', error)
+        this.customerProducts = []
+        const toast = useToast()
+        toast.error({
+          title: 'Error',
+          message: 'Gagal memuat produk untuk Sales Order Retail B2B.',
+          color: 'red',
+        })
+        return []
+      } finally {
+        this.loading = false
+      }
+    },
+
+    sellableProductsForWarehouse(warehouseId?: number | null, priceListId?: number | null) {
+      const wid = warehouseId != null && Number(warehouseId) > 0 ? Number(warehouseId) : 0
+      const pid = priceListId != null && Number(priceListId) > 0 ? Number(priceListId) : 0
+      return this.sellableProductsByWarehouse[`${pid}:${wid}`] || []
+    },
+
+    clearSellableProductCache() {
+      this.sellableProductsByWarehouse = {}
+      this.customerProducts = []
+    },
+
+    /** Route product loading by commercial mode — KISS facade for form pages. */
+    async loadOrderProducts(input: {
+      retailB2b: boolean
+      customerId?: number | null
+      warehouseId?: number | null
+      priceListId?: number | null
+      pricingDate?: string
+      force?: boolean
+    }) {
+      if (input.retailB2b) {
+        await this.fetchSellableProducts({
+          warehouseId: input.warehouseId ?? null,
+          priceListId: input.priceListId ?? null,
+          pricingDate: input.pricingDate,
+          force: input.force,
+        })
+        return
+      }
+      if (input.customerId) {
+        await this.fetchProductsForCustomer(Number(input.customerId))
+        return
+      }
+      this.customerProducts = []
+    },
+
+    async resolveOfficialPrices(
+      items: Array<{ productId?: number; unitId?: number }>,
+      options?: { pricingDate?: string; channel?: string; priceListId?: number | null }
+    ) {
+      const { $api } = useNuxtApp()
+      const payloadItems = (items || [])
+        .filter((row) => row?.productId && row?.unitId)
+        .map((row) => ({ productId: Number(row.productId), unitId: Number(row.unitId) }))
+      if (!payloadItems.length) return []
+      const response = await fetch($api.productSellingPriceResolveBatch(), {
+        method: 'POST',
+        headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          items: payloadItems,
+          pricingDate: options?.pricingDate || new Date().toISOString().slice(0, 10),
+          channel: options?.channel || 'B2B',
+          priceListId: options?.priceListId != null ? Number(options.priceListId) : undefined,
+        }),
+      })
+      if (!response.ok) {
+        const err = await normalizeFailedResponse(response, 'Gagal mengambil harga resmi.')
+        throw new Error(err.message)
+      }
+      const json = await response.json()
+      return Array.isArray(json?.data) ? json.data : []
     },
 
     async saveSalesOrder() {
@@ -428,6 +613,10 @@ export const useSalesOrderStore = defineStore('salesOrder', {
                         numValue = Number(value) || 0;
                     }
                     formData.append(key, numValue.toString());
+                } else if (key === 'quotationId') {
+                    if (value && value !== 'null' && value !== 'undefined') {
+                        formData.append(key, value)
+                    }
                 } else if (value !== null && value !== undefined) {
                     formData.append(key, value);
                 }
@@ -858,6 +1047,7 @@ export const useSalesOrderStore = defineStore('salesOrder', {
           // Pastikan discountPercent dan taxPercent selalu berupa number
           formData.discountPercent = Number(formData.discountPercent) || 0;
           formData.taxPercent = Number(formData.taxPercent) || 0;
+          formData.priceListId = formData.priceListId ?? formData.price_list_id ?? null;
 
           this.form = formData;
           
@@ -919,6 +1109,7 @@ export const useSalesOrderStore = defineStore('salesOrder', {
         customerId: null,
         perusahaanId: null,
         quotationId: null,
+        priceListId: null,
         cabangId: null,
         termOfPayment: '',
         date: new Date().toISOString().split('T')[0],

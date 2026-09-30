@@ -988,6 +988,15 @@ export default defineNuxtPlugin(() => {
     posGatewayRecover: () => `${apiBase}/pos/gateway/recover`,
     posCheckoutByKey: (key: string) => `${apiBase}/pos/checkout-by-key/${key}`,
     productSellingPrices: () => `${apiBase}/product-selling-prices`,
+    productSellingPriceActiveOptions: () => `${apiBase}/product-selling-prices/active-options`,
+    productSellingPriceSellableForWarehouse: (id: number | string) =>
+      `${apiBase}/product-selling-prices/${id}/sellable-for-warehouse`,
+    /** Assign MARKETPLACE price list to a connected shop (no TikTok publish). */
+    productSellingPriceAssignShop: (id: number | string) =>
+      `${apiBase}/product-selling-prices/${id}/assign-shop`,
+    /** Duplicate price list as draft on a target channel. */
+    productSellingPriceDuplicate: (id: number | string) =>
+      `${apiBase}/product-selling-prices/${id}/duplicate`,
     retailSales: () => `${apiBase}/retail-sales`,
     retailSale: (id: string) => `${apiBase}/retail-sales/${id}`,
     retailSaleConfirm: (id: string) => `${apiBase}/retail-sales/${id}/confirm`,
@@ -1037,9 +1046,51 @@ export default defineNuxtPlugin(() => {
     commerceShopSkuListings: (shopId: string) => `${apiBase}/commerce/shops/${shopId}/sku-listings`,
     commerceExternalOrders: () => `${apiBase}/commerce/external-orders`,
     commerceExternalOrderCounts: () => `${apiBase}/commerce/external-orders/counts`,
+    /**
+     * Release preview/execute. Body: `{ execute?: boolean, idempotencyKey?: string }`.
+     * execute=false (default) → preview gate; execute=true → form RetailSale + optional revenue post.
+     */
+    commerceExternalOrderRelease: (id: string) => `${apiBase}/commerce/external-orders/${id}/release`,
+    commerceExternalOrderRetryRevenue: (id: string) =>
+      `${apiBase}/commerce/external-orders/${id}/retry-revenue`,
+    commerceSettlementsVerify: () => `${apiBase}/commerce/settlements/verify`,
+    commerceExternalOrderReserve: (id: string) => `${apiBase}/commerce/external-orders/${id}/reserve`,
+    commerceExternalOrderMarkPicked: (id: string) =>
+      `${apiBase}/commerce/external-orders/${id}/mark-picked`,
+    commerceExternalOrderMarkPacked: (id: string) =>
+      `${apiBase}/commerce/external-orders/${id}/mark-packed`,
+    commerceExternalOrderDoc: (id: string, kind: string) =>
+      `${apiBase}/commerce/external-orders/${id}/docs/${kind}`,
+    commerceExternalOrderHandoverSlots: (id: string) =>
+      `${apiBase}/commerce/external-orders/${id}/handover-slots`,
+    commerceExternalOrderArrangeShipment: (id: string) =>
+      `${apiBase}/commerce/external-orders/${id}/arrange-shipment`,
+    commerceExternalOrderConfirmHandover: (id: string) =>
+      `${apiBase}/commerce/external-orders/${id}/confirm-handover`,
+    commerceExternalOrderReconcileShip: (id: string) =>
+      `${apiBase}/commerce/external-orders/${id}/reconcile-ship`,
+    commerceExternalOrderRetryAccounting: (id: string) =>
+      `${apiBase}/commerce/external-orders/${id}/retry-accounting`,
+    commerceFulfillmentUnvaluedMovements: () =>
+      `${apiBase}/commerce/fulfillment/unvalued-movements`,
+    commerceExternalOrderArrangeShipmentBulk: () =>
+      `${apiBase}/commerce/external-orders/arrange-shipment-bulk`,
+    commerceExternalOrderShippingLabel: (id: string) =>
+      `${apiBase}/commerce/external-orders/${id}/shipping-label`,
+    commerceExternalOrderReleaseReservation: (id: string) =>
+      `${apiBase}/commerce/external-orders/${id}/release-reservation`,
+    commerceExternalOrderSellerCancel: (id: string) =>
+      `${apiBase}/commerce/external-orders/${id}/seller-cancel`,
+    commerceCancellationsRespond: () => `${apiBase}/commerce/cancellations/respond`,
+    commerceFulfillmentPrintDoc: (id: string, kind: string) =>
+      `/sales/omnichannel/cetak-fulfillment?orderId=${encodeURIComponent(id)}&kind=${encodeURIComponent(kind)}`,
+    commerceStockPushEnqueue: () => `${apiBase}/commerce/stock-push/enqueue`,
+    commerceStockPushRetry: (id: string) => `${apiBase}/commerce/stock-push/${id}/retry`,
     commerceExternalReturns: () => `${apiBase}/commerce/external-returns`,
     commerceExternalReturnCounts: () => `${apiBase}/commerce/external-returns/counts`,
     commerceExternalReturnDetail: (id: string) => `${apiBase}/commerce/external-returns/${id}`,
+    commerceExternalReturnApprove: (id: string) => `${apiBase}/commerce/external-returns/${id}/approve`,
+    commerceExternalReturnReject: (id: string) => `${apiBase}/commerce/external-returns/${id}/reject`,
     commerceExternalOrderImport: () => `${apiBase}/commerce/external-orders/import`,
     commerceInboxProcess: () => `${apiBase}/commerce/inbox/process`,
     commerceDashboard: () => `${apiBase}/commerce/dashboard`,
@@ -1048,6 +1099,18 @@ export default defineNuxtPlugin(() => {
     commerceSyncJobs: () => `${apiBase}/commerce/sync-jobs`,
     commerceWorkerHealth: () => `${apiBase}/commerce/worker/health`,
     commerceInventoryView: () => `${apiBase}/commerce/inventory-view`,
+    /**
+     * Omnichannel accounting policy (company default + optional per-shop override).
+     * GET ?shopId= ; PUT body: { postingTrigger, effectiveFrom?, shopId?, recognitionEvent? }
+     */
+    commerceAccountingPolicyGet: (params?: string) =>
+      `${apiBase}/commerce/accounting-policy${params ? `?${params}` : ''}`,
+    commerceAccountingPolicyPut: () => `${apiBase}/commerce/accounting-policy`,
+    commerceAccountingPolicy: () => `${apiBase}/commerce/accounting-policy`,
+    /** List orders with COGS posted but revenue not yet posted. */
+    commerceRevenueReconciliation: () => `${apiBase}/commerce/revenue-reconciliation`,
+    commerceRevenueReconciliationForOrder: (id: string) =>
+      `${apiBase}/commerce/external-orders/${id}/revenue-reconciliation`,
     retailReturns: () => `${apiBase}/retail-returns`,
     retailReturnApprove: (id: string) => `${apiBase}/retail-returns/${id}/approve`,
     retailReturnReceive: (id: string) => `${apiBase}/retail-returns/${id}/receive`,
@@ -1058,6 +1121,7 @@ export default defineNuxtPlugin(() => {
     retailReturnRefundApprove: (id: string) => `${apiBase}/retail-returns/${id}/refund/approve`,
     retailReturnRefundConfirm: (id: string) => `${apiBase}/retail-returns/${id}/refund/confirm`,
     productSellingPriceResolve: () => `${apiBase}/product-selling-prices/resolve`,
+    productSellingPriceResolveBatch: () => `${apiBase}/product-selling-prices/resolve-batch`,
     companyFlowEligibilities: () => `${apiBase}/company-flow-eligibilities`,
     businessModelCompanies: () => `${apiBase}/business-model-configurations`,
     businessModelProfiles: () => `${apiBase}/business-model-configurations/profiles`,

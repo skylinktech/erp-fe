@@ -669,13 +669,17 @@ onMounted(async () => {
         await userStore.loadUser()
 
         const q = route.query
-        if (q.invoiceId && q.customerId) {
+        if (q.invoiceId) {
           setTab('receipts')
           receiptStore.openFromOpenInvoice({
-            customerId: q.customerId,
+            customerId: q.customerId || null,
             invoiceId: String(q.invoiceId),
             amount: Number(q.amount || 0),
             notes: q.notes ? String(q.notes) : `Pembayaran invoice ${q.invoiceId}`,
+            commerceShopId: q.commerceShopId ? String(q.commerceShopId) : null,
+            receiptMode: String(q.receiptMode || '').toUpperCase() === 'MARKETPLACE'
+              ? 'MARKETPLACE'
+              : undefined,
           })
         } else if (q.highlight) {
           setTab('receipts')

@@ -34,8 +34,8 @@
             <option :value="null">Pilih profil aktif</option>
             <option v-for="profile in profiles" :key="profile.id" :value="profile.id">{{ profile.name }} ({{ profile.code }})</option>
           </select>
-          <label class="form-label" for="change-reason">Alasan</label>
-          <textarea id="change-reason" v-model="reason" class="form-control mb-2" rows="2"></textarea>
+          <label class="form-label" for="change-reason">Alasan <span class="text-danger">*</span></label>
+          <textarea id="change-reason" ref="reasonField" v-model="reason" class="form-control mb-2" rows="2" placeholder="Wajib diisi sebelum beri/cabut grant atau perubahan lain"></textarea>
           <button class="btn btn-primary" type="button" :disabled="!access.canChangeProfile || !companyId" @click="previewChange">Pratinjau dampak</button>
         </div>
       </section>
@@ -85,7 +85,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref } from 'vue'
 import { usePermissions } from '~/composables/usePermissions'
 import { readAccessToken } from '~/utils/authCookie'
 import { activationLabel, configurationAccess } from '~/utils/businessModelConfiguration'
@@ -121,6 +121,7 @@ const companyId = ref<number | null>(null)
 const summary = ref<any>(null)
 const proposedProfileId = ref<number | null>(null)
 const reason = ref('')
+const reasonField = ref<HTMLTextAreaElement | null>(null)
 const preview = ref<any>(null)
 const previewOpen = ref(false)
 const warehouses = ref<any[]>([])
@@ -274,14 +275,31 @@ async function onOwnershipReplace(row: any) {
 }
 
 async function mutate(extra: Record<string, unknown>) {
-  if (!companyId.value || !reason.value.trim()) { error.value = 'Isi alasan sebelum menyimpan.'; return }
+  if (!companyId.value) {
+    error.value = 'Pilih perusahaan terlebih dahulu.'
+    return
+  }
+  if (!reason.value.trim()) {
+    error.value = 'Isi alasan sebelum menyimpan.'
+    success.value = ''
+    await nextTick()
+    reasonField.value?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    reasonField.value?.focus()
+    return
+  }
   const { $api } = useNuxtApp()
   const res = await fetch($api.businessModelChangeset(companyId.value), {
     method: 'POST', headers: headers(),
     body: JSON.stringify({ expectedRevision: summary.value?.revision, reason: reason.value, ...extra }),
   })
   const payload = await res.json().catch(() => ({}))
-  if (!res.ok) { error.value = payload.message || 'Perubahan ditolak.'; conflict.value = payload.code === 'CONFIGURATION_REVISION_CONFLICT'; return }
+  if (!res.ok) {
+    error.value = payload.message || payload.code || 'Perubahan ditolak.'
+    conflict.value = payload.code === 'CONFIGURATION_REVISION_CONFLICT'
+    success.value = ''
+    return
+  }
+  error.value = ''
   success.value = 'Perubahan tersimpan.'
   await loadSummary()
 }

@@ -171,11 +171,34 @@
               </li>
             </ul>
 
-            <p class="text-muted mt-3 mb-0">
+            <p class="text-muted mt-3 mb-2">
               {{ detail.provenance?.note }}
-              Aksi write (approve/chat/resi) belum aktif —
               {{ detail.actions?.sellerCenterHint }}
             </p>
+            <div class="d-flex flex-wrap gap-2">
+              <button
+                type="button"
+                class="btn btn-sm btn-primary"
+                :disabled="!detail.actions?.approveReject?.enabled || returnActionBusy"
+                :title="detail.actions?.approveReject?.reason || ''"
+                @click="approveReturn()"
+              >
+                Approve Return/Refund
+              </button>
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-danger"
+                :disabled="!detail.actions?.approveReject?.enabled || returnActionBusy"
+                :title="detail.actions?.approveReject?.reason || ''"
+                @click="rejectReturn()"
+              >
+                Reject Return/Refund
+              </button>
+            </div>
+            <div v-if="returnActionMsg" class="small mt-2 text-break">{{ returnActionMsg }}</div>
+            <div v-if="!detail.actions?.approveReject?.enabled" class="small text-muted mt-1">
+              {{ detail.actions?.approveReject?.reason }}
+            </div>
           </div>
         </div>
       </div>
@@ -228,6 +251,8 @@ const meta = ref<any>(null)
 const loading = ref(false)
 const error = ref('')
 const detail = ref<any>(null)
+const returnActionBusy = ref(false)
+const returnActionMsg = ref('')
 
 const activeTypeTab = computed(() => caseType.value || 'all')
 const activeStatusTab = computed(() => normalizedStatus.value || 'all')
@@ -430,6 +455,7 @@ async function reload() {
 
 async function openDetail(id: string) {
   if (!companyId.value) return
+  returnActionMsg.value = ''
   const qs = new URLSearchParams({ perusahaanId: String(companyId.value) })
   const res = await fetch(`${$api.commerceExternalReturnDetail(id)}?${qs}`, {
     headers: headers(),
@@ -441,6 +467,71 @@ async function openDetail(id: string) {
     return
   }
   detail.value = json.data
+}
+
+async function approveReturn() {
+  if (!detail.value?.id) return
+  const ok = window.confirm(
+    `Approve return/refund ${detail.value.externalReturnId} di TikTok?\nTidak ada restock otomatis di SkyFlow.`
+  )
+  if (!ok) return
+  returnActionBusy.value = true
+  returnActionMsg.value = ''
+  try {
+    const res = await fetch($api.commerceExternalReturnApprove(detail.value.id), {
+      method: 'POST',
+      headers: { ...headers(), 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        phase: 'REQUEST',
+        idempotencyKey: `ui-ret-approve-${detail.value.id}-${Date.now()}`,
+      }),
+    })
+    const json = await res.json()
+    if (!res.ok || json.success === false) throw new Error(json.message || 'Approve gagal')
+    returnActionMsg.value = json.data?.note || json.message || 'Approve dikirim.'
+    await openDetail(detail.value.id)
+  } catch (e: any) {
+    returnActionMsg.value = e?.message || 'Approve gagal'
+  } finally {
+    returnActionBusy.value = false
+  }
+}
+
+async function rejectReturn() {
+  if (!detail.value?.id) return
+  const reason =
+    window.prompt(
+      'reject_reason resmi TikTok (wajib)',
+      'seller_reject_apply_package_has_not_exceeded_estimated_delivery_time'
+    ) || ''
+  if (!reason.trim()) {
+    returnActionMsg.value = 'Reject dibatalkan — alasan wajib.'
+    return
+  }
+  const ok = window.confirm(`Reject ${detail.value.externalReturnId} di TikTok?`)
+  if (!ok) return
+  returnActionBusy.value = true
+  returnActionMsg.value = ''
+  try {
+    const res = await fetch($api.commerceExternalReturnReject(detail.value.id), {
+      method: 'POST',
+      headers: { ...headers(), 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        rejectReason: reason.trim(),
+        idempotencyKey: `ui-ret-reject-${detail.value.id}-${Date.now()}`,
+      }),
+    })
+    const json = await res.json()
+    if (!res.ok || json.success === false) throw new Error(json.message || 'Reject gagal')
+    returnActionMsg.value = json.message || 'Reject dikirim.'
+    await openDetail(detail.value.id)
+  } catch (e: any) {
+    returnActionMsg.value = e?.message || 'Reject gagal'
+  } finally {
+    returnActionBusy.value = false
+  }
 }
 
 watch(companyId, async () => {

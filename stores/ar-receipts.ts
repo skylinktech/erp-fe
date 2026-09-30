@@ -210,7 +210,8 @@ export const useARReceiptStore = defineStore('arReceipt', {
      */
     async fetchFormOptions(
       customerId?: string | number | null,
-      includeInvoiceIds: string[] = []
+      includeInvoiceIds: string[] = [],
+      opts?: { commerceShopId?: string | null; receiptMode?: 'CUSTOMER' | 'MARKETPLACE' | null }
     ) {
       this.formOptionsLoading = true
       const { $api } = useNuxtApp()
@@ -220,6 +221,8 @@ export const useARReceiptStore = defineStore('arReceipt', {
         const url = `${$api.arReceiptsFormOptions()}${buildQueryString({
           customerId: customerId || undefined,
           includeInvoiceIds: includeInvoiceIds.filter(Boolean).join(',') || undefined,
+          commerceShopId: opts?.commerceShopId || undefined,
+          receiptMode: opts?.receiptMode || undefined,
         })}`
         const result = await fetchJson(url)
         const options = normalizeArReceiptFormOptions(result)
@@ -543,13 +546,17 @@ export const useARReceiptStore = defineStore('arReceipt', {
      * Prefill create form from Open Invoice (does not auto-confirm / mutate invoice status).
      */
     openFromOpenInvoice(prefill: {
-      customerId: string | number
+      customerId?: string | number | null
       invoiceId: string
-      amount: number
+      amount?: number
       notes?: string
+      commerceShopId?: string | null
+      receiptMode?: 'CUSTOMER' | 'MARKETPLACE'
     }) {
       this.openModal()
-      this.form.customer_id = String(prefill.customerId)
+      this.form.customer_id = prefill.customerId != null && prefill.customerId !== ''
+        ? String(prefill.customerId)
+        : ''
       this.form.invoice_id = String(prefill.invoiceId)
       this.form.amount = Number(prefill.amount || 0)
       this.form.notes = prefill.notes || `Pembayaran invoice ${prefill.invoiceId}`
@@ -559,7 +566,10 @@ export const useARReceiptStore = defineStore('arReceipt', {
           amount: Number(prefill.amount || 0),
         },
       ]
-      this.fetchFormOptions(prefill.customerId, [String(prefill.invoiceId)])
+      this.fetchFormOptions(prefill.customerId, [String(prefill.invoiceId)], {
+        commerceShopId: prefill.commerceShopId || null,
+        receiptMode: prefill.receiptMode || (prefill.commerceShopId ? 'MARKETPLACE' : null),
+      })
     },
 
     closeModal() {

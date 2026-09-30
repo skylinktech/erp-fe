@@ -308,7 +308,7 @@
                                             <label>No. PO</label>
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
+                                    <div v-if="!isRetailB2b" class="col-md-6">
                                         <CustomSelect2 
                                             v-model="form.quotationId" 
                                             :options="quotations" 
@@ -597,6 +597,8 @@ import 'vue-select/dist/vue-select.css'
 import { useDebounceFn } from '@vueuse/core'
 import { useRouter } from 'vue-router'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
+import { useCompanyContextStore } from '~/stores/companyContext'
+import { hasCapabilityCode } from '~/utils/businessFlowCapabilityRegistry'
 import { useImageUrl } from '~/composables/useImageUrl'
 import Swal from 'sweetalert2'
 import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
@@ -617,6 +619,10 @@ const perusahaanStore       = usePerusahaanStore()
 const warehouseStore        = useWarehouseStore()
 const cabangStore           = useCabangStore()
 const quotationStore        = useQuotationStore()
+const companyContextStore   = useCompanyContextStore()
+const isRetailB2b = computed(() =>
+  hasCapabilityCode('RETAIL_B2B_SALES', companyContextStore.effectiveFlowCodes, companyContextStore.profileCode)
+)
 const productStore          = useProductStore()
 const stockStore            = useStocksStore()
 const userStore             = useUserStore()
@@ -783,7 +789,7 @@ const { isLoading: isDataLoading, error: dataError, reload: reloadData } = usePa
         () => warehouseStore.fetchWarehouses(),
         () => permissionStore.fetchPermissions(),
         () => userStore.loadUser(),
-        () => quotationStore.fetchQuotations(),
+        () => isRetailB2b.value ? Promise.resolve() : quotationStore.fetchQuotations(),
         // Group 2: Company data with fallback
         async () => {
             try {

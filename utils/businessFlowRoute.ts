@@ -81,14 +81,23 @@ function normalizeContext(ctx: RouteAllowContext): FlowRouteContext {
 }
 
 export function classifyBusinessRoute(path: string): BusinessRouteClass {
-  if (pathMatchesPrefixes(path, BUSINESS_FLOW_CAPABILITY_REGISTRY.DIRECT_PRODUCT_SALE.prefixes)) {
+  const isDirectSale = pathMatchesPrefixes(
+    path,
+    BUSINESS_FLOW_CAPABILITY_REGISTRY.DIRECT_PRODUCT_SALE.prefixes
+  )
+  const isIsp = pathMatchesPrefixes(
+    path,
+    BUSINESS_FLOW_CAPABILITY_REGISTRY.ISP_NEW_SUBSCRIPTION.prefixes
+  )
+  if (isDirectSale) {
     if (path === '/sales/pos' || path.startsWith('/sales/pos/')) return 'DIRECT_SALE_POS'
-    return 'RETAIL_ONLY'
+    // Dual-gated with ISP (e.g. Sales Order): keep ISP_ONLY label; allow uses capability OR.
+    if (!isIsp) return 'RETAIL_ONLY'
   }
   if (pathMatchesPrefixes(path, BUSINESS_FLOW_CAPABILITY_REGISTRY.OMNICHANNEL.prefixes)) {
     return 'RETAIL_ONLY'
   }
-  if (pathMatchesPrefixes(path, BUSINESS_FLOW_CAPABILITY_REGISTRY.ISP_NEW_SUBSCRIPTION.prefixes)) {
+  if (isIsp) {
     return 'ISP_ONLY'
   }
   if (pathMatchesPrefixes(path, BUSINESS_FLOW_CAPABILITY_REGISTRY.PRODUCT_QUOTATION.prefixes)) {

@@ -29,7 +29,7 @@
                 <small class="text-muted">ID: {{ row.id }}</small>
               </div>
               <span :class="statusBadge(row.status).class">{{ statusBadge(row.status).text }}</span>
-              <span class="badge bg-label-primary">{{ row.channel || '—' }}</span>
+              <span class="badge bg-label-primary">{{ channelLabel(row.channel) }}</span>
             </div>
             <div class="d-flex flex-wrap gap-2">
               <button
@@ -39,6 +39,14 @@
                 @click="navigateTo(`/sales/pricing/form/${row.id}`)"
               >
                 <i class="ri-edit-box-line me-1"></i> Edit
+              </button>
+              <button
+                v-if="canCreate"
+                type="button"
+                class="btn btn-outline-primary btn-sm"
+                @click="showDuplicateModal = true"
+              >
+                <i class="ri-file-copy-line me-1"></i> Duplikat sebagai Draft
               </button>
               <button
                 v-if="canDelete"
@@ -71,7 +79,13 @@
                     </div>
                     <div class="col-md-6">
                       <label class="form-label text-muted medium">Kanal</label>
-                      <p class="mb-0">{{ row.channel || '—' }}</p>
+                      <p class="mb-0">{{ channelLabel(row.channel) }}</p>
+                    </div>
+                    <div v-if="isMarketplace(row.channel)" class="col-md-6">
+                      <label class="form-label text-muted medium">Shop Marketplace</label>
+                      <p class="mb-0">
+                        {{ row.shop?.name || (row.shopId ? `#${row.shopId}` : 'Belum di-assign') }}
+                      </p>
                     </div>
                     <div class="col-md-6">
                       <label class="form-label text-muted medium">Mata Uang</label>
@@ -155,7 +169,7 @@
                   </div>
                   <div class="d-flex justify-content-between py-2">
                     <span class="text-muted">Kanal</span>
-                    <span class="fw-medium">{{ row.channel || '—' }}</span>
+                    <span class="fw-medium">{{ channelLabel(row.channel) }}</span>
                   </div>
                 </div>
               </div>
@@ -164,6 +178,16 @@
         </template>
       </div>
     </div>
+
+    <PricingDuplicateModal
+      :show="showDuplicateModal"
+      :source-code="row?.code"
+      :source-channel="row ? normalizePricingChannel(row.channel) : null"
+      :busy="pricingStore.duplicating"
+      :error="duplicateError"
+      @cancel="showDuplicateModal = false"
+      @confirm="onConfirmDuplicate"
+    />
   </div>
 </template>
 
@@ -172,9 +196,16 @@ import { computed, onMounted, ref } from 'vue'
 import { usePermissions } from '~/composables/usePermissions'
 import { useActiveCompany } from '~/composables/useActiveCompany'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
+import { usePricingStore } from '~/stores/pricing'
 import { formatActiveCompanyLabel } from '~/utils/activeCompanyBinding'
 import { readAccessToken } from '~/utils/authCookie'
+import {
+  normalizePricingChannel,
+  pricingChannelLabel,
+  type PricingChannel,
+} from '~/utils/pricingChannel'
 import PageBreadcrumb from '~/components/PageBreadcrumb.vue'
+import PricingDuplicateModal from '~/components/pricing/PricingDuplicateModal.vue'
 
 definePageMeta({
   hidePageHeading: true,
@@ -192,6 +223,29 @@ void ensureBootstrapped()
 const loading = ref(true)
 const error = ref('')
 const row = ref<any | null>(null)
+const pricingStore = usePricingStore()
+const showDuplicateModal = ref(false)
+const duplicateError = ref('')
+
+function channelLabel(channel: string | null | undefined) {
+  return pricingChannelLabel(channel)
+}
+
+function isMarketplace(channel: string | null | undefined) {
+  return normalizePricingChannel(channel) === 'MARKETPLACE'
+}
+
+async function onConfirmDuplicate(targetChannel: PricingChannel) {
+  if (!row.value) return
+  duplicateError.value = ''
+  const newId = await pricingStore.duplicateDraft(row.value.id, targetChannel, companyId.value)
+  if (!newId) {
+    duplicateError.value = pricingStore.error || 'Duplikasi draft gagal.'
+    return
+  }
+  showDuplicateModal.value = false
+  await navigateTo(`/sales/pricing/form/${newId}`)
+}
 
 const canCreate = computed(
   () => userHasRole('admin') || userHasRole('superadmin') || userHasPermission('create_product_price_list')

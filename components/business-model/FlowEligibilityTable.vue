@@ -2,6 +2,7 @@
   <section class="card mb-3">
     <div class="card-body">
       <h3 class="h6">Business Flow</h3>
+      <p class="small text-muted mb-2">Isi alasan di bagian Profil bisnis utama sebelum memberi atau mencabut grant.</p>
       <div class="d-none d-lg-block table-responsive">
         <table class="table table-sm align-middle">
           <thead>

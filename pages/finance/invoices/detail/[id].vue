@@ -1,4 +1,5 @@
 <template>
+  <div class="finance-invoice-detail-page">
   <div class="content-wrapper">
     <div class="container-xxl flex-grow-1">
       <div v-if="loadingDetail" class="text-center p-6">
@@ -504,6 +505,7 @@
       </template>
     </Dialog>
   </div>
+  </div>
 </template>
 
 <script setup>
@@ -806,11 +808,18 @@ const submitEdit = async () => {
 }
 
 const goToArReceipt = () => {
+  const inv = invoice.value
   router.push({
     path: '/finance/ar-receipts',
     query: {
       invoiceId: invoiceId.value,
-      customerId: invoice.value?.customerId,
+      ...(inv?.customerId != null && inv?.customerId !== ''
+        ? { customerId: inv.customerId }
+        : {}),
+      ...(inv?.commerceShopId
+        ? { commerceShopId: inv.commerceShopId, receiptMode: 'MARKETPLACE' }
+        : {}),
+      amount: inv?.remainingAmount ?? inv?.total,
     },
   })
 }

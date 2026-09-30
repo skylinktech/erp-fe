@@ -540,7 +540,7 @@ async function resolveOfficialPrice(productId: number, unitId: number) {
   url.searchParams.set('productId', String(productId))
   url.searchParams.set('unitId', String(unitId))
   url.searchParams.set('pricingDate', new Date().toISOString().slice(0, 10))
-  url.searchParams.set('channel', 'RETAIL')
+  url.searchParams.set('channel', 'POS')
   const res = await fetch(url.toString(), {
     method: 'GET',
     headers: headers(),

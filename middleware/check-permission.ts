@@ -292,6 +292,12 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
         requiredPermission = 'view_purchase_invoice'
       } else if (/^\/sales\/sales-invoice\/form(\/.*)?$/.test(to.path)) {
         requiredPermission = 'create_sales_invoice'
+      } else if (/^\/sales\/sales-order\/form(\/.*)?$/.test(to.path)) {
+        requiredPermission = 'view_sales_order'
+      } else if (/^\/sales\/surat-jalan\/form(\/.*)?$/.test(to.path)) {
+        requiredPermission = 'view_surat_jalan'
+      } else if (/^\/sales\/sales-return\/form(\/.*)?$/.test(to.path)) {
+        requiredPermission = 'view_sales_return'
       } else if (/^\/sales\/pricing\/form(\/.*)?$/.test(to.path)) {
         requiredPermission = 'view_product_price_list'
       } else if (/^\/sales\/pricing\/detail\/.+$/.test(to.path)) {

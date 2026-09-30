@@ -11,23 +11,71 @@
       </div>
     </div>
 
+    <div
+      v-if="selectable && !empty"
+      class="card mb-3 border-0 bg-label-secondary"
+    >
+      <div class="card-body py-2">
+        <div class="d-flex flex-wrap align-items-center gap-2 justify-content-between">
+          <div class="form-check mb-0 d-flex align-items-center gap-2">
+            <input
+              id="commerce-order-select-all"
+              class="form-check-input"
+              type="checkbox"
+              :checked="pageSelect.allEligibleSelected"
+              :indeterminate.prop="pageSelect.indeterminate"
+              :disabled="busy || pageSelect.noneEligible"
+              :title="selectAllTitle"
+              :aria-label="selectAllTitle"
+              @change="onToggleSelectAll(($event.target as HTMLInputElement).checked)"
+            />
+            <label class="form-check-label small mb-0" for="commerce-order-select-all">
+              Pilih semua
+              <span class="text-muted">
+                ({{ pageSelect.eligibleCount }} eligible di halaman ini
+                <template v-if="pageSelect.selectedEligibleCount">
+                  · {{ pageSelect.selectedEligibleCount }} dipilih
+                </template>
+                )
+              </span>
+            </label>
+          </div>
+          <div class="small text-muted">
+            Hanya pesanan yang siap Atur Pengiriman. Maks {{ bulkMax }} / batch.
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div v-for="o in orders" :key="o.id" class="card mb-3">
       <div class="card-header d-flex flex-wrap justify-content-between align-items-start gap-2">
-        <div class="min-w-0">
-          <h5 class="mb-1 text-break">
-            <span class="badge me-2" :class="commerceStatusBadge(o.normalizedStatus)">
-              {{ o.statusLabel || o.normalizedStatus }}
-            </span>
-            <span class="font-monospace">{{ o.externalOrderId }}</span>
-          </h5>
-          <p class="mb-0 card-subtitle text-muted small mt-3">
-            {{ o.shop?.name || o.platformCode }}
-            · {{ o.platformCode }}
-            · {{ o.fulfillmentType || '—' }}
-            <template v-if="o.logistics?.actionDeadlineAt">
-              · SLA {{ formatTs(o.logistics.actionDeadlineAt) }}
-            </template>
-          </p>
+        <div class="d-flex align-items-start gap-2 min-w-0">
+          <input
+            v-if="selectable"
+            class="form-check-input mt-1 flex-shrink-0"
+            type="checkbox"
+            :checked="isSelected(o.id)"
+            :disabled="busy || !canBulkSelect(o) || (selected.size >= bulkMax && !isSelected(o.id))"
+            :title="rowSelectTitle(o)"
+            :aria-label="`Pilih ${o.externalOrderId}`"
+            @change="toggleSelect(o, ($event.target as HTMLInputElement).checked)"
+          />
+          <div class="min-w-0">
+            <h5 class="mb-1 text-break">
+              <span class="badge me-2" :class="commerceStatusBadge(o.normalizedStatus)">
+                {{ o.statusLabel || o.normalizedStatus }}
+              </span>
+              <span class="font-monospace">{{ o.externalOrderId }}</span>
+            </h5>
+            <p class="mb-0 card-subtitle text-muted small mt-3">
+              {{ o.shop?.name || o.platformCode }}
+              · {{ o.platformCode }}
+              · {{ o.fulfillmentType || '—' }}
+              <template v-if="o.logistics?.actionDeadlineAt">
+                · SLA {{ formatTs(o.logistics.actionDeadlineAt) }}
+              </template>
+            </p>
+          </div>
         </div>
         <div class="small text-muted text-md-end">
           <div>{{ formatTs(o.platformCreatedAt) }}</div>
@@ -132,6 +180,25 @@
                   emptyField(null, o.logistics?.fieldAvailability?.warehouse)
                 }}
               </dd>
+              <dt class="col-5 text-muted">Ops fulfill</dt>
+              <dd class="col-7">
+                <span class="badge" :class="opsBadge(o)">{{ o.fulfillOpsStatus || 'NONE' }}</span>
+              </dd>
+              <dt class="col-5 text-muted">Accounting</dt>
+              <dd class="col-7">
+                <span class="badge" :class="accountingBadge(o).badgeClass">
+                  {{ accountingBadge(o).label }}
+                </span>
+                <span
+                  v-if="o.accountingSummary"
+                  class="d-block text-muted small mt-1 text-break"
+                  :title="o.accountingSummary"
+                >{{ o.accountingSummary }}</span>
+              </dd>
+              <template v-if="o.retailSaleId">
+                <dt class="col-5 text-muted">RetailSale</dt>
+                <dd class="col-7 font-monospace small text-break">{{ o.retailSaleId }}</dd>
+              </template>
               <dt class="col-5 text-muted">Sync</dt>
               <dd class="col-7">{{ formatTs(o.lastSyncedAt || o.importedAt) }}</dd>
             </dl>
@@ -140,7 +207,9 @@
 
         <ExternalOrderCardFooter
           :actions="o.actions"
-          @open-detail="$emit('open-detail', o)"
+          :busy="busy"
+          @open-detail="emit('open-detail', o)"
+          @action="(key) => emit('action', { key, order: o })"
         />
       </div>
     </div>
@@ -151,22 +220,105 @@
 import { computed } from 'vue'
 import ExternalOrderCardFooter from '~/components/commerce/ExternalOrderCardFooter.vue'
 import {
+  COMMERCE_BULK_ARRANGE_MAX,
+  commerceBulkSelectReason,
+  isCommerceOrderBulkSelectable,
+  resolvePageBulkSelectState,
+  toggleOrderSelection,
+  toggleSelectAllOnPage,
+} from '~/utils/commerceBulkSelect'
+import {
   aggregateCommerceLineItems,
   commerceStatusBadge,
   formatCommerceMoney,
   formatCommerceQty,
   formatCommerceTs,
 } from '~/utils/commerceFormat'
+import { commerceAccountingBadgeMeta } from '~/utils/commerceAccountingStatus'
 
-const props = defineProps<{
-  orders: any[]
+const emit = defineEmits<{
+  'open-detail': [order: any]
+  action: [payload: { key: string; order: any }]
+  'update:selected-ids': [ids: string[]]
 }>()
 
-defineEmits<{
-  (e: 'open-detail', order: any): void
-}>()
+const props = withDefaults(
+  defineProps<{
+    orders: any[]
+    busy?: boolean
+    selectable?: boolean
+    selectedIds?: string[]
+    bulkMax?: number
+  }>(),
+  {
+    busy: false,
+    selectable: false,
+    selectedIds: () => [],
+    bulkMax: COMMERCE_BULK_ARRANGE_MAX,
+  }
+)
 
+const busy = computed(() => Boolean(props.busy))
 const empty = computed(() => !props.orders?.length)
+const bulkMax = computed(() =>
+  Math.max(1, Math.min(COMMERCE_BULK_ARRANGE_MAX, Number(props.bulkMax) || COMMERCE_BULK_ARRANGE_MAX))
+)
+const selected = computed(() => new Set((props.selectedIds || []).map(String)))
+const pageSelect = computed(() =>
+  resolvePageBulkSelectState({
+    orders: props.orders,
+    selectedIds: props.selectedIds,
+    max: bulkMax.value,
+  })
+)
+
+const selectAllTitle = computed(() => {
+  if (pageSelect.value.noneEligible) {
+    return 'Tidak ada pesanan eligible Atur Pengiriman di halaman ini (reservasi stok dulu).'
+  }
+  if (pageSelect.value.allEligibleSelected) {
+    return 'Batalkan pilihan semua di halaman ini'
+  }
+  return `Pilih semua ${pageSelect.value.eligibleCount} pesanan eligible di halaman ini`
+})
+
+function isSelected(id: string) {
+  return selected.value.has(String(id))
+}
+
+function canBulkSelect(o: any) {
+  return isCommerceOrderBulkSelectable(o)
+}
+
+function rowSelectTitle(o: any) {
+  if (!canBulkSelect(o)) return commerceBulkSelectReason(o)
+  if (selected.value.size >= bulkMax.value && !isSelected(o.id)) {
+    return `Maksimal ${bulkMax.value} pesanan per batch bulk.`
+  }
+  return 'Pilih untuk bulk atur pengiriman'
+}
+
+function onToggleSelectAll(checked: boolean) {
+  if (busy.value || pageSelect.value.noneEligible) return
+  emit('update:selected-ids', toggleSelectAllOnPage({
+    orders: props.orders,
+    selectAll: checked,
+    max: bulkMax.value,
+  }))
+}
+
+function toggleSelect(o: any, checked: boolean) {
+  if (!canBulkSelect(o) || busy.value) return
+  emit(
+    'update:selected-ids',
+    toggleOrderSelection({
+      selectedIds: props.selectedIds,
+      orderId: String(o.id),
+      selected: checked,
+      max: bulkMax.value,
+    })
+  )
+}
 
 function displayItems(o: any) {
   return aggregateCommerceLineItems(o?.items)
@@ -186,6 +338,23 @@ function emptyField(value: any, availability?: string) {
   if (value != null && value !== '') return value
   if (availability === 'EMPTY' || availability === 'NOT_IN_SNAPSHOT') return '—'
   return 'Tidak tersedia dari marketplace'
+}
+
+function opsBadge(o: any) {
+  const s = String(o?.fulfillOpsStatus || 'NONE').toUpperCase()
+  if (s === 'STOCK_ISSUED') return 'bg-label-success'
+  if (s === 'CANCELLED_OPS') return 'bg-label-danger'
+  if (s === 'SHIP_ARRANGED' || s === 'LABEL_READY' || s === 'HANDED_OVER') return 'bg-label-info'
+  if (s === 'RESERVED' || s === 'PICKED' || s === 'PACKED') return 'bg-label-warning'
+  return 'bg-label-secondary'
+}
+
+function accountingBadge(o: any) {
+  return commerceAccountingBadgeMeta({
+    stockIssuedAt: o?.stockIssuedAt,
+    accountingStatus: o?.accountingStatus,
+    releaseBlockerCodes: o?.releaseBlockerCodes || null,
+  })
 }
 
 function onImageError(e: Event) {

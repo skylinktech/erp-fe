@@ -14,7 +14,14 @@ export type CommerceOrderActionsMap = {
   printPickingList?: CommerceActionState
   printPackingList?: CommerceActionState
   printInvoice?: CommerceActionState
+  printShippingLabel?: CommerceActionState
   arrangeShipment?: CommerceActionState
+  confirmHandover?: CommerceActionState
+  retryAccounting?: CommerceActionState
+  reserveStock?: CommerceActionState
+  markPicked?: CommerceActionState
+  markPacked?: CommerceActionState
+  cancelFulfillOps?: CommerceActionState
   cancelOrder?: CommerceActionState
   editOrder?: CommerceActionState
   matchOrder?: CommerceActionState
@@ -38,7 +45,7 @@ export type CommerceFooterMenuItem = {
   reason: string
 }
 
-const READONLY = 'Belum diaktifkan di SkyFlow (fase read-only).'
+const READONLY = 'Belum diaktifkan di SkyFlow.'
 
 function state(
   actions: CommerceOrderActionsMap | null | undefined,
@@ -57,8 +64,7 @@ export function resolveOrderDocumentSteps(
   actions?: CommerceOrderActionsMap | null
 ): CommerceFooterDocStep[] {
   const printFallback =
-    actions?.printDocs?.reason ||
-    'Cetak dokumen fulfillment belum diaktifkan (read-only).'
+    actions?.printDocs?.reason || 'Cetak dokumen fulfillment belum diaktifkan.'
   return [
     {
       key: 'printPickingList',
@@ -69,6 +75,11 @@ export function resolveOrderDocumentSteps(
       key: 'printPackingList',
       label: 'Packing List',
       ...state(actions, 'printPackingList', printFallback),
+    },
+    {
+      key: 'printShippingLabel',
+      label: 'Label',
+      ...state(actions, 'printShippingLabel', printFallback),
     },
     {
       key: 'printInvoice',
@@ -95,11 +106,75 @@ export function resolveOrderMoreMenu(
 ): CommerceFooterMenuItem[] {
   return [
     {
-      key: 'cancelOrder',
-      label: 'Batalkan Pesanan',
+      key: 'reserveStock',
+      label: 'Reservasi Stok',
+      icon: 'ri-lock-line',
+      ...(() => {
+        const s = state(actions, 'reserveStock', `Reservasi — ${READONLY}`)
+        return { disabled: !s.enabled, reason: s.reason }
+      })(),
+    },
+    {
+      key: 'markPicked',
+      label: 'Tandai Picking',
+      ...(() => {
+        const s = state(actions, 'markPicked', `Picking — ${READONLY}`)
+        return { disabled: !s.enabled, reason: s.reason }
+      })(),
+    },
+    {
+      key: 'markPacked',
+      label: 'Tandai Packing',
+      ...(() => {
+        const s = state(actions, 'markPacked', `Packing — ${READONLY}`)
+        return { disabled: !s.enabled, reason: s.reason }
+      })(),
+    },
+    {
+      key: 'confirmHandover',
+      label: 'Konfirmasi Serah Kurir',
+      icon: 'ri-truck-line',
+      ...(() => {
+        const s = state(actions, 'confirmHandover', `Handover — ${READONLY}`)
+        return { disabled: !s.enabled, reason: s.reason }
+      })(),
+    },
+    {
+      key: 'retryAccounting',
+      label: 'Retry Accounting (GL)',
+      icon: 'ri-refresh-line',
+      ...(() => {
+        const s = state(
+          actions,
+          'retryAccounting',
+          'Retry GL hanya setelah handover — tidak mengulang stok/valuasi.'
+        )
+        return { disabled: !s.enabled, reason: s.reason }
+      })(),
+    },
+    {
+      key: 'cancelFulfillOps',
+      label: 'Lepas Reservation Lokal',
       danger: true,
       ...(() => {
-        const s = state(actions, 'cancelOrder', `Batalkan Pesanan — ${READONLY}`)
+        const s = state(
+          actions,
+          'cancelFulfillOps',
+          'Lepas reservation lokal (bukan cancel TikTok).'
+        )
+        return { disabled: !s.enabled, reason: s.reason }
+      })(),
+    },
+    {
+      key: 'cancelOrder',
+      label: 'Batalkan Pesanan (TikTok)',
+      danger: true,
+      ...(() => {
+        const s = state(
+          actions,
+          'cancelOrder',
+          'Seller cancel TikTok — butuh scope return_refund + alasan resmi.'
+        )
         return { disabled: !s.enabled, reason: s.reason }
       })(),
     },
@@ -122,6 +197,14 @@ export function resolveArrangeShipment(actions?: CommerceOrderActionsMap | null)
   return state(
     actions,
     'arrangeShipment',
-    'Atur Pengiriman / fulfill write-path UNSUPPORTED pada fase ini.'
+    'Atur Pengiriman belum tersedia untuk pesanan ini.'
+  )
+}
+
+export function resolveConfirmHandover(actions?: CommerceOrderActionsMap | null) {
+  return state(
+    actions,
+    'confirmHandover',
+    'Konfirmasi serah kurir belum tersedia.'
   )
 }

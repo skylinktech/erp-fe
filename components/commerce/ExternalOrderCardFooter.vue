@@ -14,8 +14,8 @@
       <button
         type="button"
         class="btn btn-sm btn-outline-secondary"
-        :disabled="!chat.enabled"
-        :title="chat.reason"
+        :disabled="busy || !chat.enabled"
+        :title="busy ? 'Menunggu hasil aksi…' : chat.reason"
         @click="onAction('chatBuyer')"
       >
         <i class="ri-chat-3-line me-1 text-success" aria-hidden="true" />
@@ -39,8 +39,8 @@
             <button
               type="button"
               class="dropdown-item"
-              :disabled="item.disabled"
-              :title="item.reason"
+              :disabled="busy || item.disabled"
+              :title="busy ? 'Menunggu hasil aksi…' : item.reason"
               @click="onAction(item.key)"
             >
               <i v-if="item.icon" :class="item.icon" class="me-2" aria-hidden="true" />
@@ -60,8 +60,8 @@
         <button
           type="button"
           class="btn btn-sm btn-label-secondary rounded-pill px-3"
-          :disabled="!step.enabled"
-          :title="step.reason"
+          :disabled="busy || !step.enabled"
+          :title="busy ? 'Menunggu hasil aksi…' : step.reason"
           @click="onAction(step.key)"
         >
           {{ step.label }}
@@ -93,8 +93,8 @@
               type="button"
               class="dropdown-item"
               :class="{ 'text-danger': item.danger }"
-              :disabled="item.disabled"
-              :title="item.reason"
+              :disabled="busy || item.disabled"
+              :title="busy ? 'Menunggu hasil aksi…' : item.reason"
               @click="onAction(item.key)"
             >
               {{ item.label }}
@@ -104,10 +104,20 @@
       </div>
 
       <button
+        v-if="confirm.enabled"
+        type="button"
+        class="btn btn-sm btn-success"
+        :disabled="busy || !confirm.enabled"
+        :title="busy ? 'Menunggu hasil aksi…' : confirm.reason"
+        @click="onAction('confirmHandover')"
+      >
+        Serah Kurir
+      </button>
+      <button
         type="button"
         class="btn btn-sm btn-primary"
-        :disabled="!arrange.enabled"
-        :title="arrange.reason"
+        :disabled="busy || !arrange.enabled"
+        :title="busy ? 'Menunggu hasil aksi…' : arrange.reason"
         @click="onAction('arrangeShipment')"
       >
         Atur Pengiriman
@@ -121,6 +131,7 @@ import { computed } from 'vue'
 import {
   resolveArrangeShipment,
   resolveChatBuyer,
+  resolveConfirmHandover,
   resolveOrderDocumentSteps,
   resolveOrderMoreMenu,
   resolveOrderPrintMenu,
@@ -129,6 +140,7 @@ import {
 
 const props = defineProps<{
   actions?: CommerceOrderActionsMap | null
+  busy?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -136,13 +148,16 @@ const emit = defineEmits<{
   action: [key: string]
 }>()
 
+const busy = computed(() => Boolean(props.busy))
 const chat = computed(() => resolveChatBuyer(props.actions))
 const arrange = computed(() => resolveArrangeShipment(props.actions))
+const confirm = computed(() => resolveConfirmHandover(props.actions))
 const docSteps = computed(() => resolveOrderDocumentSteps(props.actions))
 const printMenu = computed(() => resolveOrderPrintMenu(props.actions))
 const moreMenu = computed(() => resolveOrderMoreMenu(props.actions))
 
 function onAction(key: string) {
+  if (busy.value) return
   emit('action', key)
 }
 </script>

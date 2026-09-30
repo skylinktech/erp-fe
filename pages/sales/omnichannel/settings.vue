@@ -48,16 +48,12 @@
     </div>
 
     <div
-      v-show="activeTab === 'pesanan'"
+      v-show="activeTab === 'pesanan' || activeTab === 'accounting'"
       :id="'omni-settings-panel-pesanan'"
       role="tabpanel"
       aria-labelledby="omni-settings-tab-pesanan"
     >
-      <div class="card mb-3">
-        <div class="card-body text-muted small py-5 text-center">
-          Pengaturan Pesanan belum tersedia pada fase ini.
-        </div>
-      </div>
+      <CommerceAccountingPolicyPanel />
     </div>
 
     <div
@@ -82,6 +78,7 @@ import { useActiveCompany } from '~/composables/useActiveCompany'
 import OmnichannelShell from '~/components/commerce/OmnichannelShell.vue'
 import CommerceConnectedShopsPanel from '~/components/commerce/CommerceConnectedShopsPanel.vue'
 import CommerceSyncJobsPanel from '~/components/commerce/CommerceSyncJobsPanel.vue'
+import CommerceAccountingPolicyPanel from '~/components/commerce/CommerceAccountingPolicyPanel.vue'
 import WorkspaceTabs from '~/components/common/WorkspaceTabs.vue'
 import type { WorkspaceTab } from '~/types/workspaceTab'
 import { readAccessToken } from '~/utils/authCookie'
@@ -94,7 +91,7 @@ type SettingsTabId = (typeof TAB_IDS)[number]
 const tabs: WorkspaceTab[] = [
   { id: 'toko', label: 'Toko Terhubung' },
   { id: 'sinkronisasi', label: 'Sinkronisasi' },
-  { id: 'pesanan', label: 'Pesanan' },
+  { id: 'pesanan', label: 'Kebijakan Accounting' },
   { id: 'addon', label: 'Add on' },
 ]
 

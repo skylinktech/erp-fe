@@ -82,6 +82,18 @@ describe('businessFlowRoute', () => {
         profileCode: 'ISP',
       })
     ).toBe(true)
+    expect(
+      isRouteAllowedForContext('/sales/sales-order', {
+        effectiveFlowCodes: ['RETAIL_DIRECT_SALE'],
+        profileCode: 'RETAIL',
+      })
+    ).toBe(false)
+    expect(
+      isRouteAllowedForContext('/sales/sales-order', {
+        effectiveFlowCodes: ['RETAIL_B2B_SALES'],
+        profileCode: 'RETAIL',
+      })
+    ).toBe(true)
   })
 
   it('ISP + Direct Sale grant unlocks both commercial and POS on ISP profile', () => {
@@ -105,6 +117,13 @@ describe('businessFlowRoute', () => {
     expect(isRouteAllowedForContext('/service-management/pending', dual)).toBe(false)
     expect(isRouteAllowedForContext('/operations/berita-acara', dual)).toBe(false)
     expect(isRouteAllowedForContext('/sales/fdr', dual)).toBe(false)
+    expect(isRouteAllowedForContext('/sales/sales-order', dual)).toBe(false)
+    expect(
+      isRouteAllowedForContext('/sales/sales-order', {
+        ...dual,
+        effectiveFlowCodes: [...dual.effectiveFlowCodes, 'RETAIL_B2B_SALES'],
+      })
+    ).toBe(true)
     expect(isRouteAllowedForContext('/sales/pos', dual)).toBe(true)
     expect(isRouteAllowedForContext('/sales/omnichannel', dual)).toBe(true)
     expect(hasCapabilityCode('ISP_COMMERCIAL', dual.effectiveFlowCodes, 'RETAIL')).toBe(false)

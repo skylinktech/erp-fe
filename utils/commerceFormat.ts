@@ -44,11 +44,15 @@ export function aggregateCommerceLineItems<T extends Record<string, any>>(
     const key = commerceLineItemKey(item)
     const existing = map.get(key)
     if (!existing) {
-      map.set(key, { ...item, quantity: toNum(item.quantity) })
+      map.set(key, { ...item, quantity: toNum(item.quantity) } as T)
       continue
     }
     const qty = toNum(existing.quantity) + toNum(item.quantity)
-    const next: T = { ...existing, quantity: qty }
+    const next = { ...existing, quantity: qty } as T & {
+      lineTotalAmount?: number
+      refundTotalAmount?: number
+      imageUrl?: string
+    }
     if (item.lineTotalAmount != null || existing.lineTotalAmount != null) {
       next.lineTotalAmount = toNum(existing.lineTotalAmount) + toNum(item.lineTotalAmount)
     }
@@ -56,7 +60,7 @@ export function aggregateCommerceLineItems<T extends Record<string, any>>(
       next.refundTotalAmount = toNum(existing.refundTotalAmount) + toNum(item.refundTotalAmount)
     }
     if (!existing.imageUrl && item.imageUrl) next.imageUrl = item.imageUrl
-    map.set(key, next)
+    map.set(key, next as T)
   }
   return [...map.values()]
 }

@@ -7,29 +7,26 @@
 
       <ListPageStatsCards :items="statCards" :loading="loading && !rows.length" />
 
+      <div class="card card-body mb-4">
+        <label class="form-label mb-2">Kanal</label>
+        <WorkspaceTabs
+          id-prefix="pricing-channel"
+          embedded
+          :tabs="channelTabs"
+          :model-value="activeChannelTab"
+          @update:model-value="onChannelTab"
+        />
+      </div>
+
       <CollapsibleFilterCard
         title="Filter Pricing"
         :has-active-filters="hasActiveFilters"
         :show-reset="false"
         @reset="resetFilters"
       >
-        <FilterFieldsRow :columns="3">
+        <FilterFieldsRow :columns="2">
           <FilterField>
             <ActiveCompanyField input-id="pricing-company" label-text="Perusahaan" />
-          </FilterField>
-          <FilterField>
-            <label class="form-label">Kanal</label>
-            <CustomSelect2
-              v-model="filters.channel"
-              :options="channelOptions"
-              :get-option-label="(o) => o.label"
-              :reduce="(o) => o.value"
-              :get-option-key="(o) => String(o.value)"
-              searchable
-              clearable
-              placeholder="Semua kanal"
-              @update:model-value="onFilterChange"
-            />
           </FilterField>
           <FilterField>
             <label class="form-label">Status</label>
@@ -116,7 +113,10 @@
               </Column>
               <Column field="channel" header="Kanal" :sortable="true">
                 <template #body="slotProps">
-                  <span class="badge bg-label-primary">{{ slotProps.data.channel || '—' }}</span>
+                  <span class="badge bg-label-primary">{{ channelLabel(slotProps.data.channel) }}</span>
+                  <div v-if="isMarketplace(slotProps.data.channel)" class="small text-muted mt-1">
+                    Shop: {{ slotProps.data.shop?.name || (slotProps.data.shopId ? `#${slotProps.data.shopId}` : 'belum di-assign') }}
+                  </div>
                 </template>
               </Column>
               <Column field="perusahaanId" header="Perusahaan" :sortable="true">
@@ -207,6 +207,15 @@
                           <i class="ri-pause-circle-line me-2"></i> Nonaktifkan
                         </a>
                       </li>
+                      <li v-if="canCreate">
+                        <a
+                          class="dropdown-item"
+                          href="javascript:void(0)"
+                          @click="openDuplicateModal(slotProps.data)"
+                        >
+                          <i class="ri-file-copy-line me-2"></i> Duplikat sebagai Draft
+                        </a>
+                      </li>
                       <li v-if="canDeleteRow(slotProps.data)">
                         <a
                           class="dropdown-item text-danger"
@@ -263,6 +272,16 @@
       </div>
     </div>
     <div class="content-backdrop fade"></div>
+
+    <PricingDuplicateModal
+      :show="showDuplicateModal"
+      :source-code="duplicateSource?.code"
+      :source-channel="duplicateSource ? normalizePricingChannel(duplicateSource.channel) : null"
+      :busy="pricingStore.duplicating"
+      :error="duplicateError"
+      @cancel="showDuplicateModal = false"
+      @confirm="onConfirmDuplicate"
+    />
   </div>
 </template>
 
@@ -270,6 +289,7 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useCompanyScopedReload } from '~/composables/useCompanyScopedReload'
 import { useCompanyContextStore } from '~/stores/companyContext'
+import { usePricingStore } from '~/stores/pricing'
 import { useDebounceFn } from '@vueuse/core'
 import Column from 'primevue/column'
 import { usePermissions } from '~/composables/usePermissions'
@@ -277,14 +297,23 @@ import { useActiveCompany } from '~/composables/useActiveCompany'
 import { useDynamicTitle } from '~/composables/useDynamicTitle'
 import { formatActiveCompanyLabel } from '~/utils/activeCompanyBinding'
 import { readAccessToken } from '~/utils/authCookie'
+import {
+  PRICING_CHANNEL_OPTIONS,
+  normalizePricingChannel,
+  pricingChannelLabel,
+  type PricingChannel,
+} from '~/utils/pricingChannel'
 import ActiveCompanyField from '~/components/company/ActiveCompanyField.vue'
 import CustomSelect2 from '~/components/CustomSelect2.vue'
 import MyDataTable from '~/components/table/MyDataTable.vue'
+import WorkspaceTabs from '~/components/common/WorkspaceTabs.vue'
+import type { WorkspaceTab } from '~/types/workspaceTab'
 import ListPageTableHeader from '~/components/list/ListPageTableHeader.vue'
 import ListPageStatsCards from '~/components/list/ListPageStatsCards.vue'
 import CollapsibleFilterCard from '~/components/list/CollapsibleFilterCard.vue'
 import FilterFieldsRow from '~/components/list/FilterFieldsRow.vue'
 import FilterField from '~/components/list/FilterField.vue'
+import PricingDuplicateModal from '~/components/pricing/PricingDuplicateModal.vue'
 
 definePageMeta({ middleware: ['auth', 'check-permission'] })
 
@@ -328,15 +357,59 @@ const tableFirst = ref(0)
 const rowsPerPageOptions = [10, 25, 50, 100]
 const expandedRows = ref<Record<string, boolean>>({})
 
-const filters = ref<{ channel: string | null; status: string | null }>({
-  channel: 'RETAIL',
+const filters = ref<{ channel: PricingChannel | null; status: string | null }>({
+  channel: null,
   status: null,
 })
 
-const channelOptions = [
-  { value: 'RETAIL', label: 'RETAIL (POS / Direct Sale)' },
-  { value: 'PRODUCT_QUOTATION', label: 'PRODUCT_QUOTATION' },
-]
+const pricingStore = usePricingStore()
+const activeChannelTab = computed(() => filters.value.channel || 'all')
+const channelTabs = computed<WorkspaceTab[]>(() => [
+  { id: 'all', label: 'Semua' },
+  ...PRICING_CHANNEL_OPTIONS.map((o) => ({ id: o.value, label: o.label })),
+])
+
+function onChannelTab(id: string) {
+  filters.value.channel = id === 'all' ? null : (id as PricingChannel)
+  onFilterChange()
+}
+
+function channelLabel(channel: string | null | undefined) {
+  return pricingChannelLabel(channel)
+}
+
+function isMarketplace(channel: string | null | undefined) {
+  return normalizePricingChannel(channel) === 'MARKETPLACE'
+}
+
+const showDuplicateModal = ref(false)
+const duplicateSource = ref<{ id: number; code?: string; channel?: string } | null>(null)
+const duplicateError = ref('')
+
+function openDuplicateModal(row: { id: number; code?: string; channel?: string }) {
+  duplicateSource.value = row
+  duplicateError.value = ''
+  showDuplicateModal.value = true
+}
+
+async function onConfirmDuplicate(targetChannel: PricingChannel) {
+  if (!duplicateSource.value) return
+  duplicateError.value = ''
+  let perusahaanId: number | null = null
+  try {
+    perusahaanId = requireCompanyId()
+  } catch {
+    perusahaanId = companyId.value
+  }
+  const newId = await pricingStore.duplicateDraft(duplicateSource.value.id, targetChannel, perusahaanId)
+  if (!newId) {
+    duplicateError.value = pricingStore.error || 'Duplikasi draft gagal.'
+    return
+  }
+  showDuplicateModal.value = false
+  await navigateTo(`/sales/pricing/form/${newId}`)
+}
+
 const statusOptions = [
   { value: 'draft', label: 'Draft' },
   { value: 'pending', label: 'Pending' },
@@ -359,8 +432,11 @@ const companyNameById = computed(() => {
 const filteredRows = computed(() => {
   const q = globalFilterValue.value.trim().toLowerCase()
   const status = filters.value.status
+  const channel = filters.value.channel
   return rows.value.filter((row) => {
     if (status && String(row.status) !== status) return false
+    // Defensive client-side normalization — legacy RETAIL rows display as POS.
+    if (channel && normalizePricingChannel(row.channel) !== channel) return false
     if (q && !String(row.code || '').toLowerCase().includes(q)) return false
     return true
   })
@@ -529,7 +605,7 @@ function onStatusFilterChange() {
 }
 
 function resetFilters() {
-  filters.value = { channel: 'RETAIL', status: null }
+  filters.value = { channel: null, status: null }
   globalFilterValue.value = ''
   tableFirst.value = 0
   void load()

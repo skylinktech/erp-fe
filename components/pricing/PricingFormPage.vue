@@ -9,9 +9,20 @@
             Kelola harga jual produk.
           </p>
         </div>
-        <button type="button" class="btn btn-outline-secondary" @click="navigateTo('/sales/pricing')">
-          <i class="ri-arrow-left-line me-1"></i>Kembali
-        </button>
+        <div class="d-flex flex-wrap gap-2">
+          <button
+            v-if="isEditMode && form.id"
+            type="button"
+            class="btn btn-outline-primary"
+            :disabled="saving"
+            @click="openDuplicateModal"
+          >
+            <i class="ri-file-copy-line me-1"></i>Duplikat sebagai Draft
+          </button>
+          <button type="button" class="btn btn-outline-secondary" @click="navigateTo('/sales/pricing')">
+            <i class="ri-arrow-left-line me-1"></i>Kembali
+          </button>
+        </div>
       </div>
 
       <div v-if="loading" class="card">
@@ -109,6 +120,68 @@
                     <ActiveCompanyField input-id="pricing-form-company" />
                     <div v-if="uiErrors.perusahaanId" class="invalid-feedback d-block">
                       {{ uiErrors.perusahaanId }}
+                    </div>
+                  </div>
+
+                  <div v-if="form.channel === 'MARKETPLACE'" class="col-12">
+                    <div class="card bg-label-secondary border-0">
+                      <div class="card-body">
+                        <h6 class="mb-1">
+                          <i class="ri-store-2-line me-1"></i>Penugasan Shop Marketplace
+                        </h6>
+                        <p class="text-muted small mb-3">
+                          Daftar harga kanal Marketplace hanya berlaku untuk satu shop yang
+                          terhubung. Simpan draft terlebih dahulu sebelum menugaskan shop.
+                        </p>
+
+                        <div v-if="!form.id" class="alert alert-warning small mb-0">
+                          Simpan draft dulu untuk mengaktifkan penugasan shop.
+                        </div>
+                        <template v-else>
+                          <div v-if="form.shopId" class="alert alert-success small mb-3">
+                            Shop saat ini: <strong>{{ form.shopName || `#${form.shopId}` }}</strong>
+                          </div>
+                          <div class="row g-2 align-items-end">
+                            <div class="col-md-8">
+                              <label class="form-label" for="pricing-marketplace-shop">
+                                Pilih Shop Terhubung
+                              </label>
+                              <select
+                                id="pricing-marketplace-shop"
+                                v-model="selectedShopId"
+                                class="form-select"
+                                :disabled="assigningShop || loadingShops"
+                              >
+                                <option value="">
+                                  {{ loadingShops ? 'Memuat shop…' : 'Pilih shop' }}
+                                </option>
+                                <option v-for="s in connectedShops" :key="s.id" :value="s.id">
+                                  {{ s.name }} ({{ s.platformCode }})
+                                </option>
+                              </select>
+                            </div>
+                            <div class="col-md-4">
+                              <button
+                                type="button"
+                                class="btn btn-primary w-100"
+                                :disabled="!selectedShopId || assigningShop"
+                                @click="onAssignShop"
+                              >
+                                <span
+                                  v-if="assigningShop"
+                                  class="spinner-border spinner-border-sm me-1"
+                                  role="status"
+                                  aria-hidden="true"
+                                ></span>
+                                {{ assigningShop ? 'Menyimpan…' : 'Assign ke Shop' }}
+                              </button>
+                            </div>
+                          </div>
+                          <p v-if="!connectedShops.length && !loadingShops" class="small text-muted mt-2 mb-0">
+                            Belum ada shop terhubung. Hubungkan shop di Settings → Omnichannel → Toko Terhubung.
+                          </p>
+                        </template>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -213,6 +286,16 @@
       </div>
     </div>
     <div class="content-backdrop fade"></div>
+
+    <PricingDuplicateModal
+      :show="showDuplicateModal"
+      :source-code="form.code"
+      :source-channel="form.channel"
+      :busy="pricingStore.duplicating"
+      :error="duplicateError"
+      @cancel="showDuplicateModal = false"
+      @confirm="onConfirmDuplicate"
+    />
   </div>
 </template>
 
@@ -231,6 +314,9 @@ import CustomSelect2 from '~/components/CustomSelect2.vue'
 import ActiveCompanyField from '~/components/company/ActiveCompanyField.vue'
 import ProductSelect from '~/components/reference/ProductSelect.vue'
 import PageBreadcrumb from '~/components/PageBreadcrumb.vue'
+import PricingDuplicateModal from '~/components/pricing/PricingDuplicateModal.vue'
+import { PRICING_CHANNEL_OPTIONS, type PricingChannel } from '~/utils/pricingChannel'
+import { readAccessToken } from '~/utils/authCookie'
 
 const route = useRoute()
 const formatRupiah = useFormatRupiah()
@@ -249,10 +335,69 @@ const { form, loading, saving, error, isEditMode, isDraftEditable } = storeToRef
 const formRoot = ref<HTMLElement | null>(null)
 const uiErrors = ref<Record<string, string>>({})
 
-const channelOptions = [
-  { value: 'RETAIL', label: 'RETAIL (POS / Direct Sale)' },
-  { value: 'PRODUCT_QUOTATION', label: 'PRODUCT_QUOTATION' },
-]
+const channelOptions = PRICING_CHANNEL_OPTIONS
+
+const assigningShop = computed(() => pricingStore.assigningShop)
+const connectedShops = ref<Array<{ id: string; name: string; platformCode: string }>>([])
+const loadingShops = ref(false)
+const selectedShopId = ref('')
+
+async function loadConnectedShops() {
+  if (!companyId.value) return
+  loadingShops.value = true
+  try {
+    const { $api } = useNuxtApp() as any
+    const token = readAccessToken()
+    const headers: Record<string, string> = { Accept: 'application/json' }
+    if (token) headers.Authorization = `Bearer ${token}`
+    headers['X-Company-Id'] = String(companyId.value)
+    const qs = new URLSearchParams({ perusahaanId: String(companyId.value), page: '1', perPage: '100' })
+    const res = await fetch(`${$api.commerceShops()}?${qs}`, { headers, credentials: 'include' })
+    const json = await res.json().catch(() => ({}))
+    connectedShops.value = res.ok
+      ? (json.data || []).filter((s: any) => String(s.status || '').toUpperCase() === 'ACTIVE')
+      : []
+  } catch {
+    connectedShops.value = []
+  } finally {
+    loadingShops.value = false
+  }
+}
+
+async function onAssignShop() {
+  if (!selectedShopId.value) return
+  const ok = await pricingStore.assignShop(selectedShopId.value, companyId.value)
+  if (ok) selectedShopId.value = ''
+}
+
+const showDuplicateModal = ref(false)
+const duplicateError = ref('')
+
+function openDuplicateModal() {
+  duplicateError.value = ''
+  showDuplicateModal.value = true
+}
+
+async function onConfirmDuplicate(targetChannel: PricingChannel) {
+  if (!form.value.id) return
+  duplicateError.value = ''
+  const newId = await pricingStore.duplicateDraft(form.value.id, targetChannel, companyId.value)
+  if (!newId) {
+    duplicateError.value = pricingStore.error || 'Duplikasi draft gagal.'
+    return
+  }
+  showDuplicateModal.value = false
+  await navigateTo(`/sales/pricing/form/${newId}`)
+}
+
+watch(
+  () => form.value.channel,
+  (channel) => {
+    if (channel === 'MARKETPLACE' && form.value.id && !connectedShops.value.length && !loadingShops.value) {
+      void loadConnectedShops()
+    }
+  }
+)
 
 const pageTitle = computed(() => (isEditMode.value ? 'Edit Pricing' : 'Tambah Pricing'))
 
@@ -370,10 +515,11 @@ onMounted(async () => {
     const ok = await pricingStore.fetchForEdit(id, companyId.value)
     if (!ok) return
     setFormTitle('Pricing', true, form.value.code || String(id))
+    if (form.value.channel === 'MARKETPLACE') void loadConnectedShops()
   } else {
     setFormTitle('Pricing', false)
     pricingStore.resetForm({
-      channel: 'RETAIL',
+      channel: 'POS',
       perusahaanId: companyId.value,
     })
   }

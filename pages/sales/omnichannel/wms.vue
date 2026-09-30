@@ -3,9 +3,11 @@
     title="WMS"
     subtitle="Pekerjaan fulfillment marketplace — status jujur sesuai kemampuan F0/F1"
   >
-    <div class="alert alert-warning small">
-      Operasi <strong>pick / pack / ship</strong> marketplace <strong>belum diaktifkan</strong> di fase ini.
-      Tidak ada tombol operasional palsu. Auto-release ke RetailSale tetap diblokir money snapshot blocker.
+    <div class="alert alert-info small">
+      Operasi <strong>pick / pack / ship</strong> TikTok (seller) dijalankan dari
+      <NuxtLink to="/sales/omnichannel/pesanan">Kelola Pesanan</NuxtLink>
+      (reserve → pick/pack → atur pengiriman → label). Halaman ini menampilkan antrian status.
+      Auto-release ke RetailSale tetap diblokir (money snapshot).
     </div>
 
     <div v-if="error" class="alert alert-danger text-break mb-3">{{ error }}</div>
